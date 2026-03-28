@@ -39,11 +39,12 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { AICoreRuntimePanel } from '../../../components/Admin/AI/AICoreRuntimePanel';
 import { PromptOsRuntimeSummaryPanel } from '../../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
-import { Api } from '../../../services/api';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
+import { Api } from '../../../services/api';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { LLMObservatoryTab } from './Analytics/LLMObservatoryTab';
@@ -74,8 +75,6 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
-import { AICoreRuntimePanel } from '../../../components/Admin/AI/AICoreRuntimePanel';
-import { PromptOsRuntimeSummaryPanel } from '../../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
 import { APIKeysTab } from './Security/APIKeysTab';
@@ -260,7 +259,9 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       security: 'superadmin_ai_security',
       knowledge: 'superadmin_ai_intelligence',
     };
-    setHelpDocumentIdOverride(mapping[key] || mainFallback[activeMainTab] || 'superadmin_ai_configuration');
+    setHelpDocumentIdOverride(
+      mapping[key] || mainFallback[activeMainTab] || 'superadmin_ai_configuration'
+    );
     return () => setHelpDocumentIdOverride(null);
   }, [activeMainTab, activeSubTab, setHelpDocumentIdOverride]);
 

@@ -14,7 +14,6 @@
  */
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-
 import { getOrCreateBrandVoice, validateContent } from './brandVoiceProfileService.js';
 import { getCanonicalTemplate } from './reportCanonicalTemplatesService.js';
 
@@ -47,8 +46,23 @@ const RECOMMENDED_SECTION_TYPES = ['recommendations', 'consulting_decisions', 'f
 
 const V3_REPORT_TYPES = ['R1', 'R2', 'R3', 'R4'];
 
-const POSITIVE_SIGNALS = ['on track', 'completed', 'ahead of schedule', 'exceeding', 'strong progress', 'no issues'];
-const NEGATIVE_SIGNALS = ['critical', 'blocked', 'failed', 'overdue', 'at risk', 'significantly delayed', 'severe'];
+const POSITIVE_SIGNALS = [
+  'on track',
+  'completed',
+  'ahead of schedule',
+  'exceeding',
+  'strong progress',
+  'no issues',
+];
+const NEGATIVE_SIGNALS = [
+  'critical',
+  'blocked',
+  'failed',
+  'overdue',
+  'at risk',
+  'significantly delayed',
+  'severe',
+];
 
 // ── Main Check ─────────────────────────────────────────────────
 
@@ -219,7 +233,9 @@ export async function checkQualityGates(
         try {
           const refs = JSON.parse(section.source_refs_json);
           hasRefs = Array.isArray(refs) && refs.length > 0;
-        } catch { /* malformed JSON */ }
+        } catch {
+          /* malformed JSON */
+        }
       }
       if (hasRefs) {
         tracedCount++;
@@ -270,7 +286,11 @@ export async function checkQualityGates(
         sectionKey: section.section_key,
         category: 'coverage',
       });
-    } else if (rag === 'red' && POSITIVE_SIGNALS.some((s) => lowerContent.includes(s)) && !NEGATIVE_SIGNALS.some((s) => lowerContent.includes(s))) {
+    } else if (
+      rag === 'red' &&
+      POSITIVE_SIGNALS.some((s) => lowerContent.includes(s)) &&
+      !NEGATIVE_SIGNALS.some((s) => lowerContent.includes(s))
+    ) {
       gates.push({
         id: `qg-rag-mismatch-${section.section_key}`,
         gateType: 'RAG_CONTENT_MISMATCH',
@@ -342,7 +362,9 @@ function checkNumericConsistency(
       while ((match = pattern.exec(section.content)) !== null) {
         const fullMatch = match[0].trim();
         const normalized = fullMatch.toLowerCase().replace(/,/g, '');
-        const unitMatch = normalized.match(/\d[\d.]*\s*(%.?|initiatives?|projects?|tasks?|risks?|items?|people|ftes?|days?|weeks?|months?|\$)/);
+        const unitMatch = normalized.match(
+          /\d[\d.]*\s*(%.?|initiatives?|projects?|tasks?|risks?|items?|people|ftes?|days?|weeks?|months?|\$)/
+        );
         const unit = unitMatch ? unitMatch[1] : '';
         const key = unit || 'numeric';
 
@@ -397,20 +419,27 @@ const EXPECTED_ORDER: string[] = [
 ];
 
 function checkSectionOrdering(
-  enabledSections: Array<{ section_key: string; section_type: string; title: string; order_index: number }>,
+  enabledSections: Array<{
+    section_key: string;
+    section_type: string;
+    title: string;
+    order_index: number;
+  }>,
   gates: QualityGateResult[]
 ): void {
   const summaryTypes = ['summary', 'executive_summary', 'cover'];
   const detailTypes = ['axis_analysis', 'list', 'matrix', 'recommendations', 'action_plan'];
 
-  const summarySection = enabledSections.find((s) =>
-    summaryTypes.includes(s.section_type) || summaryTypes.includes(s.section_key)
+  const summarySection = enabledSections.find(
+    (s) => summaryTypes.includes(s.section_type) || summaryTypes.includes(s.section_key)
   );
-  const firstDetailSection = enabledSections.find((s) =>
-    detailTypes.includes(s.section_type)
-  );
+  const firstDetailSection = enabledSections.find((s) => detailTypes.includes(s.section_type));
 
-  if (summarySection && firstDetailSection && summarySection.order_index > firstDetailSection.order_index) {
+  if (
+    summarySection &&
+    firstDetailSection &&
+    summarySection.order_index > firstDetailSection.order_index
+  ) {
     gates.push({
       id: 'qg-order-summary-after-detail',
       gateType: 'SECTION_ORDER_WARNING',
@@ -420,8 +449,11 @@ function checkSectionOrdering(
     });
   }
 
-  const actionSection = enabledSections.find((s) =>
-    s.section_type === 'action_plan' || s.section_key.includes('action') || s.section_key.includes('next')
+  const actionSection = enabledSections.find(
+    (s) =>
+      s.section_type === 'action_plan' ||
+      s.section_key.includes('action') ||
+      s.section_key.includes('next')
   );
   const lastAnalysis = [...enabledSections]
     .filter((s) => ['axis_analysis', 'matrix', 'list', 'summary'].includes(s.section_type))

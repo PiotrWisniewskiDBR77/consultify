@@ -116,7 +116,11 @@ export async function computeR1Rag(
   const delayed = initiatives.filter((i) => computeDelayDays(i) > 0);
   const criticalPending = initiatives.filter((i) => hasCriticalDecisionPending(i.status));
 
-  if (blocked.length > 0 || criticalPending.length > 0 || delayed.some((i) => computeDelayDays(i) > 7)) {
+  if (
+    blocked.length > 0 ||
+    criticalPending.length > 0 ||
+    delayed.some((i) => computeDelayDays(i) > 7)
+  ) {
     results.push({
       sectionKey: 'initiatives_overview',
       status: 'red',
@@ -148,7 +152,11 @@ export async function computeR1Rag(
     [organizationId]
   );
   const overdue = tasks.filter(
-    (t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done' && t.status !== 'completed'
+    (t) =>
+      t.due_date &&
+      new Date(t.due_date) < new Date() &&
+      t.status !== 'done' &&
+      t.status !== 'completed'
   );
   const overdueRatio = tasks.length > 0 ? overdue.length / tasks.length : 0;
 
@@ -157,14 +165,18 @@ export async function computeR1Rag(
       sectionKey: 'tasks_progress',
       status: 'red',
       reason: `${overdue.length}/${tasks.length} tasks overdue (${Math.round(overdueRatio * 100)}%)`,
-      dataPoints: [{ metric: 'overdue_ratio', value: Math.round(overdueRatio * 100), threshold: 20 }],
+      dataPoints: [
+        { metric: 'overdue_ratio', value: Math.round(overdueRatio * 100), threshold: 20 },
+      ],
     });
   } else if (overdueRatio > 0.05) {
     results.push({
       sectionKey: 'tasks_progress',
       status: 'amber',
       reason: `${overdue.length} overdue tasks`,
-      dataPoints: [{ metric: 'overdue_ratio', value: Math.round(overdueRatio * 100), threshold: 5 }],
+      dataPoints: [
+        { metric: 'overdue_ratio', value: Math.round(overdueRatio * 100), threshold: 5 },
+      ],
     });
   } else {
     results.push({
@@ -374,7 +386,8 @@ export async function computeR3Rag(
 
   // --- delivered_initiatives ---
   const completed = initiatives.filter(
-    (i) => (i.status || '').toLowerCase() === 'completed' || (i.status || '').toLowerCase() === 'done'
+    (i) =>
+      (i.status || '').toLowerCase() === 'completed' || (i.status || '').toLowerCase() === 'done'
   );
   const totalCount = initiatives.length || 1;
   const completionRate = (completed.length / totalCount) * 100;
@@ -390,7 +403,9 @@ export async function computeR3Rag(
       sectionKey: 'delivered_initiatives',
       status: 'amber',
       reason: `${Math.round(completionRate)}% completion rate (${completed.length}/${initiatives.length})`,
-      dataPoints: [{ metric: 'completion_rate', value: Math.round(completionRate), threshold: 100 }],
+      dataPoints: [
+        { metric: 'completion_rate', value: Math.round(completionRate), threshold: 100 },
+      ],
     });
   } else {
     results.push({
@@ -404,14 +419,15 @@ export async function computeR3Rag(
   // --- planned_vs_realized_benefits ---
   // Approximate: compare expected_roi vs budget utilisation
   const withRoi = initiatives.filter((i: any) => i.expected_roi != null && i.expected_roi > 0);
-  const avgRoiAchievement = withRoi.length > 0
-    ? withRoi.reduce((sum: number, i: any) => {
-        const actual = (i.cost_capex || 0) + (i.cost_opex || 0);
-        const target = i.estimated_budget || actual || 1;
-        const efficiency = target > 0 ? ((i.expected_roi || 0) / target) * 100 : 100;
-        return sum + Math.min(efficiency, 200);
-      }, 0) / withRoi.length
-    : 100;
+  const avgRoiAchievement =
+    withRoi.length > 0
+      ? withRoi.reduce((sum: number, i: any) => {
+          const actual = (i.cost_capex || 0) + (i.cost_opex || 0);
+          const target = i.estimated_budget || actual || 1;
+          const efficiency = target > 0 ? ((i.expected_roi || 0) / target) * 100 : 100;
+          return sum + Math.min(efficiency, 200);
+        }, 0) / withRoi.length
+      : 100;
 
   if (avgRoiAchievement >= 100) {
     results.push({
@@ -424,22 +440,28 @@ export async function computeR3Rag(
       sectionKey: 'planned_vs_realized_benefits',
       status: 'amber',
       reason: `Benefits at ${Math.round(avgRoiAchievement)}% of target`,
-      dataPoints: [{ metric: 'roi_achievement', value: Math.round(avgRoiAchievement), threshold: 100 }],
+      dataPoints: [
+        { metric: 'roi_achievement', value: Math.round(avgRoiAchievement), threshold: 100 },
+      ],
     });
   } else {
     results.push({
       sectionKey: 'planned_vs_realized_benefits',
       status: 'red',
       reason: `Benefits below target at ${Math.round(avgRoiAchievement)}%`,
-      dataPoints: [{ metric: 'roi_achievement', value: Math.round(avgRoiAchievement), threshold: 80 }],
+      dataPoints: [
+        { metric: 'roi_achievement', value: Math.round(avgRoiAchievement), threshold: 80 },
+      ],
     });
   }
 
   // --- kpi_trends ---
   // Without a dedicated KPI table, derive from initiative health
-  const healthyRatio = initiatives.length > 0
-    ? initiatives.filter((i) => !isBlocked(i.status) && computeDelayDays(i) <= 0).length / initiatives.length
-    : 1;
+  const healthyRatio =
+    initiatives.length > 0
+      ? initiatives.filter((i) => !isBlocked(i.status) && computeDelayDays(i) <= 0).length /
+        initiatives.length
+      : 1;
 
   if (healthyRatio >= 0.9) {
     results.push({ sectionKey: 'kpi_trends', status: 'green', reason: 'KPI trends healthy' });
@@ -460,7 +482,11 @@ export async function computeR3Rag(
   // --- financial_impact ---
   const overBudget = initiatives.filter((i) => computeBudgetDeviation(i) > 10);
   if (overBudget.length === 0) {
-    results.push({ sectionKey: 'financial_impact', status: 'green', reason: 'Financial impact within bounds' });
+    results.push({
+      sectionKey: 'financial_impact',
+      status: 'green',
+      reason: 'Financial impact within bounds',
+    });
   } else if (overBudget.length <= 2) {
     results.push({
       sectionKey: 'financial_impact',
@@ -497,12 +523,8 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
 
   const total = initiatives.length || 1;
   const blocked = initiatives.filter((i) => isBlocked(i.status));
-  const onTrack = initiatives.filter(
-    (i) => !isBlocked(i.status) && computeDelayDays(i) <= 0
-  );
-  const delayed = initiatives.filter(
-    (i) => !isBlocked(i.status) && computeDelayDays(i) > 0
-  );
+  const onTrack = initiatives.filter((i) => !isBlocked(i.status) && computeDelayDays(i) <= 0);
+  const delayed = initiatives.filter((i) => !isBlocked(i.status) && computeDelayDays(i) > 0);
 
   // --- status_distribution ---
   const blockedRatio = blocked.length / total;
@@ -511,7 +533,9 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
       sectionKey: 'status_distribution',
       status: 'red',
       reason: `${Math.round(blockedRatio * 100)}% of portfolio blocked`,
-      dataPoints: [{ metric: 'blocked_ratio', value: Math.round(blockedRatio * 100), threshold: 15 }],
+      dataPoints: [
+        { metric: 'blocked_ratio', value: Math.round(blockedRatio * 100), threshold: 15 },
+      ],
     });
   } else if (blockedRatio > 0.05) {
     results.push({
@@ -530,14 +554,21 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
   // --- budget_allocation ---
   const totalBudget = initiatives.reduce((s, i) => s + (i.estimated_budget || 0), 0);
   const totalActual = initiatives.reduce((s, i) => s + (i.cost_capex || 0) + (i.cost_opex || 0), 0);
-  const portfolioDeviation = totalBudget > 0 ? ((totalActual - totalBudget) / totalBudget) * 100 : 0;
+  const portfolioDeviation =
+    totalBudget > 0 ? ((totalActual - totalBudget) / totalBudget) * 100 : 0;
 
   if (portfolioDeviation > 15) {
     results.push({
       sectionKey: 'budget_allocation',
       status: 'red',
       reason: `Portfolio ${Math.round(portfolioDeviation)}% over budget`,
-      dataPoints: [{ metric: 'portfolio_budget_deviation', value: Math.round(portfolioDeviation), threshold: 15 }],
+      dataPoints: [
+        {
+          metric: 'portfolio_budget_deviation',
+          value: Math.round(portfolioDeviation),
+          threshold: 15,
+        },
+      ],
     });
   } else if (portfolioDeviation > 5) {
     results.push({
@@ -555,12 +586,17 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
 
   // --- value_realized_vs_planned ---
   const completedCount = initiatives.filter(
-    (i) => (i.status || '').toLowerCase() === 'completed' || (i.status || '').toLowerCase() === 'done'
+    (i) =>
+      (i.status || '').toLowerCase() === 'completed' || (i.status || '').toLowerCase() === 'done'
   ).length;
   const valueRatio = (completedCount / total) * 100;
 
   if (valueRatio >= 80) {
-    results.push({ sectionKey: 'value_realized_vs_planned', status: 'green', reason: 'Value delivery on track' });
+    results.push({
+      sectionKey: 'value_realized_vs_planned',
+      status: 'green',
+      reason: 'Value delivery on track',
+    });
   } else if (valueRatio >= 50) {
     results.push({
       sectionKey: 'value_realized_vs_planned',
@@ -579,9 +615,7 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
   const highPriority = initiatives.filter(
     (i) => i.priority === 'high' || i.priority === 'critical'
   );
-  const riskyHigh = highPriority.filter(
-    (i) => isBlocked(i.status) || computeDelayDays(i) > 7
-  );
+  const riskyHigh = highPriority.filter((i) => isBlocked(i.status) || computeDelayDays(i) > 7);
 
   if (riskyHigh.length > 2) {
     results.push({
@@ -596,7 +630,11 @@ export async function computeR4Rag(organizationId: string): Promise<RagResult[]>
       reason: `${riskyHigh.length} high-priority initiative(s) at risk`,
     });
   } else {
-    results.push({ sectionKey: 'risk_exposure', status: 'green', reason: 'Risk exposure manageable' });
+    results.push({
+      sectionKey: 'risk_exposure',
+      status: 'green',
+      reason: 'Risk exposure manageable',
+    });
   }
 
   // --- timeline_heatmap ---
@@ -690,7 +728,9 @@ export async function evaluateR1EscalationTrigger(
     result.reasons.push(`${severeOverBudget.length} initiative(s) with >25% budget deviation`);
   }
   if (overdueDecisions.length >= 3) {
-    result.reasons.push(`${overdueDecisions.length} overdue decisions requiring steering committee attention`);
+    result.reasons.push(
+      `${overdueDecisions.length} overdue decisions requiring steering committee attention`
+    );
   }
 
   // Warning escalation: multiple amber signals
@@ -752,7 +792,8 @@ export async function computeRagForReport(
   }
 
   const reportType = (report.report_type_v3 || '').toUpperCase();
-  const periodFrom = report.period_from || new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const periodFrom =
+    report.period_from || new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
   const periodTo = report.period_to || new Date().toISOString();
 
   let results: RagResult[] = [];

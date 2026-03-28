@@ -200,7 +200,11 @@ function asNumber(value: unknown): number | null {
 }
 
 function uniqStrings(values: Array<string | null | undefined>): string[] {
-  return [...new Set(values.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean))];
+  return [
+    ...new Set(
+      values.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean)
+    ),
+  ];
 }
 
 function normalizeArrayOfStrings(value: unknown): string[] {
@@ -312,7 +316,10 @@ function mergeUniqueObjects(
 }
 
 function buildConflicts(claimRows: ClaimRow[]): OrganizationContextConflict[] {
-  const grouped = new Map<string, Array<{ valueKey: string; value: unknown; sourceType: string }>>();
+  const grouped = new Map<
+    string,
+    Array<{ valueKey: string; value: unknown; sourceType: string }>
+  >();
   for (const row of claimRows) {
     const value = readValue(row);
     const valueKey = JSON.stringify(value ?? null);
@@ -364,7 +371,10 @@ function buildOrganizationProfileClaims(input: Record<string, unknown>): Context
   add('profile.industrySubsector', asString(input.industry_subsector));
   add('profile.companySize', asString(input.companySize) || asString(input.company_size));
   add('profile.website', asString(input.website));
-  add('profile.defaultLanguage', asString(input.defaultLanguage) || asString(input.preferred_language));
+  add(
+    'profile.defaultLanguage',
+    asString(input.defaultLanguage) || asString(input.preferred_language)
+  );
   add('profile.defaultTimezone', asString(input.defaultTimezone));
   add('profile.currency', asString(input.currency));
   add('profile.linkedinUrl', asString(input.linkedinUrl));
@@ -426,7 +436,8 @@ function buildInterviewAnswerClaims(input: Record<string, unknown>): ContextClai
     tags: Array.isArray(input.tags) ? input.tags : [],
   };
   const claims: ContextClaimInput[] = [];
-  if (answer) claims.push({ claimPath: 'operations.interviewAnswers', value: payload, confidence: 0.85 });
+  if (answer)
+    claims.push({ claimPath: 'operations.interviewAnswers', value: payload, confidence: 0.85 });
   if (contextNote) {
     claims.push({ claimPath: 'notes.manualContext', value: payload, confidence: 0.8 });
   }
@@ -519,7 +530,11 @@ function buildToolSessionClaims(input: Record<string, unknown>): ContextClaimInp
   const answers = input.answers;
   const contextSnapshot = input.contextSnapshot;
   const claims: ContextClaimInput[] = [];
-  if (answers && typeof answers === 'object' && Object.keys(answers as Record<string, unknown>).length > 0) {
+  if (
+    answers &&
+    typeof answers === 'object' &&
+    Object.keys(answers as Record<string, unknown>).length > 0
+  ) {
     claims.push({
       claimPath: 'tools.sessionOutput',
       value: {
@@ -671,7 +686,10 @@ export class OrganizationContextService {
     }
   }
 
-  async listTimeline(organizationId: string, limit = 25): Promise<OrganizationContextTimelineItem[]> {
+  async listTimeline(
+    organizationId: string,
+    limit = 25
+  ): Promise<OrganizationContextTimelineItem[]> {
     const rows = await safeAll<{
       id: string;
       source_type: string;
@@ -707,7 +725,10 @@ export class OrganizationContextService {
     });
   }
 
-  async listClaims(organizationId: string, limit = 100): Promise<
+  async listClaims(
+    organizationId: string,
+    limit = 100
+  ): Promise<
     Array<{
       id: string;
       claimPath: string;
@@ -763,16 +784,18 @@ export class OrganizationContextService {
         `SELECT id, name, default_language, default_timezone FROM organizations WHERE id = ?`,
         [organizationId]
       ),
-      safeGet<Record<string, unknown>>(`SELECT * FROM organization_profiles WHERE organization_id = ?`, [
-        organizationId,
-      ]),
+      safeGet<Record<string, unknown>>(
+        `SELECT * FROM organization_profiles WHERE organization_id = ?`,
+        [organizationId]
+      ),
       safeGet<{ setting_value?: string }>(
         `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'branding'`,
         [organizationId]
       ),
-      safeGet<Record<string, unknown>>(`SELECT * FROM organization_context WHERE organization_id = ?`, [
-        organizationId,
-      ]),
+      safeGet<Record<string, unknown>>(
+        `SELECT * FROM organization_context WHERE organization_id = ?`,
+        [organizationId]
+      ),
       safeAll<Record<string, unknown>>(
         `SELECT key, value, value_type, category, is_sensitive FROM organization_metadata WHERE organization_id = ? ORDER BY category, key`,
         [organizationId]
@@ -904,7 +927,10 @@ export class OrganizationContextService {
       interviewContext?.stakeholders,
       []
     );
-    const legacyGaps = safeParseJson<Array<Record<string, unknown>>>(interviewContext?.open_gaps, []);
+    const legacyGaps = safeParseJson<Array<Record<string, unknown>>>(
+      interviewContext?.open_gaps,
+      []
+    );
     const legacyStrategicPriorities = safeParseJson<string[]>(
       organizationProfile?.strategic_priorities,
       []
@@ -916,7 +942,10 @@ export class OrganizationContextService {
       title: asString(row.title),
       evidenceType: asString(row.evidence_type),
       snippet:
-        asString(row.transcript_text) || asString(row.description) || asString(row.url) || asString(row.title),
+        asString(row.transcript_text) ||
+        asString(row.description) ||
+        asString(row.url) ||
+        asString(row.title),
       createdAt: asString(row.created_at),
     }));
 
@@ -997,16 +1026,14 @@ export class OrganizationContextService {
         currency: asString(currencyClaim?.value) || asString(brandingSettings.currency),
         linkedinUrl: asString(linkedinClaim?.value) || asString(brandingSettings.linkedinUrl),
         twitterUrl: asString(twitterClaim?.value) || asString(brandingSettings.twitterUrl),
-        customDomain:
-          asString(customDomainClaim?.value) || asString(brandingSettings.customDomain),
+        customDomain: asString(customDomainClaim?.value) || asString(brandingSettings.customDomain),
         brandColor: asString(brandColorClaim?.value) || asString(brandingSettings.brandColor),
         accentColor: asString(accentColorClaim?.value) || asString(brandingSettings.accentColor),
       },
       strategic: {
         goals: uniqStrings([...strategicGoalValues, ...legacyStrategicPriorities]),
         priorities: uniqStrings([...strategicPriorityValues, ...legacyStrategicPriorities]),
-        mission:
-          asString(missionClaim?.value) || asString(organizationProfile?.mission_statement),
+        mission: asString(missionClaim?.value) || asString(organizationProfile?.mission_statement),
         vision: asString(visionClaim?.value) || asString(organizationProfile?.vision_statement),
         competitivePosition:
           asString(competitivePositionClaim?.value) ||
@@ -1029,7 +1056,8 @@ export class OrganizationContextService {
       systems: {
         stack: uniqStrings([...systemStackValues, ...legacyTechStack]),
         cloudAdoption:
-          asString(cloudAdoptionClaim?.value) || asString(organizationProfile?.cloud_adoption_level),
+          asString(cloudAdoptionClaim?.value) ||
+          asString(organizationProfile?.cloud_adoption_level),
         integrations: uniqStrings(integrationValues),
       },
       stakeholders: mergeUniqueObjects(stakeholderValues, legacyStakeholders),

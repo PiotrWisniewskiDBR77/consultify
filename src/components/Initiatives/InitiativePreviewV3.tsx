@@ -5,17 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  type ActionRow,
+  type DetailsAction,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type DetailsAction,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 
 export type InitiativePreviewV3Model = {
@@ -143,23 +144,27 @@ export const InitiativePreviewV3Body: React.FC<{
         id: 'copy-md',
         label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
         onClick: () =>
-          void copyAsMarkdown(
-            { title, status, description: detailsText },
-            isPolish ? 'pl' : 'en'
-          ),
+          void copyAsMarkdown({ title, status, description: detailsText }, isPolish ? 'pl' : 'en'),
       },
       {
         id: 'copy-slack',
         label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
         onClick: () =>
-          void copyForSlack(
-            { title, status, description: detailsText },
-            isPolish ? 'pl' : 'en'
-          ),
+          void copyForSlack({ title, status, description: detailsText }, isPolish ? 'pl' : 'en'),
       },
     ];
     return actions;
-  }, [detailsText, expanded, handleCopy, initiative.name, initiative.title, isPolish, onSummarize, status, t]);
+  }, [
+    detailsText,
+    expanded,
+    handleCopy,
+    initiative.name,
+    initiative.title,
+    isPolish,
+    onSummarize,
+    status,
+    t,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -359,15 +364,7 @@ export const InitiativePreviewV3Footer: React.FC<{
         : []),
     ];
     return [{ buttons }];
-  }, [
-    chatPrompt,
-    extraActionsSlot,
-    isPolish,
-    onCopyLink,
-    onOpenChat,
-    onOpenFull,
-    onOpenInModule,
-  ]);
+  }, [chatPrompt, extraActionsSlot, isPolish, onCopyLink, onOpenChat, onOpenFull, onOpenInModule]);
 
   return (
     <div className="space-y-0">

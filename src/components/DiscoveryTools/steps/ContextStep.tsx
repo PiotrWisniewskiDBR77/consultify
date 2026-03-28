@@ -195,9 +195,61 @@ const LABELS: Record<string, ToolLabels> = {
   },
 };
 
+function buildDynamicSwotSeedProposal(isPolish: boolean): SWOTData['context'] {
+  return {
+    understanding: isPolish
+      ? 'Rozumiem tę sesję jako próbę uchwycenia kierunku strategicznego dla całej organizacji, a nie tylko poprawy jednego KPI. Dynamic SWOT ma pomóc nazwać, gdzie firma powinna iść, na czym zbudować przewagę i jakie wybory są dziś najważniejsze dla zarządu.'
+      : 'I understand this session as an attempt to define the strategic direction for the whole organization, not just improve a single KPI. Dynamic SWOT should help name where the company should go, what advantage it can build on, and which choices matter most for leadership now.',
+    directionChoice: 'company-direction',
+    directionChoices: ['company-direction'],
+    goal: isPolish
+      ? 'Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?'
+      : 'How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?',
+    scopeChoice: 'whole-company',
+    scopeChoices: ['whole-company'],
+    scope: isPolish
+      ? 'Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku.'
+      : 'The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.',
+    successChoice: 'direction-and-priorities',
+    successChoices: ['direction-and-priorities'],
+    successSignal: isPolish
+      ? 'Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution.'
+      : 'By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.',
+    timeframe: 'medium' as const,
+    kpiTarget: isPolish
+      ? '12-18 miesięcy na zmianę kierunku, 90 dni na pierwsze ruchy i decyzje wykonawcze'
+      : '12-18 months for directional change, 90 days for the first moves and execution decisions',
+    constraints: isPolish
+      ? 'Kierunek musi być realistyczny wobec obecnych zasobów; nie zakładamy pełnej transformacji wszystkiego naraz; rekomendacja ma być zrozumiała dla zarządu i możliwa do przełożenia na kolejne decyzje.'
+      : 'The direction must be realistic for current resources; we do not assume a full transformation of everything at once; the recommendation must be clear for leadership and translatable into next decisions.',
+    assumptions: isPolish
+      ? 'Firma ma kilka możliwych ścieżek wzrostu, ale nie ma jeszcze wspólnej odpowiedzi, która z nich naprawdę buduje przewagę; część napięć wynika z rynku, część z wnętrza organizacji; zarząd potrzebuje materiału, który porządkuje wybór, a nie tylko opisuje sytuację.'
+      : 'The company has several possible growth paths, but no shared answer yet on which one truly builds advantage; some tensions come from the market, others from inside the organization; leadership needs material that structures the choice instead of merely describing the situation.',
+    understandingComment: '',
+    directionComment: '',
+    scopeComment: '',
+    horizonComment: '',
+    successComment: '',
+    question4Choices: [],
+    question5Choices: [],
+    question1Confirmed: false,
+    question2Confirmed: false,
+    question3Confirmed: false,
+    question4Confirmed: false,
+    question5Confirmed: false,
+    constraintsComment: '',
+  };
+}
+
 // ==================== COMPONENT ====================
 
-export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isPolish, onGenerateFullSession, sessionGenerationStatus }) => {
+export const ContextStep: React.FC<ContextStepProps> = ({
+  toolType,
+  session,
+  isPolish,
+  onGenerateFullSession,
+  sessionGenerationStatus,
+}) => {
   const { updateInputData } = useToolStore();
   const [activeMissionFeedback, setActiveMissionFeedback] = React.useState<{
     blockId: 'understanding' | 'direction' | 'scope' | 'success' | 'constraints';
@@ -276,8 +328,86 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
     } as Partial<PorterData>);
   };
 
+  const dynamicSwotMissionContext = contextData as SWOTData['context'];
+  const dynamicSwotSeedProposal = buildDynamicSwotSeedProposal(isPolish);
+
+  React.useEffect(() => {
+    if (toolType !== 'dynamic-swot') {
+      return;
+    }
+
+    const missionContext = dynamicSwotMissionContext;
+    const hasMissingSeedData =
+      !missionContext.goal ||
+      !missionContext.scope ||
+      !missionContext.successSignal ||
+      !missionContext.constraints ||
+      !missionContext.assumptions ||
+      !missionContext.kpiTarget ||
+      !missionContext.understanding;
+
+    if (!hasMissingSeedData) {
+      return;
+    }
+
+    updateInputData({
+      context: {
+        ...missionContext,
+        goal: missionContext.goal || dynamicSwotSeedProposal.goal,
+        scope: missionContext.scope || dynamicSwotSeedProposal.scope,
+        successSignal: missionContext.successSignal || dynamicSwotSeedProposal.successSignal,
+        timeframe: missionContext.timeframe || dynamicSwotSeedProposal.timeframe,
+        kpiTarget: missionContext.kpiTarget || dynamicSwotSeedProposal.kpiTarget,
+        constraints: missionContext.constraints || dynamicSwotSeedProposal.constraints,
+        assumptions: missionContext.assumptions || dynamicSwotSeedProposal.assumptions,
+        understanding: missionContext.understanding || dynamicSwotSeedProposal.understanding,
+        directionChoice: missionContext.directionChoice || dynamicSwotSeedProposal.directionChoice,
+        scopeChoice: missionContext.scopeChoice || dynamicSwotSeedProposal.scopeChoice,
+        successChoice: missionContext.successChoice || dynamicSwotSeedProposal.successChoice,
+        directionChoices:
+          missionContext.directionChoices || dynamicSwotSeedProposal.directionChoices,
+        scopeChoices: missionContext.scopeChoices || dynamicSwotSeedProposal.scopeChoices,
+        successChoices: missionContext.successChoices || dynamicSwotSeedProposal.successChoices,
+        question4Choices:
+          missionContext.question4Choices || dynamicSwotSeedProposal.question4Choices,
+        question5Choices:
+          missionContext.question5Choices || dynamicSwotSeedProposal.question5Choices,
+        question1Confirmed:
+          missionContext.question1Confirmed || dynamicSwotSeedProposal.question1Confirmed,
+        question2Confirmed:
+          missionContext.question2Confirmed || dynamicSwotSeedProposal.question2Confirmed,
+        question3Confirmed:
+          missionContext.question3Confirmed || dynamicSwotSeedProposal.question3Confirmed,
+        question4Confirmed:
+          missionContext.question4Confirmed || dynamicSwotSeedProposal.question4Confirmed,
+        question5Confirmed:
+          missionContext.question5Confirmed || dynamicSwotSeedProposal.question5Confirmed,
+        understandingComment:
+          missionContext.understandingComment || dynamicSwotSeedProposal.understandingComment,
+        directionComment:
+          missionContext.directionComment || dynamicSwotSeedProposal.directionComment,
+        scopeComment: missionContext.scopeComment || dynamicSwotSeedProposal.scopeComment,
+        horizonComment: missionContext.horizonComment || dynamicSwotSeedProposal.horizonComment,
+        successComment: missionContext.successComment || dynamicSwotSeedProposal.successComment,
+        constraintsComment: missionContext.constraintsComment || '',
+      },
+    } as Partial<SWOTData>);
+  }, [
+    dynamicSwotMissionContext.assumptions,
+    dynamicSwotMissionContext.constraints,
+    dynamicSwotMissionContext.goal,
+    dynamicSwotMissionContext.kpiTarget,
+    dynamicSwotMissionContext.scope,
+    dynamicSwotMissionContext.successSignal,
+    dynamicSwotMissionContext.timeframe,
+    dynamicSwotMissionContext.understanding,
+    isPolish,
+    toolType,
+    updateInputData,
+  ]);
+
   if (toolType === 'dynamic-swot') {
-    const missionContext = contextData as SWOTData['context'];
+    const missionContext = dynamicSwotMissionContext;
     const isGenerating = sessionGenerationStatus === 'generating';
     const updateMissionContext = (patch: Partial<SWOTData['context']>) => {
       updateInputData({
@@ -288,111 +418,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       } as Partial<SWOTData>);
     };
 
-    const seededProposal = React.useMemo(
-      () => ({
-        understanding: isPolish
-          ? 'Rozumiem tę sesję jako próbę uchwycenia kierunku strategicznego dla całej organizacji, a nie tylko poprawy jednego KPI. Dynamic SWOT ma pomóc nazwać, gdzie firma powinna iść, na czym zbudować przewagę i jakie wybory są dziś najważniejsze dla zarządu.'
-          : 'I understand this session as an attempt to define the strategic direction for the whole organization, not just improve a single KPI. Dynamic SWOT should help name where the company should go, what advantage it can build on, and which choices matter most for leadership now.',
-        directionChoice: 'company-direction',
-        directionChoices: ['company-direction'],
-        goal: isPolish
-          ? 'Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?'
-          : 'How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?',
-        scopeChoice: 'whole-company',
-        scopeChoices: ['whole-company'],
-        scope: isPolish
-          ? 'Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku.'
-          : 'The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.',
-        successChoice: 'direction-and-priorities',
-        successChoices: ['direction-and-priorities'],
-        successSignal: isPolish
-          ? 'Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution.'
-          : 'By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.',
-        timeframe: 'medium' as const,
-        kpiTarget: isPolish
-          ? '12-18 miesięcy na zmianę kierunku, 90 dni na pierwsze ruchy i decyzje wykonawcze'
-          : '12-18 months for directional change, 90 days for the first moves and execution decisions',
-        constraints: isPolish
-          ? 'Kierunek musi być realistyczny wobec obecnych zasobów; nie zakładamy pełnej transformacji wszystkiego naraz; rekomendacja ma być zrozumiała dla zarządu i możliwa do przełożenia na kolejne decyzje.'
-          : 'The direction must be realistic for current resources; we do not assume a full transformation of everything at once; the recommendation must be clear for leadership and translatable into next decisions.',
-        assumptions: isPolish
-          ? 'Firma ma kilka możliwych ścieżek wzrostu, ale nie ma jeszcze wspólnej odpowiedzi, która z nich naprawdę buduje przewagę; część napięć wynika z rynku, część z wnętrza organizacji; zarząd potrzebuje materiału, który porządkuje wybór, a nie tylko opisuje sytuację.'
-          : 'The company has several possible growth paths, but no shared answer yet on which one truly builds advantage; some tensions come from the market, others from inside the organization; leadership needs material that structures the choice instead of merely describing the situation.',
-        understandingComment: '',
-        directionComment: '',
-        scopeComment: '',
-        horizonComment: '',
-        successComment: '',
-        question4Choices: [],
-        question5Choices: [],
-        question1Confirmed: false,
-        question2Confirmed: false,
-        question3Confirmed: false,
-        question4Confirmed: false,
-        question5Confirmed: false,
-        constraintsComment: '',
-      }),
-      [isPolish]
-    );
-
-    React.useEffect(() => {
-      const hasMissingSeedData =
-        !missionContext.goal ||
-        !missionContext.scope ||
-        !missionContext.successSignal ||
-        !missionContext.constraints ||
-        !missionContext.assumptions ||
-        !missionContext.kpiTarget ||
-        !missionContext.understanding;
-
-      if (!hasMissingSeedData) {
-        return;
-      }
-
-      updateInputData({
-        context: {
-          ...missionContext,
-          goal: missionContext.goal || seededProposal.goal,
-          scope: missionContext.scope || seededProposal.scope,
-          successSignal: missionContext.successSignal || seededProposal.successSignal,
-          timeframe: missionContext.timeframe || seededProposal.timeframe,
-          kpiTarget: missionContext.kpiTarget || seededProposal.kpiTarget,
-          constraints: missionContext.constraints || seededProposal.constraints,
-          assumptions: missionContext.assumptions || seededProposal.assumptions,
-          understanding: missionContext.understanding || seededProposal.understanding,
-          directionChoice: missionContext.directionChoice || seededProposal.directionChoice,
-          scopeChoice: missionContext.scopeChoice || seededProposal.scopeChoice,
-          successChoice: missionContext.successChoice || seededProposal.successChoice,
-          directionChoices: missionContext.directionChoices || seededProposal.directionChoices,
-          scopeChoices: missionContext.scopeChoices || seededProposal.scopeChoices,
-          successChoices: missionContext.successChoices || seededProposal.successChoices,
-          question4Choices: missionContext.question4Choices || seededProposal.question4Choices,
-          question5Choices: missionContext.question5Choices || seededProposal.question5Choices,
-          question1Confirmed: missionContext.question1Confirmed || seededProposal.question1Confirmed,
-          question2Confirmed: missionContext.question2Confirmed || seededProposal.question2Confirmed,
-          question3Confirmed: missionContext.question3Confirmed || seededProposal.question3Confirmed,
-          question4Confirmed: missionContext.question4Confirmed || seededProposal.question4Confirmed,
-          question5Confirmed: missionContext.question5Confirmed || seededProposal.question5Confirmed,
-          understandingComment: missionContext.understandingComment || seededProposal.understandingComment,
-          directionComment: missionContext.directionComment || seededProposal.directionComment,
-          scopeComment: missionContext.scopeComment || seededProposal.scopeComment,
-          horizonComment: missionContext.horizonComment || seededProposal.horizonComment,
-          successComment: missionContext.successComment || seededProposal.successComment,
-          constraintsComment: missionContext.constraintsComment || '',
-        },
-      } as Partial<SWOTData>);
-    }, [
-      missionContext.assumptions,
-      missionContext.constraints,
-      missionContext.goal,
-      missionContext.kpiTarget,
-      missionContext.scope,
-      missionContext.successSignal,
-      missionContext.timeframe,
-      missionContext.understanding,
-      seededProposal,
-      updateInputData,
-    ]);
+    const seededProposal = dynamicSwotSeedProposal;
 
     const sanitizeMissionBlockText = (value: string) =>
       value
@@ -505,12 +531,18 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
     const displayedContext = {
       goal: sanitizeMissionBlockText(missionContext.goal || seededProposal.goal),
       scope: sanitizeMissionBlockText(missionContext.scope || seededProposal.scope),
-      successSignal: sanitizeMissionBlockText(missionContext.successSignal || seededProposal.successSignal),
+      successSignal: sanitizeMissionBlockText(
+        missionContext.successSignal || seededProposal.successSignal || ''
+      ),
       timeframe: missionContext.timeframe || seededProposal.timeframe,
       kpiTarget: missionContext.kpiTarget || seededProposal.kpiTarget,
-      constraints: sanitizeMissionBlockText(missionContext.constraints || seededProposal.constraints),
+      constraints: sanitizeMissionBlockText(
+        missionContext.constraints || seededProposal.constraints || ''
+      ),
       assumptions: missionContext.assumptions || seededProposal.assumptions,
-      understanding: sanitizeMissionBlockText(missionContext.understanding || seededProposal.understanding),
+      understanding: sanitizeMissionBlockText(
+        missionContext.understanding || seededProposal.understanding || ''
+      ),
       directionChoice: missionContext.directionChoice || seededProposal.directionChoice,
       scopeChoice: missionContext.scopeChoice || seededProposal.scopeChoice,
       successChoice: missionContext.successChoice || seededProposal.successChoice,
@@ -524,7 +556,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       question3Confirmed: missionContext.question3Confirmed || seededProposal.question3Confirmed,
       question4Confirmed: missionContext.question4Confirmed || seededProposal.question4Confirmed,
       question5Confirmed: missionContext.question5Confirmed || seededProposal.question5Confirmed,
-      understandingComment: missionContext.understandingComment || seededProposal.understandingComment,
+      understandingComment:
+        missionContext.understandingComment || seededProposal.understandingComment,
       directionComment: missionContext.directionComment || seededProposal.directionComment,
       scopeComment: missionContext.scopeComment || seededProposal.scopeComment,
       horizonComment: missionContext.horizonComment || seededProposal.horizonComment,
@@ -591,7 +624,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       {
         id: 'whole-company',
         label: isPolish ? 'Cała organizacja' : 'Whole organization',
-        description: isPolish ? 'Oferta, rynek, model wzrostu i wykonanie.' : 'Offer, market, growth model, and execution.',
+        description: isPolish
+          ? 'Oferta, rynek, model wzrostu i wykonanie.'
+          : 'Offer, market, growth model, and execution.',
         patch: {
           scopeChoice: 'whole-company',
           scope: isPolish
@@ -602,7 +637,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       {
         id: 'go-to-market',
         label: isPolish ? 'Go-to-market i oferta' : 'Go-to-market and offer',
-        description: isPolish ? 'Sprzedaż, segmenty, propozycja wartości, pricing.' : 'Sales, segments, value proposition, pricing.',
+        description: isPolish
+          ? 'Sprzedaż, segmenty, propozycja wartości, pricing.'
+          : 'Sales, segments, value proposition, pricing.',
         patch: {
           scopeChoice: 'go-to-market',
           scope: isPolish
@@ -612,8 +649,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       },
       {
         id: 'portfolio-focus',
-        label: isPolish ? 'Portfolio i priorytety inwestycji' : 'Portfolio and investment priorities',
-        description: isPolish ? 'Gdzie inwestować, a z czego schodzić.' : 'Where to invest and what to de-prioritize.',
+        label: isPolish
+          ? 'Portfolio i priorytety inwestycji'
+          : 'Portfolio and investment priorities',
+        description: isPolish
+          ? 'Gdzie inwestować, a z czego schodzić.'
+          : 'Where to invest and what to de-prioritize.',
         patch: {
           scopeChoice: 'portfolio-focus',
           scope: isPolish
@@ -623,8 +664,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       },
       {
         id: 'capabilities-and-constraints',
-        label: isPolish ? 'Zdolności i ograniczenia organizacji' : 'Capabilities and organizational constraints',
-        description: isPolish ? 'Co organizacja potrafi, a co ją blokuje.' : 'What the organization can do and what holds it back.',
+        label: isPolish
+          ? 'Zdolności i ograniczenia organizacji'
+          : 'Capabilities and organizational constraints',
+        description: isPolish
+          ? 'Co organizacja potrafi, a co ją blokuje.'
+          : 'What the organization can do and what holds it back.',
         patch: {
           scopeChoice: 'capabilities-and-constraints',
           scope: isPolish
@@ -637,8 +682,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
     const successOptions = [
       {
         id: 'direction-and-priorities',
-        label: isPolish ? 'Kierunek i priorytety strategiczne' : 'Direction and strategic priorities',
-        description: isPolish ? 'Jasny wybór i lista priorytetów dla zarządu.' : 'A clear choice and list of priorities for leadership.',
+        label: isPolish
+          ? 'Kierunek i priorytety strategiczne'
+          : 'Direction and strategic priorities',
+        description: isPolish
+          ? 'Jasny wybór i lista priorytetów dla zarządu.'
+          : 'A clear choice and list of priorities for leadership.',
         patch: {
           successChoice: 'direction-and-priorities',
           successSignal: isPolish
@@ -649,7 +698,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       {
         id: 'board-decision',
         label: isPolish ? 'Materiał do decyzji zarządu' : 'Board decision material',
-        description: isPolish ? 'Gotowy materiał, który porządkuje wybór.' : 'Ready material that structures the choice.',
+        description: isPolish
+          ? 'Gotowy materiał, który porządkuje wybór.'
+          : 'Ready material that structures the choice.',
         patch: {
           successChoice: 'board-decision',
           successSignal: isPolish
@@ -660,7 +711,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       {
         id: 'execution-bridge',
         label: isPolish ? 'Most do execution' : 'Bridge to execution',
-        description: isPolish ? 'Ruchy, które można od razu przełożyć na działanie.' : 'Moves that can quickly be translated into action.',
+        description: isPolish
+          ? 'Ruchy, które można od razu przełożyć na działanie.'
+          : 'Moves that can quickly be translated into action.',
         patch: {
           successChoice: 'execution-bridge',
           successSignal: isPolish
@@ -671,7 +724,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       {
         id: 'strategic-clarity',
         label: isPolish ? 'Jasność strategiczna' : 'Strategic clarity',
-        description: isPolish ? 'Uporządkowanie myślenia i języka strategii.' : 'Order the thinking and language of strategy.',
+        description: isPolish
+          ? 'Uporządkowanie myślenia i języka strategii.'
+          : 'Order the thinking and language of strategy.',
         patch: {
           successChoice: 'strategic-clarity',
           successSignal: isPolish
@@ -707,7 +762,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       next: isPolish ? 'Next' : 'Next',
       previous: isPolish ? 'Previous' : 'Previous',
       confirm: isPolish ? 'Potwierdź' : 'Confirm',
-      selectedMany: isPolish ? 'Możesz zaznaczyć wiele odpowiedzi' : 'You can select multiple answers',
+      selectedMany: isPolish
+        ? 'Możesz zaznaczyć wiele odpowiedzi'
+        : 'You can select multiple answers',
     };
 
     const navButtonClass =
@@ -741,7 +798,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
 
     const composeList = (values: string[]) => values.join(isPolish ? ', ' : ', ');
 
-    const question4Options = React.useMemo(() => {
+    const question4Options = (() => {
       const basedOnDirection = displayedContext.directionChoices || [];
       const basedOnScope = displayedContext.scopeChoices || [];
 
@@ -749,16 +806,23 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
 
       options.push({
         id: 'leadership-choice',
-        label: isPolish ? 'Jaki wybór naprawdę stoi przed zarządem?' : 'What is the real leadership choice?',
+        label: isPolish
+          ? 'Jaki wybór naprawdę stoi przed zarządem?'
+          : 'What is the real leadership choice?',
         description: isPolish
           ? 'Nazwij decyzję, którą zarząd faktycznie ma podjąć.'
           : 'Name the decision leadership actually needs to make.',
       });
 
-      if (basedOnDirection.includes('company-direction') || basedOnScope.includes('whole-company')) {
+      if (
+        basedOnDirection.includes('company-direction') ||
+        basedOnScope.includes('whole-company')
+      ) {
         options.push({
           id: 'whole-company-priority',
-          label: isPolish ? 'Który priorytet ma spiąć całą firmę?' : 'Which priority should align the whole company?',
+          label: isPolish
+            ? 'Który priorytet ma spiąć całą firmę?'
+            : 'Which priority should align the whole company?',
           description: isPolish
             ? 'Pytanie o wspólny kierunek dla całej organizacji.'
             : 'A question about one shared direction for the whole organization.',
@@ -768,7 +832,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       if (basedOnDirection.includes('growth-engine') || basedOnScope.includes('go-to-market')) {
         options.push({
           id: 'growth-source',
-          label: isPolish ? 'Skąd ma przyjść następna fala wzrostu?' : 'Where should the next growth wave come from?',
+          label: isPolish
+            ? 'Skąd ma przyjść następna fala wzrostu?'
+            : 'Where should the next growth wave come from?',
           description: isPolish
             ? 'Pogłębienie źródła wzrostu i koncentracji handlowej.'
             : 'Go deeper on the source of growth and commercial concentration.',
@@ -778,7 +844,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       if (basedOnDirection.includes('market-position')) {
         options.push({
           id: 'positioning-choice',
-          label: isPolish ? 'Jaką pozycję rynkową chcemy naprawdę zająć?' : 'What market position do we truly want to hold?',
+          label: isPolish
+            ? 'Jaką pozycję rynkową chcemy naprawdę zająć?'
+            : 'What market position do we truly want to hold?',
           description: isPolish
             ? 'Doprecyzowanie aspiracji rynkowej i segmentów.'
             : 'Clarify market ambition and target segments.',
@@ -787,48 +855,60 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
 
       options.push({
         id: 'trade-off',
-        label: isPolish ? 'Jaki trade-off trzeba zaakceptować?' : 'Which trade-off must be accepted?',
+        label: isPolish
+          ? 'Jaki trade-off trzeba zaakceptować?'
+          : 'Which trade-off must be accepted?',
         description: isPolish
           ? 'Nazwij kompromis, którego nie da się ominąć.'
           : 'Name the compromise that cannot be avoided.',
       });
 
       return options.slice(0, 5);
-    }, [displayedContext.directionChoices, displayedContext.scopeChoices, isPolish]);
+    })();
 
-    const question5Options = React.useMemo(() => {
+    const question5Options = (() => {
       const options: Array<{ id: string; label: string; description: string }> = [
         {
           id: 'resource-reality',
-          label: isPolish ? 'Jakie ograniczenia zasobów są realne?' : 'Which resource constraints are real?',
+          label: isPolish
+            ? 'Jakie ograniczenia zasobów są realne?'
+            : 'Which resource constraints are real?',
           description: isPolish
             ? 'Ludzie, czas, budżet, zdolność wykonawcza.'
             : 'People, time, budget, execution capacity.',
         },
         {
           id: 'risk-boundary',
-          label: isPolish ? 'Jakiego ryzyka nie chcemy przekroczyć?' : 'Which risk boundary should not be crossed?',
+          label: isPolish
+            ? 'Jakiego ryzyka nie chcemy przekroczyć?'
+            : 'Which risk boundary should not be crossed?',
           description: isPolish
             ? 'Granice akceptowalnego ryzyka dla tej strategii.'
             : 'The acceptable risk boundary for this strategy.',
         },
         {
           id: 'decision-speed',
-          label: isPolish ? 'Jak szybka musi być ta decyzja?' : 'How fast does this decision need to be?',
+          label: isPolish
+            ? 'Jak szybka musi być ta decyzja?'
+            : 'How fast does this decision need to be?',
           description: isPolish
             ? 'Tempo działania i rytm kolejnych kroków.'
             : 'Pace of action and rhythm of next moves.',
         },
         {
           id: 'board-clarity',
-          label: isPolish ? 'Co musi być jasne dla zarządu?' : 'What must be crystal-clear for leadership?',
+          label: isPolish
+            ? 'Co musi być jasne dla zarządu?'
+            : 'What must be crystal-clear for leadership?',
           description: isPolish
             ? 'Jak opisać wybór, by był jednoznaczny.'
             : 'How to frame the choice so it is unmistakably clear.',
         },
         {
           id: 'execution-readiness',
-          label: isPolish ? 'Co musi być gotowe do execution?' : 'What must be ready for execution?',
+          label: isPolish
+            ? 'Co musi być gotowe do execution?'
+            : 'What must be ready for execution?',
           description: isPolish
             ? 'Jakie pierwsze ruchy powinny wynikać z tej sesji.'
             : 'Which first moves should follow from this session.',
@@ -836,7 +916,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       ];
 
       return options;
-    }, [isPolish]);
+    })();
 
     const confirmQuestion = (questionId: 1 | 2 | 3 | 4 | 5) => {
       if (questionId === 1) {
@@ -951,14 +1031,18 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       ? `Założeniem dowiezienia tej pracy jest rezultat w postaci: ${composeList(
           selectedSuccessLabels.length ? selectedSuccessLabels : [displayedContext.successSignal]
         )}. Żeby ten rezultat był wiarygodny, sesja musi dodatkowo odpowiedzieć na pytania: ${composeList(
-          selectedQuestion4Labels.length ? selectedQuestion4Labels : [displayedContext.assumptions]
+          selectedQuestion4Labels.length
+            ? selectedQuestion4Labels
+            : [displayedContext.assumptions].filter((value): value is string => Boolean(value))
         )}, przy jednoczesnym uszanowaniu granic: ${composeList(
           selectedQuestion5Labels.length ? selectedQuestion5Labels : [displayedContext.constraints]
         )}. To właśnie ten fragment powinien później wejść na pierwszy slajd prezentacji jako uzasadnienie celu SWOT-a, zakresu pracy i oczekiwanego sposobu dowiezienia rekomendacji.`
       : `The intended delivery of this work is an outcome shaped as: ${composeList(
           selectedSuccessLabels.length ? selectedSuccessLabels : [displayedContext.successSignal]
         )}. To make that outcome credible, the session must additionally answer: ${composeList(
-          selectedQuestion4Labels.length ? selectedQuestion4Labels : [displayedContext.assumptions]
+          selectedQuestion4Labels.length
+            ? selectedQuestion4Labels
+            : [displayedContext.assumptions].filter((value): value is string => Boolean(value))
         )}, while respecting the boundaries: ${composeList(
           selectedQuestion5Labels.length ? selectedQuestion5Labels : [displayedContext.constraints]
         )}. This is the exact fragment that should later become the first slide of the presentation, explaining the purpose of the SWOT, the scope of work, and the intended logic of delivery.`;
@@ -970,7 +1054,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       understanding: [
         {
           id: 'broader-strategy',
-          label: isPolish ? 'Pokaż szerzej, o jaką strategię chodzi' : 'Broaden the strategy framing',
+          label: isPolish
+            ? 'Pokaż szerzej, o jaką strategię chodzi'
+            : 'Broaden the strategy framing',
         },
         {
           id: 'leadership-angle',
@@ -978,13 +1064,17 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
         },
         {
           id: 'real-choice',
-          label: isPolish ? 'Mocniej pokaż, jaki wybór jest do podjęcia' : 'Make the underlying choice more explicit',
+          label: isPolish
+            ? 'Mocniej pokaż, jaki wybór jest do podjęcia'
+            : 'Make the underlying choice more explicit',
         },
       ],
       direction: [
         {
           id: 'competition',
-          label: isPolish ? 'Mocniej uwzględnij konkurencję i rynek' : 'Go deeper on competition and market',
+          label: isPolish
+            ? 'Mocniej uwzględnij konkurencję i rynek'
+            : 'Go deeper on competition and market',
         },
         {
           id: 'capabilities',
@@ -998,15 +1088,21 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       scope: [
         {
           id: 'narrower-scope',
-          label: isPolish ? 'Zawęź zakres do konkretnego obszaru' : 'Narrow the scope to a sharper area',
+          label: isPolish
+            ? 'Zawęź zakres do konkretnego obszaru'
+            : 'Narrow the scope to a sharper area',
         },
         {
           id: 'organization-wide',
-          label: isPolish ? 'Pokaż skutki dla całej organizacji' : 'Show whole-organization implications',
+          label: isPolish
+            ? 'Pokaż skutki dla całej organizacji'
+            : 'Show whole-organization implications',
         },
         {
           id: 'market-vs-internal',
-          label: isPolish ? 'Rozdziel rynek i wnętrze organizacji' : 'Separate market and internal factors',
+          label: isPolish
+            ? 'Rozdziel rynek i wnętrze organizacji'
+            : 'Separate market and internal factors',
         },
       ],
       success: [
@@ -1016,11 +1112,15 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
         },
         {
           id: 'execution-bridge',
-          label: isPolish ? 'Mocniej pokaż most do execution' : 'Strengthen the bridge to execution',
+          label: isPolish
+            ? 'Mocniej pokaż most do execution'
+            : 'Strengthen the bridge to execution',
         },
         {
           id: 'board-material',
-          label: isPolish ? 'Zrób z tego bardziej materiał zarządczy' : 'Make it more board-material oriented',
+          label: isPolish
+            ? 'Zrób z tego bardziej materiał zarządczy'
+            : 'Make it more board-material oriented',
         },
       ],
       constraints: [
@@ -1077,10 +1177,17 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       const commentField = feedbackCommentField[blockId];
       const currentValue = String(displayedContext[targetField] || '').trim();
       const instruction =
-        activeMissionFeedback?.mode === 'think-deeper' ? selectedDeepDive : missionFeedbackInput.trim();
+        activeMissionFeedback?.mode === 'think-deeper'
+          ? selectedDeepDive
+          : missionFeedbackInput.trim();
       const nextValue =
         activeMissionFeedback?.mode && instruction
-          ? buildMissionBlockRevision(blockId, currentValue, instruction, activeMissionFeedback.mode)
+          ? buildMissionBlockRevision(
+              blockId,
+              currentValue,
+              instruction,
+              activeMissionFeedback.mode
+            )
           : currentValue;
 
       if (nextValue === currentValue) {
@@ -1111,7 +1218,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
       }
 
       const instruction =
-        activeMissionFeedback.mode === 'think-deeper' ? selectedDeepDive : missionFeedbackInput.trim();
+        activeMissionFeedback.mode === 'think-deeper'
+          ? selectedDeepDive
+          : missionFeedbackInput.trim();
 
       if (!instruction) {
         return baseText;
@@ -1269,16 +1378,16 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
               <div className="mt-3 text-base font-medium leading-relaxed text-slate-900 dark:text-white">
                 {getMissionBlockPreviewValue('understanding')}
               </div>
-              <div className="mt-4 flex justify-end">
-                {renderMissionActionBar('understanding')}
-              </div>
+              <div className="mt-4 flex justify-end">{renderMissionActionBar('understanding')}</div>
               {renderMissionActionPanel('understanding')}
             </div>
 
             <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  {isPolish ? '1. Jaki kierunek strategiczny projektujemy?' : '1. What strategic direction are we designing?'}
+                  {isPolish
+                    ? '1. Jaki kierunek strategiczny projektujemy?'
+                    : '1. What strategic direction are we designing?'}
                 </div>
                 <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
                   1/5
@@ -1289,7 +1398,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
                   ? 'Wybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.'
                   : 'Choose what kind of strategic direction we are actually trying to build here.'}
               </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{labelsUi.selectedMany}</div>
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {labelsUi.selectedMany}
+              </div>
               <div className="mt-4 space-y-2">
                 {directionOptions.map((option) => {
                   const active = (displayedContext.directionChoices || []).includes(option.id);
@@ -1344,363 +1455,396 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
             </div>
 
             {displayedContext.question1Confirmed && (
-            <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                  {isPolish ? '2. Co ma być w centrum tej analizy?' : '2. What should sit at the center of this analysis?'}
+              <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+                    {isPolish
+                      ? '2. Co ma być w centrum tej analizy?'
+                      : '2. What should sit at the center of this analysis?'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-sky-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200">
+                    2/5
+                  </span>
                 </div>
-                <span className="inline-flex rounded-full border border-sky-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200">
-                  2/5
-                </span>
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'Tutaj zawężamy, co dokładnie ma być przedmiotem pracy w tej sesji.'
-                  : 'Here we narrow down what exactly should become the object of work in this session.'}
-              </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{labelsUi.selectedMany}</div>
-              <div className="mt-4 space-y-2">
-                {scopeOptions.map((option) => {
-                  const active = (displayedContext.scopeChoices || []).includes(option.id);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleChoice('scopeChoices', option.id)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
-                        active
-                          ? 'border-sky-300 bg-sky-50 shadow-sm dark:border-sky-700 dark:bg-sky-950/20'
-                          : 'border-sky-200/50 bg-white/80 hover:border-sky-300 dark:border-sky-900/30 dark:bg-navy-900/40'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
-                            active
-                              ? 'border-sky-500 bg-sky-500 text-white'
-                              : 'border-slate-300 text-slate-400 dark:border-slate-600'
-                          }`}
-                        >
-                          {active ? '●' : ''}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {option.label}
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                            {option.description}
+                <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {isPolish
+                    ? 'Tutaj zawężamy, co dokładnie ma być przedmiotem pracy w tej sesji.'
+                    : 'Here we narrow down what exactly should become the object of work in this session.'}
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {labelsUi.selectedMany}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {scopeOptions.map((option) => {
+                    const active = (displayedContext.scopeChoices || []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => toggleChoice('scopeChoices', option.id)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-sky-300 bg-sky-50 shadow-sm dark:border-sky-700 dark:bg-sky-950/20'
+                            : 'border-sky-200/50 bg-white/80 hover:border-sky-300 dark:border-sky-900/30 dark:bg-navy-900/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+                              active
+                                ? 'border-sky-500 bg-sky-500 text-white'
+                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                            }`}
+                          >
+                            {active ? '●' : ''}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              {option.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateMissionContext({ question1Confirmed: false, question2Confirmed: false })}
-                    className={navButtonClass}
-                  >
-                    {labelsUi.previous}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => confirmQuestion(2)}
-                    disabled={(displayedContext.scopeChoices || []).length === 0}
-                    className={primaryNavButtonClass}
-                  >
-                    {labelsUi.next}
-                  </button>
+                      </button>
+                    );
+                  })}
                 </div>
-                {renderMissionActionBar('scope')}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateMissionContext({
+                          question1Confirmed: false,
+                          question2Confirmed: false,
+                        })
+                      }
+                      className={navButtonClass}
+                    >
+                      {labelsUi.previous}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => confirmQuestion(2)}
+                      disabled={(displayedContext.scopeChoices || []).length === 0}
+                      className={primaryNavButtonClass}
+                    >
+                      {labelsUi.next}
+                    </button>
+                  </div>
+                  {renderMissionActionBar('scope')}
+                </div>
+                {renderMissionActionPanel('scope')}
               </div>
-              {renderMissionActionPanel('scope')}
-            </div>
             )}
 
             {displayedContext.question2Confirmed && (
-            <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-                  {isPolish ? '3. Jak rozpoznajemy dobry wynik tej sesji?' : '3. How do we recognize a strong outcome from this session?'}
+              <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+                    {isPolish
+                      ? '3. Jak rozpoznajemy dobry wynik tej sesji?'
+                      : '3. How do we recognize a strong outcome from this session?'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
+                    3/5
+                  </span>
                 </div>
-                <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
-                  3/5
-                </span>
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'Wybierz, jaki rodzaj wyniku ma być naprawdę użyteczny po zakończeniu tej sesji.'
-                  : 'Choose which type of outcome should be genuinely useful once this session is complete.'}
-              </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{labelsUi.selectedMany}</div>
-              <div className="mt-4 space-y-2">
-                {successOptions.map((option) => {
-                  const active = (displayedContext.successChoices || []).includes(option.id);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleChoice('successChoices', option.id)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
-                        active
-                          ? 'border-emerald-300 bg-emerald-50 shadow-sm dark:border-emerald-700 dark:bg-emerald-950/20'
-                          : 'border-emerald-200/50 bg-white/80 hover:border-emerald-300 dark:border-emerald-900/30 dark:bg-navy-900/40'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
-                            active
-                              ? 'border-emerald-500 bg-emerald-500 text-white'
-                              : 'border-slate-300 text-slate-400 dark:border-slate-600'
-                          }`}
-                        >
-                          {active ? '●' : ''}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {option.label}
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                            {option.description}
+                <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {isPolish
+                    ? 'Wybierz, jaki rodzaj wyniku ma być naprawdę użyteczny po zakończeniu tej sesji.'
+                    : 'Choose which type of outcome should be genuinely useful once this session is complete.'}
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {labelsUi.selectedMany}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {successOptions.map((option) => {
+                    const active = (displayedContext.successChoices || []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => toggleChoice('successChoices', option.id)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-emerald-300 bg-emerald-50 shadow-sm dark:border-emerald-700 dark:bg-emerald-950/20'
+                            : 'border-emerald-200/50 bg-white/80 hover:border-emerald-300 dark:border-emerald-900/30 dark:bg-navy-900/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+                              active
+                                ? 'border-emerald-500 bg-emerald-500 text-white'
+                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                            }`}
+                          >
+                            {active ? '●' : ''}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              {option.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {timeframeOptions.map((option) => {
-                  const active = displayedContext.timeframe === option.id;
-                  return (
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {timeframeOptions.map((option) => {
+                    const active = displayedContext.timeframe === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleTimeframeChange(option.id)}
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
+                          active
+                            ? 'border-emerald-400 bg-emerald-500 text-white'
+                            : 'border-emerald-200/70 bg-white/80 text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200'
+                        }`}
+                        title={option.description}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <textarea
+                  value={displayedContext.horizonComment || ''}
+                  onChange={(e) => updateMissionContext({ horizonComment: e.target.value })}
+                  rows={2}
+                  placeholder={
+                    isPolish
+                      ? 'Dopisz, jeśli rekomendacja ma obejmować inny rytm lub horyzont.'
+                      : 'Add if the recommendation should follow a different time rhythm or horizon.'
+                  }
+                  className="mt-4 w-full resize-none rounded-2xl border border-emerald-200/70 bg-white/80 px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/40 dark:bg-navy-800 dark:text-white"
+                />
+                <div className="mt-3 text-sm font-medium leading-relaxed text-slate-900 dark:text-white">
+                  {displayedContext.kpiTarget}
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
                     <button
-                      key={option.id}
                       type="button"
-                      onClick={() => handleTimeframeChange(option.id)}
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
-                        active
-                          ? 'border-emerald-400 bg-emerald-500 text-white'
-                          : 'border-emerald-200/70 bg-white/80 text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200'
-                      }`}
-                      title={option.description}
+                      onClick={() =>
+                        updateMissionContext({
+                          question2Confirmed: false,
+                          question3Confirmed: false,
+                        })
+                      }
+                      className={navButtonClass}
                     >
-                      {option.label}
+                      {labelsUi.previous}
                     </button>
-                  );
-                })}
+                    <button
+                      type="button"
+                      onClick={() => confirmQuestion(3)}
+                      disabled={(displayedContext.successChoices || []).length === 0}
+                      className={primaryNavButtonClass}
+                    >
+                      {labelsUi.next}
+                    </button>
+                  </div>
+                  {renderMissionActionBar('success')}
+                </div>
+                {renderMissionActionPanel('success')}
               </div>
-              <textarea
-                value={displayedContext.horizonComment || ''}
-                onChange={(e) => updateMissionContext({ horizonComment: e.target.value })}
-                rows={2}
-                placeholder={
-                  isPolish
-                    ? 'Dopisz, jeśli rekomendacja ma obejmować inny rytm lub horyzont.'
-                    : 'Add if the recommendation should follow a different time rhythm or horizon.'
-                }
-                className="mt-4 w-full resize-none rounded-2xl border border-emerald-200/70 bg-white/80 px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/40 dark:bg-navy-800 dark:text-white"
-              />
-              <div className="mt-3 text-sm font-medium leading-relaxed text-slate-900 dark:text-white">
-                {displayedContext.kpiTarget}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
+            )}
+
+            {displayedContext.question3Confirmed && (
+              <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-5 shadow-sm dark:border-violet-900/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+                    {isPolish
+                      ? '4. Jakie pytanie kontekstowe musimy jeszcze doprecyzować?'
+                      : '4. Which contextual question still needs sharpening?'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+                    4/5
+                  </span>
+                </div>
+                <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {isPolish
+                    ? 'To pytanie jest już zależne od wcześniejszych odpowiedzi i pomaga doprecyzować właściwy kontekst strategiczny.'
+                    : 'This question already depends on previous answers and helps sharpen the real strategic context.'}
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {labelsUi.selectedMany}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {question4Options.map((option) => {
+                    const active = (displayedContext.question4Choices || []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => toggleChoice('question4Choices', option.id)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-violet-300 bg-violet-50 shadow-sm dark:border-violet-700 dark:bg-violet-950/20'
+                            : 'border-violet-200/50 bg-white/80 hover:border-violet-300 dark:border-violet-900/30 dark:bg-navy-900/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+                              active
+                                ? 'border-violet-500 bg-violet-500 text-white'
+                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                            }`}
+                          >
+                            {active ? '●' : ''}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              {option.description}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() => updateMissionContext({ question2Confirmed: false, question3Confirmed: false })}
+                    onClick={() =>
+                      updateMissionContext({ question3Confirmed: false, question4Confirmed: false })
+                    }
                     className={navButtonClass}
                   >
                     {labelsUi.previous}
                   </button>
                   <button
                     type="button"
-                    onClick={() => confirmQuestion(3)}
-                    disabled={(displayedContext.successChoices || []).length === 0}
+                    onClick={() => confirmQuestion(4)}
+                    disabled={(displayedContext.question4Choices || []).length === 0}
                     className={primaryNavButtonClass}
                   >
                     {labelsUi.next}
                   </button>
                 </div>
-                {renderMissionActionBar('success')}
               </div>
-              {renderMissionActionPanel('success')}
-            </div>
-            )}
-
-            {displayedContext.question3Confirmed && (
-            <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-5 shadow-sm dark:border-violet-900/40">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
-                  {isPolish ? '4. Jakie pytanie kontekstowe musimy jeszcze doprecyzować?' : '4. Which contextual question still needs sharpening?'}
-                </div>
-                <span className="inline-flex rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
-                  4/5
-                </span>
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'To pytanie jest już zależne od wcześniejszych odpowiedzi i pomaga doprecyzować właściwy kontekst strategiczny.'
-                  : 'This question already depends on previous answers and helps sharpen the real strategic context.'}
-              </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{labelsUi.selectedMany}</div>
-              <div className="mt-4 space-y-2">
-                {question4Options.map((option) => {
-                  const active = (displayedContext.question4Choices || []).includes(option.id);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleChoice('question4Choices', option.id)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
-                        active
-                          ? 'border-violet-300 bg-violet-50 shadow-sm dark:border-violet-700 dark:bg-violet-950/20'
-                          : 'border-violet-200/50 bg-white/80 hover:border-violet-300 dark:border-violet-900/30 dark:bg-navy-900/40'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
-                            active
-                              ? 'border-violet-500 bg-violet-500 text-white'
-                              : 'border-slate-300 text-slate-400 dark:border-slate-600'
-                          }`}
-                        >
-                          {active ? '●' : ''}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {option.label}
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                            {option.description}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => updateMissionContext({ question3Confirmed: false, question4Confirmed: false })}
-                  className={navButtonClass}
-                >
-                  {labelsUi.previous}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => confirmQuestion(4)}
-                  disabled={(displayedContext.question4Choices || []).length === 0}
-                  className={primaryNavButtonClass}
-                >
-                  {labelsUi.next}
-                </button>
-              </div>
-            </div>
             )}
 
             {displayedContext.question4Confirmed && (
-            <div className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-5 shadow-sm dark:border-amber-900/40">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
-                  {isPolish ? '5. Jakie granice i realia ta strategia musi respektować?' : '5. Which boundaries and realities must this strategy respect?'}
+              <div className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-5 shadow-sm dark:border-amber-900/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+                    {isPolish
+                      ? '5. Jakie granice i realia ta strategia musi respektować?'
+                      : '5. Which boundaries and realities must this strategy respect?'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
+                    5/5
+                  </span>
                 </div>
-                <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
-                  5/5
-                </span>
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'Na końcu doprecyzowujemy ograniczenia, których ta strategia nie może ignorować.'
-                  : 'At the end, we sharpen the constraints this strategy cannot ignore.'}
-              </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">{labelsUi.selectedMany}</div>
-              <div className="mt-4 space-y-2">
-                {question5Options.map((option) => {
-                  const active = (displayedContext.question5Choices || []).includes(option.id);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleChoice('question5Choices', option.id)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
-                        active
-                          ? 'border-amber-300 bg-amber-50 shadow-sm dark:border-amber-700 dark:bg-amber-950/20'
-                          : 'border-amber-200/50 bg-white/80 hover:border-amber-300 dark:border-amber-900/30 dark:bg-navy-900/40'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
-                            active
-                              ? 'border-amber-500 bg-amber-500 text-white'
-                              : 'border-slate-300 text-slate-400 dark:border-slate-600'
-                          }`}
-                        >
-                          {active ? '●' : ''}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {option.label}
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                            {option.description}
+                <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {isPolish
+                    ? 'Na końcu doprecyzowujemy ograniczenia, których ta strategia nie może ignorować.'
+                    : 'At the end, we sharpen the constraints this strategy cannot ignore.'}
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {labelsUi.selectedMany}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {question5Options.map((option) => {
+                    const active = (displayedContext.question5Choices || []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => toggleChoice('question5Choices', option.id)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-amber-300 bg-amber-50 shadow-sm dark:border-amber-700 dark:bg-amber-950/20'
+                            : 'border-amber-200/50 bg-white/80 hover:border-amber-300 dark:border-amber-900/30 dark:bg-navy-900/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+                              active
+                                ? 'border-amber-500 bg-amber-500 text-white'
+                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                            }`}
+                          >
+                            {active ? '●' : ''}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              {option.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateMissionContext({ question4Confirmed: false, question5Confirmed: false })}
-                    className={navButtonClass}
-                  >
-                    {labelsUi.previous}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => confirmQuestion(5)}
-                    disabled={(displayedContext.question5Choices || []).length === 0}
-                    className={primaryNavButtonClass}
-                  >
-                    {labelsUi.confirm}
-                  </button>
+                      </button>
+                    );
+                  })}
                 </div>
-                {renderMissionActionBar('constraints')}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateMissionContext({
+                          question4Confirmed: false,
+                          question5Confirmed: false,
+                        })
+                      }
+                      className={navButtonClass}
+                    >
+                      {labelsUi.previous}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => confirmQuestion(5)}
+                      disabled={(displayedContext.question5Choices || []).length === 0}
+                      className={primaryNavButtonClass}
+                    >
+                      {labelsUi.confirm}
+                    </button>
+                  </div>
+                  {renderMissionActionBar('constraints')}
+                </div>
+                {renderMissionActionPanel('constraints')}
               </div>
-              {renderMissionActionPanel('constraints')}
-            </div>
             )}
 
             {displayedContext.question5Confirmed && (
-            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  {isPolish ? 'Executive summary tej sesji' : 'Executive summary of this session'}
+              <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    {isPolish ? 'Executive summary tej sesji' : 'Executive summary of this session'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                    Summary
+                  </span>
                 </div>
-                <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
-                  Summary
-                </span>
+                <div className="mt-4 text-base font-semibold leading-relaxed text-slate-900 dark:text-white">
+                  {executiveSummaryIntro}
+                </div>
+                <div className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {executiveSummaryBody}
+                </div>
+                <div className="mt-4 rounded-2xl border border-violet-200/70 bg-violet-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-violet-900/40 dark:text-slate-200">
+                  {executiveSummaryDelivery}
+                </div>
               </div>
-              <div className="mt-4 text-base font-semibold leading-relaxed text-slate-900 dark:text-white">
-                {executiveSummaryIntro}
-              </div>
-              <div className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-                {executiveSummaryBody}
-              </div>
-              <div className="mt-4 rounded-2xl border border-violet-200/70 bg-violet-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-violet-900/40 dark:text-slate-200">
-                {executiveSummaryDelivery}
-              </div>
-            </div>
             )}
 
             {displayedContext.question5Confirmed && onGenerateFullSession && (

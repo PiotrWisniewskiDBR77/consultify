@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
 import { execSync } from 'node:child_process';
+
+import { Request, Response } from 'express';
 
 import { getDatabase } from '../database/Database.js';
 
@@ -31,7 +32,9 @@ export class HealthCheckController {
     }
 
     try {
-      const sha = String(execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }))
+      const sha = String(
+        execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      )
         .trim()
         .slice(0, 12);
       const branch = String(

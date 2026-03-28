@@ -18,7 +18,9 @@ interface ImportExternalMapProps {
   open: boolean;
   onClose: () => void;
   locked: boolean;
-  onImport: (nodes: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }>) => void;
+  onImport: (
+    nodes: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }>
+  ) => void;
 }
 
 // ── FreeMind (.mm) parser ───────────────────────────────────────────────
@@ -132,7 +134,8 @@ function parseOPML(xml: string): ImportedNode | null {
 function flattenTree(
   root: ImportedNode
 ): Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }> {
-  const result: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }> = [];
+  const result: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }> =
+    [];
 
   function walk(node: ImportedNode, parentLabel?: string, isTopBranch?: boolean) {
     result.push({
@@ -223,10 +226,9 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
     const flat = flattenTree(preview);
     onImport(flat);
     const total = countNodes(preview);
-    toast.success(
-      isPl ? `Zaimportowano ${total} węzłów` : `Imported ${total} nodes`,
-      { duration: 1500 }
-    );
+    toast.success(isPl ? `Zaimportowano ${total} węzłów` : `Imported ${total} nodes`, {
+      duration: 1500,
+    });
     onClose();
   }, [isPl, onClose, onImport, preview]);
 
@@ -238,7 +240,9 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         {depth > 0 && <span className="text-slate-300 mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
         {node.label}
         {node.notes && (
-          <span className="ml-1 text-[8px] text-slate-400" title={node.notes}>📝</span>
+          <span className="ml-1 text-[8px] text-slate-400" title={node.notes}>
+            📝
+          </span>
         )}
       </div>
       {node.children.map((child) => renderTree(child, depth + 1))}
@@ -310,7 +314,8 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
                   {fileName}
                 </div>
                 <div className="text-[9px] text-slate-400">
-                  {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length} {isPl ? 'gałęzi' : 'branches'}
+                  {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length}{' '}
+                  {isPl ? 'gałęzi' : 'branches'}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 max-h-[250px] overflow-y-auto">

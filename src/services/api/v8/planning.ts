@@ -1,5 +1,6 @@
-import { v8Get } from './client';
 import type { PortfolioInitiative } from '@/types';
+
+import { v8Get } from './client';
 
 export interface V8PlanningDecisionEntry {
   decisionId: string;
@@ -331,7 +332,9 @@ const toPlanningQueryString = (filters?: V8PlanningPortfolioFilters): string => 
 
 export const V8PlanningApi = {
   getPortfolio: (filters?: V8PlanningPortfolioFilters) =>
-    v8Get<V8PlanningPortfolioRead>(`/planning/initiatives/portfolio${toPlanningQueryString(filters)}`),
+    v8Get<V8PlanningPortfolioRead>(
+      `/planning/initiatives/portfolio${toPlanningQueryString(filters)}`
+    ),
   getInitiative: (initiativeId: string) =>
     v8Get<{ initiative: Record<string, unknown> }>(
       `/planning/initiatives/${encodeURIComponent(initiativeId)}`
@@ -396,7 +399,7 @@ export const V8PlanningApi = {
     ).then((data) => data.items),
   getInitiativeSnapshot: (initiativeId: string) =>
     v8Get<V8PlanningInitiativeSnapshot>(
-      `/planning/initiatives/${encodeURIComponent(initiativeId)}/snapshot`,
+      `/planning/initiatives/${encodeURIComponent(initiativeId)}/snapshot`
     ),
   getPendingDecisions: () =>
     v8Get<{ pendingDecisionChains: V8PlanningDecisionChain[] }>('/planning/pending-decisions'),

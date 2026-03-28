@@ -7,19 +7,18 @@
  * Thin orchestrator: delegates to existing services, does not duplicate logic.
  */
 
-import type { ContextSnapshot, ConsumerClass, V8ArtifactRef } from '../../types/contextSnapshot.js';
 import type { IntentClassification } from '../../types/chatExecutionIntegration.js';
-import type { PromptPreset, PurposeFamily } from '../../types/promptOsRuntime.js';
+import type { ConsumerClass, ContextSnapshot, V8ArtifactRef } from '../../types/contextSnapshot.js';
 import type { RetrievalRequest } from '../../types/governedRetrieval.js';
+import type { PromptPreset, PurposeFamily } from '../../types/promptOsRuntime.js';
 import type { HealthSignal } from '../../types/trustAudit.js';
-
-import * as contextConsumerBindingService from './contextConsumerBindingService.js';
-import * as chatExecutionService from './chatExecutionService.js';
-import * as governedRetrievalService from './governedRetrievalService.js';
-import * as trustAuditService from './trustAuditService.js';
-import * as executionSpineService from './executionSpineService.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import * as chatExecutionService from './chatExecutionService.js';
+import * as contextConsumerBindingService from './contextConsumerBindingService.js';
+import * as executionSpineService from './executionSpineService.js';
+import * as governedRetrievalService from './governedRetrievalService.js';
+import * as trustAuditService from './trustAuditService.js';
 
 // ==========================================
 // TYPES
@@ -111,9 +110,7 @@ interface PresetRow {
  * Step 4: If conversational → return chat result
  * Step 5: If ambiguous → return ambiguous result
  */
-export async function processChatTurn(
-  params: ProcessChatTurnParams,
-): Promise<ChatTurnResult> {
+export async function processChatTurn(params: ProcessChatTurnParams): Promise<ChatTurnResult> {
   const snapshot = await contextConsumerBindingService.captureForChat({
     conversationId: params.conversationId,
     workspaceId: params.workspaceId,
@@ -128,7 +125,7 @@ export async function processChatTurn(
   const intent = await chatExecutionService.classifyIntent(
     params.message,
     snapshot.snapshotId,
-    params.organizationId,
+    params.organizationId
   );
 
   if (intent.intentType === 'governed_work') {
@@ -154,7 +151,7 @@ export async function processChatTurn(
 
     logger.info(
       `${LOG_PREFIX} Chat turn → governed_work: handoff=${handoff.handoffId}, ` +
-      `execSnapshot=${executionSnapshot.snapshotId}`,
+        `execSnapshot=${executionSnapshot.snapshotId}`
     );
 
     return {
@@ -166,9 +163,7 @@ export async function processChatTurn(
     };
   }
 
-  logger.info(
-    `${LOG_PREFIX} Chat turn → ${intent.intentType}: snapshot=${snapshot.snapshotId}`,
-  );
+  logger.info(`${LOG_PREFIX} Chat turn → ${intent.intentType}: snapshot=${snapshot.snapshotId}`);
 
   return {
     type: intent.intentType === 'conversational' ? 'chat' : 'ambiguous',
@@ -184,7 +179,7 @@ export async function processChatTurn(
  * In production, this would incorporate consumer class routing rules.
  */
 export async function selectPromptPreset(
-  params: SelectPromptPresetParams,
+  params: SelectPromptPresetParams
 ): Promise<PromptPreset | null> {
   const rows = await dbAll<PresetRow>(
     `SELECT * FROM v8_prompt_presets
@@ -192,13 +187,13 @@ export async function selectPromptPreset(
      ORDER BY created_at DESC
      LIMIT 1`,
     [params.organizationId, params.purposeFamily],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!rows || rows.length === 0) {
     logger.info(
       `${LOG_PREFIX} No preset found for purpose=${params.purposeFamily}, ` +
-      `org=${params.organizationId}, consumer=${params.consumerClass}`,
+        `org=${params.organizationId}, consumer=${params.consumerClass}`
     );
     return null;
   }
@@ -226,7 +221,7 @@ export async function selectPromptPreset(
 
   logger.info(
     `${LOG_PREFIX} Selected preset ${preset.presetId} "${preset.name}" ` +
-    `for purpose=${params.purposeFamily}`,
+      `for purpose=${params.purposeFamily}`
   );
 
   return preset;
@@ -240,7 +235,7 @@ export async function selectPromptPreset(
  * Step 3: Return both the snapshot and request
  */
 export async function executeGovernedRetrieval(
-  params: ExecuteGovernedRetrievalParams,
+  params: ExecuteGovernedRetrievalParams
 ): Promise<GovernedRetrievalResult> {
   const retrievalSnapshot = await contextConsumerBindingService.captureForRetrieval({
     activeSnapshotId: params.snapshotId,
@@ -260,7 +255,7 @@ export async function executeGovernedRetrieval(
 
   logger.info(
     `${LOG_PREFIX} Governed retrieval: snapshot=${retrievalSnapshot.snapshotId}, ` +
-    `request=${request.requestId}`,
+      `request=${request.requestId}`
   );
 
   return { retrievalSnapshot, request };
@@ -273,7 +268,7 @@ export async function executeGovernedRetrieval(
  * to produce a composite status for the operating environment.
  */
 export async function getOperatingEnvironmentStatus(
-  organizationId: string,
+  organizationId: string
 ): Promise<OperatingEnvironmentStatus> {
   const healthSignals = await trustAuditService.getHealthSignals(organizationId);
   const degradedConditions = await trustAuditService.getActiveDegradedConditions(organizationId);
@@ -294,7 +289,7 @@ export async function getOperatingEnvironmentStatus(
 
   logger.info(
     `${LOG_PREFIX} Environment status: healthy=${healthy}, ` +
-    `degraded=${degradedConditions.length}, activeRuns=${activeRuns.length}`,
+      `degraded=${degradedConditions.length}, activeRuns=${activeRuns.length}`
   );
 
   return { healthy, layers };
@@ -313,22 +308,15 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
-function deriveLayerStatus(
-  signals: HealthSignal[],
-  componentPrefix: string,
-): LayerStatus {
-  const layerSignals = signals.filter((s) =>
-    s.componentId.startsWith(componentPrefix),
-  );
+function deriveLayerStatus(signals: HealthSignal[], componentPrefix: string): LayerStatus {
+  const layerSignals = signals.filter((s) => s.componentId.startsWith(componentPrefix));
 
   if (layerSignals.length === 0) return 'healthy';
 
   const hasUnavailable = layerSignals.some((s) => s.status === 'critical');
   if (hasUnavailable) return 'unavailable';
 
-  const hasDegraded = layerSignals.some(
-    (s) => s.status === 'warning' || s.status === 'unknown',
-  );
+  const hasDegraded = layerSignals.some((s) => s.status === 'warning' || s.status === 'unknown');
   if (hasDegraded) return 'degraded';
 
   return 'healthy';

@@ -72,10 +72,20 @@ async function getMockColumns(table: string): Promise<Set<string>> {
     );
     const columns = new Set((rows || []).map((r) => String(r.name || '')).filter(Boolean));
     if (columns.size > 0) return columns;
-    const fallback = MOCK_TABLE_FALLBACK_COLUMNS[String(table || '').trim().toLowerCase()] || [];
+    const fallback =
+      MOCK_TABLE_FALLBACK_COLUMNS[
+        String(table || '')
+          .trim()
+          .toLowerCase()
+      ] || [];
     return new Set(fallback);
   } catch {
-    const fallback = MOCK_TABLE_FALLBACK_COLUMNS[String(table || '').trim().toLowerCase()] || [];
+    const fallback =
+      MOCK_TABLE_FALLBACK_COLUMNS[
+        String(table || '')
+          .trim()
+          .toLowerCase()
+      ] || [];
     return new Set(fallback);
   }
 }

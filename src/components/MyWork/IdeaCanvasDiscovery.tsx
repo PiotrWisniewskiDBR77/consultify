@@ -1,11 +1,11 @@
 import {
   BadgeCheck,
-  Building2,
   BookOpen,
   Bot,
   Box,
   BriefcaseBusiness,
   Brush,
+  Building2,
   CircleDot,
   Database,
   Diamond,
@@ -34,8 +34,8 @@ import {
   Rows3,
   Scale,
   Server,
-  Share2,
   Shapes,
+  Share2,
   ShieldCheck,
   Sparkles,
   Split,
@@ -43,8 +43,8 @@ import {
   StickyNote,
   Timer,
   Type,
-  UserSquare2,
   Users,
+  UserSquare2,
   Vote,
   Workflow,
   X,
@@ -52,15 +52,15 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import type { CanvasToolType, IdeaWorkspaceInsertItem } from './ideaSelectionTypes';
 import {
-  CANVAS_OS_RAIL,
   CANVAS_OS_CAPABILITY_LABELS,
-  getCanvasOsActions,
+  CANVAS_OS_RAIL,
   type CanvasOsAction,
   type CanvasOsPanelId,
+  getCanvasOsActions,
   type ProcessFlowSemanticKit,
 } from './canvas/canvasOsContract';
+import type { CanvasToolType, IdeaWorkspaceInsertItem } from './ideaSelectionTypes';
 
 const ICON_MAP = {
   BadgeCheck,
@@ -175,20 +175,16 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
     const normalized = query.trim().toLowerCase();
     if (!normalized) return base;
     return base.filter((action) => {
-      const haystack = [
-        action.labelEn,
-        action.labelPl,
-        action.descEn,
-        action.descPl,
-        action.id,
-      ]
+      const haystack = [action.labelEn, action.labelPl, action.descEn, action.descPl, action.id]
         .join(' ')
         .toLowerCase();
       return haystack.includes(normalized);
     });
   }, [activePanelId, activeTool, query]);
 
-  const activeRailItem = activePanelId ? CANVAS_OS_RAIL.find((item) => item.id === activePanelId) : null;
+  const activeRailItem = activePanelId
+    ? CANVAS_OS_RAIL.find((item) => item.id === activePanelId)
+    : null;
 
   const handleAction = (action: CanvasOsAction) => {
     switch (action.kind) {
@@ -232,7 +228,9 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
         onOpenTools();
         return;
       case 'chat_prompt':
-        onSendToChat(isPolish ? action.chatPromptPl || action.descPl : action.chatPromptEn || action.descEn);
+        onSendToChat(
+          isPolish ? action.chatPromptPl || action.descPl : action.chatPromptEn || action.descEn
+        );
         return;
       default:
         return;
@@ -297,7 +295,8 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
               />
             </div>
             <div className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
-              {isPolish ? 'Aktywny system' : 'Active system'}: <span className="font-semibold">{activeTool}</span>
+              {isPolish ? 'Aktywny system' : 'Active system'}:{' '}
+              <span className="font-semibold">{activeTool}</span>
             </div>
           </div>
 
@@ -308,7 +307,9 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
                   {isPolish ? 'Brak wyników dla tego filtra' : 'No results for this filter'}
                 </div>
                 <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Wyczyść wyszukiwarkę albo przełącz panel.' : 'Clear the search or switch the panel.'}
+                  {isPolish
+                    ? 'Wyczyść wyszukiwarkę albo przełącz panel.'
+                    : 'Clear the search or switch the panel.'}
                 </div>
               </div>
             ) : (

@@ -2,7 +2,7 @@ import { Bookmark, Globe, Share2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { PulseData, PulseArticle } from './useHomeData';
+import type { PulseArticle, PulseData } from './useHomeData';
 
 interface WorldPulseProps {
   data: PulseData;

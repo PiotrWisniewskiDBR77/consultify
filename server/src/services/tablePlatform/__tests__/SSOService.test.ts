@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -10,7 +10,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { SSOService, type SAMLConfig, type OIDCConfig, type SSOConfigRow } from '../SSOService.js';
+import { type OIDCConfig, type SAMLConfig, type SSOConfigRow, SSOService } from '../SSOService.js';
 
 describe('SSOService', () => {
   let service: SSOService;
@@ -49,7 +49,7 @@ describe('SSOService', () => {
       expect(result.provider).toBe('saml');
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tp_sso_configs'),
-        ['org-1', JSON.stringify(samlConfig)],
+        ['org-1', JSON.stringify(samlConfig)]
       );
     });
   });
@@ -85,10 +85,10 @@ describe('SSOService', () => {
 
       expect(result.provider).toBe('oidc');
       expect(result.config).toEqual(oidcConfig);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining("provider = 'oidc'"),
-        ['org-2', JSON.stringify(oidcConfig)],
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining("provider = 'oidc'"), [
+        'org-2',
+        JSON.stringify(oidcConfig),
+      ]);
     });
   });
 
@@ -116,7 +116,7 @@ describe('SSOService', () => {
       expect(result!.organization_id).toBe('org-1');
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM tp_sso_configs'),
-        ['org-1'],
+        ['org-1']
       );
     });
 
@@ -141,7 +141,7 @@ describe('SSOService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE tp_sso_configs SET enabled'),
-        ['org-1', true],
+        ['org-1', true]
       );
     });
   });

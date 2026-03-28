@@ -8,8 +8,8 @@ import {
   List,
   MessageSquare,
   Mic,
-  Printer,
   Presentation,
+  Printer,
   Upload,
 } from 'lucide-react';
 import React from 'react';
@@ -22,10 +22,25 @@ interface ImportExportPopoverProps {
 
 const IMPORT_ACTIONS = [
   { action: 'mm_import_device', iconEl: Upload, labelPl: 'Mapa JSON', labelEn: 'JSON map' },
-  { action: 'mm_import_external', iconEl: FileUp, labelPl: 'XMind / FreeMind / OPML', labelEn: 'XMind / FreeMind / OPML' },
-  { action: 'mm_doc_to_map', iconEl: FileText, labelPl: 'Dokument → Mapa', labelEn: 'Document → Map' },
+  {
+    action: 'mm_import_external',
+    iconEl: FileUp,
+    labelPl: 'XMind / FreeMind / OPML',
+    labelEn: 'XMind / FreeMind / OPML',
+  },
+  {
+    action: 'mm_doc_to_map',
+    iconEl: FileText,
+    labelPl: 'Dokument → Mapa',
+    labelEn: 'Document → Map',
+  },
   { action: 'mm_voice', iconEl: Mic, labelPl: 'Mów pomysły (Voice)', labelEn: 'Voice to Node' },
-  { action: 'mm_interview_to_map', iconEl: MessageSquare, labelPl: 'Wywiady → Mapa', labelEn: 'Interviews → Map' },
+  {
+    action: 'mm_interview_to_map',
+    iconEl: MessageSquare,
+    labelPl: 'Wywiady → Mapa',
+    labelEn: 'Interviews → Map',
+  },
 ];
 
 const EXPORT_ACTIONS = [
@@ -33,11 +48,31 @@ const EXPORT_ACTIONS = [
   { action: 'mm_export_png', iconEl: Image, labelPl: 'PNG', labelEn: 'PNG' },
   { action: 'mm_export_svg', iconEl: Image, labelPl: 'SVG', labelEn: 'SVG' },
   { action: 'mm_export_json', iconEl: Download, labelPl: 'JSON', labelEn: 'JSON' },
-  { action: 'mm_export_diagram', iconEl: Code, labelPl: 'Mermaid / PlantUML', labelEn: 'Mermaid / PlantUML' },
+  {
+    action: 'mm_export_diagram',
+    iconEl: Code,
+    labelPl: 'Mermaid / PlantUML',
+    labelEn: 'Mermaid / PlantUML',
+  },
   { action: 'mm_export_csv', iconEl: FileText, labelPl: 'CSV (Excel)', labelEn: 'CSV (Excel)' },
-  { action: 'mm_export_markdown', iconEl: List, labelPl: 'Markdown (konspekt)', labelEn: 'Markdown outline' },
-  { action: 'mm_export_pptx', iconEl: Presentation, labelPl: 'Prezentacja (PPTX)', labelEn: 'Presentation (PPTX)' },
-  { action: 'mm_embed_report', iconEl: FileText, labelPl: 'Osadź w raporcie', labelEn: 'Embed in report' },
+  {
+    action: 'mm_export_markdown',
+    iconEl: List,
+    labelPl: 'Markdown (konspekt)',
+    labelEn: 'Markdown outline',
+  },
+  {
+    action: 'mm_export_pptx',
+    iconEl: Presentation,
+    labelPl: 'Prezentacja (PPTX)',
+    labelEn: 'Presentation (PPTX)',
+  },
+  {
+    action: 'mm_embed_report',
+    iconEl: FileText,
+    labelPl: 'Osadź w raporcie',
+    labelEn: 'Embed in report',
+  },
 ];
 
 export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({

@@ -2,19 +2,19 @@
  * DataLineageView — SVG-based directed graph showing data flow:
  * Source nodes → Table nodes → Model nodes → Output (Consultify modules).
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Database,
+  DollarSign,
   FileSpreadsheet,
   Layers,
   Loader2,
-  Target,
-  DollarSign,
-  Zap,
   Rocket,
+  Target,
   X,
+  Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as Api from '@/services/api/tablePlatform.api';
@@ -49,7 +49,15 @@ const NODE_H = 48;
 const PADDING_X = 40;
 const PADDING_Y = 40;
 
-const NODE_STYLES: Record<string, { fill: string; stroke: string; textColor: string; icon: React.FC<{ size?: number; className?: string }> }> = {
+const NODE_STYLES: Record<
+  string,
+  {
+    fill: string;
+    stroke: string;
+    textColor: string;
+    icon: React.FC<{ size?: number; className?: string }>;
+  }
+> = {
   source: { fill: '#eff6ff', stroke: '#93c5fd', textColor: '#1e40af', icon: FileSpreadsheet },
   table: { fill: '#f0fdf4', stroke: '#86efac', textColor: '#166534', icon: Database },
   model: { fill: '#faf5ff', stroke: '#c4b5fd', textColor: '#5b21b6', icon: Layers },
@@ -74,12 +82,7 @@ function SvgNode({
   const style = NODE_STYLES[node.type] ?? NODE_STYLES.source;
 
   return (
-    <g
-      onClick={() => onSelect(node)}
-      className="cursor-pointer"
-      role="button"
-      tabIndex={0}
-    >
+    <g onClick={() => onSelect(node)} className="cursor-pointer" role="button" tabIndex={0}>
       <rect
         x={x}
         y={y}
@@ -103,13 +106,7 @@ function SvgNode({
         {node.label.length > 22 ? node.label.slice(0, 20) + '…' : node.label}
       </text>
       {node.meta && (
-        <text
-          x={x + 12}
-          y={y + 35}
-          fontSize={9}
-          fill="#94a3b8"
-          className="select-none"
-        >
+        <text x={x + 12} y={y + 35} fontSize={9} fill="#94a3b8" className="select-none">
           {node.meta}
         </text>
       )}
@@ -178,11 +175,7 @@ interface DataLineageViewProps {
   onClose?: () => void;
 }
 
-export const DataLineageView: React.FC<DataLineageViewProps> = ({
-  baseId,
-  tables,
-  onClose,
-}) => {
+export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables, onClose }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -198,14 +191,22 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
         const list = await Api.listGovernedModels(baseId);
         const detailed = await Promise.all(
           list.map(async (m: any) => {
-            try { return await Api.getGovernedModel(m.model_id); } catch { return m; }
+            try {
+              return await Api.getGovernedModel(m.model_id);
+            } catch {
+              return m;
+            }
           })
         );
         if (!cancelled) setModels(detailed);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       if (!cancelled) setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [baseId]);
 
   const { nodes, edges, svgWidth, svgHeight } = useMemo(() => {
@@ -214,16 +215,44 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
 
     // Column 0: Sources (connectors, imports, forms — represented generically)
     const sourceIds = new Set<string>();
-    ns.push({ id: 'src-import', label: isPl ? 'Import CSV/Sheets' : 'CSV/Sheets Import', type: 'source', meta: 'connector', column: 0, row: 0 });
-    ns.push({ id: 'src-form', label: isPl ? 'Formularze' : 'Forms', type: 'source', meta: 'form input', column: 0, row: 1 });
-    ns.push({ id: 'src-manual', label: isPl ? 'Wpis ręczny' : 'Manual Entry', type: 'source', meta: 'manual', column: 0, row: 2 });
+    ns.push({
+      id: 'src-import',
+      label: isPl ? 'Import CSV/Sheets' : 'CSV/Sheets Import',
+      type: 'source',
+      meta: 'connector',
+      column: 0,
+      row: 0,
+    });
+    ns.push({
+      id: 'src-form',
+      label: isPl ? 'Formularze' : 'Forms',
+      type: 'source',
+      meta: 'form input',
+      column: 0,
+      row: 1,
+    });
+    ns.push({
+      id: 'src-manual',
+      label: isPl ? 'Wpis ręczny' : 'Manual Entry',
+      type: 'source',
+      meta: 'manual',
+      column: 0,
+      row: 2,
+    });
     sourceIds.add('src-import');
     sourceIds.add('src-form');
     sourceIds.add('src-manual');
 
     // Column 1: Tables
     tables.forEach((t, i) => {
-      ns.push({ id: `tbl-${t.id}`, label: t.name, type: 'table', meta: `table`, column: 1, row: i });
+      ns.push({
+        id: `tbl-${t.id}`,
+        label: t.name,
+        type: 'table',
+        meta: `table`,
+        column: 1,
+        row: i,
+      });
       es.push({ from: 'src-import', to: `tbl-${t.id}` });
       if (i % 2 === 0) es.push({ from: 'src-form', to: `tbl-${t.id}` });
       if (i % 3 === 0) es.push({ from: 'src-manual', to: `tbl-${t.id}` });
@@ -233,7 +262,14 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
     models.forEach((m: any, i: number) => {
       const mid = `model-${m.model_id}`;
       const kpiCount = m.kpis?.length ?? 0;
-      ns.push({ id: mid, label: m.name, type: 'model', meta: `${kpiCount} KPIs`, column: 2, row: i });
+      ns.push({
+        id: mid,
+        label: m.name,
+        type: 'model',
+        meta: `${kpiCount} KPIs`,
+        column: 2,
+        row: i,
+      });
 
       (m.sources ?? []).forEach((s: any) => {
         const tblNodeId = `tbl-${s.table_id}`;
@@ -294,7 +330,10 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
           </p>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={16} className="text-slate-400" />
           </button>
         )}
@@ -308,7 +347,11 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
           isPl ? 'Modele' : 'Models',
           isPl ? 'Moduły' : 'Modules',
         ].map((lbl, i) => (
-          <div key={i} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider" style={{ width: COL_WIDTH }}>
+          <div
+            key={i}
+            className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider"
+            style={{ width: COL_WIDTH }}
+          >
             {lbl}
           </div>
         ))}
@@ -324,14 +367,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
           style={{ minHeight: 300 }}
         >
           <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="8"
-              markerHeight="6"
-              refX="8"
-              refY="3"
-              orient="auto"
-            >
+            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
               <polygon points="0 0, 8 3, 0 6" fill="#cbd5e1" />
             </marker>
           </defs>
@@ -357,13 +393,20 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({
       {selectedNode && (
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{selectedNode.label}</h4>
-            <button onClick={() => setSelectedNode(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
+              {selectedNode.label}
+            </h4>
+            <button
+              onClick={() => setSelectedNode(null)}
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} className="text-slate-400" />
             </button>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <span className="capitalize">{isPl ? 'Typ' : 'Type'}: {selectedNode.type}</span>
+            <span className="capitalize">
+              {isPl ? 'Typ' : 'Type'}: {selectedNode.type}
+            </span>
             {selectedNode.meta && <span>{selectedNode.meta}</span>}
           </div>
           <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">

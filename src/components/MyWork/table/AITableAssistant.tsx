@@ -99,7 +99,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           workspaceId,
           command.trim(),
           schema,
-          i18n.language,
+          i18n.language
         );
 
         if (onProposal && proposal) {
@@ -119,7 +119,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             rows: [],
           };
           onProposal(mapped);
-          toast.success(isPl ? 'Propozycja wygenerowana (nowy backend)' : 'Proposal generated (new backend)');
+          toast.success(
+            isPl ? 'Propozycja wygenerowana (nowy backend)' : 'Proposal generated (new backend)'
+          );
         }
         setCommand('');
         return;

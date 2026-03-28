@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { Share2, Copy, Lock, Calendar, X, Check } from 'lucide-react';
+import { Calendar, Check, Copy, Lock, Share2, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface ShareViewDialogProps {
@@ -13,7 +14,12 @@ interface ShareViewDialogProps {
 }
 
 export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
-  viewId, viewName, isShared = false, shareToken, onClose, onUpdated,
+  viewId,
+  viewName,
+  isShared = false,
+  shareToken,
+  onClose,
+  onUpdated,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -61,15 +67,13 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
     >
       <div
         className="w-[440px] bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl p-6"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Share2 size={16} className="text-violet-500" />
-            <h3 className="font-semibold text-sm">
-              {isPl ? 'Udostępnij widok' : 'Share View'}
-            </h3>
+            <h3 className="font-semibold text-sm">{isPl ? 'Udostępnij widok' : 'Share View'}</h3>
           </div>
           <button
             onClick={onClose}
@@ -83,9 +87,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
 
         {/* Toggle */}
         <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-900">
-          <span className="text-sm">
-            {isPl ? 'Udostępnianie włączone' : 'Sharing enabled'}
-          </span>
+          <span className="text-sm">{isPl ? 'Udostępnianie włączone' : 'Sharing enabled'}</span>
           <button
             onClick={handleToggleShare}
             disabled={loading}
@@ -127,7 +129,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               <input
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Zostaw puste = bez hasła' : 'Leave empty = no password'}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
               />
@@ -142,7 +144,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               <input
                 type="datetime-local"
                 value={expiresAt}
-                onChange={e => setExpiresAt(e.target.value)}
+                onChange={(e) => setExpiresAt(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
               />
             </div>

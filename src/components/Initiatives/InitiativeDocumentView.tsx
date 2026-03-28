@@ -112,13 +112,13 @@ import {
 } from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
   isShowcaseArtifactId,
   isShowcaseInitiativeId,
 } from './initiativesDemoData';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,
@@ -1433,7 +1433,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         : null;
       const data =
         showcaseDetail?.initiative ||
-        (await V8PlanningApi.getInitiative(initiativeId).catch(() => Api.getInitiativeById(initiativeId)));
+        (await V8PlanningApi.getInitiative(initiativeId).catch(() =>
+          Api.getInitiativeById(initiativeId)
+        ));
       setInitiative(data);
       setInitiativeTemplate(null);
       setTitleDraft(String(data.title || data.name || '').trim());

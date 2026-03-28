@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // v8ErrorCodes — pure module, no mocks needed
 // ==========================================
-
 import { V8_ERROR_CODES, v8Error } from '../../../utils/v8ErrorCodes.js';
 
 describe('v8ErrorCodes', () => {
@@ -89,9 +88,9 @@ describe('v8ErrorCodes', () => {
 // ==========================================
 
 import {
+  getV8MetricsSnapshot,
   recordV8Request,
   resetV8Metrics,
-  getV8MetricsSnapshot,
 } from '../../../utils/v8MetricsStore.js';
 
 describe('V8 request metrics', () => {
@@ -165,8 +164,9 @@ describe('V8 request metrics', () => {
 // v8MetricsMiddleware
 // ==========================================
 
-import { v8MetricsMiddleware } from '../../../middleware/v8Metrics.middleware.js';
 import { EventEmitter } from 'events';
+
+import { v8MetricsMiddleware } from '../../../middleware/v8Metrics.middleware.js';
 
 describe('v8MetricsMiddleware', () => {
   beforeEach(() => {
@@ -272,12 +272,8 @@ describe('admin health route handler', () => {
   });
 
   it('returns all four sections in the data envelope', async () => {
-    const {
-      getPlatformHealth,
-      getCrossDomainIntegrity,
-      getPlatformMetrics,
-      getDomainReadiness,
-    } = await import('../platformHealthService.js');
+    const { getPlatformHealth, getCrossDomainIntegrity, getPlatformMetrics, getDomainReadiness } =
+      await import('../platformHealthService.js');
 
     const [health, integrity, metrics, readiness] = await Promise.all([
       getPlatformHealth(ORG_ID),
@@ -297,12 +293,8 @@ describe('admin health route handler', () => {
   });
 
   it('calls all four platform health functions with orgId', async () => {
-    const {
-      getPlatformHealth,
-      getCrossDomainIntegrity,
-      getPlatformMetrics,
-      getDomainReadiness,
-    } = await import('../platformHealthService.js');
+    const { getPlatformHealth, getCrossDomainIntegrity, getPlatformMetrics, getDomainReadiness } =
+      await import('../platformHealthService.js');
 
     await Promise.all([
       getPlatformHealth(ORG_ID),

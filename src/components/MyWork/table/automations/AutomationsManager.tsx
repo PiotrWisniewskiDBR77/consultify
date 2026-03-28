@@ -30,6 +30,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+
 import { AutomationBuilder, type AutomationFormData } from './AutomationBuilder';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -137,8 +138,12 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       );
       toast.success(
         auto.enabled
-          ? (isPl ? 'Automatyzacja wstrzymana' : 'Automation paused')
-          : (isPl ? 'Automatyzacja aktywowana' : 'Automation activated')
+          ? isPl
+            ? 'Automatyzacja wstrzymana'
+            : 'Automation paused'
+          : isPl
+            ? 'Automatyzacja aktywowana'
+            : 'Automation activated'
       );
     } catch {
       toast.error(isPl ? 'Nie udało się zmienić statusu' : 'Failed to toggle');
@@ -247,7 +252,10 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-navy-700">
           <button
-            onClick={() => { setView('list'); setEditTarget(null); }}
+            onClick={() => {
+              setView('list');
+              setEditTarget(null);
+            }}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <ChevronLeft size={16} className="text-slate-400" />
@@ -255,8 +263,12 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           <Zap size={16} className="text-amber-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {view === 'edit'
-              ? (isPl ? 'Edytuj automatyzację' : 'Edit Automation')
-              : (isPl ? 'Nowa automatyzacja' : 'New Automation')}
+              ? isPl
+                ? 'Edytuj automatyzację'
+                : 'Edit Automation'
+              : isPl
+                ? 'Nowa automatyzacja'
+                : 'New Automation'}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
@@ -278,7 +290,10 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 : undefined
             }
             onSave={view === 'edit' ? handleEdit : handleCreate}
-            onCancel={() => { setView('list'); setEditTarget(null); }}
+            onCancel={() => {
+              setView('list');
+              setEditTarget(null);
+            }}
             saving={saving}
             fields={fields}
           />
@@ -293,7 +308,10 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-navy-700">
           <button
-            onClick={() => { setView('list'); setHistoryTarget(null); }}
+            onClick={() => {
+              setView('list');
+              setHistoryTarget(null);
+            }}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <ChevronLeft size={16} className="text-slate-400" />
@@ -324,9 +342,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     {run.status === 'completed' && (
                       <CheckCircle2 size={16} className="text-emerald-500" />
                     )}
-                    {run.status === 'failed' && (
-                      <XCircle size={16} className="text-red-500" />
-                    )}
+                    {run.status === 'failed' && <XCircle size={16} className="text-red-500" />}
                     {run.status === 'running' && (
                       <Loader2 size={16} className="animate-spin text-blue-500" />
                     )}
@@ -335,15 +351,19 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-slate-800 dark:text-white">
                         {run.status === 'completed'
-                          ? (isPl ? 'Sukces' : 'Success')
+                          ? isPl
+                            ? 'Sukces'
+                            : 'Success'
                           : run.status === 'failed'
-                            ? (isPl ? 'Błąd' : 'Error')
-                            : (isPl ? 'W toku' : 'Running')}
+                            ? isPl
+                              ? 'Błąd'
+                              : 'Error'
+                            : isPl
+                              ? 'W toku'
+                              : 'Running'}
                       </span>
                       {run.duration_ms != null && (
-                        <span className="text-[10px] text-slate-400">
-                          {run.duration_ms}ms
-                        </span>
+                        <span className="text-[10px] text-slate-400">{run.duration_ms}ms</span>
                       )}
                     </div>
                     <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -463,7 +483,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                   className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
                     auto.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
-                  title={auto.enabled ? (isPl ? 'Wyłącz' : 'Disable') : (isPl ? 'Włącz' : 'Enable')}
+                  title={auto.enabled ? (isPl ? 'Wyłącz' : 'Disable') : isPl ? 'Włącz' : 'Enable'}
                 >
                   <span
                     className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
@@ -488,24 +508,37 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                         <MenuBtn
                           icon={<Play size={13} />}
                           label={isPl ? 'Uruchom teraz' : 'Run now'}
-                          onClick={() => { setMenuOpen(null); handleRunNow(auto); }}
+                          onClick={() => {
+                            setMenuOpen(null);
+                            handleRunNow(auto);
+                          }}
                         />
                         <MenuBtn
                           icon={<Clock size={13} />}
                           label={isPl ? 'Historia' : 'History'}
-                          onClick={() => { setMenuOpen(null); openHistory(auto); }}
+                          onClick={() => {
+                            setMenuOpen(null);
+                            openHistory(auto);
+                          }}
                         />
                         <MenuBtn
                           icon={<Pencil size={13} />}
                           label={isPl ? 'Edytuj' : 'Edit'}
-                          onClick={() => { setMenuOpen(null); setEditTarget(auto); setView('edit'); }}
+                          onClick={() => {
+                            setMenuOpen(null);
+                            setEditTarget(auto);
+                            setView('edit');
+                          }}
                         />
                         <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
                         <MenuBtn
                           icon={<Trash2 size={13} />}
                           label={isPl ? 'Usuń' : 'Delete'}
                           danger
-                          onClick={() => { setMenuOpen(null); handleDelete(auto.id); }}
+                          onClick={() => {
+                            setMenuOpen(null);
+                            handleDelete(auto.id);
+                          }}
                         />
                       </div>
                     </>

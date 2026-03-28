@@ -11,7 +11,14 @@ interface CalendarSidebarProps {
   onDateChange: (date: Date) => void;
 }
 
-const ALL_SOURCES: CalendarEventSource[] = ['task', 'initiative', 'decision', 'consultify', 'google', 'outlook'];
+const ALL_SOURCES: CalendarEventSource[] = [
+  'task',
+  'initiative',
+  'decision',
+  'consultify',
+  'google',
+  'outlook',
+];
 
 export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   filter,
@@ -66,13 +73,17 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         </div>
 
         <div className="grid grid-cols-7 gap-0.5 text-center">
-          {(isPolish ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']).map(
-            (d) => (
-              <div key={d} className="text-[10px] font-medium text-slate-500 dark:text-slate-500 py-1">
-                {d}
-              </div>
-            )
-          )}
+          {(isPolish
+            ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
+            : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+          ).map((d) => (
+            <div
+              key={d}
+              className="text-[10px] font-medium text-slate-500 dark:text-slate-500 py-1"
+            >
+              {d}
+            </div>
+          ))}
           {Array.from({ length: startOffset }).map((_, i) => (
             <div key={`empty-${i}`} />
           ))}

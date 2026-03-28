@@ -103,22 +103,55 @@ class ReportEnterpriseService {
   // V4-RPT-01: Source Packs
   // ──────────────────────────────────────────────
 
-  async createSourcePack(orgId: string, userId: string, data: {
-    reportId: string; name: string; description?: string; citationPolicy?: string;
-  }): Promise<SourcePack> {
+  async createSourcePack(
+    orgId: string,
+    userId: string,
+    data: {
+      reportId: string;
+      name: string;
+      description?: string;
+      citationPolicy?: string;
+    }
+  ): Promise<SourcePack> {
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
       `INSERT INTO report_source_packs (id, organization_id, report_id, name, description, citation_policy, created_by, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, data.reportId, data.name, data.description || null, data.citationPolicy || 'recommended', userId, now, now]
+      [
+        id,
+        orgId,
+        data.reportId,
+        data.name,
+        data.description || null,
+        data.citationPolicy || 'recommended',
+        userId,
+        now,
+        now,
+      ]
     );
-    return { id, reportId: data.reportId, name: data.name, description: data.description || null, artifacts: [], citationPolicy: data.citationPolicy || 'recommended', status: 'draft' };
+    return {
+      id,
+      reportId: data.reportId,
+      name: data.name,
+      description: data.description || null,
+      artifacts: [],
+      citationPolicy: data.citationPolicy || 'recommended',
+      status: 'draft',
+    };
   }
 
-  async addSourcePackItem(orgId: string, sourcePackId: string, data: {
-    artifactType: string; artifactId: string; artifactTitle?: string; citationLabel?: string; sortOrder?: number;
-  }): Promise<{ id: string }> {
+  async addSourcePackItem(
+    orgId: string,
+    sourcePackId: string,
+    data: {
+      artifactType: string;
+      artifactId: string;
+      artifactTitle?: string;
+      citationLabel?: string;
+      sortOrder?: number;
+    }
+  ): Promise<{ id: string }> {
     const pack = await queryHelpers.queryOne<{ id: string }>(
       `SELECT id FROM report_source_packs WHERE id = ? AND organization_id = ?`,
       [sourcePackId, orgId]
@@ -130,34 +163,53 @@ class ReportEnterpriseService {
     await queryHelpers.queryRun(
       `INSERT INTO report_source_pack_items (id, source_pack_id, artifact_type, artifact_id, artifact_title, citation_label, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, sourcePackId, data.artifactType, data.artifactId, data.artifactTitle || null, data.citationLabel || null, data.sortOrder || 0]
+      [
+        id,
+        sourcePackId,
+        data.artifactType,
+        data.artifactId,
+        data.artifactTitle || null,
+        data.citationLabel || null,
+        data.sortOrder || 0,
+      ]
     );
     return { id };
   }
 
   async getSourcePacks(orgId: string, reportId: string): Promise<SourcePack[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_source_packs WHERE organization_id = ? AND report_id = ? ORDER BY created_at`,
-      [orgId, reportId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_source_packs WHERE organization_id = ? AND report_id = ? ORDER BY created_at`,
+        [orgId, reportId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, reportId: r.report_id, name: r.name, description: r.description,
-      artifacts: safeJsonArray(r.artifacts), citationPolicy: r.citation_policy, status: r.status,
+      id: r.id,
+      reportId: r.report_id,
+      name: r.name,
+      description: r.description,
+      artifacts: safeJsonArray(r.artifacts),
+      citationPolicy: r.citation_policy,
+      status: r.status,
     }));
   }
 
   async getSourcePackItems(orgId: string, sourcePackId: string) {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT items.*
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT items.*
        FROM report_source_pack_items items
        JOIN report_source_packs packs ON packs.id = items.source_pack_id
        WHERE items.source_pack_id = ? AND packs.organization_id = ?
        ORDER BY items.sort_order`,
-      [sourcePackId, orgId]
-    )) || [];
+        [sourcePackId, orgId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, artifactType: r.artifact_type, artifactId: r.artifact_id,
-      artifactTitle: r.artifact_title, citationLabel: r.citation_label, sortOrder: r.sort_order,
+      id: r.id,
+      artifactType: r.artifact_type,
+      artifactId: r.artifact_id,
+      artifactTitle: r.artifact_title,
+      citationLabel: r.citation_label,
+      sortOrder: r.sort_order,
     }));
   }
 
@@ -165,16 +217,33 @@ class ReportEnterpriseService {
   // V4-RPT-02: Data bindings
   // ──────────────────────────────────────────────
 
-  async createDataBinding(orgId: string, data: {
-    reportId: string; sectionId: string; bindingType?: string; datasetRef: string;
-  }): Promise<DataBinding> {
+  async createDataBinding(
+    orgId: string,
+    data: {
+      reportId: string;
+      sectionId: string;
+      bindingType?: string;
+      datasetRef: string;
+    }
+  ): Promise<DataBinding> {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO report_data_bindings (id, organization_id, report_id, section_id, binding_type, dataset_ref)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [id, orgId, data.reportId, data.sectionId, data.bindingType || 'kpi', data.datasetRef]
     );
-    return { id, reportId: data.reportId, sectionId: data.sectionId, bindingType: data.bindingType || 'kpi', datasetRef: data.datasetRef, lastRefreshAt: null, lastValue: null, previousValue: null, diffData: {}, approvalStatus: 'auto' };
+    return {
+      id,
+      reportId: data.reportId,
+      sectionId: data.sectionId,
+      bindingType: data.bindingType || 'kpi',
+      datasetRef: data.datasetRef,
+      lastRefreshAt: null,
+      lastValue: null,
+      previousValue: null,
+      diffData: {},
+      approvalStatus: 'auto',
+    };
   }
 
   async refreshDataBinding(orgId: string, bindingId: string, newValue: string): Promise<boolean> {
@@ -184,7 +253,13 @@ class ReportEnterpriseService {
     );
     if (!current) return false;
 
-    const diff = current.last_value ? { previous: current.last_value, current: newValue, changed: current.last_value !== newValue } : {};
+    const diff = current.last_value
+      ? {
+          previous: current.last_value,
+          current: newValue,
+          changed: current.last_value !== newValue,
+        }
+      : {};
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
       `UPDATE report_data_bindings SET previous_value = last_value, last_value = ?, diff_data = ?, last_refresh_at = ?, approval_status = CASE WHEN last_value != ? THEN 'pending' ELSE approval_status END WHERE id = ? AND organization_id = ?`,
@@ -202,14 +277,22 @@ class ReportEnterpriseService {
   }
 
   async getDataBindings(orgId: string, reportId: string): Promise<DataBinding[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_data_bindings WHERE organization_id = ? AND report_id = ? ORDER BY created_at`,
-      [orgId, reportId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_data_bindings WHERE organization_id = ? AND report_id = ? ORDER BY created_at`,
+        [orgId, reportId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, reportId: r.report_id, sectionId: r.section_id, bindingType: r.binding_type,
-      datasetRef: r.dataset_ref, lastRefreshAt: r.last_refresh_at, lastValue: r.last_value,
-      previousValue: r.previous_value, diffData: safeJson(r.diff_data), approvalStatus: r.approval_status,
+      id: r.id,
+      reportId: r.report_id,
+      sectionId: r.section_id,
+      bindingType: r.binding_type,
+      datasetRef: r.dataset_ref,
+      lastRefreshAt: r.last_refresh_at,
+      lastValue: r.last_value,
+      previousValue: r.previous_value,
+      diffData: safeJson(r.diff_data),
+      approvalStatus: r.approval_status,
     }));
   }
 
@@ -217,18 +300,47 @@ class ReportEnterpriseService {
   // V4-RPT-03: Templates
   // ──────────────────────────────────────────────
 
-  async createTemplate(orgId: string, userId: string, data: {
-    name: string; description?: string; category?: string; templateData: Record<string, unknown>;
-    variables?: unknown[]; governanceLevel?: string;
-  }): Promise<ReportTemplate> {
+  async createTemplate(
+    orgId: string,
+    userId: string,
+    data: {
+      name: string;
+      description?: string;
+      category?: string;
+      templateData: Record<string, unknown>;
+      variables?: unknown[];
+      governanceLevel?: string;
+    }
+  ): Promise<ReportTemplate> {
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
       `INSERT INTO report_templates (id, organization_id, name, description, category, template_data, variables, governance_level, created_by, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, data.name, data.description || null, data.category || 'general', JSON.stringify(data.templateData), JSON.stringify(data.variables || []), data.governanceLevel || 'org', userId, now, now]
+      [
+        id,
+        orgId,
+        data.name,
+        data.description || null,
+        data.category || 'general',
+        JSON.stringify(data.templateData),
+        JSON.stringify(data.variables || []),
+        data.governanceLevel || 'org',
+        userId,
+        now,
+        now,
+      ]
     );
-    return { id, name: data.name, description: data.description || null, category: data.category || 'general', variables: data.variables || [], version: 1, status: 'draft', governanceLevel: data.governanceLevel || 'org' };
+    return {
+      id,
+      name: data.name,
+      description: data.description || null,
+      category: data.category || 'general',
+      variables: data.variables || [],
+      version: 1,
+      status: 'draft',
+      governanceLevel: data.governanceLevel || 'org',
+    };
   }
 
   async publishTemplate(orgId: string, templateId: string, userId: string): Promise<boolean> {
@@ -253,25 +365,35 @@ class ReportEnterpriseService {
   }
 
   async getTemplates(orgId: string): Promise<ReportTemplate[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_templates WHERE (organization_id = ? OR organization_id IS NULL) ORDER BY created_at DESC`,
-      [orgId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_templates WHERE (organization_id = ? OR organization_id IS NULL) ORDER BY created_at DESC`,
+        [orgId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, name: r.name, description: r.description, category: r.category,
-      variables: safeJsonArray(r.variables), version: r.version, status: r.status,
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      category: r.category,
+      variables: safeJsonArray(r.variables),
+      version: r.version,
+      status: r.status,
       governanceLevel: r.governance_level,
     }));
   }
 
   async getTemplateVersions(templateId: string) {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_template_versions WHERE template_id = ? ORDER BY version DESC`,
-      [templateId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_template_versions WHERE template_id = ? ORDER BY version DESC`,
+        [templateId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, version: r.version, changelog: r.changelog,
-      createdBy: r.created_by, createdAt: r.created_at,
+      id: r.id,
+      version: r.version,
+      changelog: r.changelog,
+      createdBy: r.created_by,
+      createdAt: r.created_at,
     }));
   }
 
@@ -279,45 +401,73 @@ class ReportEnterpriseService {
   // V4-RPT-04: Brand voice
   // ──────────────────────────────────────────────
 
-  async createBrandVoicePolicy(orgId: string, userId: string, data: {
-    policyName: string; tone?: string; forbiddenPhrases?: string[];
-    requiredSourceCitation?: boolean; noMarketingLanguage?: boolean; customRules?: unknown[];
-  }): Promise<BrandVoicePolicy> {
+  async createBrandVoicePolicy(
+    orgId: string,
+    userId: string,
+    data: {
+      policyName: string;
+      tone?: string;
+      forbiddenPhrases?: string[];
+      requiredSourceCitation?: boolean;
+      noMarketingLanguage?: boolean;
+      customRules?: unknown[];
+    }
+  ): Promise<BrandVoicePolicy> {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO report_brand_voice_policies (id, organization_id, policy_name, tone, forbidden_phrases, required_source_citation, no_marketing_language, custom_rules, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, data.policyName, data.tone || 'professional', JSON.stringify(data.forbiddenPhrases || []), data.requiredSourceCitation ? 1 : 0, data.noMarketingLanguage ? 1 : 0, JSON.stringify(data.customRules || []), userId]
+      [
+        id,
+        orgId,
+        data.policyName,
+        data.tone || 'professional',
+        JSON.stringify(data.forbiddenPhrases || []),
+        data.requiredSourceCitation ? 1 : 0,
+        data.noMarketingLanguage ? 1 : 0,
+        JSON.stringify(data.customRules || []),
+        userId,
+      ]
     );
     return {
-      id, policyName: data.policyName, tone: data.tone || 'professional',
+      id,
+      policyName: data.policyName,
+      tone: data.tone || 'professional',
       forbiddenPhrases: data.forbiddenPhrases || [],
       requiredSourceCitation: data.requiredSourceCitation || false,
       noMarketingLanguage: data.noMarketingLanguage || false,
-      customRules: data.customRules || [], isActive: true,
+      customRules: data.customRules || [],
+      isActive: true,
     };
   }
 
   async getBrandVoicePolicies(orgId: string): Promise<BrandVoicePolicy[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_brand_voice_policies WHERE organization_id = ? ORDER BY created_at DESC`,
-      [orgId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_brand_voice_policies WHERE organization_id = ? ORDER BY created_at DESC`,
+        [orgId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, policyName: r.policy_name, tone: r.tone,
+      id: r.id,
+      policyName: r.policy_name,
+      tone: r.tone,
       forbiddenPhrases: safeJsonArray(r.forbidden_phrases) as string[],
       requiredSourceCitation: !!r.required_source_citation,
       noMarketingLanguage: !!r.no_marketing_language,
-      customRules: safeJsonArray(r.custom_rules), isActive: !!r.is_active,
+      customRules: safeJsonArray(r.custom_rules),
+      isActive: !!r.is_active,
     }));
   }
 
-  async validateAgainstBrandVoice(orgId: string, text: string): Promise<{
+  async validateAgainstBrandVoice(
+    orgId: string,
+    text: string
+  ): Promise<{
     violations: Array<{ rule: string; snippet: string }>;
     passed: boolean;
   }> {
     const policies = await this.getBrandVoicePolicies(orgId);
-    const activePolicy = policies.find(p => p.isActive);
+    const activePolicy = policies.find((p) => p.isActive);
     if (!activePolicy) return { violations: [], passed: true };
 
     const violations: Array<{ rule: string; snippet: string }> = [];
@@ -330,7 +480,15 @@ class ReportEnterpriseService {
     }
 
     if (activePolicy.noMarketingLanguage) {
-      const marketingTerms = ['revolutionary', 'game-changing', 'world-class', 'best-in-class', 'cutting-edge', 'synergy', 'paradigm shift'];
+      const marketingTerms = [
+        'revolutionary',
+        'game-changing',
+        'world-class',
+        'best-in-class',
+        'cutting-edge',
+        'synergy',
+        'paradigm shift',
+      ];
       for (const term of marketingTerms) {
         if (lowerText.includes(term)) {
           violations.push({ rule: 'No marketing language', snippet: term });
@@ -345,25 +503,53 @@ class ReportEnterpriseService {
   // V4-RPT-05: AI proposals
   // ──────────────────────────────────────────────
 
-  async createAIProposal(orgId: string, data: {
-    reportId: string; sectionId?: string; blockId?: string;
-    proposedContent: string; originalContent?: string; citations?: unknown[]; aiModelUsed?: string;
-  }): Promise<AIProposal> {
+  async createAIProposal(
+    orgId: string,
+    data: {
+      reportId: string;
+      sectionId?: string;
+      blockId?: string;
+      proposedContent: string;
+      originalContent?: string;
+      citations?: unknown[];
+      aiModelUsed?: string;
+    }
+  ): Promise<AIProposal> {
     const id = uuidv4();
     const diff = data.originalContent
-      ? { hasChanges: true, originalLength: data.originalContent.length, proposedLength: data.proposedContent.length }
+      ? {
+          hasChanges: true,
+          originalLength: data.originalContent.length,
+          proposedLength: data.proposedContent.length,
+        }
       : {};
 
     await queryHelpers.queryRun(
       `INSERT INTO report_ai_proposals (id, organization_id, report_id, section_id, block_id, proposed_content, original_content, diff_preview, citations, ai_model_used)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, data.reportId, data.sectionId || null, data.blockId || null, data.proposedContent, data.originalContent || null, JSON.stringify(diff), JSON.stringify(data.citations || []), data.aiModelUsed || null]
+      [
+        id,
+        orgId,
+        data.reportId,
+        data.sectionId || null,
+        data.blockId || null,
+        data.proposedContent,
+        data.originalContent || null,
+        JSON.stringify(diff),
+        JSON.stringify(data.citations || []),
+        data.aiModelUsed || null,
+      ]
     );
     return {
-      id, reportId: data.reportId, sectionId: data.sectionId || null,
-      blockId: data.blockId || null, proposedContent: data.proposedContent,
-      originalContent: data.originalContent || null, diffPreview: diff as Record<string, unknown>,
-      citations: data.citations || [], status: 'proposed',
+      id,
+      reportId: data.reportId,
+      sectionId: data.sectionId || null,
+      blockId: data.blockId || null,
+      proposedContent: data.proposedContent,
+      originalContent: data.originalContent || null,
+      diffPreview: diff as Record<string, unknown>,
+      citations: data.citations || [],
+      status: 'proposed',
     };
   }
 
@@ -399,15 +585,25 @@ class ReportEnterpriseService {
   async getAIProposals(orgId: string, reportId: string, status?: string): Promise<AIProposal[]> {
     const conditions = ['organization_id = ?', 'report_id = ?'];
     const params: unknown[] = [orgId, reportId];
-    if (status) { conditions.push('status = ?'); params.push(status); }
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_ai_proposals WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
-      params
-    )) || [];
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+    }
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_ai_proposals WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+        params
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, reportId: r.report_id, sectionId: r.section_id, blockId: r.block_id,
-      proposedContent: r.proposed_content, originalContent: r.original_content,
-      diffPreview: safeJson(r.diff_preview), citations: safeJsonArray(r.citations), status: r.status,
+      id: r.id,
+      reportId: r.report_id,
+      sectionId: r.section_id,
+      blockId: r.block_id,
+      proposedContent: r.proposed_content,
+      originalContent: r.original_content,
+      diffPreview: safeJson(r.diff_preview),
+      citations: safeJsonArray(r.citations),
+      status: r.status,
     }));
   }
 
@@ -415,20 +611,41 @@ class ReportEnterpriseService {
   // V4-RPT-06: Distribution
   // ──────────────────────────────────────────────
 
-  async createDistributionSchedule(orgId: string, userId: string, data: {
-    reportId: string; scheduleCron?: string; sendAt?: string;
-    recipientPolicy: Record<string, unknown>; approvalRequired?: boolean;
-  }): Promise<DistributionSchedule> {
+  async createDistributionSchedule(
+    orgId: string,
+    userId: string,
+    data: {
+      reportId: string;
+      scheduleCron?: string;
+      sendAt?: string;
+      recipientPolicy: Record<string, unknown>;
+      approvalRequired?: boolean;
+    }
+  ): Promise<DistributionSchedule> {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO report_distribution_schedules (id, organization_id, report_id, schedule_cron, send_at, recipient_policy, approval_required, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, data.reportId, data.scheduleCron || null, data.sendAt || null, JSON.stringify(data.recipientPolicy), data.approvalRequired ? 1 : 0, userId]
+      [
+        id,
+        orgId,
+        data.reportId,
+        data.scheduleCron || null,
+        data.sendAt || null,
+        JSON.stringify(data.recipientPolicy),
+        data.approvalRequired ? 1 : 0,
+        userId,
+      ]
     );
     return {
-      id, reportId: data.reportId, scheduleCron: data.scheduleCron || null,
-      sendAt: data.sendAt || null, recipientPolicy: data.recipientPolicy,
-      approvalRequired: data.approvalRequired || false, approvalStatus: 'pending', status: 'active',
+      id,
+      reportId: data.reportId,
+      scheduleCron: data.scheduleCron || null,
+      sendAt: data.sendAt || null,
+      recipientPolicy: data.recipientPolicy,
+      approvalRequired: data.approvalRequired || false,
+      approvalStatus: 'pending',
+      status: 'active',
     };
   }
 
@@ -441,20 +658,32 @@ class ReportEnterpriseService {
   }
 
   async getDistributionSchedules(orgId: string, reportId: string): Promise<DistributionSchedule[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_distribution_schedules WHERE organization_id = ? AND report_id = ? ORDER BY created_at DESC`,
-      [orgId, reportId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_distribution_schedules WHERE organization_id = ? AND report_id = ? ORDER BY created_at DESC`,
+        [orgId, reportId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, reportId: r.report_id, scheduleCron: r.schedule_cron,
-      sendAt: r.send_at, recipientPolicy: safeJson(r.recipient_policy),
-      approvalRequired: !!r.approval_required, approvalStatus: r.approval_status, status: r.status,
+      id: r.id,
+      reportId: r.report_id,
+      scheduleCron: r.schedule_cron,
+      sendAt: r.send_at,
+      recipientPolicy: safeJson(r.recipient_policy),
+      approvalRequired: !!r.approval_required,
+      approvalStatus: r.approval_status,
+      status: r.status,
     }));
   }
 
-  async logDistribution(orgId: string, data: {
-    scheduleId: string; reportId: string; recipientEmail: string; channel?: string;
-  }): Promise<{ id: string }> {
+  async logDistribution(
+    orgId: string,
+    data: {
+      scheduleId: string;
+      reportId: string;
+      recipientEmail: string;
+      channel?: string;
+    }
+  ): Promise<{ id: string }> {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO report_distribution_log (id, organization_id, schedule_id, report_id, recipient_email, channel)
@@ -465,18 +694,28 @@ class ReportEnterpriseService {
   }
 
   async getDistributionLog(orgId: string, scheduleId: string) {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_distribution_log WHERE organization_id = ? AND schedule_id = ? ORDER BY created_at DESC`,
-      [orgId, scheduleId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM report_distribution_log WHERE organization_id = ? AND schedule_id = ? ORDER BY created_at DESC`,
+        [orgId, scheduleId]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, recipientEmail: r.recipient_email, channel: r.channel,
-      status: r.status, deliveredAt: r.delivered_at, openedAt: r.opened_at,
-      errorMessage: r.error_message, createdAt: r.created_at,
+      id: r.id,
+      recipientEmail: r.recipient_email,
+      channel: r.channel,
+      status: r.status,
+      deliveredAt: r.delivered_at,
+      openedAt: r.opened_at,
+      errorMessage: r.error_message,
+      createdAt: r.created_at,
     }));
   }
 
-  private async applyAcceptedProposal(orgId: string, proposal: any, userId: string): Promise<string | null> {
+  private async applyAcceptedProposal(
+    orgId: string,
+    proposal: any,
+    userId: string
+  ): Promise<string | null> {
     const section = proposal.section_id
       ? await queryHelpers.queryOne<any>(
           `SELECT id, section_key, content_format
@@ -521,14 +760,20 @@ class ReportEnterpriseService {
 
 function safeJson(val: unknown): Record<string, unknown> {
   if (!val) return {};
-  try { return typeof val === 'string' ? JSON.parse(val) : (val as Record<string, unknown>); }
-  catch { return {}; }
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : (val as Record<string, unknown>);
+  } catch {
+    return {};
+  }
 }
 
 function safeJsonArray(val: unknown): unknown[] {
   if (!val) return [];
-  try { return typeof val === 'string' ? JSON.parse(val) : (val as unknown[]); }
-  catch { return []; }
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : (val as unknown[]);
+  } catch {
+    return [];
+  }
 }
 
 function tryParseJson(val: unknown): Record<string, unknown> | null {

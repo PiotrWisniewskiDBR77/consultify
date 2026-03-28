@@ -36,7 +36,12 @@ export interface MindMapQuickActionHandlers {
   exportAsPNG: (filename: string) => void;
   exportAsJSON: (n: Node[], e: Edge[], ext: any, filename: string) => void;
   exportAsCSV?: (n: Node[], filename: string) => void;
-  exportAsMarkdown?: (n: Node[], e: Edge[], opts?: { includeMetadata?: boolean }, filename?: string) => string;
+  exportAsMarkdown?: (
+    n: Node[],
+    e: Edge[],
+    opts?: { includeMetadata?: boolean },
+    filename?: string
+  ) => string;
   onOpenChat?: (prompt?: string) => void;
 }
 
@@ -114,7 +119,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     setters,
   } = opts;
 
-  const quickActionRef = useRef<(action: string, detail?: Record<string, unknown>) => void>(() => {});
+  const quickActionRef = useRef<(action: string, detail?: Record<string, unknown>) => void>(
+    () => {}
+  );
 
   quickActionRef.current = (action: string, detail?: Record<string, unknown>) => {
     const targetNodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
@@ -129,10 +136,17 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const sel = handlers.getSelectedNode();
       if (sel) handlers.toggleCollapse(sel.id);
     }
-    if (action === 'mm_fold_0' || action === 'mm_fold_1' || action === 'mm_fold_2' || action === 'mm_fold_3') {
+    if (
+      action === 'mm_fold_0' ||
+      action === 'mm_fold_1' ||
+      action === 'mm_fold_2' ||
+      action === 'mm_fold_3'
+    ) {
       const level = Number(action.split('_').pop());
       handlers.setFoldLevel?.(level);
-      toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, { duration: 1200 });
+      toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, {
+        duration: 1200,
+      });
     }
     if (action === 'mm_expand_all') {
       handlers.setFoldLevel?.(Infinity);
@@ -149,7 +163,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (locked) return;
       const sel = handlers.getSelectedNode();
       if (!sel) {
-        toast(isPolish ? 'Zaznacz węzeł, do którego chcesz dodać' : 'Select a node to attach to', { icon: 'ℹ️' });
+        toast(isPolish ? 'Zaznacz węzeł, do którego chcesz dodać' : 'Select a node to attach to', {
+          icon: 'ℹ️',
+        });
         return;
       }
       handlers.pushUndo();
@@ -311,25 +327,37 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     if (action === 'mm_export_markdown') {
       if (handlers.exportAsMarkdown) {
-        handlers.exportAsMarkdown(nodes, edges, { includeMetadata: true }, `${ideaTitle || 'mindmap'}.md`);
+        handlers.exportAsMarkdown(
+          nodes,
+          edges,
+          { includeMetadata: true },
+          `${ideaTitle || 'mindmap'}.md`
+        );
         toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard');
       }
     }
 
     if (action === 'mm_export_pdf') {
-      window.dispatchEvent(new CustomEvent('idea-mindmap-export-pdf', { detail: { title: ideaTitle } }));
+      window.dispatchEvent(
+        new CustomEvent('idea-mindmap-export-pdf', { detail: { title: ideaTitle } })
+      );
       return;
     }
 
     // ── AddNodePopover: Semantic node inserts ──────────────────────────────
-    const SEMANTIC_INSERT_MAP: Record<string, { kind: string; labelPl: string; labelEn: string }> = {
-      mm_insert_topic: { kind: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
-      mm_insert_hypothesis: { kind: 'hypothesis', labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
-      mm_insert_risk: { kind: 'risk', labelPl: 'Ryzyko', labelEn: 'Risk' },
-      mm_insert_action: { kind: 'action_item', labelPl: 'Akcja', labelEn: 'Action' },
-      mm_insert_decision: { kind: 'decision_point', labelPl: 'Punkt decyzyjny', labelEn: 'Decision point' },
-      mm_insert_option: { kind: 'option', labelPl: 'Opcja', labelEn: 'Option' },
-    };
+    const SEMANTIC_INSERT_MAP: Record<string, { kind: string; labelPl: string; labelEn: string }> =
+      {
+        mm_insert_topic: { kind: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
+        mm_insert_hypothesis: { kind: 'hypothesis', labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
+        mm_insert_risk: { kind: 'risk', labelPl: 'Ryzyko', labelEn: 'Risk' },
+        mm_insert_action: { kind: 'action_item', labelPl: 'Akcja', labelEn: 'Action' },
+        mm_insert_decision: {
+          kind: 'decision_point',
+          labelPl: 'Punkt decyzyjny',
+          labelEn: 'Decision point',
+        },
+        mm_insert_option: { kind: 'option', labelPl: 'Opcja', labelEn: 'Option' },
+      };
     if (SEMANTIC_INSERT_MAP[action]) {
       if (locked) return;
       const sel = handlers.getSelectedNode();
@@ -407,7 +435,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         } as Node,
       ]);
       toast.success(
-        isPolish ? `Zgrupowano ${selectedIds.length} węzłów` : `Grouped ${selectedIds.length} nodes`,
+        isPolish ? `Zgrupowano ${selectedIds.length} węzłów` : `Grouped ${selectedIds.length} nodes`
       );
       return;
     }
@@ -430,14 +458,21 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           type: 'group',
           position: { x: sel ? sel.position.x - 40 : 200, y: sel ? sel.position.y - 40 : 100 },
           data: { label: isPolish ? 'Ramka' : 'Frame' },
-          style: { width: 300, height: 200, border: '2px dashed #94a3b8', borderRadius: 16, background: 'rgba(148,163,184,0.04)' },
+          style: {
+            width: 300,
+            height: 200,
+            border: '2px dashed #94a3b8',
+            borderRadius: 16,
+            background: 'rgba(148,163,184,0.04)',
+          },
         },
       ]);
     }
 
     // ── AI Actions ─────────────────────────────────────────────────────────
     if (action === 'mm_ai_expand') handlers.handleAIExpand();
-    if (action === 'mm_ai_expand_node') handlers.handleAIExpand(detail?.nodeId as string | undefined);
+    if (action === 'mm_ai_expand_node')
+      handlers.handleAIExpand(detail?.nodeId as string | undefined);
     if (action === 'mm_ai_suggest') {
       if (handlers.onOpenChat) {
         const prompt = isPolish
@@ -450,7 +485,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_ai_gap_analysis') {
       if (handlers.onOpenChat) {
-        const nodeLabels = nodes.slice(0, 20).map((n) => n.data?.label).filter(Boolean).join(', ');
+        const nodeLabels = nodes
+          .slice(0, 20)
+          .map((n) => n.data?.label)
+          .filter(Boolean)
+          .join(', ');
         const prompt = isPolish
           ? `Przeanalizuj luki w mapie "${ideaTitle}". Obecne węzły: ${nodeLabels}. Czego brakuje?`
           : `Analyze gaps in the map "${ideaTitle}". Current nodes: ${nodeLabels}. What's missing?`;
@@ -465,15 +504,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         .filter((e) => e.source === 'root' && e.data?.edgeRole !== 'relation')
         .map((e) => e.target);
 
-      const orphanIdeas = nodes.filter(
-        (n) => rootChildren.includes(n.id) && n.type === 'idea',
-      );
+      const orphanIdeas = nodes.filter((n) => rootChildren.includes(n.id) && n.type === 'idea');
 
       if (orphanIdeas.length < 2) {
         toast(
           isPolish
             ? 'Za mało luźnych węzłów do grupowania'
-            : 'Not enough ungrouped nodes to cluster',
+            : 'Not enough ungrouped nodes to cluster'
         );
         return;
       }
@@ -485,13 +522,31 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const semType: string = node.data?.semanticType || '';
 
         let clusterKey = 'uncategorized';
-        if (semType === 'risk' || semType === 'threat' || label.includes('risk') || label.includes('ryzyko')) {
+        if (
+          semType === 'risk' ||
+          semType === 'threat' ||
+          label.includes('risk') ||
+          label.includes('ryzyko')
+        ) {
           clusterKey = 'risks';
-        } else if (semType === 'hypothesis' || label.includes('hypothesis') || label.includes('hipoteza')) {
+        } else if (
+          semType === 'hypothesis' ||
+          label.includes('hypothesis') ||
+          label.includes('hipoteza')
+        ) {
           clusterKey = 'hypotheses';
-        } else if (semType === 'action' || semType === 'task' || label.includes('action') || label.includes('zadanie')) {
+        } else if (
+          semType === 'action' ||
+          semType === 'task' ||
+          label.includes('action') ||
+          label.includes('zadanie')
+        ) {
           clusterKey = 'actions';
-        } else if (semType === 'evidence' || label.includes('evidence') || label.includes('dowód')) {
+        } else if (
+          semType === 'evidence' ||
+          label.includes('evidence') ||
+          label.includes('dowód')
+        ) {
           clusterKey = 'evidence';
         } else if (semType === 'question' || label.includes('?') || label.includes('question')) {
           clusterKey = 'questions';
@@ -504,11 +559,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
 
       if (clusters.size < 2) {
-        toast(
-          isPolish
-            ? 'Wszystkie węzły pasują do jednej grupy'
-            : 'All nodes fit in one group',
-        );
+        toast(isPolish ? 'Wszystkie węzły pasują do jednej grupy' : 'All nodes fit in one group');
         return;
       }
 
@@ -535,8 +586,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const by = Math.sin(angle) * radius;
 
         const branchId = `branch-auto-${key}-${Date.now()}`;
-        const branchLabel =
-          CLUSTER_LABELS[key]?.[isPolish ? 'pl' : 'en'] || key;
+        const branchLabel = CLUSTER_LABELS[key]?.[isPolish ? 'pl' : 'en'] || key;
 
         newNodes.push({
           id: branchId,
@@ -559,9 +609,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         } as Edge);
 
         for (const node of clusterNodes) {
-          const oldEdge = edges.find(
-            (e) => e.target === node.id && e.source === 'root',
-          );
+          const oldEdge = edges.find((e) => e.target === node.id && e.source === 'root');
           if (oldEdge) edgesToRemove.add(oldEdge.id);
 
           newEdges.push({
@@ -578,15 +626,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
 
       setters.setNodes((prev) => [...prev, ...newNodes]);
-      setters.setEdges((prev) => [
-        ...prev.filter((e) => !edgesToRemove.has(e.id)),
-        ...newEdges,
-      ]);
+      setters.setEdges((prev) => [...prev.filter((e) => !edgesToRemove.has(e.id)), ...newEdges]);
 
       toast.success(
         isPolish
           ? `Utworzono ${clusters.size} grup z ${orphanIdeas.length} węzłów`
-          : `Created ${clusters.size} clusters from ${orphanIdeas.length} nodes`,
+          : `Created ${clusters.size} clusters from ${orphanIdeas.length} nodes`
       );
 
       setTimeout(() => {
@@ -600,7 +645,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_ai_summarize') {
       if (handlers.onOpenChat) {
-        const nodeLabels = nodes.slice(0, 30).map((n) => n.data?.label).filter(Boolean).join(', ');
+        const nodeLabels = nodes
+          .slice(0, 30)
+          .map((n) => n.data?.label)
+          .filter(Boolean)
+          .join(', ');
         const prompt = isPolish
           ? `Podsumuj mapę "${ideaTitle}" z ${nodes.length} węzłami: ${nodeLabels}`
           : `Summarize the map "${ideaTitle}" with ${nodes.length} nodes: ${nodeLabels}`;
@@ -620,7 +669,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (sel && handlers.onOpenChat) {
         const tags = Array.isArray(sel.data?.tags) ? sel.data.tags.join(', ') : '';
         const sType = sel.data?.semanticType || '';
-        const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : ''].filter(Boolean).join('. ');
+        const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : '']
+          .filter(Boolean)
+          .join('. ');
         const prompt = isPolish
           ? `Pogłęb temat "${sel.data?.label}" w kontekście mapy "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}.` : ''} Podaj szczegółową analizę.`
           : `Deepen the topic "${sel.data?.label}" in the context of map "${ideaTitle}".${ctx ? ` Context: ${ctx}.` : ''} Provide detailed analysis.`;
@@ -656,7 +707,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           tags ? `Tags: ${tags}` : '',
           sType ? `Type: ${sType}` : '',
           node.data?.description ? `Description: ${node.data.description}` : '',
-        ].filter(Boolean).join('. ');
+        ]
+          .filter(Boolean)
+          .join('. ');
         const prompt = isPolish
           ? `Porozmawiajmy o węźle "${label}" w mapie "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}` : ''}`
           : `Let's discuss the node "${label}" in map "${ideaTitle}".${ctx ? ` Context: ${ctx}` : ''}`;
@@ -689,10 +742,15 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     // ── KnowledgePopover: Platform inserts ────────────────────────────────
     if (action === 'mm_insert_from_notebook') {
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'open_linked_artifacts', ideaId },
-      }));
-      toast(isPolish ? 'Otwórz panel Context → Notebook' : 'Open Context panel → Notebook', { icon: '📓', duration: 2500 });
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: { action: 'open_linked_artifacts', ideaId },
+        })
+      );
+      toast(isPolish ? 'Otwórz panel Context → Notebook' : 'Open Context panel → Notebook', {
+        icon: '📓',
+        duration: 2500,
+      });
     }
     if (action === 'mm_insert_from_interview') {
       setters.setShowInterviewToMap(true);
@@ -718,7 +776,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
               if (Array.isArray(data.edges)) {
                 setters.setEdges((prev) => [...prev, ...data.edges]);
               }
-              toast.success(isPolish ? `Zaimportowano ${data.nodes.length} węzłów` : `Imported ${data.nodes.length} nodes`);
+              toast.success(
+                isPolish
+                  ? `Zaimportowano ${data.nodes.length} węzłów`
+                  : `Imported ${data.nodes.length} nodes`
+              );
             } else {
               toast.error(
                 isPolish
@@ -728,9 +790,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
             }
           } catch {
             toast.error(
-              isPolish
-                ? 'Nie udało się odczytać pliku JSON'
-                : 'Could not read JSON file'
+              isPolish ? 'Nie udało się odczytać pliku JSON' : 'Could not read JSON file'
             );
           }
         };
@@ -757,12 +817,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         'mm_kanban_view',
       ].includes(action)
     ) {
-      toast(
-        isPolish
-          ? 'Ta funkcja jest w trakcie rozwoju'
-          : 'This feature is under development',
-        { icon: '🚧', duration: 2200 }
-      );
+      toast(isPolish ? 'Ta funkcja jest w trakcie rozwoju' : 'This feature is under development', {
+        icon: '🚧',
+        duration: 2200,
+      });
       return;
     }
 
@@ -774,13 +832,20 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const nextMode = modes[(curIdx + 1) % modes.length];
       setters.setLayoutMode(nextMode);
       if (setters.setStructureType) setters.setStructureType('mindmap');
-      const laid = nextMode === 'radial'
-        ? applyRadialLayout(nodes, edges)
-        : nextMode === 'force'
-          ? applyForceLayout(nodes, edges)
-          : handlers.autoLayout(nodes, edges);
+      const laid =
+        nextMode === 'radial'
+          ? applyRadialLayout(nodes, edges)
+          : nextMode === 'force'
+            ? applyForceLayout(nodes, edges)
+            : handlers.autoLayout(nodes, edges);
       setters.setNodes(laid);
-      setTimeout(() => { try { handlers.fitView({ padding: 0.3, duration: 400 }); } catch { /* */ } }, 50);
+      setTimeout(() => {
+        try {
+          handlers.fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* */
+        }
+      }, 50);
       toast.success(isPolish ? `Układ: ${nextMode}` : `Layout: ${nextMode}`, { duration: 1200 });
     }
     if (action === 'mm_structure_picker') {
@@ -793,7 +858,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         setters.setStructureType(newType);
         const laid = applyStructureLayout(newType, nodes, edges, handlers.autoLayout);
         setters.setNodes(laid);
-        setTimeout(() => { try { handlers.fitView({ padding: 0.3, duration: 400 }); } catch { /* */ } }, 50);
+        setTimeout(() => {
+          try {
+            handlers.fitView({ padding: 0.3, duration: 400 });
+          } catch {
+            /* */
+          }
+        }, 50);
         const LABELS: Record<string, { pl: string; en: string }> = {
           mindmap: { pl: 'Mapa myśli', en: 'Mind Map' },
           org_chart: { pl: 'Schemat organizacyjny', en: 'Org Chart' },
@@ -815,20 +886,26 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_activity') setters.setShowActivityFeed(true);
     if (action === 'mm_share') {
       const url = `${window.location.origin}${window.location.pathname}?ideaId=${ideaId}`;
-      navigator.clipboard?.writeText(url).then(() => {
-        toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!');
-      }).catch(() => {
-        toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
-      });
+      navigator.clipboard
+        ?.writeText(url)
+        .then(() => {
+          toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!');
+        })
+        .catch(() => {
+          toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
+        });
     }
     if (action === 'mm_embed') {
       const embedUrl = `${window.location.origin}/embed/idea/${ideaId}`;
       const embedCode = `<iframe src="${embedUrl}" width="800" height="600" frameborder="0"></iframe>`;
-      navigator.clipboard?.writeText(embedCode).then(() => {
-        toast.success(isPolish ? 'Kod embed skopiowany!' : 'Embed code copied!');
-      }).catch(() => {
-        toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
-      });
+      navigator.clipboard
+        ?.writeText(embedCode)
+        .then(() => {
+          toast.success(isPolish ? 'Kod embed skopiowany!' : 'Embed code copied!');
+        })
+        .catch(() => {
+          toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
+        });
     }
     if (action === 'mm_branch_analysis') setters.setShowBranchComparison(true);
   };

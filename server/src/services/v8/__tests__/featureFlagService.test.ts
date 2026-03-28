@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 // ==========================================
 // HOISTED MOCKS (vi.mock factories are hoisted above imports)
 // ==========================================
@@ -35,12 +35,12 @@ vi.mock('../../../config/FeatureFlags.js', () => ({
 }));
 
 import {
-  isV8Enabled,
-  getV8Flags,
-  setV8OrgFlag,
-  isV8ShadowMode,
-  getAllOrgFlags,
   clearFlagCache,
+  getAllOrgFlags,
+  getV8Flags,
+  isV8Enabled,
+  isV8ShadowMode,
+  setV8OrgFlag,
 } from '../featureFlagService.js';
 
 // ==========================================
@@ -259,7 +259,7 @@ describe('featureFlagService', () => {
       mockTableExists.mockResolvedValue(false);
 
       await expect(setV8OrgFlag(ORG_ID, 'chat', true)).rejects.toThrow(
-        /v8_feature_flags table does not exist/,
+        /v8_feature_flags table does not exist/
       );
     });
 
@@ -362,14 +362,29 @@ describe('featureFlagService', () => {
     it('maps DB rows to typed objects', async () => {
       mockDbAll.mockResolvedValue([
         { organization_id: ORG_ID, module: 'chat', enabled: 1, updated_at: '2026-03-24T00:00:00Z' },
-        { organization_id: ORG_ID, module: 'finance', enabled: 0, updated_at: '2026-03-24T01:00:00Z' },
+        {
+          organization_id: ORG_ID,
+          module: 'finance',
+          enabled: 0,
+          updated_at: '2026-03-24T01:00:00Z',
+        },
       ]);
 
       const result = await getAllOrgFlags();
 
       expect(result).toEqual([
-        { organizationId: ORG_ID, module: 'chat', enabled: true, updatedAt: '2026-03-24T00:00:00Z' },
-        { organizationId: ORG_ID, module: 'finance', enabled: false, updatedAt: '2026-03-24T01:00:00Z' },
+        {
+          organizationId: ORG_ID,
+          module: 'chat',
+          enabled: true,
+          updatedAt: '2026-03-24T00:00:00Z',
+        },
+        {
+          organizationId: ORG_ID,
+          module: 'finance',
+          enabled: false,
+          updatedAt: '2026-03-24T01:00:00Z',
+        },
       ]);
     });
   });

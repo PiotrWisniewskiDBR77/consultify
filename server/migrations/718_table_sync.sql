@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS tp_table_syncs (
   UNIQUE(source_table_id, target_table_id)
 );
 
-CREATE INDEX idx_tp_syncs_source ON tp_table_syncs(source_table_id);
-CREATE INDEX idx_tp_syncs_target ON tp_table_syncs(target_table_id);
+CREATE INDEX IF NOT EXISTS idx_tp_syncs_source ON tp_table_syncs(source_table_id);
+CREATE INDEX IF NOT EXISTS idx_tp_syncs_target ON tp_table_syncs(target_table_id);

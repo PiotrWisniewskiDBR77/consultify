@@ -9,12 +9,12 @@ import { ChevronDown, ChevronRight, Copy, Send, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
-  type ActionRow,
-  type MetaPill,
 } from '@/components/shared/PreviewPane';
 
 // ── Body ───────────────────────────────────────────────────────────────────

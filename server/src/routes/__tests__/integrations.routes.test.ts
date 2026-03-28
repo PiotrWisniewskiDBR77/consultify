@@ -162,14 +162,16 @@ describe('canonical integrations readback continuity', () => {
     app.use(express.json());
     app.use('/api/integrations', integrationsRoutes);
 
-    const res = await request(app).post('/api/integrations/connect/jira').send({
-      config: {
-        site_url: 'https://acme.atlassian.net',
-        cloud_id: 'cloud-1',
-        client_id: 'jira-client-id',
-        client_secret: 'jira-client-secret',
-      },
-    });
+    const res = await request(app)
+      .post('/api/integrations/connect/jira')
+      .send({
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -184,13 +186,7 @@ describe('canonical integrations readback continuity', () => {
     });
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integrations'),
-      expect.arrayContaining([
-        'org-1',
-        'jira',
-        'Jira',
-        'project_management',
-        'pending',
-      ])
+      expect.arrayContaining(['org-1', 'jira', 'Jira', 'project_management', 'pending'])
     );
     expect(mockBuildGovernedExternalAuthSession).toHaveBeenCalledWith(
       expect.any(Object),
@@ -213,14 +209,16 @@ describe('canonical integrations readback continuity', () => {
     app.use(express.json());
     app.use('/api/integrations', integrationsRoutes);
 
-    const res = await request(app).post('/api/integrations/jira/connect').send({
-      config: {
-        site_url: 'https://acme.atlassian.net',
-        cloud_id: 'cloud-1',
-        client_id: 'jira-client-id',
-        client_secret: 'jira-client-secret',
-      },
-    });
+    const res = await request(app)
+      .post('/api/integrations/jira/connect')
+      .send({
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);

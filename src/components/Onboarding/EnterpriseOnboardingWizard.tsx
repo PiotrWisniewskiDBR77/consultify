@@ -57,7 +57,8 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     const normalizeStatus = (data: any): V8PartnerOnboardingStatus => ({
       termsAccepted: Boolean(data?.termsAccepted ?? data?.terms_accepted),
       privacyAccepted: Boolean(data?.privacyAccepted ?? data?.privacy_accepted),
-      pricingTier: data?.pricingTier === undefined ? (data?.pricing_tier ?? null) : data.pricingTier,
+      pricingTier:
+        data?.pricingTier === undefined ? (data?.pricing_tier ?? null) : data.pricingTier,
       paymentSetup: Boolean(data?.paymentSetup ?? data?.payment_setup),
       completed: Boolean(data?.completed),
     });

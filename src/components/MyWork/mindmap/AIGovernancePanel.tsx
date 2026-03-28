@@ -31,10 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
-import type {
-  CanvasAIReplayEntry,
-  CanvasGovernanceStatus,
-} from '../ideaSelectionTypes';
+import type { CanvasAIReplayEntry, CanvasGovernanceStatus } from '../ideaSelectionTypes';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -46,11 +43,7 @@ interface AIGovernancePanelProps {
   mapExtensions: Record<string, any>;
   graphNodes: any[];
   currentUserName: string;
-  onGovernanceUpdate: (update: {
-    status: string;
-    note?: string;
-    actor?: string;
-  }) => void;
+  onGovernanceUpdate: (update: { status: string; note?: string; actor?: string }) => void;
 }
 
 type SectionKey = 'timeline' | 'review' | 'stats';
@@ -76,9 +69,7 @@ function parseGovernance(ext: Record<string, any>) {
   const reviewedBy = gov.reviewedBy ? String(gov.reviewedBy) : null;
   const reviewedAt = gov.reviewedAt ? String(gov.reviewedAt) : null;
   const reviewNote = gov.reviewNote ? String(gov.reviewNote) : null;
-  const lastReviewedAt = gov.lastReviewedAt
-    ? String(gov.lastReviewedAt)
-    : null;
+  const lastReviewedAt = gov.lastReviewedAt ? String(gov.lastReviewedAt) : null;
 
   return {
     aiReplayLog,
@@ -109,8 +100,7 @@ function formatTimestamp(iso: string, isPl: boolean): string {
     const diffMs = now.getTime() - d.getTime();
     const diffMin = Math.floor(diffMs / 60_000);
     if (diffMin < 1) return isPl ? 'Przed chwilą' : 'Just now';
-    if (diffMin < 60)
-      return isPl ? `${diffMin} min temu` : `${diffMin}m ago`;
+    if (diffMin < 60) return isPl ? `${diffMin} min temu` : `${diffMin}m ago`;
     const diffH = Math.floor(diffMin / 60);
     if (diffH < 24) return isPl ? `${diffH}h temu` : `${diffH}h ago`;
     return d.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
@@ -188,34 +178,21 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
 
-  const governance = useMemo(
-    () => parseGovernance(mapExtensions),
-    [mapExtensions]
-  );
+  const governance = useMemo(() => parseGovernance(mapExtensions), [mapExtensions]);
 
   const unreviewed = useMemo(
     () =>
-      hasUnreviewedChanges(
-        governance.status,
-        governance.lastAiApplyAt,
-        governance.lastReviewedAt
-      ),
+      hasUnreviewedChanges(governance.status, governance.lastAiApplyAt, governance.lastReviewedAt),
     [governance.status, governance.lastAiApplyAt, governance.lastReviewedAt]
   );
 
-  const sortedLog = useMemo(
-    () => [...governance.aiReplayLog].reverse(),
-    [governance.aiReplayLog]
-  );
+  const sortedLog = useMemo(() => [...governance.aiReplayLog].reverse(), [governance.aiReplayLog]);
 
   // AI statistics
   const stats = useMemo(() => {
     const log = governance.aiReplayLog;
     const totalActions = log.length;
-    const totalProposals = log.reduce(
-      (sum, e) => sum + (e.proposalIds?.length || 0),
-      0
-    );
+    const totalProposals = log.reduce((sum, e) => sum + (e.proposalIds?.length || 0), 0);
 
     const aiNodeIds = new Set<string>();
     for (const entry of log) {
@@ -225,10 +202,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
     }
 
     const nodesFromAI = graphNodes.filter(
-      (n: any) =>
-        n?.data?.sourceType === 'ai' ||
-        n?.data?.source === 'ai' ||
-        aiNodeIds.has(n?.id)
+      (n: any) => n?.data?.sourceType === 'ai' || n?.data?.source === 'ai' || aiNodeIds.has(n?.id)
     ).length;
     const totalNodes = graphNodes.length;
     const manualNodes = totalNodes - nodesFromAI;
@@ -242,9 +216,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
       generatorCounts[g] = (generatorCounts[g] || 0) + 1;
     }
 
-    const mostUsedGenerator = Object.entries(generatorCounts).sort(
-      (a, b) => b[1] - a[1]
-    )[0];
+    const mostUsedGenerator = Object.entries(generatorCounts).sort((a, b) => b[1] - a[1])[0];
 
     return {
       totalActions,
@@ -305,9 +277,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                {isPl
-                  ? 'Niesprawdzone zmiany AI'
-                  : 'Unreviewed AI changes'}
+                {isPl ? 'Niesprawdzone zmiany AI' : 'Unreviewed AI changes'}
               </div>
               <div className="text-[10px] text-amber-600/80 dark:text-amber-400/70 mt-0.5">
                 {isPl
@@ -344,9 +314,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 flex-1">
               {isPl ? 'Oś czasu AI' : 'AI Activity Timeline'}
             </span>
-            <span className="text-[9px] text-slate-400 mr-1">
-              {sortedLog.length}
-            </span>
+            <span className="text-[9px] text-slate-400 mr-1">{sortedLog.length}</span>
             {expandedSections.has('timeline') ? (
               <ChevronUp size={12} className="text-violet-400" />
             ) : (
@@ -366,8 +334,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                 sortedLog.map((entry) => {
                   const isExpanded = expandedEntryId === entry.id;
                   const genLabel =
-                    GENERATOR_LABELS[entry.generatorType] ||
-                    GENERATOR_LABELS.unknown;
+                    GENERATOR_LABELS[entry.generatorType] || GENERATOR_LABELS.unknown;
                   const proposalCount = entry.proposalIds?.length || 0;
 
                   return (
@@ -377,9 +344,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          setExpandedEntryId(isExpanded ? null : entry.id)
-                        }
+                        onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
                         className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-colors"
                       >
                         <Bot size={12} className="text-violet-500 shrink-0" />
@@ -389,33 +354,20 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[9px] text-slate-400">
-                              <Clock
-                                size={8}
-                                className="inline mr-0.5 -mt-px"
-                              />
+                              <Clock size={8} className="inline mr-0.5 -mt-px" />
                               {formatTimestamp(entry.acceptedAt, !!isPl)}
                             </span>
                             <span className="text-[9px] text-violet-500/70">
-                              {proposalCount}{' '}
-                              {isPl ? 'propozycji' : 'proposals'}
+                              {proposalCount} {isPl ? 'propozycji' : 'proposals'}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <CheckCircle2
-                            size={10}
-                            className="text-emerald-500"
-                          />
+                          <CheckCircle2 size={10} className="text-emerald-500" />
                           {isExpanded ? (
-                            <ChevronUp
-                              size={10}
-                              className="text-slate-400"
-                            />
+                            <ChevronUp size={10} className="text-slate-400" />
                           ) : (
-                            <ChevronDown
-                              size={10}
-                              className="text-slate-400"
-                            />
+                            <ChevronDown size={10} className="text-slate-400" />
                           )}
                         </div>
                       </button>
@@ -514,9 +466,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   value={reviewNote}
                   onChange={(e) => setReviewNote(e.target.value)}
                   placeholder={
-                    isPl
-                      ? 'Opcjonalny komentarz do review...'
-                      : 'Optional review comment...'
+                    isPl ? 'Opcjonalny komentarz do review...' : 'Optional review comment...'
                   }
                   rows={2}
                   className="w-full text-[10px] px-2.5 py-1.5 rounded-lg border border-emerald-200/40 dark:border-emerald-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/50 outline-none focus:ring-1 focus:ring-emerald-400/40 resize-none"
@@ -549,9 +499,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       }`}
                     >
                       <Icon size={11} />
-                      <span className="truncate">
-                        {isPl ? cfg.labelPl : cfg.labelEn}
-                      </span>
+                      <span className="truncate">{isPl ? cfg.labelPl : cfg.labelEn}</span>
                     </button>
                   );
                 })}
@@ -568,10 +516,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               )}
               {governance.reviewNote && (
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-white/[0.02] rounded-lg p-2 border border-slate-200/20 dark:border-navy-700/20">
-                  <MessageSquare
-                    size={9}
-                    className="inline mr-1 text-slate-400"
-                  />
+                  <MessageSquare size={9} className="inline mr-1 text-slate-400" />
                   {governance.reviewNote}
                 </div>
               )}
@@ -661,24 +606,17 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {stats.mostUsedGenerator && (
                 <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-blue-200/20 dark:border-blue-800/15">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    {isPl
-                      ? 'Najczęściej używany generator'
-                      : 'Most used generator'}
+                    {isPl ? 'Najczęściej używany generator' : 'Most used generator'}
                   </div>
                   <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                     {isPl
-                      ? (
-                          GENERATOR_LABELS[stats.mostUsedGenerator.type] ||
-                          GENERATOR_LABELS.unknown
-                        ).pl
-                      : (
-                          GENERATOR_LABELS[stats.mostUsedGenerator.type] ||
-                          GENERATOR_LABELS.unknown
-                        ).en}
+                      ? (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
+                          .pl
+                      : (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
+                          .en}
                   </div>
                   <div className="text-[9px] text-slate-400 mt-0.5">
-                    {stats.mostUsedGenerator.count}×{' '}
-                    {isPl ? 'użyć' : 'uses'}
+                    {stats.mostUsedGenerator.count}× {isPl ? 'użyć' : 'uses'}
                   </div>
                 </div>
               )}
@@ -708,25 +646,15 @@ interface AIGovernanceBadgeProps {
   onClick: () => void;
 }
 
-export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({
-  mapExtensions,
-  onClick,
-}) => {
+export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensions, onClick }) => {
   const { i18n } = useTranslation();
   const isPl = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
 
-  const governance = useMemo(
-    () => parseGovernance(mapExtensions),
-    [mapExtensions]
-  );
+  const governance = useMemo(() => parseGovernance(mapExtensions), [mapExtensions]);
 
   const unreviewed = useMemo(
     () =>
-      hasUnreviewedChanges(
-        governance.status,
-        governance.lastAiApplyAt,
-        governance.lastReviewedAt
-      ),
+      hasUnreviewedChanges(governance.status, governance.lastAiApplyAt, governance.lastReviewedAt),
     [governance.status, governance.lastAiApplyAt, governance.lastReviewedAt]
   );
 
@@ -751,9 +679,7 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({
       }
     >
       <Shield size={11} className={unreviewed ? 'text-amber-500' : 'text-violet-500'} />
-      {unreviewed && (
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-      )}
+      {unreviewed && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
       <span>{aiCount}</span>
     </button>
   );

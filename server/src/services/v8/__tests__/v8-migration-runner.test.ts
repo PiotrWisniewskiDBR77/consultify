@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../migrations');
 const MIGRATION_FILE_PATTERN = /^2026\d{4}_v8_.*\.sql$/;
@@ -26,11 +27,13 @@ function transformSqliteToPostgres(rawSql: string): { sql: string; transformatio
     transformations.push(`datetime('now') → CURRENT_TIMESTAMP: ${bareCount}`);
   }
 
-  const alterAddCount = (sql.match(/ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS)/gi) || []).length;
+  const alterAddCount = (
+    sql.match(/ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS)/gi) || []
+  ).length;
   if (alterAddCount > 0) {
     sql = sql.replace(
       /ALTER\s+TABLE\s+(\S+)\s+ADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS)/gi,
-      'ALTER TABLE $1 ADD COLUMN IF NOT EXISTS ',
+      'ALTER TABLE $1 ADD COLUMN IF NOT EXISTS '
     );
     transformations.push(`ADD COLUMN → ADD COLUMN IF NOT EXISTS: ${alterAddCount}`);
   }
@@ -90,7 +93,9 @@ describe('CP-28: V8 Migration Runner — dry-run validation', () => {
   it('all CREATE TABLE statements use v8_ prefix', () => {
     for (const f of files) {
       const content = fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf-8');
-      const tableMatches = [...content.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi)];
+      const tableMatches = [
+        ...content.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi),
+      ];
       for (const m of tableMatches) {
         const tableName = m[1].toLowerCase();
         expect(tableName).toMatch(/^v8_/);

@@ -49,11 +49,18 @@ async function ensureDatabaseExistsForTests(err: any): Promise<boolean> {
       } catch (e: any) {
         // Common in local dev: user can connect but cannot create DBs.
         // Fall back to an existing DB so integration tests can still run.
-        if (String(e?.message || '').toLowerCase().includes('permission denied')) {
+        if (
+          String(e?.message || '')
+            .toLowerCase()
+            .includes('permission denied')
+        ) {
           testDatabaseOverride = 'postgres';
-          logger.warn('[Postgres] No permission to create test DB; falling back to postgres database', {
-            requestedDatabase: dbName,
-          });
+          logger.warn(
+            '[Postgres] No permission to create test DB; falling back to postgres database',
+            {
+              requestedDatabase: dbName,
+            }
+          );
           return true;
         }
         throw e;

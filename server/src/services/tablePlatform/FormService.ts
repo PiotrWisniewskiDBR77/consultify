@@ -4,12 +4,13 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
+import { NotFoundError, ValidationError } from './ErrorHandling.js';
 import recordsService from './RecordsService.js';
 import schemaValidationService from './SchemaValidationService.js';
-import { NotFoundError, ValidationError } from './ErrorHandling.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,11 +85,7 @@ function validateSlug(slug: string): void {
 // ── Service ──────────────────────────────────────────────────────────────────
 
 const formService = {
-  async createForm(
-    tableId: string,
-    data: CreateFormInput,
-    createdBy?: string
-  ): Promise<Form> {
+  async createForm(tableId: string, data: CreateFormInput, createdBy?: string): Promise<Form> {
     const db = getDatabase();
     const id = uuidv4();
     const slug = data.slug ?? generateSlug();
@@ -173,10 +170,10 @@ const formService = {
 
     if (data.slug && data.slug !== (before as { slug: string }).slug) {
       validateSlug(data.slug);
-      const existing = await db.query(
-        'SELECT id FROM tp_forms WHERE slug = $1 AND id != $2',
-        [data.slug, formId]
-      );
+      const existing = await db.query('SELECT id FROM tp_forms WHERE slug = $1 AND id != $2', [
+        data.slug,
+        formId,
+      ]);
       if (existing.rows.length) {
         throw new ValidationError(`Slug "${data.slug}" is already taken`);
       }
@@ -219,10 +216,7 @@ const formService = {
     }
 
     params.push(formId);
-    await db.query(
-      `UPDATE tp_forms SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
-      params
-    );
+    await db.query(`UPDATE tp_forms SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`, params);
 
     const after = (await db.query('SELECT * FROM tp_forms WHERE id = $1', [formId])).rows[0];
     await auditService.logEvent('update', 'form', formId, updatedBy, before, after, undefined);
@@ -265,14 +259,13 @@ const formService = {
       throw new ValidationError('This form is not published');
     }
 
-    const config = (typeof form.config === 'string'
-      ? JSON.parse(form.config)
-      : form.config) as FormConfig;
+    const config = (
+      typeof form.config === 'string' ? JSON.parse(form.config) : form.config
+    ) as FormConfig;
 
-    const fieldsResult = await db.query(
-      'SELECT * FROM tp_fields WHERE table_id = $1',
-      [form.table_id]
-    );
+    const fieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [
+      form.table_id,
+    ]);
     const tableFields = fieldsResult.rows as Array<{
       id: string;
       name: string;

@@ -235,7 +235,16 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   const [newEvidenceUrl, setNewEvidenceUrl] = useState('');
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['description', 'tags', 'ai_context', 'attachments', 'artifact_links', 'evidence_links', 'comments', 'links'])
+    new Set([
+      'description',
+      'tags',
+      'ai_context',
+      'attachments',
+      'artifact_links',
+      'evidence_links',
+      'comments',
+      'links',
+    ])
   );
 
   useEffect(() => {
@@ -359,10 +368,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
         setArtifactLinks((prev) =>
           prev.filter(
             (link) =>
-              !(
-                link?.artifactRef?.type === artifactType &&
-                link?.artifactRef?.id === artifactId
-              )
+              !(link?.artifactRef?.type === artifactType && link?.artifactRef?.id === artifactId)
           )
         );
       } catch {
@@ -773,7 +779,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           >
             <select
               value={nodeData.semanticType || ''}
-              onChange={(e) => onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })}
+              onChange={(e) =>
+                onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })
+              }
               disabled={locked}
               className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400 transition-colors"
             >
@@ -1036,7 +1044,8 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               {artifactLinks.map((link) => {
                 const artifactType = String(link?.artifactRef?.type || '');
                 const artifactId = String(link?.artifactRef?.id || '');
-                const label = link?.label || getArtifactLabel(artifactType as any, isPl ? 'pl' : 'en');
+                const label =
+                  link?.label || getArtifactLabel(artifactType as any, isPl ? 'pl' : 'en');
                 return (
                   <div
                     key={`${artifactType}:${artifactId}`}
@@ -1066,7 +1075,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     {!locked && artifactType && artifactId && (
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); handleDetachArtifact(artifactType, artifactId); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDetachArtifact(artifactType, artifactId);
+                        }}
                         className="text-slate-400 hover:text-red-500 shrink-0"
                       >
                         <X size={12} />
@@ -1088,7 +1100,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           >
             <div className="space-y-1.5">
               {(nodeData.evidenceLinks || []).map((item) => {
-                const isClickable = (item.type === 'url' && item.url) || (item.type === 'artifact' && item.artifactId);
+                const isClickable =
+                  (item.type === 'url' && item.url) ||
+                  (item.type === 'artifact' && item.artifactId);
                 return (
                   <div
                     key={item.id}
@@ -1132,14 +1146,20 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     autoFocus
                     value={newEvidenceTitle}
                     onChange={(e) => setNewEvidenceTitle(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddEvidence(); if (e.key === 'Escape') setShowEvidenceForm(false); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddEvidence();
+                      if (e.key === 'Escape') setShowEvidenceForm(false);
+                    }}
                     placeholder={isPl ? 'Tytuł dowodu...' : 'Evidence title...'}
                     className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
                   <input
                     value={newEvidenceUrl}
                     onChange={(e) => setNewEvidenceUrl(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddEvidence(); if (e.key === 'Escape') setShowEvidenceForm(false); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddEvidence();
+                      if (e.key === 'Escape') setShowEvidenceForm(false);
+                    }}
                     placeholder={isPl ? 'URL (opcjonalnie)' : 'URL (optional)'}
                     className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
@@ -1152,7 +1172,11 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       {isPl ? 'Dodaj' : 'Add'}
                     </button>
                     <button
-                      onClick={() => { setShowEvidenceForm(false); setNewEvidenceTitle(''); setNewEvidenceUrl(''); }}
+                      onClick={() => {
+                        setShowEvidenceForm(false);
+                        setNewEvidenceTitle('');
+                        setNewEvidenceUrl('');
+                      }}
                       className="h-7 px-3 rounded-lg text-[10px] text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     >
                       {isPl ? 'Anuluj' : 'Cancel'}

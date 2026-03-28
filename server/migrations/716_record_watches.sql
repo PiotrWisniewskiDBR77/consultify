@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS tp_record_watches (
   UNIQUE(record_id, user_id)
 );
 
-CREATE INDEX idx_tp_watches_record ON tp_record_watches(record_id);
-CREATE INDEX idx_tp_watches_user ON tp_record_watches(user_id);
+CREATE INDEX IF NOT EXISTS idx_tp_watches_record ON tp_record_watches(record_id);
+CREATE INDEX IF NOT EXISTS idx_tp_watches_user ON tp_record_watches(user_id);

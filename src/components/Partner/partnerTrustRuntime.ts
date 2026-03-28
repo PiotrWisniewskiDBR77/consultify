@@ -4,7 +4,11 @@ import {
   V8PartnerApi,
   type V8PartnerOnboardingStatus,
 } from '../../services/api/v8';
-import { PARTNER_TRUST_PHASES, type PartnerTrustPhase, type PartnerTrustProgression } from '../../views/partner/types';
+import {
+  PARTNER_TRUST_PHASES,
+  type PartnerTrustPhase,
+  type PartnerTrustProgression,
+} from '../../views/partner/types';
 import { loadPartnerRuntimeSummary } from './PartnerRuntimeSummaryStrip';
 
 interface PartnerConnectionPayload {
@@ -27,7 +31,9 @@ function normalizeConnection(payload: any): PartnerConnectionPayload {
     organization: data?.organization
       ? {
           partnerSince:
-            typeof data.organization.partnerSince === 'string' ? data.organization.partnerSince : undefined,
+            typeof data.organization.partnerSince === 'string'
+              ? data.organization.partnerSince
+              : undefined,
         }
       : undefined,
   };
@@ -85,7 +91,7 @@ function phaseRank(phase: PartnerTrustPhase): number {
 
 function buildProgression(
   currentTrustPhase: PartnerTrustPhase,
-  completionMarker?: string,
+  completionMarker?: string
 ): PartnerTrustProgression[] {
   const currentRank = phaseRank(currentTrustPhase);
 
@@ -107,8 +113,17 @@ export function derivePartnerTrustSnapshot(input: {
   totalEarned: number;
   readyForPayout: number;
 }): PartnerTrustSnapshot {
-  const { connected, partnerSince, onboardingStatus, clientCount, totalClicks, signups, paidCustomers, totalEarned, readyForPayout } =
-    input;
+  const {
+    connected,
+    partnerSince,
+    onboardingStatus,
+    clientCount,
+    totalClicks,
+    signups,
+    paidCustomers,
+    totalEarned,
+    readyForPayout,
+  } = input;
 
   let currentTrustPhase: PartnerTrustPhase = 'G1_DISCOVERY';
 

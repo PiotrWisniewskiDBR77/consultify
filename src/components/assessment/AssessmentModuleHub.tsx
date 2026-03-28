@@ -488,7 +488,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
           if (!createResponse.ok) {
             const errorData = await createResponse.json().catch(() => ({}));
             throw new Error(
-              errorData.error || (isPolish ? 'Nie udało się utworzyć assessmentu' : 'Failed to create assessment')
+              errorData.error ||
+                (isPolish ? 'Nie udało się utworzyć assessmentu' : 'Failed to create assessment')
             );
           }
           const created = await createResponse.json();
@@ -524,9 +525,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         setSelectedAssessmentId(assessmentId);
       }
       setAssessmentMeta((prev) =>
-        prev
-          ? { ...prev, name, isNew: false }
-          : { name, isNew: false }
+        prev ? { ...prev, name, isNew: false } : { name, isNew: false }
       );
     } catch (error) {
       console.error('[AssessmentModuleHub] Save error:', error);
@@ -635,9 +634,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
       const answers = assessmentRecord.answers || assessmentRecord.axisData || {};
       const completionPercent = Number(
-        assessmentRecord.completion_percent ??
-          assessmentRecord.completionPercent ??
-          0
+        assessmentRecord.completion_percent ?? assessmentRecord.completionPercent ?? 0
       );
 
       const { setFullSessionData, fullSessionData } = useAppStore.getState();
@@ -656,10 +653,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
       setAssessmentMeta({
         name: assessmentRecord.name || 'Nowy Assessment',
         isNew: false,
-        status:
-          (assessmentRecord.backendStatus || assessmentRecord.status || undefined) as
-            | WorkflowStatus
-            | undefined,
+        status: (assessmentRecord.backendStatus || assessmentRecord.status || undefined) as
+          | WorkflowStatus
+          | undefined,
       });
     } catch (error) {
       console.error('[AssessmentModuleHub] Error loading assessment:', error);

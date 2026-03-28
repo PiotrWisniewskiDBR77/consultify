@@ -19,8 +19,13 @@ const baseProps = {
   style: {},
   position: { x: 200, y: 100 },
   onUpdate: vi.fn(),
+  onAddChild: vi.fn(),
+  onAddSibling: vi.fn(),
   onOpenContextMenu: vi.fn(),
   onOpenArtifactModal: vi.fn(),
+  onOpenNodeDetail: vi.fn(),
+  onRemoveArtifact: vi.fn(),
+  onOpenLinkedArtifact: vi.fn(),
   onOpenChatAboutNode: vi.fn(),
   onAction: vi.fn(),
 };
@@ -62,8 +67,12 @@ describe('FloatingNodeToolbar', () => {
   it('calls onOpenArtifactModal on link click', () => {
     const onOpenArtifactModal = vi.fn();
     render(<FloatingNodeToolbar {...baseProps} onOpenArtifactModal={onOpenArtifactModal} />);
-    const linkBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'Link artifact');
+    const linkBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'Linked artifacts');
+    expect(linkBtn).toBeTruthy();
     if (linkBtn) fireEvent.click(linkBtn);
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
     expect(onOpenArtifactModal).toHaveBeenCalled();
   });
 

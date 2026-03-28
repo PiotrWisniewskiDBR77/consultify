@@ -46,7 +46,12 @@ export function buildWorkaroundFromSignal(signal: {
     initiativeId: signal.initiativeId,
     status: 'open',
     steps: [
-      { id: 'detect', type: 'signal_detected', status: 'done', completedAt: new Date().toISOString() },
+      {
+        id: 'detect',
+        type: 'signal_detected',
+        status: 'done',
+        completedAt: new Date().toISOString(),
+      },
       { id: 'raid', type: 'raid_created', status: 'pending' },
       { id: 'mitigate', type: 'mitigation_planned', status: 'pending' },
       { id: 'task', type: 'task_created', status: 'pending' },
@@ -62,7 +67,7 @@ export function advanceWorkaround(
   stepId: string,
   entityType?: string,
   entityId?: string,
-  userId?: string,
+  userId?: string
 ): ClosedLoopWorkaround {
   const step = workaround.steps.find((s) => s.id === stepId);
   if (step && step.status === 'pending') {

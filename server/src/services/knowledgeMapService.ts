@@ -44,46 +44,74 @@ interface FileRecord {
 // ==========================================
 
 const TOPIC_KEYWORDS: Record<string, string[]> = {
-  'Digital Transformation': ['digital', 'transformation', 'digitalization', 'automation', 'digitization'],
-  'Cybersecurity': ['security', 'cyber', 'threat', 'vulnerability', 'firewall', 'encryption'],
+  'Digital Transformation': [
+    'digital',
+    'transformation',
+    'digitalization',
+    'automation',
+    'digitization',
+  ],
+  Cybersecurity: ['security', 'cyber', 'threat', 'vulnerability', 'firewall', 'encryption'],
   'Data & Analytics': ['data', 'analytics', 'dashboard', 'kpi', 'metrics', 'bi', 'reporting'],
-  'AI & Machine Learning': ['ai', 'machine learning', 'ml', 'neural', 'deep learning', 'nlp', 'llm'],
+  'AI & Machine Learning': [
+    'ai',
+    'machine learning',
+    'ml',
+    'neural',
+    'deep learning',
+    'nlp',
+    'llm',
+  ],
   'Cloud Infrastructure': ['cloud', 'aws', 'azure', 'gcp', 'saas', 'iaas', 'paas', 'kubernetes'],
   'Strategy & Planning': ['strategy', 'roadmap', 'planning', 'vision', 'mission', 'objective'],
   'Financial Analysis': ['revenue', 'cost', 'budget', 'roi', 'profit', 'margin', 'financial'],
-  'Operations': ['process', 'workflow', 'efficiency', 'operational', 'supply chain', 'logistics'],
-  'Innovation': ['innovation', 'r&d', 'patent', 'prototype', 'experiment', 'disruption'],
+  Operations: ['process', 'workflow', 'efficiency', 'operational', 'supply chain', 'logistics'],
+  Innovation: ['innovation', 'r&d', 'patent', 'prototype', 'experiment', 'disruption'],
   'Governance & Compliance': ['governance', 'compliance', 'regulation', 'audit', 'policy', 'gdpr'],
   'Human Resources': ['talent', 'hiring', 'retention', 'hr', 'training', 'workforce', 'employee'],
   'Customer Experience': ['customer', 'ux', 'experience', 'satisfaction', 'nps', 'journey'],
 };
 
 const ENTITY_PATTERNS: { type: string; pattern: RegExp }[] = [
-  { type: 'organization', pattern: /\b(?:Inc|Corp|Ltd|GmbH|S\.A\.|LLC|Sp\.\s?z\s?o\.o|S\.p\.A)\b/gi },
-  { type: 'currency', pattern: /(?:USD|EUR|PLN|GBP|CHF)\s?[\d,.]+|[\d,.]+\s?(?:USD|EUR|PLN|GBP|CHF)/gi },
+  {
+    type: 'organization',
+    pattern: /\b(?:Inc|Corp|Ltd|GmbH|S\.A\.|LLC|Sp\.\s?z\s?o\.o|S\.p\.A)\b/gi,
+  },
+  {
+    type: 'currency',
+    pattern: /(?:USD|EUR|PLN|GBP|CHF)\s?[\d,.]+|[\d,.]+\s?(?:USD|EUR|PLN|GBP|CHF)/gi,
+  },
   { type: 'percentage', pattern: /\d+[.,]?\d*\s?%/g },
-  { type: 'date', pattern: /\b(?:Q[1-4]\s?\d{4}|\d{4}[-/]\d{2}(?:[-/]\d{2})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})\b/gi },
-  { type: 'technology', pattern: /\b(?:Python|Java|React|TypeScript|SQL|PostgreSQL|Docker|Kubernetes|Terraform|REST|GraphQL|API|SDK)\b/gi },
+  {
+    type: 'date',
+    pattern:
+      /\b(?:Q[1-4]\s?\d{4}|\d{4}[-/]\d{2}(?:[-/]\d{2})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})\b/gi,
+  },
+  {
+    type: 'technology',
+    pattern:
+      /\b(?:Python|Java|React|TypeScript|SQL|PostgreSQL|Docker|Kubernetes|Terraform|REST|GraphQL|API|SDK)\b/gi,
+  },
 ];
 
 const REPORT_TYPE_SIGNALS: Record<string, { keywords: string[]; weight: number }> = {
-  'ASSESSMENT_DRD': {
+  ASSESSMENT_DRD: {
     keywords: ['maturity', 'assessment', 'drd', 'digital readiness', 'axis', 'area'],
     weight: 1,
   },
-  'STRATEGIC_REVIEW': {
+  STRATEGIC_REVIEW: {
     keywords: ['strategy', 'roadmap', 'vision', 'strategic', 'initiative', 'program'],
     weight: 1,
   },
-  'FINANCIAL_ANALYSIS': {
+  FINANCIAL_ANALYSIS: {
     keywords: ['budget', 'revenue', 'cost', 'roi', 'financial', 'valuation', 'p&l'],
     weight: 1,
   },
-  'OPERATIONAL_AUDIT': {
+  OPERATIONAL_AUDIT: {
     keywords: ['process', 'audit', 'compliance', 'operational', 'efficiency', 'sla'],
     weight: 1,
   },
-  'TECHNICAL_REVIEW': {
+  TECHNICAL_REVIEW: {
     keywords: ['architecture', 'infrastructure', 'code', 'technical', 'stack', 'deployment'],
     weight: 1,
   },
@@ -167,9 +195,13 @@ function generateSummary(
 ): string {
   const topicStr = topics.slice(0, 4).join(', ');
   const orgEntities = entities.filter((e) => e.type === 'organization');
-  const orgStr = orgEntities.length > 0
-    ? ` References to ${orgEntities.slice(0, 3).map((e) => e.name).join(', ')}.`
-    : '';
+  const orgStr =
+    orgEntities.length > 0
+      ? ` References to ${orgEntities
+          .slice(0, 3)
+          .map((e) => e.name)
+          .join(', ')}.`
+      : '';
   const pages = Math.ceil(totalChars / 2000);
 
   return (
@@ -187,7 +219,10 @@ export async function buildKnowledgeMap(
   organizationId: string,
   fileIds: string[]
 ): Promise<KnowledgeMapResult> {
-  logger.info('[KnowledgeMap] Building knowledge map', { organizationId, fileCount: fileIds.length });
+  logger.info('[KnowledgeMap] Building knowledge map', {
+    organizationId,
+    fileCount: fileIds.length,
+  });
 
   if (!fileIds || fileIds.length === 0) {
     throw new Error('No file IDs provided');
@@ -212,7 +247,9 @@ export async function buildKnowledgeMap(
         try {
           const meta = JSON.parse(f.metadata_json);
           if (meta.extractedText) text += ' ' + meta.extractedText;
-        } catch { /* ignore parse errors */ }
+        } catch {
+          /* ignore parse errors */
+        }
       }
       return text;
     })

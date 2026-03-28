@@ -2,7 +2,10 @@ const PROBABILITY_SCORES: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 
 const IMPACT_SCORES: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
 
 export function calculateRiskScore(probability: string, impact: string): number {
-  return (PROBABILITY_SCORES[probability?.toUpperCase()] || 1) * (IMPACT_SCORES[impact?.toUpperCase()] || 1);
+  return (
+    (PROBABILITY_SCORES[probability?.toUpperCase()] || 1) *
+    (IMPACT_SCORES[impact?.toUpperCase()] || 1)
+  );
 }
 
 export function categorizeScore(

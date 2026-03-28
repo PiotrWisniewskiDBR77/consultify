@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { Brain, Plus, RefreshCw, Trash2, Weight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
@@ -33,9 +33,7 @@ const AVAILABLE_PRODUCTS = [
   { slug: 'marketplace', label: 'Marketplace', defaultWeight: 0.6 },
 ];
 
-export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> = ({
-  workerId,
-}) => {
+export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> = ({ workerId }) => {
   const [assignments, setAssignments] = useState<KnowledgeAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -193,7 +191,8 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                   {assignment.product_slug || assignment.knowledge_doc_id || 'Unknown'}
                 </span>
                 <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
-                  {SOURCE_TYPE_LABELS[assignment.knowledge_source_type] || assignment.knowledge_source_type}
+                  {SOURCE_TYPE_LABELS[assignment.knowledge_source_type] ||
+                    assignment.knowledge_source_type}
                 </span>
               </div>
             </div>
@@ -206,7 +205,9 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                   className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs"
                 >
                   {[0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0].map((w) => (
-                    <option key={w} value={w}>{w}</option>
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
                   ))}
                 </select>
               </div>

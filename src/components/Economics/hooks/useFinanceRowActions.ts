@@ -4,7 +4,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import {
+  shouldFallbackToLegacyFinance,
+  V8FinanceApi,
+  type V8FinanceModelCreatePayload,
+} from '@/services/api/v8/finance';
 
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { type FinanceModelRow, type FinanceRow, type FinanceStatementRow } from '../financeTypes';
@@ -31,7 +35,7 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
-async function createModelWithFallback(body: Record<string, unknown>) {
+async function createModelWithFallback(body: V8FinanceModelCreatePayload) {
   try {
     return await V8FinanceApi.createModel(body);
   } catch (error) {
@@ -163,7 +167,10 @@ export function useFinanceRowActions({
         const copyTitle = `${row.title} (${isPl ? 'kopia' : 'copy'})`;
         if (row.kind === 'statements') {
           toast.error(
-            t('finance.toast.statementDuplicateUnsupported', 'Duplikacja statementu nie jest wspierana')
+            t(
+              'finance.toast.statementDuplicateUnsupported',
+              'Duplikacja statementu nie jest wspierana'
+            )
           );
           return;
         } else if (
@@ -297,7 +304,10 @@ export function useFinanceRowActions({
             onClick: () => handleOpenFull(statementRow),
           });
         }
-        if (statementRow.isWorkable && String(statementRow.rawStatus || '').toLowerCase() !== 'confirmed') {
+        if (
+          statementRow.isWorkable &&
+          String(statementRow.rawStatus || '').toLowerCase() !== 'confirmed'
+        ) {
           tabSpecific.push({
             id: 'confirm',
             label: t('finance.row.confirmStatement', 'Potwierdź'),

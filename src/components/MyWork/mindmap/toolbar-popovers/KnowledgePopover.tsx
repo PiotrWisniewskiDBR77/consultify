@@ -8,21 +8,37 @@ interface KnowledgePopoverProps {
 }
 
 const KNOWLEDGE_CARDS = [
-  { action: 'mm_add_knowledge', iconEl: FileText, labelPl: 'Karta wiedzy', labelEn: 'Knowledge card' },
+  {
+    action: 'mm_add_knowledge',
+    iconEl: FileText,
+    labelPl: 'Karta wiedzy',
+    labelEn: 'Knowledge card',
+  },
   { action: 'mm_add_note', iconEl: Star, labelPl: 'Notatka', labelEn: 'Note card' },
-  { action: 'mm_add_evidence', iconEl: Shield, labelPl: 'Dowód / Evidence', labelEn: 'Evidence card' },
+  {
+    action: 'mm_add_evidence',
+    iconEl: Shield,
+    labelPl: 'Dowód / Evidence',
+    labelEn: 'Evidence card',
+  },
 ];
 
 const FROM_PLATFORM = [
-  { action: 'mm_insert_from_notebook', iconEl: BookOpen, labelPl: 'Wstaw z Notebook', labelEn: 'Insert from Notebook' },
-  { action: 'mm_insert_from_interview', iconEl: MessageSquare, labelPl: 'Wstaw z Interview', labelEn: 'Insert from Interview' },
+  {
+    action: 'mm_insert_from_notebook',
+    iconEl: BookOpen,
+    labelPl: 'Wstaw z Notebook',
+    labelEn: 'Insert from Notebook',
+  },
+  {
+    action: 'mm_insert_from_interview',
+    iconEl: MessageSquare,
+    labelPl: 'Wstaw z Interview',
+    labelEn: 'Insert from Interview',
+  },
 ];
 
-export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({
-  isPl,
-  onAction,
-  onClose,
-}) => {
+export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onAction, onClose }) => {
   const dispatch = (action: string) => {
     onAction(action);
     onClose();

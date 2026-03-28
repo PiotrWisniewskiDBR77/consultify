@@ -6,7 +6,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { CanonicalNode, CanonicalEdge } from '../validators/ideaWorkspaceGraph.validators.js';
+
+import type { CanonicalEdge, CanonicalNode } from '../validators/ideaWorkspaceGraph.validators.js';
 
 export interface ClusterNode extends CanonicalNode {
   kind: 'cluster';
@@ -43,12 +44,13 @@ export function materializeClusters(
       .map((n) => n.position)
       .filter(Boolean) as { x: number; y: number }[];
 
-    const centroid = memberPositions.length > 0
-      ? {
-          x: memberPositions.reduce((s, p) => s + p.x, 0) / memberPositions.length,
-          y: memberPositions.reduce((s, p) => s + p.y, 0) / memberPositions.length - 80,
-        }
-      : undefined;
+    const centroid =
+      memberPositions.length > 0
+        ? {
+            x: memberPositions.reduce((s, p) => s + p.x, 0) / memberPositions.length,
+            y: memberPositions.reduce((s, p) => s + p.y, 0) / memberPositions.length - 80,
+          }
+        : undefined;
 
     const clusterNode: ClusterNode = {
       id: clusterId,

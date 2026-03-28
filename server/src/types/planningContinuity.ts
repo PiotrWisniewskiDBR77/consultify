@@ -19,12 +19,7 @@ import { z } from 'zod';
 // ==========================================
 
 /** Decision W3-4: 4-level canonical WBS depth */
-export const WBSLevelValues = [
-  'initiative',
-  'workstream_phase',
-  'task',
-  'subtask',
-] as const;
+export const WBSLevelValues = ['initiative', 'workstream_phase', 'task', 'subtask'] as const;
 export type WBSLevel = (typeof WBSLevelValues)[number];
 
 export const WBS_MAX_DEPTH = 4;
@@ -67,28 +62,14 @@ export const CrossDependencyTypeValues = [
 ] as const;
 export type CrossDependencyType = (typeof CrossDependencyTypeValues)[number];
 
-export const CrossDependencyStatusValues = [
-  'active',
-  'resolved',
-  'broken',
-  'cancelled',
-] as const;
+export const CrossDependencyStatusValues = ['active', 'resolved', 'broken', 'cancelled'] as const;
 export type CrossDependencyStatus = (typeof CrossDependencyStatusValues)[number];
 
 /** Decision W3-7: lightweight chain types */
-export const DecisionChainTypeValues = [
-  'sequential',
-  'parallel',
-  'delegated',
-] as const;
+export const DecisionChainTypeValues = ['sequential', 'parallel', 'delegated'] as const;
 export type DecisionChainType = (typeof DecisionChainTypeValues)[number];
 
-export const DecisionChainStatusValues = [
-  'open',
-  'in_progress',
-  'completed',
-  'cancelled',
-] as const;
+export const DecisionChainStatusValues = ['open', 'in_progress', 'completed', 'cancelled'] as const;
 export type DecisionChainStatus = (typeof DecisionChainStatusValues)[number];
 
 // ==========================================
@@ -273,10 +254,14 @@ export const CreateDecisionChainParamsSchema = z.object({
   organizationId: z.string().uuid(),
   initiativeId: z.string().uuid(),
   chainType: z.enum(DecisionChainTypeValues),
-  decisions: z.array(z.object({
-    decisionId: z.string().min(1),
-    order: z.number().int().min(0),
-  })).min(1),
+  decisions: z
+    .array(
+      z.object({
+        decisionId: z.string().min(1),
+        order: z.number().int().min(0),
+      })
+    )
+    .min(1),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
 

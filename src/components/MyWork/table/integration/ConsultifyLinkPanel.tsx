@@ -2,7 +2,6 @@
  * ConsultifyLinkPanel — connects Table Platform data to Consultify modules:
  * Results, Finance, Execution, and Initiatives.
  */
-import React, { useCallback, useEffect, useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -18,6 +17,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -82,7 +82,15 @@ type ModuleKey = keyof typeof MODULE_CONFIG;
 
 const FINANCE_CATEGORIES = ['revenue', 'cost', 'profit', 'budget', 'forecast', 'actual'];
 const EXECUTION_FIELDS = ['status', 'assignee', 'due_date', 'priority', 'progress'];
-const INITIATIVE_FIELDS = ['title', 'description', 'owner', 'status', 'start_date', 'end_date', 'budget'];
+const INITIATIVE_FIELDS = [
+  'title',
+  'description',
+  'owner',
+  'status',
+  'start_date',
+  'end_date',
+  'budget',
+];
 
 function formatTimeAgo(date: string): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -123,10 +131,13 @@ function ModuleLinkSection({
 
   const selectedTable = tables.find((t) => t.id === selectedTableId);
   const targetFields =
-    moduleKey === 'finance' ? FINANCE_CATEGORIES :
-    moduleKey === 'execution' ? EXECUTION_FIELDS :
-    moduleKey === 'initiatives' ? INITIATIVE_FIELDS :
-    ['kpi_value', 'kpi_target', 'kpi_unit'];
+    moduleKey === 'finance'
+      ? FINANCE_CATEGORIES
+      : moduleKey === 'execution'
+        ? EXECUTION_FIELDS
+        : moduleKey === 'initiatives'
+          ? INITIATIVE_FIELDS
+          : ['kpi_value', 'kpi_target', 'kpi_unit'];
 
   const handleSync = useCallback(async () => {
     if (!modelId) {
@@ -172,7 +183,11 @@ function ModuleLinkSection({
             <CheckCircle2 size={10} /> {isPl ? 'Połączono' : 'Linked'}
           </span>
         )}
-        {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        {expanded ? (
+          <ChevronUp size={14} className="text-slate-400" />
+        ) : (
+          <ChevronDown size={14} className="text-slate-400" />
+        )}
       </button>
 
       {/* Status bar */}
@@ -219,7 +234,9 @@ function ModuleLinkSection({
             >
               <option value="">{isPl ? '— Wybierz tabelę —' : '— Select table —'}</option>
               {tables.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </div>
@@ -238,13 +255,13 @@ function ModuleLinkSection({
                     <select
                       className={inputCls}
                       value={fieldMappings[tf] ?? ''}
-                      onChange={(e) =>
-                        setFieldMappings((p) => ({ ...p, [tf]: e.target.value }))
-                      }
+                      onChange={(e) => setFieldMappings((p) => ({ ...p, [tf]: e.target.value }))}
                     >
                       <option value="">—</option>
                       {(selectedTable.fields ?? []).map((f) => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -261,8 +278,12 @@ function ModuleLinkSection({
           >
             {syncing && <Loader2 size={12} className="animate-spin" />}
             {moduleKey === 'results'
-              ? (isPl ? 'Publikuj do Wyników' : 'Publish to Results')
-              : (isPl ? `Synchronizuj z ${moduleLabels[moduleKey].pl}` : `Sync to ${moduleLabels[moduleKey].en}`)}
+              ? isPl
+                ? 'Publikuj do Wyników'
+                : 'Publish to Results'
+              : isPl
+                ? `Synchronizuj z ${moduleLabels[moduleKey].pl}`
+                : `Sync to ${moduleLabels[moduleKey].en}`}
           </button>
         </div>
       )}
@@ -310,13 +331,17 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       if (!selectedModelId && list.length > 0) {
         setSelectedModelId(list[0].model_id);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     if (selectedModelId) {
       try {
         const s = await Api.getModuleLinkStatus(selectedModelId);
         setStatuses(s);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     setLoading(false);
   }, [baseId, selectedModelId]);
@@ -359,12 +384,16 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
         >
           <option value="">{isPl ? '— Wybierz model —' : '— Select model —'}</option>
           {models.map((m) => (
-            <option key={m.model_id} value={m.model_id}>{m.name}</option>
+            <option key={m.model_id} value={m.model_id}>
+              {m.name}
+            </option>
           ))}
         </select>
         {models.length === 0 && !loading && (
           <p className="text-[11px] text-slate-400 mt-1 italic">
-            {isPl ? 'Utwórz model danych w zakładce Modele' : 'Create a data model in the Models tab first'}
+            {isPl
+              ? 'Utwórz model danych w zakładce Modele'
+              : 'Create a data model in the Models tab first'}
           </p>
         )}
       </div>

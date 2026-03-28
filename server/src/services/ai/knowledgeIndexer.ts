@@ -489,7 +489,9 @@ export class KnowledgeIndexer {
     const base = path.basename(normalized);
     const withoutExt = base.replace(/\.(md|markdown)$/i, '');
     const pillId = this.slugifySegment(withoutExt) || null;
-    const language = /\.([a-z]{2})\.(md|markdown)$/i.test(base) ? base.match(/\.([a-z]{2})\./i)?.[1]?.toLowerCase() || null : 'pl';
+    const language = /\.([a-z]{2})\.(md|markdown)$/i.test(base)
+      ? base.match(/\.([a-z]{2})\./i)?.[1]?.toLowerCase() || null
+      : 'pl';
 
     return { productSlug, pillId, language };
   }

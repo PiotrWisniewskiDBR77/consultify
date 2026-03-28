@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -29,7 +29,12 @@ describe('SchemaValidationService.validateRecord', () => {
   });
 
   function setupFields(
-    fields: Array<{ id: string; name: string; field_type: string; options?: Record<string, unknown> }>
+    fields: Array<{
+      id: string;
+      name: string;
+      field_type: string;
+      options?: Record<string, unknown>;
+    }>
   ) {
     mockQuery.mockResolvedValueOnce({ rows: fields });
   }

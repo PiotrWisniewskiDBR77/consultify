@@ -638,7 +638,9 @@ router.post('/:assessmentId/versions', async (req: AuthRequest, res: Response) =
     });
 
     const snapshot = buildAssessmentSnapshot(assessment);
-    const previousSnapshot = latestVersion?.data ? safeJsonParse<any>(latestVersion.data, null) : null;
+    const previousSnapshot = latestVersion?.data
+      ? safeJsonParse<any>(latestVersion.data, null)
+      : null;
     const diff = previousSnapshot ? diffAssessmentSnapshots(previousSnapshot, snapshot) : null;
     const changedAxes = diff?.changedAxes?.map((item: any) => item.axis) || [];
 
@@ -702,47 +704,50 @@ router.post('/:assessmentId/versions', async (req: AuthRequest, res: Response) =
  * GET /api/assessment-workflow/:assessmentId/versions/:fromVersion/diff/:toVersion
  * Compare two frozen assessment versions.
  */
-router.get('/:assessmentId/versions/:fromVersion/diff/:toVersion', async (req: AuthRequest, res: Response) => {
-  try {
-    const { assessmentId, fromVersion, toVersion } = req.params;
-    const db = getDatabase();
+router.get(
+  '/:assessmentId/versions/:fromVersion/diff/:toVersion',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { assessmentId, fromVersion, toVersion } = req.params;
+      const db = getDatabase();
 
-    const versions = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT version, data
+      const versions = await new Promise<any[]>((resolve, reject) => {
+        db.all(
+          `SELECT version, data
          FROM assessment_versions
          WHERE assessment_id = ? AND version IN (?, ?)
          ORDER BY version ASC`,
-        [assessmentId, parseInt(fromVersion, 10), parseInt(toVersion, 10)],
-        (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+          [assessmentId, parseInt(fromVersion, 10), parseInt(toVersion, 10)],
+          (err: Error | null, rows: any[]) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          }
+        );
+      });
 
-    const fromRow = versions.find((row) => Number(row.version) === parseInt(fromVersion, 10));
-    const toRow = versions.find((row) => Number(row.version) === parseInt(toVersion, 10));
+      const fromRow = versions.find((row) => Number(row.version) === parseInt(fromVersion, 10));
+      const toRow = versions.find((row) => Number(row.version) === parseInt(toVersion, 10));
 
-    if (!fromRow || !toRow) {
-      return res.status(404).json({ error: 'One or both assessment versions not found' });
+      if (!fromRow || !toRow) {
+        return res.status(404).json({ error: 'One or both assessment versions not found' });
+      }
+
+      const fromSnapshot = safeJsonParse<any>(fromRow.data, {});
+      const toSnapshot = safeJsonParse<any>(toRow.data, {});
+      const diff = diffAssessmentSnapshots(fromSnapshot, toSnapshot);
+
+      res.json({
+        success: true,
+        fromVersion: parseInt(fromVersion, 10),
+        toVersion: parseInt(toVersion, 10),
+        diff,
+      });
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflow] Error diffing versions:', err);
+      res.status(500).json({ error: 'Failed to diff assessment versions', message: err.message });
     }
-
-    const fromSnapshot = safeJsonParse<any>(fromRow.data, {});
-    const toSnapshot = safeJsonParse<any>(toRow.data, {});
-    const diff = diffAssessmentSnapshots(fromSnapshot, toSnapshot);
-
-    res.json({
-      success: true,
-      fromVersion: parseInt(fromVersion, 10),
-      toVersion: parseInt(toVersion, 10),
-      diff,
-    });
-  } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error diffing versions:', err);
-    res.status(500).json({ error: 'Failed to diff assessment versions', message: err.message });
   }
-});
+);
 
 /**
  * GET /api/assessment-workflow/:assessmentId/history

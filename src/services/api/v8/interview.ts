@@ -74,7 +74,8 @@ export const V8InterviewApi = {
       status ? { status } : undefined
     ),
 
-  getAcceptedSessions: () => v8Get<{ sessions: V8InterviewSession[] }>('/interview/sessions/accepted'),
+  getAcceptedSessions: () =>
+    v8Get<{ sessions: V8InterviewSession[] }>('/interview/sessions/accepted'),
 
   getSession: (id: string) =>
     v8Get<{ session: V8InterviewSession }>(`/interview/sessions/${encodeURIComponent(id)}`),

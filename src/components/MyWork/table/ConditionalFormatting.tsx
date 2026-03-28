@@ -58,16 +58,33 @@ const OPERATOR_LABELS: Record<FormatOperator, { en: string; pl: string }> = {
 };
 
 const PRESET_BG_COLORS = [
-  '#fee2e2', '#fef3c7', '#d1fae5', '#dbeafe', '#ede9fe',
-  '#fce7f3', '#ccfbf1', '#e0e7ff',
+  '#fee2e2',
+  '#fef3c7',
+  '#d1fae5',
+  '#dbeafe',
+  '#ede9fe',
+  '#fce7f3',
+  '#ccfbf1',
+  '#e0e7ff',
 ];
 
 const PRESET_TEXT_COLORS = [
-  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
-  '#ec4899', '#334155', '#ffffff',
+  '#ef4444',
+  '#f59e0b',
+  '#10b981',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#334155',
+  '#ffffff',
 ];
 
-export function evaluateCondition(value: unknown, operator: FormatOperator, ruleValue?: unknown, ruleValue2?: unknown): boolean {
+export function evaluateCondition(
+  value: unknown,
+  operator: FormatOperator,
+  ruleValue?: unknown,
+  ruleValue2?: unknown
+): boolean {
   const strVal = value != null ? String(value) : '';
   const numVal = Number(value);
   const ruleStr = ruleValue != null ? String(ruleValue) : '';
@@ -99,7 +116,11 @@ export function evaluateCondition(value: unknown, operator: FormatOperator, rule
   }
 }
 
-export function getCellStyle(fieldId: string, value: unknown, rules: FormatRule[]): React.CSSProperties {
+export function getCellStyle(
+  fieldId: string,
+  value: unknown,
+  rules: FormatRule[]
+): React.CSSProperties {
   for (const rule of rules) {
     if (rule.fieldId !== fieldId) continue;
     if (evaluateCondition(value, rule.operator, rule.value, rule.value2)) {
@@ -123,9 +144,8 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
   fields,
   onChange,
   open = true,
-  onClose,
+  onClose: _onClose,
 }) => {
-  if (open === false) return null;
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -145,26 +165,26 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
   const removeRule = useCallback(
     (id: string) => onChange(rules.filter((r) => r.id !== id)),
-    [onChange, rules],
+    [onChange, rules]
   );
 
   const updateRule = useCallback(
     (id: string, patch: Partial<FormatRule>) => {
       onChange(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
     },
-    [onChange, rules],
+    [onChange, rules]
   );
 
   const updateStyle = useCallback(
     (id: string, stylePatch: Partial<FormatRuleStyle>) => {
       onChange(
-        rules.map((r) =>
-          r.id === id ? { ...r, style: { ...r.style, ...stylePatch } } : r,
-        ),
+        rules.map((r) => (r.id === id ? { ...r, style: { ...r.style, ...stylePatch } } : r))
       );
     },
-    [onChange, rules],
+    [onChange, rules]
   );
+
+  if (open === false) return null;
 
   return (
     <div className="space-y-3">
@@ -207,13 +227,17 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
               >
                 {fields.map((f) => (
-                  <option key={f.key} value={f.key}>{f.header}</option>
+                  <option key={f.key} value={f.key}>
+                    {f.header}
+                  </option>
                 ))}
               </select>
 
               <select
                 value={rule.operator}
-                onChange={(e) => updateRule(rule.id, { operator: e.target.value as FormatOperator })}
+                onChange={(e) =>
+                  updateRule(rule.id, { operator: e.target.value as FormatOperator })
+                }
                 className="w-28 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
               >
                 {(Object.keys(OPERATOR_LABELS) as FormatOperator[]).map((op) => (
@@ -268,7 +292,9 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     key={c}
                     onClick={() => updateStyle(rule.id, { backgroundColor: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
-                      rule.style.backgroundColor === c ? 'border-violet-500 scale-110' : 'border-slate-200 dark:border-navy-700'
+                      rule.style.backgroundColor === c
+                        ? 'border-violet-500 scale-110'
+                        : 'border-slate-200 dark:border-navy-700'
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -291,7 +317,9 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     key={c}
                     onClick={() => updateStyle(rule.id, { color: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
-                      rule.style.color === c ? 'border-violet-500 scale-110' : 'border-slate-200 dark:border-navy-700'
+                      rule.style.color === c
+                        ? 'border-violet-500 scale-110'
+                        : 'border-slate-200 dark:border-navy-700'
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -350,7 +378,7 @@ export { ConditionalFormattingConfig as ConditionalFormatting };
 export function getConditionalStyle(
   rules: FormatRule[],
   fieldId: string,
-  value: unknown,
+  value: unknown
 ): React.CSSProperties | undefined {
   for (const rule of rules) {
     if (rule.fieldId !== fieldId) continue;

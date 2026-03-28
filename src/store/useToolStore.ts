@@ -62,7 +62,14 @@ export type SWOTCardStatus = 'accepted' | 'proposed';
 export type ProposalStatus = 'ai-proposed' | 'accepted' | 'rejected' | 'rethinking';
 export type SessionGenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
 
-export type ProposalCardType = 'signal' | 'item' | 'tension' | 'move' | 'correlation' | 'output-candidate' | 'conclusion';
+export type ProposalCardType =
+  | 'signal'
+  | 'item'
+  | 'tension'
+  | 'move'
+  | 'correlation'
+  | 'output-candidate'
+  | 'conclusion';
 export type SWOTOutputReadiness =
   | 'ready-for-initiative'
   | 'ready-for-presentation'
@@ -1119,7 +1126,11 @@ interface ToolStoreState {
   rejectCard: (cardType: ProposalCardType, cardId: string) => void;
   commentOnCard: (cardType: ProposalCardType, cardId: string, comment: string) => void;
   markRethinking: (cardType: ProposalCardType, cardId: string) => void;
-  updateCardAfterRethink: (cardType: ProposalCardType, cardId: string, updates: Record<string, unknown>) => void;
+  updateCardAfterRethink: (
+    cardType: ProposalCardType,
+    cardId: string,
+    updates: Record<string, unknown>
+  ) => void;
   acceptAllInPhase: (phaseId: DynamicSwotPhaseId) => void;
 
   // Chat
@@ -2281,16 +2292,18 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const update = (arr: any[]) => arr.map((item: any) =>
-          item.id === cardId ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
-        );
+        const update = (arr: any[]) =>
+          arr.map((item: any) =>
+            item.id === cardId ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
+          );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') updated.items = update(swotData.items);
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'output-candidate')
+          updated.outputCandidates = update(swotData.outputCandidates);
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2298,16 +2311,18 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const update = (arr: any[]) => arr.map((item: any) =>
-          item.id === cardId ? { ...item, proposalStatus: 'rejected' as ProposalStatus } : item
-        );
+        const update = (arr: any[]) =>
+          arr.map((item: any) =>
+            item.id === cardId ? { ...item, proposalStatus: 'rejected' as ProposalStatus } : item
+          );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') updated.items = update(swotData.items);
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'output-candidate')
+          updated.outputCandidates = update(swotData.outputCandidates);
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2315,16 +2330,16 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const update = (arr: any[]) => arr.map((item: any) =>
-          item.id === cardId ? { ...item, userComment: comment } : item
-        );
+        const update = (arr: any[]) =>
+          arr.map((item: any) => (item.id === cardId ? { ...item, userComment: comment } : item));
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') updated.items = update(swotData.items);
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'output-candidate')
+          updated.outputCandidates = update(swotData.outputCandidates);
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2332,16 +2347,18 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const update = (arr: any[]) => arr.map((item: any) =>
-          item.id === cardId ? { ...item, proposalStatus: 'rethinking' as ProposalStatus } : item
-        );
+        const update = (arr: any[]) =>
+          arr.map((item: any) =>
+            item.id === cardId ? { ...item, proposalStatus: 'rethinking' as ProposalStatus } : item
+          );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') updated.items = update(swotData.items);
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'output-candidate')
+          updated.outputCandidates = update(swotData.outputCandidates);
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2349,16 +2366,20 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const update = (arr: any[]) => arr.map((item: any) =>
-          item.id === cardId ? { ...item, ...updates, proposalStatus: 'ai-proposed' as ProposalStatus } : item
-        );
+        const update = (arr: any[]) =>
+          arr.map((item: any) =>
+            item.id === cardId
+              ? { ...item, ...updates, proposalStatus: 'ai-proposed' as ProposalStatus }
+              : item
+          );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') updated.items = update(swotData.items);
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'output-candidate')
+          updated.outputCandidates = update(swotData.outputCandidates);
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2366,9 +2387,12 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
-        const acceptAll = (arr: any[]) => arr.map((item: any) =>
-          item.proposalStatus === 'ai-proposed' ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
-        );
+        const acceptAll = (arr: any[]) =>
+          arr.map((item: any) =>
+            item.proposalStatus === 'ai-proposed'
+              ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+              : item
+          );
         const updated = { ...swotData };
         if (phaseId === 'input') updated.signals = acceptAll(swotData.signals);
         else if (phaseId === 'swot') updated.items = acceptAll(swotData.items);

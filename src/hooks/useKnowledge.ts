@@ -7,6 +7,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+
 import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 
 // ============================================
@@ -131,8 +132,8 @@ async function fetchPublicPreview(lang: string, limit = 3): Promise<KbArticleLis
     return await fetchPublicBridgeArticles('public', lang, limit);
   } catch {
     try {
-    const data = await V8KnowledgeBaseApi.getPublicPreview(lang, limit);
-    return data.articles as KbArticleListItem[];
+      const data = await V8KnowledgeBaseApi.getPublicPreview(lang, limit);
+      return data.articles as KbArticleListItem[];
     } catch {
       const res = await fetch(`${API_BASE}/public?lang=${lang}&limit=${limit}`);
       if (!res.ok) throw new Error('Failed to fetch public preview');
@@ -147,8 +148,8 @@ async function fetchFeatured(lang: string, limit = 4): Promise<KbArticleListItem
     return await fetchPublicBridgeArticles('featured', lang, limit);
   } catch {
     try {
-    const data = await V8KnowledgeBaseApi.getFeaturedArticles(lang, limit);
-    return data.articles as KbArticleListItem[];
+      const data = await V8KnowledgeBaseApi.getFeaturedArticles(lang, limit);
+      return data.articles as KbArticleListItem[];
     } catch {
       const res = await fetch(`${API_BASE}/featured?lang=${lang}&limit=${limit}`);
       if (!res.ok) throw new Error('Failed to fetch featured articles');

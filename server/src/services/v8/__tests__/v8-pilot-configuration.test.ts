@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8Enabled: vi.fn().mockResolvedValue(false),
@@ -8,7 +8,12 @@ vi.mock('../../../services/v8/featureFlagService.js', () => ({
   setV8OrgFlag: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { setV8OrgFlag, getV8Flags, isV8Enabled, isV8ShadowMode } from '../../../services/v8/featureFlagService.js';
+import {
+  getV8Flags,
+  isV8Enabled,
+  isV8ShadowMode,
+  setV8OrgFlag,
+} from '../../../services/v8/featureFlagService.js';
 
 describe('CP-33: Pilot Org Configuration', () => {
   describe('Pilot org selection criteria', () => {

@@ -13,8 +13,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { DemoButton } from '../../components/Landing/DemoButton';
 import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidget';
+import { DemoButton } from '../../components/Landing/DemoButton';
 import { EntryFooter } from '../../components/Landing/EntryFooter';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 

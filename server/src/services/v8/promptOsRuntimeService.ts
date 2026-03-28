@@ -17,17 +17,17 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  PromptPreset,
-  ReleaseBundle,
-  EvalGate,
+  BundleStatus,
   CanaryConfig,
-  RollbackRecord,
   CreatePresetParams,
   CreateReleaseBundleParams,
-  EvaluateGateParams,
-  SetCanaryConfigParams,
+  EvalGate,
   EvalThresholds,
-  BundleStatus,
+  EvaluateGateParams,
+  PromptPreset,
+  ReleaseBundle,
+  RollbackRecord,
+  SetCanaryConfigParams,
 } from '../../types/promptOsRuntime.js';
 import {
   CreatePresetParamsSchema,
@@ -243,25 +243,24 @@ export async function createPreset(params: CreatePresetParams): Promise<PromptPr
       JSON.stringify(preset.evalThresholds),
       preset.createdAt,
       preset.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created preset ${presetId} "${validated.name}" for org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created preset ${presetId} "${validated.name}" for org ${validated.organizationId}`
+  );
   return preset;
 }
 
 /**
  * Retrieve a preset by ID with org isolation.
  */
-export async function getPreset(
-  presetId: string,
-  orgId: string,
-): Promise<PromptPreset | null> {
+export async function getPreset(presetId: string, orgId: string): Promise<PromptPreset | null> {
   const row = await dbGet<PresetRow>(
     `SELECT * FROM v8_prompt_presets
      WHERE preset_id = ? AND organization_id = ?`,
     [presetId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -277,7 +276,7 @@ export async function listPresetsByOrganization(orgId: string): Promise<PromptPr
      WHERE organization_id = ?
      ORDER BY created_at DESC`,
     [orgId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToPreset);
 }
@@ -290,7 +289,7 @@ export async function listPresetsByOrganization(orgId: string): Promise<PromptPr
  * Create an atomic release bundle in draft status (W2-12).
  */
 export async function createReleaseBundle(
-  params: CreateReleaseBundleParams,
+  params: CreateReleaseBundleParams
 ): Promise<ReleaseBundle> {
   const validated = CreateReleaseBundleParamsSchema.parse(params);
 
@@ -332,10 +331,12 @@ export async function createReleaseBundle(
       bundle.createdAt,
       bundle.activatedAt,
       bundle.rolledBackAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created release bundle ${bundleId} v${validated.version} for preset ${validated.presetId}`);
+  logger.info(
+    `${LOG_PREFIX} Created release bundle ${bundleId} v${validated.version} for preset ${validated.presetId}`
+  );
   return bundle;
 }
 
@@ -346,7 +347,7 @@ export async function getBundle(bundleId: string): Promise<ReleaseBundle | null>
   const row = await dbGet<BundleRow>(
     `SELECT * FROM v8_release_bundles WHERE bundle_id = ?`,
     [bundleId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -358,7 +359,7 @@ export async function getBundle(bundleId: string): Promise<ReleaseBundle | null>
  */
 export async function listBundlesByOrganization(
   orgId: string,
-  limit: number = 100,
+  limit: number = 100
 ): Promise<ReleaseBundle[]> {
   const safeLimit = Math.min(Math.max(1, limit), 500);
   const rows = await dbAll<BundleRow>(
@@ -367,7 +368,7 @@ export async function listBundlesByOrganization(
      ORDER BY created_at DESC
      LIMIT ?`,
     [orgId, safeLimit],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToBundle);
 }
@@ -378,7 +379,7 @@ export async function listBundlesByOrganization(
 async function transitionBundleStatus(
   bundleId: string,
   newStatus: BundleStatus,
-  extra?: { activatedAt?: string; rolledBackAt?: string },
+  extra?: { activatedAt?: string; rolledBackAt?: string }
 ): Promise<void> {
   const setClauses = ['status = ?'];
   const params: unknown[] = [newStatus];
@@ -394,10 +395,7 @@ async function transitionBundleStatus(
 
   params.push(bundleId);
 
-  await dbRun(
-    `UPDATE v8_release_bundles SET ${setClauses.join(', ')} WHERE bundle_id = ?`,
-    params,
-  );
+  await dbRun(`UPDATE v8_release_bundles SET ${setClauses.join(', ')} WHERE bundle_id = ?`, params);
 }
 
 /**
@@ -425,7 +423,7 @@ export async function activateBundle(bundleId: string): Promise<ReleaseBundle> {
 
   if (failedHardGates.length > 0) {
     throw new Error(
-      `Cannot activate bundle ${bundleId}: ${failedHardGates.length} hard gate(s) failed`,
+      `Cannot activate bundle ${bundleId}: ${failedHardGates.length} hard gate(s) failed`
     );
   }
 
@@ -433,7 +431,7 @@ export async function activateBundle(bundleId: string): Promise<ReleaseBundle> {
   const warningSoftGates = softGates.filter((g) => g.result === 'failed' || g.result === 'warning');
   if (warningSoftGates.length > 0) {
     logger.warn(
-      `${LOG_PREFIX} Activating bundle ${bundleId} with ${warningSoftGates.length} soft gate warning(s)`,
+      `${LOG_PREFIX} Activating bundle ${bundleId} with ${warningSoftGates.length} soft gate warning(s)`
     );
   }
 
@@ -461,7 +459,7 @@ export async function activateBundle(bundleId: string): Promise<ReleaseBundle> {
 export async function rollbackBundle(
   bundleId: string,
   reason: string,
-  rolledBackBy: string,
+  rolledBackBy: string
 ): Promise<RollbackRecord> {
   const bundle = await getBundle(bundleId);
   if (!bundle) {
@@ -477,7 +475,7 @@ export async function rollbackBundle(
      WHERE preset_id = ? AND bundle_id != ? AND status != 'rolled_back'
      ORDER BY created_at DESC LIMIT 1`,
     [bundle.presetId, bundleId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -511,7 +509,7 @@ export async function rollbackBundle(
       record.rolledBackBy,
       record.rolledBackAt,
       record.previousBundleId,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Rolled back bundle ${bundleId}: ${reason}`);
@@ -527,7 +525,7 @@ export async function getActiveBundle(presetId: string): Promise<ReleaseBundle |
      WHERE preset_id = ? AND status = 'active'
      LIMIT 1`,
     [presetId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -572,10 +570,12 @@ export async function evaluateGate(params: EvaluateGateParams): Promise<EvalGate
       JSON.stringify(gate.thresholds),
       gate.result,
       gate.evaluatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Eval gate ${gateId}: bundle=${validated.bundleId} result=${validated.result}`);
+  logger.info(
+    `${LOG_PREFIX} Eval gate ${gateId}: bundle=${validated.bundleId} result=${validated.result}`
+  );
   return gate;
 }
 
@@ -586,7 +586,7 @@ export async function getGatesByBundle(bundleId: string): Promise<EvalGate[]> {
   const rows = await dbAll<GateRow>(
     `SELECT * FROM v8_eval_gates WHERE bundle_id = ? ORDER BY evaluated_at ASC`,
     [bundleId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToGate);
@@ -628,7 +628,7 @@ export async function setCanaryConfig(params: SetCanaryConfigParams): Promise<Ca
       config.presetScoped ? 1 : 0,
       config.rollbackEnabled ? 1 : 0,
       config.createdAt,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Canary config ${configId} for bundle ${validated.bundleId}`);
@@ -642,7 +642,7 @@ export async function getCanaryConfig(bundleId: string): Promise<CanaryConfig | 
   const row = await dbGet<CanaryRow>(
     `SELECT * FROM v8_canary_configs WHERE bundle_id = ? ORDER BY created_at DESC LIMIT 1`,
     [bundleId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
@@ -7,14 +7,14 @@ import type {
   RenderingHints,
 } from '../../../types/chatExecutionIntegration.js';
 import {
-  IntentClassificationSchema,
   ChatActionProposalSchema,
   ChatExecutionHandoffSchema,
+  ClassifyIntentParamsSchema,
+  CreateChatActionProposalParamsSchema,
+  InitiateHandoffParamsSchema,
+  IntentClassificationSchema,
   ProposalMessageSchema,
   RenderingHintsSchema,
-  ClassifyIntentParamsSchema,
-  InitiateHandoffParamsSchema,
-  CreateChatActionProposalParamsSchema,
 } from '../../../types/chatExecutionIntegration.js';
 
 // ==========================================
@@ -58,11 +58,11 @@ vi.mock('../executionSpineService.js', () => ({
 
 import {
   classifyIntent,
-  initiateHandoff,
-  getHandoff,
-  getHandoffsByConversation,
   createChatActionProposal,
   getChatProposalsByConversation,
+  getHandoff,
+  getHandoffsByConversation,
+  initiateHandoff,
 } from '../chatExecutionService.js';
 
 // ==========================================
@@ -138,7 +138,7 @@ function makeDefaultRenderingHints(): RenderingHints {
 }
 
 function makeChatProposalParams(
-  overrides?: Partial<CreateChatActionProposalParams>,
+  overrides?: Partial<CreateChatActionProposalParams>
 ): CreateChatActionProposalParams {
   return {
     conversationId: CONVERSATION_ID,
@@ -196,11 +196,7 @@ beforeEach(() => {
 
 describe('classifyIntent', () => {
   it('classifies a clear conversational question', async () => {
-    const result = await classifyIntent(
-      'What is the status of initiative X?',
-      SNAPSHOT_ID,
-      ORG_ID,
-    );
+    const result = await classifyIntent('What is the status of initiative X?', SNAPSHOT_ID, ORG_ID);
 
     expect(result.intentType).toBe('conversational');
     expect(result.suggestedAction).toBe('continue_chat');
@@ -212,7 +208,7 @@ describe('classifyIntent', () => {
     const result = await classifyIntent(
       'Create a report from this note and add risk slides',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
 
     expect(result.intentType).toBe('governed_work');
@@ -224,7 +220,7 @@ describe('classifyIntent', () => {
     const result = await classifyIntent(
       'I need to think about the quarterly review',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
 
     expect(result.intentType).toBe('ambiguous');
@@ -233,23 +229,15 @@ describe('classifyIntent', () => {
   });
 
   it('rejects empty message via Zod', async () => {
-    await expect(
-      classifyIntent('', SNAPSHOT_ID, ORG_ID),
-    ).rejects.toThrow(ZodError);
+    await expect(classifyIntent('', SNAPSHOT_ID, ORG_ID)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid contextSnapshotId via Zod', async () => {
-    await expect(
-      classifyIntent('Hello', 'not-a-uuid', ORG_ID),
-    ).rejects.toThrow(ZodError);
+    await expect(classifyIntent('Hello', 'not-a-uuid', ORG_ID)).rejects.toThrow(ZodError);
   });
 
   it('returns valid IntentClassification structure', async () => {
-    const result = await classifyIntent(
-      'Build a deck from this initiative',
-      SNAPSHOT_ID,
-      ORG_ID,
-    );
+    const result = await classifyIntent('Build a deck from this initiative', SNAPSHOT_ID, ORG_ID);
 
     expect(() => IntentClassificationSchema.parse(result)).not.toThrow();
   });
@@ -288,21 +276,19 @@ describe('initiateHandoff', () => {
   it('throws when snapshot not found', async () => {
     mockGetSnapshot.mockResolvedValueOnce(null);
 
-    await expect(
-      initiateHandoff(makeHandoffParams()),
-    ).rejects.toThrow(`ContextSnapshot ${SNAPSHOT_ID} not found`);
+    await expect(initiateHandoff(makeHandoffParams())).rejects.toThrow(
+      `ContextSnapshot ${SNAPSHOT_ID} not found`
+    );
   });
 
   it('rejects invalid params via Zod', async () => {
     await expect(
-      initiateHandoff({ ...makeHandoffParams(), conversationId: 'not-a-uuid' }),
+      initiateHandoff({ ...makeHandoffParams(), conversationId: 'not-a-uuid' })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty goal via Zod', async () => {
-    await expect(
-      initiateHandoff({ ...makeHandoffParams(), goal: '' }),
-    ).rejects.toThrow(ZodError);
+    await expect(initiateHandoff({ ...makeHandoffParams(), goal: '' })).rejects.toThrow(ZodError);
   });
 
   it('returns valid ChatExecutionHandoff structure', async () => {
@@ -403,7 +389,7 @@ describe('createChatActionProposal', () => {
       const result = await createChatActionProposal(
         makeChatProposalParams({
           renderingHints: { ...makeDefaultRenderingHints(), style },
-        }),
+        })
       );
       expect(result.renderingHints.style).toBe(style);
     }
@@ -414,7 +400,7 @@ describe('createChatActionProposal', () => {
       createChatActionProposal({
         ...makeChatProposalParams(),
         conversationId: 'not-a-uuid',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -423,7 +409,7 @@ describe('createChatActionProposal', () => {
       createChatActionProposal({
         ...makeChatProposalParams(),
         displaySummary: '',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -475,7 +461,7 @@ describe('Zod schema validation', () => {
         suggestedAction: 'initiate_execution',
         reasoning: 'Work intent detected',
         classifiedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -487,7 +473,7 @@ describe('Zod schema validation', () => {
         suggestedAction: 'continue_chat',
         reasoning: 'test',
         classifiedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -499,7 +485,7 @@ describe('Zod schema validation', () => {
         suggestedAction: 'continue_chat',
         reasoning: 'test',
         classifiedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
 
     expect(() =>
@@ -509,14 +495,12 @@ describe('Zod schema validation', () => {
         suggestedAction: 'continue_chat',
         reasoning: 'test',
         classifiedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
   it('validates RenderingHints', () => {
-    expect(() =>
-      RenderingHintsSchema.parse(makeDefaultRenderingHints()),
-    ).not.toThrow();
+    expect(() => RenderingHintsSchema.parse(makeDefaultRenderingHints())).not.toThrow();
   });
 
   it('validates ProposalMessage', () => {
@@ -528,7 +512,7 @@ describe('Zod schema validation', () => {
         proposalRefs: [PROPOSAL_ID],
         planSummary: 'Build report with 3 sections',
         stepCount: 3,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -541,7 +525,7 @@ describe('Zod schema validation', () => {
         proposalRefs: [],
         planSummary: 'test',
         stepCount: 0,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -563,7 +547,7 @@ describe('Zod schema validation', () => {
         },
         goal: 'Build a report',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -573,19 +557,17 @@ describe('Zod schema validation', () => {
         message: 'Create a report',
         contextSnapshotId: SNAPSHOT_ID,
         organizationId: ORG_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
   it('validates InitiateHandoffParams', () => {
-    expect(() =>
-      InitiateHandoffParamsSchema.parse(makeHandoffParams()),
-    ).not.toThrow();
+    expect(() => InitiateHandoffParamsSchema.parse(makeHandoffParams())).not.toThrow();
   });
 
   it('validates CreateChatActionProposalParams', () => {
     expect(() =>
-      CreateChatActionProposalParamsSchema.parse(makeChatProposalParams()),
+      CreateChatActionProposalParamsSchema.parse(makeChatProposalParams())
     ).not.toThrow();
   });
 });

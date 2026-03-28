@@ -51,8 +51,8 @@ import {
   Triangle,
   Truck,
   Undo2,
-  UserSquare2,
   Users,
+  UserSquare2,
   X,
   Zap,
 } from 'lucide-react';
@@ -78,17 +78,21 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Api } from '@/services/api';
-import { generateAIProposal, generateProcessSummary, runProcessCoach } from '@/services/ideaAIGenerator';
+import {
+  generateAIProposal,
+  generateProcessSummary,
+  runProcessCoach,
+} from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
   formatIdeaMapSyncLabel,
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
-import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -747,9 +751,17 @@ function validateFlow(
   const flowNodes = nodes.filter((n: Node) => n.type === 'flowNode');
 
   const startShapes =
-    semanticKit === 'bpmn' ? ['start', 'bpmn_event'] : semanticKit === 'system' || semanticKit === 'org' ? [] : ['start'];
+    semanticKit === 'bpmn'
+      ? ['start', 'bpmn_event']
+      : semanticKit === 'system' || semanticKit === 'org'
+        ? []
+        : ['start'];
   const endShapes =
-    semanticKit === 'bpmn' ? ['end', 'bpmn_event'] : semanticKit === 'system' || semanticKit === 'org' ? [] : ['end'];
+    semanticKit === 'bpmn'
+      ? ['end', 'bpmn_event']
+      : semanticKit === 'system' || semanticKit === 'org'
+        ? []
+        : ['end'];
   const hasStart =
     startShapes.length === 0 ||
     flowNodes.some((n: Node) => startShapes.includes(String(n.data?.shape || '')));
@@ -825,7 +837,10 @@ function validateFlow(
     const outgoing = edges.filter((e: Edge) => e.source === node.id);
     const incoming = edges.filter((e: Edge) => e.target === node.id);
 
-    if (['decision', 'bpmn_gateway', 'org_handoff'].includes(String(node.data?.shape)) && outgoing.length < 2) {
+    if (
+      ['decision', 'bpmn_gateway', 'org_handoff'].includes(String(node.data?.shape)) &&
+      outgoing.length < 2
+    ) {
       warnings.push({
         id: `decision-exits-${node.id}`,
         message: `Decision "${node.data?.label || node.id}" needs at least 2 exits`,
@@ -1163,9 +1178,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const toggleInternalFullscreen = useCallback(() => {
     if (!flowContainerRef.current) return;
     if (!document.fullscreenElement) {
-      flowContainerRef.current.requestFullscreen?.().then(() => setInternalFullscreen(true)).catch(() => {});
+      flowContainerRef.current
+        .requestFullscreen?.()
+        .then(() => setInternalFullscreen(true))
+        .catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setInternalFullscreen(false)).catch(() => {});
+      document
+        .exitFullscreen?.()
+        .then(() => setInternalFullscreen(false))
+        .catch(() => {});
     }
   }, []);
 
@@ -1183,19 +1204,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [metricsDraft, setMetricsDraft] = useState<Record<string, string>>({});
   const [savingsLoading, setSavingsLoading] = useState(false);
   const [dragOverLaneId, setDragOverLaneId] = useState<string | null>(null);
-  const {
-    saving,
-    syncState,
-    lastSavedAt,
-    queueSync,
-    flushNow,
-    primeServerVersion,
-  } = useIdeaMapSync({
-    ideaId,
-    tool: 'process_flow',
-    open,
-    locked,
-  });
+  const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
+    useIdeaMapSync({
+      ideaId,
+      tool: 'process_flow',
+      open,
+      locked,
+    });
 
   // V5-IDEA-21: Flow mode
   const [flowMode, setFlowMode] = useState<ProcessFlowMode>('classic');
@@ -1209,10 +1224,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   );
 
   const didPersistRef = useRef(false);
-  const selectedNodeId = useMemo(
-    () => nodes.find((node) => node.selected)?.id ?? null,
-    [nodes]
-  );
+  const selectedNodeId = useMemo(() => nodes.find((node) => node.selected)?.id ?? null, [nodes]);
   const selectedNodeIds = useMemo(
     () => nodes.filter((node) => node.selected).map((node) => node.id),
     [nodes]
@@ -1227,7 +1239,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   }, [extensions]);
   const savingsAnalysisData = useMemo(() => {
     const pf = extensions?.processFlow;
-    return pf && typeof pf === 'object' ? (pf as Record<string, any>).savingsAnalysis || null : null;
+    return pf && typeof pf === 'object'
+      ? (pf as Record<string, any>).savingsAnalysis || null
+      : null;
   }, [extensions]);
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -1676,7 +1690,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         type: resolvedType,
         position: overrides?.position || { x: xBase, y: yBase },
         data: {
-          label: overrides?.label || (isPl ? SHAPE_CONFIG[shape].labelPl : SHAPE_CONFIG[shape].label),
+          label:
+            overrides?.label || (isPl ? SHAPE_CONFIG[shape].labelPl : SHAPE_CONFIG[shape].label),
           shape,
           laneId: lane.id,
           laneColor: lane.color,
@@ -1737,7 +1752,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         })();
       }
     },
-    [edges, i18n.language, ideaId, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, semanticKit, setNodes]
+    [
+      edges,
+      i18n.language,
+      ideaId,
+      isPl,
+      lanes,
+      locked,
+      nodes,
+      onNodeDetail,
+      pushUndo,
+      semanticKit,
+      setNodes,
+    ]
   );
 
   // ── V5-IDEA-21: Insert step between two connected nodes ─────────────────
@@ -1759,7 +1786,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const lane =
       lanes.find((l) => l.id === sourceNode.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
 
-    const insertShape: FlowShape = flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    const insertShape: FlowShape =
+      flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
     const newNode: Node = {
       id: newId,
       type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
@@ -1811,7 +1839,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const newId = `pf-split-${Date.now()}`;
     const lane = lanes.find((l) => l.id === selected.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
 
-    const splitShape: FlowShape = flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    const splitShape: FlowShape =
+      flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
     const newNode: Node = {
       id: newId,
       type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
@@ -1886,7 +1915,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       cost: selected.data?.cost != null ? String(selected.data.cost) : '',
       fteCount: selected.data?.fteCount != null ? String(selected.data.fteCount) : '',
       automationPotential:
-        selected.data?.automationPotential != null ? String(selected.data.automationPotential) : 'medium',
+        selected.data?.automationPotential != null
+          ? String(selected.data.automationPotential)
+          : 'medium',
       savingsEstimate:
         selected.data?.savingsEstimate != null ? String(selected.data.savingsEstimate) : '',
     });
@@ -1959,7 +1990,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         });
       }
     } catch (error: any) {
-      toast.error(error?.message || (isPl ? 'Nie udało się uruchomić analizy savings' : 'Failed to run savings analysis'));
+      toast.error(
+        error?.message ||
+          (isPl ? 'Nie udało się uruchomić analizy savings' : 'Failed to run savings analysis')
+      );
     } finally {
       setSavingsLoading(false);
     }
@@ -2236,14 +2270,24 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const defaultShape: FlowShape = flowMode === 'automation' ? 'auto_trigger' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+        const defaultShape: FlowShape =
+          flowMode === 'automation'
+            ? 'auto_trigger'
+            : flowMode === 'vsm'
+              ? 'vsm_process'
+              : 'action';
         addNode(defaultShape);
         return;
       }
 
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        const altShape: FlowShape = flowMode === 'automation' ? 'auto_condition' : flowMode === 'vsm' ? 'vsm_inventory' : 'decision';
+        const altShape: FlowShape =
+          flowMode === 'automation'
+            ? 'auto_condition'
+            : flowMode === 'vsm'
+              ? 'vsm_inventory'
+              : 'decision';
         addNode(altShape);
         return;
       }
@@ -2287,7 +2331,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (Array.isArray(detail.items) && detail.items.length > 0) {
         detail.items.forEach((item) => {
-          const shape = resolveSemanticInsertShape(item.type || item.label || item.text, flowMode, semanticKit);
+          const shape = resolveSemanticInsertShape(
+            item.type || item.label || item.text,
+            flowMode,
+            semanticKit
+          );
           addNode(shape, {
             label: item.label || item.text,
             position: item.position || detail.position,
@@ -2297,7 +2345,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         return;
       }
 
-      const shape = resolveSemanticInsertShape(detail.nodeType || detail.label || detail.text, flowMode, semanticKit);
+      const shape = resolveSemanticInsertShape(
+        detail.nodeType || detail.label || detail.text,
+        flowMode,
+        semanticKit
+      );
       addNode(shape, {
         label: detail.label || detail.text,
         position: detail.position,
@@ -2388,7 +2440,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   {isPl ? FLOW_MODE_LABELS[flowMode].pl : FLOW_MODE_LABELS[flowMode].en}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-                  {isPl ? FLOW_MODE_GUIDANCE[flowMode].stagePl : FLOW_MODE_GUIDANCE[flowMode].stageEn}
+                  {isPl
+                    ? FLOW_MODE_GUIDANCE[flowMode].stagePl
+                    : FLOW_MODE_GUIDANCE[flowMode].stageEn}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-300">
                   {isPl ? `Kit ${semanticKit}` : `Kit ${semanticKit}`}
@@ -2545,7 +2599,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   }`}
                   title={isPl ? 'AI Coach' : 'AI Coach'}
                 >
-                  {coachLoading ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+                  {coachLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Bot size={14} />
+                  )}
                   {isPl ? 'AI Coach' : 'AI Coach'}
                 </button>
                 <button
@@ -2737,11 +2795,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 {isPl ? 'Luki' : 'Gaps'}
               </div>
               <ul className="mt-1 space-y-0.5">
-                {(processBriefData.currentGaps || []).slice(0, 3).map((item: string, idx: number) => (
-                  <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
-                    {item}
-                  </li>
-                ))}
+                {(processBriefData.currentGaps || [])
+                  .slice(0, 3)
+                  .map((item: string, idx: number) => (
+                    <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
+                      {item}
+                    </li>
+                  ))}
               </ul>
             </div>
             <div>
@@ -2761,11 +2821,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 {isPl ? 'Checkpointy' : 'Checkpoints'}
               </div>
               <ul className="mt-1 space-y-0.5">
-                {(processBriefData.reviewCheckpoints || []).slice(0, 3).map((item: string, idx: number) => (
-                  <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
-                    {item}
-                  </li>
-                ))}
+                {(processBriefData.reviewCheckpoints || [])
+                  .slice(0, 3)
+                  .map((item: string, idx: number) => (
+                    <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
+                      {item}
+                    </li>
+                  ))}
               </ul>
             </div>
           </div>
@@ -3034,7 +3096,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="mb-1">{isPl ? 'Czas' : 'Duration'}</div>
                 <input
                   value={metricsDraft.duration || ''}
-                  onChange={(e) => setMetricsDraft((prev) => ({ ...prev, duration: e.target.value }))}
+                  onChange={(e) =>
+                    setMetricsDraft((prev) => ({ ...prev, duration: e.target.value }))
+                  }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
@@ -3042,7 +3106,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="mb-1">{isPl ? 'Jednostka' : 'Unit'}</div>
                 <input
                   value={metricsDraft.durationUnit || ''}
-                  onChange={(e) => setMetricsDraft((prev) => ({ ...prev, durationUnit: e.target.value }))}
+                  onChange={(e) =>
+                    setMetricsDraft((prev) => ({ ...prev, durationUnit: e.target.value }))
+                  }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
@@ -3058,12 +3124,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="mb-1">FTE</div>
                 <input
                   value={metricsDraft.fteCount || ''}
-                  onChange={(e) => setMetricsDraft((prev) => ({ ...prev, fteCount: e.target.value }))}
+                  onChange={(e) =>
+                    setMetricsDraft((prev) => ({ ...prev, fteCount: e.target.value }))
+                  }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">{isPl ? 'Potencjał automatyzacji' : 'Automation potential'}</div>
+                <div className="mb-1">
+                  {isPl ? 'Potencjał automatyzacji' : 'Automation potential'}
+                </div>
                 <select
                   value={metricsDraft.automationPotential || 'medium'}
                   onChange={(e) =>

@@ -51,7 +51,9 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedGovernance, setSelectedGovernance] = useState<ReportItem['governance'] | null>(null);
+  const [selectedGovernance, setSelectedGovernance] = useState<ReportItem['governance'] | null>(
+    null
+  );
   const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
@@ -413,11 +415,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         onSelect={setSelectedId}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => (
-          <ReportPreviewBody
-            report={item}
-          />
-        )}
+        renderPreview={(item) => <ReportPreviewBody report={item} />}
         renderPreviewFooter={(item) => (
           <ReportPreviewFooter
             report={item}

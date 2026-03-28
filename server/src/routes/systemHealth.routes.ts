@@ -8,8 +8,8 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest } from '../middleware/auth.middleware.js';
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -186,7 +186,9 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     await ensureAlertsTable();
     const { all: dbAll } = await import('../utils/DbPromise.js');
-    const rows = await dbAll('SELECT * FROM system_health_alerts ORDER BY created_at DESC', [], { fallback: true });
+    const rows = await dbAll('SELECT * FROM system_health_alerts ORDER BY created_at DESC', [], {
+      fallback: true,
+    });
     res.json(rows.map(alertRowToJson));
   })
 );
@@ -226,7 +228,9 @@ router.put(
     await ensureAlertsTable();
     const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
 
-    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [
+      req.params.id,
+    ]);
     if (!existing) return res.status(404).json({ error: 'Alert not found' });
 
     const { name, metric, threshold, operator, enabled, channels } = req.body;
@@ -259,13 +263,19 @@ router.put(
     await ensureAlertsTable();
     const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
 
-    const existing = await dbGet<any>('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    const existing = await dbGet<any>('SELECT * FROM system_health_alerts WHERE id = ?', [
+      req.params.id,
+    ]);
     if (!existing) return res.status(404).json({ error: 'Alert not found' });
 
     const newEnabled = existing.enabled === 1 ? 0 : 1;
     const now = new Date().toISOString();
 
-    await dbRun('UPDATE system_health_alerts SET enabled = ?, updated_at = ? WHERE id = ?', [newEnabled, now, req.params.id], { fallback: false });
+    await dbRun(
+      'UPDATE system_health_alerts SET enabled = ?, updated_at = ? WHERE id = ?',
+      [newEnabled, now, req.params.id],
+      { fallback: false }
+    );
 
     const updated = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
     res.json(updated ? alertRowToJson(updated) : { id: req.params.id, enabled: newEnabled === 1 });
@@ -279,10 +289,14 @@ router.delete(
     await ensureAlertsTable();
     const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
 
-    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [
+      req.params.id,
+    ]);
     if (!existing) return res.status(404).json({ error: 'Alert not found' });
 
-    await dbRun('DELETE FROM system_health_alerts WHERE id = ?', [req.params.id], { fallback: false });
+    await dbRun('DELETE FROM system_health_alerts WHERE id = ?', [req.params.id], {
+      fallback: false,
+    });
     res.json({ success: true });
   })
 );

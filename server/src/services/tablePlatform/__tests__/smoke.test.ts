@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -103,10 +103,10 @@ vi.mock('../../chatToSchema/undoRedoStack.js', () => ({
   })),
 }));
 
-import metadataService from '../MetadataService.js';
-import recordsService from '../RecordsService.js';
 import chatToSchemaService from '../ChatToSchemaService.js';
 import governedModelService from '../GovernedModelService.js';
+import metadataService from '../MetadataService.js';
+import recordsService from '../RecordsService.js';
 
 describe('Table Platform Smoke Tests', () => {
   beforeEach(() => {
@@ -122,10 +122,13 @@ describe('Table Platform Smoke Tests', () => {
 
   describe('MetadataService CRUD smoke', () => {
     it('createBase returns base with id and name', async () => {
-      const baseRow = { id: 'smoke-uuid-001', name: 'Smoke Base', workspace_id: 'ws-1', organization_id: 'org-1' };
-      mockQuery
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [baseRow] });
+      const baseRow = {
+        id: 'smoke-uuid-001',
+        name: 'Smoke Base',
+        workspace_id: 'ws-1',
+        organization_id: 'org-1',
+      };
+      mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [baseRow] });
 
       const base = await metadataService.createBase('ws-1', 'org-1', 'Smoke Base', 'user-1');
       expect(base.id).toBe('smoke-uuid-001');
@@ -154,7 +157,12 @@ describe('Table Platform Smoke Tests', () => {
     });
 
     it('createField returns field with correct type', async () => {
-      const fieldRow = { id: 'smoke-uuid-001', name: 'Status', field_type: 'singleSelect', table_id: 't-1' };
+      const fieldRow = {
+        id: 'smoke-uuid-001',
+        name: 'Status',
+        field_type: 'singleSelect',
+        table_id: 't-1',
+      };
       mockQuery
         .mockResolvedValueOnce({ rows: [{ governance_mode: 'operational' }] }) // assertNotGoverned
         .mockResolvedValueOnce({ rows: [{ next_order: 1 }] }) // MAX order
@@ -164,19 +172,35 @@ describe('Table Platform Smoke Tests', () => {
         .mockResolvedValueOnce({ rows: [{ schema_version: 3 }] }) // bumpSchemaVersion UPDATE
         .mockResolvedValueOnce({ rows: [] }); // bumpSchemaVersion INSERT
 
-      const field = await metadataService.createField('t-1', 'Status', 'singleSelect', { options: [{ value: 'Done' }] }, 'user-1');
+      const field = await metadataService.createField(
+        't-1',
+        'Status',
+        'singleSelect',
+        { options: [{ value: 'Done' }] },
+        'user-1'
+      );
       expect(field.name).toBe('Status');
       expect(field.field_type).toBe('singleSelect');
     });
 
     it('createView returns view object', async () => {
-      const viewRow = { id: 'smoke-uuid-001', name: 'Kanban', view_type: 'kanban', table_id: 't-1' };
+      const viewRow = {
+        id: 'smoke-uuid-001',
+        name: 'Kanban',
+        view_type: 'kanban',
+        table_id: 't-1',
+      };
       mockQuery.mockImplementation((sql: string) => {
-        if (typeof sql === 'string' && sql.includes('INSERT INTO tp_views')) return Promise.resolve({ rows: [] });
-        if (typeof sql === 'string' && sql.includes('SELECT * FROM tp_views WHERE id')) return Promise.resolve({ rows: [viewRow] });
-        if (typeof sql === 'string' && sql.includes('SELECT base_id FROM tp_tables')) return Promise.resolve({ rows: [{ base_id: 'b-1' }] });
-        if (typeof sql === 'string' && sql.includes('schema_version = schema_version + 1')) return Promise.resolve({ rows: [{ schema_version: 4 }] });
-        if (typeof sql === 'string' && sql.includes('tp_schema_versions')) return Promise.resolve({ rows: [] });
+        if (typeof sql === 'string' && sql.includes('INSERT INTO tp_views'))
+          return Promise.resolve({ rows: [] });
+        if (typeof sql === 'string' && sql.includes('SELECT * FROM tp_views WHERE id'))
+          return Promise.resolve({ rows: [viewRow] });
+        if (typeof sql === 'string' && sql.includes('SELECT base_id FROM tp_tables'))
+          return Promise.resolve({ rows: [{ base_id: 'b-1' }] });
+        if (typeof sql === 'string' && sql.includes('schema_version = schema_version + 1'))
+          return Promise.resolve({ rows: [{ schema_version: 4 }] });
+        if (typeof sql === 'string' && sql.includes('tp_schema_versions'))
+          return Promise.resolve({ rows: [] });
         return Promise.resolve({ rows: [] });
       });
 
@@ -197,9 +221,7 @@ describe('Table Platform Smoke Tests', () => {
 
     it('deleteBase returns true when base exists', async () => {
       const baseRow = { id: 'b-1', name: 'Smoke Base' };
-      mockQuery
-        .mockResolvedValueOnce({ rows: [baseRow] })
-        .mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [baseRow] }).mockResolvedValueOnce({ rows: [] });
 
       const deleted = await metadataService.deleteBase('b-1', 'user-1');
       expect(deleted).toBe(true);
@@ -224,7 +246,9 @@ describe('Table Platform Smoke Tests', () => {
         .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
         .mockResolvedValueOnce({ rows: [] }) // INSERT
         .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
-        .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }) // recomputeAffectedFields tp_fields
+        .mockResolvedValueOnce({
+          rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
+        }) // recomputeAffectedFields tp_fields
         .mockResolvedValueOnce({ rows: [recordRow] }); // re-fetch after recompute
 
       const created = await recordsService.createRecord('t-1', { Name: 'Smoke Item' }, 'user-1');
@@ -259,7 +283,9 @@ describe('Table Platform Smoke Tests', () => {
         .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
         .mockResolvedValueOnce({ rows: [] }) // UPDATE
         .mockResolvedValueOnce({ rows: [after] }) // SELECT after
-        .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }) // recomputeAffectedFields tp_fields
+        .mockResolvedValueOnce({
+          rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
+        }) // recomputeAffectedFields tp_fields
         .mockResolvedValueOnce({ rows: [after] }); // re-fetch after recompute
 
       const updated = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
@@ -313,7 +339,12 @@ describe('Table Platform Smoke Tests', () => {
         confidence: 0.95,
         summary: 'Create Tasks table',
         operations: JSON.stringify([
-          { id: 'op_1', operationType: 'create_table', target: { type: 'table', base_id: 'b-1' }, payload: { name: 'Tasks' } },
+          {
+            id: 'op_1',
+            operationType: 'create_table',
+            target: { type: 'table', base_id: 'b-1' },
+            payload: { name: 'Tasks' },
+          },
         ]),
         warnings: '[]',
         status: 'pending',
@@ -321,9 +352,7 @@ describe('Table Platform Smoke Tests', () => {
         created_at: new Date().toISOString(),
       };
 
-      mockQuery
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [proposalRow] });
+      mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [proposalRow] });
 
       const proposal = await chatToSchemaService.generateProposal(
         'ws-1',
@@ -364,12 +393,20 @@ describe('Table Platform Smoke Tests', () => {
   describe('GovernedModelService smoke', () => {
     it('full lifecycle: createModel → addKpi → computeKpi → deleteModel', async () => {
       // --- createModel ---
-      const modelRow = { model_id: 'smoke-uuid-001', base_id: 'b-1', name: 'Revenue Model', description: 'Smoke test model' };
-      mockQuery
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [modelRow] });
+      const modelRow = {
+        model_id: 'smoke-uuid-001',
+        base_id: 'b-1',
+        name: 'Revenue Model',
+        description: 'Smoke test model',
+      };
+      mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [modelRow] });
 
-      const model = await governedModelService.createModel('b-1', 'Revenue Model', 'Smoke test model', 'user-1');
+      const model = await governedModelService.createModel(
+        'b-1',
+        'Revenue Model',
+        'Smoke test model',
+        'user-1'
+      );
       expect(model.model_id).toBe('smoke-uuid-001');
       expect(model.name).toBe('Revenue Model');
 
@@ -383,9 +420,7 @@ describe('Table Platform Smoke Tests', () => {
         source_table_id: 't-1',
         source_field_id: 'f-revenue',
       };
-      mockQuery
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [kpiRow] });
+      mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [kpiRow] });
 
       const kpi = await governedModelService.addKpi('smoke-uuid-001', {
         code: 'total_revenue',
@@ -409,9 +444,7 @@ describe('Table Platform Smoke Tests', () => {
       expect(computed.computedAt).toBeTruthy();
 
       // --- deleteModel ---
-      mockQuery
-        .mockResolvedValueOnce({ rows: [modelRow] })
-        .mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [modelRow] }).mockResolvedValueOnce({ rows: [] });
 
       const deleted = await governedModelService.deleteModel('smoke-uuid-001');
       expect(deleted).toBe(true);
@@ -437,7 +470,9 @@ describe('Table Platform Smoke Tests', () => {
     it('computeKpi throws for missing KPI', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] });
 
-      await expect(governedModelService.computeKpi('nonexistent')).rejects.toThrow('KPI nonexistent not found');
+      await expect(governedModelService.computeKpi('nonexistent')).rejects.toThrow(
+        'KPI nonexistent not found'
+      );
     });
 
     it('getModel returns model with kpis, dimensions, sources', async () => {

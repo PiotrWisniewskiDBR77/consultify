@@ -111,8 +111,16 @@ export const WHITEBOARD_ACTIONS: Record<string, WhiteboardActionDefinition> = {
   wb_add_area: { id: 'wb_add_area', surface: 'tools_panel', label: 'Create area' },
   wb_add_table: { id: 'wb_add_table', surface: 'tools_panel', label: 'Create table block' },
   wb_add_icon_star: { id: 'wb_add_icon_star', surface: 'tools_panel', label: 'Create star icon' },
-  wb_add_icon_check: { id: 'wb_add_icon_check', surface: 'tools_panel', label: 'Create check icon' },
-  wb_add_icon_alert: { id: 'wb_add_icon_alert', surface: 'tools_panel', label: 'Create alert icon' },
+  wb_add_icon_check: {
+    id: 'wb_add_icon_check',
+    surface: 'tools_panel',
+    label: 'Create check icon',
+  },
+  wb_add_icon_alert: {
+    id: 'wb_add_icon_alert',
+    surface: 'tools_panel',
+    label: 'Create alert icon',
+  },
   wb_add_cluster: { id: 'wb_add_cluster', surface: 'tools_panel', label: 'Create cluster' },
   wb_add_theme: { id: 'wb_add_theme', surface: 'tools_panel', label: 'Create theme' },
   wb_add_outcome: { id: 'wb_add_outcome', surface: 'tools_panel', label: 'Create outcome' },

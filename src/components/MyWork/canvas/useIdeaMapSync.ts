@@ -4,13 +4,7 @@ import { Api } from '@/services/api';
 
 import type { CanvasToolType } from '../ideaSelectionTypes';
 
-export type IdeaMapSyncState =
-  | 'idle'
-  | 'queued'
-  | 'saving'
-  | 'saved'
-  | 'offline'
-  | 'conflict';
+export type IdeaMapSyncState = 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
 
 export interface IdeaMapSyncPayload {
   nodes: any[];
@@ -100,7 +94,11 @@ export function readIdeaMapDraft(ideaId: string): IdeaMapDraftRecord | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as IdeaMapDraftRecord;
     if (!parsed || typeof parsed !== 'object') return null;
-    if (!parsed.payload || !Array.isArray(parsed.payload.nodes) || !Array.isArray(parsed.payload.edges)) {
+    if (
+      !parsed.payload ||
+      !Array.isArray(parsed.payload.nodes) ||
+      !Array.isArray(parsed.payload.edges)
+    ) {
       return null;
     }
     return {
@@ -305,9 +303,12 @@ export function useIdeaMapSync({
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
       }
-      syncTimerRef.current = window.setTimeout(() => {
-        void flushNow(null, { reason: opts?.reason || 'draft' });
-      }, opts?.immediate ? 0 : idleMs);
+      syncTimerRef.current = window.setTimeout(
+        () => {
+          void flushNow(null, { reason: opts?.reason || 'draft' });
+        },
+        opts?.immediate ? 0 : idleMs
+      );
     },
     [draftMs, flushNow, idleMs, locked, open, persistDraft]
   );

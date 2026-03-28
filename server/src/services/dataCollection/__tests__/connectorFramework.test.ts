@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -25,8 +25,8 @@ vi.mock('../../tablePlatform/RecordsService.js', () => ({
 import {
   connectorRegistry,
   connectorRunner,
-  type IConnector,
   type ExternalRecord,
+  type IConnector,
 } from '../connectorFramework.js';
 import { SyncScheduler } from '../syncScheduler.js';
 
@@ -50,7 +50,7 @@ describe('ConnectorRegistry', () => {
 
   it('get unknown type throws', () => {
     expect(() => connectorRegistry.get('nonexistent-type-xyz')).toThrow(
-      /No connector registered for type/,
+      /No connector registered for type/
     );
   });
 
@@ -107,12 +107,12 @@ describe('ConnectorRunner', () => {
     };
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [connectorRow] })  // SELECT connector
-      .mockResolvedValueOnce({ rows: [] })               // INSERT run
-      .mockResolvedValueOnce({ rows: [] })               // INSERT provenance 1
-      .mockResolvedValueOnce({ rows: [] })               // INSERT provenance 2
-      .mockResolvedValueOnce({ rows: [] })               // UPDATE run
-      .mockResolvedValueOnce({ rows: [] });              // UPDATE connector
+      .mockResolvedValueOnce({ rows: [connectorRow] }) // SELECT connector
+      .mockResolvedValueOnce({ rows: [] }) // INSERT run
+      .mockResolvedValueOnce({ rows: [] }) // INSERT provenance 1
+      .mockResolvedValueOnce({ rows: [] }) // INSERT provenance 2
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE run
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE connector
 
     mockBatchCreate.mockResolvedValue([{ id: 'rec-1' }, { id: 'rec-2' }]);
 
@@ -202,10 +202,10 @@ describe('SyncScheduler', () => {
 
   it('scheduleConnector throws for non-positive interval', () => {
     expect(() => scheduler.scheduleConnector('conn-z', 0)).toThrow(
-      /intervalMinutes must be positive/,
+      /intervalMinutes must be positive/
     );
     expect(() => scheduler.scheduleConnector('conn-z', -5)).toThrow(
-      /intervalMinutes must be positive/,
+      /intervalMinutes must be positive/
     );
   });
 

@@ -37,10 +37,7 @@ import {
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
-import {
-  getCapacityTimeline,
-  getLevelingAlerts,
-} from '../services/workloadCapacityService.js';
+import { getCapacityTimeline, getLevelingAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -247,7 +244,7 @@ router.get(
     const { projectId } = req.query;
     const { warnings, total } = await getTimelineWarningsSnapshot(
       orgId,
-      typeof projectId === 'string' ? projectId : undefined,
+      typeof projectId === 'string' ? projectId : undefined
     );
     return res.json({ warnings, total });
   })
@@ -613,7 +610,17 @@ router.post(
     await dbRun(
       `INSERT INTO closed_loop_workarounds (id, organization_id, initiative_id, signal_id, signal_type, status, steps_json, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, initiativeId, signalId, signalType, partial.status, JSON.stringify(partial.steps), now, now]
+      [
+        id,
+        orgId,
+        initiativeId,
+        signalId,
+        signalType,
+        partial.status,
+        JSON.stringify(partial.steps),
+        now,
+        now,
+      ]
     );
 
     await dbRun(
@@ -770,7 +777,9 @@ router.post(
 
     const workaround = parseWorkaroundRow(rows[0]);
     if (!workaround.raidItemId) {
-      return res.status(400).json({ error: 'Workaround has no linked RAID item. Advance the raid step first.' });
+      return res
+        .status(400)
+        .json({ error: 'Workaround has no linked RAID item. Advance the raid step first.' });
     }
 
     const { title, assigneeId, dueDate } = req.body;
@@ -780,7 +789,18 @@ router.post(
     await dbRun(
       `INSERT INTO tasks (id, organization_id, initiative_id, raid_item_id, title, status, priority, assignee_id, due_date, reporter_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, 'todo', 'high', ?, ?, ?, ?, ?)`,
-      [taskId, orgId, workaround.initiativeId, workaround.raidItemId, title, assigneeId || null, dueDate || null, userId, now, now]
+      [
+        taskId,
+        orgId,
+        workaround.initiativeId,
+        workaround.raidItemId,
+        title,
+        assigneeId || null,
+        dueDate || null,
+        userId,
+        now,
+        now,
+      ]
     );
 
     const updated = advanceWorkaround(workaround, 'task', 'task', taskId, userId);
@@ -791,7 +811,14 @@ router.post(
     );
 
     return res.json({
-      task: { id: taskId, title, assigneeId, dueDate, raidItemId: workaround.raidItemId, status: 'todo' },
+      task: {
+        id: taskId,
+        title,
+        assigneeId,
+        dueDate,
+        raidItemId: workaround.raidItemId,
+        status: 'todo',
+      },
       workaround: updated,
     });
   })
@@ -840,7 +867,12 @@ router.post(
     await dbRun(
       `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
        VALUES (gen_random_uuid()::TEXT, ?, ?, 'closed_loop_verified', 'in_progress', 'closed', ?, ?)`,
-      [orgId, workaround.initiativeId, req.body.verificationNotes || 'Workaround verified and closed', userId]
+      [
+        orgId,
+        workaround.initiativeId,
+        req.body.verificationNotes || 'Workaround verified and closed',
+        userId,
+      ]
     );
 
     return res.json(workaround);

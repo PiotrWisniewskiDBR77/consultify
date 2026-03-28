@@ -11,10 +11,22 @@ import { z } from 'zod';
 // ENUMS / LITERALS
 // ==========================================
 
-export const ConsumerClassValues = ['chat', 'execution', 'retrieval', 'background', 'worker'] as const;
+export const ConsumerClassValues = [
+  'chat',
+  'execution',
+  'retrieval',
+  'background',
+  'worker',
+] as const;
 export type ConsumerClass = (typeof ConsumerClassValues)[number];
 
-export const ScopeTypeValues = ['session', 'user_private', 'organization', 'system', 'external'] as const;
+export const ScopeTypeValues = [
+  'session',
+  'user_private',
+  'organization',
+  'system',
+  'external',
+] as const;
 export type ScopeType = (typeof ScopeTypeValues)[number];
 
 export const ArtifactRelationshipValues = ['target', 'source', 'reference'] as const;
@@ -29,7 +41,12 @@ export const DriftTypeValues = [
 ] as const;
 export type DriftType = (typeof DriftTypeValues)[number];
 
-export const DriftResolutionValues = ['revalidated', 'paused', 'aborted', 'user_confirmed'] as const;
+export const DriftResolutionValues = [
+  'revalidated',
+  'paused',
+  'aborted',
+  'user_confirmed',
+] as const;
 export type DriftResolution = (typeof DriftResolutionValues)[number];
 
 // ==========================================

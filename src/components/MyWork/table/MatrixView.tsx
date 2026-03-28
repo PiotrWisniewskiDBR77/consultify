@@ -58,12 +58,8 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
   );
 
   const { midX, midY, minX, maxX, minY, maxY } = useMemo(() => {
-    const xVals = nodes
-      .map((n) => Number(n.data?.[xAxis.key]))
-      .filter((v) => Number.isFinite(v));
-    const yVals = nodes
-      .map((n) => Number(n.data?.[yAxis.key]))
-      .filter((v) => Number.isFinite(v));
+    const xVals = nodes.map((n) => Number(n.data?.[xAxis.key])).filter((v) => Number.isFinite(v));
+    const yVals = nodes.map((n) => Number(n.data?.[yAxis.key])).filter((v) => Number.isFinite(v));
     const mx = median(xVals);
     const my = median(yVals);
     return {
@@ -238,9 +234,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 quadrantRefs.current[idx] = r;
               }}
               className={`rounded-2xl border p-3 ${q.color} flex flex-col overflow-hidden relative ${
-                dropQuadrant === idx
-                  ? 'ring-2 ring-violet-400 dark:ring-violet-500'
-                  : ''
+                dropQuadrant === idx ? 'ring-2 ring-violet-400 dark:ring-violet-500' : ''
               }`}
               onDragOver={handleDragOver}
               onDragEnter={() => dragNodeId && setDropQuadrant(idx)}
@@ -252,9 +246,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             >
               <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-2 flex-shrink-0">
                 {isPl ? q.labelPl : q.labelEn}
-                <span className="ml-1 text-slate-400">
-                  ({nodesByQuadrant[idx].length})
-                </span>
+                <span className="ml-1 text-slate-400">({nodesByQuadrant[idx].length})</span>
               </div>
               <div className="flex-1 min-h-[100px] relative">
                 {nodesByQuadrant[idx].map((node) => (
@@ -267,9 +259,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                     }}
                     onClick={() => onNodeClick?.(node.id)}
                     className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-slate-200/40 dark:border-navy-700/40 hover:shadow-md transition-shadow ${
-                      dragNodeId === node.id
-                        ? 'opacity-40 scale-95 border-violet-400'
-                        : ''
+                      dragNodeId === node.id ? 'opacity-40 scale-95 border-violet-400' : ''
                     }`}
                     style={{
                       left: `${positionsByNode[node.id]?.left ?? 5}%`,

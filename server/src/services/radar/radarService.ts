@@ -2,15 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { pickTipOfDay } from '../homeCoverFeedService.js';
-import type {
-  RadarRecommendation,
-  RadarSignalCard,
-  RadarViewPayload,
-} from './radarTypes.js';
 import { radarLocalizationService } from './radarLocalizationService.js';
 import { radarProcessingService } from './radarProcessingService.js';
 import { radarRankingService } from './radarRankingService.js';
 import { radarSourceRegistryService } from './radarSourceRegistryService.js';
+import type { RadarRecommendation, RadarSignalCard, RadarViewPayload } from './radarTypes.js';
 
 function dedupeBySignalId(cards: RadarSignalCard[]): RadarSignalCard[] {
   const seen = new Set<string>();
@@ -67,13 +63,12 @@ function tipCard(params: {
   };
 }
 
-function buildRecommendations(
-  cards: RadarSignalCard[],
-  isPolish: boolean
-): RadarRecommendation[] {
+function buildRecommendations(cards: RadarSignalCard[], isPolish: boolean): RadarRecommendation[] {
   const L = (pl: string, en: string) => (isPolish ? pl : en);
   const top = cards[0];
-  const riskCard = cards.find((card) => card.impactType === 'risk' || card.impactType === 'compliance');
+  const riskCard = cards.find(
+    (card) => card.impactType === 'risk' || card.impactType === 'compliance'
+  );
   const opportunityCard = cards.find(
     (card) => card.impactType === 'commercial' || card.impactType === 'product'
   );
@@ -167,19 +162,21 @@ class RadarService {
         radarRankingService.getOrCreateProfile({ userId, orgId, role, industry }),
         radarRankingService.buildDynamicContext(userId, orgId),
         radarProcessingService.listSignals(80),
-        queryHelpers.queryAll<{ action_type: string }>(
-          `SELECT action_type
+        queryHelpers
+          .queryAll<{ action_type: string }>(
+            `SELECT action_type
            FROM radar_actions
            WHERE user_id = ? AND created_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'`,
-          [userId]
-        ).catch(async () =>
-          queryHelpers.queryAll<{ action_type: string }>(
-            `SELECT action_type
-             FROM radar_actions
-             WHERE user_id = ? AND created_at >= datetime('now', '-30 days')`,
             [userId]
           )
-        ),
+          .catch(async () =>
+            queryHelpers.queryAll<{ action_type: string }>(
+              `SELECT action_type
+             FROM radar_actions
+             WHERE user_id = ? AND created_at >= datetime('now', '-30 days')`,
+              [userId]
+            )
+          ),
         queryHelpers.queryOne<{ duplicate_count: number; total_count: number }>(
           `SELECT
              SUM(CASE WHEN duplicate_cluster_id IS NOT NULL THEN 1 ELSE 0 END) AS duplicate_count,
@@ -214,12 +211,10 @@ class RadarService {
       };
     });
     const localizationPendingCount = radarLocalizationService.prewarmSignals(
-      topRankedSignals
-        .filter((item) => item.localization.pending)
-        .map((item) => item.signal),
+      topRankedSignals.filter((item) => item.localization.pending).map((item) => item.signal),
       requestedLanguage
     );
-    let cards = topRankedSignals.map(({ signal, ranked: score, localization }) =>
+    const cards = topRankedSignals.map(({ signal, ranked: score, localization }) =>
       radarRankingService.toSignalCard(signal, score, {
         sourceLanguage: localization.sourceLanguage,
         requestedLanguage: localization.requestedLanguage,
@@ -230,7 +225,9 @@ class RadarService {
 
     const { appTip, aiPlaybookTip } = pickTipOfDay(now);
     const learnCards = dedupeBySignalId([
-      ...cards.filter((card) => card.contentType === 'how_to' || card.contentType === 'tool_tip').slice(0, 2),
+      ...cards
+        .filter((card) => card.contentType === 'how_to' || card.contentType === 'tool_tip')
+        .slice(0, 2),
       tipCard({
         id: `tip:${appTip.id}`,
         title: isPolish ? appTip.titlePl : appTip.titleEn,
@@ -303,7 +300,8 @@ class RadarService {
             String(item.action_type)
           )
         ).length,
-        savedSignalsLast30d: actions30d.filter((item) => String(item.action_type) === 'save').length,
+        savedSignalsLast30d: actions30d.filter((item) => String(item.action_type) === 'save')
+          .length,
       },
       localization: {
         requestedLanguage,

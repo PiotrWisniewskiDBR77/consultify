@@ -19,8 +19,8 @@ import { ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDeviceType } from '@/hooks/useDeviceType';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
+import { useDeviceType } from '@/hooks/useDeviceType';
 
 export interface PreviewableItem {
   id: string;
@@ -116,7 +116,9 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     if (selectedId) setHistoryForward((prev) => [...prev, selectedId]);
     isHistoryNav.current = true;
     onSelect(prevId);
-    requestAnimationFrame(() => { isHistoryNav.current = false; });
+    requestAnimationFrame(() => {
+      isHistoryNav.current = false;
+    });
   }, [historyBack, selectedId, onSelect]);
 
   const goForward = useCallback(() => {
@@ -126,7 +128,9 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     if (selectedId) setHistoryBack((prev) => [...prev, selectedId]);
     isHistoryNav.current = true;
     onSelect(nextId);
-    requestAnimationFrame(() => { isHistoryNav.current = false; });
+    requestAnimationFrame(() => {
+      isHistoryNav.current = false;
+    });
   }, [historyForward, selectedId, onSelect]);
 
   // If selection is controlled externally (row click sets selectedId),
@@ -166,7 +170,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      const isInput =
+        tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
 
       if (!itemIds.length && !actionShortcuts) return;
 
@@ -228,7 +233,17 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
 
     container.addEventListener('keydown', handleKeyDown);
     return () => container.removeEventListener('keydown', handleKeyDown);
-  }, [itemIds, selectedId, handleSelect, handleClose, onOpenFull, isPreviewOpen, actionShortcuts, goBack, goForward]);
+  }, [
+    itemIds,
+    selectedId,
+    handleSelect,
+    handleClose,
+    onOpenFull,
+    isPreviewOpen,
+    actionShortcuts,
+    goBack,
+    goForward,
+  ]);
 
   const previewActions =
     !isBatchMode && selectedItem ? (

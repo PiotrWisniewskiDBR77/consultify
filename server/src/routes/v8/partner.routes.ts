@@ -11,23 +11,24 @@
  */
 
 import crypto from 'node:crypto';
-import { Router } from 'express';
+
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
-import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
+import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
   updatePartnerPayoutSettings,
 } from '../../services/partnerPayoutSettingsService.js';
 import PartnerReferralService from '../../services/partnerReferralService.js';
-import logger from '../../utils/Logger.js';
-import * as DbPromise from '../../utils/DbPromise.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -86,7 +87,7 @@ router.get(
       data: { clients },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -120,7 +121,7 @@ router.get(
       data: { projects },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -155,7 +156,7 @@ router.get(
       data: { employees },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -201,7 +202,7 @@ router.get(
       },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -238,11 +239,13 @@ router.post(
          privacy_accepted_at = NOW(),
          privacy_version = excluded.privacy_version,
          updated_at = NOW()`,
-      [userId, termsVersion, privacyVersion],
+      [userId, termsVersion, privacyVersion]
     );
 
     const ipAddress =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket?.remoteAddress ||
+      '';
     const userAgent = (req.headers['user-agent'] as string) || '';
     const organizationId = req.organizationId || req.user?.organizationId;
 
@@ -253,7 +256,7 @@ router.post(
         'USER',
         ipAddress,
         userAgent,
-        organizationId,
+        organizationId
       );
     } catch (legalErr) {
       logger.warn('[V8 Partner Onboarding] Legal acceptance sync failed (non-blocking):', legalErr);
@@ -263,7 +266,7 @@ router.post(
       data: { success: true, message: 'Terms accepted' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -301,14 +304,14 @@ router.post(
          pricing_tier = excluded.pricing_tier,
          pricing_tier_selected_at = NOW(),
          updated_at = NOW()`,
-      [userId, tier],
+      [userId, tier]
     );
 
     return res.json({
       data: { success: true, tier, message: 'Pricing tier selected' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -338,7 +341,7 @@ router.post(
       `SELECT terms_accepted, privacy_accepted, pricing_tier
        FROM user_onboarding_status
        WHERE user_id = ?`,
-      [userId],
+      [userId]
     );
 
     if (!status) {
@@ -348,7 +351,7 @@ router.post(
       });
     }
 
-    if (!Boolean(status.terms_accepted) || !Boolean(status.privacy_accepted)) {
+    if (!status.terms_accepted || !status.privacy_accepted) {
       return res.status(400).json({
         error: 'Terms not accepted',
         code: 'ONBOARDING_TERMS_REQUIRED',
@@ -369,20 +372,20 @@ router.post(
            completed_at = NOW(),
            updated_at = NOW()
        WHERE user_id = ?`,
-      [userId],
+      [userId]
     );
 
     await DbPromise.run(
       getDatabase(),
       `UPDATE users SET onboarding_completed = TRUE WHERE id = ?`,
-      [userId],
+      [userId]
     );
 
     return res.json({
       data: { success: true, message: 'Onboarding completed!' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -412,7 +415,7 @@ router.get(
       data: { tools: tools || buildReferralToolsFallback() },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -442,7 +445,7 @@ router.get(
       data: { analytics, days },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -477,7 +480,7 @@ router.get(
       data: { attributions },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -502,7 +505,7 @@ router.get(
       data: { earnings },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -539,7 +542,7 @@ router.get(
       data: { transactions },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -574,7 +577,7 @@ router.get(
       data: { payouts },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -610,7 +613,7 @@ router.post(
       data: { payout },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -633,7 +636,9 @@ router.post(
     const { name, description, utmSource, utmMedium, utmCampaign, utmContent, destinationUrl } =
       req.body ?? {};
     if (!name) {
-      return res.status(400).json({ error: 'Campaign name is required', code: 'CAMPAIGN_NAME_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Campaign name is required', code: 'CAMPAIGN_NAME_REQUIRED' });
     }
     const campaignLink = await PartnerReferralService.createCampaignLink({
       partnerOrgId,
@@ -649,7 +654,7 @@ router.post(
       data: { campaignLink },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -672,13 +677,15 @@ router.delete(
     const linkId = String(req.params.linkId || '');
     const deleted = await PartnerReferralService.deleteCampaignLink(partnerOrgId, linkId);
     if (!deleted) {
-      return res.status(404).json({ error: 'Campaign link not found', code: 'CAMPAIGN_LINK_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Campaign link not found', code: 'CAMPAIGN_LINK_NOT_FOUND' });
     }
     return res.json({
       data: { success: true, deleted: linkId },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -714,14 +721,14 @@ router.put(
       `UPDATE partner_organizations
        SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
        WHERE id = ?`,
-      [name, taxId || null, contactEmail, contactPhone || null, website || null, partnerOrgId],
+      [name, taxId || null, contactEmail, contactPhone || null, website || null, partnerOrgId]
     );
 
     return res.json({
       data: { success: true, message: 'Organization updated successfully' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -753,8 +760,8 @@ router.put(
       new Set(
         specializations
           .filter((s: unknown) => typeof s === 'string' && s.trim().length > 0)
-          .map((s: string) => s.trim()),
-      ),
+          .map((s: string) => s.trim())
+      )
     );
 
     const result = await DbPromise.transaction([
@@ -781,7 +788,7 @@ router.put(
       data: { success: true, message: 'Specializations updated successfully' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -813,8 +820,8 @@ router.put(
       new Set(
         regions
           .filter((region: unknown) => typeof region === 'string' && region.trim().length > 0)
-          .map((region: string) => region.trim()),
-      ),
+          .map((region: string) => region.trim())
+      )
     );
 
     const result = await DbPromise.transaction([
@@ -841,7 +848,7 @@ router.put(
       data: { success: true, message: 'Regions updated successfully' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -874,14 +881,14 @@ router.put(
       `UPDATE partner_organizations
        SET public_listing_enabled = ?, updated_at = NOW()
        WHERE id = ?`,
-      [publicListingEnabled, partnerOrgId],
+      [publicListingEnabled, partnerOrgId]
     );
 
     return res.json({
       data: { success: true, publicListingEnabled },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -907,7 +914,7 @@ router.get(
       data: { settings },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 /**
@@ -933,7 +940,7 @@ router.put(
       data: { success: true, settings },
       meta: partnerReadMeta(req, partnerOrgId),
     });
-  }),
+  })
 );
 
 export default router;

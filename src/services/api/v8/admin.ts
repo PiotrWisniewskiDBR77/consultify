@@ -10,8 +10,7 @@ export const V8AdminApi = {
 
   getAllFlags: () => v8Get('/admin/flags/all'),
 
-  setFlag: (module: string, enabled: boolean) =>
-    v8Put(`/admin/flags/${module}`, { enabled }),
+  setFlag: (module: string, enabled: boolean) => v8Put(`/admin/flags/${module}`, { enabled }),
 
   getHealth: () => v8Get('/admin/health'),
 
@@ -19,7 +18,8 @@ export const V8AdminApi = {
 
   getShadowStats: () => v8Get('/admin/shadow/stats'),
 
-  getShadowComparisons: (limit = 25) => v8Get('/admin/shadow/comparisons', { limit: String(limit) }),
+  getShadowComparisons: (limit = 25) =>
+    v8Get('/admin/shadow/comparisons', { limit: String(limit) }),
 
   getShadowPromotionReadiness: () => v8Get('/admin/shadow/promotion-readiness'),
 };

@@ -1,6 +1,6 @@
 import express from 'express';
 import supertest from 'supertest';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8Enabled: vi.fn().mockResolvedValue(true),
@@ -128,16 +128,61 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     { name: 'Feature flags', method: 'get', path: '/api/v8/admin/flags', expectedStatus: 200 },
     { name: 'Admin health', method: 'get', path: '/api/v8/admin/health', expectedStatus: 200 },
     { name: 'Admin metrics', method: 'get', path: '/api/v8/admin/metrics', expectedStatus: 200 },
-    { name: 'Shadow stats', method: 'get', path: '/api/v8/admin/shadow/stats', expectedStatus: 200 },
-    { name: 'Shadow comparisons', method: 'get', path: '/api/v8/admin/shadow/comparisons', expectedStatus: 200 },
-    { name: 'Shadow promotion', method: 'get', path: '/api/v8/admin/shadow/promotion-readiness', expectedStatus: 200 },
-    { name: 'AI Core environment', method: 'get', path: '/api/v8/ai-core/environment', expectedStatus: 200 },
+    {
+      name: 'Shadow stats',
+      method: 'get',
+      path: '/api/v8/admin/shadow/stats',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Shadow comparisons',
+      method: 'get',
+      path: '/api/v8/admin/shadow/comparisons',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Shadow promotion',
+      method: 'get',
+      path: '/api/v8/admin/shadow/promotion-readiness',
+      expectedStatus: 200,
+    },
+    {
+      name: 'AI Core environment',
+      method: 'get',
+      path: '/api/v8/ai-core/environment',
+      expectedStatus: 200,
+    },
     { name: 'AI Core tools', method: 'get', path: '/api/v8/ai-core/tools', expectedStatus: 200 },
-    { name: 'Chat snapshots (no params)', method: 'get', path: '/api/v8/chat/snapshots', expectedStatus: 400 },
-    { name: 'Chat snapshots (with conversationId)', method: 'get', path: '/api/v8/chat/snapshots?conversationId=test-conv', expectedStatus: 200 },
-    { name: 'Chat handoffs (no params)', method: 'get', path: '/api/v8/chat/handoffs', expectedStatus: 400 },
-    { name: 'Chat handoffs (with conversationId)', method: 'get', path: '/api/v8/chat/handoffs?conversationId=test-conv', expectedStatus: 200 },
-    { name: 'Prompt OS runtime summary', method: 'get', path: '/api/v8/prompt-os/runtime/summary', expectedStatus: 200 },
+    {
+      name: 'Chat snapshots (no params)',
+      method: 'get',
+      path: '/api/v8/chat/snapshots',
+      expectedStatus: 400,
+    },
+    {
+      name: 'Chat snapshots (with conversationId)',
+      method: 'get',
+      path: '/api/v8/chat/snapshots?conversationId=test-conv',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Chat handoffs (no params)',
+      method: 'get',
+      path: '/api/v8/chat/handoffs',
+      expectedStatus: 400,
+    },
+    {
+      name: 'Chat handoffs (with conversationId)',
+      method: 'get',
+      path: '/api/v8/chat/handoffs?conversationId=test-conv',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Prompt OS runtime summary',
+      method: 'get',
+      path: '/api/v8/prompt-os/runtime/summary',
+      expectedStatus: 200,
+    },
     {
       name: 'My Work inbox canonical list',
       method: 'get',
@@ -158,23 +203,42 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     },
     { name: 'KB search', method: 'get', path: '/api/v8/kb/search?q=ab', expectedStatus: 200 },
     { name: 'KB context', method: 'get', path: '/api/v8/kb/context/chat', expectedStatus: 200 },
-    { name: 'Results dashboard', method: 'get', path: '/api/v8/results/dashboard', expectedStatus: 200 },
-    { name: 'Sync auth health', method: 'get', path: '/api/v8/sync/auth/health', expectedStatus: 200 },
-    { name: 'Sync auth escalations', method: 'get', path: '/api/v8/sync/auth/escalations', expectedStatus: 200 },
+    {
+      name: 'Results dashboard',
+      method: 'get',
+      path: '/api/v8/results/dashboard',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Sync auth health',
+      method: 'get',
+      path: '/api/v8/sync/auth/health',
+      expectedStatus: 200,
+    },
+    {
+      name: 'Sync auth escalations',
+      method: 'get',
+      path: '/api/v8/sync/auth/escalations',
+      expectedStatus: 200,
+    },
     {
       name: 'Sync connector health',
       method: 'get',
       path: '/api/v8/sync/connectors/00000000-0000-4000-8000-000000000030/health',
       expectedStatus: 200,
     },
-    { name: 'Sync conflicts', method: 'get', path: '/api/v8/sync/conflicts?limit=50', expectedStatus: 200 },
+    {
+      name: 'Sync conflicts',
+      method: 'get',
+      path: '/api/v8/sync/conflicts?limit=50',
+      expectedStatus: 200,
+    },
   ];
 
   for (const test of smokeTests) {
     it(`${test.method.toUpperCase()} ${test.path} → ${test.expectedStatus} (${test.name})`, async () => {
       const app = createSmokeApp();
-      let req = supertest(app)[test.method](test.path)
-        .set('Authorization', 'Bearer smoke-token');
+      let req = supertest(app)[test.method](test.path).set('Authorization', 'Bearer smoke-token');
 
       if (test.body) {
         req = req.send(test.body);
@@ -188,7 +252,8 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
   it('all successful smoke tests produce JSON responses', async () => {
     const app = createSmokeApp();
     for (const test of smokeTests) {
-      const res = await supertest(app)[test.method](test.path)
+      const res = await supertest(app)
+        [test.method](test.path)
         .set('Authorization', 'Bearer smoke-token');
       if (res.status < 500) {
         expect(res.headers['content-type']).toMatch(/json/);
@@ -201,7 +266,8 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     const results: Array<{ name: string; status: number; passed: boolean }> = [];
 
     for (const test of smokeTests) {
-      const res = await supertest(app)[test.method](test.path)
+      const res = await supertest(app)
+        [test.method](test.path)
         .set('Authorization', 'Bearer smoke-token');
       results.push({
         name: test.name,

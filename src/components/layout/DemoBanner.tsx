@@ -79,7 +79,10 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
             ) : null}
             <span className="ml-2 hidden sm:inline">
               {isDemoMode
-                ? t('demo.banner.descriptionActive', 'Demo mode is overriding the active organization context')
+                ? t(
+                    'demo.banner.descriptionActive',
+                    'Demo mode is overriding the active organization context'
+                  )
                 : t('demo.banner.description', 'Exploring sample data')}
             </span>
           </span>

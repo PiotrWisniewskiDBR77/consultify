@@ -35,7 +35,9 @@ router.get(
       return res.json(analytics);
     } catch (error: any) {
       logger.error('[Analytics] Anna funnel analytics error:', error);
-      return res.status(500).json({ error: error?.message || 'Failed to fetch Anna funnel analytics' });
+      return res
+        .status(500)
+        .json({ error: error?.message || 'Failed to fetch Anna funnel analytics' });
     }
   })
 );
@@ -47,48 +49,42 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const days = 30;
-      const [
-        byType,
-        last7Demo,
-        last7Trial,
-        last7Paid,
-        trialWarnings,
-        recentEvents,
-      ] = await Promise.all([
-        dbAll(
-          `SELECT event_type, COUNT(*) as count FROM conversion_events
+      const [byType, last7Demo, last7Trial, last7Paid, trialWarnings, recentEvents] =
+        await Promise.all([
+          dbAll(
+            `SELECT event_type, COUNT(*) as count FROM conversion_events
            WHERE created_at > datetime('now', '-' || ? || ' days')
            GROUP BY event_type`,
-          [days]
-        ),
-        dbGet(
-          `SELECT COUNT(*) as count FROM conversion_events
+            [days]
+          ),
+          dbGet(
+            `SELECT COUNT(*) as count FROM conversion_events
            WHERE event_type = 'DEMO' AND created_at > datetime('now', '-7 days')`,
-          []
-        ),
-        dbGet(
-          `SELECT COUNT(*) as count FROM conversion_events
+            []
+          ),
+          dbGet(
+            `SELECT COUNT(*) as count FROM conversion_events
            WHERE event_type = 'TRIAL_START' AND created_at > datetime('now', '-7 days')`,
-          []
-        ),
-        dbGet(
-          `SELECT COUNT(*) as count FROM conversion_events
+            []
+          ),
+          dbGet(
+            `SELECT COUNT(*) as count FROM conversion_events
            WHERE event_type = 'PAID' AND created_at > datetime('now', '-7 days')`,
-          []
-        ),
-        dbGet(
-          `SELECT COUNT(*) as count FROM conversion_events
+            []
+          ),
+          dbGet(
+            `SELECT COUNT(*) as count FROM conversion_events
            WHERE event_type = 'trial_expiry_warning_shown' AND created_at > datetime('now', '-' || ? || ' days')`,
-          [days]
-        ),
-        dbAll(
-          `SELECT id, event_type, organization_id, user_id, source, metadata, created_at
+            [days]
+          ),
+          dbAll(
+            `SELECT id, event_type, organization_id, user_id, source, metadata, created_at
            FROM conversion_events
            WHERE created_at > datetime('now', '-' || ? || ' days')
            ORDER BY created_at DESC LIMIT 50`,
-          [days]
-        ),
-      ]);
+            [days]
+          ),
+        ]);
 
       const byTypeMap = (byType || []).reduce((acc: Record<string, number>, row: any) => {
         acc[row.event_type] = row.count;
@@ -125,7 +121,9 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Analytics] Demo-trial analytics error:', error);
-      return res.status(500).json({ error: error?.message || 'Failed to fetch demo-trial analytics' });
+      return res
+        .status(500)
+        .json({ error: error?.message || 'Failed to fetch demo-trial analytics' });
     }
   })
 );
@@ -942,16 +940,33 @@ router.post(
         )) as any;
         const mrr = mrrData?.mrr || 0;
         const avgRevPerSub = subCount?.cnt ? mrr / subCount.cnt : 0;
-        trainedParams = { currentMRR: mrr, activeSubscriptions: subCount?.cnt || 0, avgRevenuePerSubscription: avgRevPerSub };
-        accuracyScore = Math.min(0.92, 0.65 + ((subCount?.cnt || 0) > 5 ? 0.2 : (subCount?.cnt || 0) * 0.04));
+        trainedParams = {
+          currentMRR: mrr,
+          activeSubscriptions: subCount?.cnt || 0,
+          avgRevenuePerSubscription: avgRevPerSub,
+        };
+        accuracyScore = Math.min(
+          0.92,
+          0.65 + ((subCount?.cnt || 0) > 5 ? 0.2 : (subCount?.cnt || 0) * 0.04)
+        );
       } else if (modelType === 'growth') {
-        const totalUsers = (await dbGet(`SELECT COUNT(*) as cnt FROM users WHERE is_active = 1`)) as any;
+        const totalUsers = (await dbGet(
+          `SELECT COUNT(*) as cnt FROM users WHERE is_active = 1`
+        )) as any;
         const recentUsers = (await dbGet(
           `SELECT COUNT(*) as cnt FROM users WHERE is_active = 1 AND created_at > datetime('now', '-30 days')`
         )) as any;
-        const growthRate = (totalUsers?.cnt || 0) > 0 ? (recentUsers?.cnt || 0) / (totalUsers?.cnt || 1) : 0;
-        trainedParams = { totalActiveUsers: totalUsers?.cnt || 0, newUsersLast30d: recentUsers?.cnt || 0, monthlyGrowthRate: growthRate };
-        accuracyScore = Math.min(0.90, 0.6 + ((totalUsers?.cnt || 0) > 20 ? 0.25 : (totalUsers?.cnt || 0) * 0.0125));
+        const growthRate =
+          (totalUsers?.cnt || 0) > 0 ? (recentUsers?.cnt || 0) / (totalUsers?.cnt || 1) : 0;
+        trainedParams = {
+          totalActiveUsers: totalUsers?.cnt || 0,
+          newUsersLast30d: recentUsers?.cnt || 0,
+          monthlyGrowthRate: growthRate,
+        };
+        accuracyScore = Math.min(
+          0.9,
+          0.6 + ((totalUsers?.cnt || 0) > 20 ? 0.25 : (totalUsers?.cnt || 0) * 0.0125)
+        );
       } else {
         trainedParams = { type: modelType, note: 'Custom model — basic stats collected' };
         accuracyScore = 0.5;
@@ -1004,11 +1019,17 @@ router.post(
       )) as any;
 
       if (!latestRun) {
-        return res.status(400).json({ error: 'Model has not been trained yet. Train the model first.' });
+        return res
+          .status(400)
+          .json({ error: 'Model has not been trained yet. Train the model first.' });
       }
 
       let params: Record<string, any> = {};
-      try { params = JSON.parse(latestRun.parameters_json || '{}'); } catch { params = {}; }
+      try {
+        params = JSON.parse(latestRun.parameters_json || '{}');
+      } catch {
+        params = {};
+      }
 
       const modelType = model.model_type || 'custom';
       let predictedValue: string | number = 0;

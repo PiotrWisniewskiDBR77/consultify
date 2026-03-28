@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCreateBase = vi.fn();
 const mockGetBase = vi.fn();
@@ -47,7 +47,9 @@ vi.mock('../../config/FeatureFlags.js', () => ({
 }));
 
 vi.mock('../../services/tablePlatform/ErrorHandling.js', async () => {
-  const actual = await vi.importActual<typeof import('../../services/tablePlatform/ErrorHandling.js')>('../../services/tablePlatform/ErrorHandling.js');
+  const actual = await vi.importActual<
+    typeof import('../../services/tablePlatform/ErrorHandling.js')
+  >('../../services/tablePlatform/ErrorHandling.js');
   return actual;
 });
 

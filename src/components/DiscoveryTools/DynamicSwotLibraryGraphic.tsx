@@ -8,7 +8,9 @@ export function DynamicSwotLibraryGraphic({
   variant?: 'process' | 'example';
 }) {
   const isExample = variant === 'example';
-  const outputs = isPolish ? ['Initiative', 'Report', 'Presentation', 'Idea'] : ['Initiative', 'Report', 'Presentation', 'Idea'];
+  const outputs = isPolish
+    ? ['Initiative', 'Report', 'Presentation', 'Idea']
+    : ['Initiative', 'Report', 'Presentation', 'Idea'];
   const labels = isPolish
     ? {
         eyebrow: 'Dynamic SWOT',
@@ -28,18 +30,21 @@ export function DynamicSwotLibraryGraphic({
           ? 'Od czego zacząć transformację: od CAPEX-u czy od diagnozy?'
           : 'Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, decka oraz inicjatyw.',
         stagesTitle: '5 kroków pracy',
-        stagesSubtitle: 'Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.',
+        stagesSubtitle:
+          'Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.',
         signals: 'Macierz czynników',
         matrixLead:
           'Macierz porządkuje sygnały, ale nie jest finałem. Każda karta powinna być krótka, konkretna, mieć źródło i wpływać na logikę decyzji.',
         matrixNote:
           'Dobra macierz nie zbiera wszystkiego. Zostawia tylko te czynniki, które naprawdę przesuwają wybór strategiczny.',
         tensionPanel: 'Napięcie strategiczne',
-        tensionLead: 'Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.',
+        tensionLead:
+          'Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.',
         moves: 'Rekomendowany ruch',
         movesLead: 'Ruch musi wynikać z napięcia, a nie z intuicji autora.',
         outputs: 'Most do outputów',
-        outputsLead: 'Wynik sesji musi nadawać się do dalszego użycia przez management i execution.',
+        outputsLead:
+          'Wynik sesji musi nadawać się do dalszego użycia przez management i execution.',
         stage1: 'Mission brief',
         stage1Value: 'Cel, zakres, success signal, constraints',
         stage2: 'Evidence map',
@@ -93,7 +98,11 @@ export function DynamicSwotLibraryGraphic({
           'Dopiero potem układać kolejność: dane -> automatyzacja -> governance inwestycji.',
           'Zamknąć wynik w materiale dla zarządu, a nie w długiej liście obserwacji.',
         ],
-        outputItems: ['Executive summary sytuacji', 'Priorytety na 90 dni', 'Raport / deck / inicjatywa'],
+        outputItems: [
+          'Executive summary sytuacji',
+          'Priorytety na 90 dni',
+          'Raport / deck / inicjatywa',
+        ],
         legend: 'Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output',
       }
     : {
@@ -125,7 +134,8 @@ export function DynamicSwotLibraryGraphic({
         moves: 'Recommended move',
         movesLead: 'A move must emerge from the tension, not from analyst instinct.',
         outputs: 'Bridge to outputs',
-        outputsLead: 'The result of the session must be usable by management and by downstream execution.',
+        outputsLead:
+          'The result of the session must be usable by management and by downstream execution.',
         stage1: 'Mission brief',
         stage1Value: 'Goal, scope, success signal, constraints',
         stage2: 'Evidence map',
@@ -179,16 +189,55 @@ export function DynamicSwotLibraryGraphic({
           'Only then sequence the roadmap: data -> automation -> investment governance.',
           'Close the result in board-ready material, not in a long list of observations.',
         ],
-        outputItems: ['Executive summary of the situation', '90-day priorities', 'Report / deck / initiative'],
+        outputItems: [
+          'Executive summary of the situation',
+          '90-day priorities',
+          'Report / deck / initiative',
+        ],
         legend: 'Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output',
       };
 
   const stages = [
-    { id: 1, title: labels.stage1, value: labels.stage1Value, tone: 'from-violet-500/18 to-fuchsia-500/8', accent: 'bg-violet-500', badge: null },
-    { id: 2, title: labels.stage2, value: labels.stage2Value, tone: 'from-sky-500/18 to-cyan-500/8', accent: 'bg-sky-500', badge: null },
-    { id: 3, title: labels.stage3, value: labels.stage3Value, tone: 'from-emerald-500/18 to-teal-500/8', accent: 'bg-emerald-500', badge: null },
-    { id: 4, title: labels.stage4, value: labels.stage4Value, tone: 'from-amber-500/22 to-orange-500/10', accent: 'bg-amber-500', badge: labels.stage4Badge },
-    { id: 5, title: labels.stage5, value: labels.stage5Value, tone: 'from-violet-500/22 to-indigo-500/10', accent: 'bg-violet-600', badge: labels.stage5Badge },
+    {
+      id: 1,
+      title: labels.stage1,
+      value: labels.stage1Value,
+      tone: 'from-violet-500/18 to-fuchsia-500/8',
+      accent: 'bg-violet-500',
+      badge: null,
+    },
+    {
+      id: 2,
+      title: labels.stage2,
+      value: labels.stage2Value,
+      tone: 'from-sky-500/18 to-cyan-500/8',
+      accent: 'bg-sky-500',
+      badge: null,
+    },
+    {
+      id: 3,
+      title: labels.stage3,
+      value: labels.stage3Value,
+      tone: 'from-emerald-500/18 to-teal-500/8',
+      accent: 'bg-emerald-500',
+      badge: null,
+    },
+    {
+      id: 4,
+      title: labels.stage4,
+      value: labels.stage4Value,
+      tone: 'from-amber-500/22 to-orange-500/10',
+      accent: 'bg-amber-500',
+      badge: labels.stage4Badge,
+    },
+    {
+      id: 5,
+      title: labels.stage5,
+      value: labels.stage5Value,
+      tone: 'from-violet-500/22 to-indigo-500/10',
+      accent: 'bg-violet-600',
+      badge: labels.stage5Badge,
+    },
   ];
 
   const signalCards = [
@@ -275,15 +324,21 @@ export function DynamicSwotLibraryGraphic({
         <div className="rounded-[26px] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{labels.stagesTitle}</div>
-              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{labels.stagesSubtitle}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                {labels.stagesTitle}
+              </div>
+              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                {labels.stagesSubtitle}
+              </div>
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
               Process
             </span>
           </div>
 
-          <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-slate-400">{labels.legend}</div>
+          <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+            {labels.legend}
+          </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
             {stages.slice(0, 3).map((stage) => (
@@ -295,11 +350,15 @@ export function DynamicSwotLibraryGraphic({
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
                     {stage.id}
                   </div>
-                  <div className="text-xs font-semibold leading-tight text-slate-900 dark:text-white">{stage.title}</div>
+                  <div className="text-xs font-semibold leading-tight text-slate-900 dark:text-white">
+                    {stage.title}
+                  </div>
                 </div>
                 <div className="mt-2 flex items-start gap-1.5">
                   <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${stage.accent}`} />
-                  <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{stage.value}</div>
+                  <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    {stage.value}
+                  </div>
                 </div>
               </div>
             ))}
@@ -314,7 +373,9 @@ export function DynamicSwotLibraryGraphic({
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
                     {stage.id}
                   </div>
-                  <div className="text-xs font-semibold leading-tight text-slate-900 dark:text-white">{stage.title}</div>
+                  <div className="text-xs font-semibold leading-tight text-slate-900 dark:text-white">
+                    {stage.title}
+                  </div>
                   {stage.badge ? (
                     <span className="ml-auto inline-flex shrink-0 rounded-full border border-white/50 bg-white/60 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
                       {stage.badge}
@@ -323,7 +384,9 @@ export function DynamicSwotLibraryGraphic({
                 </div>
                 <div className="mt-2 flex items-start gap-1.5">
                   <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${stage.accent}`} />
-                  <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{stage.value}</div>
+                  <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    {stage.value}
+                  </div>
                 </div>
               </div>
             ))}
@@ -341,17 +404,26 @@ export function DynamicSwotLibraryGraphic({
                 Matrix
               </span>
             </div>
-            <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">{labels.matrixLead}</div>
+            <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+              {labels.matrixLead}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {signalCards.map((card) => (
-              <div key={card.title} className={`rounded-[22px] border p-4 shadow-sm ${card.className}`}>
+              <div
+                key={card.title}
+                className={`rounded-[22px] border p-4 shadow-sm ${card.className}`}
+              >
                 <div className="flex items-center justify-between gap-3">
-                  <div className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${card.titleClassName}`}>
+                  <div
+                    className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${card.titleClassName}`}
+                  >
                     {card.title}
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-current/65">{card.hint}</div>
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-current/65">
+                    {card.hint}
+                  </div>
                 </div>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed">
                   {card.items.map((item) => (
@@ -366,7 +438,9 @@ export function DynamicSwotLibraryGraphic({
           </div>
 
           <div className="mt-4 rounded-[22px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">{labels.matrixNote}</div>
+            <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              {labels.matrixNote}
+            </div>
           </div>
         </div>
 
@@ -380,7 +454,9 @@ export function DynamicSwotLibraryGraphic({
               {labels.stage4Badge}
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">{labels.tensionLead}</div>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+            {labels.tensionLead}
+          </div>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {labels.tensionItems.map((item) => (
               <li key={item} className="flex items-start gap-2">
@@ -400,7 +476,9 @@ export function DynamicSwotLibraryGraphic({
               {labels.stage5Badge}
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">{labels.movesLead}</div>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+            {labels.movesLead}
+          </div>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {labels.moveItems.map((item) => (
               <li key={item} className="flex items-start gap-2">
@@ -420,7 +498,9 @@ export function DynamicSwotLibraryGraphic({
               Output
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">{labels.outputsLead}</div>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+            {labels.outputsLead}
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {outputs.map((item) => (
               <span

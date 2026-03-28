@@ -5,7 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import type { ExternalSchema, ConnectorRow } from './connectorFramework.js';
+import type { ConnectorRow, ExternalSchema } from './connectorFramework.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,21 +38,19 @@ export interface DriftReport {
 // ---------------------------------------------------------------------------
 
 export class SchemaDriftDetector {
-  async detectDrift(
-    connectorId: string,
-    currentSchema: ExternalSchema
-  ): Promise<DriftReport> {
+  async detectDrift(connectorId: string, currentSchema: ExternalSchema): Promise<DriftReport> {
     const db = getDatabase();
-    const result = await db.query(
-      'SELECT config, field_mapping FROM tp_connectors WHERE id = $1',
-      [connectorId]
-    );
+    const result = await db.query('SELECT config, field_mapping FROM tp_connectors WHERE id = $1', [
+      connectorId,
+    ]);
     const row = result.rows[0] as Pick<ConnectorRow, 'config' | 'field_mapping'> | undefined;
     if (!row) {
       throw new Error(`Connector not found: ${connectorId}`);
     }
 
-    const storedSchema = (row.config as Record<string, unknown>)._lastSchema as ExternalSchema | undefined;
+    const storedSchema = (row.config as Record<string, unknown>)._lastSchema as
+      | ExternalSchema
+      | undefined;
     if (!storedSchema?.tables?.length) {
       await this.storeCurrentSchema(connectorId, currentSchema);
       return {
@@ -105,7 +103,11 @@ export class SchemaDriftDetector {
 
     for (const [name, stored] of storedFields) {
       if (!currentFields.has(name)) {
-        removed.push({ name, externalType: stored.externalType, inferredType: stored.inferredType });
+        removed.push({
+          name,
+          externalType: stored.externalType,
+          inferredType: stored.inferredType,
+        });
       }
     }
 
@@ -122,15 +124,11 @@ export class SchemaDriftDetector {
     };
   }
 
-  async autoResolveDrift(
-    connectorId: string,
-    drift: DriftReport
-  ): Promise<void> {
+  async autoResolveDrift(connectorId: string, drift: DriftReport): Promise<void> {
     const db = getDatabase();
-    const result = await db.query(
-      'SELECT field_mapping FROM tp_connectors WHERE id = $1',
-      [connectorId]
-    );
+    const result = await db.query('SELECT field_mapping FROM tp_connectors WHERE id = $1', [
+      connectorId,
+    ]);
     const row = result.rows[0] as { field_mapping: unknown } | undefined;
     if (!row) return;
 
@@ -176,10 +174,7 @@ export class SchemaDriftDetector {
     });
   }
 
-  private async storeCurrentSchema(
-    connectorId: string,
-    schema: ExternalSchema
-  ): Promise<void> {
+  private async storeCurrentSchema(connectorId: string, schema: ExternalSchema): Promise<void> {
     const db = getDatabase();
     await db.query(
       `UPDATE tp_connectors

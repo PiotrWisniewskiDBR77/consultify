@@ -1,28 +1,28 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   CreateLandingSectionParams,
-  SetAnnaLPConfigParams,
-  SetDemoTrialConfigParams,
   RegisterSuperadminDomainParams,
   RegisterSuperadminSurfaceParams,
+  SetAnnaLPConfigParams,
+  SetDemoTrialConfigParams,
 } from '../../../types/landingSuperadminPackage.js';
 import {
-  LandingPageSectionSchema,
-  AnnaLPAssistantConfigSchema,
-  DemoTrialConfigSchema,
-  SuperadminDomainSchema,
-  SuperadminSurfaceSchema,
-  CreateLandingSectionParamsSchema,
-  SetAnnaLPConfigParamsSchema,
-  SetDemoTrialConfigParamsSchema,
-  RegisterSuperadminDomainParamsSchema,
-  RegisterSuperadminSurfaceParamsSchema,
-  LandingSectionTypeValues,
   AnnaIdentityRoleValues,
+  AnnaLPAssistantConfigSchema,
+  CreateLandingSectionParamsSchema,
+  DemoTrialConfigSchema,
+  LandingPageSectionSchema,
+  LandingSectionTypeValues,
   NarrativeVersionValues,
   OwnershipTypeValues,
+  RegisterSuperadminDomainParamsSchema,
+  RegisterSuperadminSurfaceParamsSchema,
+  SetAnnaLPConfigParamsSchema,
+  SetDemoTrialConfigParamsSchema,
+  SuperadminDomainSchema,
+  SuperadminSurfaceSchema,
   SurfaceAccessLevelValues,
 } from '../../../types/landingSuperadminPackage.js';
 
@@ -51,15 +51,15 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 import {
   createLandingSection,
-  getLandingSections,
-  setAnnaLPConfig,
   getAnnaLPConfig,
-  setDemoTrialConfig,
   getDemoTrialConfig,
-  registerSuperadminDomain,
+  getLandingSections,
   getSuperadminDomains,
-  registerSuperadminSurface,
   getSuperadminSurfaces,
+  registerSuperadminDomain,
+  registerSuperadminSurface,
+  setAnnaLPConfig,
+  setDemoTrialConfig,
 } from '../landingSuperadminService.js';
 
 // ==========================================
@@ -70,7 +70,9 @@ const ORG_ID = '00000000-0000-4000-8000-000000000001';
 const OTHER_ORG_ID = '00000000-0000-4000-8000-000000000099';
 const DOMAIN_ID = '00000000-0000-4000-8000-dddddddddddd';
 
-function makeSectionParams(overrides?: Partial<CreateLandingSectionParams>): CreateLandingSectionParams {
+function makeSectionParams(
+  overrides?: Partial<CreateLandingSectionParams>
+): CreateLandingSectionParams {
   return {
     organizationId: ORG_ID,
     sectionType: 'hero',
@@ -90,7 +92,9 @@ function makeAnnaParams(overrides?: Partial<SetAnnaLPConfigParams>): SetAnnaLPCo
   };
 }
 
-function makeDemoTrialParams(overrides?: Partial<SetDemoTrialConfigParams>): SetDemoTrialConfigParams {
+function makeDemoTrialParams(
+  overrides?: Partial<SetDemoTrialConfigParams>
+): SetDemoTrialConfigParams {
   return {
     organizationId: ORG_ID,
     narrativeVersion: 'v8',
@@ -100,7 +104,9 @@ function makeDemoTrialParams(overrides?: Partial<SetDemoTrialConfigParams>): Set
   };
 }
 
-function makeDomainParams(overrides?: Partial<RegisterSuperadminDomainParams>): RegisterSuperadminDomainParams {
+function makeDomainParams(
+  overrides?: Partial<RegisterSuperadminDomainParams>
+): RegisterSuperadminDomainParams {
   return {
     organizationId: ORG_ID,
     domainName: 'Partner Program',
@@ -109,7 +115,9 @@ function makeDomainParams(overrides?: Partial<RegisterSuperadminDomainParams>): 
   };
 }
 
-function makeSurfaceParams(overrides?: Partial<RegisterSuperadminSurfaceParams>): RegisterSuperadminSurfaceParams {
+function makeSurfaceParams(
+  overrides?: Partial<RegisterSuperadminSurfaceParams>
+): RegisterSuperadminSurfaceParams {
   return {
     domainId: DOMAIN_ID,
     organizationId: ORG_ID,
@@ -221,7 +229,7 @@ describe('createLandingSection', () => {
 
   it('creates a value_proposition section', async () => {
     const result = await createLandingSection(
-      makeSectionParams({ sectionType: 'value_proposition', displayOrder: 1 }),
+      makeSectionParams({ sectionType: 'value_proposition', displayOrder: 1 })
     );
     expect(result.sectionType).toBe('value_proposition');
     expect(result.displayOrder).toBe(1);
@@ -229,55 +237,53 @@ describe('createLandingSection', () => {
 
   it('creates an expert_showcase section', async () => {
     const result = await createLandingSection(
-      makeSectionParams({ sectionType: 'expert_showcase', displayOrder: 2 }),
+      makeSectionParams({ sectionType: 'expert_showcase', displayOrder: 2 })
     );
     expect(result.sectionType).toBe('expert_showcase');
   });
 
   it('creates a use_case_mapping section', async () => {
     const result = await createLandingSection(
-      makeSectionParams({ sectionType: 'use_case_mapping', displayOrder: 3 }),
+      makeSectionParams({ sectionType: 'use_case_mapping', displayOrder: 3 })
     );
     expect(result.sectionType).toBe('use_case_mapping');
   });
 
   it('creates a cta section', async () => {
     const result = await createLandingSection(
-      makeSectionParams({ sectionType: 'cta', displayOrder: 4 }),
+      makeSectionParams({ sectionType: 'cta', displayOrder: 4 })
     );
     expect(result.sectionType).toBe('cta');
   });
 
   it('creates a social_proof section', async () => {
     const result = await createLandingSection(
-      makeSectionParams({ sectionType: 'social_proof', displayOrder: 5 }),
+      makeSectionParams({ sectionType: 'social_proof', displayOrder: 5 })
     );
     expect(result.sectionType).toBe('social_proof');
   });
 
   it('supports isActive=false for inactive sections', async () => {
-    const result = await createLandingSection(
-      makeSectionParams({ isActive: false }),
-    );
+    const result = await createLandingSection(makeSectionParams({ isActive: false }));
     expect(result.isActive).toBe(false);
   });
 
   it('rejects invalid section type via Zod', async () => {
     await expect(
-      createLandingSection(makeSectionParams({ sectionType: 'invalid' as any })),
+      createLandingSection(makeSectionParams({ sectionType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      createLandingSection(makeSectionParams({ organizationId: 'not-a-uuid' })),
+      createLandingSection(makeSectionParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects negative displayOrder', async () => {
-    await expect(
-      createLandingSection(makeSectionParams({ displayOrder: -1 })),
-    ).rejects.toThrow(ZodError);
+    await expect(createLandingSection(makeSectionParams({ displayOrder: -1 }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -285,7 +291,11 @@ describe('getLandingSections', () => {
   it('returns sections ordered by displayOrder', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeFakeSectionRow({ display_order: 0, section_type: 'hero' }),
-      makeFakeSectionRow({ section_id: 'sec-2', display_order: 1, section_type: 'value_proposition' }),
+      makeFakeSectionRow({
+        section_id: 'sec-2',
+        display_order: 1,
+        section_type: 'value_proposition',
+      }),
       makeFakeSectionRow({ section_id: 'sec-3', display_order: 2, section_type: 'cta' }),
     ]);
 
@@ -326,9 +336,7 @@ describe('getLandingSections', () => {
   });
 
   it('handles malformed JSON content gracefully', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeSectionRow({ content: 'not-json' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeSectionRow({ content: 'not-json' })]);
 
     const results = await getLandingSections(ORG_ID);
     expect(results[0].content).toEqual({});
@@ -357,9 +365,7 @@ describe('setAnnaLPConfig', () => {
   });
 
   it('creates an onboarding_assistant config', async () => {
-    const result = await setAnnaLPConfig(
-      makeAnnaParams({ identityRole: 'onboarding_assistant' }),
-    );
+    const result = await setAnnaLPConfig(makeAnnaParams({ identityRole: 'onboarding_assistant' }));
     expect(result.identityRole).toBe('onboarding_assistant');
   });
 
@@ -368,7 +374,7 @@ describe('setAnnaLPConfig', () => {
       makeAnnaParams({
         platformIntegrationRef: 'integration:chat-v8',
         aiGovernanceRef: 'governance:anna-policy',
-      }),
+      })
     );
     expect(result.platformIntegrationRef).toBe('integration:chat-v8');
     expect(result.aiGovernanceRef).toBe('governance:anna-policy');
@@ -376,21 +382,21 @@ describe('setAnnaLPConfig', () => {
 
   it('records degraded state behavior for resilience', async () => {
     const result = await setAnnaLPConfig(
-      makeAnnaParams({ degradedStateBehavior: 'show_static_faq' }),
+      makeAnnaParams({ degradedStateBehavior: 'show_static_faq' })
     );
     expect(result.degradedStateBehavior).toBe('show_static_faq');
   });
 
   it('rejects invalid identity role via Zod', async () => {
     await expect(
-      setAnnaLPConfig(makeAnnaParams({ identityRole: 'invalid' as any })),
+      setAnnaLPConfig(makeAnnaParams({ identityRole: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty degradedStateBehavior', async () => {
-    await expect(
-      setAnnaLPConfig(makeAnnaParams({ degradedStateBehavior: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(setAnnaLPConfig(makeAnnaParams({ degradedStateBehavior: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -420,7 +426,7 @@ describe('getAnnaLPConfig', () => {
 
   it('parses conversation contract JSON', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeAnnaRow({ conversation_contract: '{"maxTurns":5,"persona":"friendly"}' }),
+      makeFakeAnnaRow({ conversation_contract: '{"maxTurns":5,"persona":"friendly"}' })
     );
 
     const result = await getAnnaLPConfig(ORG_ID);
@@ -449,15 +455,13 @@ describe('setDemoTrialConfig', () => {
   });
 
   it('creates a V3 config for legacy compatibility', async () => {
-    const result = await setDemoTrialConfig(
-      makeDemoTrialParams({ narrativeVersion: 'v3' }),
-    );
+    const result = await setDemoTrialConfig(makeDemoTrialParams({ narrativeVersion: 'v3' }));
     expect(result.narrativeVersion).toBe('v3');
   });
 
   it('supports isRefreshed=true for V3→V8 migration', async () => {
     const result = await setDemoTrialConfig(
-      makeDemoTrialParams({ narrativeVersion: 'v8', isRefreshed: true }),
+      makeDemoTrialParams({ narrativeVersion: 'v8', isRefreshed: true })
     );
     expect(result.isRefreshed).toBe(true);
     expect(result.narrativeVersion).toBe('v8');
@@ -465,33 +469,33 @@ describe('setDemoTrialConfig', () => {
 
   it('supports onboarding flow reference', async () => {
     const result = await setDemoTrialConfig(
-      makeDemoTrialParams({ onboardingFlowRef: 'flow:first-run-v8' }),
+      makeDemoTrialParams({ onboardingFlowRef: 'flow:first-run-v8' })
     );
     expect(result.onboardingFlowRef).toBe('flow:first-run-v8');
   });
 
   it('rejects invalid narrative version via Zod', async () => {
     await expect(
-      setDemoTrialConfig(makeDemoTrialParams({ narrativeVersion: 'v9' as any })),
+      setDemoTrialConfig(makeDemoTrialParams({ narrativeVersion: 'v9' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects zero trial duration', async () => {
-    await expect(
-      setDemoTrialConfig(makeDemoTrialParams({ trialDuration: 0 })),
-    ).rejects.toThrow(ZodError);
+    await expect(setDemoTrialConfig(makeDemoTrialParams({ trialDuration: 0 }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects negative trial duration', async () => {
-    await expect(
-      setDemoTrialConfig(makeDemoTrialParams({ trialDuration: -7 })),
-    ).rejects.toThrow(ZodError);
+    await expect(setDemoTrialConfig(makeDemoTrialParams({ trialDuration: -7 }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty demo scenarios array', async () => {
-    await expect(
-      setDemoTrialConfig(makeDemoTrialParams({ demoScenarios: [] })),
-    ).rejects.toThrow(ZodError);
+    await expect(setDemoTrialConfig(makeDemoTrialParams({ demoScenarios: [] }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -548,7 +552,7 @@ describe('registerSuperadminDomain', () => {
 
   it('registers a tenant_admin domain', async () => {
     const result = await registerSuperadminDomain(
-      makeDomainParams({ ownershipType: 'tenant_admin', domainName: 'Organization Settings' }),
+      makeDomainParams({ ownershipType: 'tenant_admin', domainName: 'Organization Settings' })
     );
     expect(result.ownershipType).toBe('tenant_admin');
     expect(result.domainName).toBe('Organization Settings');
@@ -556,33 +560,33 @@ describe('registerSuperadminDomain', () => {
 
   it('supports vertical packages', async () => {
     const result = await registerSuperadminDomain(
-      makeDomainParams({ verticalPackages: ['partner_control_tower', 'partner_portal'] }),
+      makeDomainParams({ verticalPackages: ['partner_control_tower', 'partner_portal'] })
     );
     expect(result.verticalPackages).toEqual(['partner_control_tower', 'partner_portal']);
   });
 
   it('supports cross-domain capabilities', async () => {
     const result = await registerSuperadminDomain(
-      makeDomainParams({ crossDomainCapabilities: ['audit_log', 'health_dashboard'] }),
+      makeDomainParams({ crossDomainCapabilities: ['audit_log', 'health_dashboard'] })
     );
     expect(result.crossDomainCapabilities).toEqual(['audit_log', 'health_dashboard']);
   });
 
   it('rejects invalid ownership type via Zod', async () => {
     await expect(
-      registerSuperadminDomain(makeDomainParams({ ownershipType: 'invalid' as any })),
+      registerSuperadminDomain(makeDomainParams({ ownershipType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty domain name', async () => {
-    await expect(
-      registerSuperadminDomain(makeDomainParams({ domainName: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(registerSuperadminDomain(makeDomainParams({ domainName: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      registerSuperadminDomain(makeDomainParams({ organizationId: 'bad' })),
+      registerSuperadminDomain(makeDomainParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -647,7 +651,7 @@ describe('registerSuperadminSurface', () => {
 
   it('registers a tenant-level surface', async () => {
     const result = await registerSuperadminSurface(
-      makeSurfaceParams({ accessLevel: 'tenant', surfaceName: 'Org Settings' }),
+      makeSurfaceParams({ accessLevel: 'tenant', surfaceName: 'Org Settings' })
     );
     expect(result.accessLevel).toBe('tenant');
   });
@@ -658,7 +662,7 @@ describe('registerSuperadminSurface', () => {
         accessLevel: 'module',
         surfaceName: 'Connector Fleet Health',
         moduleRef: 'module:connectors',
-      }),
+      })
     );
     expect(result.accessLevel).toBe('module');
     expect(result.moduleRef).toBe('module:connectors');
@@ -666,20 +670,20 @@ describe('registerSuperadminSurface', () => {
 
   it('rejects invalid access level via Zod', async () => {
     await expect(
-      registerSuperadminSurface(makeSurfaceParams({ accessLevel: 'invalid' as any })),
+      registerSuperadminSurface(makeSurfaceParams({ accessLevel: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty surface name', async () => {
-    await expect(
-      registerSuperadminSurface(makeSurfaceParams({ surfaceName: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(registerSuperadminSurface(makeSurfaceParams({ surfaceName: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid UUID for domainId', async () => {
-    await expect(
-      registerSuperadminSurface(makeSurfaceParams({ domainId: 'bad' })),
-    ).rejects.toThrow(ZodError);
+    await expect(registerSuperadminSurface(makeSurfaceParams({ domainId: 'bad' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -769,7 +773,7 @@ describe('Zod schema validation', () => {
         isActive: true,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -784,7 +788,7 @@ describe('Zod schema validation', () => {
         isActive: true,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -800,7 +804,7 @@ describe('Zod schema validation', () => {
         degradedStateBehavior: 'static_fallback',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -816,7 +820,7 @@ describe('Zod schema validation', () => {
         isRefreshed: true,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -831,7 +835,7 @@ describe('Zod schema validation', () => {
         crossDomainCapabilities: ['cap_a'],
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -846,7 +850,7 @@ describe('Zod schema validation', () => {
         moduleRef: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 

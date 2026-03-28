@@ -1,4 +1,16 @@
-import { AlertTriangle, BarChart3, Calculator, ChevronDown, ChevronRight, FileText, PanelRightClose, PanelRightOpen, RefreshCw, RotateCcw, Upload } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Calculator,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  PanelRightClose,
+  PanelRightOpen,
+  RefreshCw,
+  RotateCcw,
+  Upload,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -58,7 +70,10 @@ function parseStringArray(value: unknown): string[] {
   return [];
 }
 
-function mapValidation(validation: Record<string, unknown>, scope: 'statement' | 'pack'): FinanceStatementValidation {
+function mapValidation(
+  validation: Record<string, unknown>,
+  scope: 'statement' | 'pack'
+): FinanceStatementValidation {
   return {
     validationScope: scope,
     checkCode: String(validation.check_code || validation.checkCode || ''),
@@ -66,9 +81,17 @@ function mapValidation(validation: Record<string, unknown>, scope: 'statement' |
     severity: String(validation.severity || 'info') as 'info' | 'warning' | 'error',
     status: String(validation.status || 'pass') as 'pass' | 'warning' | 'fail',
     expectedValue:
-      validation.expected_value != null ? Number(validation.expected_value) : validation.expectedValue != null ? Number(validation.expectedValue) : null,
+      validation.expected_value != null
+        ? Number(validation.expected_value)
+        : validation.expectedValue != null
+          ? Number(validation.expectedValue)
+          : null,
     actualValue:
-      validation.actual_value != null ? Number(validation.actual_value) : validation.actualValue != null ? Number(validation.actualValue) : null,
+      validation.actual_value != null
+        ? Number(validation.actual_value)
+        : validation.actualValue != null
+          ? Number(validation.actualValue)
+          : null,
     difference: validation.difference != null ? Number(validation.difference) : null,
     tolerance: validation.tolerance != null ? Number(validation.tolerance) : null,
     message: validation.message ? String(validation.message) : null,
@@ -103,7 +126,12 @@ function mapPackDetailToRow(detail: PackDetail): FinanceStatementRow {
     id: String(detail.id),
     title: String(detail.period_label || detail.entity_name || detail.id),
     kind: 'statements',
-    status: readinessStatus === 'ready' ? 'APPROVED' : readinessStatus === 'recoverable' ? 'REVIEW' : 'DRAFT',
+    status:
+      readinessStatus === 'ready'
+        ? 'APPROVED'
+        : readinessStatus === 'recoverable'
+          ? 'REVIEW'
+          : 'DRAFT',
     statementType: 'PACK',
     statementPackId: String(detail.id),
     entityName: String(detail.entity_name || ''),
@@ -112,16 +140,30 @@ function mapPackDetailToRow(detail: PackDetail): FinanceStatementRow {
     periodLabel: String(detail.period_label || ''),
     currency: String(detail.currency || 'PLN'),
     scaling: String(detail.scaling || 'units'),
-    sourceFileName: childStatements.map((statement) => statement.sourceFileName).filter(Boolean).join(', '),
+    sourceFileName: childStatements
+      .map((statement) => statement.sourceFileName)
+      .filter(Boolean)
+      .join(', '),
     validationStatus: String(detail.pack_status || 'pending'),
-    mappedLineCount: childStatements.reduce((sum, statement) => sum + Number(statement.mappedLineCount || 0), 0),
-    totalLineCount: childStatements.reduce((sum, statement) => sum + Number(statement.totalLineCount || 0), 0),
-    unmappedLineCount: childStatements.reduce((sum, statement) => sum + Number(statement.unmappedLineCount || 0), 0),
+    mappedLineCount: childStatements.reduce(
+      (sum, statement) => sum + Number(statement.mappedLineCount || 0),
+      0
+    ),
+    totalLineCount: childStatements.reduce(
+      (sum, statement) => sum + Number(statement.totalLineCount || 0),
+      0
+    ),
+    unmappedLineCount: childStatements.reduce(
+      (sum, statement) => sum + Number(statement.unmappedLineCount || 0),
+      0
+    ),
     sourceStatementCount: Number(detail.source_statement_count ?? childStatements.length),
     statementIds: childStatements.map((statement) => statement.id),
     missingStatementTypes,
     completenessLabel: ['P&L', 'BS', 'CF']
-      .map((type) => (childStatements.some((statement) => statement.statementType === type) ? type : `—${type}`))
+      .map((type) =>
+        childStatements.some((statement) => statement.statementType === type) ? type : `—${type}`
+      )
       .join(' / '),
     childStatements,
     overallConfidence: 0,
@@ -174,8 +216,11 @@ function mapStatementDetail(detail: any): FinanceStatementDetailV1 {
               valueOrigin: String(value.value_origin || 'source'),
               mappingConfidence: Number(value.mapping_confidence ?? value.confidence ?? 0),
               isNonFinancial: Boolean(value.is_non_financial),
-              classificationReason: value.classification_reason ? String(value.classification_reason) : null,
-              aggregationLevel: value.aggregation_level != null ? Number(value.aggregation_level) : null,
+              classificationReason: value.classification_reason
+                ? String(value.classification_reason)
+                : null,
+              aggregationLevel:
+                value.aggregation_level != null ? Number(value.aggregation_level) : null,
               requiredLevel: value.required_level ? String(value.required_level) : null,
               signConvention: value.sign_convention ? String(value.sign_convention) : null,
               isTotal: Boolean(value.is_total),
@@ -183,9 +228,15 @@ function mapStatementDetail(detail: any): FinanceStatementDetailV1 {
               isComputed: Boolean(value.is_computed),
               deaggregationReady: Boolean(value.deaggregation_ready),
               evidenceJson: parsedEvidence,
-              sourceCandidateRowId: value.source_candidate_row_id ? String(value.source_candidate_row_id) : null,
-              selectedMappingCandidateId: value.selected_mapping_candidate_id ? String(value.selected_mapping_candidate_id) : null,
-              valuePeriodLabel: parsedEvidence?.periodLabel ? String(parsedEvidence.periodLabel) : null,
+              sourceCandidateRowId: value.source_candidate_row_id
+                ? String(value.source_candidate_row_id)
+                : null,
+              selectedMappingCandidateId: value.selected_mapping_candidate_id
+                ? String(value.selected_mapping_candidate_id)
+                : null,
+              valuePeriodLabel: parsedEvidence?.periodLabel
+                ? String(parsedEvidence.periodLabel)
+                : null,
               valuePeriodIndex: Number(parsedEvidence?.periodIndex ?? 0),
             };
           })
@@ -204,13 +255,37 @@ function ReadinessRing({ score, size = 32 }: { score: number; size?: number }) {
   const color =
     pct >= 80 ? 'stroke-emerald-500' : pct >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
   const textColor =
-    pct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : pct >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400';
+    pct >= 80
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : pct >= 50
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-rose-600 dark:text-rose-400';
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={2.5} className="stroke-slate-200/60 dark:stroke-white/[0.08]" />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={2.5} strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} className={`${color} transition-all duration-700 ease-out`} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={2.5}
+          className="stroke-slate-200/60 dark:stroke-white/[0.08]"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={`${color} transition-all duration-700 ease-out`}
+        />
       </svg>
       <span className={`absolute text-[8px] font-bold tabular-nums ${textColor}`}>{pct}</span>
     </div>
@@ -253,7 +328,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [aggregationLevel, setAggregationLevel] = useState<1 | 2 | 3>(2);
   const [analyticsRows, setAnalyticsRows] = useState<FinanceStatementTableRow[]>([]);
-  const [analyticsPeriods, setAnalyticsPeriods] = useState<Array<{ label: string; index: number }>>([]);
+  const [analyticsPeriods, setAnalyticsPeriods] = useState<Array<{ label: string; index: number }>>(
+    []
+  );
   const [showValidations, setShowValidations] = useState(false);
   const statementRequestSeq = useRef(0);
   const explainRequestSeq = useRef(0);
@@ -266,7 +343,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         if (!shouldFallbackToLegacyFinance(error)) {
           throw error;
         }
-        return (await Api.get(`/api/finance-statements/${statementId}/analytics?level=${level}`)) as {
+        return (await Api.get(
+          `/api/finance-statements/${statementId}/analytics?level=${level}`
+        )) as {
           periods?: Array<{ label: string; index: number }>;
           rows?: Array<any>;
         };
@@ -287,7 +366,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         if (!shouldFallbackToLegacyFinance(error)) {
           throw error;
         }
-        data = ((await Api.get(`/api/finance-statements/packs/${statementPackId}`)) as PackDetail) || null;
+        data =
+          ((await Api.get(`/api/finance-statements/packs/${statementPackId}`)) as PackDetail) ||
+          null;
       }
       setDetail(data);
     } catch (e: any) {
@@ -315,7 +396,8 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     const next = new Map<StatementTabType, FinanceStatementPackChild>();
     for (const statement of childStatements) {
       const type = String(statement.statementType || '') as StatementTabType;
-      if ((type === 'P&L' || type === 'BS' || type === 'CF') && !next.has(type)) next.set(type, statement);
+      if ((type === 'P&L' || type === 'BS' || type === 'CF') && !next.has(type))
+        next.set(type, statement);
     }
     return next;
   }, [childStatements]);
@@ -357,35 +439,40 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     }
   }, []);
 
-  const loadAnalytics = useCallback(async (statementId: string, level: 1 | 2 | 3) => {
-    const requestSeq = ++explainRequestSeq.current;
-    setDetailLoading(true);
-    try {
-      const response = await getStatementAnalyticsWithFallback(statementId, level);
-      if (requestSeq !== explainRequestSeq.current) return;
-      const nextRows = Array.isArray(response?.rows)
-        ? response.rows.map((row: any) => ({
-            ...row,
-            parentCanonicalLineId: row.parentCanonicalLineId ? String(row.parentCanonicalLineId) : null,
-          }))
-        : [];
-      setAnalyticsRows(nextRows);
-      setAnalyticsPeriods(Array.isArray(response?.periods) ? response.periods : []);
-      setSelectedValueId(null);
-      setSelectedExplain(null);
-      setSelectedRow(null);
-    } catch (e: any) {
-      if (requestSeq !== explainRequestSeq.current) return;
-      setAnalyticsRows([]);
-      setAnalyticsPeriods([]);
-      setSelectedExplain(null);
-      setSelectedRow(null);
-    } finally {
-      if (requestSeq === explainRequestSeq.current) {
-        setDetailLoading(false);
+  const loadAnalytics = useCallback(
+    async (statementId: string, level: 1 | 2 | 3) => {
+      const requestSeq = ++explainRequestSeq.current;
+      setDetailLoading(true);
+      try {
+        const response = await getStatementAnalyticsWithFallback(statementId, level);
+        if (requestSeq !== explainRequestSeq.current) return;
+        const nextRows = Array.isArray(response?.rows)
+          ? response.rows.map((row: any) => ({
+              ...row,
+              parentCanonicalLineId: row.parentCanonicalLineId
+                ? String(row.parentCanonicalLineId)
+                : null,
+            }))
+          : [];
+        setAnalyticsRows(nextRows);
+        setAnalyticsPeriods(Array.isArray(response?.periods) ? response.periods : []);
+        setSelectedValueId(null);
+        setSelectedExplain(null);
+        setSelectedRow(null);
+      } catch (e: any) {
+        if (requestSeq !== explainRequestSeq.current) return;
+        setAnalyticsRows([]);
+        setAnalyticsPeriods([]);
+        setSelectedExplain(null);
+        setSelectedRow(null);
+      } finally {
+        if (requestSeq === explainRequestSeq.current) {
+          setDetailLoading(false);
+        }
       }
-    }
-  }, [getStatementAnalyticsWithFallback]);
+    },
+    [getStatementAnalyticsWithFallback]
+  );
 
   useEffect(() => {
     if (!selectedStatement?.id) {
@@ -482,25 +569,35 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {packRow.entityName || packRow.title}
               </span>
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                packRow.status === 'APPROVED'
-                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                  : packRow.status === 'REVIEW'
-                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
-                    : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400'
-              }`}>
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                  packRow.status === 'APPROVED'
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                    : packRow.status === 'REVIEW'
+                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                      : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400'
+                }`}
+              >
                 {packRow.status === 'APPROVED'
-                  ? (isPl ? 'Gotowy' : 'Ready')
+                  ? isPl
+                    ? 'Gotowy'
+                    : 'Ready'
                   : packRow.status === 'REVIEW'
-                    ? (isPl ? 'Do naprawy' : 'Recovery')
-                    : (isPl ? 'Szkic' : 'Draft')}
+                    ? isPl
+                      ? 'Do naprawy'
+                      : 'Recovery'
+                    : isPl
+                      ? 'Szkic'
+                      : 'Draft'}
               </span>
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
               <span>{packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}`}</span>
               <span>{packRow.currency}</span>
               <span>{packRow.scaling}</span>
-              <span>{childStatements.length} {isPl ? 'dok.' : 'docs'}</span>
+              <span>
+                {childStatements.length} {isPl ? 'dok.' : 'docs'}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -528,7 +625,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         </div>
 
         {/* Row 2: P&L/BS/CF tabs (left) + Aggregation + Panel toggle (right) */}
-        <div className="flex items-center gap-1 border-t border-slate-200/50 px-4 py-1.5 dark:border-white/[0.05]" role="tablist">
+        <div
+          className="flex items-center gap-1 border-t border-slate-200/50 px-4 py-1.5 dark:border-white/[0.05]"
+          role="tablist"
+        >
           {/* Statement type tabs */}
           {(['P&L', 'BS', 'CF'] as const).map((tab) => {
             const child = statementsByType.get(tab);
@@ -556,18 +656,18 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               >
                 {tab}
                 {hasDocument && total > 0 && (
-                  <span className={`rounded px-1 py-0.5 text-[9px] font-semibold tabular-nums leading-none ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200/70 text-slate-500 dark:bg-white/[0.08] dark:text-slate-400'
-                  }`}>
+                  <span
+                    className={`rounded px-1 py-0.5 text-[9px] font-semibold tabular-nums leading-none ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200/70 text-slate-500 dark:bg-white/[0.08] dark:text-slate-400'
+                    }`}
+                  >
                     {mapped}/{total}
                   </span>
                 )}
                 {!hasDocument && (
-                  <span className="text-[9px] font-normal italic">
-                    {isPl ? 'brak' : 'n/a'}
-                  </span>
+                  <span className="text-[9px] font-normal italic">{isPl ? 'brak' : 'n/a'}</span>
                 )}
               </button>
             );
@@ -646,9 +746,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             title={isPl ? 'Panel szczegółów' : 'Details panel'}
           >
             {showSidePanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-            <span className="hidden lg:inline">
-              {isPl ? 'Szczegóły' : 'Details'}
-            </span>
+            <span className="hidden lg:inline">{isPl ? 'Szczegóły' : 'Details'}</span>
           </button>
         </div>
 
@@ -665,7 +763,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
 
       {/* ═══ CONTENT AREA ═══ */}
       {selectedStatement ? (
-        <div className={`grid min-h-0 flex-1 gap-2 ${showSidePanel ? 'xl:grid-cols-[minmax(0,1fr)_320px]' : ''}`}>
+        <div
+          className={`grid min-h-0 flex-1 gap-2 ${showSidePanel ? 'xl:grid-cols-[minmax(0,1fr)_320px]' : ''}`}
+        >
           {/* Main table */}
           <div className="flex min-h-0 flex-col rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
             {/* Statement validations (inline, compact) */}
@@ -703,7 +803,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 <div className="flex flex-col items-center justify-center gap-2 py-12">
                   <FileText size={20} className="text-slate-400" />
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPl ? 'Nie udało się załadować tabeli dokumentu.' : 'Could not load document table.'}
+                    {isPl
+                      ? 'Nie udało się załadować tabeli dokumentu.'
+                      : 'Could not load document table.'}
                   </div>
                   <button
                     type="button"
@@ -741,12 +843,20 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   selectedRow={selectedRow}
                   currency={packRow.currency}
                   title={isPl ? 'Szczegóły pozycji' : 'Line item details'}
-                  emptyLabel={isPl ? 'Kliknij wiersz, aby zobaczyć szczegóły pozycji.' : 'Select a row to see line item details.'}
+                  emptyLabel={
+                    isPl
+                      ? 'Kliknij wiersz, aby zobaczyć szczegóły pozycji.'
+                      : 'Select a row to see line item details.'
+                  }
                   mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
                   originLabel={isPl ? 'Pochodzenie' : 'Origin'}
                   confidenceLabel={isPl ? 'Pewność' : 'Confidence'}
                   sourceLabel={isPl ? 'Źródło' : 'Source'}
-                  noEvidenceLabel={isPl ? 'Brak zapisanych evidence dla tej pozycji.' : 'No stored evidence for this value.'}
+                  noEvidenceLabel={
+                    isPl
+                      ? 'Brak zapisanych evidence dla tej pozycji.'
+                      : 'No stored evidence for this value.'
+                  }
                 />
               ) : (
                 /* Source files list when no row selected */
@@ -803,7 +913,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                             >
                               <div className="flex items-start gap-2.5">
                                 <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/[0.05]">
-                                  <FileText size={13} className="text-slate-500 dark:text-slate-400" />
+                                  <FileText
+                                    size={13}
+                                    className="text-slate-500 dark:text-slate-400"
+                                  />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5">
@@ -829,7 +942,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                                     <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
                                       <div
                                         className="h-full rounded-full bg-cyan-500 transition-all duration-300"
-                                        style={{ width: `${file.total > 0 ? (file.mapped / file.total) * 100 : 0}%` }}
+                                        style={{
+                                          width: `${file.total > 0 ? (file.mapped / file.total) * 100 : 0}%`,
+                                        }}
                                       />
                                     </div>
                                   )}
@@ -864,7 +979,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/70 py-12 dark:border-white/[0.08]">
           <FileText size={20} className="text-slate-400" />
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPl ? 'Brak wybranego dokumentu dla tej tabeli.' : 'No document selected for this table.'}
+            {isPl
+              ? 'Brak wybranego dokumentu dla tej tabeli.'
+              : 'No document selected for this table.'}
           </div>
         </div>
       )}

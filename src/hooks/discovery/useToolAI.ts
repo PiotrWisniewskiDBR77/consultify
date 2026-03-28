@@ -41,7 +41,12 @@ interface UseToolAIReturn {
   generateCorrelations: () => Promise<void>;
   generateSummary: () => Promise<void>;
   generateFullSession: () => Promise<void>;
-  rethinkCard: (phaseId: string, cardType: string, cardId: string, userComment?: string) => Promise<void>;
+  rethinkCard: (
+    phaseId: string,
+    cardType: string,
+    cardId: string,
+    userComment?: string
+  ) => Promise<void>;
   abortStream: () => void;
 
   // Utilities
@@ -720,38 +725,36 @@ Guidelines:
     await sendMessage(prompt);
   }, [toolType, currentSession, formatForPrompt, sendMessage, setSessionGenerationStatus]);
 
-  const rethinkCard = useCallback(async (
-    phaseId: string,
-    cardType: string,
-    cardId: string,
-    userComment?: string,
-  ) => {
-    if (toolType !== 'dynamic-swot' || !currentSession) return;
+  const rethinkCard = useCallback(
+    async (phaseId: string, cardType: string, cardId: string, userComment?: string) => {
+      if (toolType !== 'dynamic-swot' || !currentSession) return;
 
-    setError(null);
-    markRethinking(cardType as any, cardId);
-    setRethinkTarget({ phaseId, cardType, cardId });
+      setError(null);
+      markRethinking(cardType as any, cardId);
+      setRethinkTarget({ phaseId, cardType, cardId });
 
-    const swotData = currentSession.inputData as SWOTData;
-    let cardContent = '';
-    if (cardType === 'signal') {
-      const signal = swotData.signals.find(s => s.id === cardId);
-      cardContent = signal ? `[${signal.type}] ${signal.content} (source: ${signal.sourceLabel})` : '';
-    } else if (cardType === 'item') {
-      const item = swotData.items.find(i => i.id === cardId);
-      cardContent = item ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})` : '';
-    } else if (cardType === 'tension') {
-      const tension = swotData.tensions.find(t => t.id === cardId);
-      cardContent = tension ? `[${tension.type}] ${tension.title}: ${tension.insight}` : '';
-    } else if (cardType === 'move') {
-      const move = swotData.recommendedMoves.find(m => m.id === cardId);
-      cardContent = move ? `[${move.category}] ${move.title}: ${move.rationale}` : '';
-    } else if (cardType === 'output-candidate') {
-      const oc = swotData.outputCandidates.find(o => o.id === cardId);
-      cardContent = oc ? `[${oc.outputType}] ${oc.title}: ${oc.description}` : '';
-    }
+      const swotData = currentSession.inputData as SWOTData;
+      let cardContent = '';
+      if (cardType === 'signal') {
+        const signal = swotData.signals.find((s) => s.id === cardId);
+        cardContent = signal
+          ? `[${signal.type}] ${signal.content} (source: ${signal.sourceLabel})`
+          : '';
+      } else if (cardType === 'item') {
+        const item = swotData.items.find((i) => i.id === cardId);
+        cardContent = item ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})` : '';
+      } else if (cardType === 'tension') {
+        const tension = swotData.tensions.find((t) => t.id === cardId);
+        cardContent = tension ? `[${tension.type}] ${tension.title}: ${tension.insight}` : '';
+      } else if (cardType === 'move') {
+        const move = swotData.recommendedMoves.find((m) => m.id === cardId);
+        cardContent = move ? `[${move.category}] ${move.title}: ${move.rationale}` : '';
+      } else if (cardType === 'output-candidate') {
+        const oc = swotData.outputCandidates.find((o) => o.id === cardId);
+        cardContent = oc ? `[${oc.outputType}] ${oc.title}: ${oc.description}` : '';
+      }
 
-    const prompt = `The user wants you to RETHINK this specific ${cardType} card.
+      const prompt = `The user wants you to RETHINK this specific ${cardType} card.
 
 Current card content:
 ${cardContent}
@@ -766,9 +769,11 @@ Provide an improved version of this card. Keep the same type/structure but make 
 
 Return JSON with the updated fields for this ${cardType}. Use the same field names as the original.`;
 
-    setPendingAction('rethink');
-    await sendMessage(prompt);
-  }, [toolType, currentSession, markRethinking, sendMessage]);
+      setPendingAction('rethink');
+      await sendMessage(prompt);
+    },
+    [toolType, currentSession, markRethinking, sendMessage]
+  );
 
   useEffect(() => {
     if (isStreaming || !pendingAction || !streamedContent || toolType !== 'dynamic-swot') return;
@@ -997,7 +1002,12 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
           sourceLabel: String(signal.sourceLabel || 'AI consultant'),
           confidence: typeof signal.confidence === 'number' ? signal.confidence : 3,
           tags: Array.isArray(signal.tags) ? signal.tags.filter(Boolean) : [],
-          evidenceType: signal.evidenceType === 'fact' || signal.evidenceType === 'observation' || signal.evidenceType === 'hypothesis' ? signal.evidenceType : 'observation',
+          evidenceType:
+            signal.evidenceType === 'fact' ||
+            signal.evidenceType === 'observation' ||
+            signal.evidenceType === 'hypothesis'
+              ? signal.evidenceType
+              : 'observation',
           state: 'proposed',
           provenance: String(signal.provenance || signal.sourceLabel || 'AI consultant'),
           proposalStatus: 'ai-proposed',
@@ -1032,55 +1042,77 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
 
       const tensions = Array.isArray(parsed.tensions) ? parsed.tensions : [];
       setSWOTTensions(
-        tensions.filter((t) => t?.title && t?.type).map((t) => ({
-          title: t.title,
-          type: t.type,
-          linkedCorrelationIds: [],
-          linkedItemIds: [],
-          insight: t.insight || '',
-          whyNow: t.whyNow || '',
-          confidence: typeof t.confidence === 'number' ? t.confidence : 3,
-          proposalStatus: 'ai-proposed' as const,
-        }))
+        tensions
+          .filter((t) => t?.title && t?.type)
+          .map((t) => ({
+            title: t.title,
+            type: t.type,
+            linkedCorrelationIds: [],
+            linkedItemIds: [],
+            insight: t.insight || '',
+            whyNow: t.whyNow || '',
+            confidence: typeof t.confidence === 'number' ? t.confidence : 3,
+            proposalStatus: 'ai-proposed' as const,
+          }))
       );
 
       const moves = Array.isArray(parsed.moves) ? parsed.moves : [];
       setSWOTMoves(
-        moves.filter((m) => m?.title).map((m) => ({
-          title: m.title,
-          category: m.category || 'quick-win',
-          rationale: m.rationale || '',
-          linkedTensionIds: [],
-          linkedItemIds: [],
-          expectedImpact: m.expectedImpact || 'medium',
-          estimatedEffort: m.estimatedEffort || 'medium',
-          riskLevel: m.riskLevel || 'medium',
-          confidence: typeof m.confidence === 'number' ? m.confidence : 3,
-          firstStep: m.firstStep || '',
-          proposalStatus: 'ai-proposed' as const,
-        }))
+        moves
+          .filter((m) => m?.title)
+          .map((m) => ({
+            title: m.title,
+            category: m.category || 'quick-win',
+            rationale: m.rationale || '',
+            linkedTensionIds: [],
+            linkedItemIds: [],
+            expectedImpact: m.expectedImpact || 'medium',
+            estimatedEffort: m.estimatedEffort || 'medium',
+            riskLevel: m.riskLevel || 'medium',
+            confidence: typeof m.confidence === 'number' ? m.confidence : 3,
+            firstStep: m.firstStep || '',
+            proposalStatus: 'ai-proposed' as const,
+          }))
       );
 
-      const outputCandidates = Array.isArray(parsed.outputCandidates) ? parsed.outputCandidates : [];
+      const outputCandidates = Array.isArray(parsed.outputCandidates)
+        ? parsed.outputCandidates
+        : [];
       setSWOTOutputCandidates(
-        outputCandidates.filter((oc) => oc?.title).map((oc) => ({
-          outputType: oc.outputType || 'initiative',
-          title: oc.title,
-          description: oc.description || '',
-          linkedMoveIds: [],
-          linkedItemIds: [],
-          rationale: oc.rationale || '',
-          readiness: oc.readiness || 'keep-as-idea',
-          proposalStatus: 'ai-proposed' as const,
-        }))
+        outputCandidates
+          .filter((oc) => oc?.title)
+          .map((oc) => ({
+            outputType: oc.outputType || 'initiative',
+            title: oc.title,
+            description: oc.description || '',
+            linkedMoveIds: [],
+            linkedItemIds: [],
+            rationale: oc.rationale || '',
+            readiness: oc.readiness || 'keep-as-idea',
+            proposalStatus: 'ai-proposed' as const,
+          }))
       );
 
-      const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+      const summaryObj =
+        parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
       const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
       setSWOTSummary({
-        executiveSummary: typeof summaryObj?.executiveSummary === 'string' ? summaryObj.executiveSummary : (typeof parsed.summary === 'string' ? parsed.summary : ''),
-        keyInsights: Array.isArray(summaryObj?.keyInsights) ? summaryObj.keyInsights.filter(Boolean) : (Array.isArray(parsed.insights) ? parsed.insights.filter(Boolean) : []),
-        appliedConclusions: Array.isArray(summaryObj?.appliedConclusions) ? summaryObj.appliedConclusions.filter(Boolean) : (Array.isArray(parsed.appliedConclusions) ? parsed.appliedConclusions.filter(Boolean) : []),
+        executiveSummary:
+          typeof summaryObj?.executiveSummary === 'string'
+            ? summaryObj.executiveSummary
+            : typeof parsed.summary === 'string'
+              ? parsed.summary
+              : '',
+        keyInsights: Array.isArray(summaryObj?.keyInsights)
+          ? summaryObj.keyInsights.filter(Boolean)
+          : Array.isArray(parsed.insights)
+            ? parsed.insights.filter(Boolean)
+            : [],
+        appliedConclusions: Array.isArray(summaryObj?.appliedConclusions)
+          ? summaryObj.appliedConclusions.filter(Boolean)
+          : Array.isArray(parsed.appliedConclusions)
+            ? parsed.appliedConclusions.filter(Boolean)
+            : [],
         recommendedInitiatives: initiatives.map((init) => ({
           id: '',
           title: init.title || '',

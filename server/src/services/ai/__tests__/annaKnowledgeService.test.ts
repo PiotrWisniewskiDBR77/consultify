@@ -24,10 +24,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
-import {
-  buildAnnaKnowledgeContext,
-  buildAnnaVoiceBootstrap,
-} from '../annaKnowledgeService.js';
+import { buildAnnaKnowledgeContext, buildAnnaVoiceBootstrap } from '../annaKnowledgeService.js';
 
 type RagResult = {
   documentId: string;
@@ -62,15 +59,20 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
 
     const hitsByDocumentId = new Map<string, RagResult>([
       ['pl-doc', { documentId: 'pl-doc', content: 'Polish Consultify context', similarity: 0.92 }],
-      ['neutral-doc', { documentId: 'neutral-doc', content: 'Neutral Consultify context', similarity: 0.83 }],
+      [
+        'neutral-doc',
+        { documentId: 'neutral-doc', content: 'Neutral Consultify context', similarity: 0.83 },
+      ],
       ['en-doc', { documentId: 'en-doc', content: 'English Consultify context', similarity: 0.99 }],
     ]);
 
-    mockSearchRelevantChunks.mockImplementation(async (_query: string, opts: { documentIds: string[] }) => {
-      return opts.documentIds
-        .map((documentId) => hitsByDocumentId.get(documentId))
-        .filter(Boolean);
-    });
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) => {
+        return opts.documentIds
+          .map((documentId) => hitsByDocumentId.get(documentId))
+          .filter(Boolean);
+      }
+    );
 
     const result = await buildAnnaKnowledgeContext({
       query: 'Czym jest Consultify?',
@@ -86,16 +88,22 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
   });
 
   it('falls back to other-language pills only when locale-matching retrieval finds no hits', async () => {
-    mockDbAll.mockResolvedValue([
-      buildDoc('en-doc', 'consultify-en.md', 'consultify', 'en'),
-    ]);
+    mockDbAll.mockResolvedValue([buildDoc('en-doc', 'consultify-en.md', 'consultify', 'en')]);
 
-    mockSearchRelevantChunks.mockImplementation(async (_query: string, opts: { documentIds: string[] }) => {
-      if (opts.documentIds.includes('en-doc')) {
-        return [{ documentId: 'en-doc', content: 'English Consultify fallback context', similarity: 0.88 }];
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) => {
+        if (opts.documentIds.includes('en-doc')) {
+          return [
+            {
+              documentId: 'en-doc',
+              content: 'English Consultify fallback context',
+              similarity: 0.88,
+            },
+          ];
+        }
+        return [];
       }
-      return [];
-    });
+    );
 
     const result = await buildAnnaKnowledgeContext({
       query: 'Jak wyglada demo?',
@@ -113,13 +121,15 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
       buildDoc('en-doc', 'voice-en.md', 'consultify', 'en'),
     ]);
 
-    mockSearchRelevantChunks.mockImplementation(async (_query: string, opts: { documentIds: string[] }) => {
-      return opts.documentIds.map((documentId) => ({
-        documentId,
-        content: `context-for-${documentId}`,
-        similarity: documentId === 'pl-doc' ? 0.91 : 0.89,
-      }));
-    });
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) => {
+        return opts.documentIds.map((documentId) => ({
+          documentId,
+          content: `context-for-${documentId}`,
+          similarity: documentId === 'pl-doc' ? 0.91 : 0.89,
+        }));
+      }
+    );
 
     const result = await buildAnnaVoiceBootstrap('pl');
 

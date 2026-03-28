@@ -5,7 +5,7 @@
  * After ~10 decks, the system's defaults become "ideal" for the organization.
  */
 
-import { get as dbGet, run as dbRun, all as dbAll } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 export interface StyleProfile {
@@ -44,16 +44,14 @@ const DEFAULT_PROFILE: StyleProfile = {
 
 export async function getOrCreateProfile(organizationId: string): Promise<StyleProfile> {
   try {
-    const row = await dbGet(
-      'SELECT * FROM organization_style_profiles WHERE organization_id = ?',
-      [organizationId]
-    );
+    const row = await dbGet('SELECT * FROM organization_style_profiles WHERE organization_id = ?', [
+      organizationId,
+    ]);
 
     if (!row) {
-      await dbRun(
-        'INSERT INTO organization_style_profiles (organization_id) VALUES (?)',
-        [organizationId]
-      );
+      await dbRun('INSERT INTO organization_style_profiles (organization_id) VALUES (?)', [
+        organizationId,
+      ]);
       return { ...DEFAULT_PROFILE };
     }
 
@@ -62,7 +60,8 @@ export async function getOrCreateProfile(organizationId: string): Promise<StyleP
       preferred_register: row.preferred_register || DEFAULT_PROFILE.preferred_register,
       preferred_image_style: row.preferred_image_style || DEFAULT_PROFILE.preferred_image_style,
       preferred_color_set: row.preferred_color_set || DEFAULT_PROFILE.preferred_color_set,
-      preferred_content_depth: row.preferred_content_depth || DEFAULT_PROFILE.preferred_content_depth,
+      preferred_content_depth:
+        row.preferred_content_depth || DEFAULT_PROFILE.preferred_content_depth,
       layout_usage_stats: safeParseJSON(row.layout_usage_stats, []),
       intent_adjustment_stats: safeParseJSON(row.intent_adjustment_stats, {}),
       block_interaction_stats: safeParseJSON(row.block_interaction_stats, {}),
@@ -95,10 +94,15 @@ export async function recordDeckGeneration(
     const profile = await getOrCreateProfile(organizationId);
 
     const totalDecks = profile.total_decks_generated + 1;
-    const newAvgCards = ((profile.avg_cards_per_deck * profile.total_decks_generated) + deckSettings.cardCount) / totalDecks;
-    const newAvgBlocks = deckSettings.cardCount > 0
-      ? ((profile.avg_blocks_per_card * profile.total_decks_generated) + (deckSettings.totalBlocks / deckSettings.cardCount)) / totalDecks
-      : profile.avg_blocks_per_card;
+    const newAvgCards =
+      (profile.avg_cards_per_deck * profile.total_decks_generated + deckSettings.cardCount) /
+      totalDecks;
+    const newAvgBlocks =
+      deckSettings.cardCount > 0
+        ? (profile.avg_blocks_per_card * profile.total_decks_generated +
+            deckSettings.totalBlocks / deckSettings.cardCount) /
+          totalDecks
+        : profile.avg_blocks_per_card;
 
     await dbRun(
       `UPDATE organization_style_profiles SET
@@ -166,10 +170,7 @@ export async function recordInteraction(
   }
 }
 
-export async function recordLayoutUsage(
-  organizationId: string,
-  layoutId: string
-): Promise<void> {
+export async function recordLayoutUsage(organizationId: string, layoutId: string): Promise<void> {
   try {
     const profile = await getOrCreateProfile(organizationId);
     const stats = [...profile.layout_usage_stats];

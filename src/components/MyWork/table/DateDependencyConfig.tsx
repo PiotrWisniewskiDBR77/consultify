@@ -2,19 +2,23 @@
  * DateDependencyConfig — Configuration panel for Airtable-style date dependencies.
  * Configures start/end date fields, duration, predecessor, dependency type, lag, weekend skipping.
  */
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import { Calendar, Loader2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
-import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { DateDependencyConfigPayload } from '@/services/api/tablePlatform.api';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
 
 const DATE_FIELD_TYPES = ['date', 'createdTime', 'lastModifiedTime'];
 const NUMBER_FIELD_TYPES = ['number', 'currency', 'percent', 'duration'];
 
-const DEPENDENCY_TYPES: Array<{ value: 'FS' | 'SS' | 'FF' | 'SF'; labelEn: string; labelPl: string }> = [
+const DEPENDENCY_TYPES: Array<{
+  value: 'FS' | 'SS' | 'FF' | 'SF';
+  labelEn: string;
+  labelPl: string;
+}> = [
   { value: 'FS', labelEn: 'Finish-to-Start', labelPl: 'Koniec-Początek' },
   { value: 'SS', labelEn: 'Start-to-Start', labelPl: 'Początek-Początek' },
   { value: 'FF', labelEn: 'Finish-to-Finish', labelPl: 'Koniec-Koniec' },
@@ -81,7 +85,8 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
   };
 
   const handleRecalculate = async () => {
-    if (!config || !config.startDateFieldId || !config.endDateFieldId || locked || recalculating) return;
+    if (!config || !config.startDateFieldId || !config.endDateFieldId || locked || recalculating)
+      return;
     setRecalculating(true);
     setCycleWarning(null);
 
@@ -99,9 +104,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       const recalcRes = await TablePlatformApi.recalculateDateDependencies(tableId, config);
       const count = recalcRes.updatedRecords ?? 0;
-      toast.success(
-        isPl ? `Zaktualizowano ${count} rekordów` : `${count} records updated`
-      );
+      toast.success(isPl ? `Zaktualizowano ${count} rekordów` : `${count} records updated`);
       onRecordsUpdated?.();
     } catch {
       toast.error(isPl ? 'Nie udało się przeliczyć' : 'Failed to recalculate');
@@ -149,7 +152,9 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         >
           <option value="">—</option>
           {dateFields.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>
@@ -167,7 +172,9 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         >
           <option value="">—</option>
           {dateFields.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>
@@ -185,7 +192,9 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         >
           <option value="">—</option>
           {numberFields.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>
@@ -203,7 +212,9 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         >
           <option value="">—</option>
           {linkedRecordFields.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>

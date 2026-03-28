@@ -14,6 +14,7 @@ const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import { PlaybookSchema } from '../../services/decisionPlaybookService.js';
 import {
   CreateDecisionSchema,
   DecideSchema,
@@ -21,7 +22,6 @@ import {
   RemindDecisionSchema,
   UpdateDecisionSchema,
 } from '../../validators/decision.validators.js';
-import { PlaybookSchema } from '../../services/decisionPlaybookService.js';
 
 // Apply rate limiting
 const router = Router();
@@ -36,7 +36,11 @@ router.use(verifyToken);
 router.get('/playbooks', DecisionPlaybookController.listPlaybooks);
 router.post('/playbooks', validateBody(PlaybookSchema), DecisionPlaybookController.createPlaybook);
 router.get('/playbooks/:playbookId', DecisionPlaybookController.getPlaybook);
-router.put('/playbooks/:playbookId', validateBody(PlaybookSchema), DecisionPlaybookController.updatePlaybook);
+router.put(
+  '/playbooks/:playbookId',
+  validateBody(PlaybookSchema),
+  DecisionPlaybookController.updatePlaybook
+);
 router.delete('/playbooks/:playbookId', DecisionPlaybookController.deletePlaybook);
 
 // ==========================================

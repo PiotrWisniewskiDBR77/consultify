@@ -82,11 +82,7 @@ function countBusinessDays(start: Date, end: Date): number {
   const target = end.getTime();
   const direction = target >= current.getTime() ? 1 : -1;
 
-  while (
-    direction > 0
-      ? current.getTime() < target
-      : current.getTime() > target
-  ) {
+  while (direction > 0 ? current.getTime() < target : current.getTime() > target) {
     current.setUTCDate(current.getUTCDate() + direction);
     if (!isWeekend(current)) {
       count++;
@@ -336,7 +332,10 @@ export class DateDependencyEngine {
 
     for (const r of records) {
       color.set(r.recordId, WHITE);
-      adjList.set(r.recordId, r.predecessorIds.filter((id) => records.some((rec) => rec.recordId === id)));
+      adjList.set(
+        r.recordId,
+        r.predecessorIds.filter((id) => records.some((rec) => rec.recordId === id))
+      );
     }
 
     const dfs = (node: string): string[] | null => {

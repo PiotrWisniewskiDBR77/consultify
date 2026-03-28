@@ -20,8 +20,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { EntryFooter } from '../components/Landing/EntryFooter';
 import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
+import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 
 const CALENDAR_URL =

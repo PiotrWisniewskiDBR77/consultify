@@ -28,6 +28,7 @@ import {
   Group,
   Hexagon,
   Image as ImageIcon,
+  Layers,
   LayoutGrid,
   Link2,
   Loader2,
@@ -45,7 +46,6 @@ import {
   Type,
   Ungroup,
   Workflow,
-  Layers,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -75,27 +75,28 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
   formatIdeaMapSyncLabel,
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
-  IDEA_WORKSPACE_THEME_EVENT,
   IDEA_WORKSPACE_INSERT_EVENT,
+  IDEA_WORKSPACE_THEME_EVENT,
   type IdeaWorkspaceInsertDetail,
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
-import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { SummaryCardNode } from './IdeaSummaryCardNode';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
+import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
+import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
 import {
   createWhiteboardActivityEntry,
   createWhiteboardHistoryEntry,
@@ -112,7 +113,6 @@ import {
   type WhiteboardSharePolicy,
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
-import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
 
 // ── Sticky colors ────────────────────────────────────────────────────────────
 
@@ -201,8 +201,8 @@ const hexToGlow = (hex: string): string => {
 };
 
 const useIsDark = () => {
-  const [isDark, setIsDark] = React.useState(() =>
-    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  const [isDark, setIsDark] = React.useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   );
   React.useEffect(() => {
     const el = document.documentElement;
@@ -254,7 +254,9 @@ const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => 
       style={{
         width: size.w,
         minHeight: size.h,
-        ...(isDark ? { boxShadow: selected ? `${color.glow}, 0 0 24px rgba(168,85,247,0.2)` : color.glow } : {}),
+        ...(isDark
+          ? { boxShadow: selected ? `${color.glow}, 0 0 24px rgba(168,85,247,0.2)` : color.glow }
+          : {}),
       }}
       onDoubleClick={() => {
         if (!data?.locked) {
@@ -440,11 +442,19 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
         backgroundColor: isDark ? darkBg : lightBg,
         borderRadius: isCircle ? '50%' : isDiamond ? 8 : isHexagon ? 0 : 12,
         transform: isDiamond ? 'rotate(45deg)' : undefined,
-        border: isHexagon ? 'none' : isDark ? `2px solid ${hexToGlow(lightBg)}` : '2px solid rgba(255,255,255,0.4)',
-        boxShadow: isHexagon ? undefined : isDark
-          ? `0 0 14px ${hexToGlow(lightBg)}, inset 0 1px 0 rgba(255,255,255,0.05)`
-          : 'inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.08)',
-        clipPath: isHexagon ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' : undefined,
+        border: isHexagon
+          ? 'none'
+          : isDark
+            ? `2px solid ${hexToGlow(lightBg)}`
+            : '2px solid rgba(255,255,255,0.4)',
+        boxShadow: isHexagon
+          ? undefined
+          : isDark
+            ? `0 0 14px ${hexToGlow(lightBg)}, inset 0 1px 0 rgba(255,255,255,0.05)`
+            : 'inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.08)',
+        clipPath: isHexagon
+          ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+          : undefined,
       }}
       onDoubleClick={() => {
         if (!data?.locked) {
@@ -471,7 +481,9 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
             className="w-full bg-transparent text-[11px] font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400"
           />
         ) : (
-          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">{data?.label || ''}</div>
+          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+            {data?.label || ''}
+          </div>
         )}
       </div>
       <Handle
@@ -920,9 +932,15 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   const toggleInternalFullscreen = React.useCallback(() => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.().then(() => setInternalFullscreen(true)).catch(() => {});
+      containerRef.current
+        .requestFullscreen?.()
+        .then(() => setInternalFullscreen(true))
+        .catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setInternalFullscreen(false)).catch(() => {});
+      document
+        .exitFullscreen?.()
+        .then(() => setInternalFullscreen(false))
+        .catch(() => {});
     }
   }, []);
 
@@ -1141,7 +1159,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               if (n.type === 'stickyNote') {
                 const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
                 const c = STICKY_COLORS[idx];
-                return isDarkCanvas ? (c.darkHex || c.hex) : c.hex;
+                return isDarkCanvas ? c.darkHex || c.hex : c.hex;
               }
               if (n.type === 'kpiBadge') {
                 const s = n.data?.status;
@@ -1374,19 +1392,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     () => nodes.filter((node) => node.selected).map((node) => node.id),
     [nodes]
   );
-  const {
-    saving,
-    syncState,
-    lastSavedAt,
-    queueSync,
-    flushNow,
-    primeServerVersion,
-  } = useIdeaMapSync({
-    ideaId,
-    tool: 'whiteboard',
-    open,
-    locked,
-  });
+  const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
+    useIdeaMapSync({
+      ideaId,
+      tool: 'whiteboard',
+      open,
+      locked,
+    });
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
@@ -1424,7 +1436,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     redoStackRef.current = [current, ...redoStackRef.current.slice(0, 24)];
     restoreSnapshot(previous);
     appendActivity(
-      createWhiteboardActivityEntry('history', isPl ? 'Cofnięto zmianę' : 'Undid change', currentUserId)
+      createWhiteboardActivityEntry(
+        'history',
+        isPl ? 'Cofnięto zmianę' : 'Undid change',
+        currentUserId
+      )
     );
   }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
 
@@ -1436,7 +1452,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = [...undoStackRef.current.slice(-24), current];
     restoreSnapshot(next);
     appendActivity(
-      createWhiteboardActivityEntry('history', isPl ? 'Ponowiono zmianę' : 'Redid change', currentUserId)
+      createWhiteboardActivityEntry(
+        'history',
+        isPl ? 'Ponowiono zmianę' : 'Redid change',
+        currentUserId
+      )
     );
   }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
   const handleSelectionUpdate = useCallback(
@@ -1461,7 +1481,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             attachments: Array.isArray(selected[0]?.data?.attachments)
               ? selected[0]?.data?.attachments
               : undefined,
-            shape: typeof selected[0]?.data?.shape === 'string' ? selected[0]?.data?.shape : undefined,
+            shape:
+              typeof selected[0]?.data?.shape === 'string' ? selected[0]?.data?.shape : undefined,
             semanticType: inferWhiteboardSemanticType(selected[0]),
           },
         });
@@ -1490,10 +1511,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     },
     [handleSelectionUpdate, pushUndoSnapshot]
   );
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    if (changes.some((change) => change.type !== 'select')) pushUndoSnapshot();
-    setEdges((eds) => applyEdgeChanges(changes, eds));
-  }, [pushUndoSnapshot]);
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      if (changes.some((change) => change.type !== 'select')) pushUndoSnapshot();
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
+    [pushUndoSnapshot]
+  );
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
@@ -1547,7 +1571,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const didPersistRef = useRef(false);
   const stickyColorCounter = useRef(0);
 
-
   // ── Hydrate ──────────────────────────────────────────────────────────────
 
   const hydrate = useCallback(async () => {
@@ -1599,7 +1622,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             type: normalizedNode?.type || 'stickyNote',
             position: normalizedNode?.position || { x: 100, y: 100 },
             data: nodeData,
-            ...(normalizedNode?.parentNode || normalizedNode?.parentId || normalizedNode?.data?.parentId
+            ...(normalizedNode?.parentNode ||
+            normalizedNode?.parentId ||
+            normalizedNode?.data?.parentId
               ? {
                   parentNode:
                     normalizedNode?.parentNode ||
@@ -1859,7 +1884,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState.role]);
 
   const toggleSessionTimer = useCallback(() => {
-    const timerEndsAt = sessionState.timerEndsAt ? null : Date.now() + sessionState.timerSeconds * 1000;
+    const timerEndsAt = sessionState.timerEndsAt
+      ? null
+      : Date.now() + sessionState.timerSeconds * 1000;
     const nextState = {
       ...sessionState,
       active: true,
@@ -1952,9 +1979,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       )
     );
     ensureFacilitationSession()
-      .then((sessionId) =>
-        Api.facilitationUpdatePhase(sessionId, followMe ? 'follow_me' : 'board')
-      )
+      .then((sessionId) => Api.facilitationUpdatePhase(sessionId, followMe ? 'follow_me' : 'board'))
       .catch(() => undefined);
   }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState.followMe]);
 
@@ -2097,7 +2122,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         ...prev,
         classification,
         watermark: `${classification.toUpperCase()} • ${
-          String(prev.watermark || 'Consultify Whiteboard').split(' • ').slice(-1)[0]
+          String(prev.watermark || 'Consultify Whiteboard')
+            .split(' • ')
+            .slice(-1)[0]
         }`,
       };
     });
@@ -2218,9 +2245,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         type: typeMap[kind],
         position: explicitPosition || { x: 100 + offset, y: 100 + offset },
         data: nodeData,
-        draggable: !Boolean(nodeData.locked),
-        connectable: !Boolean(nodeData.locked),
-        deletable: !Boolean(nodeData.locked),
+        draggable: !nodeData.locked,
+        connectable: !nodeData.locked,
+        deletable: !nodeData.locked,
         ...(kind === 'group' || kind === 'frame'
           ? {
               style: {
@@ -2273,7 +2300,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       sourceNodeIds: sourceNodeIds?.length ? sourceNodeIds : [node.id],
       exportedToType: exportInfo?.exportedToType,
       exportedToId: exportInfo?.exportedToId,
-      linkedOutcomeId: typeof node.data?.linkedOutcomeId === 'string' ? node.data.linkedOutcomeId : undefined,
+      linkedOutcomeId:
+        typeof node.data?.linkedOutcomeId === 'string' ? node.data.linkedOutcomeId : undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }),
@@ -2523,20 +2551,15 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── Node CRUD, grouping, distribution (extracted to useWhiteboardNodes) ──
-  const {
-    deleteSelected,
-    duplicateSelected,
-    groupSelected,
-    ungroupSelected,
-    distributeNodes,
-  } = useWhiteboardNodes({
-    nodes,
-    setNodes,
-    setEdges,
-    locked: locked || false,
-    isPl,
-    pushSnapshot: pushUndoSnapshot,
-  });
+  const { deleteSelected, duplicateSelected, groupSelected, ungroupSelected, distributeNodes } =
+    useWhiteboardNodes({
+      nodes,
+      setNodes,
+      setEdges,
+      locked: locked || false,
+      isPl,
+      pushSnapshot: pushUndoSnapshot,
+    });
 
   // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
   useWhiteboardQuickActions({
@@ -2588,7 +2611,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           )
         );
       } catch (error: any) {
-        toast.error(error?.message || (isPl ? 'Nie udało się zapisać głosu' : 'Failed to save vote'));
+        toast.error(
+          error?.message || (isPl ? 'Nie udało się zapisać głosu' : 'Failed to save vote')
+        );
       }
     };
     window.addEventListener('idea-whiteboard-cast-vote', handler);
@@ -2779,7 +2804,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if (!outputId || nodeIds.length === 0) return;
       const linkedNodes = nodes.filter((node) => nodeIds.includes(node.id));
       linkedNodes.forEach((node) => {
-        const semanticType = String(node.data?.semanticType || '') as WhiteboardOutcomeRecord['type'];
+        const semanticType = String(
+          node.data?.semanticType || ''
+        ) as WhiteboardOutcomeRecord['type'];
         if (
           semanticType === 'cluster' ||
           semanticType === 'theme' ||
@@ -2955,7 +2982,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     if (!open || locked || loading) return;
     if (nodes.length === 0 && edges.length === 0 && drawingPaths.length === 0) return;
     queueSync(buildPersistPayload(), { reason: 'draft' });
-  }, [buildPersistPayload, drawingPaths.length, loading, locked, nodes.length, edges.length, open, queueSync]);
+  }, [
+    buildPersistPayload,
+    drawingPaths.length,
+    loading,
+    locked,
+    nodes.length,
+    edges.length,
+    open,
+    queueSync,
+  ]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
@@ -3012,10 +3048,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return { nodes: filteredNodes, edges: filteredEdges };
   }, [nodes, edges, focusMode, focusObjectId, drillFocusNodeId]);
 
-  const selectedNodes = useMemo(
-    () => nodes.filter((node: Node) => node.selected),
-    [nodes]
-  );
+  const selectedNodes = useMemo(() => nodes.filter((node: Node) => node.selected), [nodes]);
   const canvasNodes = useMemo(
     () =>
       displayNodes.map((node) => ({
@@ -3321,9 +3354,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {selectedCount > 0 && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.08] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5">
               <span className="px-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                {isPl
-                  ? `${selectedCount} zazn.`
-                  : `${selectedCount} selected`}
+                {isPl ? `${selectedCount} zazn.` : `${selectedCount} selected`}
               </span>
               <ToolbarBtn
                 icon={Link2}

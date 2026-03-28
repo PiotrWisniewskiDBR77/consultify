@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
-import { DemoModeModal } from './DemoModeModal';
 import { AnnaAssistantWidget } from './AnnaAssistantWidget';
+import { DemoModeModal } from './DemoModeModal';
 import { EntryFooter } from './EntryFooter';
 import { EntryTopBar } from './EntryTopBar';
 

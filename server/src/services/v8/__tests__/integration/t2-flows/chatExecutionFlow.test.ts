@@ -8,7 +8,7 @@
  * Services: contextSnapshotService, executionSpineService, chatExecutionService
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -33,13 +33,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
   },
 }));
 
-import { captureSnapshot } from '../../../contextSnapshotService.js';
-import { createRun } from '../../../executionSpineService.js';
 import {
   classifyIntent,
-  initiateHandoff,
   createChatActionProposal,
+  initiateHandoff,
 } from '../../../chatExecutionService.js';
+import { captureSnapshot } from '../../../contextSnapshotService.js';
+import { createRun } from '../../../executionSpineService.js';
 
 // ==========================================
 // FIXTURES
@@ -68,7 +68,7 @@ describe('F01 — Chat → Execution full handoff flow', () => {
     const intent = await classifyIntent(
       'Create a report from this note and add risk slides',
       '00000000-0000-4000-8000-000000000099',
-      ORG_ID,
+      ORG_ID
     );
     expect(intent.intentType).toBe('governed_work');
     expect(intent.suggestedAction).toBe('initiate_execution');
@@ -109,32 +109,30 @@ describe('F01 — Chat → Execution full handoff flow', () => {
     // have the real captureSnapshot working (with mocked DB), we need to mock
     // the getSnapshot DB call to return the snapshot we captured.
     mockDbGet.mockReset();
-    mockDbGet.mockImplementation(
-      (sql: string, _params?: unknown[]) => {
-        if (typeof sql === 'string' && sql.includes('v8_context_snapshots')) {
-          return Promise.resolve({
-            snapshot_id: snapshot.snapshotId,
-            snapshot_version: 1,
-            captured_at: snapshot.capturedAt,
-            workspace_id: WORKSPACE_ID,
-            organization_id: ORG_ID,
-            project_id: null,
-            conversation_id: CONVERSATION_ID,
-            execution_run_id: null,
-            artifact_refs: '[]',
-            effective_scope_ref: 'scope:default',
-            resolved_role_ref: 'role:admin',
-            initiator_user_id: USER_ID,
-            consumer_class: 'chat',
-            privacy_mode: 0,
-            source_context_refs: '[]',
-            drift_events: '[]',
-            created_at: snapshot.capturedAt,
-          });
-        }
-        return Promise.resolve(null);
-      },
-    );
+    mockDbGet.mockImplementation((sql: string, _params?: unknown[]) => {
+      if (typeof sql === 'string' && sql.includes('v8_context_snapshots')) {
+        return Promise.resolve({
+          snapshot_id: snapshot.snapshotId,
+          snapshot_version: 1,
+          captured_at: snapshot.capturedAt,
+          workspace_id: WORKSPACE_ID,
+          organization_id: ORG_ID,
+          project_id: null,
+          conversation_id: CONVERSATION_ID,
+          execution_run_id: null,
+          artifact_refs: '[]',
+          effective_scope_ref: 'scope:default',
+          resolved_role_ref: 'role:admin',
+          initiator_user_id: USER_ID,
+          consumer_class: 'chat',
+          privacy_mode: 0,
+          source_context_refs: '[]',
+          drift_events: '[]',
+          created_at: snapshot.capturedAt,
+        });
+      }
+      return Promise.resolve(null);
+    });
 
     const handoff = await initiateHandoff({
       conversationId: CONVERSATION_ID,
@@ -183,7 +181,7 @@ describe('F01 — Chat → Execution full handoff flow', () => {
     const intent = await classifyIntent(
       'Build a deck from this initiative',
       '00000000-0000-4000-8000-000000000099',
-      ORG_ID,
+      ORG_ID
     );
     expect(intent).toHaveProperty('intentType');
     expect(intent).toHaveProperty('confidence');
@@ -208,7 +206,7 @@ describe('F01 — Chat → Execution full handoff flow', () => {
     expect(snapshot).toHaveProperty('organizationId');
     expect(typeof snapshot.snapshotId).toBe('string');
     expect(snapshot.snapshotId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     );
 
     // createRun output has runId needed by initiateHandoff
@@ -222,9 +220,7 @@ describe('F01 — Chat → Execution full handoff flow', () => {
     expect(run).toHaveProperty('contextSnapshotId');
     expect(run).toHaveProperty('state');
     expect(typeof run.runId).toBe('string');
-    expect(run.runId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
+    expect(run.runId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 
     // createChatActionProposal requires conversationId, messageId, underlyingProposalId, organizationId
     const proposalParams = {

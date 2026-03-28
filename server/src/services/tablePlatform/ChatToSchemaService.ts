@@ -7,23 +7,26 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import metadataService from './MetadataService.js';
-import schemaValidationService from './SchemaValidationService.js';
-import auditService from './AuditService.js';
-import recordsService from './RecordsService.js';
-import { parseIntent } from '../chatToSchema/intentParser.js';
-import { groundSchema } from '../chatToSchema/schemaGrounder.js';
-import {
-  generateProposal as pipelineGenerateProposal,
-} from '../chatToSchema/proposalGenerator.js';
 import type { ParsedIntent } from '../chatToSchema/intentParser.js';
-import { MutationExecutor } from '../chatToSchema/mutationExecutor.js';
+import { parseIntent } from '../chatToSchema/intentParser.js';
 import type { MutationResult } from '../chatToSchema/mutationExecutor.js';
-import { getStack } from '../chatToSchema/undoRedoStack.js';
+import { MutationExecutor } from '../chatToSchema/mutationExecutor.js';
 import type { SchemaOperation as PipelineSchemaOperation } from '../chatToSchema/proposalGenerator.js';
-import { validateProposalLimits, checkRateLimit, validateSchemaOperations } from '../chatToSchema/safetyGuardrails.js';
+import { generateProposal as pipelineGenerateProposal } from '../chatToSchema/proposalGenerator.js';
+import {
+  checkRateLimit,
+  validateProposalLimits,
+  validateSchemaOperations,
+} from '../chatToSchema/safetyGuardrails.js';
+import { groundSchema } from '../chatToSchema/schemaGrounder.js';
+import { getStack } from '../chatToSchema/undoRedoStack.js';
+import auditService from './AuditService.js';
+import metadataService from './MetadataService.js';
+import recordsService from './RecordsService.js';
+import schemaValidationService from './SchemaValidationService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,7 +163,10 @@ function parseAIResponse(response: string): {
       warnings: Array.isArray(warnings) ? warnings : [],
     };
   } catch (e) {
-    logger.error('[ChatToSchema] parseAIResponse failed', { error: (e as Error).message, response: response?.slice?.(0, 200) });
+    logger.error('[ChatToSchema] parseAIResponse failed', {
+      error: (e as Error).message,
+      response: response?.slice?.(0, 200),
+    });
     return {
       intent: 'unknown',
       summary: 'Failed to parse AI response',
@@ -288,7 +294,8 @@ const chatToSchemaService = {
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'executed', $8)`,
           [id, workspaceId, 'describe_schema', 0.95, schemaText, '[]', '[]', createdBy ?? null]
         );
-        const row = (await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [id])).rows[0];
+        const row = (await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [id]))
+          .rows[0];
         return row as unknown as SchemaProposal;
       }
 
@@ -304,12 +311,9 @@ const chatToSchemaService = {
 
       // --- Step 3: Proposal generation via pipeline ---
       const llmStartTime = Date.now();
-      const proposal = await pipelineGenerateProposal(
-        parsedIntent,
-        schemaContext,
-        userMessage,
-        { tableId: context?.tableId }
-      );
+      const proposal = await pipelineGenerateProposal(parsedIntent, schemaContext, userMessage, {
+        tableId: context?.tableId,
+      });
       const llmDurationMs = Date.now() - llmStartTime;
 
       const estimatedInputTokens = Math.ceil((schemaContext.length + userMessage.length) / 4);
@@ -332,7 +336,9 @@ const chatToSchemaService = {
           undefined
         );
       } catch (auditErr) {
-        logger.warn('[ChatToSchema] Cost tracking audit failed', { error: (auditErr as Error).message });
+        logger.warn('[ChatToSchema] Cost tracking audit failed', {
+          error: (auditErr as Error).message,
+        });
       }
 
       // Convert pipeline proposal format to legacy internal format
@@ -383,9 +389,16 @@ const chatToSchemaService = {
       await db.query(
         `INSERT INTO tp_schema_proposals (id, workspace_id, intent, confidence, summary, operations, warnings, status, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'clarification_needed', $8)`,
-        [id, workspaceId, parsed.intent, parsed.confidence,
-         "I couldn't understand your request clearly. Could you try rephrasing? For example: 'Add a Priority column' or 'Create a contacts table'.",
-         '[]', JSON.stringify(parsed.warnings), createdBy ?? null]
+        [
+          id,
+          workspaceId,
+          parsed.intent,
+          parsed.confidence,
+          "I couldn't understand your request clearly. Could you try rephrasing? For example: 'Add a Priority column' or 'Create a contacts table'.",
+          '[]',
+          JSON.stringify(parsed.warnings),
+          createdBy ?? null,
+        ]
       );
       const row = (await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [id])).rows[0];
       return row as unknown as SchemaProposal;
@@ -449,7 +462,7 @@ const chatToSchemaService = {
     if (proposalAge > STALE_THRESHOLD_MS) {
       throw new Error(
         'Schema was modified since this proposal was created. Please regenerate. ' +
-        `Proposal is ${Math.round(proposalAge / 1000)}s old (max ${STALE_THRESHOLD_MS / 1000}s).`
+          `Proposal is ${Math.round(proposalAge / 1000)}s old (max ${STALE_THRESHOLD_MS / 1000}s).`
       );
     }
 
@@ -463,9 +476,22 @@ const chatToSchemaService = {
 
     const pipelineOps: PipelineSchemaOperation[] = toExecute.map((op) => ({
       id: op.id,
-      operation_type: String(op.operationType ?? (op as unknown as Record<string, unknown>).op ?? (op as unknown as Record<string, unknown>).type ?? ''),
-      target: (op.target ?? {}) as { type: string; base_id?: string; table_id?: string; field_id?: string },
-      payload: (op.payload ?? (op as unknown as Record<string, unknown>).data ?? {}) as Record<string, unknown>,
+      operation_type: String(
+        op.operationType ??
+          (op as unknown as Record<string, unknown>).op ??
+          (op as unknown as Record<string, unknown>).type ??
+          ''
+      ),
+      target: (op.target ?? {}) as {
+        type: string;
+        base_id?: string;
+        table_id?: string;
+        field_id?: string;
+      },
+      payload: (op.payload ?? (op as unknown as Record<string, unknown>).data ?? {}) as Record<
+        string,
+        unknown
+      >,
       dependencies: op.dependsOn,
       reversible: true,
     }));
@@ -478,7 +504,7 @@ const chatToSchemaService = {
       baseId,
       executedBy,
       orgId,
-      workspaceId,
+      workspaceId
     );
 
     const createdIds: Record<string, string> = {};
@@ -490,7 +516,8 @@ const chatToSchemaService = {
       .map((r) => ({ operationId: r.operationId, error: r.error ?? 'Unknown error' }));
 
     const anySuccess = outcome.results.some((r) => r.success);
-    const status = failedOperations.length === 0 ? 'executed' : anySuccess ? 'partially_executed' : 'failed';
+    const status =
+      failedOperations.length === 0 ? 'executed' : anySuccess ? 'partially_executed' : 'failed';
 
     await db.query(
       `UPDATE tp_schema_proposals SET status = $2, resolved_by = $3, resolved_at = NOW() WHERE id = $1`,
@@ -528,19 +555,20 @@ const chatToSchemaService = {
     };
   },
 
-  extractBaseId(
-    operations: PipelineSchemaOperation[],
-    fallback: string,
-  ): string {
+  extractBaseId(operations: PipelineSchemaOperation[], fallback: string): string {
     for (const op of operations) {
       const target = op.target as Record<string, string> | undefined;
       if (target?.base_id && !target.base_id.startsWith('@ref:')) return target.base_id;
-      if (target?.baseId && !(target.baseId as string).startsWith('@ref:')) return target.baseId as string;
+      if (target?.baseId && !(target.baseId as string).startsWith('@ref:'))
+        return target.baseId as string;
     }
     return fallback;
   },
 
-  async undoProposal(proposalId: string, baseId: string): Promise<{ success: boolean; error?: string }> {
+  async undoProposal(
+    proposalId: string,
+    baseId: string
+  ): Promise<{ success: boolean; error?: string }> {
     const stack = getStack(baseId);
     if (!stack.canUndo()) {
       return { success: false, error: 'Nothing to undo' };
@@ -563,7 +591,10 @@ const chatToSchemaService = {
     }
   },
 
-  async redoProposal(proposalId: string, baseId: string): Promise<{ success: boolean; error?: string }> {
+  async redoProposal(
+    proposalId: string,
+    baseId: string
+  ): Promise<{ success: boolean; error?: string }> {
     const stack = getStack(baseId);
     if (!stack.canRedo()) {
       return { success: false, error: 'Nothing to redo' };
@@ -625,7 +656,9 @@ const chatToSchemaService = {
 
     const refinementCount = original.refinement_count ?? 0;
     if (refinementCount >= 3) {
-      throw new Error('Maximum refinements reached. Please approve, reject, or start a new proposal.');
+      throw new Error(
+        'Maximum refinements reached. Please approve, reject, or start a new proposal.'
+      );
     }
 
     await db.query(
@@ -647,10 +680,15 @@ const chatToSchemaService = {
   async getProposal(proposalId: string): Promise<any> {
     const db = getDatabase();
     try {
-      const result = await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [proposalId]);
+      const result = await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [
+        proposalId,
+      ]);
       return result.rows[0] ?? null;
     } catch (e) {
-      logger.error('[ChatToSchema] getProposal failed', { proposalId, error: (e as Error).message });
+      logger.error('[ChatToSchema] getProposal failed', {
+        proposalId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

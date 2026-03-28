@@ -13,7 +13,14 @@ interface UseCalendarDataReturn {
   refetch: () => void;
 }
 
-const ALL_SOURCES: CalendarEventSource[] = ['task', 'initiative', 'decision', 'google', 'outlook', 'consultify'];
+const ALL_SOURCES: CalendarEventSource[] = [
+  'task',
+  'initiative',
+  'decision',
+  'google',
+  'outlook',
+  'consultify',
+];
 
 export function useCalendarData(
   dateRange?: { start: string; end: string },

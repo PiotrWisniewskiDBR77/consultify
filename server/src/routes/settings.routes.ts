@@ -9,6 +9,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
+import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -799,7 +800,9 @@ function normalizeConnectorId(provider: string): string {
 function getConfiguredFields(configFields: string[], config: Record<string, unknown>): string[] {
   return configFields.filter((field) => {
     const value = config[field];
-    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+    return typeof value === 'string'
+      ? value.trim().length > 0
+      : value !== undefined && value !== null;
   });
 }
 
@@ -835,7 +838,7 @@ function mapGovernedStatusToSettingsStatus(status: string): IntegrationEntry['st
 }
 
 async function loadGovernedSettingsIntegrations(
-  organizationId: string,
+  organizationId: string
 ): Promise<IntegrationEntry[]> {
   const cols = await getTableColumns('integrations');
   if (!cols.has('connector_id') || !cols.has('config')) {
@@ -880,18 +883,100 @@ async function loadGovernedSettingsIntegrations(
 
 async function loadEffectiveSettingsIntegrations(
   userId: string,
-  organizationId?: string,
+  organizationId?: string
 ): Promise<IntegrationEntry[]> {
   const legacyIntegrations = await loadIntegrations(userId);
   const governedIntegrations = organizationId
     ? await loadGovernedSettingsIntegrations(organizationId).catch(() => [])
     : [];
-  const governedProviders = new Set(governedIntegrations.map((integration) => integration.provider));
+  const governedProviders = new Set(
+    governedIntegrations.map((integration) => integration.provider)
+  );
 
   return [
     ...governedIntegrations,
     ...legacyIntegrations.filter((integration) => !governedProviders.has(integration.provider)),
   ];
+}
+
+async function loadSettingsIntegrationSyncLogs(integrationId: string, limit: number) {
+  const cols = await getTableColumns('integration_sync_log');
+  if (!cols.size) return [];
+
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
+  const hasNewCols = cols.has('items_processed') || cols.has('trigger_type');
+  const rows = await dbAll<any>(
+    hasNewCols
+      ? `SELECT id, status, sync_type, direction, trigger_type, items_processed, items_created, items_updated, items_failed, error_summary, error_details, started_at, completed_at, duration_ms
+         FROM integration_sync_log WHERE integration_id = ? ORDER BY started_at DESC LIMIT ${safeLimit}`
+      : `SELECT id, status, sync_type, direction, items_synced, items_failed, error_details, started_at, completed_at, duration_ms
+         FROM integration_sync_log WHERE integration_id = ? ORDER BY started_at DESC LIMIT ${safeLimit}`,
+    [integrationId]
+  );
+
+  return (rows || []).map((row) =>
+    hasNewCols
+      ? {
+          id: row.id,
+          status: row.status,
+          syncType: row.sync_type,
+          direction: row.direction,
+          syncScope:
+            String(row.direction || '').toLowerCase() === 'bidirectional'
+              ? 'bidirectional'
+              : 'read_only',
+          syncScopeLabel:
+            String(row.direction || '').toLowerCase() === 'bidirectional'
+              ? 'Bidirectional sync'
+              : 'Read-only sync',
+          triggerType: row.trigger_type,
+          itemsProcessed: row.items_processed ?? 0,
+          itemsCreated: row.items_created ?? 0,
+          itemsUpdated: row.items_updated ?? 0,
+          itemsFailed: row.items_failed ?? 0,
+          errorSummary: row.error_summary ?? null,
+          errorDetails: row.error_details
+            ? (() => {
+                try {
+                  return JSON.parse(row.error_details);
+                } catch {
+                  return row.error_details;
+                }
+              })()
+            : null,
+          startedAt: row.started_at,
+          completedAt: row.completed_at,
+          durationMs: row.duration_ms ?? 0,
+        }
+      : {
+          id: row.id,
+          status: row.status,
+          syncType: row.sync_type,
+          direction: row.direction,
+          syncScope:
+            String(row.direction || '').toLowerCase() === 'bidirectional'
+              ? 'bidirectional'
+              : 'read_only',
+          syncScopeLabel:
+            String(row.direction || '').toLowerCase() === 'bidirectional'
+              ? 'Bidirectional sync'
+              : 'Read-only sync',
+          itemsProcessed: row.items_synced ?? 0,
+          itemsFailed: row.items_failed ?? 0,
+          errorDetails: row.error_details
+            ? (() => {
+                try {
+                  return JSON.parse(row.error_details);
+                } catch {
+                  return row.error_details;
+                }
+              })()
+            : null,
+          startedAt: row.started_at,
+          completedAt: row.completed_at,
+          durationMs: row.duration_ms ?? 0,
+        }
+  );
 }
 
 /**
@@ -908,7 +993,8 @@ router.get(
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const connectedCount = integrations.filter((i) => i.status === 'active').length;
     const providers = defaultIntegrationProviders.map((provider) => {
-      const connection = integrations.find((integration) => integration.provider === provider.id) || null;
+      const connection =
+        integrations.find((integration) => integration.provider === provider.id) || null;
       return {
         ...provider,
         isConnected: connection?.status === 'active',
@@ -1109,8 +1195,68 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
+    const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
-    return res.json({ success: true });
+
+    const effectiveIntegrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
+    const item = effectiveIntegrations.find((integration) => integration.provider === provider);
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'Integration not connected' });
+    }
+
+    const connectorId = normalizeConnectorId(provider);
+    const connector = CONNECTORS[connectorId];
+    if (!organizationId || !connector || !item.id) {
+      return res.json({ success: true });
+    }
+
+    if (connector.authType !== 'oauth2') {
+      return res.status(409).json({
+        success: false,
+        error: 'Integration does not support governed token refresh',
+      });
+    }
+
+    const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
+    const config = parseJsonObject(item.config);
+    const configuredFields = getConfiguredFields(connectorConfigFields, config);
+    const onboardingStatus = getPendingOnboardingStatus(
+      connector.authType,
+      connectorConfigFields,
+      configuredFields
+    );
+
+    if (onboardingStatus !== 'pending_external_auth') {
+      return res.status(409).json({
+        success: false,
+        error: 'Integration configuration is incomplete',
+        onboardingStatus,
+      });
+    }
+
+    await updateIntegrationStatus(item.id, 'pending');
+    await setConnectorAuthState({
+      connectorId: connector.id,
+      organizationId,
+      targetState: 'connecting',
+      transitionedBy: userId,
+      reason: 'settings_integrations_refresh_started',
+    });
+    const externalAuth = buildGovernedExternalAuthSession(req, {
+      integrationId: item.id,
+      organizationId,
+      connectorId: connector.id,
+      mode: 'reauth',
+      config,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Re-authorization initiated',
+      onboardingStatus,
+      authUrl: externalAuth.authUrl,
+    });
   })
 );
 
@@ -1122,19 +1268,83 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
     const { provider } = req.params;
-    const { config } = req.body;
+    const config = parseJsonObject(req.body?.config);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const integrations = await loadIntegrations(userId);
-    const updated = integrations.map((i) =>
-      i.provider === provider
-        ? { ...i, config: config || {}, updatedAt: new Date().toISOString() }
-        : i
-    );
-    await saveIntegrations(userId, updated);
+    const effectiveIntegrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
+    const item = effectiveIntegrations.find((integration) => integration.provider === provider);
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'Integration not connected' });
+    }
 
-    return res.json({ success: true });
+    const connectorId = normalizeConnectorId(provider);
+    const connector = CONNECTORS[connectorId];
+    if (!organizationId || !connector || !item.id) {
+      const integrations = await loadIntegrations(userId);
+      const updated = integrations.map((integration) =>
+        integration.provider === provider
+          ? { ...integration, config, updatedAt: new Date().toISOString() }
+          : integration
+      );
+      await saveIntegrations(userId, updated);
+      return res.json({ success: true });
+    }
+
+    const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
+    const nextConfig = { ...parseJsonObject(item.config) };
+    for (const field of connectorConfigFields) {
+      if (Object.prototype.hasOwnProperty.call(config, field)) {
+        nextConfig[field] = config[field];
+      }
+    }
+
+    const configuredFields = getConfiguredFields(connectorConfigFields, nextConfig);
+    const onboardingStatus = getPendingOnboardingStatus(
+      connector.authType,
+      connectorConfigFields,
+      configuredFields
+    );
+
+    await dbRun(
+      `UPDATE integrations
+       SET config = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(nextConfig), item.id, organizationId]
+    );
+
+    let authUrl: string | null = null;
+    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+      await setConnectorAuthState({
+        connectorId: connector.id,
+        organizationId,
+        targetState: 'connecting',
+        transitionedBy: userId,
+        reason: 'settings_integrations_configured',
+      });
+      authUrl = buildGovernedExternalAuthSession(req, {
+        integrationId: item.id,
+        organizationId,
+        connectorId: connector.id,
+        mode: 'connect',
+        config: nextConfig,
+      }).authUrl;
+    }
+
+    return res.json({
+      success: true,
+      onboardingStatus,
+      authUrl,
+      integration: {
+        id: item.id,
+        provider,
+        status: 'pending',
+        config: nextConfig,
+        configuredFields,
+        requiredFields: connectorConfigFields,
+      },
+    });
   })
 );
 
@@ -1162,8 +1372,21 @@ router.get(
 router.get(
   '/integrations/:provider/logs',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({ logs: [] });
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
+    const { provider } = req.params;
+    const rawLimit = parseInt(String(req.query.limit || '50'), 10);
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
+    const item = integrations.find((integration) => integration.provider === provider);
+    if (!item) {
+      return res.status(404).json({ logs: [], error: 'Integration not connected' });
+    }
+
+    const logs = item.id ? await loadSettingsIntegrationSyncLogs(item.id, rawLimit) : [];
+    return res.json({ logs });
   })
 );
 

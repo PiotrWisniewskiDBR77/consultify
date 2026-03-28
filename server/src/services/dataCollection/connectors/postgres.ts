@@ -4,13 +4,14 @@
  */
 
 import { Pool } from 'pg';
-import type {
-  IConnector,
-  ExternalSchema,
-  ExternalRecord,
-  FetchOptions,
-} from '../connectorFramework.js';
+
 import logger from '../../../utils/Logger.js';
+import type {
+  ExternalRecord,
+  ExternalSchema,
+  FetchOptions,
+  IConnector,
+} from '../connectorFramework.js';
 
 interface PostgresConfig {
   host: string;
@@ -27,7 +28,9 @@ const IDENTIFIER_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 function sanitizeIdentifier(name: string): string {
   if (!IDENTIFIER_RE.test(name)) {
-    throw new Error(`Invalid identifier: "${name}". Only alphanumeric characters and underscores are allowed.`);
+    throw new Error(
+      `Invalid identifier: "${name}". Only alphanumeric characters and underscores are allowed.`
+    );
   }
   return `"${name}"`;
 }
@@ -222,11 +225,7 @@ export const postgresConnector: IConnector = {
       const result = await pool.query(query, params);
 
       return result.rows.map((row: Record<string, unknown>) => {
-        const id =
-          (row.id as string) ??
-          (row.uuid as string) ??
-          (row._id as string) ??
-          undefined;
+        const id = (row.id as string) ?? (row.uuid as string) ?? (row._id as string) ?? undefined;
         return {
           externalId: id ? String(id) : undefined,
           data: row,

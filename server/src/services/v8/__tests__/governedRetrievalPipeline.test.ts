@@ -1,10 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  RetrievalRequest,
-  SensitivityLabel,
-} from '../../../types/governedRetrieval.js';
 import type { ScopeType } from '../../../types/contextSnapshot.js';
+import type { RetrievalRequest, SensitivityLabel } from '../../../types/governedRetrieval.js';
 
 // ==========================================
 // MOCK DB LAYER
@@ -29,15 +26,15 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
+import type { CandidateSource, SourceACLContext } from '../governedRetrievalService.js';
 import {
+  buildScopeResolution,
   checkACL,
   checkFreshness,
-  runPipeline,
-  buildScopeResolution,
-  getTracesBySnapshot,
   getRequestsByOrg,
+  getTracesBySnapshot,
+  runPipeline,
 } from '../governedRetrievalService.js';
-import type { SourceACLContext, CandidateSource } from '../governedRetrievalService.js';
 
 // ==========================================
 // FIXTURES

@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -9,13 +9,28 @@ import logger from '../utils/Logger.js';
 // ============================================
 
 export const TriggerTypeEnum = z.enum([
-  'task_status_changed', 'task_assigned', 'task_created', 'task_overdue',
-  'decision_status_changed', 'raid_item_created', 'schedule', 'manual',
+  'task_status_changed',
+  'task_assigned',
+  'task_created',
+  'task_overdue',
+  'decision_status_changed',
+  'raid_item_created',
+  'schedule',
+  'manual',
 ]);
 
 export const ConditionOperatorEnum = z.enum([
-  'equals', 'not_equals', 'contains', 'gt', 'lt', 'gte', 'lte',
-  'in', 'not_in', 'is_empty', 'is_not_empty',
+  'equals',
+  'not_equals',
+  'contains',
+  'gt',
+  'lt',
+  'gte',
+  'lte',
+  'in',
+  'not_in',
+  'is_empty',
+  'is_not_empty',
 ]);
 
 export const ConditionSchema = z.object({
@@ -25,8 +40,16 @@ export const ConditionSchema = z.object({
 });
 
 export const ActionTypeEnum = z.enum([
-  'set_status', 'assign_user', 'set_priority', 'add_tag', 'remove_tag',
-  'create_task', 'send_notification', 'add_comment', 'set_field', 'escalate',
+  'set_status',
+  'assign_user',
+  'set_priority',
+  'add_tag',
+  'remove_tag',
+  'create_task',
+  'send_notification',
+  'add_comment',
+  'set_field',
+  'escalate',
 ]);
 
 export const ActionSchema = z.object({
@@ -69,7 +92,7 @@ export interface ActionResult {
 
 export function evaluateConditions(
   conditions: Condition[],
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): boolean {
   if (conditions.length === 0) return true;
 
@@ -81,15 +104,35 @@ export function evaluateConditions(
       case 'not_equals':
         return fieldValue !== cond.value;
       case 'contains':
-        return typeof fieldValue === 'string' && typeof cond.value === 'string' && fieldValue.includes(cond.value);
+        return (
+          typeof fieldValue === 'string' &&
+          typeof cond.value === 'string' &&
+          fieldValue.includes(cond.value)
+        );
       case 'gt':
-        return typeof fieldValue === 'number' && typeof cond.value === 'number' && fieldValue > cond.value;
+        return (
+          typeof fieldValue === 'number' &&
+          typeof cond.value === 'number' &&
+          fieldValue > cond.value
+        );
       case 'lt':
-        return typeof fieldValue === 'number' && typeof cond.value === 'number' && fieldValue < cond.value;
+        return (
+          typeof fieldValue === 'number' &&
+          typeof cond.value === 'number' &&
+          fieldValue < cond.value
+        );
       case 'gte':
-        return typeof fieldValue === 'number' && typeof cond.value === 'number' && fieldValue >= cond.value;
+        return (
+          typeof fieldValue === 'number' &&
+          typeof cond.value === 'number' &&
+          fieldValue >= cond.value
+        );
       case 'lte':
-        return typeof fieldValue === 'number' && typeof cond.value === 'number' && fieldValue <= cond.value;
+        return (
+          typeof fieldValue === 'number' &&
+          typeof cond.value === 'number' &&
+          fieldValue <= cond.value
+        );
       case 'in':
         return Array.isArray(cond.value) && (cond.value as unknown[]).includes(fieldValue);
       case 'not_in':
@@ -111,7 +154,7 @@ export function evaluateConditions(
 export async function executeActions(
   actions: Action[],
   context: Record<string, unknown>,
-  orgId: string,
+  orgId: string
 ): Promise<ActionResult[]> {
   const results: ActionResult[] = [];
 
@@ -124,11 +167,15 @@ export async function executeActions(
           if (taskId && newStatus) {
             await dbRun(
               'UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?',
-              [newStatus, taskId, orgId],
+              [newStatus, taskId, orgId]
             );
             results.push({ action: 'set_status', success: true, result: { taskId, newStatus } });
           } else {
-            results.push({ action: 'set_status', success: false, error: 'Missing taskId or status' });
+            results.push({
+              action: 'set_status',
+              success: false,
+              error: 'Missing taskId or status',
+            });
           }
           break;
         }
@@ -138,11 +185,15 @@ export async function executeActions(
           if (taskId && userId) {
             await dbRun(
               'UPDATE tasks SET assignee_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?',
-              [userId, taskId, orgId],
+              [userId, taskId, orgId]
             );
             results.push({ action: 'assign_user', success: true, result: { taskId, userId } });
           } else {
-            results.push({ action: 'assign_user', success: false, error: 'Missing taskId or userId' });
+            results.push({
+              action: 'assign_user',
+              success: false,
+              error: 'Missing taskId or userId',
+            });
           }
           break;
         }
@@ -152,11 +203,15 @@ export async function executeActions(
           if (taskId && priority) {
             await dbRun(
               'UPDATE tasks SET priority = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?',
-              [priority, taskId, orgId],
+              [priority, taskId, orgId]
             );
             results.push({ action: 'set_priority', success: true, result: { taskId, priority } });
           } else {
-            results.push({ action: 'set_priority', success: false, error: 'Missing taskId or priority' });
+            results.push({
+              action: 'set_priority',
+              success: false,
+              error: 'Missing taskId or priority',
+            });
           }
           break;
         }
@@ -165,30 +220,46 @@ export async function executeActions(
           const fieldName = action.config.field as string;
           const fieldValue = action.config.value;
           if (taskId && fieldName) {
-            const task = await dbGet(
+            const task = (await dbGet(
               'SELECT custom_fields_json FROM tasks WHERE id = ? AND organization_id = ?',
-              [taskId, orgId],
-            ) as { custom_fields_json?: string } | undefined;
+              [taskId, orgId]
+            )) as { custom_fields_json?: string } | undefined;
             const fields = task?.custom_fields_json ? JSON.parse(task.custom_fields_json) : {};
             fields[fieldName] = fieldValue;
             await dbRun(
               'UPDATE tasks SET custom_fields_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?',
-              [JSON.stringify(fields), taskId, orgId],
+              [JSON.stringify(fields), taskId, orgId]
             );
-            results.push({ action: 'set_field', success: true, result: { taskId, fieldName, fieldValue } });
+            results.push({
+              action: 'set_field',
+              success: true,
+              result: { taskId, fieldName, fieldValue },
+            });
           } else {
             results.push({ action: 'set_field', success: false, error: 'Missing taskId or field' });
           }
           break;
         }
         case 'send_notification':
-          results.push({ action: 'send_notification', success: true, result: { message: action.config.message, queued: true } });
+          results.push({
+            action: 'send_notification',
+            success: true,
+            result: { message: action.config.message, queued: true },
+          });
           break;
         case 'add_comment':
-          results.push({ action: 'add_comment', success: true, result: { comment: action.config.text, queued: true } });
+          results.push({
+            action: 'add_comment',
+            success: true,
+            result: { comment: action.config.text, queued: true },
+          });
           break;
         default:
-          results.push({ action: action.type, success: false, error: 'Action type not yet implemented' });
+          results.push({
+            action: action.type,
+            success: false,
+            error: 'Action type not yet implemented',
+          });
       }
     } catch (err: any) {
       results.push({ action: action.type, success: false, error: err?.message || 'Unknown error' });
@@ -231,7 +302,10 @@ function mapRowToRule(row: RuleRow): AutomationRule {
   };
 }
 
-export async function getActiveRulesForOrg(orgId: string, triggerType?: string): Promise<AutomationRule[]> {
+export async function getActiveRulesForOrg(
+  orgId: string,
+  triggerType?: string
+): Promise<AutomationRule[]> {
   const sql = triggerType
     ? `SELECT * FROM task_automation_rules WHERE organization_id = ? AND is_active = 1 AND trigger_type = ? ORDER BY created_at ASC`
     : `SELECT * FROM task_automation_rules WHERE organization_id = ? AND is_active = 1 ORDER BY created_at ASC`;
@@ -248,10 +322,10 @@ export async function getActiveRulesForOrg(orgId: string, triggerType?: string):
 
 export async function getRuleById(ruleId: string, orgId: string): Promise<AutomationRule | null> {
   try {
-    const row = await dbGet(
+    const row = (await dbGet(
       `SELECT * FROM task_automation_rules WHERE id = ? AND organization_id = ?`,
-      [ruleId, orgId],
-    ) as RuleRow | undefined;
+      [ruleId, orgId]
+    )) as RuleRow | undefined;
     return row ? mapRowToRule(row) : null;
   } catch {
     return null;
@@ -261,7 +335,7 @@ export async function getRuleById(ruleId: string, orgId: string): Promise<Automa
 export async function updateRule(
   ruleId: string,
   orgId: string,
-  updates: Partial<AutomationRuleInput>,
+  updates: Partial<AutomationRuleInput>
 ): Promise<AutomationRule | null> {
   const existing = await getRuleById(ruleId, orgId);
   if (!existing) return null;
@@ -277,7 +351,16 @@ export async function updateRule(
     `UPDATE task_automation_rules
      SET name = ?, trigger_type = ?, trigger_config_json = ?, conditions_json = ?, actions_json = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
      WHERE id = ? AND organization_id = ?`,
-    [name, triggerType, JSON.stringify(triggerConfig ?? {}), JSON.stringify(conditions), JSON.stringify(actions), isActive ? 1 : 0, ruleId, orgId],
+    [
+      name,
+      triggerType,
+      JSON.stringify(triggerConfig ?? {}),
+      JSON.stringify(conditions),
+      JSON.stringify(actions),
+      isActive ? 1 : 0,
+      ruleId,
+      orgId,
+    ]
   );
 
   return {
@@ -296,7 +379,7 @@ export async function deleteRule(ruleId: string, orgId: string): Promise<boolean
   try {
     const result = await dbRun(
       `DELETE FROM task_automation_rules WHERE id = ? AND organization_id = ?`,
-      [ruleId, orgId],
+      [ruleId, orgId]
     );
     return (result as any).changes > 0;
   } catch {
@@ -306,8 +389,18 @@ export async function deleteRule(ruleId: string, orgId: string): Promise<boolean
 
 export function dryRunRule(
   rule: AutomationRule,
-  context: Record<string, unknown>,
-): { wouldMatch: boolean; conditionResults: Array<{ field: string; operator: string; expected: unknown; actual: unknown; passed: boolean }>; actions: Action[] } {
+  context: Record<string, unknown>
+): {
+  wouldMatch: boolean;
+  conditionResults: Array<{
+    field: string;
+    operator: string;
+    expected: unknown;
+    actual: unknown;
+    passed: boolean;
+  }>;
+  actions: Action[];
+} {
   const conditionResults = rule.conditions.map((cond) => {
     const fieldValue = context[cond.field];
     const passed = evaluateConditions([cond], context);

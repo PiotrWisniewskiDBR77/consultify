@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -22,10 +22,10 @@ vi.mock('../../../utils/Logger.js', () => ({
 import {
   getEntrypointsByOrg,
   getEntrypointsBySource,
-  validateMaterializationChain,
   getOrphanedEntrypoints,
-  refreshSyncedSources,
   getTransformationPipeline,
+  refreshSyncedSources,
+  validateMaterializationChain,
 } from '../sourceTruthService.js';
 
 const ORG_A = '00000000-0000-4000-8000-000000000001';
@@ -91,9 +91,9 @@ describe('getEntrypointsByOrg', () => {
   });
 
   it('throws on invalid sourceType at runtime', async () => {
-    await expect(
-      getEntrypointsByOrg(ORG_A, 'not_an_entrypoint' as 'idea'),
-    ).rejects.toThrow(/Invalid sourceType/);
+    await expect(getEntrypointsByOrg(ORG_A, 'not_an_entrypoint' as 'idea')).rejects.toThrow(
+      /Invalid sourceType/
+    );
   });
 });
 
@@ -341,9 +341,7 @@ describe('refreshSyncedSources', () => {
 
 describe('getTransformationPipeline', () => {
   it('aggregates totals and per-source-type counts', async () => {
-    mockDbGet
-      .mockResolvedValueOnce({ c: 5 })
-      .mockResolvedValueOnce({ c: 2 });
+    mockDbGet.mockResolvedValueOnce({ c: 5 }).mockResolvedValueOnce({ c: 2 });
     mockDbAll.mockResolvedValueOnce([
       { source_type: 'idea', c: 3 },
       { source_type: 'interview', c: 2 },

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -65,7 +65,12 @@ describe('InterfaceService', () => {
     it('stores blocks JSON and returns updated row', async () => {
       const layout = {
         blocks: [
-          { id: 'blk-1', type: 'table_grid' as const, config: {}, position: { x: 0, y: 0, w: 12, h: 6 } },
+          {
+            id: 'blk-1',
+            type: 'table_grid' as const,
+            config: {},
+            position: { x: 0, y: 0, w: 12, h: 6 },
+          },
         ],
         theme: { primaryColor: '#3B82F6' },
       };
@@ -186,10 +191,7 @@ describe('InterfaceService', () => {
 
       await service.deleteInterface('ifc-1');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        'DELETE FROM tp_interfaces WHERE id = $1',
-        ['ifc-1']
-      );
+      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM tp_interfaces WHERE id = $1', ['ifc-1']);
     });
   });
 

@@ -6,12 +6,17 @@
  */
 
 import type { Server as HttpServer } from 'http';
-
 import { Server as SocketIOServer } from 'socket.io';
 
 import logger from '../utils/Logger.js';
 
-const ideaRooms = new Map<string, Map<string, { userId: string; userName: string; cursor?: { x: number; y: number; activeNodeId?: string } }>>();
+const ideaRooms = new Map<
+  string,
+  Map<
+    string,
+    { userId: string; userName: string; cursor?: { x: number; y: number; activeNodeId?: string } }
+  >
+>();
 
 export function initializeIdeaCollabGateway(io: SocketIOServer): void {
   const collabNs = io.of('/collab');
@@ -45,21 +50,24 @@ export function initializeIdeaCollabGateway(io: SocketIOServer): void {
       })),
     });
 
-    socket.on('cursor', (payload: { userId: string; x: number; y: number; activeNodeId?: string }) => {
-      const p = participants.get(socket.id);
-      if (p) {
-        p.cursor = { x: payload.x, y: payload.y, activeNodeId: payload.activeNodeId };
+    socket.on(
+      'cursor',
+      (payload: { userId: string; x: number; y: number; activeNodeId?: string }) => {
+        const p = participants.get(socket.id);
+        if (p) {
+          p.cursor = { x: payload.x, y: payload.y, activeNodeId: payload.activeNodeId };
+        }
+        socket.to(room).emit('presence', {
+          users: Array.from(participants.values()).map((p) => ({
+            id: p.userId,
+            name: p.userName,
+            cursorX: p.cursor?.x ?? 0,
+            cursorY: p.cursor?.y ?? 0,
+            activeNodeId: p.cursor?.activeNodeId,
+          })),
+        });
       }
-      socket.to(room).emit('presence', {
-        users: Array.from(participants.values()).map((p) => ({
-          id: p.userId,
-          name: p.userName,
-          cursorX: p.cursor?.x ?? 0,
-          cursorY: p.cursor?.y ?? 0,
-          activeNodeId: p.cursor?.activeNodeId,
-        })),
-      });
-    });
+    );
 
     socket.on('disconnect', () => {
       participants.delete(socket.id);

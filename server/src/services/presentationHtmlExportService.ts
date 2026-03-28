@@ -71,15 +71,9 @@ ${getEmbeddedJS(deck.cards.length)}
 </html>`;
 }
 
-function renderCardHtml(
-  card: ExportCard,
-  index: number,
-  theme: ExportDeck['theme']
-): string {
+function renderCardHtml(card: ExportCard, index: number, theme: ExportDeck['theme']): string {
   const bgStyle = getCardBgCSS(card.background, theme);
-  const blocksHtml = card.blocks
-    .map((block) => renderBlockHtml(block, theme))
-    .join('\n');
+  const blocksHtml = card.blocks.map((block) => renderBlockHtml(block, theme)).join('\n');
 
   return `<section class="slide" data-index="${index}" data-entrance="${card.animations.entrance}" data-stagger="${card.animations.block_stagger}" style="${bgStyle}">
   <div class="slide-content">
@@ -124,10 +118,7 @@ function renderBlockHtml(
   }
 }
 
-function getCardBgCSS(
-  bg: { type: string; value?: string },
-  theme: ExportDeck['theme']
-): string {
+function getCardBgCSS(bg: { type: string; value?: string }, theme: ExportDeck['theme']): string {
   switch (bg.type) {
     case 'color':
       return `background-color:${bg.value || theme.background}`;

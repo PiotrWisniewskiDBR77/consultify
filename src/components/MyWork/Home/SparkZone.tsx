@@ -74,14 +74,21 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
             {isPolish ? 'Nowy pomysł' : 'New Idea'}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-500 mt-1">
-            {isPolish ? 'Zacznij od zera lub użyj szablonu' : 'Start from scratch or use a template'}
+            {isPolish
+              ? 'Zacznij od zera lub użyj szablonu'
+              : 'Start from scratch or use a template'}
           </span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data.notes.map((note) => (
-          <NoteCard key={note.id} item={note} onClick={() => onNoteClick?.(note.id)} isPolish={isPolish} />
+          <NoteCard
+            key={note.id}
+            item={note}
+            onClick={() => onNoteClick?.(note.id)}
+            isPolish={isPolish}
+          />
         ))}
       </div>
     </div>

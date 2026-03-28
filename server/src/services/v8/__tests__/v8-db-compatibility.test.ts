@@ -10,15 +10,16 @@
  * Runs ONLY when V8_DB_TEST_MODE=real (skipped otherwise).
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
 import {
-  isRealDbMode,
   connectV8Db,
   disconnectV8Db,
   getV8DbClient,
-  getV8TableCount,
   getV8IndexCount,
+  getV8TableCount,
   getV8TableNames,
+  isRealDbMode,
 } from './helpers/v8-db-test-setup.js';
 
 const SKIP_REASON = 'Skipped: V8_DB_TEST_MODE !== "real"';
@@ -44,7 +45,7 @@ describe('V8 DB Compatibility', () => {
 
       const client = getV8DbClient();
       const result = await client.query(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'v8'",
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'v8'"
       );
       expect(result.rows.length).toBe(1);
     });
@@ -94,21 +95,18 @@ describe('V8 DB Compatibility', () => {
          (snapshot_id, workspace_id, organization_id, effective_scope_ref,
           resolved_role_ref, initiator_user_id, consumer_class)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'chat'],
+        [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'chat']
       );
 
       const result = await client.query(
         'SELECT * FROM v8.v8_context_snapshots WHERE snapshot_id = $1',
-        [id],
+        [id]
       );
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].consumer_class).toBe('chat');
 
-      await client.query(
-        'DELETE FROM v8.v8_context_snapshots WHERE snapshot_id = $1',
-        [id],
-      );
+      await client.query('DELETE FROM v8.v8_context_snapshots WHERE snapshot_id = $1', [id]);
     });
 
     it('can insert and read from v8_feature_flags', async () => {
@@ -120,21 +118,17 @@ describe('V8 DB Compatibility', () => {
       await client.query(
         `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at)
          VALUES ($1, $2, $3, $4, $5)`,
-        [id, 'org-test', 'chat', 1, new Date().toISOString()],
+        [id, 'org-test', 'chat', 1, new Date().toISOString()]
       );
 
-      const result = await client.query(
-        'SELECT * FROM v8.v8_feature_flags WHERE flag_id = $1',
-        [id],
-      );
+      const result = await client.query('SELECT * FROM v8.v8_feature_flags WHERE flag_id = $1', [
+        id,
+      ]);
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].enabled).toBe(1);
 
-      await client.query(
-        'DELETE FROM v8.v8_feature_flags WHERE flag_id = $1',
-        [id],
-      );
+      await client.query('DELETE FROM v8.v8_feature_flags WHERE flag_id = $1', [id]);
     });
 
     it('can insert and read from v8_tool_catalog', async () => {
@@ -147,22 +141,18 @@ describe('V8 DB Compatibility', () => {
         `INSERT INTO v8.v8_tool_catalog
          (tool_id, organization_id, name, description, category, risk_class, mutation_type)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [id, 'org-1', 'Test Tool', 'A test tool', 'retrieval', 'low_risk', 'read_only'],
+        [id, 'org-1', 'Test Tool', 'A test tool', 'retrieval', 'low_risk', 'read_only']
       );
 
-      const result = await client.query(
-        'SELECT * FROM v8.v8_tool_catalog WHERE tool_id = $1',
-        [id],
-      );
+      const result = await client.query('SELECT * FROM v8.v8_tool_catalog WHERE tool_id = $1', [
+        id,
+      ]);
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].name).toBe('Test Tool');
       expect(result.rows[0].risk_class).toBe('low_risk');
 
-      await client.query(
-        'DELETE FROM v8.v8_tool_catalog WHERE tool_id = $1',
-        [id],
-      );
+      await client.query('DELETE FROM v8.v8_tool_catalog WHERE tool_id = $1', [id]);
     });
   });
 
@@ -183,8 +173,8 @@ describe('V8 DB Compatibility', () => {
            (snapshot_id, workspace_id, organization_id, effective_scope_ref,
             resolved_role_ref, initiator_user_id, consumer_class)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'INVALID_CLASS'],
-        ),
+          [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'INVALID_CLASS']
+        )
       ).rejects.toThrow();
     });
 
@@ -199,8 +189,8 @@ describe('V8 DB Compatibility', () => {
           `INSERT INTO v8.v8_tool_catalog
            (tool_id, organization_id, name, description, category, risk_class, mutation_type)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [id, 'org-1', 'Bad Tool', 'desc', 'INVALID_CATEGORY', 'low_risk', 'read_only'],
-        ),
+          [id, 'org-1', 'Bad Tool', 'desc', 'INVALID_CATEGORY', 'low_risk', 'read_only']
+        )
       ).rejects.toThrow();
     });
 
@@ -215,21 +205,18 @@ describe('V8 DB Compatibility', () => {
          (snapshot_id, workspace_id, organization_id, effective_scope_ref,
           resolved_role_ref, initiator_user_id, consumer_class)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'chat'],
+        [id, 'ws-1', 'org-1', 'scope-1', 'role-1', 'user-1', 'chat']
       );
 
       const result = await client.query(
         'SELECT created_at, captured_at FROM v8.v8_context_snapshots WHERE snapshot_id = $1',
-        [id],
+        [id]
       );
 
       expect(result.rows[0].created_at).toBeTruthy();
       expect(result.rows[0].captured_at).toBeTruthy();
 
-      await client.query(
-        'DELETE FROM v8.v8_context_snapshots WHERE snapshot_id = $1',
-        [id],
-      );
+      await client.query('DELETE FROM v8.v8_context_snapshots WHERE snapshot_id = $1', [id]);
     });
 
     it('partial indexes exist (conversation_id WHERE NOT NULL)', async () => {
@@ -240,11 +227,11 @@ describe('V8 DB Compatibility', () => {
         `SELECT indexname, indexdef FROM pg_indexes
          WHERE schemaname = 'v8'
            AND indexdef LIKE '%WHERE%'
-         ORDER BY indexname`,
+         ORDER BY indexname`
       );
 
       console.log(
-        `[V8-DB-Test] Partial indexes:\n  ${result.rows.map((r: { indexname: string }) => r.indexname).join('\n  ')}`,
+        `[V8-DB-Test] Partial indexes:\n  ${result.rows.map((r: { indexname: string }) => r.indexname).join('\n  ')}`
       );
       expect(result.rows.length).toBeGreaterThan(0);
     });
@@ -260,21 +247,18 @@ describe('V8 DB Compatibility', () => {
       await client.query(
         `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at)
          VALUES ($1, $2, $3, $4, $5)`,
-        [id1, orgId, 'chat', 1, new Date().toISOString()],
+        [id1, orgId, 'chat', 1, new Date().toISOString()]
       );
 
       await expect(
         client.query(
           `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at)
            VALUES ($1, $2, $3, $4, $5)`,
-          [id2, orgId, 'chat', 0, new Date().toISOString()],
-        ),
+          [id2, orgId, 'chat', 0, new Date().toISOString()]
+        )
       ).rejects.toThrow();
 
-      await client.query(
-        'DELETE FROM v8.v8_feature_flags WHERE flag_id = $1',
-        [id1],
-      );
+      await client.query('DELETE FROM v8.v8_feature_flags WHERE flag_id = $1', [id1]);
     });
   });
 
@@ -292,9 +276,7 @@ describe('V8 DB Compatibility', () => {
       // The v8 migrations use datetime('now') in DEFAULT clauses.
       // Postgres accepts this in CREATE TABLE only if the migration runner
       // rewrites it to CURRENT_TIMESTAMP. Verify the actual default works:
-      await expect(
-        client.query("SELECT datetime('now')"),
-      ).rejects.toThrow(); // Postgres does not have datetime() function
+      await expect(client.query("SELECT datetime('now')")).rejects.toThrow(); // Postgres does not have datetime() function
 
       // But CURRENT_TIMESTAMP works:
       const result = await client.query('SELECT CURRENT_TIMESTAMP AS ts');

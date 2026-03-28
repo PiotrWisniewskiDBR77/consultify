@@ -28,8 +28,8 @@ import {
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
-  V8ResultsApi,
   shouldFallbackToLegacyResults,
+  V8ResultsApi,
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -196,7 +196,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
       let kpiRows: KpiMappingLike[] = [];
       if (catalogRes.status === 'fulfilled') {
-        kpiRows = Array.isArray(catalogRes.value?.mappings) ? (catalogRes.value.mappings as any) : [];
+        kpiRows = Array.isArray(catalogRes.value?.mappings)
+          ? (catalogRes.value.mappings as any)
+          : [];
       } else if (shouldFallbackToLegacyResults(catalogRes.reason)) {
         const kpiRes = await Api.get('/benefits/kpi-mappings');
         const kpiPayload = (kpiRes as any) ?? null;

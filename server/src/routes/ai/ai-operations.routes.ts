@@ -1132,7 +1132,9 @@ router.get(
       );
 
       const allProviderKeys = new Set<string>();
-      activeProviders.forEach((row) => allProviderKeys.add(String(row.provider || '').toLowerCase()));
+      activeProviders.forEach((row) =>
+        allProviderKeys.add(String(row.provider || '').toLowerCase())
+      );
       providerHealthMap.forEach((_value, key) => allProviderKeys.add(key));
       providerRequestMap.forEach((_value, key) => allProviderKeys.add(key));
 
@@ -1168,7 +1170,10 @@ router.get(
             successRate,
             errorRate,
             avgLatencyMs:
-              requestData?.avgLatencyMs || providerMeta?.avg_latency_ms || healthData?.avgLatencyMs || 0,
+              requestData?.avgLatencyMs ||
+              providerMeta?.avg_latency_ms ||
+              healthData?.avgLatencyMs ||
+              0,
             totalTokens: requestData?.tokens || 0,
             totalCost: Number((requestData?.cost || 0).toFixed(4)),
             uptimePct,
@@ -1291,7 +1296,9 @@ router.get(
             failed: Number(row.failed || 0),
             successRate:
               Number(row.requests || 0) > 0
-                ? Number(((Number(row.successful || 0) / Number(row.requests || 0)) * 100).toFixed(1))
+                ? Number(
+                    ((Number(row.successful || 0) / Number(row.requests || 0)) * 100).toFixed(1)
+                  )
                 : 100,
             avgLatencyMs: Math.round(Number(row.avg_latency_ms || 0)),
             tokens: Number(row.tokens || 0),

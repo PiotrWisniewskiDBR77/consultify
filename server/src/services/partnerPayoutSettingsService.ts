@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 
 import { getDatabase } from '../database/Database.js';
-import { EncryptionService } from './encryption/EncryptionService.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { EncryptionService } from './encryption/EncryptionService.js';
 
 export type PartnerPayoutMethod = 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
 
@@ -29,14 +29,18 @@ export interface UpdatePartnerPayoutSettingsInput {
 }
 
 function normalizePayoutMethod(value: unknown): PartnerPayoutMethod {
-  const candidate = String(value || 'BANK_TRANSFER').trim().toUpperCase();
+  const candidate = String(value || 'BANK_TRANSFER')
+    .trim()
+    .toUpperCase();
   if (candidate === 'PAYPAL' || candidate === 'STRIPE' || candidate === 'WISE') {
     return candidate;
   }
   return 'BANK_TRANSFER';
 }
 
-function sanitizeAccountDetails(details?: Partial<PartnerPayoutAccountDetails> | null): PartnerPayoutAccountDetails | null {
+function sanitizeAccountDetails(
+  details?: Partial<PartnerPayoutAccountDetails> | null
+): PartnerPayoutAccountDetails | null {
   if (!details) {
     return null;
   }
@@ -48,7 +52,12 @@ function sanitizeAccountDetails(details?: Partial<PartnerPayoutAccountDetails> |
     bankName: String(details.bankName || '').trim(),
   };
 
-  if (!normalized.accountHolderName && !normalized.iban && !normalized.bicSwift && !normalized.bankName) {
+  if (
+    !normalized.accountHolderName &&
+    !normalized.iban &&
+    !normalized.bicSwift &&
+    !normalized.bankName
+  ) {
     return null;
   }
 
@@ -67,7 +76,9 @@ function getAccountLastFour(details: PartnerPayoutAccountDetails): string | null
   return normalizedIban.slice(-4) || null;
 }
 
-export async function getPartnerPayoutSettings(partnerOrgId: string): Promise<PartnerPayoutSettings> {
+export async function getPartnerPayoutSettings(
+  partnerOrgId: string
+): Promise<PartnerPayoutSettings> {
   const db = getDatabase();
 
   const [orgRow, primaryAccount] = await Promise.all([
@@ -80,7 +91,7 @@ export async function getPartnerPayoutSettings(partnerOrgId: string): Promise<Pa
       `SELECT payout_threshold, payout_method, auto_payout_enabled
        FROM partner_organizations
        WHERE id = ?`,
-      [partnerOrgId],
+      [partnerOrgId]
     ),
     DbPromise.get<{
       account_details_encrypted?: string | null;
@@ -91,13 +102,13 @@ export async function getPartnerPayoutSettings(partnerOrgId: string): Promise<Pa
        WHERE partner_org_id = ? AND is_primary = TRUE
        ORDER BY updated_at DESC
        LIMIT 1`,
-      [partnerOrgId],
+      [partnerOrgId]
     ),
   ]);
 
   const decryptedAccount = primaryAccount?.account_details_encrypted
     ? sanitizeAccountDetails(
-        JSON.parse(EncryptionService.decrypt(primaryAccount.account_details_encrypted)),
+        JSON.parse(EncryptionService.decrypt(primaryAccount.account_details_encrypted))
       )
     : null;
 
@@ -111,7 +122,7 @@ export async function getPartnerPayoutSettings(partnerOrgId: string): Promise<Pa
 
 export async function updatePartnerPayoutSettings(
   partnerOrgId: string,
-  input: UpdatePartnerPayoutSettingsInput,
+  input: UpdatePartnerPayoutSettingsInput
 ): Promise<PartnerPayoutSettings> {
   const db = getDatabase();
 
@@ -127,7 +138,7 @@ export async function updatePartnerPayoutSettings(
     `UPDATE partner_organizations
      SET payout_threshold = ?, payout_method = ?, auto_payout_enabled = ?, updated_at = NOW()
      WHERE id = ?`,
-    [minimumThreshold, payoutMethod, autoPayoutEnabled, partnerOrgId],
+    [minimumThreshold, payoutMethod, autoPayoutEnabled, partnerOrgId]
   );
 
   if (payoutAccount) {
@@ -137,7 +148,7 @@ export async function updatePartnerPayoutSettings(
        FROM partner_payout_accounts
        WHERE partner_org_id = ? AND is_primary = TRUE
        LIMIT 1`,
-      [partnerOrgId],
+      [partnerOrgId]
     );
 
     const encryptedDetails = EncryptionService.encrypt(JSON.stringify(payoutAccount));
@@ -151,7 +162,7 @@ export async function updatePartnerPayoutSettings(
          SET payout_method = ?, account_details_encrypted = ?, account_name = ?, account_last_four = ?,
              updated_at = NOW()
          WHERE id = ?`,
-        [payoutMethod, encryptedDetails, accountName, accountLastFour, existingPrimary.id],
+        [payoutMethod, encryptedDetails, accountName, accountLastFour, existingPrimary.id]
       );
     } else {
       await DbPromise.run(
@@ -167,7 +178,7 @@ export async function updatePartnerPayoutSettings(
           encryptedDetails,
           accountName,
           accountLastFour,
-        ],
+        ]
       );
     }
   }

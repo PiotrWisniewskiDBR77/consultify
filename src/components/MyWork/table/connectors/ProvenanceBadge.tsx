@@ -1,5 +1,17 @@
+import {
+  AlertTriangle,
+  BadgeCheck,
+  ChevronRight,
+  Clock,
+  Database,
+  FileSpreadsheet,
+  FormInput,
+  Link2,
+  ShieldCheck,
+  Webhook,
+  X,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { AlertTriangle, BadgeCheck, ChevronRight, Clock, Database, FileSpreadsheet, FormInput, Link2, ShieldCheck, Webhook, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ProvenanceChainStep {
@@ -59,21 +71,30 @@ function sourceIcon(source: string) {
   }
 }
 
-const TRUST_STYLES: Record<string, { bg: string; color: string; icon: React.ReactNode; label: string; labelPl: string }> = {
+const TRUST_STYLES: Record<
+  string,
+  { bg: string; color: string; icon: React.ReactNode; label: string; labelPl: string }
+> = {
   certified: {
-    bg: '#dcfce7', color: '#166534',
+    bg: '#dcfce7',
+    color: '#166534',
     icon: <BadgeCheck size={10} />,
-    label: 'Certified', labelPl: 'Certyfikowany',
+    label: 'Certified',
+    labelPl: 'Certyfikowany',
   },
   unverified: {
-    bg: '#fef3c7', color: '#92400e',
+    bg: '#fef3c7',
+    color: '#92400e',
     icon: <AlertTriangle size={10} />,
-    label: 'Unverified', labelPl: 'Niezweryfikowany',
+    label: 'Unverified',
+    labelPl: 'Niezweryfikowany',
   },
   deprecated: {
-    bg: '#fee2e2', color: '#991b1b',
+    bg: '#fee2e2',
+    color: '#991b1b',
     icon: <AlertTriangle size={10} />,
-    label: 'Deprecated', labelPl: 'Wycofany',
+    label: 'Deprecated',
+    labelPl: 'Wycofany',
   },
 };
 
@@ -97,7 +118,8 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
 
   const label = connectorName || SOURCE_LABELS[source] || source;
   const timeAgo = syncedAt ? formatTimeAgo(new Date(syncedAt)) : '';
-  const effectiveTrust = trustLevel ?? (trusted === true ? 'certified' : trusted === false ? 'unverified' : undefined);
+  const effectiveTrust =
+    trustLevel ?? (trusted === true ? 'certified' : trusted === false ? 'unverified' : undefined);
   const trustStyle = effectiveTrust ? TRUST_STYLES[effectiveTrust] : null;
 
   const titleParts = [`Synced from ${label}`];
@@ -117,16 +139,8 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
         }}
         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors hover:opacity-80"
         style={{
-          backgroundColor: manuallyOverridden
-            ? '#fef3c7'
-            : trustStyle
-              ? trustStyle.bg
-              : '#e0f2fe',
-          color: manuallyOverridden
-            ? '#92400e'
-            : trustStyle
-              ? trustStyle.color
-              : '#0369a1',
+          backgroundColor: manuallyOverridden ? '#fef3c7' : trustStyle ? trustStyle.bg : '#e0f2fe',
+          color: manuallyOverridden ? '#92400e' : trustStyle ? trustStyle.color : '#0369a1',
           cursor: hasChain ? 'pointer' : 'default',
         }}
         title={titleParts.join(' \u2022 ')}
@@ -135,25 +149,18 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
         {sourceIcon(source)}
 
         {/* Trust indicator */}
-        {trustStyle && (
-          <span style={{ color: trustStyle.color }}>{trustStyle.icon}</span>
-        )}
+        {trustStyle && <span style={{ color: trustStyle.color }}>{trustStyle.icon}</span>}
 
         {/* Legacy trust icon for backward compat */}
         {!trustStyle && trusted !== undefined && (
-          <ShieldCheck
-            size={10}
-            style={{ color: trusted ? '#16a34a' : '#d97706' }}
-          />
+          <ShieldCheck size={10} style={{ color: trusted ? '#16a34a' : '#d97706' }} />
         )}
 
         {manuallyOverridden && <span className="text-[9px]">&#9998;</span>}
 
         <span className="max-w-[80px] truncate">{label}</span>
 
-        {timeAgo && (
-          <span className="opacity-60 text-[9px]">{timeAgo}</span>
-        )}
+        {timeAgo && <span className="opacity-60 text-[9px]">{timeAgo}</span>}
 
         {lastVerifiedAt && (
           <span className="opacity-50 text-[9px] flex items-center gap-0.5">
@@ -195,12 +202,17 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
                     className="w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0"
                     style={{
                       backgroundColor:
-                        step.type === 'connector' ? '#6366f1' :
-                        step.type === 'run' ? '#3b82f6' :
-                        step.type === 'import' ? '#10b981' :
-                        step.type === 'form' ? '#f59e0b' :
-                        step.type === 'manual' ? '#94a3b8' :
-                        '#8b5cf6',
+                        step.type === 'connector'
+                          ? '#6366f1'
+                          : step.type === 'run'
+                            ? '#3b82f6'
+                            : step.type === 'import'
+                              ? '#10b981'
+                              : step.type === 'form'
+                                ? '#f59e0b'
+                                : step.type === 'manual'
+                                  ? '#94a3b8'
+                                  : '#8b5cf6',
                     }}
                   >
                     {step.type === 'connector' && <Link2 size={9} />}

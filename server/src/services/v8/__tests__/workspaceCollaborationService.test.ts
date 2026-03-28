@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
@@ -6,14 +6,14 @@ import type {
   WorkspaceSessionState,
 } from '../../../types/workspaceCollaboration.js';
 import {
-  WorkspaceSessionSchema,
   ActivityFeedEntrySchema,
   CreateSessionParamsSchema,
   LinkRoomParamsSchema,
   RecordActivityParamsSchema,
+  TERMINAL_SESSION_STATES,
   UpdateSharedContextParamsSchema,
   VALID_SESSION_TRANSITIONS,
-  TERMINAL_SESSION_STATES,
+  WorkspaceSessionSchema,
 } from '../../../types/workspaceCollaboration.js';
 
 // ==========================================
@@ -40,18 +40,18 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createSession,
-  getSession,
-  pauseSession,
-  resumeSession,
   completeSession,
-  linkRoom,
-  unlinkRoom,
-  getLinkedRooms,
-  updateSharedContext,
-  recordActivity,
+  createSession,
   getActivityFeed,
+  getLinkedRooms,
+  getSession,
   getSessionsByWorkspace,
+  linkRoom,
+  pauseSession,
+  recordActivity,
+  resumeSession,
+  unlinkRoom,
+  updateSharedContext,
 } from '../workspaceCollaborationService.js';
 
 // ==========================================
@@ -143,14 +143,12 @@ describe('createSession', () => {
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createSession({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createSession({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      createSession(makeSessionParams({ organizationId: 'not-a-uuid' })),
+      createSession(makeSessionParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -198,17 +196,17 @@ describe('pauseSession', () => {
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      pauseSession('nonexistent', ORG_ID),
-    ).rejects.toThrow('Session nonexistent not found');
+    await expect(pauseSession('nonexistent', ORG_ID)).rejects.toThrow(
+      'Session nonexistent not found'
+    );
   });
 
   it('rejects invalid transition: completed → paused', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'completed' }));
 
-    await expect(
-      pauseSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid session state transition: completed → paused');
+    await expect(pauseSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid session state transition: completed → paused'
+    );
   });
 });
 
@@ -225,17 +223,17 @@ describe('resumeSession', () => {
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resumeSession('nonexistent', ORG_ID),
-    ).rejects.toThrow('Session nonexistent not found');
+    await expect(resumeSession('nonexistent', ORG_ID)).rejects.toThrow(
+      'Session nonexistent not found'
+    );
   });
 
   it('rejects invalid transition: active → active', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'active' }));
 
-    await expect(
-      resumeSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid session state transition: active → active');
+    await expect(resumeSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid session state transition: active → active'
+    );
   });
 });
 
@@ -262,17 +260,17 @@ describe('completeSession', () => {
   it('rejects invalid transition: abandoned → completed', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'abandoned' }));
 
-    await expect(
-      completeSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid session state transition: abandoned → completed');
+    await expect(completeSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid session state transition: abandoned → completed'
+    );
   });
 
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      completeSession('nonexistent', ORG_ID),
-    ).rejects.toThrow('Session nonexistent not found');
+    await expect(completeSession('nonexistent', ORG_ID)).rejects.toThrow(
+      'Session nonexistent not found'
+    );
   });
 });
 
@@ -290,7 +288,7 @@ describe('linkRoom', () => {
 
   it('does not duplicate if room already linked', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1]) }),
+      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1]) })
     );
 
     const result = await linkRoom(SESSION_ID, ROOM_ID_1, ORG_ID);
@@ -302,24 +300,24 @@ describe('linkRoom', () => {
   it('rejects linking to a completed session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'completed' }));
 
-    await expect(
-      linkRoom(SESSION_ID, ROOM_ID_1, ORG_ID),
-    ).rejects.toThrow("Cannot link room to session");
+    await expect(linkRoom(SESSION_ID, ROOM_ID_1, ORG_ID)).rejects.toThrow(
+      'Cannot link room to session'
+    );
   });
 
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      linkRoom(SESSION_ID, ROOM_ID_1, ORG_ID),
-    ).rejects.toThrow(`Session ${SESSION_ID} not found`);
+    await expect(linkRoom(SESSION_ID, ROOM_ID_1, ORG_ID)).rejects.toThrow(
+      `Session ${SESSION_ID} not found`
+    );
   });
 });
 
 describe('unlinkRoom', () => {
   it('removes a room from linkedRoomIds', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1, ROOM_ID_2]) }),
+      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1, ROOM_ID_2]) })
     );
 
     const result = await unlinkRoom(SESSION_ID, ROOM_ID_1, ORG_ID);
@@ -331,7 +329,7 @@ describe('unlinkRoom', () => {
 
   it('is a no-op if room not in linkedRoomIds', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_2]) }),
+      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_2]) })
     );
 
     const result = await unlinkRoom(SESSION_ID, ROOM_ID_1, ORG_ID);
@@ -344,16 +342,16 @@ describe('unlinkRoom', () => {
   it('rejects unlinking from an abandoned session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'abandoned' }));
 
-    await expect(
-      unlinkRoom(SESSION_ID, ROOM_ID_1, ORG_ID),
-    ).rejects.toThrow("Cannot unlink room from session");
+    await expect(unlinkRoom(SESSION_ID, ROOM_ID_1, ORG_ID)).rejects.toThrow(
+      'Cannot unlink room from session'
+    );
   });
 });
 
 describe('getLinkedRooms', () => {
   it('returns linked room IDs', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1, ROOM_ID_2]) }),
+      makeFakeSessionRow({ linked_room_ids: JSON.stringify([ROOM_ID_1, ROOM_ID_2]) })
     );
 
     const result = await getLinkedRooms(SESSION_ID, ORG_ID);
@@ -372,16 +370,16 @@ describe('getLinkedRooms', () => {
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      getLinkedRooms('nonexistent', ORG_ID),
-    ).rejects.toThrow('Session nonexistent not found');
+    await expect(getLinkedRooms('nonexistent', ORG_ID)).rejects.toThrow(
+      'Session nonexistent not found'
+    );
   });
 });
 
 describe('updateSharedContext', () => {
   it('merges updates into sharedContext', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ shared_context: JSON.stringify({ existing: 'value' }) }),
+      makeFakeSessionRow({ shared_context: JSON.stringify({ existing: 'value' }) })
     );
 
     const result = await updateSharedContext(SESSION_ID, ORG_ID, [
@@ -399,7 +397,7 @@ describe('updateSharedContext', () => {
 
   it('overwrites existing keys', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSessionRow({ shared_context: JSON.stringify({ goal: 'old' }) }),
+      makeFakeSessionRow({ shared_context: JSON.stringify({ goal: 'old' }) })
     );
 
     const result = await updateSharedContext(SESSION_ID, ORG_ID, [
@@ -413,16 +411,12 @@ describe('updateSharedContext', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSessionRow({ state: 'completed' }));
 
     await expect(
-      updateSharedContext(SESSION_ID, ORG_ID, [
-        { key: 'goal', value: 'test', updatedBy: USER_ID },
-      ]),
-    ).rejects.toThrow("Cannot update shared context on session");
+      updateSharedContext(SESSION_ID, ORG_ID, [{ key: 'goal', value: 'test', updatedBy: USER_ID }])
+    ).rejects.toThrow('Cannot update shared context on session');
   });
 
   it('rejects empty updates array via Zod', async () => {
-    await expect(
-      updateSharedContext(SESSION_ID, ORG_ID, []),
-    ).rejects.toThrow(ZodError);
+    await expect(updateSharedContext(SESSION_ID, ORG_ID, [])).rejects.toThrow(ZodError);
   });
 
   it('throws when session not found', async () => {
@@ -430,9 +424,7 @@ describe('updateSharedContext', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     await expect(
-      updateSharedContext(missingId, ORG_ID, [
-        { key: 'k', value: 'v', updatedBy: USER_ID },
-      ]),
+      updateSharedContext(missingId, ORG_ID, [{ key: 'k', value: 'v', updatedBy: USER_ID }])
     ).rejects.toThrow(`Session ${missingId} not found`);
   });
 });
@@ -479,7 +471,7 @@ describe('recordActivity', () => {
         entryType: 'invalid.type' as any,
         actorId: USER_ID,
         actorDisplayName: 'Test User',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -534,16 +526,14 @@ describe('getSessionsByWorkspace', () => {
   });
 
   it('includes completed sessions when includeCompleted is true', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeSessionRow({ state: 'completed' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeSessionRow({ state: 'completed' })]);
 
     const results = await getSessionsByWorkspace(WORKSPACE_ID, ORG_ID, true);
 
     expect(results).toHaveLength(1);
 
     const query = mockDbAll.mock.calls[0][0] as string;
-    expect(query).not.toContain("state NOT IN");
+    expect(query).not.toContain('state NOT IN');
   });
 
   it('returns empty array when no sessions exist', async () => {
@@ -567,9 +557,9 @@ describe('org isolation', () => {
   it('pauseSession enforces organization_id', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      pauseSession(SESSION_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(pauseSession(SESSION_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 
   it('getActivityFeed enforces organization_id', async () => {
@@ -629,7 +619,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
         completedAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -647,7 +637,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
         completedAt: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -662,7 +652,7 @@ describe('Zod schema validation', () => {
         actorDisplayName: 'Test User',
         payload: {},
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -676,7 +666,7 @@ describe('Zod schema validation', () => {
         sessionId: SESSION_ID,
         roomId: ROOM_ID_1,
         organizationId: ORG_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -688,7 +678,7 @@ describe('Zod schema validation', () => {
         entryType: 'session.started',
         actorId: USER_ID,
         actorDisplayName: 'Test User',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -698,7 +688,7 @@ describe('Zod schema validation', () => {
         sessionId: SESSION_ID,
         organizationId: ORG_ID,
         updates: [{ key: 'goal', value: 'test', updatedBy: USER_ID }],
-      }),
+      })
     ).not.toThrow();
   });
 });

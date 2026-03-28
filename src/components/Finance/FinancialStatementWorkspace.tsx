@@ -21,9 +21,9 @@ import {
   isWorkableStatement,
 } from '../Economics/financeTypes';
 import {
-  FinancialStatementMappingEditor,
   type FinancialStatementCanonicalLineOption,
   type FinancialStatementMappedValue,
+  FinancialStatementMappingEditor,
 } from './FinancialStatementMappingEditor';
 
 interface StatementDetail {
@@ -121,7 +121,13 @@ interface StatementDetail {
 }
 
 interface RatioResult {
-  ratios?: Array<{ code: string; name: string; namePl?: string; value: number | null; status: string }>;
+  ratios?: Array<{
+    code: string;
+    name: string;
+    namePl?: string;
+    value: number | null;
+    status: string;
+  }>;
   coverageSummary?: { coveragePct: number; computed: number; total: number };
 }
 
@@ -249,7 +255,10 @@ async function extractStatementWithFallback(statementId: string) {
   }
 }
 
-async function mapStatementWithFallback(statementId: string, lines: Array<Record<string, unknown>>) {
+async function mapStatementWithFallback(
+  statementId: string,
+  lines: Array<Record<string, unknown>>
+) {
   try {
     return await V8FinanceApi.mapStatement(statementId, { lines });
   } catch (error) {
@@ -262,7 +271,7 @@ async function mapStatementWithFallback(statementId: string, lines: Array<Record
 
 async function saveStatementValuesWithFallback(
   statementId: string,
-  values: Array<Record<string, unknown>>,
+  values: Array<Record<string, unknown>>
 ) {
   try {
     return await V8FinanceApi.putStatementValues(statementId, { values });
@@ -285,7 +294,10 @@ function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
       Math.max(
         0,
         Number(detail.totalLineCount ?? (detail.values || []).length) -
-          Number(detail.mappedLineCount ?? (detail.values || []).filter((value) => value.line_code).length)
+          Number(
+            detail.mappedLineCount ??
+              (detail.values || []).filter((value) => value.line_code).length
+          )
       ),
     detail.totalLineCount ?? (detail.values || []).length
   );
@@ -318,7 +330,8 @@ function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
           0,
           Number(detail.totalLineCount ?? (detail.values || []).length) -
             Number(
-              detail.mappedLineCount ?? (detail.values || []).filter((value) => value.line_code).length
+              detail.mappedLineCount ??
+                (detail.values || []).filter((value) => value.line_code).length
             )
         )
     ),
@@ -344,7 +357,8 @@ function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
           0,
           Number(detail.totalLineCount ?? (detail.values || []).length) -
             Number(
-              detail.mappedLineCount ?? (detail.values || []).filter((value) => value.line_code).length
+              detail.mappedLineCount ??
+                (detail.values || []).filter((value) => value.line_code).length
             )
         )
     ),
@@ -383,8 +397,12 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
       ]);
       setDetail(statement as StatementDetail);
       setRatios((ratioData as RatioResult) || null);
-      setCanonicalLines(((canonicalLineData as FinancialStatementCanonicalLineOption[]) || []).filter(Boolean));
-      setAllStatements(Array.isArray(statementList) ? (statementList as RelatedStatementItem[]) : []);
+      setCanonicalLines(
+        ((canonicalLineData as FinancialStatementCanonicalLineOption[]) || []).filter(Boolean)
+      );
+      setAllStatements(
+        Array.isArray(statementList) ? (statementList as RelatedStatementItem[]) : []
+      );
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
@@ -422,10 +440,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     [detail]
   );
 
-  const statementRow = useMemo(
-    () => (detail ? mapStatementToRow(detail) : null),
-    [detail]
-  );
+  const statementRow = useMemo(() => (detail ? mapStatementToRow(detail) : null), [detail]);
   const isWorkable = statementRow?.isWorkable ?? false;
 
   const relatedStatements = useMemo(() => {
@@ -450,7 +465,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
       currentRow,
       ...allStatements.filter((statement) => String(statement.id) !== detail.id),
     ];
-    const unique = Array.from(new Map(merged.map((statement) => [String(statement.id), statement])).values());
+    const unique = Array.from(
+      new Map(merged.map((statement) => [String(statement.id), statement])).values()
+    );
 
     return unique
       .sort((a, b) => {
@@ -477,10 +494,15 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
       {
         id: 'statement-source-documents',
         icon: FileText,
-        label: t('finance.statements.sourceDocuments', isPl ? 'Dokumenty źródłowe' : 'Source documents'),
+        label: t(
+          'finance.statements.sourceDocuments',
+          isPl ? 'Dokumenty źródłowe' : 'Source documents'
+        ),
         helper: t(
           'finance.statements.sourceDocumentsHelper',
-          isPl ? '3 dokumenty do porównania z tym, czego użytkownik szukał.' : '3 documents to compare with what the user expected.'
+          isPl
+            ? '3 dokumenty do porównania z tym, czego użytkownik szukał.'
+            : '3 documents to compare with what the user expected.'
         ),
       },
       {
@@ -517,7 +539,15 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
         helper: `${(detail?.ingestRuns || []).length}`,
       },
     ],
-    [detail, editableValues.length, isPl, isWorkable, mappedValues.length, ratios?.coverageSummary?.coveragePct, t]
+    [
+      detail,
+      editableValues.length,
+      isPl,
+      isWorkable,
+      mappedValues.length,
+      ratios?.coverageSummary?.coveragePct,
+      t,
+    ]
   );
 
   const scrollToSection = useCallback((sectionId: string) => {
@@ -584,7 +614,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           mappingStatus: line.suggestedCanonicalId ? 'auto' : 'unmapped',
           isNonFinancial: !!line.isNonFinancial,
           classificationReason: line.classificationReason,
-        })),
+        }))
       );
 
       await load();
@@ -597,7 +627,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   }, [detail, load, onStatementChanged]);
 
   const handleRecoveryValueChange = useCallback((idx: number, field: string, value: any) => {
-    setEditableValues((prev) => prev.map((item, index) => (index === idx ? { ...item, [field]: value } : item)));
+    setEditableValues((prev) =>
+      prev.map((item, index) => (index === idx ? { ...item, [field]: value } : item))
+    );
   }, []);
 
   const handleRecoveryCanonicalChange = useCallback(
@@ -635,7 +667,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           mappingStatus: value.mappingStatus,
           isNonFinancial: !!value.isNonFinancial,
           classificationReason: value.classificationReason,
-        })),
+        }))
       );
       await load();
       await onStatementChanged?.();
@@ -649,7 +681,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   const handleSearchDocumentIntelligence = useCallback(async () => {
     if (!detail || !docQuery.trim()) return;
     try {
-      const matches = await searchStatementDocumentIntelligenceWithFallback(detail.id, docQuery.trim());
+      const matches = await searchStatementDocumentIntelligenceWithFallback(
+        detail.id,
+        docQuery.trim()
+      );
       setDocMatches(matches);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
@@ -657,7 +692,11 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   }, [detail, docQuery]);
 
   if (loading && !detail) {
-    return <div className="p-6 text-sm text-slate-500 dark:text-slate-400">{t('common.loading', 'Loading…')}</div>;
+    return (
+      <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
+        {t('common.loading', 'Loading…')}
+      </div>
+    );
   }
 
   if (!detail) {
@@ -681,7 +720,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 </h3>
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {detail.statement_type} • {detail.currency} • {detail.period_start} → {detail.period_end}
+                {detail.statement_type} • {detail.currency} • {detail.period_start} →{' '}
+                {detail.period_end}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -744,7 +784,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {label}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{value}</div>
+                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                  {value}
+                </div>
               </div>
             ))}
           </div>
@@ -764,7 +806,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
               <div className="text-right text-xs text-slate-500 dark:text-slate-400">
                 <div>
-                  {t('finance.statements.mappedLines', 'Mapped lines')}: {statementRow?.mappedLineCount || 0}
+                  {t('finance.statements.mappedLines', 'Mapped lines')}:{' '}
+                  {statementRow?.mappedLineCount || 0}
                 </div>
                 <div>
                   {t('finance.statements.unmappedLines', 'Unmapped lines')}:{' '}
@@ -802,7 +845,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <Database size={16} className="text-cyan-500" />
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {t('finance.statements.systemTables', isPl ? 'Tabele danych w systemie' : 'System data tables')}
+                  {t(
+                    'finance.statements.systemTables',
+                    isPl ? 'Tabele danych w systemie' : 'System data tables'
+                  )}
                 </h4>
               </div>
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -827,7 +873,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                         <Icon size={14} className="text-cyan-500" />
                         {section.label}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{section.helper}</div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {section.helper}
+                      </div>
                     </button>
                   );
                 })}
@@ -842,10 +890,15 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   <FileText size={16} className="text-cyan-500" />
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {t('finance.statements.documentsLoaded', isPl ? 'Dokumenty załadowane do systemu' : 'Documents loaded into the system')}
+                    {t(
+                      'finance.statements.documentsLoaded',
+                      isPl ? 'Dokumenty załadowane do systemu' : 'Documents loaded into the system'
+                    )}
                   </h4>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{relatedStatements.length}/3</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {relatedStatements.length}/3
+                </span>
               </div>
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {t(
@@ -883,9 +936,12 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                             {statement.source_file_name || statement.period_label || statement.id}
                           </div>
                           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {t('finance.statements.readiness', 'Readiness')}: {statement.readiness_status || 'pending'} •{' '}
-                            {t('finance.statements.mappedLines', 'Mapped lines')}: {statement.mapped_line_count || 0} •{' '}
-                            {t('finance.statements.unmappedLines', 'Unmapped lines')}: {statement.unmapped_line_count || 0}
+                            {t('finance.statements.readiness', 'Readiness')}:{' '}
+                            {statement.readiness_status || 'pending'} •{' '}
+                            {t('finance.statements.mappedLines', 'Mapped lines')}:{' '}
+                            {statement.mapped_line_count || 0} •{' '}
+                            {t('finance.statements.unmappedLines', 'Unmapped lines')}:{' '}
+                            {statement.unmapped_line_count || 0}
                           </div>
                         </div>
                         <span className="text-xs font-medium text-cyan-600 dark:text-cyan-300">
@@ -899,7 +955,12 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 })}
                 {relatedStatements.length === 0 && (
                   <div className="text-sm text-slate-400">
-                    {t('finance.statements.noRelatedDocuments', isPl ? 'Brak załadowanych dokumentów do porównania' : 'No loaded documents to compare yet')}
+                    {t(
+                      'finance.statements.noRelatedDocuments',
+                      isPl
+                        ? 'Brak załadowanych dokumentów do porównania'
+                        : 'No loaded documents to compare yet'
+                    )}
                   </div>
                 )}
               </div>
@@ -970,9 +1031,13 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                     {mappedValues.map((value) => (
                       <tr key={value.id}>
                         <td className="py-2 text-slate-900 dark:text-white">
-                          {isPl ? value.line_name_pl || value.line_name || value.line_code : value.line_name || value.line_name_pl || value.line_code}
+                          {isPl
+                            ? value.line_name_pl || value.line_name || value.line_code
+                            : value.line_name || value.line_name_pl || value.line_code}
                         </td>
-                        <td className="py-2 text-slate-500 dark:text-slate-400">{value.original_label}</td>
+                        <td className="py-2 text-slate-500 dark:text-slate-400">
+                          {value.original_label}
+                        </td>
                         <td className="py-2 text-right font-mono text-slate-900 dark:text-white">
                           {Number(value.value || 0).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
                         </td>
@@ -1001,7 +1066,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 {Number(ratios?.coverageSummary?.coveragePct || 0).toFixed(0)}%
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {(ratios?.coverageSummary?.computed || 0)}/{ratios?.coverageSummary?.total || 0}{' '}
+                {ratios?.coverageSummary?.computed || 0}/{ratios?.coverageSummary?.total || 0}{' '}
                 {t('finance.statements.ratiosComputed', 'ratios computed')}
               </div>
               <div className="mt-4 space-y-2">
@@ -1047,7 +1112,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   >
                     <AlertTriangle size={14} className="mt-0.5 text-amber-500" />
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{message.code}</div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {message.code}
+                      </div>
                       <div className="text-slate-500 dark:text-slate-400">{message.message}</div>
                     </div>
                   </div>
@@ -1055,14 +1122,21 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 {!!(detail.mappingCandidates || []).length && (
                   <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300">
                     {t('finance.statements.mappingCandidates', 'Mapping candidates')} •{' '}
-                    {(detail.mappingCandidates || []).filter((candidate) => !candidate.is_selected).length}{' '}
+                    {
+                      (detail.mappingCandidates || []).filter((candidate) => !candidate.is_selected)
+                        .length
+                    }{' '}
                     {t('finance.statements.alternativeCandidates', 'alternatives')}
                   </div>
                 )}
                 {!!(detail.repairSessions || []).length && (
                   <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300">
                     {t('finance.statements.repairSessions', 'Repair sessions')} •{' '}
-                    {(detail.repairSessions || []).filter((session) => session.repair_status === 'open').length}{' '}
+                    {
+                      (detail.repairSessions || []).filter(
+                        (session) => session.repair_status === 'open'
+                      ).length
+                    }{' '}
                     {t('finance.statements.open', 'open')}
                   </div>
                 )}
@@ -1118,7 +1192,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                       {run.current_stage} • {run.run_status}
                     </div>
                     <div className="mt-1">
-                      {(run.document_class || 'unknown')} • {run.extraction_strategy || '—'}
+                      {run.document_class || 'unknown'} • {run.extraction_strategy || '—'}
                     </div>
                   </div>
                 ))}

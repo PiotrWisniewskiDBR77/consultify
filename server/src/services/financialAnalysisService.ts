@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import { getVerifiedPackSeed } from './financialStatementPackService.js';
+import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 
 export interface StatementLine {
   code: string;
@@ -91,10 +91,8 @@ function describeAgainstBenchmark(
   if (value == null) return `${message} Insufficient source data to compute this KPI.`;
   if (benchmark == null) return message;
 
-  const strong =
-    direction === 'higher' ? value >= benchmark : value <= benchmark;
-  const watch =
-    direction === 'higher' ? value >= benchmark * 0.85 : value <= benchmark * 1.15;
+  const strong = direction === 'higher' ? value >= benchmark : value <= benchmark;
+  const watch = direction === 'higher' ? value >= benchmark * 0.85 : value <= benchmark * 1.15;
 
   const suffix = strong
     ? 'Currently within a healthy operating range.'
@@ -201,9 +199,15 @@ function isInvestmentAnalysisType(value: unknown): boolean {
   );
 }
 
-async function loadAnalysisStatementRows(
-  statementIds: string[]
-): Promise<Array<{ statement_id: string; value: number; line_code: string; line_name: string; statement_type: string }>> {
+async function loadAnalysisStatementRows(statementIds: string[]): Promise<
+  Array<{
+    statement_id: string;
+    value: number;
+    line_code: string;
+    line_name: string;
+    statement_type: string;
+  }>
+> {
   const rowsFromSnapshots: Array<{
     statement_id: string;
     value: number;
@@ -244,7 +248,13 @@ async function loadAnalysisStatementRows(
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id IN (${placeholders})`,
     [...statementIds]
-  )) as Array<{ statement_id: string; value: number; line_code: string; line_name: string; statement_type: string }>;
+  )) as Array<{
+    statement_id: string;
+    value: number;
+    line_code: string;
+    line_name: string;
+    statement_type: string;
+  }>;
   return rows.map((row) => ({
     ...row,
     line_code: normalizeCanonicalLineCode(row.line_code),
@@ -590,14 +600,9 @@ export function computeRatios(data: StatementData, period: string): RatioResult[
   const ni = pl('NET_INCOME');
   const ie = plAny('INTEREST_EXPENSE', 'FINANCIAL_EXPENSE');
   const directLabor =
-    plAny(
-      'DIRECT_LABOR_COGS',
-      'PRODUCTION_PAYROLL_COGS',
-      'PRODUCTION_COSTS',
-      'PAYROLL_COST'
-    ) + plAny('GNA_PAYROLL', 'SOCIAL_SECURITY');
-  const energy =
-    plAny('MATERIALS_AND_ENERGY', 'ENERGY_COST', 'UTILITIES_EXPENSE') || 0;
+    plAny('DIRECT_LABOR_COGS', 'PRODUCTION_PAYROLL_COGS', 'PRODUCTION_COSTS', 'PAYROLL_COST') +
+    plAny('GNA_PAYROLL', 'SOCIAL_SECURITY');
+  const energy = plAny('MATERIALS_AND_ENERGY', 'ENERGY_COST', 'UTILITIES_EXPENSE') || 0;
   const operatingCf = cfAny('OPERATING_CF', 'CF_GENERATED', 'OPERATING_CASH_FLOW');
   const capex = Math.abs(cfAny('CAPEX', 'CAPEX_CF', 'CAPITAL_EXPENDITURES'));
   const freeCashFlow = cfAny('FREE_CASH_FLOW', 'FCF') || operatingCf - capex;
@@ -887,7 +892,10 @@ export async function runFullAnalysis(orgId: string, analysisId: string): Promis
   const ins = generateInsights(v, h, lr, tr);
   await dbRun(`DELETE FROM financial_analysis_ratios WHERE analysis_id=?`, [analysisId]);
   for (const p of ps) {
-    const ratiosForPeriod = [...computeRatios(sd, p), ...(p === ps[ps.length - 1] ? investmentRatios : [])];
+    const ratiosForPeriod = [
+      ...computeRatios(sd, p),
+      ...(p === ps[ps.length - 1] ? investmentRatios : []),
+    ];
     for (const r of ratiosForPeriod) {
       if (r.value === null) continue;
       await dbRun(

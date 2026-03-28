@@ -22,12 +22,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  SUPPORTED_CHAT_ATTACHMENT_LABEL,
-  isSupportedChatAttachment,
-} from './chatAttachmentSupport';
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Api } from '../../services/api';
+import {
+  isSupportedChatAttachment,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 
 // Cloud provider icons
 const ProviderIcons: Record<string, React.ReactNode> = {

@@ -19,6 +19,9 @@ export const ROUTES = {
   // Public Routes
   WELCOME: '/',
   AUTH: '/auth',
+  // Backward-compatible aliases used by public-entry views.
+  LOGIN: '/auth',
+  REGISTER: '/auth',
   BECOME_PARTNER: '/become-partner',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
@@ -501,7 +504,8 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS)) return AppView.SUPERADMIN_VIRTUAL_WORKERS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS))
+    return AppView.SUPERADMIN_VIRTUAL_WORKERS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;

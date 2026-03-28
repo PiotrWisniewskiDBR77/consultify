@@ -873,7 +873,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     {initiative.sourceId && (
                       <a
                         href={
-                          ['tool', 'tool_session', 'idea'].includes(initiative.sourceType.toLowerCase())
+                          ['tool', 'tool_session', 'idea'].includes(
+                            initiative.sourceType.toLowerCase()
+                          )
                             ? `/my-work?tab=ideas&sessionId=${initiative.sourceId}`
                             : initiative.sourceType.toLowerCase() === 'assessment'
                               ? `/interview?assessmentId=${initiative.sourceId}`

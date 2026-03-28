@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -30,26 +30,35 @@ describe('AutomationService', () => {
   describe('createAutomation', () => {
     it('inserts automation + actions in a transaction', async () => {
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'On create', description: null, enabled: true,
-        trigger_type: 'record_created', trigger_config: {},
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'On create',
+        description: null,
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
       };
       const actionRow = {
-        id: 'act-1', action_order: 0,
-        action_type: 'update_record', action_config: { fieldUpdates: { status: 'New' } },
+        id: 'act-1',
+        action_order: 0,
+        action_type: 'update_record',
+        action_config: { fieldUpdates: { status: 'New' } },
       };
 
       mockQuery
-        .mockResolvedValueOnce({ rows: [] })           // BEGIN
-        .mockResolvedValueOnce({ rows: [autoRow] })     // INSERT automation
-        .mockResolvedValueOnce({ rows: [actionRow] })   // INSERT action
-        .mockResolvedValueOnce({ rows: [] });            // COMMIT
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [autoRow] }) // INSERT automation
+        .mockResolvedValueOnce({ rows: [actionRow] }) // INSERT action
+        .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       const result = await service.createAutomation('b-1', 't-1', {
         name: 'On create',
         triggerType: 'record_created',
         triggerConfig: {},
-        actions: [{ actionType: 'update_record', actionConfig: { fieldUpdates: { status: 'New' } } }],
+        actions: [
+          { actionType: 'update_record', actionConfig: { fieldUpdates: { status: 'New' } } },
+        ],
       });
 
       expect(result.id).toBe('auto-1');
@@ -65,13 +74,15 @@ describe('AutomationService', () => {
 
     it('rolls back on error', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [] })                    // BEGIN
-        .mockRejectedValueOnce(new Error('insert failed'))      // INSERT automation fails
-        .mockResolvedValueOnce({ rows: [] });                   // ROLLBACK
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockRejectedValueOnce(new Error('insert failed')) // INSERT automation fails
+        .mockResolvedValueOnce({ rows: [] }); // ROLLBACK
 
       await expect(
         service.createAutomation('b-1', 't-1', {
-          name: 'Fail', triggerType: 'record_created', triggerConfig: {},
+          name: 'Fail',
+          triggerType: 'record_created',
+          triggerConfig: {},
           actions: [],
         })
       ).rejects.toThrow('insert failed');
@@ -91,9 +102,14 @@ describe('AutomationService', () => {
     it('returns automations with joined actions', async () => {
       const rows = [
         {
-          id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-          name: 'Auto 1', description: null, enabled: true,
-          trigger_type: 'record_created', trigger_config: {},
+          id: 'auto-1',
+          base_id: 'b-1',
+          table_id: 't-1',
+          name: 'Auto 1',
+          description: null,
+          enabled: true,
+          trigger_type: 'record_created',
+          trigger_config: {},
           actions: [{ id: 'act-1', actionOrder: 0, actionType: 'update_record', actionConfig: {} }],
         },
       ];
@@ -142,18 +158,29 @@ describe('AutomationService', () => {
   describe('evaluateTriggers', () => {
     it('finds matching automations and runs them', async () => {
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'Auto', enabled: true,
-        trigger_type: 'record_created', trigger_config: {},
-        actions: [{ id: 'act-1', actionOrder: 0, actionType: 'update_record', actionConfig: { fieldUpdates: { status: 'New' } } }],
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
+        actions: [
+          {
+            id: 'act-1',
+            actionOrder: 0,
+            actionType: 'update_record',
+            actionConfig: { fieldUpdates: { status: 'New' } },
+          },
+        ],
       };
 
       mockQuery
-        .mockResolvedValueOnce({ rows: [autoRow] })    // SELECT automations
+        .mockResolvedValueOnce({ rows: [autoRow] }) // SELECT automations
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
-        .mockResolvedValueOnce({ rows: [] })            // UPDATE record (executeAction)
-        .mockResolvedValueOnce({ rows: [] })            // UPDATE run completed
-        .mockResolvedValueOnce({ rows: [] });           // INSERT run_counts
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE record (executeAction)
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT run_counts
 
       const record = { id: 'rec-1', data: { Name: 'Test' } };
       await service.evaluateTriggers('t-1', 'record_created', record);
@@ -163,8 +190,11 @@ describe('AutomationService', () => {
 
     it('skips automations whose conditions do not match', async () => {
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'Auto', enabled: true,
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
         trigger_type: 'record_created',
         trigger_config: {
           conditions: [{ fieldId: 'status', operator: 'equals', value: 'VIP' }],
@@ -188,8 +218,11 @@ describe('AutomationService', () => {
 
   describe('evaluateConditions (via evaluateTriggers)', () => {
     const makeAutoRow = (conditions: unknown[]) => ({
-      id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-      name: 'Auto', enabled: true,
+      id: 'auto-1',
+      base_id: 'b-1',
+      table_id: 't-1',
+      name: 'Auto',
+      enabled: true,
       trigger_type: 'record_created',
       trigger_config: { conditions },
       actions: [],
@@ -197,12 +230,17 @@ describe('AutomationService', () => {
 
     it('equals operator matches', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [makeAutoRow([{ fieldId: 'status', operator: 'equals', value: 'Active' }])] })
+        .mockResolvedValueOnce({
+          rows: [makeAutoRow([{ fieldId: 'status', operator: 'equals', value: 'Active' }])],
+        })
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
-      await service.evaluateTriggers('t-1', 'record_created', { id: 'r-1', data: { status: 'Active' } });
+      await service.evaluateTriggers('t-1', 'record_created', {
+        id: 'r-1',
+        data: { status: 'Active' },
+      });
 
       // Run was inserted → condition matched
       const insertRunCall = mockQuery.mock.calls.find(
@@ -213,12 +251,17 @@ describe('AutomationService', () => {
 
     it('contains operator matches substring', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [makeAutoRow([{ fieldId: 'name', operator: 'contains', value: 'test' }])] })
+        .mockResolvedValueOnce({
+          rows: [makeAutoRow([{ fieldId: 'name', operator: 'contains', value: 'test' }])],
+        })
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
-      await service.evaluateTriggers('t-1', 'record_created', { id: 'r-1', data: { name: 'A test record' } });
+      await service.evaluateTriggers('t-1', 'record_created', {
+        id: 'r-1',
+        data: { name: 'A test record' },
+      });
 
       const insertRunCall = mockQuery.mock.calls.find(
         (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO tp_automation_runs')
@@ -228,7 +271,9 @@ describe('AutomationService', () => {
 
     it('is_empty operator matches null value', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [makeAutoRow([{ fieldId: 'notes', operator: 'is_empty' }])] })
+        .mockResolvedValueOnce({
+          rows: [makeAutoRow([{ fieldId: 'notes', operator: 'is_empty' }])],
+        })
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
@@ -243,7 +288,9 @@ describe('AutomationService', () => {
 
     it('gt operator matches greater value', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [makeAutoRow([{ fieldId: 'amount', operator: 'gt', value: 100 }])] })
+        .mockResolvedValueOnce({
+          rows: [makeAutoRow([{ fieldId: 'amount', operator: 'gt', value: 100 }])],
+        })
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
@@ -258,7 +305,9 @@ describe('AutomationService', () => {
 
     it('lt operator matches lesser value', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [makeAutoRow([{ fieldId: 'score', operator: 'lt', value: 50 }])] })
+        .mockResolvedValueOnce({
+          rows: [makeAutoRow([{ fieldId: 'score', operator: 'lt', value: 50 }])],
+        })
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
@@ -279,18 +328,29 @@ describe('AutomationService', () => {
   describe('executeAction (via runAutomation)', () => {
     it('update_record patches JSONB', async () => {
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'Auto', enabled: true,
-        trigger_type: 'record_created', trigger_config: {},
-        actions: [{ id: 'act-1', actionOrder: 0, actionType: 'update_record', actionConfig: { fieldUpdates: { status: 'Done' } } }],
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
+        actions: [
+          {
+            id: 'act-1',
+            actionOrder: 0,
+            actionType: 'update_record',
+            actionConfig: { fieldUpdates: { status: 'Done' } },
+          },
+        ],
       };
 
       mockQuery
-        .mockResolvedValueOnce({ rows: [autoRow] })         // SELECT automations
+        .mockResolvedValueOnce({ rows: [autoRow] }) // SELECT automations
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
-        .mockResolvedValueOnce({ rows: [] })                 // UPDATE tp_records (JSONB patch)
-        .mockResolvedValueOnce({ rows: [] })                 // UPDATE run completed
-        .mockResolvedValueOnce({ rows: [] });                // INSERT run_counts
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE tp_records (JSONB patch)
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT run_counts
 
       await service.evaluateTriggers('t-1', 'record_created', { id: 'rec-1', data: {} });
 
@@ -308,17 +368,28 @@ describe('AutomationService', () => {
       mockFetch.mockResolvedValueOnce({ status: 200, ok: true });
 
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'Auto', enabled: true,
-        trigger_type: 'record_created', trigger_config: {},
-        actions: [{ id: 'act-1', actionOrder: 0, actionType: 'send_webhook', actionConfig: { url: 'https://example.com/hook', method: 'POST' } }],
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
+        actions: [
+          {
+            id: 'act-1',
+            actionOrder: 0,
+            actionType: 'send_webhook',
+            actionConfig: { url: 'https://example.com/hook', method: 'POST' },
+          },
+        ],
       };
 
       mockQuery
-        .mockResolvedValueOnce({ rows: [autoRow] })         // SELECT automations
+        .mockResolvedValueOnce({ rows: [autoRow] }) // SELECT automations
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
-        .mockResolvedValueOnce({ rows: [] })                 // UPDATE run completed
-        .mockResolvedValueOnce({ rows: [] });                // INSERT run_counts
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT run_counts
 
       await service.evaluateTriggers('t-1', 'record_created', { id: 'rec-1', data: {} });
 
@@ -338,17 +409,21 @@ describe('AutomationService', () => {
   describe('run accounting', () => {
     it('increments monthly counter after successful run', async () => {
       const autoRow = {
-        id: 'auto-1', base_id: 'b-1', table_id: 't-1',
-        name: 'Auto', enabled: true,
-        trigger_type: 'record_created', trigger_config: {},
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
         actions: [],
       };
 
       mockQuery
-        .mockResolvedValueOnce({ rows: [autoRow] })         // SELECT automations
+        .mockResolvedValueOnce({ rows: [autoRow] }) // SELECT automations
         .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
-        .mockResolvedValueOnce({ rows: [] })                 // UPDATE run completed
-        .mockResolvedValueOnce({ rows: [] });                // INSERT/UPSERT run_counts
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT/UPSERT run_counts
 
       await service.evaluateTriggers('t-1', 'record_created', { id: 'rec-1', data: {} });
 
@@ -389,10 +464,9 @@ describe('AutomationService', () => {
 
       await service.deleteAutomation('auto-1');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        'DELETE FROM tp_automations WHERE id = $1',
-        ['auto-1']
-      );
+      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM tp_automations WHERE id = $1', [
+        'auto-1',
+      ]);
     });
   });
 });

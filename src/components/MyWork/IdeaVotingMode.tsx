@@ -87,7 +87,10 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
 
   const myVoteCount = useMemo(() => {
     if (externalMyVoteCounts) {
-      return Object.values(externalMyVoteCounts).reduce((sum, count) => sum + Number(count || 0), 0);
+      return Object.values(externalMyVoteCounts).reduce(
+        (sum, count) => sum + Number(count || 0),
+        0
+      );
     }
     return votes.filter((v) => v.userId === userId).length;
   }, [externalMyVoteCounts, userId, votes]);
@@ -122,20 +125,24 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
     [ideaId, maxVotes, myVoteCount, persistent, timeLeft, timerEndsAt, timerSeconds, userId]
   );
 
-  const handleUnvote = useCallback((nodeId: string) => {
-    if (persistent) return;
-    setVotes((prev) => {
-      const idx = prev.findIndex((v) => v.nodeId === nodeId && v.userId === userId);
-      if (idx === -1) return prev;
-      return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-    });
-  }, [persistent, userId]);
+  const handleUnvote = useCallback(
+    (nodeId: string) => {
+      if (persistent) return;
+      setVotes((prev) => {
+        const idx = prev.findIndex((v) => v.nodeId === nodeId && v.userId === userId);
+        if (idx === -1) return prev;
+        return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+      });
+    },
+    [persistent, userId]
+  );
 
   const sortedNodes = useMemo(() => {
     return [...nodes].sort((a, b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
   }, [nodes, voteCounts]);
 
-  const timerExpired = (timerEndsAt != null || (timerSeconds != null && timerSeconds > 0)) && timeLeft <= 0;
+  const timerExpired =
+    (timerEndsAt != null || (timerSeconds != null && timerSeconds > 0)) && timeLeft <= 0;
 
   const handleReact = useCallback((nodeId: string, emojiKey: string) => {
     setNodeReactions((prev) => {
@@ -202,7 +209,9 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
         <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
           {sortedNodes.map((node, rank) => {
             const count = voteCounts[node.id] || 0;
-            const myVotes = externalMyVoteCounts?.[node.id] || votes.filter((v) => v.nodeId === node.id && v.userId === userId).length;
+            const myVotes =
+              externalMyVoteCounts?.[node.id] ||
+              votes.filter((v) => v.nodeId === node.id && v.userId === userId).length;
             return (
               <div
                 key={node.id}

@@ -2,7 +2,7 @@
  * Wave 12 — PM sync baseline & operator recovery surface tests.
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -24,16 +24,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  getConnectorHealth as getConnectorSyncHealthSummary,
-  getUnresolvedConflicts,
-  resolveConflict,
-} from '../pmSyncTruthService.js';
-import { getCredentialHealth, getActiveEscalations } from '../pmSyncAuthService.js';
-import {
   getOperatorDashboard,
   getPausedConnectors,
   getRecentIncidents,
 } from '../operatorAdminService.js';
+import { getActiveEscalations, getCredentialHealth } from '../pmSyncAuthService.js';
+import {
+  getConnectorHealth as getConnectorSyncHealthSummary,
+  getUnresolvedConflicts,
+  resolveConflict,
+} from '../pmSyncTruthService.js';
 
 const ORG_ID = '00000000-0000-4000-8000-000000000001';
 const CONNECTOR_ID = 'jira-connector-1';

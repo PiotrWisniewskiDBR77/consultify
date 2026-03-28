@@ -21,16 +21,24 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ColumnDef } from '../tableTypes';
 import type { FormatRule } from '../ConditionalFormatting';
 import { ConditionalFormattingConfig } from '../ConditionalFormatting';
 import type { RowColorRule } from '../RowColoringConfig';
 import { RowColoringConfig } from '../RowColoringConfig';
+import type { ColumnDef } from '../tableTypes';
 import type { CardSize } from './GalleryView';
 import type { GanttZoom } from './GanttView';
 import type { TimelineZoom } from './TimelineView';
 
-export type PlatformViewType = 'grid' | 'kanban' | 'calendar' | 'gallery' | 'timeline' | 'gantt' | 'form' | 'chart';
+export type PlatformViewType =
+  | 'grid'
+  | 'kanban'
+  | 'calendar'
+  | 'gallery'
+  | 'timeline'
+  | 'gantt'
+  | 'form'
+  | 'chart';
 
 export interface ViewConfigState {
   viewType: PlatformViewType;
@@ -66,7 +74,12 @@ export interface ViewConfigPanelProps {
   onSave: () => void;
 }
 
-const VIEW_TYPES: { id: PlatformViewType; icon: React.FC<{ size?: number; className?: string }>; labelEn: string; labelPl: string }[] = [
+const VIEW_TYPES: {
+  id: PlatformViewType;
+  icon: React.FC<{ size?: number; className?: string }>;
+  labelEn: string;
+  labelPl: string;
+}[] = [
   { id: 'grid', icon: Table2, labelEn: 'Grid', labelPl: 'Tabela' },
   { id: 'kanban', icon: KanbanSquare, labelEn: 'Kanban', labelPl: 'Kanban' },
   { id: 'calendar', icon: Calendar, labelEn: 'Calendar', labelPl: 'Kalendarz' },
@@ -96,40 +109,42 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   const [expandedSection, setExpandedSection] = useState<string | null>('type');
 
   const selectFields = useMemo(
-    () => columns.filter((c) => c.type === 'select' || c.type === 'multiselect' || c.type === 'status'),
-    [columns],
+    () =>
+      columns.filter((c) => c.type === 'select' || c.type === 'multiselect' || c.type === 'status'),
+    [columns]
   );
 
   const dateFields = useMemo(
-    () => columns.filter((c) => c.type === 'date' || c.type === 'created_time' || c.type === 'last_edited_time'),
-    [columns],
+    () =>
+      columns.filter(
+        (c) => c.type === 'date' || c.type === 'created_time' || c.type === 'last_edited_time'
+      ),
+    [columns]
   );
 
   const attachmentFields = useMemo(
     () => columns.filter((c) => c.type === 'file' || c.type === 'url'),
-    [columns],
+    [columns]
   );
 
   const numberFields = useMemo(
-    () => columns.filter((c) => c.type === 'number' || c.type === 'progress' || c.type === 'currency'),
-    [columns],
+    () =>
+      columns.filter((c) => c.type === 'number' || c.type === 'progress' || c.type === 'currency'),
+    [columns]
   );
 
-  const relationFields = useMemo(
-    () => columns.filter((c) => c.type === 'relation'),
-    [columns],
-  );
+  const relationFields = useMemo(() => columns.filter((c) => c.type === 'relation'), [columns]);
 
   const textLikeFields = useMemo(
     () => columns.filter((c) => c.type === 'text' || c.key === 'label'),
-    [columns],
+    [columns]
   );
 
   const updateConfig = useCallback(
     (patch: Partial<ViewConfigState>) => {
       onChange({ ...config, ...patch });
     },
-    [config, onChange],
+    [config, onChange]
   );
 
   const toggleVisibleField = useCallback(
@@ -142,7 +157,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
       }
       updateConfig({ visibleFieldIds: Array.from(current) });
     },
-    [config.visibleFieldIds, updateConfig],
+    [config.visibleFieldIds, updateConfig]
   );
 
   if (!open) return null;
@@ -376,7 +391,17 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
                         }`}
                       >
-                        {z === 'day' ? (isPl ? 'Dzień' : 'Day') : z === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+                        {z === 'day'
+                          ? isPl
+                            ? 'Dzień'
+                            : 'Day'
+                          : z === 'week'
+                            ? isPl
+                              ? 'Tydzień'
+                              : 'Week'
+                            : isPl
+                              ? 'Miesiąc'
+                              : 'Month'}
                       </button>
                     ))}
                   </div>
@@ -446,7 +471,17 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
                         }`}
                       >
-                        {z === 'day' ? (isPl ? 'Dzień' : 'Day') : z === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+                        {z === 'day'
+                          ? isPl
+                            ? 'Dzień'
+                            : 'Day'
+                          : z === 'week'
+                            ? isPl
+                              ? 'Tydzień'
+                              : 'Week'
+                            : isPl
+                              ? 'Miesiąc'
+                              : 'Month'}
                       </button>
                     ))}
                   </div>
@@ -479,7 +514,13 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
                         }`}
                       >
-                        {l === 'single-column' ? (isPl ? '1 kolumna' : '1 Column') : (isPl ? '2 kolumny' : '2 Columns')}
+                        {l === 'single-column'
+                          ? isPl
+                            ? '1 kolumna'
+                            : '1 Column'
+                          : isPl
+                            ? '2 kolumny'
+                            : '2 Columns'}
                       </button>
                     ))}
                   </div>
@@ -545,7 +586,11 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   </label>
                   <select
                     value={config.chartAggregation || 'count'}
-                    onChange={(e) => updateConfig({ chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max' })}
+                    onChange={(e) =>
+                      updateConfig({
+                        chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max',
+                      })
+                    }
                     className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
                   >
                     <option value="count">Count</option>
@@ -631,7 +676,10 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
               {isPl ? 'Anuluj' : 'Cancel'}
             </button>
             <button
-              onClick={() => { onSave(); onClose(); }}
+              onClick={() => {
+                onSave();
+                onClose();
+              }}
               className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors"
             >
               {isPl ? 'Zapisz' : 'Save'}

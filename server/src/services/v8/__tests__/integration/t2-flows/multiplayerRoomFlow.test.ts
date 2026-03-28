@@ -8,7 +8,7 @@
  * Services: collaborationRoomService, multiplayerHardeningService, concurrentEditingService
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -35,14 +35,14 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 import { createRoom } from '../../../collaborationRoomService.js';
 import {
-  updateSurfacePresence,
-  startFacilitationSession,
-} from '../../../multiplayerHardeningService.js';
-import {
   acquireLock,
-  recordConflict,
   createNotification,
+  recordConflict,
 } from '../../../concurrentEditingService.js';
+import {
+  startFacilitationSession,
+  updateSurfacePresence,
+} from '../../../multiplayerHardeningService.js';
 
 // ==========================================
 // FIXTURES
@@ -81,14 +81,12 @@ describe('F05 — Multiplayer room lifecycle flow', () => {
     expect(room.organizationId).toBe(ORG_ID);
 
     // Step 2: Update surface presence — user joins a specific surface
-    mockDbGet.mockImplementation(
-      (sql: string) => {
-        if (typeof sql === 'string' && sql.includes('v8_surface_presence')) {
-          return Promise.resolve(null);
-        }
+    mockDbGet.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('v8_surface_presence')) {
         return Promise.resolve(null);
-      },
-    );
+      }
+      return Promise.resolve(null);
+    });
 
     const presence = await updateSurfacePresence({
       userId: USER_ID,
@@ -188,9 +186,7 @@ describe('F05 — Multiplayer room lifecycle flow', () => {
     expect(room).toHaveProperty('roomState');
     expect(room).toHaveProperty('organizationId');
     expect(typeof room.roomId).toBe('string');
-    expect(room.roomId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
+    expect(room.roomId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 
     // updateSurfacePresence output has surfacePresenceId and roomId
     mockDbGet.mockResolvedValue(null);

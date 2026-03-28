@@ -4,20 +4,21 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import auditService from './AuditService.js';
-import schemaValidationService from './SchemaValidationService.js';
-import relationService from './RelationService.js';
 import attachmentService from './AttachmentService.js';
-import { ValidationError, ConflictError, PermissionError } from './ErrorHandling.js';
-import { recomputeAffectedFields } from './formulaEngine.js';
-import { fieldPermissionService } from './FieldPermissionService.js';
+import auditService from './AuditService.js';
 import { automationService } from './AutomationService.js';
+import { ConflictError, PermissionError, ValidationError } from './ErrorHandling.js';
+import { fieldPermissionService } from './FieldPermissionService.js';
+import { recomputeAffectedFields } from './formulaEngine.js';
 import { tablePlatformRealtime } from './RealtimeService.js';
+import recordWatchService from './RecordWatchService.js';
+import relationService from './RelationService.js';
+import schemaValidationService from './SchemaValidationService.js';
 import { webhookDispatcher } from './WebhookDispatcherService.js';
 import { webhookRelayService } from './WebhookRelayService.js';
-import recordWatchService from './RecordWatchService.js';
 
 const MAX_BATCH_SIZE = 10;
 const MAX_UNDO_STACK = 20;
@@ -26,7 +27,7 @@ async function resolveUserName(userId: string): Promise<string> {
   try {
     const pool = getDatabase();
     const r = await pool.query(
-      "SELECT COALESCE(name, email, id) as display_name FROM users WHERE id = $1",
+      'SELECT COALESCE(name, email, id) as display_name FROM users WHERE id = $1',
       [userId]
     );
     if (r.rows.length > 0) return (r.rows[0] as any).display_name;
@@ -94,10 +95,7 @@ async function computeAutoNumber(
   fieldOptions?: Record<string, unknown>
 ): Promise<number> {
   const db = getDatabase();
-  await db.query(
-    `SELECT pg_advisory_xact_lock(hashtext($1 || $2))`,
-    [tableId, fieldId]
-  );
+  await db.query(`SELECT pg_advisory_xact_lock(hashtext($1 || $2))`, [tableId, fieldId]);
   const result = await db.query(
     `SELECT COALESCE(MAX((data->>$2)::integer), 0) AS max_val
      FROM tp_records WHERE table_id = $1`,
@@ -306,7 +304,12 @@ const recordsService = {
         }
       }
 
-      const enrichedData = await populateAutoFieldsForCreate(data, autoFields, createdBy, autoNumberValues);
+      const enrichedData = await populateAutoFieldsForCreate(
+        data,
+        autoFields,
+        createdBy,
+        autoNumberValues
+      );
 
       await db.query(
         `INSERT INTO tp_records (id, table_id, data, created_by)
@@ -314,7 +317,9 @@ const recordsService = {
         [id, tableId, JSON.stringify(enrichedData), createdBy ?? null]
       );
       let row = (await db.query('SELECT * FROM tp_records WHERE id = $1', [id])).rows[0];
-      await auditService.logEvent('create', 'record', id, createdBy, undefined, row, { table_id: tableId });
+      await auditService.logEvent('create', 'record', id, createdBy, undefined, row, {
+        table_id: tableId,
+      });
 
       try {
         const allFieldIds = Object.keys(enrichedData);
@@ -329,30 +334,45 @@ const recordsService = {
         });
       }
 
-      try { tablePlatformRealtime.notifyRecordCreated(tableId, row); } catch { /* non-blocking */ }
+      try {
+        tablePlatformRealtime.notifyRecordCreated(tableId, row);
+      } catch {
+        /* non-blocking */
+      }
 
       if (row) {
         automationService.evaluateTriggers(tableId, 'record_created', row).catch((err) =>
-          logger.warn('[Automations] trigger evaluation failed after create', { error: (err as Error).message })
+          logger.warn('[Automations] trigger evaluation failed after create', {
+            error: (err as Error).message,
+          })
         );
       }
 
-      getBaseIdForTable(tableId).then((baseId) => {
-        if (!baseId) return;
-        webhookDispatcher.dispatchEvent(baseId, {
-          source: 'publicApi',
-          sourceMetadata: { userId: createdBy },
-          actionType: 'createRecord',
-          tableId,
-          recordId: id,
-          newCellValues: enrichedData,
-        }).catch(() => {});
-        webhookRelayService.dispatchEvent(baseId, 'record.created', { recordId: id, tableId, data: enrichedData }).catch(() => {});
-      }).catch(() => {});
+      getBaseIdForTable(tableId)
+        .then((baseId) => {
+          if (!baseId) return;
+          webhookDispatcher
+            .dispatchEvent(baseId, {
+              source: 'publicApi',
+              sourceMetadata: { userId: createdBy },
+              actionType: 'createRecord',
+              tableId,
+              recordId: id,
+              newCellValues: enrichedData,
+            })
+            .catch(() => {});
+          webhookRelayService
+            .dispatchEvent(baseId, 'record.created', { recordId: id, tableId, data: enrichedData })
+            .catch(() => {});
+        })
+        .catch(() => {});
 
       return row ?? null;
     } catch (e) {
-      logger.error('[RecordsService] createRecord failed', { tableId, error: (e as Error).message });
+      logger.error('[RecordsService] createRecord failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -361,7 +381,10 @@ const recordsService = {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId]);
-      const record = (result.rows[0] ?? null) as { table_id: string; data: Record<string, unknown> } | null;
+      const record = (result.rows[0] ?? null) as {
+        table_id: string;
+        data: Record<string, unknown>;
+      } | null;
       if (record) {
         try {
           const attachFieldIds = await getAttachmentFieldIds(record.table_id);
@@ -379,7 +402,11 @@ const recordsService = {
           try {
             const hasPerms = await fieldPermissionService.tableHasFieldPermissions(record.table_id);
             if (hasPerms) {
-              record.data = await fieldPermissionService.filterRecordFields(record, record.table_id, userRole);
+              record.data = await fieldPermissionService.filterRecordFields(
+                record,
+                record.table_id,
+                userRole
+              );
             }
           } catch (permErr) {
             logger.warn('[RecordsService] field permission filtering failed for getRecord', {
@@ -413,7 +440,11 @@ const recordsService = {
         try {
           const hasPerms = await fieldPermissionService.tableHasFieldPermissions(tableId);
           if (hasPerms) {
-            const writeCheck = await fieldPermissionService.validateWritePermissions(data, tableId, userRole);
+            const writeCheck = await fieldPermissionService.validateWritePermissions(
+              data,
+              tableId,
+              userRole
+            );
             if (!writeCheck.allowed) {
               throw new PermissionError(
                 `Write denied for fields: ${writeCheck.deniedFields.join(', ')}`
@@ -477,7 +508,15 @@ const recordsService = {
       }
 
       let after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
-      await auditService.logEvent('update', 'record', recordId, updatedBy, before, after, undefined);
+      await auditService.logEvent(
+        'update',
+        'record',
+        recordId,
+        updatedBy,
+        before,
+        after,
+        undefined
+      );
 
       // Cell-level history: compute diff between old and new data
       if (updatedBy) {
@@ -514,39 +553,61 @@ const recordsService = {
         });
       }
 
-      try { tablePlatformRealtime.notifyRecordUpdated(tableId, recordId, after); } catch { /* non-blocking */ }
+      try {
+        tablePlatformRealtime.notifyRecordUpdated(tableId, recordId, after);
+      } catch {
+        /* non-blocking */
+      }
 
       if (after) {
         automationService.evaluateTriggers(tableId, 'record_updated', after).catch((err) =>
-          logger.warn('[Automations] trigger evaluation failed after update', { error: (err as Error).message })
+          logger.warn('[Automations] trigger evaluation failed after update', {
+            error: (err as Error).message,
+          })
         );
       }
 
-      getBaseIdForTable(tableId).then((baseId) => {
-        if (!baseId) return;
-        webhookDispatcher.dispatchEvent(baseId, {
-          source: 'publicApi',
-          sourceMetadata: { userId: updatedBy },
-          actionType: 'updateRecord',
-          tableId,
-          recordId,
-          oldCellValues: existingData,
-          newCellValues: enrichedData,
-        }).catch(() => {});
-        webhookRelayService.dispatchEvent(baseId, 'record.updated', { recordId, tableId, data: enrichedData, previousData: existingData }).catch(() => {});
-      }).catch(() => {});
+      getBaseIdForTable(tableId)
+        .then((baseId) => {
+          if (!baseId) return;
+          webhookDispatcher
+            .dispatchEvent(baseId, {
+              source: 'publicApi',
+              sourceMetadata: { userId: updatedBy },
+              actionType: 'updateRecord',
+              tableId,
+              recordId,
+              oldCellValues: existingData,
+              newCellValues: enrichedData,
+            })
+            .catch(() => {});
+          webhookRelayService
+            .dispatchEvent(baseId, 'record.updated', {
+              recordId,
+              tableId,
+              data: enrichedData,
+              previousData: existingData,
+            })
+            .catch(() => {});
+        })
+        .catch(() => {});
 
-      recordWatchService.notifyWatchers(recordId, {
-        action: 'update',
-        recordId,
-        tableId,
-        actorId: updatedBy,
-        changes: enrichedData,
-      }).catch(() => {});
+      recordWatchService
+        .notifyWatchers(recordId, {
+          action: 'update',
+          recordId,
+          tableId,
+          actorId: updatedBy,
+          changes: enrichedData,
+        })
+        .catch(() => {});
 
       return after ?? null;
     } catch (e) {
-      logger.error('[RecordsService] updateRecord failed', { recordId, error: (e as Error).message });
+      logger.error('[RecordsService] updateRecord failed', {
+        recordId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -559,32 +620,55 @@ const recordsService = {
       const tableId = (before as { table_id: string }).table_id;
       await relationService.onRecordDeleted(recordId);
       await db.query('DELETE FROM tp_records WHERE id = $1', [recordId]);
-      await auditService.logEvent('delete', 'record', recordId, deletedBy, before, undefined, undefined);
-
-      try { tablePlatformRealtime.notifyRecordDeleted(tableId, recordId); } catch { /* non-blocking */ }
-
-      getBaseIdForTable(tableId).then((baseId) => {
-        if (!baseId) return;
-        webhookDispatcher.dispatchEvent(baseId, {
-          source: 'publicApi',
-          sourceMetadata: { userId: deletedBy },
-          actionType: 'deleteRecord',
-          tableId,
-          recordId,
-        }).catch(() => {});
-        webhookRelayService.dispatchEvent(baseId, 'record.deleted', { recordId, tableId }).catch(() => {});
-      }).catch(() => {});
-
-      recordWatchService.notifyWatchers(recordId, {
-        action: 'delete',
+      await auditService.logEvent(
+        'delete',
+        'record',
         recordId,
-        tableId,
-        actorId: deletedBy,
-      }).catch(() => {});
+        deletedBy,
+        before,
+        undefined,
+        undefined
+      );
+
+      try {
+        tablePlatformRealtime.notifyRecordDeleted(tableId, recordId);
+      } catch {
+        /* non-blocking */
+      }
+
+      getBaseIdForTable(tableId)
+        .then((baseId) => {
+          if (!baseId) return;
+          webhookDispatcher
+            .dispatchEvent(baseId, {
+              source: 'publicApi',
+              sourceMetadata: { userId: deletedBy },
+              actionType: 'deleteRecord',
+              tableId,
+              recordId,
+            })
+            .catch(() => {});
+          webhookRelayService
+            .dispatchEvent(baseId, 'record.deleted', { recordId, tableId })
+            .catch(() => {});
+        })
+        .catch(() => {});
+
+      recordWatchService
+        .notifyWatchers(recordId, {
+          action: 'delete',
+          recordId,
+          tableId,
+          actorId: deletedBy,
+        })
+        .catch(() => {});
 
       return true;
     } catch (e) {
-      logger.error('[RecordsService] deleteRecord failed', { recordId, error: (e as Error).message });
+      logger.error('[RecordsService] deleteRecord failed', {
+        recordId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -799,11 +883,7 @@ const recordsService = {
     return response;
   },
 
-  async _executeSingleOp(
-    tableId: string,
-    op: BatchOperation,
-    userId?: string
-  ): Promise<unknown> {
+  async _executeSingleOp(tableId: string, op: BatchOperation, userId?: string): Promise<unknown> {
     switch (op.type) {
       case 'create':
         return this.createRecord(tableId, op.data ?? {}, userId);
@@ -931,10 +1011,9 @@ const recordsService = {
   ): Promise<{ tableId: string; tableName: string; records: unknown[] }[]> {
     const db = getDatabase();
     try {
-      const tablesResult = await db.query(
-        'SELECT id, name FROM tp_tables WHERE base_id = $1',
-        [baseId]
-      );
+      const tablesResult = await db.query('SELECT id, name FROM tp_tables WHERE base_id = $1', [
+        baseId,
+      ]);
       const tables = tablesResult.rows as { id: string; name: string }[];
       if (tables.length === 0) return [];
 
@@ -985,7 +1064,8 @@ const recordsService = {
 
     const db = getDatabase();
     try {
-      const current = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId])).rows[0];
+      const current = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId]))
+        .rows[0];
       if (!current) return null;
 
       await db.query(
@@ -993,14 +1073,25 @@ const recordsService = {
         [entry.recordId, JSON.stringify(entry.previousData)]
       );
 
-      const restored = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId])).rows[0];
-      await auditService.logEvent('undo', 'record', entry.recordId, userId, current, restored, { table_id: tableId });
+      const restored = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId]))
+        .rows[0];
+      await auditService.logEvent('undo', 'record', entry.recordId, userId, current, restored, {
+        table_id: tableId,
+      });
 
-      try { tablePlatformRealtime.notifyRecordUpdated(tableId, entry.recordId, restored); } catch { /* non-blocking */ }
+      try {
+        tablePlatformRealtime.notifyRecordUpdated(tableId, entry.recordId, restored);
+      } catch {
+        /* non-blocking */
+      }
 
       return restored ?? null;
     } catch (e) {
-      logger.error('[RecordsService] undoLastEdit failed', { tableId, userId, error: (e as Error).message });
+      logger.error('[RecordsService] undoLastEdit failed', {
+        tableId,
+        userId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

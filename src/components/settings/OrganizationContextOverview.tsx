@@ -1,7 +1,7 @@
 import { AlertTriangle, Database, GitBranch, History, RefreshCw } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Callout, InlineTable, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
@@ -116,9 +116,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
       claims.map((claim) => ({
         ...claim,
         valuePreview:
-          typeof claim.value === 'string'
-            ? claim.value
-            : JSON.stringify(claim.value).slice(0, 120),
+          typeof claim.value === 'string' ? claim.value : JSON.stringify(claim.value).slice(0, 120),
       })),
     [claims]
   );

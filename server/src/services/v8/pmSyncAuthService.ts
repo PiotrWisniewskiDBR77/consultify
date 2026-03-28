@@ -9,28 +9,28 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  ConnectionCredentialRef,
-  RefreshTimingPolicy,
   AdminReBindRecord,
-  LastRefreshResult,
-  EscalationLevel,
   AuthEscalationRecord,
+  ConnectionCredentialRef,
   CredentialHealthSummary,
-  StoreCredentialParams,
-  RecordRefreshResultParams,
-  SetRefreshTimingPolicyParams,
+  EscalationLevel,
+  LastRefreshResult,
   RecordAdminReBindParams,
-} from '../../types/pmSyncAuthBaseline.js';
-import {
-  TRANSIENT_FAILURE_TYPES,
-  AUTH_BREAK_FAILURE_TYPES,
-  DEFAULT_ESCALATION_LADDER,
-  StoreCredentialParamsSchema,
-  RecordRefreshResultParamsSchema,
-  SetRefreshTimingPolicyParamsSchema,
-  RecordAdminReBindParamsSchema,
+  RecordRefreshResultParams,
+  RefreshTimingPolicy,
+  SetRefreshTimingPolicyParams,
+  StoreCredentialParams,
 } from '../../types/pmSyncAuthBaseline.js';
 import type { FailureAction } from '../../types/pmSyncAuthBaseline.js';
+import {
+  AUTH_BREAK_FAILURE_TYPES,
+  DEFAULT_ESCALATION_LADDER,
+  RecordAdminReBindParamsSchema,
+  RecordRefreshResultParamsSchema,
+  SetRefreshTimingPolicyParamsSchema,
+  StoreCredentialParamsSchema,
+  TRANSIENT_FAILURE_TYPES,
+} from '../../types/pmSyncAuthBaseline.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -171,7 +171,7 @@ const FAILING_REFRESH_RESULTS: ReadonlySet<string> = new Set([
  * Upserts on (connector_id, organization_id).
  */
 export async function storeCredential(
-  params: StoreCredentialParams,
+  params: StoreCredentialParams
 ): Promise<ConnectionCredentialRef> {
   const validated = StoreCredentialParamsSchema.parse(params);
 
@@ -179,7 +179,7 @@ export async function storeCredential(
     `SELECT * FROM v8_connection_credentials
      WHERE connector_id = ? AND organization_id = ?`,
     [validated.connectorId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -199,11 +199,11 @@ export async function storeCredential(
         now,
         now,
         existing.credential_id,
-      ],
+      ]
     );
 
     logger.info(
-      `${LOG_PREFIX} Updated credential ${existing.credential_id} for connector ${validated.connectorId}`,
+      `${LOG_PREFIX} Updated credential ${existing.credential_id} for connector ${validated.connectorId}`
     );
 
     return {
@@ -245,11 +245,11 @@ export async function storeCredential(
       null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Stored credential ${credentialId} for connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Stored credential ${credentialId} for connector ${validated.connectorId}`
   );
 
   return {
@@ -273,13 +273,13 @@ export async function storeCredential(
  */
 export async function getCredential(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ConnectionCredentialRef | null> {
   const row = await dbGet<CredentialRow>(
     `SELECT * FROM v8_connection_credentials
      WHERE connector_id = ? AND organization_id = ?`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -295,7 +295,7 @@ export async function getCredential(
  * Updates last_refresh_at, last_refresh_result on the credential.
  */
 export async function recordRefreshResult(
-  params: RecordRefreshResultParams,
+  params: RecordRefreshResultParams
 ): Promise<ConnectionCredentialRef> {
   const validated = RecordRefreshResultParamsSchema.parse(params);
 
@@ -303,12 +303,12 @@ export async function recordRefreshResult(
     `SELECT * FROM v8_connection_credentials
      WHERE connector_id = ? AND organization_id = ?`,
     [validated.connectorId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!existing) {
     throw new Error(
-      `No credential found for connector ${validated.connectorId} in org ${validated.organizationId}`,
+      `No credential found for connector ${validated.connectorId} in org ${validated.organizationId}`
     );
   }
 
@@ -318,11 +318,11 @@ export async function recordRefreshResult(
     `UPDATE v8_connection_credentials
      SET last_refresh_at = ?, last_refresh_result = ?, updated_at = ?
      WHERE credential_id = ?`,
-    [now, validated.result, now, existing.credential_id],
+    [now, validated.result, now, existing.credential_id]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded refresh result '${validated.result}' for connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Recorded refresh result '${validated.result}' for connector ${validated.connectorId}`
   );
 
   return {
@@ -368,21 +368,20 @@ export function classifyFailure(errorType: string): FailureAction {
  */
 export async function checkEscalationLevel(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<EscalationLevel> {
   const row = await dbGet<{ auth_state: string; transitioned_at: string }>(
     `SELECT auth_state, transitioned_at FROM v8_connector_auth_states
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY transitioned_at DESC LIMIT 1`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return 'healthy';
 
   const isDegraded =
-    row.auth_state === 'degraded_reauth_needed' ||
-    row.auth_state === 'degraded_scope_limited';
+    row.auth_state === 'degraded_reauth_needed' || row.auth_state === 'degraded_scope_limited';
 
   if (!isDegraded) return 'healthy';
 
@@ -414,7 +413,7 @@ export async function checkEscalationLevel(
  * Upserts on (provider_family, organization_id).
  */
 export async function setRefreshTimingPolicy(
-  params: SetRefreshTimingPolicyParams,
+  params: SetRefreshTimingPolicyParams
 ): Promise<RefreshTimingPolicy> {
   const validated = SetRefreshTimingPolicyParamsSchema.parse(params);
 
@@ -422,7 +421,7 @@ export async function setRefreshTimingPolicy(
     `SELECT * FROM v8_refresh_timing_policies
      WHERE provider_family = ? AND organization_id = ?`,
     [validated.providerFamily, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -439,11 +438,11 @@ export async function setRefreshTimingPolicy(
         validated.maxRetryAttempts,
         now,
         existing.policy_id,
-      ],
+      ]
     );
 
     logger.info(
-      `${LOG_PREFIX} Updated refresh policy ${existing.policy_id} for ${validated.providerFamily}`,
+      `${LOG_PREFIX} Updated refresh policy ${existing.policy_id} for ${validated.providerFamily}`
     );
 
     return {
@@ -475,12 +474,10 @@ export async function setRefreshTimingPolicy(
       validated.maxRetryAttempts,
       now,
       now,
-    ],
+    ]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Created refresh policy ${policyId} for ${validated.providerFamily}`,
-  );
+  logger.info(`${LOG_PREFIX} Created refresh policy ${policyId} for ${validated.providerFamily}`);
 
   return {
     policyId,
@@ -499,13 +496,13 @@ export async function setRefreshTimingPolicy(
  */
 export async function getRefreshTimingPolicy(
   providerFamily: string,
-  orgId: string,
+  orgId: string
 ): Promise<RefreshTimingPolicy | null> {
   const row = await dbGet<PolicyRow>(
     `SELECT * FROM v8_refresh_timing_policies
      WHERE provider_family = ? AND organization_id = ?`,
     [providerFamily, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -521,7 +518,7 @@ export async function getRefreshTimingPolicy(
  * and policy-checked (Decision W5-1).
  */
 export async function recordAdminReBind(
-  params: RecordAdminReBindParams,
+  params: RecordAdminReBindParams
 ): Promise<AdminReBindRecord> {
   const validated = RecordAdminReBindParamsSchema.parse(params);
 
@@ -543,11 +540,11 @@ export async function recordAdminReBind(
       validated.actorId,
       validated.reason,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Admin re-bind ${reBindId}: connector ${validated.connectorId} by ${validated.actorId}`,
+    `${LOG_PREFIX} Admin re-bind ${reBindId}: connector ${validated.connectorId} by ${validated.actorId}`
   );
 
   return {
@@ -567,14 +564,14 @@ export async function recordAdminReBind(
  */
 export async function getReBindHistory(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<AdminReBindRecord[]> {
   const rows = await dbAll<ReBindRow>(
     `SELECT * FROM v8_admin_rebind_records
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY audit_timestamp DESC`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToReBindRecord);
@@ -587,11 +584,13 @@ export async function getReBindHistory(
 /**
  * Roll up credential refresh health and active auth escalations for an org.
  */
-export async function getCredentialHealth(organizationId: string): Promise<CredentialHealthSummary> {
+export async function getCredentialHealth(
+  organizationId: string
+): Promise<CredentialHealthSummary> {
   const rows = await dbAll<CredentialRow>(
     `SELECT * FROM v8_connection_credentials WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const list = rows || [];
@@ -611,7 +610,7 @@ export async function getCredentialHealth(organizationId: string): Promise<Crede
     `SELECT COUNT(*) as n FROM v8_auth_escalations
      WHERE organization_id = ? AND resolved_at IS NULL`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {
@@ -629,7 +628,7 @@ export async function getCredentialHealth(organizationId: string): Promise<Crede
 export async function recordAuthEscalation(
   connectorId: string,
   organizationId: string,
-  reason: string | null,
+  reason: string | null
 ): Promise<AuthEscalationRecord> {
   const trimmedConnectorId = connectorId.trim();
   const trimmedOrganizationId = organizationId.trim();
@@ -648,7 +647,7 @@ export async function recordAuthEscalation(
      ORDER BY escalated_at DESC
      LIMIT 1`,
     [trimmedConnectorId, trimmedOrganizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (existing) {
@@ -662,10 +661,12 @@ export async function recordAuthEscalation(
     `INSERT INTO v8_auth_escalations (
       escalation_id, organization_id, connector_id, reason, escalated_at, resolved_at, resolved_by
     ) VALUES (?, ?, ?, ?, ?, NULL, NULL)`,
-    [escalationId, trimmedOrganizationId, trimmedConnectorId, normalizedReason, now],
+    [escalationId, trimmedOrganizationId, trimmedConnectorId, normalizedReason, now]
   );
 
-  logger.info(`${LOG_PREFIX} Recorded auth escalation ${escalationId} for connector ${trimmedConnectorId}`);
+  logger.info(
+    `${LOG_PREFIX} Recorded auth escalation ${escalationId} for connector ${trimmedConnectorId}`
+  );
 
   return {
     escalationId,
@@ -681,13 +682,15 @@ export async function recordAuthEscalation(
 /**
  * Active (unresolved) auth escalations for operator recovery.
  */
-export async function getActiveEscalations(organizationId: string): Promise<AuthEscalationRecord[]> {
+export async function getActiveEscalations(
+  organizationId: string
+): Promise<AuthEscalationRecord[]> {
   const rows = await dbAll<EscalationRow>(
     `SELECT * FROM v8_auth_escalations
      WHERE organization_id = ? AND resolved_at IS NULL
      ORDER BY escalated_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToAuthEscalation);
@@ -699,7 +702,7 @@ export async function getActiveEscalations(organizationId: string): Promise<Auth
 export async function resolveAuthEscalation(
   escalationId: string,
   resolvedBy: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<AuthEscalationRecord> {
   const trimmedEscalationId = escalationId.trim();
   const trimmedResolvedBy = resolvedBy.trim();
@@ -719,7 +722,7 @@ export async function resolveAuthEscalation(
     `SELECT * FROM v8_auth_escalations
      WHERE escalation_id = ? AND organization_id = ?`,
     [trimmedEscalationId, trimmedOrganizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -736,7 +739,7 @@ export async function resolveAuthEscalation(
     `UPDATE v8_auth_escalations
      SET resolved_at = ?, resolved_by = ?
      WHERE escalation_id = ? AND organization_id = ?`,
-    [now, trimmedResolvedBy, trimmedEscalationId, trimmedOrganizationId],
+    [now, trimmedResolvedBy, trimmedEscalationId, trimmedOrganizationId]
   );
 
   logger.info(`${LOG_PREFIX} Resolved auth escalation ${trimmedEscalationId}`);
@@ -755,7 +758,7 @@ export async function resolveAuthEscalation(
 export async function resolveAuthEscalationsForConnector(
   connectorId: string,
   resolvedBy: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<AuthEscalationRecord[]> {
   const trimmedConnectorId = connectorId.trim();
   const trimmedResolvedBy = resolvedBy.trim();
@@ -776,7 +779,7 @@ export async function resolveAuthEscalationsForConnector(
      WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL
      ORDER BY escalated_at DESC`,
     [trimmedConnectorId, trimmedOrganizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!rows.length) {
@@ -789,11 +792,11 @@ export async function resolveAuthEscalationsForConnector(
     `UPDATE v8_auth_escalations
      SET resolved_at = ?, resolved_by = ?
      WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL`,
-    [now, trimmedResolvedBy, trimmedConnectorId, trimmedOrganizationId],
+    [now, trimmedResolvedBy, trimmedConnectorId, trimmedOrganizationId]
   );
 
   logger.info(
-    `${LOG_PREFIX} Resolved ${rows.length} auth escalation(s) for connector ${trimmedConnectorId}`,
+    `${LOG_PREFIX} Resolved ${rows.length} auth escalation(s) for connector ${trimmedConnectorId}`
   );
 
   return rows.map((row) => ({

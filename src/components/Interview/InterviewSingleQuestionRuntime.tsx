@@ -33,7 +33,6 @@ import {
   ArtifactAttachPopover,
   type ArtifactSearchResult,
 } from '../shared/NModeBlocks/ArtifactAttachPopover';
-
 import { CATEGORY_CONFIG, CATEGORY_ORDER, type InterviewCategory } from './CategorySidebar';
 import type { InterviewEvidence } from './EvidencePanel';
 import type { InterviewQuestion } from './QuestionsList';
@@ -105,17 +104,29 @@ function buildDefaultOptions(question: InterviewQuestion, isPolish: boolean): st
   return [];
 }
 
-function getAnswerTypeLabel(answerType?: string, isPolish = false): { label: string; icon: 'text' | 'hash' | 'check' | 'calendar' } {
+function getAnswerTypeLabel(
+  answerType?: string,
+  isPolish = false
+): { label: string; icon: 'text' | 'hash' | 'check' | 'calendar' } {
   const normalized = normalizeAnswerType(answerType);
-  if (QUESTION_INPUT_TYPES.longText.has(normalized)) return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
-  if (QUESTION_INPUT_TYPES.shortText.has(normalized)) return { label: isPolish ? 'Krótki tekst' : 'Short text', icon: 'text' };
-  if (QUESTION_INPUT_TYPES.number.has(normalized)) return { label: isPolish ? 'Liczba' : 'Number', icon: 'hash' };
-  if (QUESTION_INPUT_TYPES.singleChoice.has(normalized)) return { label: isPolish ? 'Wybór' : 'Choice', icon: 'check' };
-  if (QUESTION_INPUT_TYPES.multiChoice.has(normalized)) return { label: isPolish ? 'Wielokrotny' : 'Multi', icon: 'check' };
-  if (QUESTION_INPUT_TYPES.yesNo.has(normalized)) return { label: isPolish ? 'Tak/Nie' : 'Yes/No', icon: 'check' };
-  if (QUESTION_INPUT_TYPES.rating.has(normalized)) return { label: isPolish ? 'Skala' : 'Scale', icon: 'hash' };
-  if (QUESTION_INPUT_TYPES.dropdown.has(normalized)) return { label: isPolish ? 'Lista' : 'Dropdown', icon: 'check' };
-  if (QUESTION_INPUT_TYPES.date.has(normalized)) return { label: isPolish ? 'Data' : 'Date', icon: 'calendar' };
+  if (QUESTION_INPUT_TYPES.longText.has(normalized))
+    return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
+  if (QUESTION_INPUT_TYPES.shortText.has(normalized))
+    return { label: isPolish ? 'Krótki tekst' : 'Short text', icon: 'text' };
+  if (QUESTION_INPUT_TYPES.number.has(normalized))
+    return { label: isPolish ? 'Liczba' : 'Number', icon: 'hash' };
+  if (QUESTION_INPUT_TYPES.singleChoice.has(normalized))
+    return { label: isPolish ? 'Wybór' : 'Choice', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.multiChoice.has(normalized))
+    return { label: isPolish ? 'Wielokrotny' : 'Multi', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.yesNo.has(normalized))
+    return { label: isPolish ? 'Tak/Nie' : 'Yes/No', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.rating.has(normalized))
+    return { label: isPolish ? 'Skala' : 'Scale', icon: 'hash' };
+  if (QUESTION_INPUT_TYPES.dropdown.has(normalized))
+    return { label: isPolish ? 'Lista' : 'Dropdown', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.date.has(normalized))
+    return { label: isPolish ? 'Data' : 'Date', icon: 'calendar' };
   return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
 }
 
@@ -123,7 +134,9 @@ function parseMultiChoiceValue(answerDraft: string): Set<string> {
   try {
     const parsed = JSON.parse(answerDraft);
     if (Array.isArray(parsed)) return new Set(parsed);
-  } catch { /* not JSON */ }
+  } catch {
+    /* not JSON */
+  }
   if (!answerDraft) return new Set();
   return new Set(answerDraft.split('|||'));
 }
@@ -152,8 +165,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
   const orderedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
-      const categoryDiff =
-        CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+      const categoryDiff = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
       if (categoryDiff !== 0) return categoryDiff;
       return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
@@ -195,11 +207,18 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const [artifactPopoverOpen, setArtifactPopoverOpen] = useState(false);
   const [artifactSearchResults, setArtifactSearchResults] = useState<ArtifactSearchResult[]>([]);
   const [aiImproving, setAiImproving] = useState(false);
-  const [aiImproveResult, setAiImproveResult] = useState<{ improvedText: string; changesSummary: string } | null>(null);
+  const [aiImproveResult, setAiImproveResult] = useState<{
+    improvedText: string;
+    changesSummary: string;
+  } | null>(null);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
   const aiDropdownRef = useRef<HTMLDivElement>(null);
   const [aiExplaining, setAiExplaining] = useState(false);
-  const [aiExplainResult, setAiExplainResult] = useState<{ explanation: string; exampleAnswers: string[]; whyItMatters: string } | null>(null);
+  const [aiExplainResult, setAiExplainResult] = useState<{
+    explanation: string;
+    exampleAnswers: string[];
+    whyItMatters: string;
+  } | null>(null);
   const artifactCacheRef = useRef<ArtifactSearchResult[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -233,8 +252,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     const stillVisible = pool.some((question) => question.id === currentQuestionId);
     if (stillVisible) return;
 
-    const preferred =
-      pool.find((question) => question.status !== 'answered') || pool[0];
+    const preferred = pool.find((question) => question.status !== 'answered') || pool[0];
     setCurrentQuestionId(preferred?.id || null);
   }, [categoryQuestions, currentQuestionId, immersive, orderedQuestions]);
 
@@ -281,7 +299,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     !!currentQuestion &&
     (answerDraft !== (currentQuestion.answerText || '') ||
       contextDraft !== (currentQuestion.contextNote || currentQuestion.notes || '') ||
-      inputMode !== (currentQuestion.answerMode === 'voice_answer' ? 'voice_answer' : 'text_answer') ||
+      inputMode !==
+        (currentQuestion.answerMode === 'voice_answer' ? 'voice_answer' : 'text_answer') ||
       voiceTranscriptDraft !== (currentQuestion.voiceTranscript || ''));
 
   const persistCurrentQuestion = useCallback(async () => {
@@ -307,7 +326,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         answerPayload: payload,
         contextNote: normalizedContext || undefined,
         notes: normalizedContext || undefined,
-        voiceTranscript: inputMode === 'voice_answer' ? voiceTranscriptDraft || normalizedAnswer : '',
+        voiceTranscript:
+          inputMode === 'voice_answer' ? voiceTranscriptDraft || normalizedAnswer : '',
         voiceTranscriptStatus:
           inputMode === 'voice_answer' && (voiceTranscriptDraft || normalizedAnswer)
             ? 'approved'
@@ -448,7 +468,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [currentQuestion, isPolish, navigateToQuestion, nextQuestion, persistCurrentQuestion, previousQuestion, readOnly]);
+  }, [
+    currentQuestion,
+    isPolish,
+    navigateToQuestion,
+    nextQuestion,
+    persistCurrentQuestion,
+    previousQuestion,
+    readOnly,
+  ]);
 
   const handleFilePicked = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -505,25 +533,31 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         arr.forEach((t: any) => push('task', t.id, t.title || t.name, t.status));
       }
       if (initiatives.status === 'fulfilled' && Array.isArray(initiatives.value)) {
-        initiatives.value.forEach((i: any) => push('initiative', i.id, i.title || i.name, i.status));
+        initiatives.value.forEach((i: any) =>
+          push('initiative', i.id, i.title || i.name, i.status)
+        );
       }
       if (decisions.status === 'fulfilled' && Array.isArray(decisions.value)) {
         decisions.value.forEach((d: any) => push('decision', d.id, d.title || d.name, d.status));
       }
       if (assessments.status === 'fulfilled' && Array.isArray(assessments.value)) {
-        assessments.value.forEach((a: any) => push('assessment', a.id, a.name || a.title, a.status));
+        assessments.value.forEach((a: any) =>
+          push('assessment', a.id, a.name || a.title, a.status)
+        );
       }
       artifactCacheRef.current = all;
       cache = all;
     }
     const q = query.toLowerCase();
     setArtifactSearchResults(
-      cache.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) ||
-          r.type.toLowerCase().includes(q) ||
-          buildArtifactCode(r.type, r.id).toLowerCase().includes(q)
-      ).slice(0, 12)
+      cache
+        .filter(
+          (r) =>
+            r.title.toLowerCase().includes(q) ||
+            r.type.toLowerCase().includes(q) ||
+            buildArtifactCode(r.type, r.id).toLowerCase().includes(q)
+        )
+        .slice(0, 12)
     );
   }, []);
 
@@ -545,32 +579,42 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     [currentQuestion, isPolish, onAddLink]
   );
 
-  const handleAiImprove = useCallback(async (mode: string = 'improve') => {
-    if (!currentQuestion || !answerDraft.trim() || aiImproving) return;
-    setAiImproving(true);
-    setAiImproveResult(null);
-    setAiDropdownOpen(false);
-    try {
-      const res = await fetch(`${API_URL}/interview/questions/${currentQuestion.id}/ai-improve`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ answerText: answerDraft.trim(), language: isPolish ? 'pl' : 'en', mode }),
-      });
-      if (!res.ok) throw new Error('AI improve failed');
-      const data = await res.json();
-      if (data.improvedText) {
-        setAiImproveResult(data);
+  const handleAiImprove = useCallback(
+    async (mode: string = 'improve') => {
+      if (!currentQuestion || !answerDraft.trim() || aiImproving) return;
+      setAiImproving(true);
+      setAiImproveResult(null);
+      setAiDropdownOpen(false);
+      try {
+        const res = await fetch(`${API_URL}/interview/questions/${currentQuestion.id}/ai-improve`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({
+            answerText: answerDraft.trim(),
+            language: isPolish ? 'pl' : 'en',
+            mode,
+          }),
+        });
+        if (!res.ok) throw new Error('AI improve failed');
+        const data = await res.json();
+        if (data.improvedText) {
+          setAiImproveResult(data);
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się ulepszyć odpowiedzi' : 'Failed to improve answer');
+      } finally {
+        setAiImproving(false);
       }
-    } catch {
-      toast.error(isPolish ? 'Nie udało się ulepszyć odpowiedzi' : 'Failed to improve answer');
-    } finally {
-      setAiImproving(false);
-    }
-  }, [currentQuestion, answerDraft, aiImproving, isPolish]);
+    },
+    [currentQuestion, answerDraft, aiImproving, isPolish]
+  );
 
   const handleAiExplain = useCallback(async () => {
     if (!currentQuestion || aiExplaining) return;
-    if (aiExplainResult) { setAiExplainResult(null); return; }
+    if (aiExplainResult) {
+      setAiExplainResult(null);
+      return;
+    }
     setAiExplaining(true);
     try {
       const res = await fetch(`${API_URL}/interview/questions/${currentQuestion.id}/ai-explain`, {
@@ -604,7 +648,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       chunksRef.current = [];
       liveTranscriptRef.current = '';
 
-      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognitionAPI =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
         const recognition = new SpeechRecognitionAPI();
         recognition.lang = isPolish ? 'pl-PL' : 'en-US';
@@ -618,7 +663,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           }
         };
         recognition.onerror = () => {};
-        recognition.onend = () => { speechRecognitionRef.current = null; };
+        recognition.onend = () => {
+          speechRecognitionRef.current = null;
+        };
         recognition.start();
         speechRecognitionRef.current = recognition;
       }
@@ -638,7 +685,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
           const mimeType = recorder.mimeType || 'audio/webm';
           const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.webm`, { type: mimeType });
+          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.webm`, {
+            type: mimeType,
+          });
           const browserTranscript = liveTranscriptRef.current.trim();
 
           setIsTranscribing(true);
@@ -649,7 +698,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             const hdrs = { ...getHeaders() };
             delete hdrs['Content-Type'];
 
-            const response = await fetch(`${API_URL}/voice/stt`, { method: 'POST', headers: hdrs, body: formData });
+            const response = await fetch(`${API_URL}/voice/stt`, {
+              method: 'POST',
+              headers: hdrs,
+              body: formData,
+            });
             const data = await response.json();
 
             const serverText = response.ok && data?.text ? String(data.text).trim() : '';
@@ -661,7 +714,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             setVoiceTranscriptDraft(finalText);
             setAnswerDraft(finalText);
 
-            const created = await onAddVoiceEvidence(audioFile, finalText, currentQuestion.category, currentQuestion.id);
+            const created = await onAddVoiceEvidence(
+              audioFile,
+              finalText,
+              currentQuestion.category,
+              currentQuestion.id
+            );
             await onUpdateQuestion(currentQuestion.id, {
               answerMode: 'voice_answer',
               voiceTranscript: finalText,
@@ -694,9 +752,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             } else {
               console.error('[InterviewSingleQuestionRuntime] Voice transcription failed:', error);
               toast.error(
-                isPolish
-                  ? 'Nie udało się przetworzyć nagrania.'
-                  : 'Failed to process recording.'
+                isPolish ? 'Nie udało się przetworzyć nagrania.' : 'Failed to process recording.'
               );
             }
           } finally {
@@ -716,14 +772,24 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       );
       console.error('[InterviewSingleQuestionRuntime] Recording failed:', error);
     }
-  }, [currentQuestion, isPolish, isRecording, isTranscribing, onAddVoiceEvidence, onUpdateQuestion]);
+  }, [
+    currentQuestion,
+    isPolish,
+    isRecording,
+    isTranscribing,
+    onAddVoiceEvidence,
+    onUpdateQuestion,
+  ]);
 
   const renderedInput = useMemo(() => {
     if (!currentQuestion) return null;
 
     const normalizedType = normalizeAnswerType(currentQuestion.answerType);
 
-    if (QUESTION_INPUT_TYPES.yesNo.has(normalizedType) || QUESTION_INPUT_TYPES.singleChoice.has(normalizedType)) {
+    if (
+      QUESTION_INPUT_TYPES.yesNo.has(normalizedType) ||
+      QUESTION_INPUT_TYPES.singleChoice.has(normalizedType)
+    ) {
       return (
         <div className="flex flex-wrap gap-2">
           {currentQuestionOptions.map((option) => {
@@ -824,7 +890,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <span className={answerDraft ? '' : 'text-slate-400 dark:text-slate-500'}>
               {answerDraft || (isPolish ? 'Wybierz opcję...' : 'Select an option...')}
             </span>
-            <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+            />
           </button>
           {dropdownOpen && (
             <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-xl max-h-60 overflow-y-auto">
@@ -909,15 +978,17 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     );
   }, [currentQuestion, currentQuestionOptions, answerDraft, readOnly, isPolish, dropdownOpen]);
 
-  const activeCategoryConfig = currentQuestion ? CATEGORY_CONFIG[currentQuestion.category] : undefined;
-  const answeredCount = orderedQuestions.filter((question) => question.status === 'answered').length;
+  const activeCategoryConfig = currentQuestion
+    ? CATEGORY_CONFIG[currentQuestion.category]
+    : undefined;
+  const answeredCount = orderedQuestions.filter(
+    (question) => question.status === 'answered'
+  ).length;
   const categoryPosition = currentQuestion
     ? categoryQuestions.findIndex((question) => question.id === currentQuestion.id) + 1
     : 0;
   const isLastQuestion = !nextQuestion;
-  const requiredMissing = orderedQuestions.filter(
-    (q) => q.isRequired && q.status !== 'answered'
-  );
+  const requiredMissing = orderedQuestions.filter((q) => q.isRequired && q.status !== 'answered');
   const navRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll active question into view in nav.
@@ -946,9 +1017,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <FileText size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Brak pytań w tej sekcji.'
-            : 'No questions are available in this section.'}
+          {isPolish ? 'Brak pytań w tej sekcji.' : 'No questions are available in this section.'}
         </p>
       </div>
     );
@@ -956,7 +1025,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
   // ---- Review screen ----
   if (runtimeView === 'review') {
-    const completionPct = orderedQuestions.length > 0 ? Math.round((answeredCount / orderedQuestions.length) * 100) : 0;
+    const completionPct =
+      orderedQuestions.length > 0 ? Math.round((answeredCount / orderedQuestions.length) * 100) : 0;
     return (
       <div className={`space-y-4 ${immersive ? 'max-w-3xl mx-auto px-6 py-8' : ''}`}>
         <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-6 shadow-lg">
@@ -1005,7 +1075,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 {orderedQuestions.map((q, idx) => {
                   const answered = q.status === 'answered';
                   const snippet = q.answerText
-                    ? q.answerText.length > 80 ? q.answerText.slice(0, 80) + '…' : q.answerText
+                    ? q.answerText.length > 80
+                      ? q.answerText.slice(0, 80) + '…'
+                      : q.answerText
                     : '';
                   return (
                     <button
@@ -1017,13 +1089,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       }}
                       className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
                     >
-                      <span className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
-                        answered
-                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                          : q.isRequired
-                            ? 'bg-rose-500/10 text-rose-500'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
-                      }`}>
+                      <span
+                        className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
+                          answered
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : q.isRequired
+                              ? 'bg-rose-500/10 text-rose-500'
+                              : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                        }`}
+                      >
                         {answered ? <Check size={10} /> : idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -1048,9 +1122,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 const catConfig = CATEGORY_CONFIG[cat];
                 const catQs = orderedQuestions.filter((q) => q.category === cat);
                 return (
-                  <div key={cat} className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden">
+                  <div
+                    key={cat}
+                    className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden"
+                  >
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}
+                      >
                         <catConfig.icon size={11} />
                         {isPolish ? catConfig.labelPl : catConfig.labelEn}
                       </span>
@@ -1065,7 +1144,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       {catQs.map((q) => {
                         const answered = q.status === 'answered';
                         const snippet = q.answerText
-                          ? q.answerText.length > 80 ? q.answerText.slice(0, 80) + '…' : q.answerText
+                          ? q.answerText.length > 80
+                            ? q.answerText.slice(0, 80) + '…'
+                            : q.answerText
                           : '';
                         return (
                           <button
@@ -1153,23 +1234,28 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
                 {isPolish ? 'Pytania' : 'Questions'}
               </p>
-              <span className={`text-[10px] font-semibold tabular-nums ${
-                answeredCount === orderedQuestions.length
-                  ? 'text-emerald-500'
-                  : 'text-slate-400 dark:text-slate-500'
-              }`}>
+              <span
+                className={`text-[10px] font-semibold tabular-nums ${
+                  answeredCount === orderedQuestions.length
+                    ? 'text-emerald-500'
+                    : 'text-slate-400 dark:text-slate-500'
+                }`}
+              >
                 {answeredCount}/{orderedQuestions.length}
               </span>
             </div>
             <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden mt-2">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-primary-500'}`}
-                style={{ width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%` }}
+                style={{
+                  width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%`,
+                }}
               />
             </div>
             {answeredCount < orderedQuestions.length && (
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
-                {orderedQuestions.length - answeredCount} {isPolish ? 'do uzupełnienia' : 'remaining'}
+                {orderedQuestions.length - answeredCount}{' '}
+                {isPolish ? 'do uzupełnienia' : 'remaining'}
               </p>
             )}
           </div>
@@ -1193,23 +1279,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         : 'hover:bg-slate-50 dark:hover:bg-navy-900/50'
                   }`}
                 >
-                  <span className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
-                    isCurrent
-                      ? 'bg-primary-500 text-white'
-                      : isAnswered
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-200/80 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                  }`}>
+                  <span
+                    className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
+                      isCurrent
+                        ? 'bg-primary-500 text-white'
+                        : isAnswered
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-200/80 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
                     {isAnswered ? <Check size={10} /> : idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <span className={`text-[11px] leading-snug line-clamp-2 block ${
-                      isCurrent
-                        ? 'text-primary-700 dark:text-primary-300 font-medium'
-                        : isAnswered
-                          ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
-                          : 'text-slate-700 dark:text-slate-200 font-medium'
-                    }`}>
+                    <span
+                      className={`text-[11px] leading-snug line-clamp-2 block ${
+                        isCurrent
+                          ? 'text-primary-700 dark:text-primary-300 font-medium'
+                          : isAnswered
+                            ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
+                            : 'text-slate-700 dark:text-slate-200 font-medium'
+                      }`}
+                    >
                       {q.questionText}
                     </span>
                     {isAnswered && q.answerText && (
@@ -1283,7 +1373,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 }`}
               >
                 <span className="truncate">{isPolish ? catConfig.labelPl : catConfig.labelEn}</span>
-                <span className={`text-[10px] tabular-nums shrink-0 ${isDone ? 'text-emerald-500' : ''}`}>
+                <span
+                  className={`text-[10px] tabular-nums shrink-0 ${isDone ? 'text-emerald-500' : ''}`}
+                >
                   {catInfo.answered}/{catInfo.total}
                 </span>
               </button>
@@ -1292,7 +1384,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <div className="!mt-auto border-t border-slate-100 dark:border-navy-800 pt-3">
             <button
               type="button"
-              onClick={() => { void persistCurrentQuestion(); setRuntimeView('review'); }}
+              onClick={() => {
+                void persistCurrentQuestion();
+                setRuntimeView('review');
+              }}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
             >
               <ClipboardList size={13} />
@@ -1301,7 +1396,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             {onSaveAndExit && (
               <button
                 type="button"
-                onClick={() => { void persistCurrentQuestion().then(() => onSaveAndExit?.()); }}
+                onClick={() => {
+                  void persistCurrentQuestion().then(() => onSaveAndExit?.());
+                }}
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
               >
                 <LogOut size={13} />
@@ -1314,7 +1411,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
       {/* Mobile: horizontal question pills (immersive) or category pills (legacy) */}
       {!immersive && (
-        <div className="md:hidden absolute left-0 right-0 -mt-2 mb-2" style={{ position: 'relative' }}>
+        <div
+          className="md:hidden absolute left-0 right-0 -mt-2 mb-2"
+          style={{ position: 'relative' }}
+        >
           <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide" role="navigation">
             {CATEGORY_ORDER.map((cat) => {
               const catInfo = categorySummary.get(cat);
@@ -1322,13 +1422,21 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               const catConfig = CATEGORY_CONFIG[cat];
               const isActive = cat === activeCategory;
               return (
-                <button key={cat} type="button" onClick={() => onCategoryChange(cat)} aria-current={isActive ? 'step' : undefined}
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => onCategoryChange(cat)}
+                  aria-current={isActive ? 'step' : undefined}
                   className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
-                    isActive ? `${catConfig.bgColor} ${catConfig.color} ring-1 ring-current/20` : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                    isActive
+                      ? `${catConfig.bgColor} ${catConfig.color} ring-1 ring-current/20`
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   {isPolish ? catConfig.labelPl : catConfig.labelEn}
-                  <span className={`text-[10px] tabular-nums ${catInfo.answered === catInfo.total && catInfo.total > 0 ? 'text-emerald-500' : ''}`}>
+                  <span
+                    className={`text-[10px] tabular-nums ${catInfo.answered === catInfo.total && catInfo.total > 0 ? 'text-emerald-500' : ''}`}
+                  >
                     {catInfo.answered}/{catInfo.total}
                   </span>
                 </button>
@@ -1339,12 +1447,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       )}
 
       {/* Center content */}
-      <div className={`flex-1 min-w-0 flex flex-col ${immersive ? 'overflow-hidden' : 'space-y-4'}`}>
+      <div
+        className={`flex-1 min-w-0 flex flex-col ${immersive ? 'overflow-hidden' : 'space-y-4'}`}
+      >
         {/* Progress indicator */}
         {!immersive && (
           <div className="flex items-center gap-3">
             {activeCategoryConfig && (
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeCategoryConfig.bgColor} ${activeCategoryConfig.color}`}>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeCategoryConfig.bgColor} ${activeCategoryConfig.color}`}
+              >
                 {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
               </span>
             )}
@@ -1354,7 +1466,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
               <div
                 className="h-full rounded-full bg-primary-500/60 transition-all duration-300"
-                style={{ width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%` }}
+                style={{
+                  width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%`,
+                }}
               />
             </div>
             <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
@@ -1365,513 +1479,607 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
         {/* Question card — scrollable area, bottom bar stays fixed */}
         <div className={immersive ? 'flex-1 min-h-0 overflow-y-auto' : ''}>
-          <div className={immersive ? 'flex justify-center px-8 py-6 md:px-16 lg:px-24 min-h-full' : ''}>
           <div
-            key={currentQuestion.id}
-            className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
-              immersive
-                ? 'bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.04] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
-                : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
-            }`}
+            className={
+              immersive ? 'flex justify-center px-8 py-6 md:px-16 lg:px-24 min-h-full' : ''
+            }
           >
-            <div className={immersive ? 'max-w-2xl mx-auto space-y-5' : 'space-y-5'}>
-              {/* Question header */}
-              <div className="space-y-4">
-                {/* Top meta row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold tabular-nums ${
-                      immersive
-                        ? 'bg-primary-500/15 text-primary-400 ring-1 ring-primary-500/20'
-                        : 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                    }`}>
-                      {currentIndex + 1}
-                    </span>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
-                      {isPolish ? 'z' : 'of'} {orderedQuestions.length}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const typeInfo = getAnswerTypeLabel(currentQuestion.answerType, isPolish);
-                      const TypeIcon = typeInfo.icon === 'hash' ? Hash : typeInfo.icon === 'check' ? Check : typeInfo.icon === 'calendar' ? Calendar : Type;
-                      return (
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+            <div
+              key={currentQuestion.id}
+              className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
+                immersive
+                  ? 'bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.04] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
+                  : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
+              }`}
+            >
+              <div className={immersive ? 'max-w-2xl mx-auto space-y-5' : 'space-y-5'}>
+                {/* Question header */}
+                <div className="space-y-4">
+                  {/* Top meta row */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold tabular-nums ${
                           immersive
-                            ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
-                        }`}>
-                          <TypeIcon size={10} />
-                          {typeInfo.label}
-                        </span>
-                      );
-                    })()}
-                    {currentQuestion.isRequired && (
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                        immersive
-                          ? 'bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/15'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                      }`}>
-                        <CircleAlert size={10} />
-                        {isPolish ? 'Wymagane' : 'Required'}
+                            ? 'bg-primary-500/15 text-primary-400 ring-1 ring-primary-500/20'
+                            : 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                        }`}
+                      >
+                        {currentIndex + 1}
                       </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Question text */}
-                <h2 className={`font-semibold leading-snug text-slate-900 dark:text-white ${
-                  immersive ? 'text-2xl md:text-[28px]' : 'text-2xl md:text-3xl'
-                }`}>
-                  {currentQuestion.questionText}
-                </h2>
-
-                {/* Helper text / description (with helpHint fallback) */}
-                {(currentQuestion.description || (currentQuestion as any).helpHint) && (
-                  <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                    <HelpCircle size={14} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
-                    {currentQuestion.description || (currentQuestion as any).helpHint}
-                  </p>
-                )}
-
-                {/* Expected answer shape */}
-                {currentQuestion.expectedAnswerShape && (
-                  <div className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
-                    immersive
-                      ? 'bg-primary-500/[0.06] border-primary-500/10'
-                      : 'bg-primary-500/5 dark:bg-primary-500/10 border-primary-500/10 dark:border-primary-500/15'
-                  }`}>
-                    <Sparkles size={13} className="text-primary-500 shrink-0" />
-                    <span className="text-xs text-primary-700 dark:text-primary-300">
-                      {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
-                      <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
-                    </span>
-                  </div>
-                )}
-
-                {/* AI Explain question */}
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={handleAiExplain}
-                    disabled={aiExplaining}
-                    className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                      aiExplainResult
-                        ? 'text-violet-600 dark:text-violet-400'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
-                    }`}
-                  >
-                    {aiExplaining ? <Loader2 size={12} className="animate-spin" /> : <HelpCircle size={12} />}
-                    {aiExplaining
-                      ? isPolish ? 'Analizuję...' : 'Analyzing...'
-                      : aiExplainResult
-                        ? isPolish ? 'Ukryj wyjaśnienie' : 'Hide explanation'
-                        : isPolish ? 'Wyjaśnij to pytanie' : 'Explain this question'}
-                  </button>
-                )}
-
-                {/* AI Explain result */}
-                {aiExplainResult && (
-                  <div className="rounded-xl border border-violet-200/50 dark:border-violet-500/15 bg-violet-50/50 dark:bg-violet-500/5 p-4 space-y-3">
-                    <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed">
-                      {aiExplainResult.explanation}
-                    </p>
-                    {aiExplainResult.exampleAnswers.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-400">
-                          {isPolish ? 'Przykładowe odpowiedzi' : 'Example answers'}
-                        </p>
-                        {aiExplainResult.exampleAnswers.map((ex, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs text-violet-700 dark:text-violet-300">
-                            <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-violet-500/10 flex items-center justify-center text-[9px] font-semibold text-violet-500">
-                              {i + 1}
-                            </span>
-                            <span className="leading-relaxed italic">&ldquo;{ex}&rdquo;</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <p className="text-[11px] text-violet-600/70 dark:text-violet-400/70 leading-relaxed">
-                      <Sparkles size={10} className="inline mr-1 -mt-0.5" />
-                      {aiExplainResult.whyItMatters}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                {renderedInput}
-
-                {/* ── Answer toolbar: Record + AI dropdown (chip standard) ── */}
-                {!readOnly && (
-                  <div className="flex items-center gap-1.5">
-                    {/* Record voice answer */}
-                    <button
-                      type="button"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      disabled={isTranscribing}
-                      className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
-                        isRecording
-                          ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
-                          : immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {isRecording ? <PauseCircle size={11} /> : <Mic size={11} />}
-                      {isRecording
-                        ? 'Stop'
-                        : isPolish ? 'Nagraj' : 'Record'}
-                    </button>
-
-                    {/* AI Improve dropdown */}
-                    {answerDraft.trim().length >= 3 && !aiImproveResult && (
-                      <div className="relative" ref={aiDropdownRef}>
-                        <button
-                          type="button"
-                          onClick={() => setAiDropdownOpen((prev) => !prev)}
-                          disabled={aiImproving}
-                          className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
-                            aiImproving
-                              ? immersive
-                                ? 'border-primary-500/20 bg-primary-500/10 text-primary-400'
-                                : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                              : immersive
-                                ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
-                                : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                      <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                        {isPolish ? 'z' : 'of'} {orderedQuestions.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const typeInfo = getAnswerTypeLabel(currentQuestion.answerType, isPolish);
+                        const TypeIcon =
+                          typeInfo.icon === 'hash'
+                            ? Hash
+                            : typeInfo.icon === 'check'
+                              ? Check
+                              : typeInfo.icon === 'calendar'
+                                ? Calendar
+                                : Type;
+                        return (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+                              immersive
+                                ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                            }`}
+                          >
+                            <TypeIcon size={10} />
+                            {typeInfo.label}
+                          </span>
+                        );
+                      })()}
+                      {currentQuestion.isRequired && (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+                            immersive
+                              ? 'bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/15'
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
                           }`}
                         >
-                          {aiImproving ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                          AI
-                          {!aiImproving && <ChevronDown size={10} className={`transition-transform ${aiDropdownOpen ? 'rotate-180' : ''}`} />}
-                        </button>
-
-                        {aiDropdownOpen && !aiImproving && (
-                          <div className={`absolute left-0 bottom-full mb-1.5 z-50 w-48 rounded-xl border p-1 shadow-xl ${
-                            immersive
-                              ? 'bg-navy-900/95 border-white/[0.08] backdrop-blur-xl'
-                              : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700'
-                          }`}>
-                            {([
-                              { mode: 'improve', labelPl: 'Popraw i ulepsz', labelEn: 'Improve & polish', icon: '✨' },
-                              { mode: 'fix_grammar', labelPl: 'Popraw gramatykę', labelEn: 'Fix grammar', icon: '📝' },
-                              { mode: 'shorten', labelPl: 'Skróć', labelEn: 'Make shorter', icon: '✂️' },
-                              { mode: 'expand', labelPl: 'Rozwiń', labelEn: 'Expand & elaborate', icon: '📖' },
-                              { mode: 'formal', labelPl: 'Ton formalny', labelEn: 'Formal tone', icon: '👔' },
-                            ] as const).map((item) => (
-                              <button
-                                key={item.mode}
-                                type="button"
-                                onClick={() => handleAiImprove(item.mode)}
-                                className={`w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
-                                  immersive
-                                    ? 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-                                }`}
-                              >
-                                <span className="text-xs">{item.icon}</span>
-                                {isPolish ? item.labelPl : item.labelEn}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* AI Improve result */}
-                {aiImproveResult && (
-                  <div className={`rounded-xl border p-4 space-y-3 ${
-                    immersive
-                      ? 'border-emerald-500/15 bg-emerald-500/[0.06]'
-                      : 'border-emerald-200/50 dark:border-emerald-500/15 bg-emerald-50/50 dark:bg-emerald-500/5'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
-                        {isPolish ? 'Ulepszona wersja' : 'Improved version'}
-                      </p>
-                      <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">
-                        <Sparkles size={9} className="inline mr-0.5 -mt-0.5" />
-                        AI
-                      </span>
-                    </div>
-                    <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed whitespace-pre-wrap">
-                      {aiImproveResult.improvedText}
-                    </p>
-                    <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 italic">
-                      {aiImproveResult.changesSummary}
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAnswerDraft(aiImproveResult.improvedText);
-                          setAiImproveResult(null);
-                          toast.success(isPolish ? 'Zastosowano ulepszoną wersję' : 'Applied improved version');
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
-                      >
-                        <Check size={12} />
-                        {isPolish ? 'Zastosuj' : 'Apply'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAiImproveResult(null)}
-                        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          immersive
-                            ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
-                        }`}
-                      >
-                        {isPolish ? 'Odrzuć' : 'Dismiss'}
-                      </button>
+                          <CircleAlert size={10} />
+                          {isPolish ? 'Wymagane' : 'Required'}
+                        </span>
+                      )}
                     </div>
                   </div>
-                )}
 
-                {voiceNeedsApproval && (
-                  <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 space-y-2">
-                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                      {isPolish
-                        ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'
-                        : 'Review the transcript and approve before continuing:'}
+                  {/* Question text */}
+                  <h2
+                    className={`font-semibold leading-snug text-slate-900 dark:text-white ${
+                      immersive ? 'text-2xl md:text-[28px]' : 'text-2xl md:text-3xl'
+                    }`}
+                  >
+                    {currentQuestion.questionText}
+                  </h2>
+
+                  {/* Helper text / description (with helpHint fallback) */}
+                  {(currentQuestion.description || (currentQuestion as any).helpHint) && (
+                    <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <HelpCircle
+                        size={14}
+                        className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
+                      />
+                      {currentQuestion.description || (currentQuestion as any).helpHint}
                     </p>
-                    <textarea
-                      value={voiceTranscriptDraft}
-                      onChange={(e) => setVoiceTranscriptDraft(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                    />
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoiceTranscriptDraft('');
-                          setAnswerDraft(currentQuestion?.answerText || '');
-                          setInputMode('text_answer');
-                          if (currentQuestion) {
-                            void onUpdateQuestion(currentQuestion.id, {
-                              voiceTranscript: '',
-                              voiceTranscriptStatus: 'none',
-                              answerMode: 'text_answer',
-                              status: currentQuestion.answerText ? 'answered' : 'in_progress',
-                            });
-                          }
-                          toast.success(isPolish ? 'Transkrypcja odrzucona.' : 'Transcript discarded.');
-                        }}
-                        className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
-                          immersive
-                            ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
-                        }`}
-                      >
-                        <X size={12} />
-                        {isPolish ? 'Odrzuć i ponów' : 'Discard & retry'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleApproveTranscript}
-                        aria-label={isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
-                        className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white"
-                      >
-                        <Check size={14} />
-                        {isPolish ? 'Zatwierdź' : 'Approve'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  )}
 
-                {(inputMode === 'voice_answer' || isTranscribing) && !voiceNeedsApproval && (
-                  <div className="rounded-xl border border-violet-200/70 dark:border-violet-500/20 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
-                    {isTranscribing ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Loader2 size={14} className="animate-spin" />
-                        {isPolish ? 'Trwa transkrypcja nagrania...' : 'Transcribing recording...'}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Check size={14} className="text-emerald-500" />
-                        {isPolish ? 'Transkrypcja zatwierdzona.' : 'Transcript approved.'}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Evidence prompt */}
-                {currentQuestion.evidencePrompt && (
-                  <div className="rounded-xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
-                    <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
-                    {currentQuestion.evidencePrompt}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Context capture section (always visible) ── */}
-              <div className={`space-y-3 pt-3 border-t ${
-                immersive
-                  ? 'border-white/[0.06]'
-                  : 'border-slate-200/40 dark:border-navy-700/40'
-              }`}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
-                </p>
-
-                {/* Context note (always visible) */}
-                <textarea
-                  value={contextDraft}
-                  onChange={(event) => setContextDraft(event.target.value)}
-                  disabled={readOnly}
-                  rows={1}
-                  className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary-500 ${
-                    immersive
-                      ? 'border-white/[0.06] bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-500 dark:placeholder:text-slate-500'
-                      : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
-                  }`}
-                  placeholder={
-                    isPolish
-                      ? 'Komentarz, niuans, wyjaśnienie do odpowiedzi...'
-                      : 'Comment, nuance, clarification for this answer...'
-                  }
-                />
-
-                {/* Action buttons row — platform chip standard (h-8 rounded-full) */}
-                {!readOnly && (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="hidden"
-                      onChange={handleFilePicked}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                  {/* Expected answer shape */}
+                  {currentQuestion.expectedAnswerShape && (
+                    <div
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
                         immersive
-                          ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
-                          : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                          ? 'bg-primary-500/[0.06] border-primary-500/10'
+                          : 'bg-primary-500/5 dark:bg-primary-500/10 border-primary-500/10 dark:border-primary-500/15'
                       }`}
                     >
-                      <Paperclip size={11} />
-                      {isPolish ? 'Plik' : 'File'}
-                    </button>
+                      <Sparkles size={13} className="text-primary-500 shrink-0" />
+                      <span className="text-xs text-primary-700 dark:text-primary-300">
+                        {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
+                        <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
+                      </span>
+                    </div>
+                  )}
 
+                  {/* AI Explain question */}
+                  {!readOnly && (
                     <button
                       type="button"
-                      onClick={() => setShowLinkForm((prev) => !prev)}
-                      className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
-                        showLinkForm
-                          ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                          : immersive
+                      onClick={handleAiExplain}
+                      disabled={aiExplaining}
+                      className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                        aiExplainResult
+                          ? 'text-violet-600 dark:text-violet-400'
+                          : 'text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
+                      }`}
+                    >
+                      {aiExplaining ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <HelpCircle size={12} />
+                      )}
+                      {aiExplaining
+                        ? isPolish
+                          ? 'Analizuję...'
+                          : 'Analyzing...'
+                        : aiExplainResult
+                          ? isPolish
+                            ? 'Ukryj wyjaśnienie'
+                            : 'Hide explanation'
+                          : isPolish
+                            ? 'Wyjaśnij to pytanie'
+                            : 'Explain this question'}
+                    </button>
+                  )}
+
+                  {/* AI Explain result */}
+                  {aiExplainResult && (
+                    <div className="rounded-xl border border-violet-200/50 dark:border-violet-500/15 bg-violet-50/50 dark:bg-violet-500/5 p-4 space-y-3">
+                      <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed">
+                        {aiExplainResult.explanation}
+                      </p>
+                      {aiExplainResult.exampleAnswers.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-400">
+                            {isPolish ? 'Przykładowe odpowiedzi' : 'Example answers'}
+                          </p>
+                          {aiExplainResult.exampleAnswers.map((ex, i) => (
+                            <div
+                              key={i}
+                              className="flex items-start gap-2 text-xs text-violet-700 dark:text-violet-300"
+                            >
+                              <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-violet-500/10 flex items-center justify-center text-[9px] font-semibold text-violet-500">
+                                {i + 1}
+                              </span>
+                              <span className="leading-relaxed italic">&ldquo;{ex}&rdquo;</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-violet-600/70 dark:text-violet-400/70 leading-relaxed">
+                        <Sparkles size={10} className="inline mr-1 -mt-0.5" />
+                        {aiExplainResult.whyItMatters}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {renderedInput}
+
+                  {/* ── Answer toolbar: Record + AI dropdown (chip standard) ── */}
+                  {!readOnly && (
+                    <div className="flex items-center gap-1.5">
+                      {/* Record voice answer */}
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={isTranscribing}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                          isRecording
+                            ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
+                            : immersive
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        {isRecording ? <PauseCircle size={11} /> : <Mic size={11} />}
+                        {isRecording ? 'Stop' : isPolish ? 'Nagraj' : 'Record'}
+                      </button>
+
+                      {/* AI Improve dropdown */}
+                      {answerDraft.trim().length >= 3 && !aiImproveResult && (
+                        <div className="relative" ref={aiDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setAiDropdownOpen((prev) => !prev)}
+                            disabled={aiImproving}
+                            className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                              aiImproving
+                                ? immersive
+                                  ? 'border-primary-500/20 bg-primary-500/10 text-primary-400'
+                                  : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                                : immersive
+                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
+                                  : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                            }`}
+                          >
+                            {aiImproving ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={11} />
+                            )}
+                            AI
+                            {!aiImproving && (
+                              <ChevronDown
+                                size={10}
+                                className={`transition-transform ${aiDropdownOpen ? 'rotate-180' : ''}`}
+                              />
+                            )}
+                          </button>
+
+                          {aiDropdownOpen && !aiImproving && (
+                            <div
+                              className={`absolute left-0 bottom-full mb-1.5 z-50 w-48 rounded-xl border p-1 shadow-xl ${
+                                immersive
+                                  ? 'bg-navy-900/95 border-white/[0.08] backdrop-blur-xl'
+                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700'
+                              }`}
+                            >
+                              {(
+                                [
+                                  {
+                                    mode: 'improve',
+                                    labelPl: 'Popraw i ulepsz',
+                                    labelEn: 'Improve & polish',
+                                    icon: '✨',
+                                  },
+                                  {
+                                    mode: 'fix_grammar',
+                                    labelPl: 'Popraw gramatykę',
+                                    labelEn: 'Fix grammar',
+                                    icon: '📝',
+                                  },
+                                  {
+                                    mode: 'shorten',
+                                    labelPl: 'Skróć',
+                                    labelEn: 'Make shorter',
+                                    icon: '✂️',
+                                  },
+                                  {
+                                    mode: 'expand',
+                                    labelPl: 'Rozwiń',
+                                    labelEn: 'Expand & elaborate',
+                                    icon: '📖',
+                                  },
+                                  {
+                                    mode: 'formal',
+                                    labelPl: 'Ton formalny',
+                                    labelEn: 'Formal tone',
+                                    icon: '👔',
+                                  },
+                                ] as const
+                              ).map((item) => (
+                                <button
+                                  key={item.mode}
+                                  type="button"
+                                  onClick={() => handleAiImprove(item.mode)}
+                                  className={`w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
+                                    immersive
+                                      ? 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                                  }`}
+                                >
+                                  <span className="text-xs">{item.icon}</span>
+                                  {isPolish ? item.labelPl : item.labelEn}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* AI Improve result */}
+                  {aiImproveResult && (
+                    <div
+                      className={`rounded-xl border p-4 space-y-3 ${
+                        immersive
+                          ? 'border-emerald-500/15 bg-emerald-500/[0.06]'
+                          : 'border-emerald-200/50 dark:border-emerald-500/15 bg-emerald-50/50 dark:bg-emerald-500/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                          {isPolish ? 'Ulepszona wersja' : 'Improved version'}
+                        </p>
+                        <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">
+                          <Sparkles size={9} className="inline mr-0.5 -mt-0.5" />
+                          AI
+                        </span>
+                      </div>
+                      <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed whitespace-pre-wrap">
+                        {aiImproveResult.improvedText}
+                      </p>
+                      <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 italic">
+                        {aiImproveResult.changesSummary}
+                      </p>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAnswerDraft(aiImproveResult.improvedText);
+                            setAiImproveResult(null);
+                            toast.success(
+                              isPolish ? 'Zastosowano ulepszoną wersję' : 'Applied improved version'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
+                        >
+                          <Check size={12} />
+                          {isPolish ? 'Zastosuj' : 'Apply'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiImproveResult(null)}
+                          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            immersive
+                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
+                          }`}
+                        >
+                          {isPolish ? 'Odrzuć' : 'Dismiss'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {voiceNeedsApproval && (
+                    <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 space-y-2">
+                      <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                        {isPolish
+                          ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'
+                          : 'Review the transcript and approve before continuing:'}
+                      </p>
+                      <textarea
+                        value={voiceTranscriptDraft}
+                        onChange={(e) => setVoiceTranscriptDraft(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVoiceTranscriptDraft('');
+                            setAnswerDraft(currentQuestion?.answerText || '');
+                            setInputMode('text_answer');
+                            if (currentQuestion) {
+                              void onUpdateQuestion(currentQuestion.id, {
+                                voiceTranscript: '',
+                                voiceTranscriptStatus: 'none',
+                                answerMode: 'text_answer',
+                                status: currentQuestion.answerText ? 'answered' : 'in_progress',
+                              });
+                            }
+                            toast.success(
+                              isPolish ? 'Transkrypcja odrzucona.' : 'Transcript discarded.'
+                            );
+                          }}
+                          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                            immersive
+                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
+                          }`}
+                        >
+                          <X size={12} />
+                          {isPolish ? 'Odrzuć i ponów' : 'Discard & retry'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleApproveTranscript}
+                          aria-label={isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
+                          className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white"
+                        >
+                          <Check size={14} />
+                          {isPolish ? 'Zatwierdź' : 'Approve'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(inputMode === 'voice_answer' || isTranscribing) && !voiceNeedsApproval && (
+                    <div className="rounded-xl border border-violet-200/70 dark:border-violet-500/20 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
+                      {isTranscribing ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 size={14} className="animate-spin" />
+                          {isPolish ? 'Trwa transkrypcja nagrania...' : 'Transcribing recording...'}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Check size={14} className="text-emerald-500" />
+                          {isPolish ? 'Transkrypcja zatwierdzona.' : 'Transcript approved.'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Evidence prompt */}
+                  {currentQuestion.evidencePrompt && (
+                    <div className="rounded-xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
+                      <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
+                      {currentQuestion.evidencePrompt}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Context capture section (always visible) ── */}
+                <div
+                  className={`space-y-3 pt-3 border-t ${
+                    immersive
+                      ? 'border-white/[0.06]'
+                      : 'border-slate-200/40 dark:border-navy-700/40'
+                  }`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
+                  </p>
+
+                  {/* Context note (always visible) */}
+                  <textarea
+                    value={contextDraft}
+                    onChange={(event) => setContextDraft(event.target.value)}
+                    disabled={readOnly}
+                    rows={1}
+                    className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary-500 ${
+                      immersive
+                        ? 'border-white/[0.06] bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-500 dark:placeholder:text-slate-500'
+                        : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
+                    }`}
+                    placeholder={
+                      isPolish
+                        ? 'Komentarz, niuans, wyjaśnienie do odpowiedzi...'
+                        : 'Comment, nuance, clarification for this answer...'
+                    }
+                  />
+
+                  {/* Action buttons row — platform chip standard (h-8 rounded-full) */}
+                  {!readOnly && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        onChange={handleFilePicked}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                          immersive
                             ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      <Link2 size={11} />
-                      Link
-                    </button>
+                        }`}
+                      >
+                        <Paperclip size={11} />
+                        {isPolish ? 'Plik' : 'File'}
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setArtifactPopoverOpen(true)}
-                      className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
-                        immersive
-                          ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-violet-300'
-                          : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      <Waypoints size={11} />
-                      {isPolish ? 'Artefakt' : 'Artifact'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Link form (expandable) */}
-                {showLinkForm && !readOnly && (
-                  <div className="grid gap-2 md:grid-cols-2 pt-1">
-                    <input
-                      type="text"
-                      value={linkName}
-                      onChange={(event) => setLinkName(event.target.value)}
-                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      placeholder={isPolish ? 'Nazwa linku' : 'Link title'}
-                    />
-                    <input
-                      type="url"
-                      value={linkUrl}
-                      onChange={(event) => setLinkUrl(event.target.value)}
-                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      placeholder="https://"
-                    />
-                    <div className="md:col-span-2 flex justify-end">
                       <button
                         type="button"
-                        onClick={handleAddLink}
-                        disabled={!linkName.trim() || !linkUrl.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                        onClick={() => setShowLinkForm((prev) => !prev)}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                          showLinkForm
+                            ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                            : immersive
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                        }`}
                       >
-                        <Check size={12} />
-                        {isPolish ? 'Dodaj' : 'Add'}
+                        <Link2 size={11} />
+                        Link
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setArtifactPopoverOpen(true)}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
+                          immersive
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-violet-300'
+                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        <Waypoints size={11} />
+                        {isPolish ? 'Artefakt' : 'Artifact'}
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Attached evidence chips */}
-                {currentEvidence.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {currentEvidence.map((item) => {
-                      const isArtifact = item.evidenceType === 'link' && (item.url || '').startsWith('artifact://');
-                      const EvidIcon =
-                        isArtifact
+                  {/* Link form (expandable) */}
+                  {showLinkForm && !readOnly && (
+                    <div className="grid gap-2 md:grid-cols-2 pt-1">
+                      <input
+                        type="text"
+                        value={linkName}
+                        onChange={(event) => setLinkName(event.target.value)}
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        placeholder={isPolish ? 'Nazwa linku' : 'Link title'}
+                      />
+                      <input
+                        type="url"
+                        value={linkUrl}
+                        onChange={(event) => setLinkUrl(event.target.value)}
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        placeholder="https://"
+                      />
+                      <div className="md:col-span-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleAddLink}
+                          disabled={!linkName.trim() || !linkUrl.trim()}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                        >
+                          <Check size={12} />
+                          {isPolish ? 'Dodaj' : 'Add'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attached evidence chips */}
+                  {currentEvidence.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {currentEvidence.map((item) => {
+                        const isArtifact =
+                          item.evidenceType === 'link' &&
+                          (item.url || '').startsWith('artifact://');
+                        const EvidIcon = isArtifact
                           ? Waypoints
                           : item.evidenceType === 'link'
                             ? Link2
                             : item.evidenceType === 'audio'
                               ? Mic
                               : Paperclip;
-                      return (
-                        <span
-                          key={item.id}
-                          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
-                            isArtifact
-                              ? 'border-violet-200/70 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 text-violet-600 dark:text-violet-300'
-                              : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
-                          }`}
-                        >
-                          <EvidIcon size={10} />
-                          <span className="truncate max-w-[140px]">{item.title || item.name}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+                        return (
+                          <span
+                            key={item.id}
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
+                              isArtifact
+                                ? 'border-violet-200/70 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 text-violet-600 dark:text-violet-300'
+                                : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
+                            }`}
+                          >
+                            <EvidIcon size={10} />
+                            <span className="truncate max-w-[140px]">
+                              {item.title || item.name}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 
         {/* Bottom action row */}
-        <div className={`shrink-0 ${
-          immersive
-            ? 'border-t border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01] backdrop-blur-xl px-8 py-3 md:px-16 lg:px-24'
-            : 'rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4'
-        }`}>
-          <div className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${immersive ? 'max-w-4xl mx-auto' : ''}`}>
+        <div
+          className={`shrink-0 ${
+            immersive
+              ? 'border-t border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01] backdrop-blur-xl px-8 py-3 md:px-16 lg:px-24'
+              : 'rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4'
+          }`}
+        >
+          <div
+            className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${immersive ? 'max-w-4xl mx-auto' : ''}`}
+          >
             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               {hasUnsavedChanges ? (
                 <>
                   <Loader2 size={14} className={isPersisting ? 'animate-spin' : ''} />
                   {isPersisting
-                    ? isPolish ? 'Zapisuję...' : 'Saving...'
-                    : isPolish ? 'Niezapisane zmiany' : 'Unsaved changes'}
+                    ? isPolish
+                      ? 'Zapisuję...'
+                      : 'Saving...'
+                    : isPolish
+                      ? 'Niezapisane zmiany'
+                      : 'Unsaved changes'}
                 </>
               ) : autoSaved ? (
                 <>
                   <Check size={14} className="text-emerald-500" />
-                  <span className="text-emerald-500">{isPolish ? 'Auto-zapisano' : 'Auto-saved'}</span>
+                  <span className="text-emerald-500">
+                    {isPolish ? 'Auto-zapisano' : 'Auto-saved'}
+                  </span>
                 </>
               ) : (
                 <>
@@ -1913,7 +2121,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                   }`}
                 >
-                  {isPersisting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  {isPersisting ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
               )}

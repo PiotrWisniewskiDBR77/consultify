@@ -9,7 +9,7 @@
  * Services: promptOsRuntimeService, reportsPresModelService
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -35,15 +35,12 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 }));
 
 import {
+  activateBundle,
   createPreset,
   createReleaseBundle,
   evaluateGate,
-  activateBundle,
 } from '../../../promptOsRuntimeService.js';
-import {
-  setAIGovernanceConfig,
-  createOutputArtifact,
-} from '../../../reportsPresModelService.js';
+import { createOutputArtifact, setAIGovernanceConfig } from '../../../reportsPresModelService.js';
 
 // ==========================================
 // FIXTURES
@@ -122,66 +119,69 @@ describe('F03 — Prompt release → output generation flow', () => {
     // Step 4: Activate the bundle
     // Mock getBundle to return our bundle, getGatesByBundle to return the passing gate,
     // and getActiveBundle to return null (no currently active bundle)
-    mockDbGet.mockImplementation(
-      (sql: string, params?: unknown[]) => {
-        if (typeof sql === 'string' && sql.includes('v8_release_bundles') && sql.includes('bundle_id')) {
-          return Promise.resolve({
-            bundle_id: bundle.bundleId,
-            organization_id: ORG_ID,
-            version: '2.0.0',
-            preset_id: preset.presetId,
-            prompt_version: '2.0.0',
-            model_version: 'gpt-4o-2026-03',
-            policy_version: '1.2.0',
-            runtime_config_version: '1.0.0',
-            status: 'draft',
-            created_at: bundle.createdAt,
-            activated_at: null,
-            rolled_back_at: null,
-          });
-        }
-        if (typeof sql === 'string' && sql.includes('v8_release_bundles') && sql.includes('preset_id') && sql.includes('active')) {
-          return Promise.resolve(null);
-        }
-        if (typeof sql === 'string' && sql.includes('v8_output_ai_governance')) {
-          return Promise.resolve(null);
-        }
+    mockDbGet.mockImplementation((sql: string, params?: unknown[]) => {
+      if (
+        typeof sql === 'string' &&
+        sql.includes('v8_release_bundles') &&
+        sql.includes('bundle_id')
+      ) {
+        return Promise.resolve({
+          bundle_id: bundle.bundleId,
+          organization_id: ORG_ID,
+          version: '2.0.0',
+          preset_id: preset.presetId,
+          prompt_version: '2.0.0',
+          model_version: 'gpt-4o-2026-03',
+          policy_version: '1.2.0',
+          runtime_config_version: '1.0.0',
+          status: 'draft',
+          created_at: bundle.createdAt,
+          activated_at: null,
+          rolled_back_at: null,
+        });
+      }
+      if (
+        typeof sql === 'string' &&
+        sql.includes('v8_release_bundles') &&
+        sql.includes('preset_id') &&
+        sql.includes('active')
+      ) {
         return Promise.resolve(null);
-      },
-    );
-    mockDbAll.mockImplementation(
-      (sql: string) => {
-        if (typeof sql === 'string' && sql.includes('v8_eval_gates')) {
-          return Promise.resolve([
-            {
-              gate_id: gate.gateId,
-              bundle_id: bundle.bundleId,
-              gate_type: 'hard',
-              purpose_family: 'report_generation',
-              change_type: 'prompt_update',
-              thresholds: JSON.stringify(gate.thresholds),
-              result: 'passed',
-              evaluated_at: gate.evaluatedAt,
-            },
-          ]);
-        }
-        return Promise.resolve([]);
-      },
-    );
+      }
+      if (typeof sql === 'string' && sql.includes('v8_output_ai_governance')) {
+        return Promise.resolve(null);
+      }
+      return Promise.resolve(null);
+    });
+    mockDbAll.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('v8_eval_gates')) {
+        return Promise.resolve([
+          {
+            gate_id: gate.gateId,
+            bundle_id: bundle.bundleId,
+            gate_type: 'hard',
+            purpose_family: 'report_generation',
+            change_type: 'prompt_update',
+            thresholds: JSON.stringify(gate.thresholds),
+            result: 'passed',
+            evaluated_at: gate.evaluatedAt,
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
 
     const activatedBundle = await activateBundle(bundle.bundleId);
     expect(activatedBundle.status).toBe('active');
     expect(activatedBundle.activatedAt).toBeDefined();
 
     // Step 5: Set AI governance config referencing the preset
-    mockDbGet.mockImplementation(
-      (sql: string) => {
-        if (typeof sql === 'string' && sql.includes('v8_output_ai_governance')) {
-          return Promise.resolve(null);
-        }
+    mockDbGet.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('v8_output_ai_governance')) {
         return Promise.resolve(null);
-      },
-    );
+      }
+      return Promise.resolve(null);
+    });
 
     const govConfig = await setAIGovernanceConfig({
       organizationId: ORG_ID,

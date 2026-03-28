@@ -1,21 +1,21 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  CreateRunParams,
   CreateProposalParams,
+  CreateRunParams,
   RunState,
 } from '../../../types/executionSpine.js';
 import {
-  ExecutionAgentRunSchema,
-  ActionProposalSchema,
-  RunStateTransitionSchema,
-  MutationDescriptorSchema,
   ActionPreviewSchema,
-  CreateRunParamsSchema,
+  ActionProposalSchema,
   CreateProposalParamsSchema,
-  VALID_TRANSITIONS,
+  CreateRunParamsSchema,
+  ExecutionAgentRunSchema,
+  MutationDescriptorSchema,
+  RunStateTransitionSchema,
   TERMINAL_STATES,
+  VALID_TRANSITIONS,
 } from '../../../types/executionSpine.js';
 
 // ==========================================
@@ -42,14 +42,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createRun,
-  getRun,
-  transitionRunState,
-  createProposal,
-  getProposalsByRun,
-  resolveProposal,
-  getRunTransitions,
   checkRunExpiration,
+  createProposal,
+  createRun,
+  getProposalsByRun,
+  getRun,
+  getRunTransitions,
+  resolveProposal,
+  transitionRunState,
 } from '../executionSpineService.js';
 
 // ==========================================
@@ -206,15 +206,13 @@ describe('createRun', () => {
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createRun({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createRun({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
-    await expect(
-      createRun(makeRunParams({ organizationId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createRun(makeRunParams({ organizationId: 'not-a-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -256,7 +254,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'planning',
       USER_ID,
-      'Starting plan',
+      'Starting plan'
     );
 
     expect(result.state).toBe('planning');
@@ -273,7 +271,7 @@ describe('transitionRunState', () => {
       '00000000-0000-4000-8000-bbbbbbbbbbbb',
       ORG_ID,
       'proposals_ready',
-      'system',
+      'system'
     );
 
     expect(result.state).toBe('proposals_ready');
@@ -287,7 +285,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'approved_for_apply',
       USER_ID,
-      'All proposals approved',
+      'All proposals approved'
     );
 
     expect(result.state).toBe('approved_for_apply');
@@ -301,7 +299,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'completed',
       'system',
-      'All mutations applied',
+      'All mutations applied'
     );
 
     expect(result.state).toBe('completed');
@@ -316,7 +314,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'planning',
       USER_ID,
-      'Re-planning after rejection',
+      'Re-planning after rejection'
     );
 
     expect(result.state).toBe('planning');
@@ -327,12 +325,7 @@ describe('transitionRunState', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'drafting' }));
 
     await expect(
-      transitionRunState(
-        '00000000-0000-4000-8000-bbbbbbbbbbbb',
-        ORG_ID,
-        'completed',
-        USER_ID,
-      ),
+      transitionRunState('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID, 'completed', USER_ID)
     ).rejects.toThrow('Invalid state transition: drafting → completed');
   });
 
@@ -340,12 +333,7 @@ describe('transitionRunState', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'completed' }));
 
     await expect(
-      transitionRunState(
-        '00000000-0000-4000-8000-bbbbbbbbbbbb',
-        ORG_ID,
-        'planning',
-        USER_ID,
-      ),
+      transitionRunState('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID, 'planning', USER_ID)
     ).rejects.toThrow('Invalid state transition');
   });
 
@@ -353,19 +341,20 @@ describe('transitionRunState', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'cancelled' }));
 
     await expect(
-      transitionRunState(
-        '00000000-0000-4000-8000-bbbbbbbbbbbb',
-        ORG_ID,
-        'planning',
-        USER_ID,
-      ),
+      transitionRunState('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID, 'planning', USER_ID)
     ).rejects.toThrow('Invalid state transition');
   });
 
   it('allows cancellation from any non-terminal state', async () => {
     const nonTerminalStates: RunState[] = [
-      'drafting', 'planning', 'proposals_ready',
-      'waiting_for_review', 'approved_for_apply', 'rejected', 'applying', 'failed',
+      'drafting',
+      'planning',
+      'proposals_ready',
+      'waiting_for_review',
+      'approved_for_apply',
+      'rejected',
+      'applying',
+      'failed',
     ];
 
     for (const state of nonTerminalStates) {
@@ -377,7 +366,7 @@ describe('transitionRunState', () => {
         ORG_ID,
         'cancelled',
         USER_ID,
-        `Cancelling from ${state}`,
+        `Cancelling from ${state}`
       );
 
       expect(result.state).toBe('cancelled');
@@ -388,14 +377,9 @@ describe('transitionRunState', () => {
   it('throws when run not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      transitionRunState(
-        'nonexistent',
-        ORG_ID,
-        'planning',
-        USER_ID,
-      ),
-    ).rejects.toThrow('Run nonexistent not found');
+    await expect(transitionRunState('nonexistent', ORG_ID, 'planning', USER_ID)).rejects.toThrow(
+      'Run nonexistent not found'
+    );
   });
 
   it('records audit transition on every state change', async () => {
@@ -406,7 +390,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'planning',
       USER_ID,
-      'Starting plan',
+      'Starting plan'
     );
 
     const transitionSql = mockDbRun.mock.calls[1][0] as string;
@@ -425,7 +409,7 @@ describe('transitionRunState', () => {
       ORG_ID,
       'planning',
       USER_ID,
-      'Retrying after failure',
+      'Retrying after failure'
     );
 
     expect(result.state).toBe('planning');
@@ -460,9 +444,14 @@ describe('createProposal', () => {
 
   it('supports all proposal types', async () => {
     const types = [
-      'create_artifact', 'update_artifact', 'transform_artifact',
-      'link_artifacts', 'workflow_transition', 'generate_structured_output',
-      'review_or_quality_pass', 'request_human_decision',
+      'create_artifact',
+      'update_artifact',
+      'transform_artifact',
+      'link_artifacts',
+      'workflow_transition',
+      'generate_structured_output',
+      'review_or_quality_pass',
+      'request_human_decision',
     ] as const;
 
     for (const proposalType of types) {
@@ -474,7 +463,7 @@ describe('createProposal', () => {
 
   it('rejects invalid proposal type via Zod', async () => {
     await expect(
-      createProposal(makeProposalParams({ proposalType: 'invalid' as any })),
+      createProposal(makeProposalParams({ proposalType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
@@ -514,7 +503,7 @@ describe('resolveProposal', () => {
     const result = await resolveProposal(
       '00000000-0000-4000-8000-cccccccccccc',
       'approved',
-      USER_ID,
+      USER_ID
     );
 
     expect(result.status).toBe('approved');
@@ -531,7 +520,7 @@ describe('resolveProposal', () => {
     const result = await resolveProposal(
       '00000000-0000-4000-8000-cccccccccccc',
       'rejected',
-      USER_ID,
+      USER_ID
     );
 
     expect(result.status).toBe('rejected');
@@ -543,7 +532,7 @@ describe('resolveProposal', () => {
     const result = await resolveProposal(
       '00000000-0000-4000-8000-cccccccccccc',
       'policy_allowed',
-      'policy:auto-approve-safe-additive',
+      'policy:auto-approve-safe-additive'
     );
 
     expect(result.status).toBe('policy_allowed');
@@ -553,16 +542,16 @@ describe('resolveProposal', () => {
   it('throws when proposal not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resolveProposal('nonexistent', 'approved', USER_ID),
-    ).rejects.toThrow('Proposal nonexistent not found');
+    await expect(resolveProposal('nonexistent', 'approved', USER_ID)).rejects.toThrow(
+      'Proposal nonexistent not found'
+    );
   });
 
   it('throws when proposal already resolved', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeProposalRow({ status: 'approved' }));
 
     await expect(
-      resolveProposal('00000000-0000-4000-8000-cccccccccccc', 'rejected', USER_ID),
+      resolveProposal('00000000-0000-4000-8000-cccccccccccc', 'rejected', USER_ID)
     ).rejects.toThrow('Cannot resolve proposal');
   });
 
@@ -570,7 +559,7 @@ describe('resolveProposal', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeProposalRow({ status: 'draft' }));
 
     await expect(
-      resolveProposal('00000000-0000-4000-8000-cccccccccccc', 'draft' as any, USER_ID),
+      resolveProposal('00000000-0000-4000-8000-cccccccccccc', 'draft' as any, USER_ID)
     ).rejects.toThrow('Invalid resolution status');
   });
 });
@@ -609,11 +598,11 @@ describe('checkRunExpiration', () => {
 
     // First call: getRun
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', expires_at: pastDate }),
+      makeFakeRunRow({ state: 'waiting_for_review', expires_at: pastDate })
     );
     // Second call: getRun inside transitionRunState
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', expires_at: pastDate }),
+      makeFakeRunRow({ state: 'waiting_for_review', expires_at: pastDate })
     );
 
     const expired = await checkRunExpiration('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID);
@@ -625,7 +614,7 @@ describe('checkRunExpiration', () => {
     const futureDate = new Date(Date.now() + 3_600_000).toISOString();
 
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', expires_at: futureDate }),
+      makeFakeRunRow({ state: 'waiting_for_review', expires_at: futureDate })
     );
 
     const expired = await checkRunExpiration('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID);
@@ -643,7 +632,7 @@ describe('checkRunExpiration', () => {
 
   it('returns false for runs without expiresAt', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', expires_at: null }),
+      makeFakeRunRow({ state: 'waiting_for_review', expires_at: null })
     );
 
     const expired = await checkRunExpiration('00000000-0000-4000-8000-bbbbbbbbbbbb', ORG_ID);
@@ -663,9 +652,17 @@ describe('checkRunExpiration', () => {
 describe('state machine completeness', () => {
   it('VALID_TRANSITIONS covers all RunState values', () => {
     const allStates: RunState[] = [
-      'drafting', 'planning', 'proposals_ready', 'waiting_for_review',
-      'approved_for_apply', 'rejected', 'applying',
-      'completed', 'failed', 'cancelled', 'expired',
+      'drafting',
+      'planning',
+      'proposals_ready',
+      'waiting_for_review',
+      'approved_for_apply',
+      'rejected',
+      'applying',
+      'completed',
+      'failed',
+      'cancelled',
+      'expired',
     ];
 
     for (const state of allStates) {
@@ -682,9 +679,17 @@ describe('state machine completeness', () => {
 
   it('all non-terminal states allow cancellation', () => {
     const allStates: RunState[] = [
-      'drafting', 'planning', 'proposals_ready', 'waiting_for_review',
-      'approved_for_apply', 'rejected', 'applying',
-      'completed', 'failed', 'cancelled', 'expired',
+      'drafting',
+      'planning',
+      'proposals_ready',
+      'waiting_for_review',
+      'approved_for_apply',
+      'rejected',
+      'applying',
+      'completed',
+      'failed',
+      'cancelled',
+      'expired',
     ];
 
     for (const state of allStates) {
@@ -729,7 +734,7 @@ describe('Zod schema validation', () => {
         resolvedAt: null,
         expiresAt: null,
         metadata: {},
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -741,7 +746,7 @@ describe('Zod schema validation', () => {
         payloadSummary: { key: 'value' },
         reversibility: 'reversible',
         estimatedImpact: 'Low',
-      }),
+      })
     ).not.toThrow();
 
     expect(() =>
@@ -751,7 +756,7 @@ describe('Zod schema validation', () => {
         payloadSummary: null,
         reversibility: 'reversible',
         estimatedImpact: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -765,7 +770,7 @@ describe('Zod schema validation', () => {
         updatedFields: ['field1'],
         destructiveImpact: null,
         followupEffects: [],
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -787,7 +792,7 @@ describe('Zod schema validation', () => {
         triggeredBy: USER_ID,
         reason: null,
         transitionedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 });

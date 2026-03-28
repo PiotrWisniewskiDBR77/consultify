@@ -4,12 +4,12 @@
  * Tabs: Instructions | Memory | Response Style | Automation | Chat History | Voice
  */
 
-import { Brain, Bot, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
+import { Bot, Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AISettings } from '../../components/settings/AISettings';
 import { AIInboxAutomationSettings } from '../../components/settings/ai/AIInboxAutomationSettings';
+import { AISettings } from '../../components/settings/AISettings';
 import { VoiceSettingsPanel } from '../../components/settings/VoiceSettingsPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';

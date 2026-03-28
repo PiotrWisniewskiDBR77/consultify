@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockDbAll, mockSearchRelevantChunks, mockGetWorkerBySlug, mockListKnowledgeAssignments } = vi.hoisted(() => ({
-  mockDbAll: vi.fn(),
-  mockSearchRelevantChunks: vi.fn(),
-  mockGetWorkerBySlug: vi.fn(),
-  mockListKnowledgeAssignments: vi.fn(),
-}));
+const { mockDbAll, mockSearchRelevantChunks, mockGetWorkerBySlug, mockListKnowledgeAssignments } =
+  vi.hoisted(() => ({
+    mockDbAll: vi.fn(),
+    mockSearchRelevantChunks: vi.fn(),
+    mockGetWorkerBySlug: vi.fn(),
+    mockListKnowledgeAssignments: vi.fn(),
+  }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: mockDbAll,
@@ -74,15 +75,20 @@ describe('virtualWorkerKnowledgeService locale-aware retrieval quality', () => {
 
     const hitsByDocumentId = new Map([
       ['pl-doc', { documentId: 'pl-doc', content: 'Polish worker context', similarity: 0.91 }],
-      ['neutral-doc', { documentId: 'neutral-doc', content: 'Neutral worker context', similarity: 0.84 }],
+      [
+        'neutral-doc',
+        { documentId: 'neutral-doc', content: 'Neutral worker context', similarity: 0.84 },
+      ],
       ['en-doc', { documentId: 'en-doc', content: 'English worker context', similarity: 0.99 }],
     ]);
 
-    mockSearchRelevantChunks.mockImplementation(async (_query: string, opts: { documentIds: string[] }) => {
-      return opts.documentIds
-        .map((documentId) => hitsByDocumentId.get(documentId))
-        .filter(Boolean);
-    });
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) => {
+        return opts.documentIds
+          .map((documentId) => hitsByDocumentId.get(documentId))
+          .filter(Boolean);
+      }
+    );
 
     const result = await buildWorkerKnowledgeContext({
       workerSlug: 'anna',
@@ -103,12 +109,16 @@ describe('virtualWorkerKnowledgeService locale-aware retrieval quality', () => {
       buildDoc('en-doc', 'worker-consultify-en.md', 'consultify', 'en'),
     ]);
 
-    mockSearchRelevantChunks.mockImplementation(async (_query: string, opts: { documentIds: string[] }) => {
-      if (opts.documentIds.includes('en-doc')) {
-        return [{ documentId: 'en-doc', content: 'English worker fallback context', similarity: 0.89 }];
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) => {
+        if (opts.documentIds.includes('en-doc')) {
+          return [
+            { documentId: 'en-doc', content: 'English worker fallback context', similarity: 0.89 },
+          ];
+        }
+        return [];
       }
-      return [];
-    });
+    );
 
     const result = await buildWorkerKnowledgeContext({
       workerSlug: 'anna',

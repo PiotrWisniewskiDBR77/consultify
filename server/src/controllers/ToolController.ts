@@ -6,17 +6,17 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { hasPermission } from '../services/permissionService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import { hasPermission } from '../services/permissionService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
-  ToolRuntimeContractSchema,
   evaluateDoDGates,
   type ToolRuntimeContract,
+  ToolRuntimeContractSchema,
 } from '../validators/toolRuntime.validators.js';
 
 type ToolSessionRow = {

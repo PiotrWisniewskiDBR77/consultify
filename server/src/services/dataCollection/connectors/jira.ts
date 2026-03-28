@@ -3,13 +3,13 @@
  * Uses native fetch (Node 18+); no jira package required.
  */
 
-import type {
-  IConnector,
-  ExternalSchema,
-  ExternalRecord,
-  FetchOptions,
-} from '../connectorFramework.js';
 import logger from '../../../utils/Logger.js';
+import type {
+  ExternalRecord,
+  ExternalSchema,
+  FetchOptions,
+  IConnector,
+} from '../connectorFramework.js';
 
 const MAX_ISSUES = 10_000;
 const PAGE_SIZE = 100;
@@ -159,11 +159,7 @@ export const jiraConnector: IConnector = {
   async fetchSchema(config: Record<string, unknown>): Promise<ExternalSchema> {
     const cfg = parseConfig(config);
 
-    const data = (await jiraGet(
-      `${baseUrl(cfg.domain)}/field`,
-      cfg.email,
-      cfg.apiToken
-    )) as Array<{
+    const data = (await jiraGet(`${baseUrl(cfg.domain)}/field`, cfg.email, cfg.apiToken)) as Array<{
       id: string;
       name: string;
       schema?: { type?: string; items?: string };
@@ -197,8 +193,9 @@ export const jiraConnector: IConnector = {
     options?: FetchOptions
   ): Promise<ExternalRecord[]> {
     const cfg = parseConfig(config);
-    const jql = cfg.jql
-      || (cfg.project ? `project = "${cfg.project}" ORDER BY created DESC` : 'ORDER BY created DESC');
+    const jql =
+      cfg.jql ||
+      (cfg.project ? `project = "${cfg.project}" ORDER BY created DESC` : 'ORDER BY created DESC');
 
     const allRecords: ExternalRecord[] = [];
     let startAt = options?.offset ?? 0;

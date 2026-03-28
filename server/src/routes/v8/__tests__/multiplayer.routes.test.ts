@@ -99,7 +99,10 @@ describe('V8 Multiplayer read-only routes', () => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockGetResourceTypeMapping.mockResolvedValue(null);
-    mockResolveRoomBinding.mockResolvedValue({ roomResourceType: 'whiteboard', roomResourceId: 'wb-1' });
+    mockResolveRoomBinding.mockResolvedValue({
+      roomResourceType: 'whiteboard',
+      roomResourceId: 'wb-1',
+    });
     mockGetWorkspacePresence.mockResolvedValue([]);
     mockGetPresenceBySurface.mockResolvedValue([]);
     mockGetActiveLocks.mockResolvedValue([]);
@@ -144,7 +147,9 @@ describe('V8 Multiplayer read-only routes', () => {
     });
 
     const res = await request(createApp())
-      .get('/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=wb-1&parentResourceId=ws-parent')
+      .get(
+        '/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=wb-1&parentResourceId=ws-parent'
+      )
       .set('Authorization', 'Bearer x');
 
     expect(res.status).toBe(200);

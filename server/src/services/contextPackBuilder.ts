@@ -79,7 +79,9 @@ export async function buildContextPack(
     try {
       await extractFromSource(pack, ref, organizationId);
     } catch (error) {
-      logger.warn(`[ContextPack] Failed to extract from ${ref.artifact_type}:${ref.artifact_id}`, { error });
+      logger.warn(`[ContextPack] Failed to extract from ${ref.artifact_type}:${ref.artifact_id}`, {
+        error,
+      });
       pack.metadata.extraction_warnings.push(
         `Failed to extract data from ${ref.artifact_name} (${ref.artifact_type})`
       );
@@ -214,7 +216,9 @@ async function extractFinancialData(
   }
 
   if (kpis.length > 0) {
-    pack.key_points.push(`${kpis.length} KPIs tracked; ${kpis.filter((k: any) => k.trend_direction === 'up').length} trending up.`);
+    pack.key_points.push(
+      `${kpis.length} KPIs tracked; ${kpis.filter((k: any) => k.trend_direction === 'up').length} trending up.`
+    );
     pack.charts_available.push({
       chart_type: 'line',
       title: 'KPI Trends',
@@ -237,8 +241,12 @@ async function extractExecutionData(
   );
 
   const total = tasks.length;
-  const completed = tasks.filter((t: any) => t.status === 'done' || t.status === 'completed').length;
-  const overdue = tasks.filter((t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done').length;
+  const completed = tasks.filter(
+    (t: any) => t.status === 'done' || t.status === 'completed'
+  ).length;
+  const overdue = tasks.filter(
+    (t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+  ).length;
 
   pack.key_points.push(`Execution: ${completed}/${total} tasks completed. ${overdue} overdue.`);
   pack.data_points.push(
@@ -255,11 +263,7 @@ async function extractExecutionData(
   });
 }
 
-async function extractRiskData(
-  pack: ContextPack,
-  ref: SourceRef,
-  orgId: string
-): Promise<void> {
+async function extractRiskData(pack: ContextPack, ref: SourceRef, orgId: string): Promise<void> {
   const risks = await dbAll(
     `SELECT title, severity, probability, status, mitigation_plan, owner
      FROM risks WHERE organization_id = ?
@@ -267,7 +271,9 @@ async function extractRiskData(
     [orgId]
   );
 
-  const critical = risks.filter((r: any) => r.severity === 'critical' || r.severity === 'high').length;
+  const critical = risks.filter(
+    (r: any) => r.severity === 'critical' || r.severity === 'high'
+  ).length;
 
   pack.key_points.push(`${risks.length} risks tracked, ${critical} critical/high severity.`);
   for (const risk of risks) {
@@ -303,9 +309,10 @@ async function extractToolSessionData(
   );
 
   if (session) {
-    const output = typeof session.output_data === 'string'
-      ? JSON.parse(session.output_data)
-      : session.output_data;
+    const output =
+      typeof session.output_data === 'string'
+        ? JSON.parse(session.output_data)
+        : session.output_data;
 
     if (output?.summary) pack.key_points.push(output.summary);
     if (output?.key_findings) {
@@ -334,31 +341,56 @@ async function extractValuationData(
   );
   for (const v of rows) {
     pack.headings.push(v.title || 'Enterprise Valuation');
-    const results = typeof v.results === 'string' ? JSON.parse(v.results || '{}') : (v.results || {});
+    const results = typeof v.results === 'string' ? JSON.parse(v.results || '{}') : v.results || {};
     const dcf = results?.dcf;
     if (dcf) {
-      if (dcf.enterpriseValue != null) pack.data_points.push({ label: 'Enterprise Value', value: dcf.enterpriseValue, unit: v.currency || 'PLN', source_artifact_id: ref.artifact_id });
-      if (dcf.equityValue != null) pack.data_points.push({ label: 'Equity Value', value: dcf.equityValue, unit: v.currency || 'PLN', source_artifact_id: ref.artifact_id });
-      if (dcf.impliedMultiple != null) pack.data_points.push({ label: 'EV/EBITDA', value: dcf.impliedMultiple, unit: 'x', source_artifact_id: ref.artifact_id });
-      if (dcf.wacc != null) pack.data_points.push({ label: 'WACC', value: dcf.wacc, unit: '%', source_artifact_id: ref.artifact_id });
+      if (dcf.enterpriseValue != null)
+        pack.data_points.push({
+          label: 'Enterprise Value',
+          value: dcf.enterpriseValue,
+          unit: v.currency || 'PLN',
+          source_artifact_id: ref.artifact_id,
+        });
+      if (dcf.equityValue != null)
+        pack.data_points.push({
+          label: 'Equity Value',
+          value: dcf.equityValue,
+          unit: v.currency || 'PLN',
+          source_artifact_id: ref.artifact_id,
+        });
+      if (dcf.impliedMultiple != null)
+        pack.data_points.push({
+          label: 'EV/EBITDA',
+          value: dcf.impliedMultiple,
+          unit: 'x',
+          source_artifact_id: ref.artifact_id,
+        });
+      if (dcf.wacc != null)
+        pack.data_points.push({
+          label: 'WACC',
+          value: dcf.wacc,
+          unit: '%',
+          source_artifact_id: ref.artifact_id,
+        });
     }
     if (results?.sensitivity) {
-      pack.key_points.push(`Sensitivity analysis: ${JSON.stringify(results.sensitivity.rowHeaders || [])} WACC vs growth rates`);
+      pack.key_points.push(
+        `Sensitivity analysis: ${JSON.stringify(results.sensitivity.rowHeaders || [])} WACC vs growth rates`
+      );
     }
-    const advisory = typeof v.advisory === 'string' ? JSON.parse(v.advisory || '{}') : (v.advisory || {});
+    const advisory =
+      typeof v.advisory === 'string' ? JSON.parse(v.advisory || '{}') : v.advisory || {};
     const recs = Array.isArray(advisory?.recommendations) ? advisory.recommendations : [];
     for (const rec of recs.slice(0, 5)) {
-      pack.key_points.push(`Advisory: ${rec.title || rec.description || ''} (${rec.priority || 'medium'})`);
+      pack.key_points.push(
+        `Advisory: ${rec.title || rec.description || ''} (${rec.priority || 'medium'})`
+      );
     }
     pack.metadata.confidence_score += 3;
   }
 }
 
-async function extractTaskData(
-  pack: ContextPack,
-  ref: SourceRef,
-  orgId: string
-): Promise<void> {
+async function extractTaskData(pack: ContextPack, ref: SourceRef, orgId: string): Promise<void> {
   const tasks = await dbAll(
     `SELECT title, status, priority, assignee, due_date
      FROM tasks WHERE organization_id = ? AND (id = ? OR ? IS NULL)
@@ -367,11 +399,19 @@ async function extractTaskData(
   );
 
   const total = tasks.length;
-  const completed = tasks.filter((t: any) => t.status === 'done' || t.status === 'completed').length;
-  const overdue = tasks.filter(
-    (t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done' && t.status !== 'completed'
+  const completed = tasks.filter(
+    (t: any) => t.status === 'done' || t.status === 'completed'
   ).length;
-  const highPriority = tasks.filter((t: any) => t.priority === 'high' || t.priority === 'critical').length;
+  const overdue = tasks.filter(
+    (t: any) =>
+      t.due_date &&
+      new Date(t.due_date) < new Date() &&
+      t.status !== 'done' &&
+      t.status !== 'completed'
+  ).length;
+  const highPriority = tasks.filter(
+    (t: any) => t.priority === 'high' || t.priority === 'critical'
+  ).length;
 
   pack.key_points.push(
     `Tasks: ${completed}/${total} completed, ${overdue} overdue, ${highPriority} high-priority.`
@@ -414,10 +454,14 @@ async function extractDecisionData(
   for (const d of decisions) {
     const statusLabel = d.status || 'pending';
     const impactLabel = d.impact ? ` (impact: ${d.impact})` : '';
-    pack.key_points.push(`Decision "${d.title}" — ${statusLabel}${impactLabel}: ${d.description || 'No description'}`);
+    pack.key_points.push(
+      `Decision "${d.title}" — ${statusLabel}${impactLabel}: ${d.description || 'No description'}`
+    );
   }
 
-  const approved = decisions.filter((d: any) => d.status === 'approved' || d.status === 'decided').length;
+  const approved = decisions.filter(
+    (d: any) => d.status === 'approved' || d.status === 'decided'
+  ).length;
   pack.data_points.push(
     { label: 'Total Decisions', value: decisions.length, source_artifact_id: ref.artifact_id },
     { label: 'Approved/Decided', value: approved, source_artifact_id: ref.artifact_id }
@@ -455,7 +499,9 @@ async function extractBenefitsData(
   }
 
   if (benefits.length > 0) {
-    const onTrack = benefits.filter((b: any) => b.status === 'on_track' || b.status === 'achieved').length;
+    const onTrack = benefits.filter(
+      (b: any) => b.status === 'on_track' || b.status === 'achieved'
+    ).length;
     pack.key_points.push(`${benefits.length} benefits tracked; ${onTrack} on track/achieved.`);
     pack.charts_available.push({
       chart_type: 'bar',
@@ -483,17 +529,34 @@ async function extractEconomicAnalysisData(
     pack.headings.push(row.title || 'Economic Analysis');
     const currency = row.currency || 'PLN';
     if (row.total_budget != null) {
-      pack.data_points.push({ label: 'Total Budget', value: row.total_budget, unit: currency, source_artifact_id: ref.artifact_id });
+      pack.data_points.push({
+        label: 'Total Budget',
+        value: row.total_budget,
+        unit: currency,
+        source_artifact_id: ref.artifact_id,
+      });
     }
     if (row.spent != null) {
-      pack.data_points.push({ label: 'Spent', value: row.spent, unit: currency, source_artifact_id: ref.artifact_id });
+      pack.data_points.push({
+        label: 'Spent',
+        value: row.spent,
+        unit: currency,
+        source_artifact_id: ref.artifact_id,
+      });
     }
     if (row.remaining != null) {
-      pack.data_points.push({ label: 'Remaining', value: row.remaining, unit: currency, source_artifact_id: ref.artifact_id });
+      pack.data_points.push({
+        label: 'Remaining',
+        value: row.remaining,
+        unit: currency,
+        source_artifact_id: ref.artifact_id,
+      });
     }
     if (row.total_budget && row.spent) {
       const utilisation = Math.round((Number(row.spent) / Number(row.total_budget)) * 100);
-      pack.key_points.push(`Budget utilisation: ${utilisation}% (${row.spent} of ${row.total_budget} ${currency})`);
+      pack.key_points.push(
+        `Budget utilisation: ${utilisation}% (${row.spent} of ${row.total_budget} ${currency})`
+      );
     }
   }
 
@@ -526,10 +589,7 @@ async function extractEconomicAnalysisData(
 /**
  * Save a ContextPack snapshot to the database for refresh/audit purposes.
  */
-export async function saveContextPackSnapshot(
-  deckId: string,
-  pack: ContextPack
-): Promise<void> {
+export async function saveContextPackSnapshot(deckId: string, pack: ContextPack): Promise<void> {
   try {
     await dbAll(
       `INSERT INTO context_pack_snapshots (deck_id, pack_id, pack_data, created_at)

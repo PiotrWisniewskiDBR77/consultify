@@ -98,18 +98,10 @@ export const LockTypeValues = [
 ] as const;
 export type LockType = (typeof LockTypeValues)[number];
 
-export const LockReleaseReasonValues = [
-  'explicit',
-  'timeout',
-  'disconnect',
-] as const;
+export const LockReleaseReasonValues = ['explicit', 'timeout', 'disconnect'] as const;
 export type LockReleaseReason = (typeof LockReleaseReasonValues)[number];
 
-export const NotificationPriorityValues = [
-  'high',
-  'medium',
-  'low',
-] as const;
+export const NotificationPriorityValues = ['high', 'medium', 'low'] as const;
 export type NotificationPriority = (typeof NotificationPriorityValues)[number];
 
 export const NotificationChannelValues = [
@@ -119,12 +111,7 @@ export const NotificationChannelValues = [
 ] as const;
 export type NotificationChannel = (typeof NotificationChannelValues)[number];
 
-export const NotificationStateValues = [
-  'unread',
-  'read',
-  'actioned',
-  'snoozed',
-] as const;
+export const NotificationStateValues = ['unread', 'read', 'actioned', 'snoozed'] as const;
 export type NotificationState = (typeof NotificationStateValues)[number];
 
 export const GovernanceConflictPolicyValues = [

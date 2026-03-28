@@ -1,9 +1,9 @@
 import { all as dbAll } from '../utils/DbPromise.js';
 import {
-  getCanonicalLineByCode,
-  getCanonicalLinesByStatementType,
   type CanonicalLineDefinition,
   type CanonicalStatementType,
+  getCanonicalLineByCode,
+  getCanonicalLinesByStatementType,
 } from './financeCanonicalRegistry.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 
@@ -87,7 +87,12 @@ export type StatementAnalyticsRow = {
   value: number;
   valuePeriodLabel?: string | null;
   valuePeriodIndex?: number | null;
-  periodValues: Array<{ id: string; periodLabel?: string | null; periodIndex?: number | null; value: number }>;
+  periodValues: Array<{
+    id: string;
+    periodLabel?: string | null;
+    periodIndex?: number | null;
+    value: number;
+  }>;
   originalLabel: string;
   sourcePage?: number | null;
   sourceRow?: number | null;
@@ -137,12 +142,19 @@ function formulaValue(
 ): number | null {
   const formula = line.formulaJson;
   if (!formula || typeof formula !== 'object') return null;
-  const inputs = Array.isArray((formula as any).inputs) ? ((formula as any).inputs as string[]) : [];
+  const inputs = Array.isArray((formula as any).inputs)
+    ? ((formula as any).inputs as string[])
+    : [];
   const resolved = inputs
-    .map((code) => byCode.get(normalizeCanonicalLineCode(code)) || getCanonicalLineByCode(code)?.id || null)
+    .map(
+      (code) =>
+        byCode.get(normalizeCanonicalLineCode(code)) || getCanonicalLineByCode(code)?.id || null
+    )
     .filter(Boolean) as string[];
   if (!resolved.length) return null;
-  const values = resolved.map((lineId) => computeLineValue(lineId, periodKey, byLineId, byCode, visiting) ?? 0);
+  const values = resolved.map(
+    (lineId) => computeLineValue(lineId, periodKey, byLineId, byCode, visiting) ?? 0
+  );
   if ((formula as any).type === 'difference') {
     return Number(values[0] || 0) - Number(values[1] || 0);
   }
@@ -160,7 +172,9 @@ function computeLineValue(
   if (direct != null) return direct;
   if (visiting.has(`${lineId}:${periodKey}`)) return null;
   const canonicalLine = Array.from(byCode.entries()).find(([, id]) => id === lineId)?.[0]
-    ? getCanonicalLineByCode(Array.from(byCode.entries()).find(([, id]) => id === lineId)?.[0] || '')
+    ? getCanonicalLineByCode(
+        Array.from(byCode.entries()).find(([, id]) => id === lineId)?.[0] || ''
+      )
     : null;
   if (!canonicalLine) return null;
   visiting.add(`${lineId}:${periodKey}`);
@@ -189,7 +203,9 @@ export async function buildStatementAnalytics(params: {
 
   const periods = buildPeriods(persistedRows, params.defaultPeriodLabel || null);
   const canonicalLines = getCanonicalLinesByStatementType(params.statementType);
-  const lineIdByCode = new Map(canonicalLines.map((line) => [normalizeCanonicalLineCode(line.code), line.id]));
+  const lineIdByCode = new Map(
+    canonicalLines.map((line) => [normalizeCanonicalLineCode(line.code), line.id])
+  );
   const valuesByLineAndPeriod = new Map<string, Map<string, number>>();
   const rowBuckets = new Map<string, Map<string, PersistedValueRow[]>>();
 
@@ -218,7 +234,16 @@ export async function buildStatementAnalytics(params: {
         .map((period) => {
           const directRows = rowBuckets.get(line.id)?.get(period.key) || [];
           const direct = valuesByLineAndPeriod.get(line.id)?.get(period.key);
-          const computed = direct != null ? direct : computeLineValue(line.id, period.key, valuesByLineAndPeriod, lineIdByCode, new Set());
+          const computed =
+            direct != null
+              ? direct
+              : computeLineValue(
+                  line.id,
+                  period.key,
+                  valuesByLineAndPeriod,
+                  lineIdByCode,
+                  new Set()
+                );
           if (computed == null) return null;
           const topRow = directRows[0] || null;
           return {
@@ -228,13 +253,24 @@ export async function buildStatementAnalytics(params: {
             value: Number(computed || 0),
           };
         })
-        .filter(Boolean) as Array<{ id: string; periodLabel?: string | null; periodIndex?: number | null; value: number }>;
+        .filter(Boolean) as Array<{
+        id: string;
+        periodLabel?: string | null;
+        periodIndex?: number | null;
+        value: number;
+      }>;
 
       if (!periodValues.length && line.requiredLevel === 'optional' && !line.isComputed) {
         return null;
       }
-      const firstPeriod = periodValues[0] || { id: `analytics:${line.id}`, periodLabel: periods[0]?.label || null, periodIndex: periods[0]?.index || 0, value: 0 };
-      const directRows = rowBuckets.get(line.id)?.get(`${firstPeriod.periodIndex}:${firstPeriod.periodLabel}`) || [];
+      const firstPeriod = periodValues[0] || {
+        id: `analytics:${line.id}`,
+        periodLabel: periods[0]?.label || null,
+        periodIndex: periods[0]?.index || 0,
+        value: 0,
+      };
+      const directRows =
+        rowBuckets.get(line.id)?.get(`${firstPeriod.periodIndex}:${firstPeriod.periodLabel}`) || [];
       const directHead = directRows[0] || null;
       const isDerived = !directHead && (line.isComputed || line.formulaJson);
       const explain: AnalyticsExplain = {
@@ -245,7 +281,9 @@ export async function buildStatementAnalytics(params: {
         value: Number(firstPeriod.value || 0),
         mappingStatus: directHead?.mapping_status || (isDerived ? 'computed' : 'auto'),
         valueOrigin: directHead?.value_origin || (isDerived ? 'computed' : 'mapped'),
-        mappingConfidence: Number(directHead?.mapping_confidence ?? directHead?.confidence ?? (isDerived ? 1 : 0)),
+        mappingConfidence: Number(
+          directHead?.mapping_confidence ?? directHead?.confidence ?? (isDerived ? 1 : 0)
+        ),
         evidenceJson: parseEvidenceJson(directHead?.evidence_json || null),
         evidences: [
           {
@@ -261,7 +299,8 @@ export async function buildStatementAnalytics(params: {
               ? {
                   rowLabel: directHead.original_label || null,
                   sourceRow: directHead.source_row != null ? Number(directHead.source_row) : null,
-                  sourcePage: directHead.source_page != null ? Number(directHead.source_page) : null,
+                  sourcePage:
+                    directHead.source_page != null ? Number(directHead.source_page) : null,
                 }
               : null,
           },

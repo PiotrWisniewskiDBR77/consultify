@@ -55,8 +55,7 @@ export function useTableViews(
 ): UseTableViewsReturn {
   const isPl = typeof isPlOrOpts === 'boolean' ? isPlOrOpts : isPlOrOpts.isPl;
   const ideaId = typeof isPlOrOpts === 'boolean' ? (maybeIdeaId ?? '') : isPlOrOpts.ideaId;
-  const onApplyColumns =
-    typeof isPlOrOpts === 'object' ? isPlOrOpts.onApplyColumns : undefined;
+  const onApplyColumns = typeof isPlOrOpts === 'object' ? isPlOrOpts.onApplyColumns : undefined;
 
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
 
@@ -116,14 +115,9 @@ export function useTableViews(
     [filters, groupBy, ideaId, sort, viewLayout]
   );
 
-  const updateSavedView = useCallback(
-    (viewId: string, patch: Partial<SavedView>) => {
-      setSavedViews((prev) =>
-        prev.map((v) => (v.id === viewId ? { ...v, ...patch } : v))
-      );
-    },
-    []
-  );
+  const updateSavedView = useCallback((viewId: string, patch: Partial<SavedView>) => {
+    setSavedViews((prev) => prev.map((v) => (v.id === viewId ? { ...v, ...patch } : v)));
+  }, []);
 
   const deleteSavedView = useCallback(
     (viewId: string) => {

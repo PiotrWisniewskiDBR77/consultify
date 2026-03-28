@@ -35,11 +35,7 @@ export interface WatchNotification {
 }
 
 const recordWatchService = {
-  async watchRecord(
-    recordId: string,
-    tableId: string,
-    userId: string
-  ): Promise<RecordWatch> {
+  async watchRecord(recordId: string, tableId: string, userId: string): Promise<RecordWatch> {
     const db = getDatabase();
     try {
       const result = await db.query(

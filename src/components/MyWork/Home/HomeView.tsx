@@ -1,20 +1,20 @@
-import { Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Info } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '@/lib/utils';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
+import { cn } from '@/lib/utils';
 
 import { AIPulseCore } from './AIPulseCore';
 import { CommandDock } from './CommandDock';
 import { DecisionTemperatureBlock } from './DecisionTemperatureBlock';
 import { ExecutionCurrentBlock } from './ExecutionCurrentBlock';
+import type { HomeBlock, HomeScreenAction, HomeTimeMode } from './homeV2Types';
 import { IndustryLensBlock } from './IndustryLensBlock';
 import { MomentumBlock } from './MomentumBlock';
 import { SparkField } from './SparkField';
 import { TeamSignalBlock } from './TeamSignalBlock';
-import type { HomeBlock, HomeScreenAction, HomeTimeMode } from './homeV2Types';
 import { useHomeData } from './useHomeData';
 
 interface HomeViewProps {
@@ -80,7 +80,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <div className="relative z-10 flex items-center justify-between px-7 pt-4 pb-2">
         <div className="min-w-0">
           <span className="text-[13px] font-medium text-slate-500 dark:text-slate-500">
-            {screen.pulseLabel || (pl ? 'Home V2 · ekran transformacji' : 'Home V2 · transformation screen')}
+            {screen.pulseLabel ||
+              (pl ? 'Home V2 · ekran transformacji' : 'Home V2 · transformation screen')}
             {userName ? ` · ${userName}` : ''}
           </span>
           {roofTruthStrip ? (
@@ -130,7 +131,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   );
 };
 
-function renderHomeBlock(block: HomeBlock, onAction: (action: HomeScreenAction) => void): React.ReactNode {
+function renderHomeBlock(
+  block: HomeBlock,
+  onAction: (action: HomeScreenAction) => void
+): React.ReactNode {
   switch (block.id) {
     case 'aiPulseCore':
       return <AIPulseCore block={block} onAction={onAction} />;
@@ -211,7 +215,11 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
           ? { x: [0, 12, 0], y: [0, 10, 0], scale: [1, 1.03, 1] }
           : { x: [0, 30, -18, 0], y: [0, 22, -28, 0], scale: [1, 1.08, 0.94, 1] }
       }
-      transition={{ duration: ambientMotion === 'soft' ? 34 : 28, repeat: Infinity, ease: 'easeInOut' }}
+      transition={{
+        duration: ambientMotion === 'soft' ? 34 : 28,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
     />
     <motion.div
       className="pointer-events-none absolute -right-36 top-[20%] h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-amber-300/20 to-rose-300/15 blur-[170px] dark:from-amber-500/20 dark:to-rose-400/15"
@@ -220,7 +228,11 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
           ? { x: [0, -10, 0], y: [0, -8, 0], scale: [1, 0.98, 1] }
           : { x: [0, -26, 18, 0], y: [0, -20, 22, 0], scale: [1, 0.95, 1.07, 1] }
       }
-      transition={{ duration: ambientMotion === 'soft' ? 40 : 36, repeat: Infinity, ease: 'easeInOut' }}
+      transition={{
+        duration: ambientMotion === 'soft' ? 40 : 36,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
     />
   </>
 );

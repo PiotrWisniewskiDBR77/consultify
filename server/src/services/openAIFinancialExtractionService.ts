@@ -1,14 +1,10 @@
 import fs from 'fs';
+import OpenAI from 'openai';
 import path from 'path';
 
-import OpenAI from 'openai';
-
-import {
-  logFinanceError,
-  logFinanceEvent,
-} from './financeDiagnosticsService.js';
-import type { ExtractionResult } from './financialStatementService.js';
 import { llmConfigService } from './ai/llmConfigService.js';
+import { logFinanceError, logFinanceEvent } from './financeDiagnosticsService.js';
+import type { ExtractionResult } from './financialStatementService.js';
 
 function normalizeBaseUrl(endpoint?: string | null): string | undefined {
   if (!endpoint) return undefined;
@@ -36,7 +32,9 @@ function isProviderCredentialCompatible(
   baseUrl?: string
 ): boolean {
   const normalizedKey = String(apiKey || '').trim();
-  const normalizedBaseUrl = String(baseUrl || '').trim().toLowerCase();
+  const normalizedBaseUrl = String(baseUrl || '')
+    .trim()
+    .toLowerCase();
   if (!normalizedKey) return false;
 
   if (provider === 'openai') {
@@ -55,8 +53,7 @@ function isProviderCredentialCompatible(
 function resolveMimeType(fileName: string): string {
   const ext = path.extname(fileName).toLowerCase();
   if (ext === '.pdf') return 'application/pdf';
-  if (ext === '.xlsx')
-    return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (ext === '.xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   if (ext === '.xls') return 'application/vnd.ms-excel';
   if (ext === '.csv') return 'text/csv';
   return 'application/octet-stream';
@@ -108,7 +105,9 @@ Return this JSON shape:
 }
 
 function buildAnthropicPrompt(statementType: string, rawText: string): string {
-  const normalizedText = String(rawText || '').trim().slice(0, 120000);
+  const normalizedText = String(rawText || '')
+    .trim()
+    .slice(0, 120000);
   return `${buildPrompt(statementType)}
 
 Document text to process:
@@ -228,13 +227,18 @@ Return ONLY valid JSON in this exact shape:
 }`;
 }
 
-function normalizeFullDocumentAnalysis(parsed: Record<string, unknown>): FullDocumentAnalysis | null {
+function normalizeFullDocumentAnalysis(
+  parsed: Record<string, unknown>
+): FullDocumentAnalysis | null {
   if (!parsed || !Array.isArray((parsed as any).sections)) return null;
 
   const sections: DocumentSection[] = ((parsed as any).sections || [])
     .map((sec: any) => {
-      const st = String(sec?.statementType || '').toUpperCase().trim();
-      const statementType = st === 'PL' || st === 'P&L' ? 'P&L' : st === 'BS' ? 'BS' : st === 'CF' ? 'CF' : null;
+      const st = String(sec?.statementType || '')
+        .toUpperCase()
+        .trim();
+      const statementType =
+        st === 'PL' || st === 'P&L' ? 'P&L' : st === 'BS' ? 'BS' : st === 'CF' ? 'CF' : null;
       if (!statementType) return null;
       const lines = (Array.isArray(sec?.lines) ? sec.lines : [])
         .map((line: any) => {
@@ -245,7 +249,9 @@ function normalizeFullDocumentAnalysis(parsed: Record<string, unknown>): FullDoc
             originalLabel,
             value,
             confidence: Math.max(0, Math.min(Number(line?.confidence ?? 0.75), 1)),
-            sourceRow: Number.isFinite(Number(line?.sourceRow)) ? Number(line.sourceRow) : undefined,
+            sourceRow: Number.isFinite(Number(line?.sourceRow))
+              ? Number(line.sourceRow)
+              : undefined,
             suggestedCanonicalId: line?.suggestedCanonicalId || undefined,
           };
         })
@@ -266,9 +272,15 @@ function normalizeFullDocumentAnalysis(parsed: Record<string, unknown>): FullDoc
     periodLabel: String((parsed as any).periodLabel || '').trim(),
     periodStart: String((parsed as any).periodStart || '').trim(),
     periodEnd: String((parsed as any).periodEnd || '').trim(),
-    currency: String((parsed as any).currency || 'PLN').trim().toUpperCase(),
-    scaling: String((parsed as any).scaling || 'units').trim().toLowerCase(),
-    language: String((parsed as any).language || 'en').trim().toLowerCase(),
+    currency: String((parsed as any).currency || 'PLN')
+      .trim()
+      .toUpperCase(),
+    scaling: String((parsed as any).scaling || 'units')
+      .trim()
+      .toLowerCase(),
+    language: String((parsed as any).language || 'en')
+      .trim()
+      .toLowerCase(),
     documentDescription: String((parsed as any).documentDescription || '').trim(),
     sections,
     warnings: Array.isArray((parsed as any).warnings) ? (parsed as any).warnings.map(String) : [],
@@ -298,7 +310,11 @@ export async function analyzeAndExtractFullDocument(params: {
     const fileData = `data:${mimeType};base64,${buffer.toString('base64')}`;
 
     logFinanceEvent('statement.fullAnalysis.started', {
-      traceId: params.traceId, fileName, mimeType, sizeBytes: buffer.length, model,
+      traceId: params.traceId,
+      fileName,
+      mimeType,
+      sizeBytes: buffer.length,
+      model,
     });
 
     const response = await client.responses.create({
@@ -322,17 +338,22 @@ export async function analyzeAndExtractFullDocument(params: {
     if (!result) throw new Error('LLM response did not contain valid document sections');
 
     logFinanceEvent('statement.fullAnalysis.completed', {
-      traceId: params.traceId, fileName, model,
-      entityName: result.entityName, periodLabel: result.periodLabel,
+      traceId: params.traceId,
+      fileName,
+      model,
+      entityName: result.entityName,
+      periodLabel: result.periodLabel,
       sectionCount: result.sections.length,
-      sectionTypes: result.sections.map(s => s.statementType),
+      sectionTypes: result.sections.map((s) => s.statementType),
       totalLines: result.sections.reduce((sum, s) => sum + s.lines.length, 0),
     });
 
     return result;
   } catch (error) {
     logFinanceError('statement.fullAnalysis.failed', error, {
-      traceId: params.traceId, fileName, model,
+      traceId: params.traceId,
+      fileName,
+      model,
     });
     return null;
   }

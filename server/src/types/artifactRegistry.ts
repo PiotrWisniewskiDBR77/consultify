@@ -26,7 +26,12 @@ export type ArtifactCanonicalHome = (typeof ArtifactCanonicalHomeValues)[number]
 export const ArtifactPlanOutputTypeValues = ['report', 'presentation', 'sheet'] as const;
 export type ArtifactPlanOutputType = (typeof ArtifactPlanOutputTypeValues)[number];
 
-export const ArtifactRunTriggerTypeValues = ['chat', 'module_action', 'template', 'refresh'] as const;
+export const ArtifactRunTriggerTypeValues = [
+  'chat',
+  'module_action',
+  'template',
+  'refresh',
+] as const;
 export type ArtifactRunTriggerType = (typeof ArtifactRunTriggerTypeValues)[number];
 
 export const ArtifactRunStatusValues = [

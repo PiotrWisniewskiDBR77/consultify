@@ -20,7 +20,10 @@ export const FontSizeDropdown: React.FC<FontSizeDropdownProps> = ({
         return (
           <button
             key={s}
-            onClick={() => { onSelect(s); onClose(); }}
+            onClick={() => {
+              onSelect(s);
+              onClose();
+            }}
             className={`w-full px-3 py-1.5 text-left transition-colors ${
               isActive
                 ? 'bg-primary-500/8 text-primary-600 dark:text-primary-400 font-semibold'

@@ -59,7 +59,10 @@ export function isRelationEdge(edge: Edge): boolean {
   return getEdgeRole(edge) === 'relation';
 }
 
-export const BRANCH_COLORS: Record<string, { bg: string; text: string; edge: string; glow: string }> = {
+export const BRANCH_COLORS: Record<
+  string,
+  { bg: string; text: string; edge: string; glow: string }
+> = {
   strengths: { bg: '#dcfce7', text: '#166534', edge: '#22c55e', glow: '#bbf7d0' },
   weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#ef4444', glow: '#fecaca' },
   opportunities: { bg: '#dbeafe', text: '#1e40af', edge: '#3b82f6', glow: '#bfdbfe' },
@@ -108,7 +111,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const reapply = () => {
         setNodes((prev: Node[]) => {
           if (prev.some((node) => node.id === newNode.id)) return prev;
-          return [...prev.map((node) => ({ ...node, selected: false })), { ...newNode, selected: true }];
+          return [
+            ...prev.map((node) => ({ ...node, selected: false })),
+            { ...newNode, selected: true },
+          ];
         });
         setEdges((prev: Edge[]) => {
           if (prev.some((edge) => edge.id === newEdge.id)) return prev;
@@ -175,176 +181,194 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     [isNodeLockedByPeer, nodes]
   );
 
-  const addChildNode = useCallback((anchorNodeId?: string) => {
-    if (locked) return;
-    const selected =
-      getNodeById(anchorNodeId) ||
-      getSelectedNode() ||
-      nodes.find((node) => node.id === 'branch-options') ||
-      nodes.find((node) => node.id.startsWith('branch-'));
-    if (!selected) {
-      toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
-      return;
-    }
-    pushUndo();
+  const addChildNode = useCallback(
+    (anchorNodeId?: string) => {
+      if (locked) return;
+      const selected =
+        getNodeById(anchorNodeId) ||
+        getSelectedNode() ||
+        nodes.find((node) => node.id === 'branch-options') ||
+        nodes.find((node) => node.id.startsWith('branch-'));
+      if (!selected) {
+        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
+        return;
+      }
+      pushUndo();
 
-    const branchKey = selected.data?.branchKey || 'uncategorized';
-    const isFirstChildFromStarterBranch =
-      selected.id.startsWith('branch-') && findChildrenIds(selected.id).length === 0;
-    const initialLabel = isFirstChildFromStarterBranch ? (isPolish ? 'Nowy pomysł' : 'New idea') : '';
-    const newId = `node-${uid()}`;
-    const newNode: Node = {
-      id: newId,
-      type: 'idea',
-      position: { x: selected.position.x + 220, y: selected.position.y },
-      data: {
-        label: initialLabel,
-        branchKey,
-        sourceType: 'manual',
-        priority: 50,
-        notes: '',
-        context: '',
-        goal: '',
-        rationale: '',
-        riskNote: '',
-        tags: [],
-        semanticType: '',
-        status: 'idea',
-        evidenceLinks: [],
-        artifactLinks: [],
-        aiExpansionHistory: [],
-        _startEditing: initialLabel ? undefined : Date.now(),
-      },
-    } as any;
+      const branchKey = selected.data?.branchKey || 'uncategorized';
+      const isFirstChildFromStarterBranch =
+        selected.id.startsWith('branch-') && findChildrenIds(selected.id).length === 0;
+      const initialLabel = isFirstChildFromStarterBranch
+        ? isPolish
+          ? 'Nowy pomysł'
+          : 'New idea'
+        : '';
+      const newId = `node-${uid()}`;
+      const newNode: Node = {
+        id: newId,
+        type: 'idea',
+        position: { x: selected.position.x + 220, y: selected.position.y },
+        data: {
+          label: initialLabel,
+          branchKey,
+          sourceType: 'manual',
+          priority: 50,
+          notes: '',
+          context: '',
+          goal: '',
+          rationale: '',
+          riskNote: '',
+          tags: [],
+          semanticType: '',
+          status: 'idea',
+          evidenceLinks: [],
+          artifactLinks: [],
+          aiExpansionHistory: [],
+          _startEditing: initialLabel ? undefined : Date.now(),
+        },
+      } as any;
 
-    const colors = branchColor(branchKey);
-    const newEdge: Edge = {
-      id: `edge-${uid()}`,
-      source: selected.id,
-      target: newId,
-      type: 'gradient',
-      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-      animated: true,
-      data: { userCreated: true, edgeRole: 'structural' },
-    } as any;
+      const colors = branchColor(branchKey);
+      const newEdge: Edge = {
+        id: `edge-${uid()}`,
+        source: selected.id,
+        target: newId,
+        type: 'gradient',
+        style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+        animated: true,
+        data: { userCreated: true, edgeRole: 'structural' },
+      } as any;
 
-    editingNodeIdRef.current = newId;
+      editingNodeIdRef.current = newId;
 
-    const existingChildIds = findChildrenIds(selected.id);
-    if (existingChildIds.length > 0) {
-      const childNodes = nodes.filter((n: any) => existingChildIds.includes(n.id));
-      const maxY = Math.max(...childNodes.map((n: any) => n.position?.y ?? 0));
-      newNode.position = { x: selected.position.x + 220, y: maxY + 80 };
-    }
+      const existingChildIds = findChildrenIds(selected.id);
+      if (existingChildIds.length > 0) {
+        const childNodes = nodes.filter((n: any) => existingChildIds.includes(n.id));
+        const maxY = Math.max(...childNodes.map((n: any) => n.position?.y ?? 0));
+        newNode.position = { x: selected.position.x + 220, y: maxY + 80 };
+      }
 
-    setNodes((prev: Node[]) => [
-      ...prev.map((n) => ({ ...n, selected: false })),
-      { ...newNode, selected: true },
-    ]);
-    setEdges((prev: Edge[]) => [...prev, newEdge]);
-    ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+      setNodes((prev: Node[]) => [
+        ...prev.map((n) => ({ ...n, selected: false })),
+        { ...newNode, selected: true },
+      ]);
+      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
-    setTimeout(() => {
-      try { fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 }); } catch { /* */ }
-    }, 60);
-  }, [
-    edges,
-    ensureCreatedNodePersists,
-    fitView,
-    getNodeById,
-    getSelectedNode,
-    findChildrenIds,
-    isPolish,
-    locked,
-    nodes,
-    pushUndo,
-    setEdges,
-    setNodes,
-  ]);
+      setTimeout(() => {
+        try {
+          fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 });
+        } catch {
+          /* */
+        }
+      }, 60);
+    },
+    [
+      edges,
+      ensureCreatedNodePersists,
+      fitView,
+      getNodeById,
+      getSelectedNode,
+      findChildrenIds,
+      isPolish,
+      locked,
+      nodes,
+      pushUndo,
+      setEdges,
+      setNodes,
+    ]
+  );
 
-  const addSiblingNode = useCallback((anchorNodeId?: string) => {
-    if (locked) return;
-    const selected = getNodeById(anchorNodeId) || getSelectedNode();
-    if (!selected) {
-      toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
-      return;
-    }
-    const parentId = findParentId(selected.id);
-    if (!parentId) {
-      toast(isPolish ? 'Nie można dodać rodzeństwa do korzenia' : 'Cannot add sibling to root');
-      return;
-    }
-    pushUndo();
+  const addSiblingNode = useCallback(
+    (anchorNodeId?: string) => {
+      if (locked) return;
+      const selected = getNodeById(anchorNodeId) || getSelectedNode();
+      if (!selected) {
+        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
+        return;
+      }
+      const parentId = findParentId(selected.id);
+      if (!parentId) {
+        toast(isPolish ? 'Nie można dodać rodzeństwa do korzenia' : 'Cannot add sibling to root');
+        return;
+      }
+      pushUndo();
 
-    const branchKey = selected.data?.branchKey || 'uncategorized';
-    const newId = `node-${uid()}`;
-    const newNode: Node = {
-      id: newId,
-      type: 'idea',
-      position: { x: selected.position.x, y: selected.position.y + 70 },
-      data: {
-        label: '',
-        branchKey,
-        sourceType: 'manual',
-        priority: 50,
-        notes: '',
-        context: '',
-        goal: '',
-        rationale: '',
-        riskNote: '',
-        tags: [],
-        semanticType: '',
-        status: 'idea',
-        evidenceLinks: [],
-        artifactLinks: [],
-        aiExpansionHistory: [],
-        _startEditing: Date.now(),
-      },
-    } as any;
+      const branchKey = selected.data?.branchKey || 'uncategorized';
+      const newId = `node-${uid()}`;
+      const newNode: Node = {
+        id: newId,
+        type: 'idea',
+        position: { x: selected.position.x, y: selected.position.y + 70 },
+        data: {
+          label: '',
+          branchKey,
+          sourceType: 'manual',
+          priority: 50,
+          notes: '',
+          context: '',
+          goal: '',
+          rationale: '',
+          riskNote: '',
+          tags: [],
+          semanticType: '',
+          status: 'idea',
+          evidenceLinks: [],
+          artifactLinks: [],
+          aiExpansionHistory: [],
+          _startEditing: Date.now(),
+        },
+      } as any;
 
-    const colors = branchColor(branchKey);
-    const newEdge: Edge = {
-      id: `edge-${uid()}`,
-      source: parentId,
-      target: newId,
-      type: 'gradient',
-      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-      animated: true,
-      data: { userCreated: true, edgeRole: 'structural' },
-    } as any;
+      const colors = branchColor(branchKey);
+      const newEdge: Edge = {
+        id: `edge-${uid()}`,
+        source: parentId,
+        target: newId,
+        type: 'gradient',
+        style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+        animated: true,
+        data: { userCreated: true, edgeRole: 'structural' },
+      } as any;
 
-    editingNodeIdRef.current = newId;
+      editingNodeIdRef.current = newId;
 
-    const siblingIds = findChildrenIds(parentId);
-    if (siblingIds.length > 0) {
-      const siblingNodes = nodes.filter((n: any) => siblingIds.includes(n.id));
-      const maxY = Math.max(...siblingNodes.map((n: any) => n.position?.y ?? 0));
-      newNode.position = { x: selected.position.x, y: maxY + 80 };
-    }
+      const siblingIds = findChildrenIds(parentId);
+      if (siblingIds.length > 0) {
+        const siblingNodes = nodes.filter((n: any) => siblingIds.includes(n.id));
+        const maxY = Math.max(...siblingNodes.map((n: any) => n.position?.y ?? 0));
+        newNode.position = { x: selected.position.x, y: maxY + 80 };
+      }
 
-    setNodes((prev: Node[]) => [
-      ...prev.map((n) => ({ ...n, selected: false })),
-      { ...newNode, selected: true },
-    ]);
-    setEdges((prev: Edge[]) => [...prev, newEdge]);
+      setNodes((prev: Node[]) => [
+        ...prev.map((n) => ({ ...n, selected: false })),
+        { ...newNode, selected: true },
+      ]);
+      setEdges((prev: Edge[]) => [...prev, newEdge]);
 
-    setTimeout(() => {
-      try { fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 }); } catch { /* */ }
-    }, 60);
-  }, [
-    edges,
-    findChildrenIds,
-    findParentId,
-    fitView,
-    getNodeById,
-    getSelectedNode,
-    isPolish,
-    locked,
-    nodes,
-    pushUndo,
-    setEdges,
-    setNodes,
-  ]);
+      setTimeout(() => {
+        try {
+          fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 });
+        } catch {
+          /* */
+        }
+      }, 60);
+    },
+    [
+      edges,
+      findChildrenIds,
+      findParentId,
+      fitView,
+      getNodeById,
+      getSelectedNode,
+      isPolish,
+      locked,
+      nodes,
+      pushUndo,
+      setEdges,
+      setNodes,
+    ]
+  );
 
   const deleteSelected = useCallback(() => {
     if (locked) return;
@@ -439,9 +463,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       pushUndo();
       setEdges((prev: Edge[]) => {
-        const without = prev.filter(
-          (e) => !(e.target === nodeId && isStructuralEdge(e))
-        );
+        const without = prev.filter((e) => !(e.target === nodeId && isStructuralEdge(e)));
         const branchKey =
           nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
           newParent.data?.branchKey ||
@@ -519,9 +541,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       pushUndo();
       setEdges((prev: Edge[]) => {
-        const siblingEdges = prev.filter(
-          (e) => e.source === parentId && isStructuralEdge(e)
-        );
+        const siblingEdges = prev.filter((e) => e.source === parentId && isStructuralEdge(e));
         const siblingTargets = siblingEdges.map((e) => e.target);
         const idx = siblingTargets.indexOf(nodeId);
         if (idx < 0) return prev;
@@ -592,10 +612,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
    * maxLevel=0 → root only; maxLevel=1 → root + direct children; Infinity → expand all.
    */
   const setFoldLevel = useCallback(
-    (
-      maxLevel: number,
-      setCollapsedNodeIds: React.Dispatch<React.SetStateAction<Set<string>>>,
-    ) => {
+    (maxLevel: number, setCollapsedNodeIds: React.Dispatch<React.SetStateAction<Set<string>>>) => {
       const rootNode = nodes.find((n) => n.id === 'root') ?? nodes.find((n) => n.type === 'center');
       if (!rootNode) return new Set<string>();
 
@@ -627,7 +644,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setCollapsedNodeIds(collapsed);
       return collapsed;
     },
-    [edges, nodes],
+    [edges, nodes]
   );
 
   const addRootTopic = useCallback(() => {
@@ -673,17 +690,26 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       data: { userCreated: true, edgeRole: 'structural' },
     } as any;
     editingNodeIdRef.current = newId;
-    setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+    setNodes((prev: Node[]) => [
+      ...prev.map((n) => ({ ...n, selected: false })),
+      { ...newNode, selected: true },
+    ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
     setTimeout(() => {
-      try { fitView({ padding: 0.3, duration: 300 }); } catch { /* ignore */ }
+      try {
+        fitView({ padding: 0.3, duration: 300 });
+      } catch {
+        /* ignore */
+      }
     }, 60);
   }, [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
   // ── Copy / Cut / Paste ────────────────────────────────────────────────────
 
   const copySelected = useCallback(() => {
-    const selected = nodes.filter((n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'));
+    const selected = nodes.filter(
+      (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')
+    );
     if (selected.length === 0) {
       toast(isPolish ? 'Zaznacz węzły do skopiowania' : 'Select nodes to copy');
       return;
@@ -691,7 +717,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     const selectedIds = new Set(selected.map((n) => n.id));
     const internalEdges = edges.filter(
-      (e) => isStructuralEdge(e) && selectedIds.has(e.source) && selectedIds.has(e.target),
+      (e) => isStructuralEdge(e) && selectedIds.has(e.source) && selectedIds.has(e.target)
     );
 
     const serializedNodes: SerializedNode[] = selected.map((n) => ({
@@ -716,18 +742,22 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     try {
       navigator.clipboard?.writeText(JSON.stringify(clip));
-    } catch { /* system clipboard may be blocked */ }
+    } catch {
+      /* system clipboard may be blocked */
+    }
 
     toast.success(
       isPolish
         ? `Skopiowano ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
         : `Copied ${selected.length} node${selected.length === 1 ? '' : 's'}`,
-      { duration: 1200 },
+      { duration: 1200 }
     );
   }, [edges, isPolish, nodes]);
 
   const cutSelected = useCallback(() => {
-    const selected = nodes.filter((n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'));
+    const selected = nodes.filter(
+      (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')
+    );
     if (selected.length === 0) {
       toast(isPolish ? 'Zaznacz węzły do wycięcia' : 'Select nodes to cut');
       return;
@@ -740,14 +770,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     const removedIds = new Set(selected.map((n) => n.id));
     setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
     setEdges((prev: Edge[]) =>
-      prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target)),
+      prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target))
     );
 
     toast.success(
       isPolish
         ? `Wycięto ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
         : `Cut ${selected.length} node${selected.length === 1 ? '' : 's'}`,
-      { duration: 1200 },
+      { duration: 1200 }
     );
   }, [copySelected, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
@@ -764,7 +794,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
             const parsed = JSON.parse(text) as MindMapClipboard;
             if (parsed?.nodes?.length) clip = parsed;
           }
-        } catch { /* ignore parse errors */ }
+        } catch {
+          /* ignore parse errors */
+        }
       }
 
       if (!clip || clip.nodes.length === 0) {
@@ -780,11 +812,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }
 
       const anchorNode = nodes.find(
-        (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'),
+        (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')
       );
 
-      const basePos = targetPosition
-        ?? (anchorNode
+      const basePos =
+        targetPosition ??
+        (anchorNode
           ? { x: anchorNode.position.x + 220, y: anchorNode.position.y }
           : { x: 0, y: 0 });
 
@@ -819,9 +852,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         .filter((n) => !pastedChildTargets.has(n.id))
         .map((n) => n.id);
 
-      const parentId = anchorNode?.id
-        ?? nodes.find((n) => n.id === 'root')?.id
-        ?? 'root';
+      const parentId = anchorNode?.id ?? nodes.find((n) => n.id === 'root')?.id ?? 'root';
 
       for (const origId of topLevelOrigIds) {
         const newId = idMap.get(origId)!;
@@ -839,24 +870,25 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } as any);
       }
 
-      setNodes((prev: Node[]) => [
-        ...prev.map((n) => ({ ...n, selected: false })),
-        ...newNodes,
-      ]);
+      setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
 
       toast.success(
         isPolish
           ? `Wklejono ${newNodes.length} ${newNodes.length === 1 ? 'węzeł' : 'węzłów'}`
           : `Pasted ${newNodes.length} node${newNodes.length === 1 ? '' : 's'}`,
-        { duration: 1200 },
+        { duration: 1200 }
       );
 
       setTimeout(() => {
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* */
+        }
       }, 60);
     },
-    [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes],
+    [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
   );
 
   return {

@@ -2,12 +2,7 @@
  * PublicFormPage — Standalone public form renderer at /forms/:slug.
  * Loads form definition without auth, renders fields, validates, and submits.
  */
-import {
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Star,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Star } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -102,7 +97,12 @@ export function PublicFormPage() {
     for (const fc of visibleFieldConfigs) {
       if (fc.required) {
         const val = values[fc.fieldId];
-        if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) {
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          (Array.isArray(val) && val.length === 0)
+        ) {
           const field = fieldMap.get(fc.fieldId);
           newErrors[fc.fieldId] = `${fc.label || field?.name || 'Field'} is required`;
         }
@@ -112,36 +112,39 @@ export function PublicFormPage() {
     return Object.keys(newErrors).length === 0;
   }, [visibleFieldConfigs, values, fieldMap]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!slug || !form) return;
-    if (!validate()) return;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!slug || !form) return;
+      if (!validate()) return;
 
-    setSubmitting(true);
-    try {
-      const submitData: Record<string, unknown> = {};
-      for (const fc of form.config?.fields ?? []) {
-        const val = values[fc.fieldId];
-        if (val !== undefined && val !== null && val !== '') {
-          submitData[fc.fieldId] = val;
-        } else if (fc.hidden && fc.defaultValue !== undefined) {
-          submitData[fc.fieldId] = fc.defaultValue;
+      setSubmitting(true);
+      try {
+        const submitData: Record<string, unknown> = {};
+        for (const fc of form.config?.fields ?? []) {
+          const val = values[fc.fieldId];
+          if (val !== undefined && val !== null && val !== '') {
+            submitData[fc.fieldId] = val;
+          } else if (fc.hidden && fc.defaultValue !== undefined) {
+            submitData[fc.fieldId] = fc.defaultValue;
+          }
         }
-      }
-      await TablePlatformApi.submitPublicForm(slug, submitData);
-      setSubmitted(true);
+        await TablePlatformApi.submitPublicForm(slug, submitData);
+        setSubmitted(true);
 
-      if (form.config?.redirectUrl) {
-        setTimeout(() => {
-          window.location.href = form.config.redirectUrl!;
-        }, 1500);
+        if (form.config?.redirectUrl) {
+          setTimeout(() => {
+            window.location.href = form.config.redirectUrl!;
+          }, 1500);
+        }
+      } catch (err: any) {
+        setError(err?.message || 'Submission failed');
+      } finally {
+        setSubmitting(false);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Submission failed');
-    } finally {
-      setSubmitting(false);
-    }
-  }, [slug, form, values, validate]);
+    },
+    [slug, form, values, validate]
+  );
 
   const handleSubmitAnother = useCallback(() => {
     setSubmitted(false);
@@ -207,9 +210,7 @@ export function PublicFormPage() {
         className="mx-auto max-w-lg rounded-2xl border border-gray-200 bg-white p-8 shadow-sm"
       >
         <h1 className="mb-1 text-xl font-semibold text-gray-900">{form.name}</h1>
-        {form.description && (
-          <p className="mb-6 text-sm text-gray-500">{form.description}</p>
-        )}
+        {form.description && <p className="mb-6 text-sm text-gray-500">{form.description}</p>}
 
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -229,18 +230,14 @@ export function PublicFormPage() {
                   {fc.label || field.name}
                   {fc.required && <span className="ml-1 text-red-500">*</span>}
                 </label>
-                {fc.helpText && (
-                  <p className="mb-1 text-xs text-gray-400">{fc.helpText}</p>
-                )}
+                {fc.helpText && <p className="mb-1 text-xs text-gray-400">{fc.helpText}</p>}
                 <FormInput
                   field={field}
                   value={values[fc.fieldId]}
                   onChange={(val) => setValue(fc.fieldId, val)}
                   error={!!fieldError}
                 />
-                {fieldError && (
-                  <p className="mt-1 text-xs text-red-500">{fieldError}</p>
-                )}
+                {fieldError && <p className="mt-1 text-xs text-red-500">{fieldError}</p>}
               </div>
             );
           })}
@@ -256,9 +253,7 @@ export function PublicFormPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-gray-400">
-        Powered by Consultify Table Platform
-      </p>
+      <p className="mt-4 text-center text-xs text-gray-400">Powered by Consultify Table Platform</p>
     </div>
   );
 }
@@ -408,9 +403,7 @@ function FormInput({
                   checked={checked}
                   onChange={() => {
                     onChange(
-                      checked
-                        ? selected.filter((s) => s !== opt.name)
-                        : [...selected, opt.name]
+                      checked ? selected.filter((s) => s !== opt.name) : [...selected, opt.name]
                     );
                   }}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -419,9 +412,7 @@ function FormInput({
               </label>
             );
           })}
-          {options.length === 0 && (
-            <p className="text-xs text-gray-400">No options configured</p>
-          )}
+          {options.length === 0 && <p className="text-xs text-gray-400">No options configured</p>}
         </div>
       );
     }
@@ -440,9 +431,7 @@ function FormInput({
             >
               <Star
                 className={`h-6 w-6 ${
-                  i < current
-                    ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-gray-300'
+                  i < current ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                 }`}
               />
             </button>
@@ -453,7 +442,9 @@ function FormInput({
 
     case 'attachment':
       return (
-        <div className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-red-300' : 'border-gray-200'}`}>
+        <div
+          className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-red-300' : 'border-gray-200'}`}
+        >
           <input
             type="file"
             onChange={(e) => {

@@ -1,6 +1,6 @@
 import express from 'express';
 import supertest from 'supertest';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8Enabled: vi.fn().mockResolvedValue(true),
@@ -216,19 +216,29 @@ describe('CP-32: Operator Monitoring Validation', () => {
     it('operator can check health → metrics → shadow → flags in sequence', async () => {
       const app = createOperatorApp();
 
-      const health = await supertest(app).get('/api/v8/health').set('Authorization', 'Bearer op-token');
+      const health = await supertest(app)
+        .get('/api/v8/health')
+        .set('Authorization', 'Bearer op-token');
       expect(health.status).toBe(200);
 
-      const metrics = await supertest(app).get('/api/v8/admin/metrics').set('Authorization', 'Bearer op-token');
+      const metrics = await supertest(app)
+        .get('/api/v8/admin/metrics')
+        .set('Authorization', 'Bearer op-token');
       expect(metrics.status).toBe(200);
 
-      const shadow = await supertest(app).get('/api/v8/admin/shadow/stats').set('Authorization', 'Bearer op-token');
+      const shadow = await supertest(app)
+        .get('/api/v8/admin/shadow/stats')
+        .set('Authorization', 'Bearer op-token');
       expect(shadow.status).toBe(200);
 
-      const flags = await supertest(app).get('/api/v8/admin/flags').set('Authorization', 'Bearer op-token');
+      const flags = await supertest(app)
+        .get('/api/v8/admin/flags')
+        .set('Authorization', 'Bearer op-token');
       expect(flags.status).toBe(200);
 
-      const readiness = await supertest(app).get('/api/v8/admin/shadow/promotion-readiness').set('Authorization', 'Bearer op-token');
+      const readiness = await supertest(app)
+        .get('/api/v8/admin/shadow/promotion-readiness')
+        .set('Authorization', 'Bearer op-token');
       expect(readiness.status).toBe(200);
     });
   });

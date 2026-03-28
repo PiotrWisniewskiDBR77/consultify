@@ -3,8 +3,8 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import AIPlaybookService from '../../ai/aiPlaybookService.js';
-import templateValidationService from '../../ai/templateValidationService.js';
 import { NODE_TYPES, stepsToGraph } from '../../ai/templateGraphService.js';
+import templateValidationService from '../../ai/templateValidationService.js';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -111,7 +111,11 @@ function buildTemplateStepsFromGraph(templateId: string, templateGraph: any) {
       nonTerminalEdges[0] ||
       null;
     const elseEdge =
-      nonTerminalEdges.find((edge) => String(edge.label || '').toLowerCase().includes('else')) || null;
+      nonTerminalEdges.find((edge) =>
+        String(edge.label || '')
+          .toLowerCase()
+          .includes('else')
+      ) || null;
 
     const parsedCondition = parseConditionExpression(nodeData.condition);
     let branchRules: Record<string, unknown> | null = null;
@@ -133,7 +137,9 @@ function buildTemplateStepsFromGraph(templateId: string, templateGraph: any) {
       stepOrder: index + 1,
       stepType: nodeType,
       actionType:
-        nodeType === NODE_TYPES.ACTION ? String(nodeData.actionType || step.actionType || '').trim() : null,
+        nodeType === NODE_TYPES.ACTION
+          ? String(nodeData.actionType || step.actionType || '').trim()
+          : null,
       title: String(step.title || node?.title || `Step ${index + 1}`),
       description: String(nodeData.description || step.description || ''),
       payloadTemplate: nodeData.payloadTemplate || step.payloadTemplate || {},
@@ -190,7 +196,10 @@ async function ensureTemplateRuntimeMaterialized(templateId: string): Promise<vo
   );
   if (!template?.template_graph) return;
 
-  const graph = normalizeTemplateGraph(parseJson(template.template_graph, null), template.trigger_signal || '');
+  const graph = normalizeTemplateGraph(
+    parseJson(template.template_graph, null),
+    template.trigger_signal || ''
+  );
   if (!graph) return;
   await syncTemplateStepsFromGraph(templateId, graph);
 }
@@ -231,22 +240,31 @@ function buildInstanceFromRun(run: any) {
   const completedSteps = steps.filter((step) =>
     ['EXECUTED', 'SKIPPED', 'COMPLETED'].includes(String(step.status || '').toUpperCase())
   ).length;
-  const failedStep = steps.find((step) => String(step.status || '').toUpperCase() === 'FAILED') || null;
+  const failedStep =
+    steps.find((step) => String(step.status || '').toUpperCase() === 'FAILED') || null;
   const currentStep =
     steps.find((step) =>
-      ['PENDING', 'APPROVED', 'IN_PROGRESS', 'MODIFIED'].includes(String(step.status || '').toUpperCase())
+      ['PENDING', 'APPROVED', 'IN_PROGRESS', 'MODIFIED'].includes(
+        String(step.status || '').toUpperCase()
+      )
     ) || failedStep;
 
-  const startedAtMs = run.startedAt ? Date.parse(run.startedAt) : Date.parse(run.createdAt || '') || Date.now();
+  const startedAtMs = run.startedAt
+    ? Date.parse(run.startedAt)
+    : Date.parse(run.createdAt || '') || Date.now();
   const endAtMs = run.completedAt
     ? Date.parse(run.completedAt)
     : ['COMPLETED', 'FAILED', 'CANCELLED'].includes(String(run.status || '').toUpperCase())
       ? Date.now()
       : null;
   const totalExecutionTime =
-    Number.isFinite(startedAtMs) && endAtMs ? Math.max(0, Math.round((endAtMs - startedAtMs) / 1000)) : null;
+    Number.isFinite(startedAtMs) && endAtMs
+      ? Math.max(0, Math.round((endAtMs - startedAtMs) / 1000))
+      : null;
   const averageStepTime =
-    totalExecutionTime && completedSteps > 0 ? Number((totalExecutionTime / completedSteps).toFixed(1)) : null;
+    totalExecutionTime && completedSteps > 0
+      ? Number((totalExecutionTime / completedSteps).toFixed(1))
+      : null;
 
   return {
     id: run.id,
@@ -281,8 +299,7 @@ function buildInstanceFromRun(run: any) {
     failureReason: failedStep?.statusReason || undefined,
     errorMessage: failedStep?.statusReason || undefined,
     retryCount: 0,
-    successRate:
-      totalSteps > 0 ? Number((completedSteps / totalSteps).toFixed(2)) : undefined,
+    successRate: totalSteps > 0 ? Number((completedSteps / totalSteps).toFixed(2)) : undefined,
   };
 }
 
@@ -435,7 +452,8 @@ export class AIPlaybooksController {
       }
 
       const normalizedGraph = normalizeTemplateGraph(templateGraph, triggerSignal);
-      if (templateGraph && !normalizedGraph) return res.status(400).json({ error: 'Invalid graph structure' });
+      if (templateGraph && !normalizedGraph)
+        return res.status(400).json({ error: 'Invalid graph structure' });
       const validation = normalizedGraph
         ? templateValidationService.validate({
             templateGraph: normalizedGraph,
@@ -443,7 +461,9 @@ export class AIPlaybooksController {
           })
         : { ok: true, errors: [] };
       if (!validation.ok) {
-        return res.status(400).json({ error: 'Template graph is invalid', details: validation.errors });
+        return res
+          .status(400)
+          .json({ error: 'Template graph is invalid', details: validation.errors });
       }
 
       const id = `tpl-${uuidv4()}`;
@@ -589,7 +609,9 @@ export class AIPlaybooksController {
           triggerSignal,
         });
         if (!validation.ok) {
-          return res.status(400).json({ error: 'Template graph is invalid', details: validation.errors });
+          return res
+            .status(400)
+            .json({ error: 'Template graph is invalid', details: validation.errors });
         }
       }
 
@@ -698,7 +720,11 @@ export class AIPlaybooksController {
 
       logger.info(`[AIPlaybooks] Published template: ${id}`);
 
-      return res.json({ id, status: published?.status || 'PUBLISHED', publishedAt: published?.publishedAt });
+      return res.json({
+        id,
+        status: published?.status || 'PUBLISHED',
+        publishedAt: published?.publishedAt,
+      });
     } catch (err: any) {
       logger.error('[AIPlaybooks] Publish template error:', err);
       return res.status(500).json({ error: err.message });
@@ -745,7 +771,9 @@ export class AIPlaybooksController {
   static async deprecateTemplate(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      const template = (await dbGet(`SELECT id FROM ai_playbook_templates WHERE id = ?`, [id])) as any;
+      const template = (await dbGet(`SELECT id FROM ai_playbook_templates WHERE id = ?`, [
+        id,
+      ])) as any;
       if (!template) return res.status(404).json({ error: 'Template not found' });
       await AIPlaybookService.deprecateTemplate(id);
 
@@ -953,9 +981,14 @@ export class AIPlaybooksController {
         { fallback: false }
       )) as Array<{ id: string }>;
 
-      const hydratedRuns = await Promise.all((runs || []).map((run) => AIPlaybookService.getRun(run.id)));
+      const hydratedRuns = await Promise.all(
+        (runs || []).map((run) => AIPlaybookService.getRun(run.id))
+      );
       let instances = hydratedRuns.filter(Boolean).map(buildInstanceFromRun);
-      if (status) instances = instances.filter((instance) => String(instance.status).toUpperCase() === status);
+      if (status)
+        instances = instances.filter(
+          (instance) => String(instance.status).toUpperCase() === status
+        );
       return res.json(instances);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get instances error:', err);

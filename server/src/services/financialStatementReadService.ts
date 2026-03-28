@@ -28,7 +28,9 @@ export async function listStatements(
   organizationId: string,
   readinessFilter = ''
 ): Promise<Record<string, unknown>[]> {
-  const normalizedReadiness = String(readinessFilter || '').trim().toLowerCase();
+  const normalizedReadiness = String(readinessFilter || '')
+    .trim()
+    .toLowerCase();
   try {
     return await dbAll(
       `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
@@ -51,7 +53,7 @@ export async function listStatements(
          ORDER BY fs.period_end DESC, fs.created_at DESC
          LIMIT 100`,
       [organizationId, normalizedReadiness, normalizedReadiness],
-      { fallback: false },
+      { fallback: false }
     );
   } catch (error) {
     if (!isSchemaCompatError(error)) {
@@ -95,7 +97,7 @@ export async function listStatements(
          GROUP BY fs.id
          ORDER BY fs.period_end DESC, fs.created_at DESC
          LIMIT 100`,
-      [organizationId],
+      [organizationId]
     );
   }
 }
@@ -108,7 +110,7 @@ export async function getStatementDetail(
     `SELECT *
        FROM financial_statements
       WHERE id = ? AND organization_id = ?`,
-    [statementId, organizationId],
+    [statementId, organizationId]
   );
 
   if (!stmt) {
@@ -136,7 +138,7 @@ export async function getStatementDetail(
          LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
         WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     qualityRuns = await dbAll(
       `SELECT stage, result_status, readiness_status, strategy, summary, reason_codes, created_at
@@ -145,7 +147,7 @@ export async function getStatementDetail(
         ORDER BY created_at DESC
         LIMIT 8`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     ingestRuns = await dbAll(
       `SELECT id, run_status, current_stage, source_file_name, parse_method, document_class, extraction_strategy,
@@ -155,7 +157,7 @@ export async function getStatementDetail(
         ORDER BY started_at DESC
         LIMIT 6`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     extractedSections = await dbAll(
       `SELECT section_key, section_label, statement_type, line_start, line_end, confidence, text_excerpt, metadata_json, created_at
@@ -164,7 +166,7 @@ export async function getStatementDetail(
         ORDER BY created_at DESC, confidence DESC
         LIMIT 12`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     repairSessions = await dbAll(
       `SELECT id, repair_status, summary, payload_json, started_by, created_at, updated_at
@@ -173,7 +175,7 @@ export async function getStatementDetail(
         ORDER BY created_at DESC
         LIMIT 6`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     mappingCandidates = await dbAll(
       `SELECT candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json, created_at
@@ -182,7 +184,7 @@ export async function getStatementDetail(
         ORDER BY created_at DESC, score DESC
         LIMIT 150`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     validationLedger = await dbAll(
       `SELECT validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference,
@@ -191,7 +193,7 @@ export async function getStatementDetail(
         WHERE statement_id = ?
         ORDER BY computed_at DESC, check_code ASC`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
     versions = await dbAll(
       `SELECT version_no, version_kind, readiness_status, change_summary, created_at
@@ -200,7 +202,7 @@ export async function getStatementDetail(
         ORDER BY version_no DESC
         LIMIT 12`,
       [statementId],
-      { fallback: false },
+      { fallback: false }
     );
   } catch (error) {
     if (!isSchemaCompatError(error)) {
@@ -213,12 +215,14 @@ export async function getStatementDetail(
          FROM financial_statement_values fsv
          LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
         WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
-      [statementId],
+      [statementId]
     );
   }
 
   const { notes, ...stmtData } = stmt;
-  const activeValues = Array.isArray(values) ? values.filter((value: any) => !value?.is_non_financial) : [];
+  const activeValues = Array.isArray(values)
+    ? values.filter((value: any) => !value?.is_non_financial)
+    : [];
   const totalLineCount = activeValues.length;
   const mappedLineCount = activeValues.filter((value: any) => value?.line_code).length;
   const unmappedLineCount = Math.max(0, totalLineCount - mappedLineCount);

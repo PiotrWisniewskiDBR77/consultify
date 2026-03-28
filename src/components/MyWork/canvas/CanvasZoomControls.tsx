@@ -5,7 +5,7 @@
  * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
  * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Maximize2, Minus, Minimize2, Plus, RotateCcw } from 'lucide-react';
+import { Focus, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useReactFlow } from 'reactflow';
 
@@ -98,7 +98,15 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
         {onFullscreenToggle ? (
           <ZoomBtn
             onClick={onFullscreenToggle}
-            title={isFullscreen ? (isPolish ? 'Wyłącz pełny ekran' : 'Exit fullscreen') : isPolish ? 'Pełny ekran' : 'Fullscreen'}
+            title={
+              isFullscreen
+                ? isPolish
+                  ? 'Wyłącz pełny ekran'
+                  : 'Exit fullscreen'
+                : isPolish
+                  ? 'Pełny ekran'
+                  : 'Fullscreen'
+            }
           >
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </ZoomBtn>
@@ -130,9 +138,23 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
               type="button"
               onClick={onToggleMiniMap}
               className="px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-              title={showMiniMap ? (isPolish ? 'Ukryj mini mapę' : 'Hide mini map') : isPolish ? 'Pokaż mini mapę' : 'Show mini map'}
+              title={
+                showMiniMap
+                  ? isPolish
+                    ? 'Ukryj mini mapę'
+                    : 'Hide mini map'
+                  : isPolish
+                    ? 'Pokaż mini mapę'
+                    : 'Show mini map'
+              }
             >
-              {showMiniMap ? (isPolish ? 'Ukryj mini mapę' : 'Hide mini map') : isPolish ? 'Mini mapa' : 'Mini map'}
+              {showMiniMap
+                ? isPolish
+                  ? 'Ukryj mini mapę'
+                  : 'Hide mini map'
+                : isPolish
+                  ? 'Mini mapa'
+                  : 'Mini map'}
             </button>
           </>
         )}

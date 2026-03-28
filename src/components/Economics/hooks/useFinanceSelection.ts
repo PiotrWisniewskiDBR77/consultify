@@ -4,7 +4,12 @@ import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
-import { type FinanceModelPreviewDetail, type FinanceModelRow, type FinanceRow, type PreviewDataState } from '../financeTypes';
+import {
+  type FinanceModelPreviewDetail,
+  type FinanceModelRow,
+  type FinanceRow,
+  type PreviewDataState,
+} from '../financeTypes';
 
 type ScenarioVariant = 'base' | 'optimistic' | 'conservative';
 
@@ -176,7 +181,11 @@ function buildModelPreviewDetail(
   statementDetails: StatementDetail[]
 ): FinanceModelPreviewDetail {
   const sourceStatements = Array.isArray(packDetail?.statements) ? packDetail.statements : [];
-  const valuesByType: Record<'P&L' | 'BS' | 'CF', StatementValueRow[]> = { 'P&L': [], BS: [], CF: [] };
+  const valuesByType: Record<'P&L' | 'BS' | 'CF', StatementValueRow[]> = {
+    'P&L': [],
+    BS: [],
+    CF: [],
+  };
 
   for (const statement of statementDetails) {
     const type = normalizeStatementType(statement?.statement_type);
@@ -187,9 +196,21 @@ function buildModelPreviewDetail(
   const baseline = modelDetail?.assumptions_json?.baseline || {};
   const years = buildForecastYears(String(row.startDate || modelDetail?.start_date || ''));
 
-  const baseRevenue = getLineValue(valuesByType['P&L'], ['REVENUE'], toNumber(baseline.revenue) || 1000);
-  const baseCogs = getLineValue(valuesByType['P&L'], ['COGS'], toNumber(baseline.cogs) || baseRevenue * 0.6);
-  const baseOpex = getLineValue(valuesByType['P&L'], ['OPEX'], toNumber(baseline.opex) || baseRevenue * 0.2);
+  const baseRevenue = getLineValue(
+    valuesByType['P&L'],
+    ['REVENUE'],
+    toNumber(baseline.revenue) || 1000
+  );
+  const baseCogs = getLineValue(
+    valuesByType['P&L'],
+    ['COGS'],
+    toNumber(baseline.cogs) || baseRevenue * 0.6
+  );
+  const baseOpex = getLineValue(
+    valuesByType['P&L'],
+    ['OPEX'],
+    toNumber(baseline.opex) || baseRevenue * 0.2
+  );
   const baseDepreciation = getLineValue(
     valuesByType['P&L'],
     ['DEPRECIATION'],
@@ -243,44 +264,204 @@ function buildModelPreviewDetail(
       let debt = baseDebt;
 
       const plLines = [
-        { lineCode: 'REVENUE', lineName: 'Revenue', level: 0, values: {} as Record<string, number> },
-        { lineCode: 'COGS', lineName: 'Cost of goods sold', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'GROSS_PROFIT', lineName: 'Gross profit', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'OPEX', lineName: 'Operating expenses', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'EBITDA', lineName: 'EBITDA', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'DEPRECIATION', lineName: 'Depreciation', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'EBIT', lineName: 'EBIT', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'INTEREST_EXPENSE', lineName: 'Interest expense', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'EBT', lineName: 'Earnings before tax', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        {
+          lineCode: 'REVENUE',
+          lineName: 'Revenue',
+          level: 0,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'COGS',
+          lineName: 'Cost of goods sold',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'GROSS_PROFIT',
+          lineName: 'Gross profit',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'OPEX',
+          lineName: 'Operating expenses',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'EBITDA',
+          lineName: 'EBITDA',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'DEPRECIATION',
+          lineName: 'Depreciation',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'EBIT',
+          lineName: 'EBIT',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'INTEREST_EXPENSE',
+          lineName: 'Interest expense',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'EBT',
+          lineName: 'Earnings before tax',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
         { lineCode: 'TAX', lineName: 'Income tax', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'NET_INCOME', lineName: 'Net income', level: 0, isTotal: true, values: {} as Record<string, number> },
+        {
+          lineCode: 'NET_INCOME',
+          lineName: 'Net income',
+          level: 0,
+          isTotal: true,
+          values: {} as Record<string, number>,
+        },
       ];
 
       const bsLines = [
         { lineCode: 'CASH', lineName: 'Cash', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'AR', lineName: 'Accounts receivable', level: 2, values: {} as Record<string, number> },
-        { lineCode: 'INVENTORY', lineName: 'Inventory', level: 2, values: {} as Record<string, number> },
-        { lineCode: 'CURRENT_ASSETS', lineName: 'Current assets', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'PPE_NET', lineName: 'Property, plant and equipment', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'TOTAL_ASSETS', lineName: 'Total assets', level: 0, isTotal: true, values: {} as Record<string, number> },
-        { lineCode: 'AP', lineName: 'Accounts payable', level: 2, values: {} as Record<string, number> },
-        { lineCode: 'CURRENT_LIABILITIES', lineName: 'Current liabilities', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'LONG_TERM_DEBT', lineName: 'Long-term debt', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'TOTAL_LIABILITIES', lineName: 'Total liabilities', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        {
+          lineCode: 'AR',
+          lineName: 'Accounts receivable',
+          level: 2,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'INVENTORY',
+          lineName: 'Inventory',
+          level: 2,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'CURRENT_ASSETS',
+          lineName: 'Current assets',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'PPE_NET',
+          lineName: 'Property, plant and equipment',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'TOTAL_ASSETS',
+          lineName: 'Total assets',
+          level: 0,
+          isTotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'AP',
+          lineName: 'Accounts payable',
+          level: 2,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'CURRENT_LIABILITIES',
+          lineName: 'Current liabilities',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'LONG_TERM_DEBT',
+          lineName: 'Long-term debt',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'TOTAL_LIABILITIES',
+          lineName: 'Total liabilities',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
         { lineCode: 'EQUITY', lineName: 'Equity', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'TOTAL_LIABILITIES_EQUITY', lineName: 'Total liabilities + equity', level: 0, isTotal: true, values: {} as Record<string, number> },
+        {
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          lineName: 'Total liabilities + equity',
+          level: 0,
+          isTotal: true,
+          values: {} as Record<string, number>,
+        },
       ];
 
       const cfLines = [
-        { lineCode: 'NET_INCOME_CF', lineName: 'Net income', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'DEPRECIATION_ADDBACK', lineName: 'Depreciation add-back', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'WC_CHANGE', lineName: 'Working capital change', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'OPERATING_CF', lineName: 'Operating cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'CAPEX_CF', lineName: 'Capital expenditure', level: 1, values: {} as Record<string, number> },
-        { lineCode: 'INVESTING_CF', lineName: 'Investing cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'FINANCING_CF', lineName: 'Financing cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'NET_CHANGE_CASH', lineName: 'Net change in cash', level: 0, isSubtotal: true, values: {} as Record<string, number> },
-        { lineCode: 'CLOSING_CASH', lineName: 'Closing cash', level: 0, isTotal: true, values: {} as Record<string, number> },
+        {
+          lineCode: 'NET_INCOME_CF',
+          lineName: 'Net income',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'DEPRECIATION_ADDBACK',
+          lineName: 'Depreciation add-back',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'WC_CHANGE',
+          lineName: 'Working capital change',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'OPERATING_CF',
+          lineName: 'Operating cash flow',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'CAPEX_CF',
+          lineName: 'Capital expenditure',
+          level: 1,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'INVESTING_CF',
+          lineName: 'Investing cash flow',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'FINANCING_CF',
+          lineName: 'Financing cash flow',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'NET_CHANGE_CASH',
+          lineName: 'Net change in cash',
+          level: 0,
+          isSubtotal: true,
+          values: {} as Record<string, number>,
+        },
+        {
+          lineCode: 'CLOSING_CASH',
+          lineName: 'Closing cash',
+          level: 0,
+          isTotal: true,
+          values: {} as Record<string, number>,
+        },
       ];
 
       for (const year of years) {
@@ -289,7 +470,8 @@ function buildModelPreviewDetail(
         const cogs = revenue * profile.cogsRatio;
         const grossProfit = revenue - cogs;
         const opex = Math.max(
-          baseOpex * Math.pow(1 + profile.revenueGrowth * 0.75, Number(year) - Number(years[0]) + 1),
+          baseOpex *
+            Math.pow(1 + profile.revenueGrowth * 0.75, Number(year) - Number(years[0]) + 1),
           revenue * profile.opexRatio
         );
         const ebitda = grossProfit - opex;
@@ -441,7 +623,10 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     try {
       const model = (await getModelDetailWithFallback(row.id)) as any;
       const packId =
-        model?.source_statement_pack_id || model?.source_statement_pack?.id || row.sourceStatementPackId || null;
+        model?.source_statement_pack_id ||
+        model?.source_statement_pack?.id ||
+        row.sourceStatementPackId ||
+        null;
       const packDetail = packId ? await getStatementPackDetailWithFallback(String(packId)) : null;
       const packStatements = Array.isArray((packDetail as any)?.statements)
         ? ((packDetail as any).statements as Array<{ id: string }>)
@@ -464,7 +649,9 @@ export function useFinanceSelection(activeTab: ModuleTab) {
   const loadStatementPreview = useCallback(async (statementId: string) => {
     try {
       const detail = await getStatementPackDetailWithFallback(statementId);
-      const statements = Array.isArray((detail as any)?.statements) ? (detail as any).statements : [];
+      const statements = Array.isArray((detail as any)?.statements)
+        ? (detail as any).statements
+        : [];
       setStatementPreviewDetail({
         entityName: String((detail as any)?.entity_name || ''),
         periodLabel: String((detail as any)?.period_label || ''),
@@ -513,8 +700,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
               status: String(validation.status || 'pass') as 'pass' | 'warning' | 'fail',
               expectedValue:
                 validation.expected_value != null ? Number(validation.expected_value) : null,
-              actualValue:
-                validation.actual_value != null ? Number(validation.actual_value) : null,
+              actualValue: validation.actual_value != null ? Number(validation.actual_value) : null,
               difference: validation.difference != null ? Number(validation.difference) : null,
               tolerance: validation.tolerance != null ? Number(validation.tolerance) : null,
               message: validation.message ? String(validation.message) : null,

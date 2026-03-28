@@ -1,7 +1,9 @@
-import React, { useLayoutEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useLayoutEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
+
+import { V8Provider } from '@/providers/V8Provider';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
@@ -12,7 +14,6 @@ import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
-import { V8Provider } from '@/providers/V8Provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {

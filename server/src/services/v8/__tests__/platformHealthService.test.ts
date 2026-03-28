@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -44,8 +44,7 @@ const mockGetSessionsByWorkspace = vi.fn();
 const mockGetLinkedRooms = vi.fn();
 
 vi.mock('../aiOperatingEnvironmentService.js', () => ({
-  getOperatingEnvironmentStatus: (...args: unknown[]) =>
-    mockGetOperatingEnvironmentStatus(...args),
+  getOperatingEnvironmentStatus: (...args: unknown[]) => mockGetOperatingEnvironmentStatus(...args),
 }));
 
 vi.mock('../collaborationRoomService.js', () => ({
@@ -54,19 +53,16 @@ vi.mock('../collaborationRoomService.js', () => ({
 }));
 
 vi.mock('../workspaceCollaborationService.js', () => ({
-  getSessionsByWorkspace: (...args: unknown[]) =>
-    mockGetSessionsByWorkspace(...args),
+  getSessionsByWorkspace: (...args: unknown[]) => mockGetSessionsByWorkspace(...args),
   getLinkedRooms: (...args: unknown[]) => mockGetLinkedRooms(...args),
 }));
 
 vi.mock('../workspaceGovernanceService.js', () => ({
-  getGovernanceDashboard: (...args: unknown[]) =>
-    mockGetGovernanceDashboard(...args),
+  getGovernanceDashboard: (...args: unknown[]) => mockGetGovernanceDashboard(...args),
 }));
 
 vi.mock('../sourceTruthService.js', () => ({
-  getTransformationPipeline: (...args: unknown[]) =>
-    mockGetTransformationPipeline(...args),
+  getTransformationPipeline: (...args: unknown[]) => mockGetTransformationPipeline(...args),
 }));
 
 vi.mock('../executionVisibilityService.js', () => ({
@@ -74,28 +70,23 @@ vi.mock('../executionVisibilityService.js', () => ({
 }));
 
 vi.mock('../operatorAdminService.js', () => ({
-  getOperatorDashboard: (...args: unknown[]) =>
-    mockGetOperatorDashboard(...args),
+  getOperatorDashboard: (...args: unknown[]) => mockGetOperatorDashboard(...args),
 }));
 
 vi.mock('../reportsPresModelService.js', () => ({
-  getDeliveryPipeline: (...args: unknown[]) =>
-    mockGetDeliveryPipeline(...args),
+  getDeliveryPipeline: (...args: unknown[]) => mockGetDeliveryPipeline(...args),
 }));
 
 vi.mock('../financeIntegrationService.js', () => ({
-  getFinanceDashboard: (...args: unknown[]) =>
-    mockGetFinanceDashboard(...args),
+  getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
 }));
 
 vi.mock('../resultsROIService.js', () => ({
-  getResultsDashboard: (...args: unknown[]) =>
-    mockGetResultsDashboard(...args),
+  getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
 }));
 
 vi.mock('../contextSnapshotService.js', () => ({
-  getSnapshotsByConversation: (...args: unknown[]) =>
-    mockGetSnapshotsByConversation(...args),
+  getSnapshotsByConversation: (...args: unknown[]) => mockGetSnapshotsByConversation(...args),
 }));
 
 vi.mock('../executionSpineService.js', () => ({
@@ -107,11 +98,11 @@ vi.mock('../workspaceCrossModuleService.js', () => ({
 }));
 
 import {
-  getPlatformHealth,
-  getCrossDomainIntegrity,
   getClosureCertification,
-  getPlatformMetrics,
+  getCrossDomainIntegrity,
   getDomainReadiness,
+  getPlatformHealth,
+  getPlatformMetrics,
 } from '../platformHealthService.js';
 
 // ==========================================
@@ -119,18 +110,19 @@ import {
 // ==========================================
 
 const ORG_ID = '00000000-0000-4000-8000-000000000001';
-const INVALID_ORG = 'not-a-uuid';
+const SLUG_ORG_ID = 'dbr77';
+const INVALID_ORG = '';
 
 function setupAllHealthy() {
   mockGetOperatingEnvironmentStatus.mockResolvedValue({
-    layers: [
-      { name: 'context', status: 'active' },
-      { name: 'retrieval', status: 'active' },
-      { name: 'execution', status: 'active' },
-    ],
+    layers: {
+      context: 'healthy',
+      retrieval: 'healthy',
+      execution: 'healthy',
+    },
   });
   mockGetActiveRoomsByOrg.mockResolvedValue([
-    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'active' },
+    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'active' },
   ]);
   mockGetGovernanceDashboard.mockResolvedValue({
     totalPermissions: 5,
@@ -197,10 +189,10 @@ describe('getPlatformHealth', () => {
 
   it('reports degraded when AI layers are not all active', async () => {
     mockGetOperatingEnvironmentStatus.mockResolvedValue({
-      layers: [
-        { name: 'context', status: 'active' },
-        { name: 'retrieval', status: 'degraded' },
-      ],
+      layers: {
+        context: 'healthy',
+        retrieval: 'degraded',
+      },
     });
 
     const result = await getPlatformHealth(ORG_ID);
@@ -211,7 +203,7 @@ describe('getPlatformHealth', () => {
 
   it('reports degraded when multiplayer has degraded rooms', async () => {
     mockGetActiveRoomsByOrg.mockResolvedValue([
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'degraded' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'error' },
     ]);
 
     const result = await getPlatformHealth(ORG_ID);
@@ -220,9 +212,7 @@ describe('getPlatformHealth', () => {
   });
 
   it('reports critical when a domain call throws', async () => {
-    mockGetOperatingEnvironmentStatus.mockRejectedValue(
-      new Error('AI service down'),
-    );
+    mockGetOperatingEnvironmentStatus.mockRejectedValue(new Error('AI service down'));
 
     const result = await getPlatformHealth(ORG_ID);
 
@@ -231,13 +221,17 @@ describe('getPlatformHealth', () => {
   });
 
   it('reports degraded outputs when one output sub-domain fails', async () => {
-    mockGetFinanceDashboard.mockRejectedValue(
-      new Error('Finance unavailable'),
-    );
+    mockGetFinanceDashboard.mockRejectedValue(new Error('Finance unavailable'));
 
     const result = await getPlatformHealth(ORG_ID);
 
     expect(result.domains['outputs'].status).toBe('degraded');
+  });
+
+  it('accepts non-empty organization slugs used by live auth contexts', async () => {
+    const result = await getPlatformHealth(SLUG_ORG_ID);
+
+    expect(result.overall).toBe('healthy');
   });
 
   it('rejects invalid organizationId', async () => {
@@ -269,9 +263,7 @@ describe('getCrossDomainIntegrity', () => {
 
     const result = await getCrossDomainIntegrity(ORG_ID);
 
-    const snapshotCheck = result.checks.find(
-      (c) => c.check === 'runs_reference_valid_snapshots',
-    );
+    const snapshotCheck = result.checks.find((c) => c.check === 'runs_reference_valid_snapshots');
     expect(snapshotCheck?.passed).toBe(false);
     expect(result.intact).toBe(false);
   });
@@ -281,9 +273,7 @@ describe('getCrossDomainIntegrity', () => {
 
     const result = await getCrossDomainIntegrity(ORG_ID);
 
-    const runCheck = result.checks.find(
-      (c) => c.check === 'execution_runs_accessible',
-    );
+    const runCheck = result.checks.find((c) => c.check === 'execution_runs_accessible');
     expect(runCheck?.passed).toBe(false);
     expect(result.intact).toBe(false);
   });
@@ -293,10 +283,14 @@ describe('getCrossDomainIntegrity', () => {
 
     const result = await getCrossDomainIntegrity(ORG_ID);
 
-    const snapshotCheck = result.checks.find(
-      (c) => c.check === 'runs_reference_valid_snapshots',
-    );
+    const snapshotCheck = result.checks.find((c) => c.check === 'runs_reference_valid_snapshots');
     expect(snapshotCheck?.passed).toBe(true);
+  });
+
+  it('accepts non-empty organization slugs used by live auth contexts', async () => {
+    const result = await getCrossDomainIntegrity(SLUG_ORG_ID);
+
+    expect(result.intact).toBe(true);
   });
 
   it('rejects invalid organizationId', async () => {
@@ -322,9 +316,7 @@ describe('getClosureCertification', () => {
   });
 
   it('does not certify when health is critical', async () => {
-    mockGetOperatingEnvironmentStatus.mockRejectedValue(
-      new Error('AI down'),
-    );
+    mockGetOperatingEnvironmentStatus.mockRejectedValue(new Error('AI down'));
 
     const result = await getClosureCertification(ORG_ID);
 
@@ -350,12 +342,18 @@ describe('getClosureCertification', () => {
 
   it('still certifies when health is degraded (not critical)', async () => {
     mockGetOperatingEnvironmentStatus.mockResolvedValue({
-      layers: [{ name: 'context', status: 'degraded' }],
+      layers: { context: 'degraded' },
     });
 
     const result = await getClosureCertification(ORG_ID);
 
     expect(result.platformHealth.overall).toBe('degraded');
+    expect(result.certified).toBe(true);
+  });
+
+  it('accepts non-empty organization slugs used by live auth contexts', async () => {
+    const result = await getClosureCertification(SLUG_ORG_ID);
+
     expect(result.certified).toBe(true);
   });
 
@@ -402,6 +400,12 @@ describe('getPlatformMetrics', () => {
     expect(result.metrics['activeCollaborationRooms']).toBe(0);
   });
 
+  it('accepts non-empty organization slugs used by live auth contexts', async () => {
+    const result = await getPlatformMetrics(SLUG_ORG_ID);
+
+    expect(result.metrics['activeExecutionRuns']).toBe(1);
+  });
+
   it('rejects invalid organizationId', async () => {
     await expect(getPlatformMetrics(INVALID_ORG)).rejects.toThrow();
   });
@@ -429,22 +433,20 @@ describe('getDomainReadiness', () => {
 
   it('marks aiCore not ready when layers are not all active', async () => {
     mockGetOperatingEnvironmentStatus.mockResolvedValue({
-      layers: [{ name: 'context', status: 'degraded' }],
+      layers: { context: 'degraded' },
     });
 
     const result = await getDomainReadiness(ORG_ID);
 
     const aiCore = result.domains.find((d) => d.name === 'aiCore');
     expect(aiCore?.ready).toBe(false);
-    const layerCheck = aiCore?.checks.find(
-      (c) => c.name === 'all_layers_active',
-    );
+    const layerCheck = aiCore?.checks.find((c) => c.name === 'all_layers_active');
     expect(layerCheck?.passed).toBe(false);
   });
 
   it('marks multiplayer not ready when degraded rooms exist', async () => {
     mockGetActiveRoomsByOrg.mockResolvedValue([
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'degraded' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'error' },
     ]);
 
     const result = await getDomainReadiness(ORG_ID);
@@ -469,10 +471,14 @@ describe('getDomainReadiness', () => {
 
     const outputs = result.domains.find((d) => d.name === 'outputs');
     expect(outputs?.ready).toBe(false);
-    const finCheck = outputs?.checks.find(
-      (c) => c.name === 'finance_dashboard_accessible',
-    );
+    const finCheck = outputs?.checks.find((c) => c.name === 'finance_dashboard_accessible');
     expect(finCheck?.passed).toBe(false);
+  });
+
+  it('accepts non-empty organization slugs used by live auth contexts', async () => {
+    const result = await getDomainReadiness(SLUG_ORG_ID);
+
+    expect(result.domains.length).toBe(6);
   });
 
   it('rejects invalid organizationId', async () => {

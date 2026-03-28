@@ -78,10 +78,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
     if (!refineText.trim()) return;
     setLoading(true);
     try {
-      const refined = await TablePlatformApi.refineSchemaProposal(
-        currentProposal.id,
-        refineText
-      );
+      const refined = await TablePlatformApi.refineSchemaProposal(currentProposal.id, refineText);
       if (refined) {
         setCurrentProposal(refined as SchemaProposal);
       }
@@ -125,14 +122,11 @@ export const ChatTableProposalCard: React.FC<Props> = ({
           {isPl ? 'Propozycja schematu tabeli' : 'Table Schema Proposal'}
         </span>
         <span className="ml-auto text-xs text-slate-500">
-          {Math.round(currentProposal.confidence * 100)}%{' '}
-          {isPl ? 'pewności' : 'confidence'}
+          {Math.round(currentProposal.confidence * 100)}% {isPl ? 'pewności' : 'confidence'}
         </span>
       </div>
 
-      <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
-        {currentProposal.summary}
-      </p>
+      <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{currentProposal.summary}</p>
 
       {currentProposal.operations.length > 0 && (
         <div className="space-y-1 mb-3">
@@ -173,13 +167,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
             disabled={loading}
             className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 disabled:opacity-50"
           >
-            {loading ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : isPl ? (
-              'Wyślij'
-            ) : (
-              'Send'
-            )}
+            {loading ? <Loader2 size={12} className="animate-spin" /> : isPl ? 'Wyślij' : 'Send'}
           </button>
           <button
             onClick={() => setRefineMode(false)}

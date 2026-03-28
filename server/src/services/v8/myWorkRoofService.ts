@@ -13,29 +13,29 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
+  CalendarPhase,
   CanonicalObjectState,
-  SurfaceProjection,
+  ClassifyHomeBlockParams,
   HomeBlockMaturity,
   InboxMaterialization,
   InboxMaterializationStats,
-  CalendarPhase,
-  MyWorkSurface,
   LatencyBand,
-  SetCanonicalObjectStateParams,
-  ClassifyHomeBlockParams,
+  MyWorkSurface,
   RecordInboxMaterializationParams,
   SetCalendarPhaseParams,
+  SetCanonicalObjectStateParams,
+  SurfaceProjection,
   UpdateSurfaceProjectionParams,
 } from '../../types/myWorkRoofPackage.js';
 import {
-  SetCanonicalObjectStateParamsSchema,
   ClassifyHomeBlockParamsSchema,
+  classifyLatencyBand,
   RecordInboxMaterializationParamsSchema,
   SetCalendarPhaseParamsSchema,
+  SetCanonicalObjectStateParamsSchema,
   UpdateSurfaceProjectionParamsSchema,
-  classifyLatencyBand,
 } from '../../types/myWorkRoofPackage.js';
-import { all as dbAll, run as dbRun, get as dbGet } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 // ==========================================
@@ -117,7 +117,7 @@ function rowToCanonicalObjectState(row: CanonicalObjectStateRow): CanonicalObjec
     lastUpdatedAt: row.last_updated_at,
     surfaceProjections: safeJsonParse<Record<string, SurfaceProjection>>(
       row.surface_projections,
-      {},
+      {}
     ),
   };
 }
@@ -165,7 +165,7 @@ function rowToCalendarPhase(row: CalendarPhaseRow): CalendarPhase {
  * Surfaces may show different projections, but never different truths.
  */
 export async function setCanonicalObjectState(
-  params: SetCanonicalObjectStateParams,
+  params: SetCanonicalObjectStateParams
 ): Promise<CanonicalObjectState> {
   const validated = SetCanonicalObjectStateParamsSchema.parse(params);
   const now = new Date().toISOString();
@@ -196,11 +196,11 @@ export async function setCanonicalObjectState(
       state.canonicalState,
       state.lastUpdatedAt,
       JSON.stringify(state.surfaceProjections),
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Set canonical state for ${state.objectType}:${state.objectId} → ${state.canonicalState}`,
+    `${LOG_PREFIX} Set canonical state for ${state.objectType}:${state.objectId} → ${state.canonicalState}`
   );
   return state;
 }
@@ -210,12 +210,12 @@ export async function setCanonicalObjectState(
  */
 export async function getCanonicalObjectState(
   objectId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CanonicalObjectState | null> {
   const row = await dbGet<CanonicalObjectStateRow>(
     `SELECT * FROM v8_canonical_object_states
      WHERE object_id = ? AND organization_id = ?`,
-    [objectId, organizationId],
+    [objectId, organizationId]
   );
 
   return row ? rowToCanonicalObjectState(row) : null;
@@ -228,7 +228,7 @@ export async function getCanonicalObjectState(
 export async function getSurfaceProjection(
   objectId: string,
   surface: MyWorkSurface,
-  organizationId: string,
+  organizationId: string
 ): Promise<SurfaceProjection | null> {
   const state = await getCanonicalObjectState(objectId, organizationId);
   if (!state) return null;
@@ -240,7 +240,7 @@ export async function getSurfaceProjection(
  * Creates the projection entry within the JSON map; preserves other projections.
  */
 export async function updateSurfaceProjection(
-  params: UpdateSurfaceProjectionParams,
+  params: UpdateSurfaceProjectionParams
 ): Promise<CanonicalObjectState | null> {
   const validated = UpdateSurfaceProjectionParamsSchema.parse(params);
   const now = new Date().toISOString();
@@ -264,16 +264,11 @@ export async function updateSurfaceProjection(
     `UPDATE v8_canonical_object_states
      SET surface_projections = ?, last_updated_at = ?
      WHERE object_id = ? AND organization_id = ?`,
-    [
-      JSON.stringify(updatedProjections),
-      now,
-      validated.objectId,
-      validated.organizationId,
-    ],
+    [JSON.stringify(updatedProjections), now, validated.objectId, validated.organizationId]
   );
 
   logger.info(
-    `${LOG_PREFIX} Updated projection for ${validated.objectId} on surface ${validated.surface}`,
+    `${LOG_PREFIX} Updated projection for ${validated.objectId} on surface ${validated.surface}`
   );
 
   return {
@@ -292,7 +287,7 @@ export async function updateSurfaceProjection(
  * Rule: "Home may stay heterogeneous temporarily, but truth labels must be explicit."
  */
 export async function classifyHomeBlock(
-  params: ClassifyHomeBlockParams,
+  params: ClassifyHomeBlockParams
 ): Promise<HomeBlockMaturity> {
   const validated = ClassifyHomeBlockParamsSchema.parse(params);
   const blockId = uuidv4();
@@ -323,27 +318,23 @@ export async function classifyHomeBlock(
       maturity.maturityLevel,
       maturity.serviceRef,
       maturity.lastAuditedAt,
-    ],
+    ]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Classified block ${maturity.blockName} → ${maturity.maturityLevel}`,
-  );
+  logger.info(`${LOG_PREFIX} Classified block ${maturity.blockName} → ${maturity.maturityLevel}`);
   return maturity;
 }
 
 /**
  * Get maturity classification for all Home blocks in an org.
  */
-export async function getHomeBlockMaturity(
-  organizationId: string,
-): Promise<HomeBlockMaturity[]> {
+export async function getHomeBlockMaturity(organizationId: string): Promise<HomeBlockMaturity[]> {
   const rows = await dbAll<HomeBlockMaturityRow>(
     `SELECT * FROM v8_home_block_maturity
      WHERE organization_id = ?
      ORDER BY block_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToHomeBlockMaturity);
@@ -358,7 +349,7 @@ export async function getHomeBlockMaturity(
  * Baseline: near-realtime ≤ 5s, operational ≤ 60s, degraded > 60s.
  */
 export async function recordInboxMaterialization(
-  params: RecordInboxMaterializationParams,
+  params: RecordInboxMaterializationParams
 ): Promise<InboxMaterialization> {
   const validated = RecordInboxMaterializationParamsSchema.parse(params);
   const materializationId = uuidv4();
@@ -390,11 +381,11 @@ export async function recordInboxMaterialization(
       materialization.materializedAt,
       materialization.latencyMs,
       materialization.latencyBand,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded inbox materialization ${materializationId} [${latencyBand}] latency=${validated.latencyMs}ms`,
+    `${LOG_PREFIX} Recorded inbox materialization ${materializationId} [${latencyBand}] latency=${validated.latencyMs}ms`
   );
   return materialization;
 }
@@ -405,13 +396,13 @@ export async function recordInboxMaterialization(
  */
 export async function getInboxMaterializationStats(
   userId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<InboxMaterializationStats> {
   const avgRow = await dbGet<AvgLatencyRow>(
     `SELECT AVG(latency_ms) as avg_latency
      FROM v8_inbox_materializations
      WHERE user_id = ? AND organization_id = ?`,
-    [userId, organizationId],
+    [userId, organizationId]
   );
 
   const bandRows = await dbAll<BandCountRow>(
@@ -420,7 +411,7 @@ export async function getInboxMaterializationStats(
      WHERE user_id = ? AND organization_id = ?
      GROUP BY latency_band`,
     [userId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const distribution: Record<LatencyBand, number> = {
@@ -450,9 +441,7 @@ export async function getInboxMaterializationStats(
  * Set or update a calendar hardening phase. Upserts by (phaseName, organizationId).
  * Rule: "do not block internal Calendar quality on external sync readiness."
  */
-export async function setCalendarPhase(
-  params: SetCalendarPhaseParams,
-): Promise<CalendarPhase> {
+export async function setCalendarPhase(params: SetCalendarPhaseParams): Promise<CalendarPhase> {
   const validated = SetCalendarPhaseParamsSchema.parse(params);
   const phaseId = uuidv4();
 
@@ -471,33 +460,23 @@ export async function setCalendarPhase(
     ON CONFLICT (phase_name, organization_id) DO UPDATE SET
       status = excluded.status,
       blocked_by = excluded.blocked_by`,
-    [
-      phase.phaseId,
-      phase.phaseName,
-      phase.organizationId,
-      phase.status,
-      phase.blockedBy,
-    ],
+    [phase.phaseId, phase.phaseName, phase.organizationId, phase.status, phase.blockedBy]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Set calendar phase ${phase.phaseName} → ${phase.status}`,
-  );
+  logger.info(`${LOG_PREFIX} Set calendar phase ${phase.phaseName} → ${phase.status}`);
   return phase;
 }
 
 /**
  * Get all calendar phases for an org.
  */
-export async function getCalendarPhases(
-  organizationId: string,
-): Promise<CalendarPhase[]> {
+export async function getCalendarPhases(organizationId: string): Promise<CalendarPhase[]> {
   const rows = await dbAll<CalendarPhaseRow>(
     `SELECT * FROM v8_calendar_phases
      WHERE organization_id = ?
      ORDER BY phase_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToCalendarPhase);

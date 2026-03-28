@@ -7,14 +7,20 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
-import { useTablePlatformBridge } from './useTablePlatformBridge';
-import { useTablePlatformViews } from './useTablePlatformViews';
+import type {
+  FilterGroup as TPFilterGroup,
+  TablePlatformField,
+  TablePlatformView,
+} from '@/types/tablePlatform';
+
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { columnToField, fieldToColumn, recordToNode } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
+import { useTablePlatformBridge } from './useTablePlatformBridge';
+import { useTablePlatformViews } from './useTablePlatformViews';
 import type { ViewLayout } from './useTableViews';
-import type { TablePlatformField, TablePlatformView, FilterGroup as TPFilterGroup } from '@/types/tablePlatform';
 
 // ---------------------------------------------------------------------------
 // Inactive defaults (when platform is not active)
@@ -95,7 +101,11 @@ export interface UseTablePlatformIntegrationReturn {
   platformFields: TablePlatformField[];
   platformViews: TablePlatformView[];
   applyPlatformFilters: (filters: TPFilterGroup) => Promise<void>;
-  createPlatformView: (name: string, viewType?: string, config?: Record<string, unknown>) => Promise<TablePlatformView | null>;
+  createPlatformView: (
+    name: string,
+    viewType?: string,
+    config?: Record<string, unknown>
+  ) => Promise<TablePlatformView | null>;
 }
 
 // ---------------------------------------------------------------------------
@@ -204,31 +214,25 @@ export function useTablePlatformIntegration(
     }
   }, [isActive, bridge.nodes]);
 
-  const columns = isActive ? (localColumns.length > 0 ? localColumns : bridge.columns) : EMPTY_COLUMNS;
+  const columns = isActive
+    ? localColumns.length > 0
+      ? localColumns
+      : bridge.columns
+    : EMPTY_COLUMNS;
   const nodes = isActive ? (localNodes.length > 0 ? localNodes : bridge.nodes) : EMPTY_NODES;
 
   const { processed: processedRows, grouped: groupedRows } = useMemo(() => {
     if (!isActive) return { processed: EMPTY_NODES, grouped: null };
-    return applyLocalFilterSortGroup(
-      nodes,
-      views.filters,
-      views.sort,
-      views.groupBy
-    );
+    return applyLocalFilterSortGroup(nodes, views.filters, views.sort, views.groupBy);
   }, [isActive, nodes, views.filters, views.sort, views.groupBy]);
 
-  const visibleColumns = useMemo(
-    () => columns.filter((c) => c.visible !== false),
-    [columns]
-  );
+  const visibleColumns = useMemo(() => columns.filter((c) => c.visible !== false), [columns]);
 
   const toggleColumn = useCallback(
     (key: string) => {
       if (!isActive) return;
       setLocalColumns((prev) =>
-        prev.map((c) =>
-          c.key === key ? { ...c, visible: c.visible === false } : c
-        )
+        prev.map((c) => (c.key === key ? { ...c, visible: c.visible === false } : c))
       );
     },
     [isActive]
@@ -239,7 +243,11 @@ export function useTablePlatformIntegration(
       if (!isActive || locked) return;
       void (async () => {
         const { fieldType, options } = columnToField(col);
-        const added = await bridge.addField(col.header ?? '', fieldType ?? 'singleLineText', (options ?? {}) as Record<string, unknown>);
+        const added = await bridge.addField(
+          col.header ?? '',
+          fieldType ?? 'singleLineText',
+          (options ?? {}) as Record<string, unknown>
+        );
         if (added) {
           const newCol = fieldToColumn(added);
           setLocalColumns((prev) => [...prev, newCol]);
@@ -254,9 +262,7 @@ export function useTablePlatformIntegration(
       if (!isActive || locked) return;
       void (async () => {
         await bridge.updateField(key, { name: newName });
-        setLocalColumns((prev) =>
-          prev.map((c) => (c.key === key ? { ...c, header: newName } : c))
-        );
+        setLocalColumns((prev) => prev.map((c) => (c.key === key ? { ...c, header: newName } : c)));
       })();
     },
     [isActive, locked, bridge]
@@ -303,18 +309,14 @@ export function useTablePlatformIntegration(
       const prevData = prev?.data ? { ...prev.data } : {};
       setLocalNodes((curr) =>
         curr.map((n) =>
-          n.id === nodeId
-            ? { ...n, data: { ...(n.data ?? {}), [field]: value } }
-            : n
+          n.id === nodeId ? { ...n, data: { ...(n.data ?? {}), [field]: value } } : n
         )
       );
       void (async () => {
         const result = await bridge.updateRecord(nodeId, { [field]: value });
         if (!result) {
           setLocalNodes((curr) =>
-            curr.map((n) =>
-              n.id === nodeId ? { ...n, data: prevData } : n
-            )
+            curr.map((n) => (n.id === nodeId ? { ...n, data: prevData } : n))
           );
         }
       })();
@@ -322,53 +324,45 @@ export function useTablePlatformIntegration(
     [isActive, locked, nodes, bridge]
   );
 
-  const handleAddRow = useCallback(
-    () => {
-      if (!isActive || locked) return;
-      const tempId = `temp-${Date.now()}`;
-      const tempNode: TableNode = {
-        id: tempId,
-        type: 'idea',
-        data: { label: '', status: 'todo', created_time: new Date().toISOString() },
-        position: { x: 0, y: 0 },
-      };
-      setLocalNodes((curr) => [tempNode, ...curr]);
-      void (async () => {
-        const created = await bridge.createRecord({});
+  const handleAddRow = useCallback(() => {
+    if (!isActive || locked) return;
+    const tempId = `temp-${Date.now()}`;
+    const tempNode: TableNode = {
+      id: tempId,
+      type: 'idea',
+      data: { label: '', status: 'todo', created_time: new Date().toISOString() },
+      position: { x: 0, y: 0 },
+    };
+    setLocalNodes((curr) => [tempNode, ...curr]);
+    void (async () => {
+      const created = await bridge.createRecord({});
       if (created) {
         const newNode = recordToNode(created, bridge.fields);
-        setLocalNodes((curr) =>
-          curr.map((n) => (n.id === tempId ? newNode : n))
-        );
+        setLocalNodes((curr) => curr.map((n) => (n.id === tempId ? newNode : n)));
       } else {
         setLocalNodes((curr) => curr.filter((n) => n.id !== tempId));
       }
-      })();
-    },
-    [isActive, locked, bridge]
-  );
+    })();
+  }, [isActive, locked, bridge]);
 
-  const handleBulkDelete = useCallback(
-    () => {
-      if (!isActive || locked || selectedRowIds.size === 0) return;
-      const ids = Array.from(selectedRowIds);
-      setLocalNodes((curr) => curr.filter((n) => !selectedRowIds.has(n.id)));
-      setSelectedRowIds(new Set());
-      onSelectionChange?.(EMPTY_SELECTION);
-      void (async () => {
-        let anyFailed = false;
-        for (const id of ids) {
-          const ok = await bridge.deleteRecord(id);
-          if (!ok) anyFailed = true;
-        }
-        if (anyFailed) {
-          await bridge.refresh();
-          // useEffect will sync localNodes from bridge.nodes
-        }
-      })();
-    },
-    [isActive, locked, selectedRowIds, bridge, onSelectionChange]
-  );
+  const handleBulkDelete = useCallback(() => {
+    if (!isActive || locked || selectedRowIds.size === 0) return;
+    const ids = Array.from(selectedRowIds);
+    setLocalNodes((curr) => curr.filter((n) => !selectedRowIds.has(n.id)));
+    setSelectedRowIds(new Set());
+    onSelectionChange?.(EMPTY_SELECTION);
+    void (async () => {
+      let anyFailed = false;
+      for (const id of ids) {
+        const ok = await bridge.deleteRecord(id);
+        if (!ok) anyFailed = true;
+      }
+      if (anyFailed) {
+        await bridge.refresh();
+        // useEffect will sync localNodes from bridge.nodes
+      }
+    })();
+  }, [isActive, locked, selectedRowIds, bridge, onSelectionChange]);
 
   const handleSave = useCallback(async () => {
     if (!isActive) return;

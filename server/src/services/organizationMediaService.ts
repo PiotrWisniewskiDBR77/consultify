@@ -166,8 +166,9 @@ export async function listMedia(
 
   if (options?.tags && options.tags.length > 0) {
     items = items.filter((item) =>
-      options.tags!.some((tag) =>
-        item.ai_tags.includes(tag.toLowerCase()) || item.user_tags.includes(tag.toLowerCase())
+      options.tags!.some(
+        (tag) =>
+          item.ai_tags.includes(tag.toLowerCase()) || item.user_tags.includes(tag.toLowerCase())
       )
     );
   }

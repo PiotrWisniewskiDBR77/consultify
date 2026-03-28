@@ -110,10 +110,10 @@ export async function runMigrations(): Promise<MigrationResult> {
 
     try {
       await db.query(sql);
-      await db.query(
-        `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)`,
-        [file, checksum]
-      );
+      await db.query(`INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)`, [
+        file,
+        checksum,
+      ]);
       applied++;
       logger.info(`[TP Migrations] Applied ${file}`);
     } catch (err: any) {

@@ -8,21 +8,20 @@
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import Logger from '../../utils/Logger.js';
 import { getOperatingEnvironmentStatus } from './aiOperatingEnvironmentService.js';
 import { getActiveRoomsByOrg, getRoomHealth } from './collaborationRoomService.js';
-import { getSessionsByWorkspace, getLinkedRooms } from './workspaceCollaborationService.js';
-import { getGovernanceDashboard } from './workspaceGovernanceService.js';
-import { getTransformationPipeline } from './sourceTruthService.js';
-import { rollupSignals } from './executionVisibilityService.js';
-import { getOperatorDashboard } from './operatorAdminService.js';
-import { getDeliveryPipeline } from './reportsPresModelService.js';
-import { getFinanceDashboard } from './financeIntegrationService.js';
-import { getResultsDashboard } from './resultsROIService.js';
 import { getSnapshotsByConversation } from './contextSnapshotService.js';
 import { getActiveRuns } from './executionSpineService.js';
+import { rollupSignals } from './executionVisibilityService.js';
+import { getFinanceDashboard } from './financeIntegrationService.js';
+import { getOperatorDashboard } from './operatorAdminService.js';
+import { getDeliveryPipeline } from './reportsPresModelService.js';
+import { getResultsDashboard } from './resultsROIService.js';
+import { getTransformationPipeline } from './sourceTruthService.js';
+import { getLinkedRooms, getSessionsByWorkspace } from './workspaceCollaborationService.js';
 import { getModuleLinks } from './workspaceCrossModuleService.js';
-
-import Logger from '../../utils/Logger.js';
+import { getGovernanceDashboard } from './workspaceGovernanceService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,11 +82,15 @@ export interface DomainReadinessResult {
   domains: DomainReadiness[];
 }
 
+type SafeDomainCallResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
 // ---------------------------------------------------------------------------
 // Zod schemas for input validation
 // ---------------------------------------------------------------------------
 
-const OrganizationIdSchema = z.string().uuid();
+// Live environments still use stable org keys like `dbr77` on some auth paths,
+// so platform observability must accept any non-empty organization identifier.
+const OrganizationIdSchema = z.string().trim().min(1);
 
 const TOTAL_WAVES = 20;
 
@@ -109,8 +112,8 @@ function getNumericMetric(value: unknown, key: string): number {
 
 async function safeDomainCall<T>(
   domainName: string,
-  fn: () => Promise<T>,
-): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  fn: () => Promise<T>
+): Promise<SafeDomainCallResult<T>> {
   try {
     const data = await fn();
     return { ok: true, data };
@@ -121,20 +124,22 @@ async function safeDomainCall<T>(
   }
 }
 
+function getSafeDomainError<T>(result: SafeDomainCallResult<T>): string {
+  return result.ok ? 'Unknown domain failure' : result.error;
+}
+
 // ---------------------------------------------------------------------------
 // 1. getPlatformHealth
 // ---------------------------------------------------------------------------
 
-export async function getPlatformHealth(
-  organizationId: string,
-): Promise<PlatformHealthResult> {
+export async function getPlatformHealth(organizationId: string): Promise<PlatformHealthResult> {
   OrganizationIdSchema.parse(organizationId);
 
   const domains: Record<string, DomainHealth> = {};
 
   // AI Core
   const aiResult = await safeDomainCall('aiCore', () =>
-    getOperatingEnvironmentStatus(organizationId),
+    getOperatingEnvironmentStatus(organizationId)
   );
   if (aiResult.ok) {
     const env = aiResult.data;
@@ -147,14 +152,12 @@ export async function getPlatformHealth(
   } else {
     domains['aiCore'] = {
       status: 'critical',
-      details: { error: aiResult.error },
+      details: { error: getSafeDomainError(aiResult) },
     };
   }
 
   // Multiplayer
-  const mpResult = await safeDomainCall('multiplayer', () =>
-    getActiveRoomsByOrg(organizationId),
-  );
+  const mpResult = await safeDomainCall('multiplayer', () => getActiveRoomsByOrg(organizationId));
   if (mpResult.ok) {
     const rooms = mpResult.data;
     const degradedRooms = rooms.filter((r) => r.roomState === 'error');
@@ -168,13 +171,13 @@ export async function getPlatformHealth(
   } else {
     domains['multiplayer'] = {
       status: 'critical',
-      details: { error: mpResult.error },
+      details: { error: getSafeDomainError(mpResult) },
     };
   }
 
   // Workspace
   const wsGovResult = await safeDomainCall('workspaceGovernance', () =>
-    getGovernanceDashboard('default', organizationId),
+    getGovernanceDashboard('default', organizationId)
   );
   domains['workspace'] = wsGovResult.ok
     ? {
@@ -185,12 +188,12 @@ export async function getPlatformHealth(
       }
     : {
         status: 'degraded',
-        details: { error: wsGovResult.error },
+        details: { error: getSafeDomainError(wsGovResult) },
       };
 
   // Lifecycle
   const lcResult = await safeDomainCall('lifecycle', () =>
-    getTransformationPipeline(organizationId),
+    getTransformationPipeline(organizationId)
   );
   domains['lifecycle'] = lcResult.ok
     ? {
@@ -199,13 +202,11 @@ export async function getPlatformHealth(
       }
     : {
         status: 'degraded',
-        details: { error: lcResult.error },
+        details: { error: getSafeDomainError(lcResult) },
       };
 
   // PM Sync
-  const pmResult = await safeDomainCall('pmSync', () =>
-    getOperatorDashboard(organizationId),
-  );
+  const pmResult = await safeDomainCall('pmSync', () => getOperatorDashboard(organizationId));
   domains['pmSync'] = pmResult.ok
     ? {
         status: 'healthy',
@@ -213,7 +214,7 @@ export async function getPlatformHealth(
       }
     : {
         status: 'degraded',
-        details: { error: pmResult.error },
+        details: { error: getSafeDomainError(pmResult) },
       };
 
   // Outputs
@@ -234,13 +235,9 @@ export async function getPlatformHealth(
     details: {
       delivery: deliveryResult.ok
         ? deliveryResult.data
-        : { error: deliveryResult.error },
-      finance: financeResult.ok
-        ? financeResult.data
-        : { error: financeResult.error },
-      results: resultsResult.ok
-        ? resultsResult.data
-        : { error: resultsResult.error },
+        : { error: getSafeDomainError(deliveryResult) },
+      finance: financeResult.ok ? financeResult.data : { error: getSafeDomainError(financeResult) },
+      results: resultsResult.ok ? resultsResult.data : { error: getSafeDomainError(resultsResult) },
     },
   };
 
@@ -258,7 +255,7 @@ export async function getPlatformHealth(
 // ---------------------------------------------------------------------------
 
 export async function getCrossDomainIntegrity(
-  organizationId: string,
+  organizationId: string
 ): Promise<CrossDomainIntegrityResult> {
   OrganizationIdSchema.parse(organizationId);
 
@@ -266,9 +263,7 @@ export async function getCrossDomainIntegrity(
 
   // Check 1: Context snapshots have valid consumer bindings
   // We verify that active execution runs reference existing snapshots
-  const runsResult = await safeDomainCall('executionRuns', () =>
-    getActiveRuns(organizationId),
-  );
+  const runsResult = await safeDomainCall('executionRuns', () => getActiveRuns(organizationId));
   if (runsResult.ok) {
     const runs = runsResult.data;
     const hasRuns = runs.length >= 0; // existence check — no runs is still valid
@@ -295,13 +290,13 @@ export async function getCrossDomainIntegrity(
       domain: 'aiCore',
       check: 'execution_runs_accessible',
       passed: false,
-      details: `Failed to query execution runs: ${runsResult.error}`,
+      details: `Failed to query execution runs: ${getSafeDomainError(runsResult)}`,
     });
   }
 
   // Check 2: Multiplayer rooms are accessible
   const roomsResult = await safeDomainCall('multiplayer', () =>
-    getActiveRoomsByOrg(organizationId),
+    getActiveRoomsByOrg(organizationId)
   );
   if (roomsResult.ok) {
     checks.push({
@@ -315,13 +310,13 @@ export async function getCrossDomainIntegrity(
       domain: 'multiplayer',
       check: 'rooms_accessible',
       passed: false,
-      details: `Failed to query rooms: ${roomsResult.error}`,
+      details: `Failed to query rooms: ${getSafeDomainError(roomsResult)}`,
     });
   }
 
   // Check 3: Transformation pipeline accessible
   const pipelineResult = await safeDomainCall('lifecycle', () =>
-    getTransformationPipeline(organizationId),
+    getTransformationPipeline(organizationId)
   );
   checks.push({
     domain: 'lifecycle',
@@ -329,33 +324,29 @@ export async function getCrossDomainIntegrity(
     passed: pipelineResult.ok,
     details: pipelineResult.ok
       ? 'Transformation pipeline is accessible'
-      : `Failed: ${pipelineResult.error}`,
+      : `Failed: ${getSafeDomainError(pipelineResult)}`,
   });
 
   // Check 4: PM Sync connector health
-  const pmDashResult = await safeDomainCall('pmSync', () =>
-    getOperatorDashboard(organizationId),
-  );
+  const pmDashResult = await safeDomainCall('pmSync', () => getOperatorDashboard(organizationId));
   checks.push({
     domain: 'pmSync',
     check: 'operator_dashboard_accessible',
     passed: pmDashResult.ok,
     details: pmDashResult.ok
       ? 'Operator dashboard is accessible'
-      : `Failed: ${pmDashResult.error}`,
+      : `Failed: ${getSafeDomainError(pmDashResult)}`,
   });
 
   // Check 5: Output delivery pipeline
-  const deliveryResult = await safeDomainCall('outputs', () =>
-    getDeliveryPipeline(organizationId),
-  );
+  const deliveryResult = await safeDomainCall('outputs', () => getDeliveryPipeline(organizationId));
   checks.push({
     domain: 'outputs',
     check: 'delivery_pipeline_accessible',
     passed: deliveryResult.ok,
     details: deliveryResult.ok
       ? 'Delivery pipeline is accessible'
-      : `Failed: ${deliveryResult.error}`,
+      : `Failed: ${getSafeDomainError(deliveryResult)}`,
   });
 
   const intact = checks.every((c) => c.passed);
@@ -368,7 +359,7 @@ export async function getCrossDomainIntegrity(
 // ---------------------------------------------------------------------------
 
 export async function getClosureCertification(
-  organizationId: string,
+  organizationId: string
 ): Promise<ClosureCertification> {
   OrganizationIdSchema.parse(organizationId);
 
@@ -396,54 +387,40 @@ export async function getClosureCertification(
 // 4. getPlatformMetrics
 // ---------------------------------------------------------------------------
 
-export async function getPlatformMetrics(
-  organizationId: string,
-): Promise<PlatformMetrics> {
+export async function getPlatformMetrics(organizationId: string): Promise<PlatformMetrics> {
   OrganizationIdSchema.parse(organizationId);
 
   const metrics: Record<string, number> = {};
 
   // Active execution runs
-  const runsResult = await safeDomainCall('runs', () =>
-    getActiveRuns(organizationId),
-  );
+  const runsResult = await safeDomainCall('runs', () => getActiveRuns(organizationId));
   metrics['activeExecutionRuns'] = runsResult.ok ? runsResult.data.length : 0;
 
   // Active collaboration rooms
-  const roomsResult = await safeDomainCall('rooms', () =>
-    getActiveRoomsByOrg(organizationId),
-  );
-  metrics['activeCollaborationRooms'] = roomsResult.ok
-    ? roomsResult.data.length
-    : 0;
+  const roomsResult = await safeDomainCall('rooms', () => getActiveRoomsByOrg(organizationId));
+  metrics['activeCollaborationRooms'] = roomsResult.ok ? roomsResult.data.length : 0;
 
   // Delivery pipeline artifacts
   const deliveryResult = await safeDomainCall('delivery', () =>
-    getDeliveryPipeline(organizationId),
+    getDeliveryPipeline(organizationId)
   );
   metrics['outputArtifacts'] = deliveryResult.ok
     ? getNumericMetric(deliveryResult.data, 'totalArtifacts')
     : 0;
 
   // Finance dashboard
-  const financeResult = await safeDomainCall('finance', () =>
-    getFinanceDashboard(organizationId),
-  );
+  const financeResult = await safeDomainCall('finance', () => getFinanceDashboard(organizationId));
   metrics['financeIngestions'] = financeResult.ok
     ? getNumericMetric(financeResult.data, 'totalIngestions')
     : 0;
 
   // Results dashboard
-  const resultsResult = await safeDomainCall('results', () =>
-    getResultsDashboard(organizationId),
-  );
-  metrics['kpisTracked'] = resultsResult.ok
-    ? getNumericMetric(resultsResult.data, 'totalKPIs')
-    : 0;
+  const resultsResult = await safeDomainCall('results', () => getResultsDashboard(organizationId));
+  metrics['kpisTracked'] = resultsResult.ok ? getNumericMetric(resultsResult.data, 'totalKPIs') : 0;
 
   // Transformation pipeline
   const pipelineResult = await safeDomainCall('pipeline', () =>
-    getTransformationPipeline(organizationId),
+    getTransformationPipeline(organizationId)
   );
   metrics['transformationSources'] = pipelineResult.ok
     ? getNumericMetric(pipelineResult.data, 'totalSources')
@@ -459,9 +436,7 @@ export async function getPlatformMetrics(
 // 5. getDomainReadiness
 // ---------------------------------------------------------------------------
 
-export async function getDomainReadiness(
-  organizationId: string,
-): Promise<DomainReadinessResult> {
+export async function getDomainReadiness(organizationId: string): Promise<DomainReadinessResult> {
   OrganizationIdSchema.parse(organizationId);
 
   const domains: DomainReadiness[] = [];
@@ -469,7 +444,7 @@ export async function getDomainReadiness(
   // AI Core
   const aiChecks: DomainReadinessCheck[] = [];
   const aiResult = await safeDomainCall('aiCore', () =>
-    getOperatingEnvironmentStatus(organizationId),
+    getOperatingEnvironmentStatus(organizationId)
   );
   aiChecks.push({
     name: 'operating_environment_accessible',
@@ -489,9 +464,7 @@ export async function getDomainReadiness(
 
   // Multiplayer
   const mpChecks: DomainReadinessCheck[] = [];
-  const mpResult = await safeDomainCall('multiplayer', () =>
-    getActiveRoomsByOrg(organizationId),
-  );
+  const mpResult = await safeDomainCall('multiplayer', () => getActiveRoomsByOrg(organizationId));
   mpChecks.push({
     name: 'rooms_service_accessible',
     passed: mpResult.ok,
@@ -512,7 +485,7 @@ export async function getDomainReadiness(
   // Workspace
   const wsChecks: DomainReadinessCheck[] = [];
   const wsResult = await safeDomainCall('workspace', () =>
-    getGovernanceDashboard('default', organizationId),
+    getGovernanceDashboard('default', organizationId)
   );
   wsChecks.push({
     name: 'governance_dashboard_accessible',
@@ -527,7 +500,7 @@ export async function getDomainReadiness(
   // Lifecycle
   const lcChecks: DomainReadinessCheck[] = [];
   const lcResult = await safeDomainCall('lifecycle', () =>
-    getTransformationPipeline(organizationId),
+    getTransformationPipeline(organizationId)
   );
   lcChecks.push({
     name: 'transformation_pipeline_accessible',
@@ -541,9 +514,7 @@ export async function getDomainReadiness(
 
   // PM Sync
   const pmChecks: DomainReadinessCheck[] = [];
-  const pmResult = await safeDomainCall('pmSync', () =>
-    getOperatorDashboard(organizationId),
-  );
+  const pmResult = await safeDomainCall('pmSync', () => getOperatorDashboard(organizationId));
   pmChecks.push({
     name: 'operator_dashboard_accessible',
     passed: pmResult.ok,

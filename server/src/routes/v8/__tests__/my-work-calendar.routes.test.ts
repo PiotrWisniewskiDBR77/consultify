@@ -49,7 +49,7 @@ describe('V8 My Work calendar routes', () => {
             ['due_date', { name: 'due_date' }],
             ['assignee_id', { name: 'assignee_id' }],
             ['project_id', { name: 'project_id' }],
-          ]),
+          ])
         );
       }
       return Promise.resolve(new Map());
@@ -101,7 +101,9 @@ describe('V8 My Work calendar routes', () => {
   it('loads calendar conflicts through the V8 namespace', async () => {
     mockQueryAll
       .mockResolvedValueOnce([{ id: 'task-7', title: 'Prepare deck', due_date: '2026-03-27' }])
-      .mockResolvedValueOnce([{ id: 'decision-4', title: 'Approve scope', deadline: '2026-03-27' }]);
+      .mockResolvedValueOnce([
+        { id: 'decision-4', title: 'Approve scope', deadline: '2026-03-27' },
+      ]);
 
     const res = await request(createApp())
       .get('/api/v8/my-work/calendar/conflicts')

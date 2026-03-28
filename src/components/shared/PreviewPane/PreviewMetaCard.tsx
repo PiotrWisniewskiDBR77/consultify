@@ -1,5 +1,5 @@
-import { Pencil, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Pencil, Sparkles } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { PreviewCompletenessRing } from './PreviewCompletenessRing';
@@ -72,25 +72,36 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                 className="relative"
               >
                 <Tag
-                  ref={(el: HTMLElement | null) => { pillRefs.current[idx] = el; }}
-                  onClick={isClickable ? () => {
-                    pill.onClick?.();
-                    if (pill.renderEditor) setEditingIdx(idx);
-                  } : undefined}
+                  ref={(el: HTMLElement | null) => {
+                    pillRefs.current[idx] = el;
+                  }}
+                  onClick={
+                    isClickable
+                      ? () => {
+                          pill.onClick?.();
+                          if (pill.renderEditor) setEditingIdx(idx);
+                        }
+                      : undefined
+                  }
                   className={[
                     PREVIEW_META_PILL,
                     pill.className ?? 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
-                    isClickable ? 'cursor-pointer hover:ring-1 hover:ring-primary-400/30 transition-shadow' : '',
+                    isClickable
+                      ? 'cursor-pointer hover:ring-1 hover:ring-primary-400/30 transition-shadow'
+                      : '',
                     pill.editable ? 'group/pill' : '',
-                  ].filter(Boolean).join(' ')}
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
-                  {pill.dot ? (
-                    <span className={`w-1.5 h-1.5 rounded-full ${pill.dot}`} />
-                  ) : null}
+                  {pill.dot ? <span className={`w-1.5 h-1.5 rounded-full ${pill.dot}`} /> : null}
                   {Icon ? <Icon size={11} /> : null}
                   {pill.label}
                   {pill.editable ? (
-                    <Pencil size={9} className="opacity-0 group-hover/pill:opacity-50 transition-opacity ml-0.5" />
+                    <Pencil
+                      size={9}
+                      className="opacity-0 group-hover/pill:opacity-50 transition-opacity ml-0.5"
+                    />
                   ) : null}
                 </Tag>
 

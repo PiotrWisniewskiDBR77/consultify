@@ -9,12 +9,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
-import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
 import {
   callRemoteTool,
   makeIrisHeaders,
   parseStreamableHttpConfig,
 } from '../services/mcp/mcpProviderClient.js';
+import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -34,15 +34,20 @@ function getUserId(req: any): string {
   return req.user?.id || req.user?.userId || '';
 }
 
-function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: string | null): string | null {
+function deriveKpiPeriodKey(
+  periodStart?: string | null,
+  measurementFrequency?: string | null
+): string | null {
   const start = String(periodStart || '').slice(0, 10);
   if (!start) return null;
   const [year, month = '01', day = '01'] = start.split('-');
   const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
 
   if (frequency === 'DAILY') return start;
-  if (frequency === 'WEEKLY') return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
-  if (frequency === 'QUARTERLY') return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
+  if (frequency === 'WEEKLY')
+    return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
+  if (frequency === 'QUARTERLY')
+    return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
   return `${year}-${month}`;
 }
 
@@ -423,7 +428,8 @@ router.post(
 
     const body = req.body || {};
     const value = body.value;
-    const periodStartRaw = body.periodStart || body.period_start || body.measuredAt || body.measured_at;
+    const periodStartRaw =
+      body.periodStart || body.period_start || body.measuredAt || body.measured_at;
     const periodEndRaw = body.periodEnd || body.period_end;
     const source = body.source;
     const notes = body.notes;
@@ -436,7 +442,9 @@ router.post(
       return res.status(400).json({ success: false, error: 'value is required' });
     }
     if (!periodStart) {
-      return res.status(400).json({ success: false, error: 'periodStart (or measuredAt) is required' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'periodStart (or measuredAt) is required' });
     }
 
     const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
@@ -522,7 +530,9 @@ router.get(
 
     const openOnly =
       String((req.query as any)?.openOnly || '').trim() === '1' ||
-      String((req.query as any)?.openOnly || '').trim().toLowerCase() === 'true';
+      String((req.query as any)?.openOnly || '')
+        .trim()
+        .toLowerCase() === 'true';
 
     const cases = await dbAll<any>(
       `
@@ -597,7 +607,10 @@ router.post(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    const before = await dbGet<any>(`SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const before = await dbGet<any>(
+      `SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     await dbRun(
       `
@@ -618,7 +631,9 @@ router.post(
         after: { status: 'ACKNOWLEDGED' },
         metadata: { kpiId: before?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true });
   })
@@ -634,7 +649,10 @@ router.put(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    const before = await dbGet<any>(`SELECT status, rca_text, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const before = await dbGet<any>(
+      `SELECT status, rca_text, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     await dbRun(
       `
@@ -656,7 +674,9 @@ router.put(
         after: { rcaText: rcaText ?? null },
         metadata: { kpiId: before?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true });
   })
@@ -674,7 +694,10 @@ router.post(
     const safeTitle = String(title || '').trim();
     if (!safeTitle) return res.status(400).json({ success: false, error: 'title is required' });
 
-    const deviationCase = await dbGet<any>(`SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const deviationCase = await dbGet<any>(
+      `SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -694,7 +717,9 @@ router.post(
         after: { actionId: id, title: safeTitle },
         metadata: { kpiId: deviationCase?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true, data: { id } });
   })
@@ -711,8 +736,14 @@ router.put(
     if (!caseId || !actionId)
       return res.status(400).json({ success: false, error: 'caseId and actionId are required' });
 
-    const beforeAction = await dbGet<any>(`SELECT * FROM kpi_deviation_actions WHERE id = ? AND case_id = ?`, [actionId, caseId]);
-    const deviationCase = await dbGet<any>(`SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const beforeAction = await dbGet<any>(
+      `SELECT * FROM kpi_deviation_actions WHERE id = ? AND case_id = ?`,
+      [actionId, caseId]
+    );
+    const deviationCase = await dbGet<any>(
+      `SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     await dbRun(
       `
@@ -744,11 +775,19 @@ router.put(
         action: 'deviation_case.update_action',
         resourceType: 'kpi_deviation_case',
         resourceId: String(caseId),
-        before: beforeAction ? { actionId, status: beforeAction.status, title: beforeAction.title } : undefined,
-        after: { actionId, status: status || beforeAction?.status, title: title || beforeAction?.title },
+        before: beforeAction
+          ? { actionId, status: beforeAction.status, title: beforeAction.title }
+          : undefined,
+        after: {
+          actionId,
+          status: status || beforeAction?.status,
+          title: title || beforeAction?.title,
+        },
         metadata: { kpiId: deviationCase?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true });
   })
@@ -763,7 +802,10 @@ router.post(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    const before = await dbGet<any>(`SELECT status, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const before = await dbGet<any>(
+      `SELECT status, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     await dbRun(
       `
@@ -784,7 +826,9 @@ router.post(
         after: { status: 'RESOLVED' },
         metadata: { kpiId: before?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true });
   })
@@ -797,15 +841,22 @@ router.post(
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const { caseId } = req.params;
-    const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } = req.body || {};
+    const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } =
+      req.body || {};
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
     if (!evidenceText && !evidenceRef) {
-      return res.status(400).json({ success: false, error: 'At least one of evidenceText or evidenceRef is required to close a deviation case' });
+      return res.status(400).json({
+        success: false,
+        error: 'At least one of evidenceText or evidenceRef is required to close a deviation case',
+      });
     }
 
-    const before = await dbGet<any>(`SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+    const before = await dbGet<any>(
+      `SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, orgId]
+    );
 
     try {
       await dbRun(
@@ -815,9 +866,14 @@ router.post(
          linked_task_id = COALESCE(?, linked_task_id)
          WHERE id = ? AND organization_id = ?`,
         [
-          evidenceText || null, evidenceRef || null, userId || null, resolutionNotes || null,
-          linkedInitiativeId || null, linkedTaskId || null,
-          caseId, orgId,
+          evidenceText || null,
+          evidenceRef || null,
+          userId || null,
+          resolutionNotes || null,
+          linkedInitiativeId || null,
+          linkedTaskId || null,
+          caseId,
+          orgId,
         ]
       );
     } catch {
@@ -825,7 +881,14 @@ router.post(
         `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
          evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?
          WHERE id = ? AND organization_id = ?`,
-        [evidenceText || null, evidenceRef || null, userId || null, resolutionNotes || null, caseId, orgId]
+        [
+          evidenceText || null,
+          evidenceRef || null,
+          userId || null,
+          resolutionNotes || null,
+          caseId,
+          orgId,
+        ]
       );
     }
 
@@ -836,10 +899,17 @@ router.post(
         resourceType: 'kpi_deviation_case',
         resourceId: String(caseId),
         before: before ? { status: before.status } : undefined,
-        after: { status: 'CLOSED', hasEvidence: !!(evidenceText || evidenceRef), linkedInitiativeId, linkedTaskId },
+        after: {
+          status: 'CLOSED',
+          hasEvidence: !!(evidenceText || evidenceRef),
+          linkedInitiativeId,
+          linkedTaskId,
+        },
         metadata: { kpiId: before?.kpi_id },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({ success: true });
   })

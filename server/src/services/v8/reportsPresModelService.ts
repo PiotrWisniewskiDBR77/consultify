@@ -37,9 +37,9 @@ import {
   CreateRecurringProgramParamsSchema,
   DELIVERY_TERMINAL_STATES,
   DELIVERY_VALID_TRANSITIONS,
+  OutputDeliveryStateValues,
   OutputExportFormatValues,
   OutputTypeValues,
-  OutputDeliveryStateValues,
   RegisterTemplateFamilyParamsSchema,
   SetAIGovernanceConfigParamsSchema,
 } from '../../types/reportsPresOperatingModel.js';
@@ -228,7 +228,7 @@ function isValidDeliveryTransition(from: OutputDeliveryState, to: OutputDelivery
 // ==========================================
 
 export async function createOutputArtifact(
-  params: CreateOutputArtifactParams,
+  params: CreateOutputArtifactParams
 ): Promise<OutputArtifact> {
   const validated = CreateOutputArtifactParamsSchema.parse(params);
 
@@ -265,17 +265,19 @@ export async function createOutputArtifact(
       artifact.createdBy,
       artifact.createdAt,
       artifact.lastTransitionAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created ${validated.outputType} artifact ${artifactId} for org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created ${validated.outputType} artifact ${artifactId} for org ${validated.organizationId}`
+  );
   return artifact;
 }
 
 export async function transitionDeliveryState(
   artifactId: string,
   organizationId: string,
-  newState: OutputDeliveryState,
+  newState: OutputDeliveryState
 ): Promise<OutputArtifact> {
   const artifact = await getOutputArtifact(artifactId, organizationId);
   if (!artifact) {
@@ -286,14 +288,14 @@ export async function transitionDeliveryState(
 
   if (DELIVERY_TERMINAL_STATES.has(fromState)) {
     throw new Error(
-      `Cannot transition artifact ${artifactId}: current state '${fromState}' is terminal`,
+      `Cannot transition artifact ${artifactId}: current state '${fromState}' is terminal`
     );
   }
 
   if (!isValidDeliveryTransition(fromState, newState)) {
     throw new Error(
       `Invalid delivery transition: ${fromState} → ${newState}. ` +
-      `Allowed from ${fromState}: [${DELIVERY_VALID_TRANSITIONS[fromState].join(', ')}]`,
+        `Allowed from ${fromState}: [${DELIVERY_VALID_TRANSITIONS[fromState].join(', ')}]`
     );
   }
 
@@ -303,7 +305,7 @@ export async function transitionDeliveryState(
     `UPDATE v8_output_artifacts
      SET delivery_state = ?, last_transition_at = ?
      WHERE artifact_id = ? AND organization_id = ?`,
-    [newState, now, artifactId, organizationId],
+    [newState, now, artifactId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Artifact ${artifactId}: ${fromState} → ${newState}`);
@@ -317,13 +319,13 @@ export async function transitionDeliveryState(
 
 export async function getOutputArtifact(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OutputArtifact | null> {
   const row = await dbGet<ArtifactRow>(
     `SELECT * FROM v8_output_artifacts
      WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -335,7 +337,7 @@ export async function getOutputArtifact(
 // ==========================================
 
 export async function registerTemplateFamily(
-  params: RegisterTemplateFamilyParams,
+  params: RegisterTemplateFamilyParams
 ): Promise<TemplateFamily> {
   const validated = RegisterTemplateFamilyParamsSchema.parse(params);
 
@@ -366,10 +368,12 @@ export async function registerTemplateFamily(
       family.presentationFormRef,
       family.governedMappingEnabled ? 1 : 0,
       family.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered template family '${validated.familyName}' (${familyId}) for org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Registered template family '${validated.familyName}' (${familyId}) for org ${validated.organizationId}`
+  );
   return family;
 }
 
@@ -379,7 +383,7 @@ export async function getTemplateFamilies(organizationId: string): Promise<Templ
      WHERE organization_id = ?
      ORDER BY created_at ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTemplateFamily);
@@ -390,14 +394,12 @@ export async function getTemplateFamilies(organizationId: string): Promise<Templ
 // ==========================================
 
 export async function createRecurringProgram(
-  params: CreateRecurringProgramParams,
+  params: CreateRecurringProgramParams
 ): Promise<RecurringOutputProgram> {
   const validated = CreateRecurringProgramParamsSchema.parse(params);
 
   if (validated.outputType === 'presentation' && validated.governanceLevel !== 'strict') {
-    throw new Error(
-      'Recurring presentation programs require strict governance (Decision W6-4)',
-    );
+    throw new Error('Recurring presentation programs require strict governance (Decision W6-4)');
   }
 
   const programId = uuidv4();
@@ -435,20 +437,24 @@ export async function createRecurringProgram(
       program.nextRunAt,
       program.governanceLevel,
       program.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created recurring ${validated.outputType} program ${programId} for org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created recurring ${validated.outputType} program ${programId} for org ${validated.organizationId}`
+  );
   return program;
 }
 
-export async function getRecurringPrograms(organizationId: string): Promise<RecurringOutputProgram[]> {
+export async function getRecurringPrograms(
+  organizationId: string
+): Promise<RecurringOutputProgram[]> {
   const rows = await dbAll<RecurringProgramRow>(
     `SELECT * FROM v8_recurring_output_programs
      WHERE organization_id = ?
      ORDER BY created_at ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRecurringProgram);
@@ -459,7 +465,7 @@ export async function getRecurringPrograms(organizationId: string): Promise<Recu
 // ==========================================
 
 export async function setAIGovernanceConfig(
-  params: SetAIGovernanceConfigParams,
+  params: SetAIGovernanceConfigParams
 ): Promise<OutputAIGovernanceConfig> {
   const validated = SetAIGovernanceConfigParamsSchema.parse(params);
 
@@ -478,10 +484,12 @@ export async function setAIGovernanceConfig(
         now,
         existing.configId,
         validated.organizationId,
-      ],
+      ]
     );
 
-    logger.info(`${LOG_PREFIX} Updated AI governance for ${validated.outputType} in org ${validated.organizationId}`);
+    logger.info(
+      `${LOG_PREFIX} Updated AI governance for ${validated.outputType} in org ${validated.organizationId}`
+    );
 
     return {
       ...existing,
@@ -520,22 +528,24 @@ export async function setAIGovernanceConfig(
       JSON.stringify(config.qualityThresholds),
       config.createdAt,
       config.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created AI governance for ${validated.outputType} in org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created AI governance for ${validated.outputType} in org ${validated.organizationId}`
+  );
   return config;
 }
 
 export async function getAIGovernanceConfig(
   outputType: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OutputAIGovernanceConfig | null> {
   const row = await dbGet<GovernanceConfigRow>(
     `SELECT * FROM v8_output_ai_governance
      WHERE output_type = ? AND organization_id = ?`,
     [outputType, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -584,18 +594,12 @@ export async function getArtifactsByOrg(
   organizationId: string,
   outputType?: OutputType,
   state?: OutputDeliveryState,
-  limit?: number,
+  limit?: number
 ): Promise<OutputArtifact[]> {
-  if (
-    outputType !== undefined &&
-    !(OutputTypeValues as readonly string[]).includes(outputType)
-  ) {
+  if (outputType !== undefined && !(OutputTypeValues as readonly string[]).includes(outputType)) {
     throw new Error(`Invalid outputType filter: ${outputType}`);
   }
-  if (
-    state !== undefined &&
-    !(OutputDeliveryStateValues as readonly string[]).includes(state)
-  ) {
+  if (state !== undefined && !(OutputDeliveryStateValues as readonly string[]).includes(state)) {
     throw new Error(`Invalid delivery state filter: ${state}`);
   }
 
@@ -629,7 +633,7 @@ export async function getArtifactsByOrg(
 export async function getArtifactsByTemplate(
   templateFamilyId: string,
   organizationId: string,
-  limit?: number,
+  limit?: number
 ): Promise<OutputArtifact[]> {
   const lim = clampArtifactQueryLimit(limit);
   const rows = await dbAll<ArtifactRow>(
@@ -641,7 +645,7 @@ export async function getArtifactsByTemplate(
     ORDER BY created_at DESC
     LIMIT ?`,
     [templateFamilyId, organizationId, lim],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToArtifact);
@@ -650,13 +654,13 @@ export async function getArtifactsByTemplate(
 export async function cloneArtifact(
   artifactId: string,
   organizationId: string,
-  clonedBy: string,
+  clonedBy: string
 ): Promise<OutputArtifact> {
   const row = await dbGet<ArtifactRowWithQuality>(
     `SELECT * FROM v8_output_artifacts
      WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -682,7 +686,7 @@ export async function cloneArtifact(
       clonedBy,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Cloned artifact ${artifactId} → ${newId} for org ${organizationId}`);
@@ -704,7 +708,7 @@ export async function cloneArtifact(
 export async function scoreArtifactQuality(
   artifactId: string,
   organizationId: string,
-  scores: OutputQualityScores,
+  scores: OutputQualityScores
 ): Promise<void> {
   assertQualityScores(scores);
   const existing = await getOutputArtifact(artifactId, organizationId);
@@ -721,7 +725,7 @@ export async function scoreArtifactQuality(
     `UPDATE v8_output_artifacts
      SET quality_scores = ?
      WHERE artifact_id = ? AND organization_id = ?`,
-    [payload, artifactId, organizationId],
+    [payload, artifactId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Recorded quality scores for artifact ${artifactId}`);
@@ -729,13 +733,13 @@ export async function scoreArtifactQuality(
 
 export async function getQualityScores(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OutputQualityScores | null> {
   const row = await dbGet<{ quality_scores: string | null }>(
     `SELECT quality_scores FROM v8_output_artifacts
      WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row?.quality_scores) return null;
@@ -764,7 +768,7 @@ export async function scheduleExport(
   artifactId: string,
   organizationId: string,
   format: OutputExportFormat,
-  requestedBy: string,
+  requestedBy: string
 ): Promise<OutputExportRecord> {
   if (!OUTPUT_EXPORT_FORMAT_SET.has(format)) {
     throw new Error(`Invalid export format: ${format}`);
@@ -794,16 +798,7 @@ export async function scheduleExport(
       export_id, artifact_id, organization_id, format,
       requested_by, status, created_at, completed_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      exportId,
-      artifactId,
-      organizationId,
-      format,
-      requestedBy,
-      'pending',
-      now,
-      null,
-    ],
+    [exportId, artifactId, organizationId, format, requestedBy, 'pending', now, null]
   );
 
   logger.info(`${LOG_PREFIX} Scheduled ${format} export ${exportId} for artifact ${artifactId}`);
@@ -812,32 +807,34 @@ export async function scheduleExport(
 
 export async function getExportHistory(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OutputExportRecord[]> {
   const rows = await dbAll<ExportRow>(
     `SELECT * FROM v8_output_exports
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToExport);
 }
 
-export async function getDeliveryPipeline(organizationId: string): Promise<DeliveryPipelineSummary> {
+export async function getDeliveryPipeline(
+  organizationId: string
+): Promise<DeliveryPipelineSummary> {
   const stateRows = await dbAll<CountGroupRow>(
     `SELECT delivery_state, COUNT(*) as cnt FROM v8_output_artifacts
      WHERE organization_id = ? GROUP BY delivery_state`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const typeRows = await dbAll<CountGroupRow>(
     `SELECT output_type, COUNT(*) as cnt FROM v8_output_artifacts
      WHERE organization_id = ? GROUP BY output_type`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const avgRow = await dbGet<AvgQualityRow>(
@@ -847,14 +844,14 @@ export async function getDeliveryPipeline(organizationId: string): Promise<Deliv
        AND quality_scores IS NOT NULL
        AND quality_scores::jsonb->>'overallScore' IS NOT NULL`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const pendingRow = await dbGet<CountOnlyRow>(
     `SELECT COUNT(*) as cnt FROM v8_output_exports
      WHERE organization_id = ? AND status = 'pending'`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const artifactsByState: Record<string, number> = {};
@@ -886,13 +883,13 @@ export async function getDeliveryPipeline(organizationId: string): Promise<Deliv
 
 export async function getRecurringProgramHealth(
   programId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RecurringProgramHealth | null> {
   const row = await dbGet<RecurringProgramRow>(
     `SELECT * FROM v8_recurring_output_programs
      WHERE program_id = ? AND organization_id = ?`,
     [programId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -908,7 +905,7 @@ export async function getRecurringProgramHealth(
          AND a.template_family_ref = ?
          AND e.status IN ('completed', 'failed')`,
       [organizationId, row.template_family_ref],
-      { fallback: true },
+      { fallback: true }
     );
 
     let completed = 0;
@@ -944,7 +941,7 @@ export async function getTemplateUsageStats(organizationId: string): Promise<Tem
      GROUP BY tf.family_id, tf.family_name
      ORDER BY usage_count DESC, tf.family_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map((r) => ({

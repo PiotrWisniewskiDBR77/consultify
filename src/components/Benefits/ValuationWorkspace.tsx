@@ -50,10 +50,14 @@ interface MultiplesState {
 function sensitivityHeatmapColor(value: number, min: number, max: number): string {
   if (min === max) return 'bg-slate-100 dark:bg-navy-700';
   const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
-  if (ratio >= 0.8) return 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200';
-  if (ratio >= 0.6) return 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300';
-  if (ratio >= 0.4) return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-  if (ratio >= 0.2) return 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
+  if (ratio >= 0.8)
+    return 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200';
+  if (ratio >= 0.6)
+    return 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300';
+  if (ratio >= 0.4)
+    return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+  if (ratio >= 0.2)
+    return 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
   return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
 }
 
@@ -608,9 +612,16 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               </div>
 
               {(() => {
-                const steps = ['source', 'assumptions', 'results', 'sensitivity', 'export'] as const;
+                const steps = [
+                  'source',
+                  'assumptions',
+                  'results',
+                  'sensitivity',
+                  'export',
+                ] as const;
                 const activeIndex = steps.indexOf(activeStep);
-                const progressPercent = steps.length > 1 ? (activeIndex / (steps.length - 1)) * 100 : 0;
+                const progressPercent =
+                  steps.length > 1 ? (activeIndex / (steps.length - 1)) * 100 : 0;
                 return (
                   <div className="mb-4">
                     <div className="relative mb-3">
@@ -1102,12 +1113,14 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             {advisory.recommendations.slice(0, 6).map((r: any) => {
                               const impactColors: Record<string, string> = {
                                 high: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-                                medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+                                medium:
+                                  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
                                 low: 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300',
                               };
                               const effortColors: Record<string, string> = {
                                 low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-                                medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+                                medium:
+                                  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
                                 high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
                               };
                               const impactKey = String(r.impactTier || '').toLowerCase();

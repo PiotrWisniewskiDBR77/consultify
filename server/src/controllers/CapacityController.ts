@@ -7,10 +7,10 @@
 
 import type { Response } from 'express';
 
-import * as queryHelpers from '../utils/queryHelpers.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 export class CapacityController {
   /**
@@ -40,7 +40,8 @@ export class CapacityController {
         totalCapacity = allocRows.reduce(
           (sum, r) =>
             sum +
-            (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS,
+            (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) *
+              DEFAULT_WEEKLY_HOURS,
           0
         );
       }
@@ -84,7 +85,12 @@ export class CapacityController {
            FROM project_members WHERE project_id = ?`,
           [projectId]
         )) || [];
-      const overloads: Array<{ userId: string; assignedHours: number; capacity: number; overload: number }> = [];
+      const overloads: Array<{
+        userId: string;
+        assignedHours: number;
+        capacity: number;
+        overload: number;
+      }> = [];
       for (const m of members) {
         const cap = (Math.min(100, Math.max(0, m.allocation_percent)) / 100) * DEFAULT_WEEKLY_HOURS;
         const row = await queryHelpers.queryOne<{ hours: number }>(

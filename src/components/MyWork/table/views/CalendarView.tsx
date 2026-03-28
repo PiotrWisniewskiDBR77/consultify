@@ -77,7 +77,7 @@ function getWeekDates(refDate: Date) {
   const dates: string[] = [];
   for (let i = 0; i < 7; i++) {
     dates.push(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     );
     d.setDate(d.getDate() + 1);
   }
@@ -134,14 +134,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [dragRecordId, setDragRecordId] = useState<string | null>(null);
 
-  const dateCol = useMemo(
-    () => columns.find((c) => c.key === dateFieldId),
-    [columns, dateFieldId],
-  );
+  const dateCol = useMemo(() => columns.find((c) => c.key === dateFieldId), [columns, dateFieldId]);
 
   const colorCol = useMemo(
     () => (colorByFieldId ? columns.find((c) => c.key === colorByFieldId) : null),
-    [columns, colorByFieldId],
+    [columns, colorByFieldId]
   );
 
   const getRecordColor = useCallback(
@@ -154,7 +151,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         SELECT_COLORS[(colorCol.options || []).indexOf(val) % SELECT_COLORS.length]
       );
     },
-    [colorCol],
+    [colorCol]
   );
 
   const cells = useMemo(() => getCalendarDays(viewYear, viewMonth), [viewYear, viewMonth]);
@@ -174,13 +171,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const weekDates = useMemo(
     () => getWeekDates(new Date(viewYear, viewMonth, 1)),
-    [viewYear, viewMonth],
+    [viewYear, viewMonth]
   );
 
   const prevPeriod = useCallback(() => {
     if (mode === 'month') {
       setViewMonth((m) => {
-        if (m === 0) { setViewYear((y) => y - 1); return 11; }
+        if (m === 0) {
+          setViewYear((y) => y - 1);
+          return 11;
+        }
         return m - 1;
       });
     } else {
@@ -194,7 +194,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const nextPeriod = useCallback(() => {
     if (mode === 'month') {
       setViewMonth((m) => {
-        if (m === 11) { setViewYear((y) => y + 1); return 0; }
+        if (m === 11) {
+          setViewYear((y) => y + 1);
+          return 0;
+        }
         return m + 1;
       });
     } else {
@@ -216,7 +219,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       onRecordUpdate(dragRecordId, dateFieldId, dateStr);
       setDragRecordId(null);
     },
-    [dateCol, dateFieldId, dragRecordId, onRecordUpdate],
+    [dateCol, dateFieldId, dragRecordId, onRecordUpdate]
   );
 
   const periodLabel = useMemo(() => {
@@ -285,7 +288,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
             >
-              {m === 'month' ? (isPl ? 'Miesiąc' : 'Month') : (isPl ? 'Tydzień' : 'Week')}
+              {m === 'month' ? (isPl ? 'Miesiąc' : 'Month') : isPl ? 'Tydzień' : 'Week'}
             </button>
           ))}
         </div>

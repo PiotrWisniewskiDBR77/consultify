@@ -43,7 +43,10 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
             <FileText size={16} />
             {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <X size={16} />
           </button>
         </div>

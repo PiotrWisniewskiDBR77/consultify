@@ -1,8 +1,8 @@
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   RadarContentType,
   RadarDomain,
@@ -33,14 +33,23 @@ const ENTITY_HINTS = [
 const DOMAIN_KEYWORDS: Array<{ domain: RadarDomain; words: string[] }> = [
   { domain: 'AI', words: ['ai', 'agent', 'llm', 'model', 'copilot', 'genai', 'machine learning'] },
   { domain: 'transformation', words: ['transformation', 'operating model', 'digital', 'change'] },
-  { domain: 'operations', words: ['operations', 'workflow', 'supply chain', 'planning', 'quality'] },
+  {
+    domain: 'operations',
+    words: ['operations', 'workflow', 'supply chain', 'planning', 'quality'],
+  },
   { domain: 'product', words: ['product', 'platform', 'roadmap', 'user experience', 'launch'] },
   { domain: 'leadership', words: ['leadership', 'executive', 'management', 'board', 'steering'] },
-  { domain: 'execution', words: ['execution', 'delivery', 'rollout', 'adoption', 'implementation'] },
+  {
+    domain: 'execution',
+    words: ['execution', 'delivery', 'rollout', 'adoption', 'implementation'],
+  },
   { domain: 'compliance', words: ['regulation', 'governance', 'compliance', 'policy', 'act'] },
   { domain: 'cyber', words: ['cyber', 'security', 'breach', 'zero trust', 'threat'] },
   { domain: 'market', words: ['market', 'pricing', 'demand', 'benchmark', 'industry'] },
-  { domain: 'competition', words: ['competitor', 'launches', 'partnership', 'acquisition', 'vendor'] },
+  {
+    domain: 'competition',
+    words: ['competitor', 'launches', 'partnership', 'acquisition', 'vendor'],
+  },
 ];
 
 function stripCdata(s: string): string {
@@ -115,19 +124,22 @@ function normalizeTitle(title: string): string {
 function classifyContentType(text: string, source: RadarSourceRecord): RadarContentType {
   const haystack = `${source.category} ${source.tags.join(' ')} ${text}`.toLowerCase();
   if (/\b(regulation|act|directive|policy)\b/.test(haystack)) return 'regulation';
-  if (/\b(case study|case-study|customer story|success story)\b/.test(haystack)) return 'case_study';
+  if (/\b(case study|case-study|customer story|success story)\b/.test(haystack))
+    return 'case_study';
   if (/\b(how to|how-to|playbook|guide|tutorial)\b/.test(haystack)) return 'how_to';
   if (/\b(checklist|best practice|tool tip|workflow)\b/.test(haystack)) return 'tool_tip';
   if (/\b(opinion|point of view|essay)\b/.test(haystack)) return 'opinion';
-  if (/\b(partnership|pricing|launch|acquisition|vendor)\b/.test(haystack)) return 'competitor_move';
+  if (/\b(partnership|pricing|launch|acquisition|vendor)\b/.test(haystack))
+    return 'competitor_move';
   return 'news';
 }
 
 function classifyDomains(text: string, source: RadarSourceRecord): RadarDomain[] {
-  const haystack = `${source.name} ${source.category} ${source.tags.join(' ')} ${text}`.toLowerCase();
-  const domains = DOMAIN_KEYWORDS
-    .filter((entry) => entry.words.some((word) => haystack.includes(word)))
-    .map((entry) => entry.domain);
+  const haystack =
+    `${source.name} ${source.category} ${source.tags.join(' ')} ${text}`.toLowerCase();
+  const domains = DOMAIN_KEYWORDS.filter((entry) =>
+    entry.words.some((word) => haystack.includes(word))
+  ).map((entry) => entry.domain);
   return domains.length ? Array.from(new Set(domains)) : ['market'];
 }
 
@@ -143,7 +155,9 @@ function extractTopics(title: string, summary: string, domains: RadarDomain[]): 
 
 function extractEntities(title: string, summary: string): string[] {
   const haystack = `${title} ${summary}`;
-  const entities = ENTITY_HINTS.filter((hint) => haystack.toLowerCase().includes(hint.toLowerCase()));
+  const entities = ENTITY_HINTS.filter((hint) =>
+    haystack.toLowerCase().includes(hint.toLowerCase())
+  );
   return Array.from(new Set(entities));
 }
 
@@ -159,7 +173,10 @@ function computeFreshnessScore(publishedAt?: string | null): number {
   return 42;
 }
 
-function classifyDurability(contentType: RadarContentType, freshnessScore: number): RadarDurability {
+function classifyDurability(
+  contentType: RadarContentType,
+  freshnessScore: number
+): RadarDurability {
   if (contentType === 'how_to' || contentType === 'tool_tip') return 'evergreen';
   if (freshnessScore >= 85) return 'hot';
   return 'current';
@@ -216,9 +233,10 @@ function buildContentHash(item: Pick<RadarRawItem, 'title' | 'rawText' | 'canoni
 }
 
 function parseFeed(xml: string, source: RadarSourceRecord): RadarRawItem[] {
-  const blocks = /<feed[\s>]/i.test(xml) && /<entry[\s>]/i.test(xml)
-    ? xml.match(/<entry[\s\S]*?<\/entry>/gi) || []
-    : xml.match(/<item[\s\S]*?<\/item>/gi) || [];
+  const blocks =
+    /<feed[\s>]/i.test(xml) && /<entry[\s>]/i.test(xml)
+      ? xml.match(/<entry[\s\S]*?<\/entry>/gi) || []
+      : xml.match(/<item[\s\S]*?<\/item>/gi) || [];
 
   const isAtom = /<feed[\s>]/i.test(xml) && /<entry[\s>]/i.test(xml);
   const items: RadarRawItem[] = [];
@@ -306,7 +324,8 @@ function parseJsonArray(input: unknown): string[] {
 }
 
 function parseJsonObject(input: unknown): Record<string, unknown> {
-  if (input && typeof input === 'object' && !Array.isArray(input)) return input as Record<string, unknown>;
+  if (input && typeof input === 'object' && !Array.isArray(input))
+    return input as Record<string, unknown>;
   if (typeof input !== 'string') return {};
   try {
     const parsed = JSON.parse(input);
@@ -388,21 +407,29 @@ class RadarProcessingService {
     }
   }
 
-  async processRawItem(rawItemId: string, source: RadarSourceRecord): Promise<RadarProcessedSignal | null> {
-    const rawItem = await queryHelpers.queryOne<any>(
-      `SELECT * FROM radar_raw_items WHERE id = ?`,
-      [rawItemId]
-    );
+  async processRawItem(
+    rawItemId: string,
+    source: RadarSourceRecord
+  ): Promise<RadarProcessedSignal | null> {
+    const rawItem = await queryHelpers.queryOne<any>(`SELECT * FROM radar_raw_items WHERE id = ?`, [
+      rawItemId,
+    ]);
     if (!rawItem) return null;
 
     const normalizedTitle = normalizeTitle(String(rawItem.title || ''));
-    const summaryShort = String(rawItem.raw_text || '').slice(0, 280).trim();
-    const summaryLong = String(rawItem.raw_text || '').slice(0, 1600).trim();
+    const summaryShort = String(rawItem.raw_text || '')
+      .slice(0, 280)
+      .trim();
+    const summaryLong = String(rawItem.raw_text || '')
+      .slice(0, 1600)
+      .trim();
     const domains = classifyDomains(`${rawItem.title} ${summaryLong}`, source);
     const topics = extractTopics(String(rawItem.title || ''), summaryShort, domains);
     const entities = extractEntities(String(rawItem.title || ''), summaryShort);
     const contentType = classifyContentType(`${rawItem.title} ${summaryLong}`, source);
-    const freshnessScore = computeFreshnessScore(rawItem.published_at ? String(rawItem.published_at) : null);
+    const freshnessScore = computeFreshnessScore(
+      rawItem.published_at ? String(rawItem.published_at) : null
+    );
     const impactScore = computeImpactScore(contentType, domains);
     const actionabilityScore = computeActionabilityScore(contentType, summaryShort);
     const trustScore = Math.round(source.trustScore * 100);

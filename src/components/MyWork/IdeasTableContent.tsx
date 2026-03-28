@@ -16,8 +16,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import type {
+  ColumnDef,
+  ColumnWidths,
+  FilterOption,
+  TableFilters,
+} from '@/components/ui/ResizableTable';
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
-import type { ColumnDef, ColumnWidths, FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './MyIdeasListContent';
@@ -141,13 +146,7 @@ function formatIdeaDate(idea: MyIdea) {
   return new Date(value).toLocaleDateString();
 }
 
-function SortIndicator({
-  active,
-  direction,
-}: {
-  active: boolean;
-  direction: SortDir;
-}) {
+function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {
   if (!active) return null;
   return (
     <span className="ml-1 inline-flex text-[10px] text-slate-400">
@@ -473,7 +472,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onClick={() => onSort('stage')}
                       className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
-                      <span className={(tableFilters.stage as string[] | undefined)?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.stage as string[] | undefined)?.length
+                            ? 'text-primary-500'
+                            : ''
+                        }
+                      >
                         {isPolish ? 'Etap' : 'Stage'}
                       </span>
                       <SortIndicator active={sortField === 'stage'} direction={sortDir} />
@@ -504,7 +509,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onClick={() => onSort('tags')}
                       className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
-                      <span className={(tableFilters.tags as string[] | undefined)?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.tags as string[] | undefined)?.length
+                            ? 'text-primary-500'
+                            : ''
+                        }
+                      >
                         {isPolish ? 'Tagi' : 'Tags'}
                       </span>
                       <SortIndicator active={sortField === 'tags'} direction={sortDir} />
@@ -535,7 +546,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onClick={() => onSort('tool')}
                       className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
-                      <span className={(tableFilters.tool as string[] | undefined)?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.tool as string[] | undefined)?.length
+                            ? 'text-primary-500'
+                            : ''
+                        }
+                      >
                         {isPolish ? 'Narzedzie' : 'Tool'}
                       </span>
                       <SortIndicator active={sortField === 'tool'} direction={sortDir} />

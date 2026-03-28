@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { type AuthRequest, requireSuperAdmin } from '../../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
@@ -22,7 +22,7 @@ router.get(
       },
       meta: { version: 'v8', collectedAt: new Date().toISOString() },
     });
-  }),
+  })
 );
 
 export default router;

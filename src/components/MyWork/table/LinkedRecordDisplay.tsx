@@ -35,11 +35,31 @@ interface LinkedRecordDisplayProps {
 // ── Chip colors (cycle through for visual variety) ────────────────────────────
 
 const CHIP_COLORS = [
-  { bg: 'bg-blue-50 dark:bg-blue-900/25', text: 'text-blue-700 dark:text-blue-300', hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/40' },
-  { bg: 'bg-violet-50 dark:bg-violet-900/25', text: 'text-violet-700 dark:text-violet-300', hover: 'hover:bg-violet-100 dark:hover:bg-violet-900/40' },
-  { bg: 'bg-emerald-50 dark:bg-emerald-900/25', text: 'text-emerald-700 dark:text-emerald-300', hover: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40' },
-  { bg: 'bg-amber-50 dark:bg-amber-900/25', text: 'text-amber-700 dark:text-amber-300', hover: 'hover:bg-amber-100 dark:hover:bg-amber-900/40' },
-  { bg: 'bg-rose-50 dark:bg-rose-900/25', text: 'text-rose-700 dark:text-rose-300', hover: 'hover:bg-rose-100 dark:hover:bg-rose-900/40' },
+  {
+    bg: 'bg-blue-50 dark:bg-blue-900/25',
+    text: 'text-blue-700 dark:text-blue-300',
+    hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/40',
+  },
+  {
+    bg: 'bg-violet-50 dark:bg-violet-900/25',
+    text: 'text-violet-700 dark:text-violet-300',
+    hover: 'hover:bg-violet-100 dark:hover:bg-violet-900/40',
+  },
+  {
+    bg: 'bg-emerald-50 dark:bg-emerald-900/25',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    hover: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40',
+  },
+  {
+    bg: 'bg-amber-50 dark:bg-amber-900/25',
+    text: 'text-amber-700 dark:text-amber-300',
+    hover: 'hover:bg-amber-100 dark:hover:bg-amber-900/40',
+  },
+  {
+    bg: 'bg-rose-50 dark:bg-rose-900/25',
+    text: 'text-rose-700 dark:text-rose-300',
+    hover: 'hover:bg-rose-100 dark:hover:bg-rose-900/40',
+  },
 ];
 
 // ── HoverPreviewCard ──────────────────────────────────────────────────────────
@@ -59,9 +79,7 @@ const HoverPreviewCard: React.FC<{
       try {
         const rec = await TablePlatformApi.getRecord(recordId);
         if (!cancelled) {
-          setData(
-            ((rec as Record<string, unknown>)?.data as Record<string, unknown>) ?? rec,
-          );
+          setData(((rec as Record<string, unknown>)?.data as Record<string, unknown>) ?? rec);
         }
       } catch {
         if (!cancelled) setData(null);
@@ -141,17 +159,16 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
 
           if (cancelled) return;
 
-          const records = (
-            (res as Record<string, unknown>)?.records ?? []
-          ) as Array<Record<string, unknown>>;
-          const fields = (
-            (tableData as Record<string, unknown>)?.fields ?? []
-          ) as Array<Record<string, unknown>>;
+          const records = ((res as Record<string, unknown>)?.records ?? []) as Array<
+            Record<string, unknown>
+          >;
+          const fields = ((tableData as Record<string, unknown>)?.fields ?? []) as Array<
+            Record<string, unknown>
+          >;
 
           const sortedFields = [...fields].sort(
             (a, b) =>
-              Number(a.field_order ?? a.order ?? 999) -
-              Number(b.field_order ?? b.order ?? 999),
+              Number(a.field_order ?? a.order ?? 999) - Number(b.field_order ?? b.order ?? 999)
           );
           const primaryField = sortedFields[0];
           const pfId = primaryField ? String(primaryField.id ?? '') : '';
@@ -270,7 +287,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         )}
       </div>
     );
-  },
+  }
 );
 
 LinkedRecordDisplay.displayName = 'LinkedRecordDisplay';

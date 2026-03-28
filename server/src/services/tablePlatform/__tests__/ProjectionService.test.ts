@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -144,15 +144,19 @@ describe('ProjectionService', () => {
     it('maps fields and views to extensions format', async () => {
       const fields = [
         { id: 'f-1', name: 'Name', field_type: 'single_line_text', options: null, field_order: 0 },
-        { id: 'f-2', name: 'Status', field_type: 'single_select', options: '{"choices":["A","B"]}', field_order: 1 },
+        {
+          id: 'f-2',
+          name: 'Status',
+          field_type: 'single_select',
+          options: '{"choices":["A","B"]}',
+          field_order: 1,
+        },
       ];
       const views = [
         { id: 'v-1', name: 'Grid', view_type: 'grid', config: '{}', visible_field_ids: null },
       ];
 
-      mockQuery
-        .mockResolvedValueOnce({ rows: fields })
-        .mockResolvedValueOnce({ rows: views });
+      mockQuery.mockResolvedValueOnce({ rows: fields }).mockResolvedValueOnce({ rows: views });
 
       const ext = await projectionService.projectTableExtensions('b-1', 't-1');
 
@@ -203,8 +207,7 @@ describe('ProjectionService', () => {
       expect(first).not.toBeNull();
 
       // Second call should use cache — resolveBaseId still called but rest from cache
-      mockQuery
-        .mockResolvedValueOnce({ rows: [{ base_id: 'b-1', table_id: 't-1' }] }); // resolveBaseId
+      mockQuery.mockResolvedValueOnce({ rows: [{ base_id: 'b-1', table_id: 't-1' }] }); // resolveBaseId
 
       const second = await projectionService.getFullProjection('idea-1', 'org-1', 'user-1');
       expect(second).toEqual(first);

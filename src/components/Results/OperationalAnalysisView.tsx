@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
+import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';

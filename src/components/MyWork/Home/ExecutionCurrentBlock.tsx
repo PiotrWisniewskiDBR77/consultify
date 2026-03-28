@@ -44,7 +44,10 @@ const VISIBILITY_META = {
   },
 } as const;
 
-export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({ block, onAction }) => {
+export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
+  block,
+  onAction,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;

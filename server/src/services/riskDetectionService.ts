@@ -10,8 +10,8 @@
  *  - SLA breach proximity
  */
 import { all as dbAll } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 
 export interface RiskSignal {
   id: string;

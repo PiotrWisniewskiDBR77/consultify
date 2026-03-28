@@ -11,7 +11,7 @@
  *           aiOperatingEnvironmentService
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -40,17 +40,17 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 // IMPORT SERVICES (after DB mock)
 // ==========================================
 
-import { captureSnapshot, getSnapshot } from '../../../contextSnapshotService.js';
-import { classifyIntent, initiateHandoff } from '../../../chatExecutionService.js';
-import { createPreset } from '../../../promptOsRuntimeService.js';
-import { createRetrievalRequest } from '../../../governedRetrievalService.js';
-import { recordHealthSignal, recordDegradedCondition } from '../../../trustAuditService.js';
 import {
-  processChatTurn,
-  selectPromptPreset,
   executeGovernedRetrieval,
   getOperatingEnvironmentStatus,
+  processChatTurn,
+  selectPromptPreset,
 } from '../../../aiOperatingEnvironmentService.js';
+import { classifyIntent, initiateHandoff } from '../../../chatExecutionService.js';
+import { captureSnapshot, getSnapshot } from '../../../contextSnapshotService.js';
+import { createRetrievalRequest } from '../../../governedRetrievalService.js';
+import { createPreset } from '../../../promptOsRuntimeService.js';
+import { recordDegradedCondition, recordHealthSignal } from '../../../trustAuditService.js';
 
 // ==========================================
 // FIXTURES
@@ -99,11 +99,7 @@ describe('F01 — Chat turn → context capture → intent classification', () =
     mockDbAll.mockResolvedValue([]);
     mockDbRun.mockResolvedValue({ success: true });
 
-    const intent = await classifyIntent(
-      'What is the current project status?',
-      SNAPSHOT_ID,
-      ORG_ID,
-    );
+    const intent = await classifyIntent('What is the current project status?', SNAPSHOT_ID, ORG_ID);
 
     expect(intent.intentType).toBe('conversational');
     expect(intent.confidence).toBeGreaterThan(0.5);
@@ -130,7 +126,7 @@ describe('F01 — Chat turn → context capture → intent classification', () =
 
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO v8_context_snapshots'),
-      expect.any(Array),
+      expect.any(Array)
     );
   });
 
@@ -138,7 +134,7 @@ describe('F01 — Chat turn → context capture → intent classification', () =
     const intent = await classifyIntent(
       'Create a report from this initiative and generate risk slides',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
 
     expect(intent.intentType).toBe('governed_work');
@@ -149,7 +145,7 @@ describe('F01 — Chat turn → context capture → intent classification', () =
     const intent = await classifyIntent(
       'What if we update all the tasks across every project?',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
 
     expect(intent.intentType).toBe('ambiguous');
@@ -188,7 +184,7 @@ describe('F02 — Governed work → handoff → execution snapshot', () => {
     const intent = await classifyIntent(
       'Create a report from this note and add risk slides',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
     expect(intent.intentType).toBe('governed_work');
 
@@ -209,7 +205,7 @@ describe('F02 — Governed work → handoff → execution snapshot', () => {
 
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('v8_chat_execution_handoffs'),
-      expect.any(Array),
+      expect.any(Array)
     );
   });
 });
@@ -296,7 +292,7 @@ describe('F03 — Prompt preset selection', () => {
 
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('v8_prompt_presets'),
-      expect.any(Array),
+      expect.any(Array)
     );
   });
 });
@@ -343,7 +339,7 @@ describe('F04 — Governed retrieval with context binding', () => {
 
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('v8_retrieval_requests'),
-      expect.any(Array),
+      expect.any(Array)
     );
   });
 });
@@ -358,7 +354,7 @@ describe('F05 — Full pipeline: chat → execution → retrieval → trust', ()
     const intent = await classifyIntent(
       'Create a report from this initiative',
       SNAPSHOT_ID,
-      ORG_ID,
+      ORG_ID
     );
     expect(intent.intentType).toBe('governed_work');
 
@@ -438,7 +434,7 @@ describe('F05 — Full pipeline: chat → execution → retrieval → trust', ()
 
     // Verify the full chain was persisted
     const insertCalls = mockDbRun.mock.calls.filter(
-      (call) => typeof call[0] === 'string' && call[0].includes('INSERT'),
+      (call) => typeof call[0] === 'string' && call[0].includes('INSERT')
     );
     expect(insertCalls.length).toBeGreaterThanOrEqual(4);
   });

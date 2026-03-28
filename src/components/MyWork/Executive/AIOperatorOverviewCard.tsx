@@ -1,4 +1,11 @@
-import { Activity, ArrowRight, MessageSquareMore, Route, ShieldCheck, TrendingUp } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  MessageSquareMore,
+  Route,
+  ShieldCheck,
+  TrendingUp,
+} from 'lucide-react';
 import React from 'react';
 
 type Props = {
@@ -46,7 +53,10 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
         <div className="h-5 w-48 rounded bg-slate-200 dark:bg-white/10 animate-pulse mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="h-20 rounded-xl bg-slate-100 dark:bg-white/[0.04] animate-pulse" />
+            <div
+              key={idx}
+              className="h-20 rounded-xl bg-slate-100 dark:bg-white/[0.04] animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -59,7 +69,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
   const value = overview?.value || {};
   const ops = overview?.ops || {};
   const plan = overview?.plan || {};
-  const actions = Array.isArray(navigator?.nextBestActions) ? navigator.nextBestActions.slice(0, 3) : [];
+  const actions = Array.isArray(navigator?.nextBestActions)
+    ? navigator.nextBestActions.slice(0, 3)
+    : [];
   const workstreams = Array.isArray(ops?.workstreams) ? ops.workstreams.slice(0, 4) : [];
   const suggestedInterventions = Array.isArray(overview?.interventions?.suggested)
     ? overview.interventions.suggested.slice(0, 3)
@@ -90,7 +102,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
             </div>
           </div>
           <div className="text-right">
-            <div className={`text-2xl font-semibold ${readinessTone(Number(ops?.readinessScore || 0))}`}>
+            <div
+              className={`text-2xl font-semibold ${readinessTone(Number(ops?.readinessScore || 0))}`}
+            >
               {Number(ops?.readinessScore || 0)}%
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -126,14 +140,30 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
             icon={<TrendingUp size={15} />}
             label={isPolish ? 'Wartość' : 'Value'}
             value={`${value?.coveragePct || 0}%`}
-            tone={statusTone[value?.status === 'at_risk' ? 'blocked' : value?.status === 'tracking' ? 'ready' : 'partial']}
+            tone={
+              statusTone[
+                value?.status === 'at_risk'
+                  ? 'blocked'
+                  : value?.status === 'tracking'
+                    ? 'ready'
+                    : 'partial'
+              ]
+            }
             sublabel={`${value?.trackedKpis || 0} KPI`}
           />
           <MetricCard
             icon={<ShieldCheck size={15} />}
             label={isPolish ? 'Autonomia' : 'Autonomy'}
             value={`${ops?.autonomyScore || 0}%`}
-            tone={statusTone[(ops?.autonomyScore || 0) >= 70 ? 'ready' : (ops?.autonomyScore || 0) >= 40 ? 'partial' : 'blocked']}
+            tone={
+              statusTone[
+                (ops?.autonomyScore || 0) >= 70
+                  ? 'ready'
+                  : (ops?.autonomyScore || 0) >= 40
+                    ? 'partial'
+                    : 'blocked'
+              ]
+            }
             sublabel={`${ops?.guardrails?.releaseCoveragePct || 0}% release trace`}
           />
         </div>
@@ -169,7 +199,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           {action.reason}
                         </div>
                       </div>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusTone[action.priority === 'critical' ? 'blocked' : action.priority === 'high' ? 'partial' : 'ready']}`}>
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusTone[action.priority === 'critical' ? 'blocked' : action.priority === 'high' ? 'partial' : 'ready']}`}
+                      >
                         {action.priority}
                       </span>
                     </div>
@@ -193,7 +225,8 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                   {isPolish ? 'Executive brief' : 'Executive brief'}
                 </div>
                 <div className="text-sm text-slate-800 dark:text-slate-100">
-                  {communication?.executiveBrief?.summary || (isPolish ? 'Brak briefu.' : 'No brief yet.')}
+                  {communication?.executiveBrief?.summary ||
+                    (isPolish ? 'Brak briefu.' : 'No brief yet.')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {(communication?.executiveBrief?.bullets || []).slice(0, 3).join(' • ')}
@@ -224,7 +257,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 {plan?.objective || (isPolish ? 'Brak planu operatora.' : 'No operator plan yet.')}
               </div>
             </div>
-            <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${statusTone[(plan?.progressPct || 0) >= 70 ? 'ready' : (plan?.progressPct || 0) >= 40 ? 'partial' : 'blocked']}`}>
+            <span
+              className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${statusTone[(plan?.progressPct || 0) >= 70 ? 'ready' : (plan?.progressPct || 0) >= 40 ? 'partial' : 'blocked']}`}
+            >
               {plan?.progressPct || 0}%
             </span>
           </div>
@@ -245,7 +280,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           {node.description}
                         </div>
                       </div>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusTone[node.status === 'done' ? 'ready' : node.status === 'in_progress' ? 'partial' : 'watch']}`}>
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusTone[node.status === 'done' ? 'ready' : node.status === 'in_progress' ? 'partial' : 'watch']}`}
+                      >
                         {node.status}
                       </span>
                     </div>
@@ -257,7 +294,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                         <button
                           type="button"
                           disabled={busyActionId === node.interventionTemplateKey}
-                          onClick={() => onProposeIntervention?.(String(node.interventionTemplateKey))}
+                          onClick={() =>
+                            onProposeIntervention?.(String(node.interventionTemplateKey))
+                          }
                           className="inline-flex items-center h-7 px-2.5 rounded-full bg-violet-600 text-white text-[11px] font-medium disabled:opacity-60"
                         >
                           {isPolish ? 'Intervene' : 'Intervene'}
@@ -268,7 +307,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Plan sekwencji jeszcze nie został zbudowany.' : 'Sequence plan has not been generated yet.'}
+                  {isPolish
+                    ? 'Plan sekwencji jeszcze nie został zbudowany.'
+                    : 'Sequence plan has not been generated yet.'}
                 </div>
               )}
             </div>
@@ -305,7 +346,10 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(plan?.summary || {}).map(([key, val]) => (
-                    <div key={key} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] px-3 py-2">
+                    <div
+                      key={key}
+                      className="rounded-lg bg-slate-50 dark:bg-white/[0.03] px-3 py-2"
+                    >
                       <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         {key}
                       </div>
@@ -360,7 +404,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak nowych interwencji do zaproponowania.' : 'No new interventions to propose.'}
+                  {isPolish
+                    ? 'Brak nowych interwencji do zaproponowania.'
+                    : 'No new interventions to propose.'}
                 </div>
               )}
             </div>
@@ -409,7 +455,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                             <button
                               type="button"
                               disabled={disabled}
-                              onClick={() => item.actionId && onAcceptIntervention?.(String(item.actionId))}
+                              onClick={() =>
+                                item.actionId && onAcceptIntervention?.(String(item.actionId))
+                              }
                               className="inline-flex items-center h-8 px-3 rounded-full bg-emerald-600 text-white text-xs font-medium disabled:opacity-60"
                             >
                               {isPolish ? 'Accept' : 'Accept'}
@@ -417,7 +465,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                             <button
                               type="button"
                               disabled={disabled}
-                              onClick={() => item.actionId && onRejectIntervention?.(String(item.actionId))}
+                              onClick={() =>
+                                item.actionId && onRejectIntervention?.(String(item.actionId))
+                              }
                               className="inline-flex items-center h-8 px-3 rounded-full border border-slate-200 dark:border-white/[0.08] text-xs font-medium disabled:opacity-60"
                             >
                               {isPolish ? 'Reject' : 'Reject'}
@@ -428,7 +478,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           <button
                             type="button"
                             disabled={disabled}
-                            onClick={() => item.actionId && onExecuteIntervention?.(String(item.actionId))}
+                            onClick={() =>
+                              item.actionId && onExecuteIntervention?.(String(item.actionId))
+                            }
                             className="inline-flex items-center h-8 px-3 rounded-full bg-violet-600 text-white text-xs font-medium disabled:opacity-60"
                           >
                             {isPolish ? 'Execute' : 'Execute'}
@@ -440,7 +492,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 })
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak pozycji w approval queue.' : 'No interventions in the approval queue.'}
+                  {isPolish
+                    ? 'Brak pozycji w approval queue.'
+                    : 'No interventions in the approval queue.'}
                 </div>
               )}
             </div>

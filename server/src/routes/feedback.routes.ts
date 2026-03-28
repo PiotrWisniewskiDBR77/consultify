@@ -273,7 +273,9 @@ Rules:
         title: String(parsed.title || '').trim() || undefined,
         summary: String(parsed.summary || '').trim() || undefined,
         steps:
-          Array.isArray(parsed.steps) && parsed.steps.length > 0 ? parsed.steps.map(String) : undefined,
+          Array.isArray(parsed.steps) && parsed.steps.length > 0
+            ? parsed.steps.map(String)
+            : undefined,
         expected: String(parsed.expected || '').trim() || undefined,
         actual: String(parsed.actual || '').trim() || undefined,
         impact: String(parsed.impact || '').trim() || undefined,
@@ -389,7 +391,10 @@ router.post(
     const rawTitle = String(req.body.title || '').trim();
     const inferredTitle =
       rawTitle ||
-      String(message).split('\n').map((s: string) => s.trim()).filter(Boolean)[0] ||
+      String(message)
+        .split('\n')
+        .map((s: string) => s.trim())
+        .filter(Boolean)[0] ||
       String(message).slice(0, 80);
     const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
     const description = String(req.body.description || message || '').trim();
@@ -422,7 +427,14 @@ router.post(
       title,
     };
 
-    const insertCols: string[] = ['id', 'organization_id', 'user_id', 'feedback_type', 'title', 'description'];
+    const insertCols: string[] = [
+      'id',
+      'organization_id',
+      'user_id',
+      'feedback_type',
+      'title',
+      'description',
+    ];
     const values: unknown[] = [
       feedbackId,
       ticketOrgId,
@@ -498,10 +510,10 @@ router.post(
         }
 
         if (updateCols.length > 0) {
-          await dbRun(
-            `UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`,
-            [...updateVals, feedbackId]
-          );
+          await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
+            ...updateVals,
+            feedbackId,
+          ]);
         }
       }
     } catch (e) {
@@ -643,7 +655,10 @@ router.patch(
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const current = await dbGet<{ status: string }>(`SELECT status FROM feedback_items WHERE id = ?`, [id]);
+    const current = await dbGet<{ status: string }>(
+      `SELECT status FROM feedback_items WHERE id = ?`,
+      [id]
+    );
     const fromStatus = current?.status || null;
 
     const sql = `UPDATE feedback_items SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
@@ -817,8 +832,7 @@ router.get(
       new: "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(status) = 'NEW'",
       pending:
         "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(status) IN ('PENDING', 'IN_PROGRESS')",
-      bugs:
-        "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(feedback_type) = 'BUG' AND UPPER(status) != 'RESOLVED'",
+      bugs: "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(feedback_type) = 'BUG' AND UPPER(status) != 'RESOLVED'",
     };
 
     const results: Record<string, number> = {};
@@ -855,7 +869,8 @@ router.get(
 
     const shaped = (rows || []).map((r: any) => {
       const tags = safeJsonParse<string[]>(r.tags, []);
-      const feedbackTag = tags.find((t) => typeof t === 'string' && t.startsWith('feedback:')) || null;
+      const feedbackTag =
+        tags.find((t) => typeof t === 'string' && t.startsWith('feedback:')) || null;
       return {
         ...r,
         tags,

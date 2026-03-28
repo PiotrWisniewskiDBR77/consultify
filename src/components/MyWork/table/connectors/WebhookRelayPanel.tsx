@@ -1,4 +1,3 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import {
   Check,
   ChevronLeft,
@@ -12,6 +11,7 @@ import {
   Trash2,
   Webhook,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -90,7 +90,9 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
 
   const handleToggle = async (relay: WebhookRelay) => {
     try {
-      const updated = await TablePlatformApi.updateWebhookRelay(relay.id, { isActive: !relay.is_active });
+      const updated = await TablePlatformApi.updateWebhookRelay(relay.id, {
+        isActive: !relay.is_active,
+      });
       setRelays((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
     } catch {
       toast.error(isPl ? 'Nie udało się zmienić statusu' : 'Failed to toggle status');
@@ -102,9 +104,15 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
     try {
       const result = await TablePlatformApi.testWebhookRelay(relayId);
       if (result.success) {
-        toast.success(isPl ? `Test OK (${result.statusCode})` : `Test passed (${result.statusCode})`);
+        toast.success(
+          isPl ? `Test OK (${result.statusCode})` : `Test passed (${result.statusCode})`
+        );
       } else {
-        toast.error(isPl ? `Test nieudany: ${result.error ?? result.statusCode}` : `Test failed: ${result.error ?? result.statusCode}`);
+        toast.error(
+          isPl
+            ? `Test nieudany: ${result.error ?? result.statusCode}`
+            : `Test failed: ${result.error ?? result.statusCode}`
+        );
       }
     } catch {
       toast.error(isPl ? 'Test nieudany' : 'Test failed');
@@ -160,7 +168,10 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <ChevronLeft size={16} className="text-slate-400" />
           </button>
           <Webhook size={18} className="text-indigo-500" />
@@ -220,7 +231,9 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
               className="group flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
             >
               <div className="flex-shrink-0">
-                <div className={`w-2 h-2 rounded-full ${relay.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${relay.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -240,7 +253,9 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                   </span>
                 </div>
                 <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  <span>{isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}</span>
+                  <span>
+                    {isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}
+                  </span>
                   <span>×{relay.trigger_count ?? 0}</span>
                 </div>
               </div>
@@ -259,26 +274,52 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                     <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
                     <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
                       <MenuBtn
-                        icon={testingId === relay.id ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+                        icon={
+                          testingId === relay.id ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Play size={13} />
+                          )
+                        }
                         label={isPl ? 'Testuj' : 'Test'}
-                        onClick={() => { setMenuOpen(null); handleTest(relay.id); }}
+                        onClick={() => {
+                          setMenuOpen(null);
+                          handleTest(relay.id);
+                        }}
                       />
                       <MenuBtn
                         icon={relay.is_active ? <PowerOff size={13} /> : <Power size={13} />}
-                        label={relay.is_active ? (isPl ? 'Wyłącz' : 'Disable') : (isPl ? 'Włącz' : 'Enable')}
-                        onClick={() => { setMenuOpen(null); handleToggle(relay); }}
+                        label={
+                          relay.is_active
+                            ? isPl
+                              ? 'Wyłącz'
+                              : 'Disable'
+                            : isPl
+                              ? 'Włącz'
+                              : 'Enable'
+                        }
+                        onClick={() => {
+                          setMenuOpen(null);
+                          handleToggle(relay);
+                        }}
                       />
                       <MenuBtn
                         icon={<Pencil size={13} />}
                         label={isPl ? 'Edytuj' : 'Edit'}
-                        onClick={() => { setMenuOpen(null); setEditingRelay(relay); }}
+                        onClick={() => {
+                          setMenuOpen(null);
+                          setEditingRelay(relay);
+                        }}
                       />
                       <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
                       <MenuBtn
                         icon={<Trash2 size={13} />}
                         label={isPl ? 'Usuń' : 'Delete'}
                         danger
-                        onClick={() => { setMenuOpen(null); handleDelete(relay.id); }}
+                        onClick={() => {
+                          setMenuOpen(null);
+                          handleDelete(relay.id);
+                        }}
                       />
                     </div>
                   </>
@@ -314,9 +355,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
   const [saving, setSaving] = useState(false);
 
   const toggleEvent = (ev: string) => {
-    setEventTypes((prev) =>
-      prev.includes(ev) ? prev.filter((e) => e !== ev) : [...prev, ev]
-    );
+    setEventTypes((prev) => (prev.includes(ev) ? prev.filter((e) => e !== ev) : [...prev, ev]));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -348,7 +387,15 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
           eventTypes,
         });
       }
-      toast.success(relay ? (isPl ? 'Webhook zaktualizowany' : 'Webhook updated') : (isPl ? 'Webhook utworzony' : 'Webhook created'));
+      toast.success(
+        relay
+          ? isPl
+            ? 'Webhook zaktualizowany'
+            : 'Webhook updated'
+          : isPl
+            ? 'Webhook utworzony'
+            : 'Webhook created'
+      );
       onSaved(result);
     } catch {
       toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save');
@@ -360,11 +407,20 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-5">
-        <button onClick={onBack} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onBack}
+          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <ChevronLeft size={16} className="text-slate-400" />
         </button>
         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-          {relay ? (isPl ? 'Edytuj webhook' : 'Edit webhook') : (isPl ? 'Nowy webhook' : 'New webhook')}
+          {relay
+            ? isPl
+              ? 'Edytuj webhook'
+              : 'Edit webhook'
+            : isPl
+              ? 'Nowy webhook'
+              : 'New webhook'}
         </h3>
       </div>
 
@@ -437,7 +493,10 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
                 >
                   {eventTypes.includes(opt.value) && <Check size={10} className="text-white" />}
                 </div>
-                <span className="text-sm text-slate-700 dark:text-slate-300" onClick={() => toggleEvent(opt.value)}>
+                <span
+                  className="text-sm text-slate-700 dark:text-slate-300"
+                  onClick={() => toggleEvent(opt.value)}
+                >
                   {isPl ? opt.labelPl : opt.labelEn}
                 </span>
               </label>
@@ -454,8 +513,12 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {relay
-              ? (isPl ? 'Zapisz zmiany' : 'Save changes')
-              : (isPl ? 'Utwórz webhook' : 'Create webhook')}
+              ? isPl
+                ? 'Zapisz zmiany'
+                : 'Save changes'
+              : isPl
+                ? 'Utwórz webhook'
+                : 'Create webhook'}
           </button>
         </div>
       </form>

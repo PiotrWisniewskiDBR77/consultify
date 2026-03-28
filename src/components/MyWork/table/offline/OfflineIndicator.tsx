@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { offlineQueue } from './OfflineQueue';
 
 function formatRelativeTime(ts: number | null): string {
@@ -7,7 +8,12 @@ function formatRelativeTime(ts: number | null): string {
   if (diff < 60_000) return 'just now';
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export const OfflineIndicator: React.FC = () => {
@@ -57,16 +63,22 @@ export const OfflineIndicator: React.FC = () => {
   const syncLabel = lastSync ? formatRelativeTime(lastSync) : null;
 
   return (
-    <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-sm font-medium z-50 max-w-[90vw] ${
-      isOnline
-        ? 'bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
-        : 'bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700'
-    }`}>
-      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`} />
+    <div
+      className={`fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-sm font-medium z-50 max-w-[90vw] ${
+        isOnline
+          ? 'bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
+          : 'bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700'
+      }`}
+    >
+      <div
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`}
+      />
       {!isOnline && <span>Offline</span>}
       {pendingCount > 0 && (
         <>
-          <span className="whitespace-nowrap">{pendingCount} pending change{pendingCount !== 1 ? 's' : ''}</span>
+          <span className="whitespace-nowrap">
+            {pendingCount} pending change{pendingCount !== 1 ? 's' : ''}
+          </span>
           {isOnline && (
             <button
               onClick={handleSync}
@@ -79,7 +91,10 @@ export const OfflineIndicator: React.FC = () => {
         </>
       )}
       {syncLabel && (
-        <span className="text-[10px] opacity-60 whitespace-nowrap" title={lastSync ? new Date(lastSync).toLocaleString() : undefined}>
+        <span
+          className="text-[10px] opacity-60 whitespace-nowrap"
+          title={lastSync ? new Date(lastSync).toLocaleString() : undefined}
+        >
           Last sync: {syncLabel}
         </span>
       )}

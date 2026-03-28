@@ -33,10 +33,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewActionBar,
-  PreviewMetaCard,
   type ActionRow,
   type MetaPill,
+  PreviewActionBar,
+  PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { sendMessageToAI } from '@/services/ai/gemini';
@@ -631,7 +631,10 @@ Rules:
             }
             onSelect={(id) => setExpandedId(id)}
             itemIds={visibleQuestions.map((q) => q.id)}
-            getItemById={(id) => { const q = visibleQuestions.find((x) => x.id === id); return q ? { ...q, title: q.questionText } : null; }}
+            getItemById={(id) => {
+              const q = visibleQuestions.find((x) => x.id === id);
+              return q ? { ...q, title: q.questionText } : null;
+            }}
             renderPreview={(item) => {
               const statusConfig = STATUS_CONFIG[item.status];
               const StatusIcon = statusConfig.icon;
@@ -645,7 +648,8 @@ Rules:
                 },
                 {
                   label: `${item.confidenceScore || 0}/5`,
-                  className: 'border border-slate-200/70 dark:border-white/[0.08] text-slate-600 dark:text-slate-300',
+                  className:
+                    'border border-slate-200/70 dark:border-white/[0.08] text-slate-600 dark:text-slate-300',
                   icon: Star,
                 },
                 ...item.tags.map((tag) => {
@@ -679,7 +683,9 @@ Rules:
                         {!readOnly && (
                           <div className="relative">
                             <button
-                              onClick={() => setShowTagMenu(showTagMenu === item.id ? null : item.id)}
+                              onClick={() =>
+                                setShowTagMenu(showTagMenu === item.id ? null : item.id)
+                              }
                               className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                             >
                               <Tag size={12} />
@@ -860,8 +866,12 @@ Rules:
                   buttons: [
                     {
                       label: item.answerText
-                        ? isPolish ? 'Edytuj odpowiedź' : 'Edit answer'
-                        : isPolish ? 'Dodaj odpowiedź' : 'Add answer',
+                        ? isPolish
+                          ? 'Edytuj odpowiedź'
+                          : 'Edit answer'
+                        : isPolish
+                          ? 'Dodaj odpowiedź'
+                          : 'Add answer',
                       icon: Edit3,
                       onClick: () => handleStartEdit(item),
                       colorScheme: 'neutral',

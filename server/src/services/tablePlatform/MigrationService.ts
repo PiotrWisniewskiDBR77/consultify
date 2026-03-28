@@ -5,9 +5,9 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import AuditService from './AuditService.js';
 import MetadataService from './MetadataService.js';
 import RecordsService from './RecordsService.js';
-import AuditService from './AuditService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,7 +219,7 @@ const migrationService = {
     }
     const tableId = (table as { id: string }).id;
     const primaryFieldId = (table as { primary_field_id?: string }).primary_field_id;
-    const existingFields = ((table as { fields?: Array<{ id: string; name: string }> }).fields ?? []);
+    const existingFields = (table as { fields?: Array<{ id: string; name: string }> }).fields ?? [];
 
     // 3. Build field mapping and create fields
     const mappingEntries = this.buildFieldMapping(columns);
@@ -228,10 +228,7 @@ const migrationService = {
     if (mappingEntries.length > 0) {
       const firstEntry = mappingEntries[0];
       if (primaryFieldId && existingFields.length > 0) {
-        await MetadataService.updateField(
-          primaryFieldId,
-          { name: firstEntry.name }
-        );
+        await MetadataService.updateField(primaryFieldId, { name: firstEntry.name });
         fieldMapping[firstEntry.legacyKey] = primaryFieldId;
         fieldMapping['label'] = primaryFieldId;
         fieldMapping['title'] = primaryFieldId;
@@ -295,7 +292,10 @@ const migrationService = {
         }
       } catch (e) {
         warnings.push(`Failed to migrate view "${v.name}": ${(e as Error).message}`);
-        logger.warn('[MigrationService] view migration failed', { view: v.name, error: (e as Error).message });
+        logger.warn('[MigrationService] view migration failed', {
+          view: v.name,
+          error: (e as Error).message,
+        });
       }
     }
 
@@ -362,7 +362,9 @@ const migrationService = {
       legacyNodeCount = Array.isArray(graph.nodes) ? graph.nodes.length : 0;
       legacyColumnCount = graph.extensions?.table?.columns?.length ?? 0;
     } else {
-      discrepancies.push('Legacy graph not provided; pass graph in request body for full validation');
+      discrepancies.push(
+        'Legacy graph not provided; pass graph in request body for full validation'
+      );
     }
 
     const db = getDatabase();
@@ -370,7 +372,9 @@ const migrationService = {
     let newFieldCount = 0;
 
     try {
-      const baseResult = await db.query('SELECT id, workspace_id FROM tp_bases WHERE id = $1', [baseId]);
+      const baseResult = await db.query('SELECT id, workspace_id FROM tp_bases WHERE id = $1', [
+        baseId,
+      ]);
       const base = baseResult.rows[0];
       if (!base) {
         return {
@@ -383,10 +387,7 @@ const migrationService = {
         };
       }
 
-      const tablesResult = await db.query(
-        'SELECT id FROM tp_tables WHERE base_id = $1',
-        [baseId]
-      );
+      const tablesResult = await db.query('SELECT id FROM tp_tables WHERE base_id = $1', [baseId]);
       const tableIds = (tablesResult.rows as Array<{ id: string }>).map((r) => r.id);
 
       for (const tid of tableIds) {
@@ -394,22 +395,32 @@ const migrationService = {
           'SELECT COUNT(*) AS cnt FROM tp_records WHERE table_id = $1',
           [tid]
         );
-        newRecordCount += parseInt(String((recCountResult.rows[0] as { cnt: string })?.cnt ?? 0), 10);
+        newRecordCount += parseInt(
+          String((recCountResult.rows[0] as { cnt: string })?.cnt ?? 0),
+          10
+        );
 
         const fieldCountResult = await db.query(
           'SELECT COUNT(*) AS cnt FROM tp_fields WHERE table_id = $1',
           [tid]
         );
-        newFieldCount += parseInt(String((fieldCountResult.rows[0] as { cnt: string })?.cnt ?? 0), 10);
+        newFieldCount += parseInt(
+          String((fieldCountResult.rows[0] as { cnt: string })?.cnt ?? 0),
+          10
+        );
       }
 
       if (graph) {
         if (legacyNodeCount !== newRecordCount) {
-          discrepancies.push(`Record count mismatch: legacy ${legacyNodeCount} vs new ${newRecordCount}`);
+          discrepancies.push(
+            `Record count mismatch: legacy ${legacyNodeCount} vs new ${newRecordCount}`
+          );
         }
         const expectedFields = Math.max(legacyColumnCount, 1);
         if (Math.abs(legacyColumnCount - newFieldCount) > 1) {
-          discrepancies.push(`Field count mismatch: legacy ${legacyColumnCount} vs new ${newFieldCount}`);
+          discrepancies.push(
+            `Field count mismatch: legacy ${legacyColumnCount} vs new ${newFieldCount}`
+          );
         }
       }
     } catch (e) {
@@ -440,15 +451,9 @@ const migrationService = {
       }
 
       await db.query('DELETE FROM tp_bases WHERE id = $1', [baseId]);
-      await AuditService.logEvent(
-        'delete',
-        'base',
-        baseId,
-        rolledBackBy,
-        base,
-        undefined,
-        { reason: 'migration_rollback' }
-      );
+      await AuditService.logEvent('delete', 'base', baseId, rolledBackBy, base, undefined, {
+        reason: 'migration_rollback',
+      });
       logger.info('[MigrationService] rollbackMigration completed', {
         baseId,
         rolledBackBy,

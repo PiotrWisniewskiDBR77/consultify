@@ -4,8 +4,8 @@
  */
 import {
   BarChart3,
-  ClipboardCopy,
   Check,
+  ClipboardCopy,
   FileText,
   Layout,
   LayoutGrid,
@@ -80,10 +80,30 @@ export function InterfacesIndex({
       label: t('interfacesIndex.tplDashboard', 'Dashboard'),
       description: t('interfacesIndex.tplDashboardDesc', 'Pre-configured with chart blocks'),
       blocks: [
-        { id: crypto.randomUUID(), type: 'summary', config: { tableId, label: 'Total', aggregation: 'count' }, position: { x: 0, y: 0, w: 4, h: 2 } },
-        { id: crypto.randomUUID(), type: 'summary', config: { tableId, label: 'Sum', aggregation: 'sum' }, position: { x: 4, y: 0, w: 4, h: 2 } },
-        { id: crypto.randomUUID(), type: 'chart', config: { tableId, chartType: 'bar', aggregation: 'count' }, position: { x: 0, y: 2, w: 6, h: 4 } },
-        { id: crypto.randomUUID(), type: 'chart', config: { tableId, chartType: 'pie', aggregation: 'count' }, position: { x: 6, y: 2, w: 6, h: 4 } },
+        {
+          id: crypto.randomUUID(),
+          type: 'summary',
+          config: { tableId, label: 'Total', aggregation: 'count' },
+          position: { x: 0, y: 0, w: 4, h: 2 },
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'summary',
+          config: { tableId, label: 'Sum', aggregation: 'sum' },
+          position: { x: 4, y: 0, w: 4, h: 2 },
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'chart',
+          config: { tableId, chartType: 'bar', aggregation: 'count' },
+          position: { x: 0, y: 2, w: 6, h: 4 },
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'chart',
+          config: { tableId, chartType: 'pie', aggregation: 'count' },
+          position: { x: 6, y: 2, w: 6, h: 4 },
+        },
       ],
     },
     {
@@ -92,7 +112,12 @@ export function InterfacesIndex({
       label: t('interfacesIndex.tplRecordDetail', 'Record detail'),
       description: t('interfacesIndex.tplRecordDetailDesc', 'Single record view with all fields'),
       blocks: [
-        { id: crypto.randomUUID(), type: 'record_detail', config: { tableId, visibleFieldIds: [] }, position: { x: 0, y: 0, w: 12, h: 8 } },
+        {
+          id: crypto.randomUUID(),
+          type: 'record_detail',
+          config: { tableId, visibleFieldIds: [] },
+          position: { x: 0, y: 0, w: 12, h: 8 },
+        },
       ],
     },
     {
@@ -101,8 +126,18 @@ export function InterfacesIndex({
       label: t('interfacesIndex.tplFormView', 'Form view'),
       description: t('interfacesIndex.tplFormViewDesc', 'Data entry optimized'),
       blocks: [
-        { id: crypto.randomUUID(), type: 'text', config: { content: 'Data Entry Form', fontSize: 20 }, position: { x: 0, y: 0, w: 12, h: 1 } },
-        { id: crypto.randomUUID(), type: 'table_grid', config: { tableId, maxRows: 10 }, position: { x: 0, y: 1, w: 12, h: 6 } },
+        {
+          id: crypto.randomUUID(),
+          type: 'text',
+          config: { content: 'Data Entry Form', fontSize: 20 },
+          position: { x: 0, y: 0, w: 12, h: 1 },
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'table_grid',
+          config: { tableId, maxRows: 10 },
+          position: { x: 0, y: 1, w: 12, h: 6 },
+        },
       ],
     },
     {
@@ -136,39 +171,47 @@ export function InterfacesIndex({
     }
   }, [platformViews, tableId]);
 
-  useEffect(() => { loadInterfaces(); }, [loadInterfaces]);
+  useEffect(() => {
+    loadInterfaces();
+  }, [loadInterfaces]);
 
-  const handleCreateFromTemplate = useCallback(async (template: InterfaceTemplate) => {
-    try {
-      const name = `${template.label} — ${new Date().toLocaleDateString()}`;
-      if (onCreateView) {
-        const created = await onCreateView(name, 'interface', { blocks: template.blocks });
-        if (created) {
-          setEditingInterface({
-            id: created.id,
-            tableId,
-            name,
-            viewType: 'interface',
-            config: { blocks: template.blocks },
-          });
+  const handleCreateFromTemplate = useCallback(
+    async (template: InterfaceTemplate) => {
+      try {
+        const name = `${template.label} — ${new Date().toLocaleDateString()}`;
+        if (onCreateView) {
+          const created = await onCreateView(name, 'interface', { blocks: template.blocks });
+          if (created) {
+            setEditingInterface({
+              id: created.id,
+              tableId,
+              name,
+              viewType: 'interface',
+              config: { blocks: template.blocks },
+            });
+          }
         }
+        setShowTemplates(false);
+      } catch {
+        toast.error(t('interfacesIndex.createError', 'Failed to create interface'));
       }
-      setShowTemplates(false);
-    } catch {
-      toast.error(t('interfacesIndex.createError', 'Failed to create interface'));
-    }
-  }, [onCreateView, tableId, t]);
+    },
+    [onCreateView, tableId, t]
+  );
 
-  const handleDelete = useCallback(async (ifaceId: string) => {
-    try {
-      await TablePlatformApi.deleteView(ifaceId);
-      setInterfaces((prev) => prev.filter((i) => i.id !== ifaceId));
-      setDeleteConfirm(null);
-      toast.success(t('interfacesIndex.deleted', 'Interface deleted'));
-    } catch {
-      toast.error(t('interfacesIndex.deleteError', 'Failed to delete interface'));
-    }
-  }, [t]);
+  const handleDelete = useCallback(
+    async (ifaceId: string) => {
+      try {
+        await TablePlatformApi.deleteView(ifaceId);
+        setInterfaces((prev) => prev.filter((i) => i.id !== ifaceId));
+        setDeleteConfirm(null);
+        toast.success(t('interfacesIndex.deleted', 'Interface deleted'));
+      } catch {
+        toast.error(t('interfacesIndex.deleteError', 'Failed to delete interface'));
+      }
+    },
+    [t]
+  );
 
   const handleCopyShareLink = useCallback((ifaceId: string) => {
     const url = `${window.location.origin}/interfaces/${ifaceId}`;
@@ -184,7 +227,10 @@ export function InterfacesIndex({
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-navy-700">
           <button
-            onClick={() => { setEditingInterface(null); loadInterfaces(); }}
+            onClick={() => {
+              setEditingInterface(null);
+              loadInterfaces();
+            }}
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-navy-800"
           >
             &larr; {t('interfacesIndex.backToList', 'Back to interfaces')}
@@ -243,7 +289,10 @@ export function InterfacesIndex({
           {t('interfacesIndex.emptyTitle', 'Build custom views of your data')}
         </h3>
         <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('interfacesIndex.emptyDescription', 'Interfaces let you create dashboards, detail views, and custom layouts.')}
+          {t(
+            'interfacesIndex.emptyDescription',
+            'Interfaces let you create dashboards, detail views, and custom layouts.'
+          )}
         </p>
         {!locked && (
           <button
@@ -288,9 +337,7 @@ export function InterfacesIndex({
               <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
                 {tpl.label}
               </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {tpl.description}
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{tpl.description}</p>
             </button>
           ))}
         </div>

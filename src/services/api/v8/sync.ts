@@ -138,7 +138,12 @@ export interface V8SyncConnectionCredentialRef {
   tokenExpiresAt: string | null;
   lastVerificationAt: string | null;
   lastRefreshAt: string | null;
-  lastRefreshResult: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' | null;
+  lastRefreshResult:
+    | 'success'
+    | 'transient_failure'
+    | 'credential_expired'
+    | 'scope_revoked'
+    | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -232,11 +237,11 @@ export const V8SyncApi = {
   getConnectors: (params?: { category?: string }) =>
     v8Get<{ connectors: V8SyncCatalogConnector[]; count: number }>(
       '/sync/connectors',
-      params?.category ? { category: params.category } : undefined,
+      params?.category ? { category: params.category } : undefined
     ),
   connectIntegration: (
     connectorId: string,
-    payload?: { config?: Record<string, unknown>; displayName?: string },
+    payload?: { config?: Record<string, unknown>; displayName?: string }
   ) =>
     v8Post<{
       integration: V8SyncInitiatedIntegration;
@@ -246,12 +251,15 @@ export const V8SyncApi = {
     v8Post<{
       integration: V8SyncConfiguredIntegration;
       externalAuth?: V8SyncExternalAuthSession;
-    }>(`/sync/integrations/${encodeURIComponent(integrationId)}/configure`, payload ?? { config: {} }),
+    }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/configure`,
+      payload ?? { config: {} }
+    ),
   getHubHealth: () => v8Get<{ summary: V8SyncHealthSummary }>('/sync/health'),
   getErrors: (params?: { integrationId?: string }) =>
     v8Get<{ errors: V8SyncErrorItem[]; count: number }>(
       '/sync/errors',
-      params?.integrationId ? { integrationId: params.integrationId } : undefined,
+      params?.integrationId ? { integrationId: params.integrationId } : undefined
     ),
   resolveError: (errorId: string) =>
     v8Post<{ success: true }>(`/sync/errors/${encodeURIComponent(errorId)}/resolve`, {}),
@@ -266,10 +274,7 @@ export const V8SyncApi = {
         | 'pending_configuration'
         | 'configuration_submitted_pending_validation';
       externalAuth?: V8SyncExternalAuthSession;
-    }>(
-      `/sync/integrations/${encodeURIComponent(integrationId)}/reauth`,
-      {},
-    ),
+    }>(`/sync/integrations/${encodeURIComponent(integrationId)}/reauth`, {}),
   materializeCredential: (
     integrationId: string,
     payload: {
@@ -277,22 +282,25 @@ export const V8SyncApi = {
       workspaceOrTenantId: string;
       scopesGranted: string[];
       tokenExpiresAt?: string | null;
-    },
+    }
   ) =>
     v8Post<{ credential: V8SyncConnectionCredentialRef }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/credential`,
-      payload,
+      payload
     ),
   recordRefreshResult: (
     integrationId: string,
-    payload: { result: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' },
+    payload: { result: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' }
   ) =>
     v8Post<{
       credential: V8SyncConnectionCredentialRef;
       authTransition: 'healthy' | 'degraded_reauth_needed' | null;
     }>(`/sync/integrations/${encodeURIComponent(integrationId)}/refresh-result`, payload),
   disconnectIntegration: (integrationId: string) =>
-    v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/disconnect`, {}),
+    v8Post<{ success: true }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/disconnect`,
+      {}
+    ),
   pauseIntegration: (integrationId: string) =>
     v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/pause`, {}),
   resumeIntegration: (integrationId: string) =>
@@ -300,7 +308,7 @@ export const V8SyncApi = {
   runIntegrationSync: (integrationId: string) =>
     v8Post<{ success: true; syncRun: V8SyncTriggeredRun; warnings?: string[] }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/sync`,
-      {},
+      {}
     ),
   getAuditLog: (params?: { integrationId?: string; limit?: number }) =>
     v8Get<{ entries: V8SyncAuditEntry[]; count: number }>('/sync/audit-log', {
@@ -312,41 +320,41 @@ export const V8SyncApi = {
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
   getRefreshTimingPolicy: (providerFamily: V8SyncProviderFamily) =>
     v8Get<{ policy: V8SyncRefreshTimingPolicy | null }>(
-      `/sync/auth/policies/${encodeURIComponent(providerFamily)}`,
+      `/sync/auth/policies/${encodeURIComponent(providerFamily)}`
     ),
   setRefreshTimingPolicy: (
     providerFamily: V8SyncProviderFamily,
     payload: Pick<
       V8SyncRefreshTimingPolicy,
       'typicalTokenLifetimeMinutes' | 'refreshWindowMinutes' | 'maxRetryAttempts'
-    >,
+    >
   ) =>
     v8Post<{ policy: V8SyncRefreshTimingPolicy }>(
       `/sync/auth/policies/${encodeURIComponent(providerFamily)}`,
-      payload,
+      payload
     ),
   resolveAuthEscalation: (escalationId: string) =>
     v8Post<{ escalation: V8SyncAuthEscalation }>(
       `/sync/auth/escalations/${encodeURIComponent(escalationId)}/resolve`,
-      {},
+      {}
     ),
   setConnectorAuthState: (
     connectorId: string,
     targetState: V8SyncConnectorAuthState,
-    reason?: string | null,
+    reason?: string | null
   ) =>
     v8Post<{ record: V8SyncConnectorAuthRecord }>(
       `/sync/connectors/${encodeURIComponent(connectorId)}/auth-state`,
-      { targetState, reason: reason ?? null },
+      { targetState, reason: reason ?? null }
     ),
   resolveConflict: (conflictId: string, resolutionPath: V8SyncConflictResolutionPath = 'dismiss') =>
     v8Post<{ conflict: V8SyncConflictRecord }>(
       `/sync/conflicts/${encodeURIComponent(conflictId)}/resolve`,
-      { resolutionPath },
+      { resolutionPath }
     ),
   getConnectorHealth: (connectorId: string) =>
     v8Get<{ connectorId: string; health: V8SyncConnectorHealthSummary }>(
-      `/sync/connectors/${encodeURIComponent(connectorId)}/health`,
+      `/sync/connectors/${encodeURIComponent(connectorId)}/health`
     ),
   getConflicts: (limit = 10) =>
     v8Get<{ conflicts: V8SyncConflictRecord[]; count: number }>('/sync/conflicts', {

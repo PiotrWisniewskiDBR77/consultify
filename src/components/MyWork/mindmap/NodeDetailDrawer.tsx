@@ -485,8 +485,22 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             title={isPl ? 'Notatki i kontekst' : 'Notes & Context'}
             icon={<StickyNote size={14} />}
             badge={
-              [notes, nodeData?.context, nodeData?.goal, nodeData?.rationale, nodeData?.riskNote].filter(Boolean).length > 0
-                ? String([notes, nodeData?.context, nodeData?.goal, nodeData?.rationale, nodeData?.riskNote].filter(Boolean).length)
+              [
+                notes,
+                nodeData?.context,
+                nodeData?.goal,
+                nodeData?.rationale,
+                nodeData?.riskNote,
+              ].filter(Boolean).length > 0
+                ? String(
+                    [
+                      notes,
+                      nodeData?.context,
+                      nodeData?.goal,
+                      nodeData?.rationale,
+                      nodeData?.riskNote,
+                    ].filter(Boolean).length
+                  )
                 : undefined
             }
             defaultOpen
@@ -502,9 +516,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                   onBlur={handleNotesBlur}
                   disabled={locked || isProtected}
                   rows={3}
-                  placeholder={
-                    isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'
-                  }
+                  placeholder={isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none transition-all disabled:opacity-50"
                 />
               </div>
@@ -630,9 +642,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                         </div>
                       )}
                     </div>
-                    {isClickable && (
-                      <ExternalLink size={11} className="text-slate-400 shrink-0" />
-                    )}
+                    {isClickable && <ExternalLink size={11} className="text-slate-400 shrink-0" />}
                   </div>
                 );
               })}

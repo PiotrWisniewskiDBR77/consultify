@@ -56,10 +56,23 @@ interface Employee {
   lastActive?: string;
 }
 
-function normalizeClient(client: Partial<V8PartnerClient> | Record<string, any>): Client {
+type LegacyPartnerClient = Partial<V8PartnerClient> & {
+  clientId?: string;
+};
+
+type LegacyPartnerEmployee = Partial<V8PartnerEmployee> & {
+  first_name?: string;
+  last_name?: string;
+  userId?: string;
+  role?: string;
+};
+
+function normalizeClient(client: LegacyPartnerClient): Client {
   return {
     id: String(client.id || client.organizationId || client.clientId || client.name || 'client'),
-    clientName: String(client.clientName || client.organizationName || client.name || 'Organization'),
+    clientName: String(
+      client.clientName || client.organizationName || client.name || 'Organization'
+    ),
     organizationName:
       typeof client.organizationName === 'string'
         ? client.organizationName
@@ -79,7 +92,7 @@ function normalizeClient(client: Partial<V8PartnerClient> | Record<string, any>)
   };
 }
 
-function normalizeEmployee(employee: Partial<V8PartnerEmployee> | Record<string, any>): Employee {
+function normalizeEmployee(employee: LegacyPartnerEmployee): Employee {
   const firstName = typeof employee.first_name === 'string' ? employee.first_name : '';
   const lastName = typeof employee.last_name === 'string' ? employee.last_name : '';
   const combinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
@@ -192,7 +205,9 @@ export const ClientAccessView: React.FC = () => {
         setAccessLink(referralLink);
         toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
       } else {
-        toast.error(response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link'));
+        toast.error(
+          response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
+        );
       }
     } catch (err: any) {
       console.error('Error generating access link:', err);

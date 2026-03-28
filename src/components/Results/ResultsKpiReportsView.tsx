@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
-import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
+import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import {

@@ -6,15 +6,15 @@
  * @module routes/v8/planning.routes
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
-  getCrossInitiativeDependencies,
   getCriticalPath,
+  getCrossInitiativeDependencies,
   getDecisionChainsByInitiative,
   getDecompositionTree,
   getPendingDecisions,
@@ -84,7 +84,7 @@ router.get(
       data: portfolio,
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -120,7 +120,7 @@ router.get(
       data: { initiative },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -145,7 +145,7 @@ router.get(
       data: { dependencies },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -166,7 +166,7 @@ router.get(
       data: { watchers },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -187,7 +187,7 @@ router.get(
       data: { stakeholders },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -212,7 +212,7 @@ router.get(
       data: { roles },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -233,7 +233,7 @@ router.get(
       data: { history },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -254,7 +254,7 @@ router.get(
       data: { events },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -275,7 +275,7 @@ router.get(
       data: { comments },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -304,7 +304,7 @@ router.get(
       data: { readiness },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -325,7 +325,7 @@ router.get(
       data: { resources },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -350,7 +350,7 @@ router.get(
       data: { kpis },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -371,7 +371,7 @@ router.get(
       data: { budgetItems },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -392,7 +392,7 @@ router.get(
       data: { tools },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -413,7 +413,7 @@ router.get(
       data: { intangibleAssets },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -436,7 +436,7 @@ router.get(
       data: { items },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -483,7 +483,7 @@ router.get(
       },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -499,7 +499,7 @@ router.get(
       data: { pendingDecisionChains },
       meta: planningMeta(),
     });
-  }),
+  })
 );
 
 export default router;

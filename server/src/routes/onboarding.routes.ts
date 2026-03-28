@@ -247,7 +247,7 @@ router.post('/skip', async (req: AuthRequest, res: Response) => {
     if (orgId) {
       await db.query(
         `UPDATE organizations SET onboarding_status = 'ORG_SETUP_COMPLETED' WHERE id = $1`,
-        [orgId],
+        [orgId]
       );
     }
 

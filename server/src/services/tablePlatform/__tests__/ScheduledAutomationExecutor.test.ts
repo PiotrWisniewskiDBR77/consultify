@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -10,7 +10,10 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { ScheduledAutomationExecutor, validateCronExpression } from '../ScheduledAutomationExecutor.js';
+import {
+  ScheduledAutomationExecutor,
+  validateCronExpression,
+} from '../ScheduledAutomationExecutor.js';
 
 describe('ScheduledAutomationExecutor', () => {
   let executor: ScheduledAutomationExecutor;

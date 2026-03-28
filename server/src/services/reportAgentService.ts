@@ -463,7 +463,11 @@ async function performQualityCheck(reportId: string, sections: SectionRow[]): Pr
   if (!enabled.some((s) => s.section_type === 'summary')) {
     issues.push('Missing Executive Summary (recommended for all reports)');
   }
-  if (!enabled.some((s) => s.section_type === 'recommendations' || s.section_type === 'consulting_decisions')) {
+  if (
+    !enabled.some(
+      (s) => s.section_type === 'recommendations' || s.section_type === 'consulting_decisions'
+    )
+  ) {
     issues.push('Missing Recommendations or Next Steps (required for actionable reports)');
   }
 

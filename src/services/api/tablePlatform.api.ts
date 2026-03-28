@@ -129,7 +129,9 @@ export async function listRecords(
   if (options?.sorts) params.set('sorts', JSON.stringify(options.sorts));
 
   const query = params.toString();
-  const url = query ? `${BASE_PATH}/tables/${tableId}/records?${query}` : `${BASE_PATH}/tables/${tableId}/records`;
+  const url = query
+    ? `${BASE_PATH}/tables/${tableId}/records?${query}`
+    : `${BASE_PATH}/tables/${tableId}/records`;
   const res = await fetchWithRetry(url, {
     headers: getHeaders(),
   });
@@ -152,10 +154,7 @@ export async function getRecord(recordId: string): Promise<any> {
   return handleResponse(res, 'Failed to fetch record');
 }
 
-export async function updateRecord(
-  recordId: string,
-  data: Record<string, unknown>
-): Promise<any> {
+export async function updateRecord(recordId: string, data: Record<string, unknown>): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}`, {
     method: 'PATCH',
     headers: getHeaders(),
@@ -308,10 +307,7 @@ export async function executeSchemaProposal(
 }
 
 /** Chat-to-Schema: reject proposal */
-export async function rejectSchemaProposal(
-  proposalId: string,
-  reason?: string
-): Promise<void> {
+export async function rejectSchemaProposal(proposalId: string, reason?: string): Promise<void> {
   const res = await fetchWithRetry(`${BASE_PATH}/schema/proposals/${proposalId}/reject`, {
     method: 'POST',
     headers: getHeaders(),
@@ -433,10 +429,7 @@ export async function getTableAuditTrail(
 // ============================================================================
 
 /** Bulk delete records */
-export async function bulkDeleteRecords(
-  tableId: string,
-  recordIds: string[]
-): Promise<any> {
+export async function bulkDeleteRecords(tableId: string, recordIds: string[]): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/records/bulk-delete`, {
     method: 'POST',
     headers: getHeaders(),
@@ -491,14 +484,10 @@ export async function unlinkRecords(
 }
 
 /** Get linked records for a record+field */
-export async function getLinkedRecords(
-  recordId: string,
-  fieldId: string
-): Promise<any> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/records/${recordId}/links/${fieldId}`,
-    { headers: getHeaders() }
-  );
+export async function getLinkedRecords(recordId: string, fieldId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}/links/${fieldId}`, {
+    headers: getHeaders(),
+  });
   return handleResponse(res, 'Failed to fetch linked records');
 }
 
@@ -530,10 +519,7 @@ export async function createAttachment(
 }
 
 /** List attachments for a record, optionally filtered by field */
-export async function getAttachments(
-  recordId: string,
-  fieldId?: string
-): Promise<any[]> {
+export async function getAttachments(recordId: string, fieldId?: string): Promise<any[]> {
   const params = new URLSearchParams();
   if (fieldId) params.set('fieldId', fieldId);
   const query = params.toString();
@@ -581,10 +567,7 @@ export async function searchRecords(
 // ============================================================================
 
 /** Validate a formula expression for a table */
-export async function validateFormula(
-  tableId: string,
-  expression: string
-): Promise<any> {
+export async function validateFormula(tableId: string, expression: string): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/validate-formula`, {
     method: 'POST',
     headers: getHeaders(),
@@ -668,9 +651,12 @@ export async function getFormSubmissions(
   if (opts?.limit) params.set('limit', String(opts.limit));
   if (opts?.offset) params.set('offset', String(opts.offset));
   const qs = params.toString();
-  const res = await fetchWithRetry(`${BASE_PATH}/forms/${formId}/submissions${qs ? `?${qs}` : ''}`, {
-    headers: getHeaders(),
-  });
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${formId}/submissions${qs ? `?${qs}` : ''}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return handleResponse(res, 'Failed to fetch form submissions');
 }
 
@@ -720,10 +706,7 @@ export async function listRecordComments(
   return handleResponse(res, 'Failed to list comments');
 }
 
-export async function updateRecordComment(
-  commentId: string,
-  content: string
-): Promise<any> {
+export async function updateRecordComment(commentId: string, content: string): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/comments/${commentId}`, {
     method: 'PATCH',
     headers: getHeaders(),
@@ -894,7 +877,13 @@ export async function listWebhookRelays(baseId: string): Promise<any> {
 
 export async function updateWebhookRelay(
   relayId: string,
-  updates: { name?: string; targetUrl?: string; secret?: string; eventTypes?: string[]; isActive?: boolean }
+  updates: {
+    name?: string;
+    targetUrl?: string;
+    secret?: string;
+    eventTypes?: string[];
+    isActive?: boolean;
+  }
 ): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/relays/${relayId}`, {
     method: 'PATCH',
@@ -912,7 +901,9 @@ export async function deleteWebhookRelay(relayId: string): Promise<void> {
   await handleResponse(res, 'Failed to delete webhook relay');
 }
 
-export async function testWebhookRelay(relayId: string): Promise<{ success: boolean; statusCode?: number; error?: string }> {
+export async function testWebhookRelay(
+  relayId: string
+): Promise<{ success: boolean; statusCode?: number; error?: string }> {
   const res = await fetchWithRetry(`${BASE_PATH}/relays/${relayId}/test`, {
     method: 'POST',
     headers: getHeaders(),
@@ -1081,7 +1072,9 @@ export async function removeModelKpi(kpiId: string): Promise<void> {
   await handleResponse(res, 'Failed to remove KPI');
 }
 
-export async function computeKpi(kpiId: string): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
+export async function computeKpi(
+  kpiId: string
+): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
   const res = await fetchWithRetry(`${BASE_PATH}/kpis/${kpiId}/compute`, {
     method: 'POST',
     headers: getHeaders(),
@@ -1187,9 +1180,7 @@ export async function syncToInitiatives(
   return handleResponse(res, 'Failed to sync to Initiatives');
 }
 
-export async function getModuleLinkStatus(
-  modelId: string
-): Promise<{
+export async function getModuleLinkStatus(modelId: string): Promise<{
   results: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
   finance: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
   execution: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
@@ -1230,10 +1221,7 @@ export async function listAutomations(tableId: string): Promise<any[]> {
   return handleResponse(res, 'Failed to list automations');
 }
 
-export async function toggleAutomation(
-  automationId: string,
-  enabled: boolean
-): Promise<void> {
+export async function toggleAutomation(automationId: string, enabled: boolean): Promise<void> {
   const res = await fetchWithRetry(`${BASE_PATH}/automations/${automationId}/toggle`, {
     method: 'PATCH',
     headers: getHeaders(),
@@ -1250,14 +1238,10 @@ export async function deleteAutomation(automationId: string): Promise<void> {
   await handleResponse(res, 'Failed to delete automation');
 }
 
-export async function getAutomationRuns(
-  automationId: string,
-  limit = 20
-): Promise<any[]> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/automations/${automationId}/runs?limit=${limit}`,
-    { headers: getHeaders() }
-  );
+export async function getAutomationRuns(automationId: string, limit = 20): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/automations/${automationId}/runs?limit=${limit}`, {
+    headers: getHeaders(),
+  });
   return handleResponse(res, 'Failed to fetch automation runs');
 }
 
@@ -1348,10 +1332,7 @@ export async function updateCollaboratorRole(
   return handleResponse(res, 'Failed to update collaborator role');
 }
 
-export async function removeCollaborator(
-  baseId: string,
-  userId: string
-): Promise<void> {
+export async function removeCollaborator(baseId: string, userId: string): Promise<void> {
   const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/collaborators/${userId}`, {
     method: 'DELETE',
     headers: getHeaders(),
@@ -1416,11 +1397,14 @@ export async function detectDateDependencyCycle(
   tableId: string,
   config: DateDependencyConfigPayload
 ): Promise<{ hasCycle: boolean; cycleNodes: string[] | null }> {
-  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/date-dependencies/detect-cycle`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify({ config: { ...config, tableId } }),
-  });
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${tableId}/date-dependencies/detect-cycle`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ config: { ...config, tableId } }),
+    }
+  );
   return handleResponse(res, 'Failed to detect date dependency cycle');
 }
 

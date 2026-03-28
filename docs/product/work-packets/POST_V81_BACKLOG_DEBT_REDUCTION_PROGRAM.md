@@ -7,7 +7,7 @@
 > Last updated: 2026-03-28
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: active - broader `Sync` completion promoted after broader `Partner Program` parity acceptance
+> Current state: active - broader `Notes` adjunct / object-linked outputs breadth remains the only active product lane at `12 / 13`
 
 ---
 
@@ -21,6 +21,17 @@ It exists to ensure that:
 - debt is classified honestly instead of mixed into one undifferentiated queue,
 - only one tranche at a time is promoted into active execution,
 - and each promoted slice has the same acceptance discipline as the closure wave: runtime truth, surface truth, regression, and evidence.
+
+### Parallel support docs
+
+Use these alongside the live control docs when you need the shortest path to the current endgame:
+
+- `docs/product/work-packets/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
+- `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
+- `docs/product/work-packets/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
+- `docs/product/work-packets/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
+- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/FINAL_CLOSEOUT_SEQUENCE_13_OF_13_AND_WIDER_GO_2026-03-28.md`
 
 This document does **not** replace area SSOTs. It sequences them.
 
@@ -257,90 +268,59 @@ The following do **not** qualify as done:
 
 Current state:
 
-- broader `Sync` completion is currently promoted
-- broader `Partner Program` parity is accepted in bounded form and moved to `done`
+- broader `Notes` adjunct / object-linked outputs breadth is currently promoted
+- broader `Multiplayer / collaboration` breadth is accepted in bounded form and moved to `done`
 
 ### Slice name
 
-broader `Sync` completion
+broader `Notes` adjunct / object-linked outputs breadth
 
 ### Scope
 
-The accepted bounded `Sync / connectors / interoperability` lane already closed entry authority, observability, recovery, and lifecycle-control continuity, but active connect initiation, honest onboarding state, and broader OAuth/provider completion breadth still remained at promotion time.
+The accepted bounded `T3` `Notes` adjuncts lane already closed governed notebook AI proposal continuity and governed notebook convert continuity, but broader notebook capture/upload authority and object-linked outputs breadth still remained outside that bounded scope at promotion time.
 
-This promoted broader lane starts with the smallest active real residual: connect initiation continuity on the live admin/operator sync hub.
+This promoted broader lane started with the smallest active real residual: notebook capture upload authority continuity on the live notebook creation surface. The active residual has since moved forward into wider notebook-linked output continuity on the list and context readback surfaces, and now through the first honest upload-origin source attachment seam, while wider attachment breadth and broader output propagation still remain explicitly outside any single packet claim.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and broader-sync packet discipline
-- `Agent A`: close active broader-sync seams one honest packet at a time
-- `Agent B`: keep broader partner done and other non-sync lanes parked while this lane is active
+- `Manager`: maintain this program, tranche rules, and broader-notes packet discipline
+- `Agent A`: close active broader-notes seams one honest packet at a time
+- `Agent B`: keep already accepted non-notes lanes parked while this lane is active
 
 ### Exit criteria
 
-- the active broader sync lane keeps bounded packet discipline,
+- the active broader notes lane keeps bounded packet discipline,
 - accepted bounded evidence remains the authority for previously closed lanes,
-- and the earlier accepted bounded sync lane does not get silently reopened as a whole-sync rewrite.
+- and the earlier accepted bounded `T3` notes adjunct lane does not get silently reopened as a whole notebook architecture rewrite.
 
 ### Current lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`.
 
 Current result:
 
-- broader `Partner Program` parity is now accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`,
-- the active lane now uses the split-brain map in `evidence/442-v81-broader-sync-completion-split-brain-map.md`,
-- the first real bounded broader sync packet landed in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md` by moving visible sync-hub connect authority onto a governed V8-first seam while keeping new integrations in honest `pending` onboarding state,
-- the second real bounded broader sync packet landed in `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md` by aligning the active sync hub controls with the already-recorded `pending` onboarding truth instead of offering ready-state sync actions too early,
-- the third real bounded broader sync packet landed in `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md` by exposing provider setup requirements from the governed connector registry onto the active sync catalog and pending-onboarding surfaces instead of leaving follow-up onboarding needs implicit,
-- the fourth real bounded broader sync packet landed in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md` by adding governed pending-config submission continuity on the active sync hub while keeping broader OAuth callback completion explicitly out of scope,
-- the fifth real bounded broader sync packet landed in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md` by keeping governed reauthorization in honest pending state instead of auto-claiming recovery before external auth callback completion exists,
-- the post-reauth residual assessment recorded in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md` confirmed there is no thinner honest broader-sync packet left before explicit external authorization callback continuity,
-- the sixth real bounded broader sync packet landed in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md` by adding governed external-auth session preparation plus public callback landing readback, so the active sync hub can now record callback arrival without pretending full ready-state recovery already exists,
-- the seventh real bounded broader sync packet landed in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md` by promoting callback-received integrations to connected truth on the active hub once governed verification is explicitly completed, without smuggling broader refresh / recovery lifecycle work into the same packet,
-- the post-verification residual assessment recorded in `evidence/451-v81-broader-sync-post-verification-residual-assessment.md` confirmed there is no thinner honest broader-sync packet left before broader post-auth credential / refresh continuity,
-- the eighth real bounded broader sync packet landed in `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md` by materializing governed credential baseline truth onto the active sync hub and governed inventory, so the runtime path can now see real credential metadata before broader refresh execution is attempted,
-- the ninth real bounded broader sync packet landed in `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md` by recording governed refresh-result truth on the active sync hub and reflecting auth-break outcomes back into integration state, without pretending real refresh execution already exists,
-- the tenth real bounded broader sync packet landed in `evidence/454-v81-broader-sync-run-now-refresh-preflight-honesty-seam.md` by blocking governed sync runs when credential truth already requires refresh execution or reauthorization, so the active runtime path no longer pretends stale auth can still drive a healthy manual sync,
-- the eleventh real bounded broader sync packet landed in `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md` by materializing governed auth-break escalations onto the active recovery panel whenever broader sync auth-break truth becomes real, without pretending full refresh execution or recovery workflow already exists,
-- the twelfth real bounded broader sync packet landed in `evidence/456-v81-broader-sync-auth-break-recovery-initiation-continuity-seam.md` by letting operators start governed re-authorization directly from the active escalation panel, so broader sync recovery initiation no longer requires switching back to a separate integration surface,
-- the thirteenth real bounded broader sync packet landed in `evidence/457-v81-broader-sync-auth-break-recovery-resolution-continuity-seam.md` by auto-resolving governed auth escalations when governed recovery really returns connector auth to `healthy`, so broader sync recovery success no longer leaves stale escalation work behind on the active path,
-- the fourteenth real bounded broader sync packet landed in `evidence/458-v81-broader-sync-canonical-integrations-readback-continuity-seam.md` by teaching canonical org-level `/api/integrations` readback to surface governed connector-schema pending truth, so older org settings surfaces no longer stay blind to governed broader-sync setup state,
-- the fifteenth real bounded broader sync packet landed in `evidence/459-v81-broader-sync-canonical-connect-initiation-authority-continuity-seam.md` by moving canonical `/api/integrations/connect/:provider` initiation onto the governed connector path, so the main org-level connect surface no longer claims immediate connection where governed sync truth is still only pending,
-- the sixteenth real bounded broader sync packet landed in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md` by moving alias `/api/integrations/:provider/connect` initiation onto the same governed connector path, so older settings surfaces no longer reopen a second org-level authority seam for starting broader sync setup,
-- the post-org-surface alignment residual assessment recorded in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md` confirmed that no thinner honest authority packet remains before real governed refresh execution continuity,
-- the seventeenth real bounded broader sync packet landed in `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md` by adding governed refresh-secret materialization plus real refresh execution on the active runtime path, so stale oauth credentials no longer stop at a fake `not wired yet` boundary before sync,
-- the post-refresh-execution residual assessment recorded in `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md` confirmed that no thinner honest packet remains before callback-driven governed refresh secret or token materialization continuity,
-- the eighteenth real bounded broader sync packet landed in `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md` by giving governed Jira a real provider authorization URL plus callback-driven governed credential and refresh-secret materialization on the active path, so Jira no longer depends on a manual post-callback secret write before governed refresh continuity becomes usable,
-- the post-Jira-callback residual assessment recorded in `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md` confirmed that a thinner org-level Jira authority seam still remains before wider provider coverage, because canonical and alias `/api/integrations` connect routes still return placeholder callback `authUrl` truth,
-- the nineteenth real bounded broader sync packet landed in `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md` by moving canonical and alias org-level Jira connect initiation onto the same governed provider session builder as V8, so those settings surfaces no longer emit placeholder callback `authUrl` truth,
-- the post-org-level-Jira residual assessment recorded in `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md` confirmed that no thinner Jira-specific authority packet remains before wider callback-driven provider round-trip coverage for additional governed oauth2 connectors,
-- the twentieth real bounded broader sync packet landed in `evidence/468-v81-broader-sync-gmail-governed-provider-round-trip-coverage-seam.md` by extending the shared governed provider round-trip seam to Gmail, so the active Gmail path now produces a real Google authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder,
-- the post-Gmail provider-round-trip residual assessment recorded in `evidence/469-v81-broader-sync-post-gmail-provider-round-trip-residual-assessment.md` confirmed that another provider packet still remains thinner than deeper authority alignment, with Teams now emerging as the next bounded shared-seam extension,
-- the twenty-first real bounded broader sync packet landed in `evidence/470-v81-broader-sync-teams-governed-provider-round-trip-coverage-seam.md` by extending the shared governed provider round-trip seam to Teams, so the active Teams path now produces a real Microsoft authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder,
-- the post-Teams provider-round-trip residual assessment recorded in `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md` confirmed that one more provider packet still remains thinner than deeper authority alignment, with Slack now emerging as the next bounded shared-seam extension,
-- the twenty-second real bounded broader sync packet landed in `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md` by extending the shared governed provider round-trip seam to Slack, so the active Slack path now produces a real Slack authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder,
-- the post-Slack provider-round-trip residual assessment recorded in `evidence/473-v81-broader-sync-post-slack-provider-round-trip-residual-assessment.md` confirmed that one final provider packet still remains thinner than deeper authority alignment, with Asana now emerging as the next bounded shared-seam extension,
-- the twenty-third real bounded broader sync packet landed in `evidence/474-v81-broader-sync-asana-governed-provider-round-trip-coverage-seam.md` by extending the shared governed provider round-trip seam to Asana, so the active Asana path now produces a real Asana authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder,
-- the post-Asana provider-round-trip residual assessment recorded in `evidence/475-v81-broader-sync-post-asana-provider-round-trip-residual-assessment.md` confirmed that no thinner provider or canonical org-level seam remains, so deeper authority alignment is now the next honest broader-sync step,
-- the twenty-fourth real bounded broader sync packet landed in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md` by aligning user-level settings integrations readback and connect initiation with the governed sync seam, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path,
-- the post-settings connect/readback authority residual assessment recorded in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md` confirmed that one thinner settings-lifecycle mutation seam still remains before wider cleanup, with settings disconnect now emerging as the next honest step,
-- the twenty-fifth real bounded broader sync packet landed in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md` by aligning settings disconnect with the governed sync path, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow,
-- the post-settings disconnect authority residual assessment recorded in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md` confirmed that one thinner readback seam still remains before wider cleanup, with settings status now emerging as the next honest step,
-- the twenty-sixth real bounded broader sync packet landed in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md` by aligning the dedicated settings status route with the governed sync readback, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth,
-- the post-settings status readback residual assessment recorded in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md` confirmed that one thinner live seam still remains before wider cleanup, with settings test connection now emerging as the next honest step,
-- the twenty-seventh real bounded broader sync packet landed in `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md` by aligning the settings test connection route with effective governed truth, so that surface no longer returns stubbed success when the connector is only pending or otherwise not testable,
-- the twenty-eighth real bounded broader sync packet landed in `evidence/483-v81-broader-sync-settings-logs-readback-continuity-seam.md` by aligning the settings logs route with effective governed integration readback, so that user-level settings no longer hardcodes stubbed empty sync logs for governed providers,
-- the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
+- broader `Multiplayer / collaboration` breadth is now accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`,
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`,
+- the active lane now uses the split-brain map in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`,
+- the first real bounded broader notes packet landed in `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md` by moving notebook capture upload initiation onto a governed V8-first seam while keeping broader attachment/output redesign out of scope,
+- the second real bounded broader notes packet landed in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md` by teaching the active notebook context panel to read back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs,
+- the post-direct-output residual assessment recorded in `evidence/504-v81-broader-notes-post-direct-output-readback-residual-assessment.md` confirmed that one more tiny linked-output patch on the same surface is no longer the honest next step before wider notes/output residuals,
+- the third real bounded broader notes packet landed in `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md` by persisting row-level notebook output-menu conversions back onto the source note as durable `convertedTo` readback instead of leaving them as transient success-path state only,
+- the fourth real bounded broader notes packet landed in `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md` by teaching the notebook list to summarize multiple persisted converted outputs instead of flattening notebook truth to `convertedTo[0]`,
+- the fifth real bounded broader notes packet landed in `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md` by persisting upload provenance into notebook capture metadata and surfacing that source truth back onto the live notebook list and note header,
+- the sixth real bounded broader notes packet landed in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md` by resolving direct notebook-origin `assessment` outputs on the linked outputs surface instead of limiting direct readback to report and presentation types,
+- the post-assessment residual assessment recorded in `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md` confirmed that one more tiny notebook direct-readback seam is no longer the honest next step before wider attachment breadth or broader output propagation,
+- the seventh real bounded broader notes packet landed in `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md` by retaining the original upload-origin notebook file as a governed source attachment and exposing an authenticated V8/legacy download seam on the active note surface instead of collapsing continuity to filename-only provenance,
+- the post-source-attachment residual assessment recorded in `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md` confirmed that one more tiny upload-origin note affordance is no longer the honest next step before wider notebook attachment management or broader output propagation,
+- the previously accepted bounded `T3` `Notes` adjuncts lane stays capped rather than silently reopening its already accepted AI-proposals and convert packets.
 
 ### Explicitly out of scope
 
 - broader `Chat` / `AI core` parity expansion
 - broader `Results / KPI / ROI` parity
 - broader `Partner Program` parity
+- broader `Sync` completion
 - broader `Multiplayer / collaboration` breadth
-- broader `Notes` adjunct / object-linked outputs breadth
 
 ---
 
@@ -384,7 +364,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Partner Program` parity | done | accepted lane plus twenty broader packets now close the smallest honest active partner residuals across payout/statement history, referral-tools, referred-customer lifecycle, onboarding, client-access, dashboard runtime/trust, payout-settings ownership, and final commission-surface placeholder retirement without forcing a broader partner pipeline/support product build | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | done | accepted sync lane closed bounded observability and lifecycle controls, and the broader promoted lane now also closes connect/onboarding completion truth, governed provider round-trip coverage, org-level authority alignment, and settings lifecycle continuity in bounded form | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | done | accepted lane closed presence + lock indicators only, and the broader promoted lane now also closes active collaboration visibility plus overlay/table reconnect continuity in bounded form without claiming a full transport rewrite | `12` | remaining collaboration breadth is closed or explicitly retired |
-| broader `Notes` adjunct / object-linked outputs breadth | active | accepted lane closed AI proposals + convert continuity only; the broader lane is now promoted around notebook capture/upload authority and wider object-linked outputs breadth on active notebook surfaces, with upload authority, direct notebook output readback, notebook output-menu persistence, notebook list output summary continuity, upload source readback continuity, and direct assessment output readback continuity now landed in bounded form | `13` | remaining notes/output breadth is closed or explicitly retired |
+| broader `Notes` adjunct / object-linked outputs breadth | active | accepted lane closed AI proposals + convert continuity only; the broader lane is now promoted around notebook capture/upload authority and wider object-linked outputs breadth on active notebook surfaces, with upload authority, direct notebook output readback, notebook output-menu persistence, notebook list output summary continuity, upload source readback continuity, direct assessment output readback continuity, and upload-origin source attachment continuity now landed in bounded form | `13` | remaining notes/output breadth is closed or explicitly retired |
 
 ### Recommended execution order
 
@@ -460,9 +440,6 @@ It is to process the remaining themes one by one until this section contains no 
 | `Chat` | `T2` | `Tranche 2` | done - bounded chat lane accepted after active-surface snapshot entry plus conversation-scoped governed handoff readback and creation continuity landed on the live chat header strip | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/176-v81-chat-t2-acceptance.md` |
 | `AI core` | `T2` | `Tranche 2` | done - bounded AI-core lane accepted after active operator-surface runtime summary, tool catalog, and tool-policy readback continuity landed in `AI Platform -> Operations` | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/180-v81-ai-core-t2-acceptance.md` |
 | `Notes` adjuncts | `T3` | `Tranche 3` | done - bounded notes adjunct lane accepted after notebook AI proposals and notebook convert continuity both moved onto governed V8-first seams | no further packet inside the current bounded `T3`; acceptance is recorded in `evidence/171-v81-notes-adjuncts-t3-acceptance.md` |
-- 2026-03-28: landed the sixth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, so the notebook linked outputs surface now resolves direct assessment outputs created from the same note instead of ignoring them while only reading direct reports/presentations
-- 2026-03-28: recorded `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, concluding again that one more tiny notebook direct-readback patch is no longer the honest next step and the lane should now move to notebook attachment breadth or wider output propagation
-- 2026-03-28: landed the fifth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, so uploaded notebook pages now retain visible source-file provenance on live notebook surfaces instead of losing it after extraction
 | `Communication` | `T4` | `Parking lot` | done - bounded communication lane accepted after superadmin authority/stats continuity plus stakeholder runtime read/send/distribution continuity | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/188-v81-communication-t4-acceptance.md` |
 | `Edukacja` | `T4` | `Parking lot` | done - bounded edukacja lane accepted after the mounted KB fallback seam and docs entry-authority seam both landed through the documented `Help / Knowledge Base` bridge | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/197-v81-edukacja-t4-acceptance.md` |
 | `Landing docs truth` | `T4` | `Parking lot` | done - bounded docs-truth lane accepted after canonical landing docs were normalized around the existing Anna LP contract | accepted in `evidence/226-v81-landing-docs-truth-t4-acceptance.md`; held-state recorded in `evidence/227-v81-post-backlog-program-held-state-after-landing-docs-truth.md`; any Anna embedding work remains separate visible backlog |
@@ -499,6 +476,11 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-28: landed the seventh bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, so upload-origin notebook pages now retain the original source file as a governed authenticated attachment instead of collapsing continuity to filename-only provenance
+- 2026-03-28: recorded `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md`, concluding that one more tiny upload-origin note affordance is no longer the honest next step and the lane should now move to wider notebook attachment management or broader output propagation
+- 2026-03-28: landed the sixth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, so the notebook linked outputs surface now resolves direct assessment outputs created from the same note instead of ignoring them while only reading direct reports/presentations
+- 2026-03-28: recorded `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, concluding again that one more tiny notebook direct-readback patch is no longer the honest next step and the lane should now move to notebook attachment breadth or wider output propagation
+- 2026-03-28: landed the fifth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, so uploaded notebook pages now retain visible source-file provenance on live notebook surfaces instead of losing it after extraction
 - 2026-03-28: landed the fourth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, so notebook rows now summarize multiple persisted converted outputs instead of flattening notebook output truth to the first converted target only
 - 2026-03-28: landed the third bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, so notebook outputs created from the row-level notebook output menu now persist back onto the source note instead of disappearing from notebook readback after refresh
 - 2026-03-28: landed the second bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, so the active notebook context panel now reads back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs

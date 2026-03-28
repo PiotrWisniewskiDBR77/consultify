@@ -4,18 +4,17 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import type { ColumnDef, TableNode } from '../tableTypes';
-import type { CardSize } from './GalleryView';
-import type { PlatformViewType, ViewConfigState } from './ViewConfigPanel';
-
 import { ChartBlock } from '../charts/ChartBlock';
-import { ChartConfigPanel, type ChartConfig } from '../charts/ChartConfigPanel';
+import { type ChartConfig, ChartConfigPanel } from '../charts/ChartConfigPanel';
+import type { ColumnDef, TableNode } from '../tableTypes';
 import { CalendarView } from './CalendarView';
 import { FormView } from './FormView';
+import type { CardSize } from './GalleryView';
 import { GalleryView } from './GalleryView';
 import { GanttView } from './GanttView';
 import { KanbanView } from './KanbanView';
 import { TimelineView } from './TimelineView';
+import type { PlatformViewType, ViewConfigState } from './ViewConfigPanel';
 
 export interface ViewRouterProps {
   viewType: PlatformViewType;
@@ -48,14 +47,15 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
 
   const chartFields = useMemo(
     () => columns.map((c) => ({ id: c.key, name: c.header, type: c.type })),
-    [columns],
+    [columns]
   );
 
   const visibleFieldIds = useMemo(
-    () => viewConfig.visibleFieldIds.length > 0
-      ? viewConfig.visibleFieldIds
-      : columns.filter((c) => c.visible).map((c) => c.key),
-    [columns, viewConfig.visibleFieldIds],
+    () =>
+      viewConfig.visibleFieldIds.length > 0
+        ? viewConfig.visibleFieldIds
+        : columns.filter((c) => c.visible).map((c) => c.key),
+    [columns, viewConfig.visibleFieldIds]
   );
 
   const groupByFieldId = useMemo(() => {
@@ -177,11 +177,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       return (
         <div className="flex flex-col h-full overflow-hidden">
           <div className="shrink-0 border-b border-slate-200 dark:border-navy-700 p-3 bg-slate-50/80 dark:bg-navy-900/80">
-            <ChartConfigPanel
-              config={chartConfig}
-              fields={chartFields}
-              onChange={setChartConfig}
-            />
+            <ChartConfigPanel config={chartConfig} fields={chartFields} onChange={setChartConfig} />
           </div>
           <div className="flex-1 min-h-0">
             <ChartBlock
@@ -191,7 +187,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               yFieldId={chartConfig.yFieldId}
               aggregation={chartConfig.aggregation}
               title={chartConfig.title}
-              records={records.map((r) => ({ data: r.data as Record<string, unknown> | undefined }))}
+              records={records.map((r) => ({
+                data: r.data as Record<string, unknown> | undefined,
+              }))}
               fields={chartFields}
             />
           </div>

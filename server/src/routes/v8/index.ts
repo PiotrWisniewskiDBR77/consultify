@@ -1,18 +1,18 @@
 import { Router } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
-import { requireV8OrgContext, attachV8Context } from '../../middleware/v8Auth.middleware.js';
+import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8OrgGate } from '../../middleware/v8FeatureGate.middleware.js';
 import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
 import featureFlagRoutes from './admin/feature-flags.routes.js';
 import adminHealthRoutes from './admin/health.routes.js';
 import adminMetricsRoutes from './admin/metrics.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
-import assessmentRoutes from './assessment.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
+import assessmentRoutes from './assessment.routes.js';
 import chatRoutes from './chat.routes.js';
-import executionControlRoutes from './execution-control.routes.js';
 import executionRoutes from './execution.routes.js';
+import executionControlRoutes from './execution-control.routes.js';
 import financeRoutes from './finance.routes.js';
 import healthRoutes from './health.routes.js';
 import interviewRoutes from './interview.routes.js';

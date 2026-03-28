@@ -18,7 +18,9 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
 
   const activeVariant = useMemo(() => {
     if (!detail) return 'base';
-    return detail.variants.includes(selectedVariant) ? selectedVariant : detail.variants[0] || 'base';
+    return detail.variants.includes(selectedVariant)
+      ? selectedVariant
+      : detail.variants[0] || 'base';
   }, [detail, selectedVariant]);
 
   const rows = detail?.scenarioTables[activeVariant]?.[selectedStatement] || [];
@@ -47,7 +49,9 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
         <div className="text-center">
           <div className="text-sm font-medium text-slate-200">{row.title}</div>
           <div className="mt-2 text-xs text-slate-400">
-            {isPl ? 'Ładowanie układu modelu 3-letniej prognozy...' : 'Loading 3-year forecast model layout...'}
+            {isPl
+              ? 'Ładowanie układu modelu 3-letniej prognozy...'
+              : 'Loading 3-year forecast model layout...'}
           </div>
         </div>
       </div>
@@ -86,13 +90,17 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
                 {isPl ? 'Warianty' : 'Variants'}
               </div>
-              <div className="mt-1 text-sm text-slate-100">{row.variantLabel || 'base / optimistic / conservative'}</div>
+              <div className="mt-1 text-sm text-slate-100">
+                {row.variantLabel || 'base / optimistic / conservative'}
+              </div>
             </div>
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
                 {isPl ? 'Poziomy' : 'Levels'}
               </div>
-              <div className="mt-1 text-sm text-slate-100">{detail.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}</div>
+              <div className="mt-1 text-sm text-slate-100">
+                {detail.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}
+              </div>
             </div>
           </div>
         </div>
@@ -159,8 +167,15 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
                         : 'border-t border-white/[0.04]'
                   }
                 >
-                  <td className="px-4 py-3 text-slate-200" style={{ paddingLeft: `${16 + line.level * 18}px` }}>
-                    <span className={line.isTotal || line.isSubtotal ? 'font-semibold text-slate-100' : ''}>
+                  <td
+                    className="px-4 py-3 text-slate-200"
+                    style={{ paddingLeft: `${16 + line.level * 18}px` }}
+                  >
+                    <span
+                      className={
+                        line.isTotal || line.isSubtotal ? 'font-semibold text-slate-100' : ''
+                      }
+                    >
                       {line.lineName}
                     </span>
                   </td>

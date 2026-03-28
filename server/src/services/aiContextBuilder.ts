@@ -7,8 +7,8 @@ import crypto from 'crypto';
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import { hasColumn } from '../utils/dbSchema.js';
-import organizationContextService from './organizationContext/OrganizationContextService.js';
 import logger from '../utils/Logger.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 // Mutable dependencies for injection
 let all = dbAll;
@@ -526,8 +526,7 @@ export const AIContextBuilder = {
 
     return {
       organizationId,
-      organizationName:
-        resolvedContext?.profile.companyName || org.name || 'Unknown',
+      organizationName: resolvedContext?.profile.companyName || org.name || 'Unknown',
       industry: resolvedContext?.profile.industry || org.industry || null,
       locations: [],
       activeProjectIds: projects.map((p: any) => p.id),
@@ -1191,7 +1190,10 @@ export const AIContextBuilder = {
 
       // Initiative success patterns (org-wide)
       if (organizationId) {
-        const hasEstimatedDurationWeeks = await hasColumn('initiatives', 'estimated_duration_weeks');
+        const hasEstimatedDurationWeeks = await hasColumn(
+          'initiatives',
+          'estimated_duration_weeks'
+        );
         const avgDurationSql = hasEstimatedDurationWeeks
           ? `AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks`
           : `NULL::numeric as avg_duration_weeks`;

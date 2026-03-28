@@ -326,11 +326,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       onClose={onClose}
     >
       {/* ── 1. Problem ── */}
-      <Section
-        title={isPl ? 'Problem' : 'Problem'}
-        icon={<Pencil size={12} />}
-        defaultOpen
-      >
+      <Section title={isPl ? 'Problem' : 'Problem'} icon={<Pencil size={12} />} defaultOpen>
         <div className="space-y-2.5">
           <div>
             <input
@@ -413,7 +409,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onClick={() => onStageChange(IDEA_STAGES_V5[stageIdx + 1])}
                   className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
                 >
-                  → {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en}
+                  →{' '}
+                  {isPl
+                    ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl
+                    : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en}
                 </button>
               )}
               {stageDropdownOpen && (
@@ -448,7 +447,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
           {/* Save status + evidence */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {draftSavedLabel}
+            </span>
             {evidenceCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
                 <FileText size={10} />
@@ -492,10 +493,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
 
       {/* ── 3. Convert ── */}
-      <Section
-        title={isPl ? 'Konwertuj' : 'Convert'}
-        icon={<Rocket size={12} />}
-      >
+      <Section title={isPl ? 'Konwertuj' : 'Convert'} icon={<Rocket size={12} />}>
         {selection.type !== 'none' && selection.count > 0 && (
           <div className="mb-2 text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 rounded-lg px-2 py-1.5">
             {isPl
@@ -535,10 +533,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
 
       {/* ── 4. Metadata ── */}
-      <Section
-        title={isPl ? 'Metadane' : 'Metadata'}
-        icon={<GitBranch size={12} />}
-      >
+      <Section title={isPl ? 'Metadane' : 'Metadata'} icon={<GitBranch size={12} />}>
         <div className="flex flex-wrap gap-1.5">
           {/* Branch pill */}
           {branchEditing ? (

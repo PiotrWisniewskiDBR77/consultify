@@ -129,13 +129,15 @@ router.get('/data-context', verifyToken, async (req: Request, res: Response) => 
       database: {
         source: resolved.source,
         reason: resolved.reason || null,
-        host: resolved.databaseUrl ? (() => {
-          try {
-            return new URL(resolved.databaseUrl).hostname;
-          } catch {
-            return null;
-          }
-        })() : null,
+        host: resolved.databaseUrl
+          ? (() => {
+              try {
+                return new URL(resolved.databaseUrl).hostname;
+              } catch {
+                return null;
+              }
+            })()
+          : null,
         name: parseDatabaseName(resolved.databaseUrl),
         readonly: process.env.DB_READONLY === '1' || process.env.DB_READONLY === 'true',
       },

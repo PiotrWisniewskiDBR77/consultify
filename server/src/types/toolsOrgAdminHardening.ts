@@ -29,40 +29,19 @@ export const ToolFamilyValues = [
 ] as const;
 export type ToolFamily = (typeof ToolFamilyValues)[number];
 
-export const CatalogVisibilityValues = [
-  'published',
-  'draft',
-  'internal_only',
-] as const;
+export const CatalogVisibilityValues = ['published', 'draft', 'internal_only'] as const;
 export type CatalogVisibility = (typeof CatalogVisibilityValues)[number];
 
-export const SessionModeValues = [
-  'guided',
-  'expert',
-  'ai_assisted',
-] as const;
+export const SessionModeValues = ['guided', 'expert', 'ai_assisted'] as const;
 export type SessionMode = (typeof SessionModeValues)[number];
 
-export const GateDecisionValues = [
-  'execute',
-  'propose',
-  'requires_approval',
-  'blocked',
-] as const;
+export const GateDecisionValues = ['execute', 'propose', 'requires_approval', 'blocked'] as const;
 export type GateDecision = (typeof GateDecisionValues)[number];
 
-export const OwnerLayerValues = [
-  'organization_settings',
-  'superadmin',
-  'module_embedded',
-] as const;
+export const OwnerLayerValues = ['organization_settings', 'superadmin', 'module_embedded'] as const;
 export type OwnerLayer = (typeof OwnerLayerValues)[number];
 
-export const BridgingStatusValues = [
-  'draft',
-  'active',
-  'superseded',
-] as const;
+export const BridgingStatusValues = ['draft', 'active', 'superseded'] as const;
 export type BridgingStatus = (typeof BridgingStatusValues)[number];
 
 // ==========================================

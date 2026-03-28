@@ -435,7 +435,15 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     } finally {
       setExporting(null);
     }
-  }, [downloadText, graphEdges.length, graphNodes.length, ideaId, safeFilename, title, whiteboardPolicy]);
+  }, [
+    downloadText,
+    graphEdges.length,
+    graphNodes.length,
+    ideaId,
+    safeFilename,
+    title,
+    whiteboardPolicy,
+  ]);
 
   const handleImport = useCallback(() => {
     if (!importPayload.trim() || !onImportGraph) return;
@@ -586,7 +594,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                 <button
                   key={format.id}
                   onClick={() => handleExport(format.id)}
-                disabled={!!exporting || !canExportFormat(format.id)}
+                  disabled={!!exporting || !canExportFormat(format.id)}
                   className="group w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-primary-400/40 hover:bg-primary-500/[0.02] transition-all disabled:opacity-50"
                 >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/10 to-violet-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">

@@ -98,14 +98,14 @@ export async function executeInference(organizationId: string, runId: string): P
       [...sessionIds, organizationId]
     );
 
-    const primaryEvidence = (answeredQuestions || []).filter((q: any) => (q.confidence_score || 0) >= 3);
-    const gaps = (answeredQuestions || []).filter(
-      (q: any) => q.status === 'needs_follow_up'
+    const primaryEvidence = (answeredQuestions || []).filter(
+      (q: any) => (q.confidence_score || 0) >= 3
     );
+    const gaps = (answeredQuestions || []).filter((q: any) => q.status === 'needs_follow_up');
 
-    const orgContext = await organizationContextService.buildResolvedContext(organizationId).catch(
-      () => null
-    );
+    const orgContext = await organizationContextService
+      .buildResolvedContext(organizationId)
+      .catch(() => null);
 
     const systemPrompt = `You are a senior management consultant performing structured analysis of interview data.
 Your task is to generate categorized insights from interview responses.

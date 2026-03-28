@@ -27,7 +27,12 @@ interface OperatorDef {
 
 const TEXT_OPERATORS: OperatorDef[] = [
   { value: 'contains', labelEn: 'Contains', labelPl: 'Zawiera', needsValue: true },
-  { value: 'doesNotContain', labelEn: 'Does not contain', labelPl: 'Nie zawiera', needsValue: true },
+  {
+    value: 'doesNotContain',
+    labelEn: 'Does not contain',
+    labelPl: 'Nie zawiera',
+    needsValue: true,
+  },
   { value: 'equals', labelEn: 'Equals', labelPl: 'Równa się', needsValue: true },
   { value: 'notEquals', labelEn: 'Not equals', labelPl: 'Nie równa się', needsValue: true },
   { value: 'startsWith', labelEn: 'Starts with', labelPl: 'Zaczyna się od', needsValue: true },
@@ -58,7 +63,12 @@ const SINGLE_SELECT_OPERATORS: OperatorDef[] = [
 
 const MULTI_SELECT_OPERATORS: OperatorDef[] = [
   { value: 'contains', labelEn: 'Contains', labelPl: 'Zawiera', needsValue: true },
-  { value: 'doesNotContain', labelEn: 'Does not contain', labelPl: 'Nie zawiera', needsValue: true },
+  {
+    value: 'doesNotContain',
+    labelEn: 'Does not contain',
+    labelPl: 'Nie zawiera',
+    needsValue: true,
+  },
   { value: 'isAnyOf', labelEn: 'Is any of', labelPl: 'Jest jednym z', needsValue: true },
   { value: 'isEmpty', labelEn: 'Is empty', labelPl: 'Puste', needsValue: false },
   { value: 'isNotEmpty', labelEn: 'Is not empty', labelPl: 'Niepuste', needsValue: false },
@@ -68,7 +78,12 @@ const DATE_OPERATORS: OperatorDef[] = [
   { value: 'is', labelEn: 'Is', labelPl: 'Jest', needsValue: true },
   { value: 'isBefore', labelEn: 'Is before', labelPl: 'Przed', needsValue: true },
   { value: 'isAfter', labelEn: 'Is after', labelPl: 'Po', needsValue: true },
-  { value: 'isOnOrBefore', labelEn: 'Is on or before', labelPl: 'W dniu lub przed', needsValue: true },
+  {
+    value: 'isOnOrBefore',
+    labelEn: 'Is on or before',
+    labelPl: 'W dniu lub przed',
+    needsValue: true,
+  },
   { value: 'isOnOrAfter', labelEn: 'Is on or after', labelPl: 'W dniu lub po', needsValue: true },
   { value: 'isWithin', labelEn: 'Is within', labelPl: 'W zakresie', needsValue: true },
   { value: 'isEmpty', labelEn: 'Is empty', labelPl: 'Puste', needsValue: false },
@@ -81,7 +96,12 @@ const CHECKBOX_OPERATORS: OperatorDef[] = [
 
 const LINKED_RECORD_OPERATORS: OperatorDef[] = [
   { value: 'contains', labelEn: 'Contains', labelPl: 'Zawiera', needsValue: true },
-  { value: 'doesNotContain', labelEn: 'Does not contain', labelPl: 'Nie zawiera', needsValue: true },
+  {
+    value: 'doesNotContain',
+    labelEn: 'Does not contain',
+    labelPl: 'Nie zawiera',
+    needsValue: true,
+  },
   { value: 'isEmpty', labelEn: 'Is empty', labelPl: 'Puste', needsValue: false },
   { value: 'isNotEmpty', labelEn: 'Is not empty', labelPl: 'Niepuste', needsValue: false },
 ];
@@ -213,19 +233,20 @@ const CheckboxValueInput: React.FC<ValueInputProps> = ({ value, onChange, isPl }
   </select>
 );
 
-const SelectValueInput: React.FC<ValueInputProps> = ({ field, operator, value, onChange, isPl }) => {
+const SelectValueInput: React.FC<ValueInputProps> = ({
+  field,
+  operator,
+  value,
+  onChange,
+  isPl,
+}) => {
   const options = getSelectOptions(field);
   const isMulti = isMultiValueOperator(operator);
 
   if (isMulti) {
     const selected: string[] = Array.isArray(value) ? value : value ? [String(value)] : [];
     return (
-      <MultiSelectDropdown
-        options={options}
-        selected={selected}
-        onChange={onChange}
-        isPl={isPl}
-      />
+      <MultiSelectDropdown options={options} selected={selected} onChange={onChange} isPl={isPl} />
     );
   }
 
@@ -273,9 +294,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   }, [open]);
 
   const toggle = (val: string) => {
-    const next = selected.includes(val)
-      ? selected.filter((s) => s !== val)
-      : [...selected, val];
+    const next = selected.includes(val) ? selected.filter((s) => s !== val) : [...selected, val];
     onChange(next);
   };
 
@@ -287,11 +306,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         className={`${inputCls} text-left flex items-center justify-between gap-1`}
       >
         <span className="truncate">
-          {selected.length > 0
-            ? selected.join(', ')
-            : isPl
-              ? 'Wybierz…'
-              : 'Select…'}
+          {selected.length > 0 ? selected.join(', ') : isPl ? 'Wybierz…' : 'Select…'}
         </span>
         <ChevronDown size={10} className="text-slate-400 flex-shrink-0" />
       </button>
@@ -353,14 +368,14 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
-  const fieldMap = useMemo(
-    () => new Map(fields.map((f) => [f.id, f])),
-    [fields],
-  );
+  const fieldMap = useMemo(() => new Map(fields.map((f) => [f.id, f])), [fields]);
 
   const filterableFields = useMemo(
-    () => fields.filter((f) => !f.isComputed || f.fieldType === 'singleSelect' || f.fieldType === 'multiSelect'),
-    [fields],
+    () =>
+      fields.filter(
+        (f) => !f.isComputed || f.fieldType === 'singleSelect' || f.fieldType === 'multiSelect'
+      ),
+    [fields]
   );
 
   const addRule = useCallback(() => {
@@ -380,14 +395,14 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       const newRules = filters.rules.map((r, i) => (i === idx ? { ...r, ...updates } : r));
       onChange({ ...filters, rules: newRules });
     },
-    [filters, onChange],
+    [filters, onChange]
   );
 
   const removeRule = useCallback(
     (idx: number) => {
       onChange({ ...filters, rules: filters.rules.filter((_, i) => i !== idx) });
     },
-    [filters, onChange],
+    [filters, onChange]
   );
 
   const toggleLogic = useCallback(() => {
@@ -405,7 +420,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       const ops = getOperatorsForFieldType(field.fieldType);
       updateRule(idx, { fieldId, operator: ops[0]?.value ?? 'contains', value: undefined });
     },
-    [fieldMap, updateRule],
+    [fieldMap, updateRule]
   );
 
   const handleOperatorChange = useCallback(
@@ -418,7 +433,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       }
       updateRule(idx, updates);
     },
-    [updateRule],
+    [updateRule]
   );
 
   if (!open) return null;

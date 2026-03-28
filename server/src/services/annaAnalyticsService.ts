@@ -97,7 +97,8 @@ export async function getPublicAnnaFunnelSummary(days = 30): Promise<{
     const eventType = String(row.event_type || '');
     byEvent[eventType] = (byEvent[eventType] || 0) + 1;
 
-    const locale = typeof metadata.locale === 'string' && metadata.locale.trim() ? metadata.locale.trim() : null;
+    const locale =
+      typeof metadata.locale === 'string' && metadata.locale.trim() ? metadata.locale.trim() : null;
     if (locale) {
       localeDistribution[locale] = (localeDistribution[locale] || 0) + 1;
     }

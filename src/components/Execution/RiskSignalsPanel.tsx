@@ -23,6 +23,7 @@ import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
 } from '@/services/api/v8/execution-control';
+
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 export interface RiskSignal {

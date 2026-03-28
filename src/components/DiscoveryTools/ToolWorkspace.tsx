@@ -247,7 +247,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           gaps.push(`Missing ${q}`);
         }
       });
-      if (!data.tensions?.length && !data.correlations?.length) gaps.push('Missing strategic tensions');
+      if (!data.tensions?.length && !data.correlations?.length)
+        gaps.push('Missing strategic tensions');
       if (!data.recommendedMoves?.length) gaps.push('Missing recommended moves');
     }
     if (toolType === 'market-forces') {
@@ -584,8 +585,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             }))}
             onGenerateFullSession={generateFullSession}
             sessionGenerationStatus={currentSession.sessionGenerationStatus}
-            onAcceptCard={(cardType: ProposalCardType, cardId: string) => acceptCard(cardType, cardId)}
-            onRejectCard={(cardType: ProposalCardType, cardId: string) => rejectCard(cardType, cardId)}
+            onAcceptCard={(cardType: ProposalCardType, cardId: string) =>
+              acceptCard(cardType, cardId)
+            }
+            onRejectCard={(cardType: ProposalCardType, cardId: string) =>
+              rejectCard(cardType, cardId)
+            }
             onRethinkCard={(cardType: ProposalCardType, cardId: string, comment?: string) => {
               const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
               rethinkCard(phaseId, cardType, cardId, comment);

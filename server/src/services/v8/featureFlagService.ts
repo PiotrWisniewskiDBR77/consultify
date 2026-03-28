@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { featureFlags } from '../../config/FeatureFlags.js';
-import { get as dbGet, all as dbAll, run as dbRun, tableExists } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun, tableExists } from '../../utils/DbPromise.js';
 import Logger from '../../utils/Logger.js';
 
 const LOG_PREFIX = '[v8:featureFlags]';
@@ -122,7 +122,7 @@ export async function getV8Flags(organizationId: string): Promise<Record<string,
 
   const rows = await dbAll<{ module: string; enabled: number }>(
     `SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,
-    [orgId],
+    [orgId]
   );
 
   const flags: Record<string, boolean> = {};
@@ -138,14 +138,16 @@ export async function setV8OrgFlag(
   organizationId: string,
   module: string,
   enabled: boolean,
-  updatedBy?: string,
+  updatedBy?: string
 ): Promise<void> {
   const orgId = OrgIdSchema.parse(organizationId);
   ModuleSchema.parse(module);
 
   const hasTable = await flagTableExists();
   if (!hasTable) {
-    throw new Error(`${LOG_PREFIX} v8_feature_flags table does not exist. Run V8 migrations first.`);
+    throw new Error(
+      `${LOG_PREFIX} v8_feature_flags table does not exist. Run V8 migrations first.`
+    );
   }
 
   const now = new Date().toISOString();
@@ -156,7 +158,7 @@ export async function setV8OrgFlag(
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (organization_id, module)
      DO UPDATE SET enabled = $4, updated_at = $5, updated_by = $6`,
-    [flagId, orgId, module, enabled ? 1 : 0, now, updatedBy || null],
+    [flagId, orgId, module, enabled ? 1 : 0, now, updatedBy || null]
   );
 
   clearFlagCache(orgId);
@@ -175,7 +177,7 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
 
   const row = await dbGet<{ enabled: number }>(
     `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
-    [orgId],
+    [orgId]
   );
 
   // No row = default to enabled (global flag is on). Row with enabled=0 = opt-out.
@@ -193,7 +195,9 @@ export async function getAllOrgFlags(): Promise<
     module: string;
     enabled: number;
     updated_at: string;
-  }>(`SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`);
+  }>(
+    `SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`
+  );
 
   return rows.map((r) => ({
     organizationId: r.organization_id,

@@ -6,27 +6,24 @@
 
 import type { NextFunction, Response } from 'express';
 
-import auditEventsService from '../services/AuditEventsService.js';
 import type { AuditEventInput } from '../services/AuditEventsService.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import type { AuthRequest } from './auth.middleware.js';
 
-declare global {
-  namespace Express {
-    interface Request {
-      emitAuditEvent?: (
-        input: Omit<AuditEventInput, 'actorId' | 'organizationId' | 'ip' | 'userAgent' | 'actorType'> & {
-          actorType?: AuditEventInput['actorType'];
-        }
-      ) => Promise<string>;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    emitAuditEvent?: (
+      input: Omit<
+        AuditEventInput,
+        'actorId' | 'organizationId' | 'ip' | 'userAgent' | 'actorType'
+      > & {
+        actorType?: AuditEventInput['actorType'];
+      }
+    ) => Promise<string>;
   }
 }
 
-export function requireAudit(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): void {
+export function requireAudit(req: AuthRequest, res: Response, next: NextFunction): void {
   req.emitAuditEvent = async (input) => {
     return auditEventsService.log({
       ...input,

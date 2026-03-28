@@ -12,11 +12,31 @@ interface FloatingAIPopoverProps {
 }
 
 const AI_ACTIONS = [
-  { action: 'mm_ai_expand_node', iconEl: Zap, labelPl: 'Rozwiń ten węzeł', labelEn: 'Expand this node' },
+  {
+    action: 'mm_ai_expand_node',
+    iconEl: Zap,
+    labelPl: 'Rozwiń ten węzeł',
+    labelEn: 'Expand this node',
+  },
   { action: 'mm_ai_deepen', iconEl: Wand2, labelPl: 'Pogłęb temat', labelEn: 'Deepen topic' },
-  { action: 'mm_ai_summarize_branch', iconEl: Brain, labelPl: 'Podsumuj gałąź', labelEn: 'Summarize branch' },
-  { action: 'mm_ai_what_if', iconEl: Lightbulb, labelPl: 'What-if analiza', labelEn: 'What-if analysis' },
-  { action: 'ai_suggest_links', iconEl: Link2, labelPl: 'Zasugeruj powiązania', labelEn: 'Suggest links' },
+  {
+    action: 'mm_ai_summarize_branch',
+    iconEl: Brain,
+    labelPl: 'Podsumuj gałąź',
+    labelEn: 'Summarize branch',
+  },
+  {
+    action: 'mm_ai_what_if',
+    iconEl: Lightbulb,
+    labelPl: 'What-if analiza',
+    labelEn: 'What-if analysis',
+  },
+  {
+    action: 'ai_suggest_links',
+    iconEl: Link2,
+    labelPl: 'Zasugeruj powiązania',
+    labelEn: 'Suggest links',
+  },
 ];
 
 export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
@@ -53,7 +73,10 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
         </div>
       )}
       <button
-        onClick={() => { onOpenChatAboutNode(); onClose(); }}
+        onClick={() => {
+          onOpenChatAboutNode();
+          onClose();
+        }}
         className="w-full flex items-center gap-2 px-2 py-2 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
       >
         <MessageCircle size={12} className="shrink-0" />

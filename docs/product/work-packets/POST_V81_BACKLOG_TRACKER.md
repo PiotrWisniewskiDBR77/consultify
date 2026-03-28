@@ -15,6 +15,15 @@ Use it together with the parent program:
 - the program explains tranche order, rules, and acceptance,
 - this tracker is where we move statuses and tick completion evidence.
 
+Helpful supporting docs for the current endgame:
+
+- `docs/product/work-packets/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
+- `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
+- `docs/product/work-packets/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
+- `docs/product/work-packets/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
+- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
+
 Status vocabulary:
 
 - `parked` = visible but not active
@@ -1377,14 +1386,14 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: landed the seventh bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, so upload-origin notebook pages now retain the original source file as a governed authenticated attachment instead of collapsing continuity to filename-only provenance
+- 2026-03-28: recorded `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md`, concluding that one more tiny upload-origin note affordance is no longer the honest next step and the lane should now move to wider notebook attachment management or broader output propagation
 - 2026-03-28: landed the sixth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, so the notebook linked outputs surface now resolves direct assessment outputs created from the same note instead of ignoring them while only reading direct reports/presentations
 - 2026-03-28: recorded `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, concluding again that one more tiny notebook direct-readback patch is no longer the honest next step and the lane should now move to notebook attachment breadth or wider output propagation
 - 2026-03-28: landed the fifth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, so uploaded notebook pages now retain visible source-file provenance on live notebook surfaces instead of losing it after extraction
 - 2026-03-28: landed the fourth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, so notebook rows now summarize multiple persisted converted outputs instead of flattening notebook output truth to the first converted target only
 - 2026-03-28: landed the third bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, so notebook outputs created from the row-level notebook output menu now persist back onto the source note instead of disappearing from notebook readback after refresh
 - 2026-03-28: landed the second bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, so the active notebook context panel now reads back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs
-- 2026-03-28: landed the seventh bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, so upload-origin notebook pages now retain the original source file as a governed authenticated attachment instead of collapsing continuity to filename-only provenance
-- 2026-03-28: recorded `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md`, concluding that one more tiny upload-origin note affordance is no longer the honest next step and the lane should now move to wider notebook attachment management or broader output propagation
 - 2026-03-28: recorded `evidence/504-v81-broader-notes-post-direct-output-readback-residual-assessment.md`, concluding that one more tiny notebook linked-output readback patch is no longer the honest next step and the lane should move to a wider remaining notes/output residual
 - 2026-03-28: landed the first bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, moving notebook capture upload initiation onto a governed V8-first seam while keeping legacy fallback only for unsupported statuses
 - 2026-03-28: accepted broader `Multiplayer / collaboration` breadth as bounded `T4` done in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`, because the lane now closes the honest active collaboration visibility and reconnect continuity residual without leaving another smaller real packet behind

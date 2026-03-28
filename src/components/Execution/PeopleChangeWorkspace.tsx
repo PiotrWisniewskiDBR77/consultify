@@ -208,15 +208,18 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   const fetchComm = useCallback(async () => {
     setCommLoading(true);
     try {
-      const [nextSegments, nextPlans, nextSteercoPacks, nextOverduePlans, nextSendLog] = await Promise.all([
-        Api.getStakeholderSegments(initiativeId),
-        Api.getStakeholderPlans(initiativeId),
-        Api.getSteercoPacks({ initiativeId }),
-        Api.getStakeholderOverduePlans(),
-        Api.getStakeholderSendLog({ initiativeId, limit: 20 }),
-      ]);
+      const [nextSegments, nextPlans, nextSteercoPacks, nextOverduePlans, nextSendLog] =
+        await Promise.all([
+          Api.getStakeholderSegments(initiativeId),
+          Api.getStakeholderPlans(initiativeId),
+          Api.getSteercoPacks({ initiativeId }),
+          Api.getStakeholderOverduePlans(),
+          Api.getStakeholderSendLog({ initiativeId, limit: 20 }),
+        ]);
       const planItemsEntries = await Promise.all(
-        (nextPlans ?? []).map(async (plan) => [plan.id, await Api.getStakeholderPlanItems(plan.id)] as const)
+        (nextPlans ?? []).map(
+          async (plan) => [plan.id, await Api.getStakeholderPlanItems(plan.id)] as const
+        )
       );
       setSegments(nextSegments ?? []);
       setPlans(nextPlans ?? []);
@@ -703,7 +706,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
         ) : (
           <div className="space-y-2">
             {plans.map((p) => {
-              const nextPendingItem = (planItemsByPlanId[p.id] ?? []).find((item) => item.status !== 'sent');
+              const nextPendingItem = (planItemsByPlanId[p.id] ?? []).find(
+                (item) => item.status !== 'sent'
+              );
               return (
                 <div
                   key={p.id}
@@ -733,7 +738,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                           {nextPendingItem.subject ?? t('stakeholder.nextSend', 'Ready to send')}
                         </div>
                         <div className="mt-0.5 text-slate-500 dark:text-slate-400">
-                          {(nextPendingItem.channel ?? 'email')} ·{' '}
+                          {nextPendingItem.channel ?? 'email'} ·{' '}
                           {getRecipientCountForPlanItem(nextPendingItem)}{' '}
                           {t('stakeholder.recipients', 'recipients')}
                         </div>

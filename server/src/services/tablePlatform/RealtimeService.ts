@@ -33,8 +33,16 @@ export class TablePlatformRealtimeService {
   private userColors = new Map<string, string>();
 
   private static COLORS = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+    '#3b82f6',
+    '#ef4444',
+    '#10b981',
+    '#f59e0b',
+    '#8b5cf6',
+    '#ec4899',
+    '#06b6d4',
+    '#84cc16',
+    '#f97316',
+    '#6366f1',
   ];
 
   init(io: SocketIOServer): void {
@@ -71,8 +79,16 @@ export class TablePlatformRealtimeService {
       });
 
       socket.on('focus:cell', (data: { tableId: string; recordId: string; fieldId: string }) => {
-        this.updatePresence(userId, userName ?? 'Anonymous', data.tableId, data.recordId, data.fieldId);
-        socket.to(`table:${data.tableId}`).emit('presence:update', this.getTablePresence(data.tableId));
+        this.updatePresence(
+          userId,
+          userName ?? 'Anonymous',
+          data.tableId,
+          data.recordId,
+          data.fieldId
+        );
+        socket
+          .to(`table:${data.tableId}`)
+          .emit('presence:update', this.getTablePresence(data.tableId));
       });
 
       socket.on('cell:update', (data: CellUpdate) => {
@@ -100,37 +116,65 @@ export class TablePlatformRealtimeService {
 
   notifyRecordCreated(tableId: string, record: unknown): void {
     try {
-      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:created', record);
+      (this.io?.of('/table-platform') as any)
+        ?.to(`table:${tableId}`)
+        .emit('record:created', record);
     } catch (err) {
-      logger.warn('[TablePlatformRealtime] notifyRecordCreated failed', { tableId, error: (err as Error).message });
+      logger.warn('[TablePlatformRealtime] notifyRecordCreated failed', {
+        tableId,
+        error: (err as Error).message,
+      });
     }
   }
 
   notifyRecordUpdated(tableId: string, recordId: string, data: unknown): void {
     try {
-      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:updated', { recordId, data });
+      (this.io?.of('/table-platform') as any)
+        ?.to(`table:${tableId}`)
+        .emit('record:updated', { recordId, data });
     } catch (err) {
-      logger.warn('[TablePlatformRealtime] notifyRecordUpdated failed', { tableId, recordId, error: (err as Error).message });
+      logger.warn('[TablePlatformRealtime] notifyRecordUpdated failed', {
+        tableId,
+        recordId,
+        error: (err as Error).message,
+      });
     }
   }
 
   notifyRecordDeleted(tableId: string, recordId: string): void {
     try {
-      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:deleted', { recordId });
+      (this.io?.of('/table-platform') as any)
+        ?.to(`table:${tableId}`)
+        .emit('record:deleted', { recordId });
     } catch (err) {
-      logger.warn('[TablePlatformRealtime] notifyRecordDeleted failed', { tableId, recordId, error: (err as Error).message });
+      logger.warn('[TablePlatformRealtime] notifyRecordDeleted failed', {
+        tableId,
+        recordId,
+        error: (err as Error).message,
+      });
     }
   }
 
   notifySchemaChanged(tableId: string, change: unknown): void {
     try {
-      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('schema:changed', change);
+      (this.io?.of('/table-platform') as any)
+        ?.to(`table:${tableId}`)
+        .emit('schema:changed', change);
     } catch (err) {
-      logger.warn('[TablePlatformRealtime] notifySchemaChanged failed', { tableId, error: (err as Error).message });
+      logger.warn('[TablePlatformRealtime] notifySchemaChanged failed', {
+        tableId,
+        error: (err as Error).message,
+      });
     }
   }
 
-  private updatePresence(userId: string, userName: string, tableId: string, recordId?: string, fieldId?: string): void {
+  private updatePresence(
+    userId: string,
+    userName: string,
+    tableId: string,
+    recordId?: string,
+    fieldId?: string
+  ): void {
     const key = `${userId}:${tableId}`;
     this.presence.set(key, {
       userId,
@@ -158,9 +202,13 @@ export class TablePlatformRealtimeService {
   private broadcastPresence(tableId: string): void {
     try {
       const ns = this.io?.of('/table-platform');
-      if (ns) (ns as any).to(`table:${tableId}`).emit('presence:update', this.getTablePresence(tableId));
+      if (ns)
+        (ns as any).to(`table:${tableId}`).emit('presence:update', this.getTablePresence(tableId));
     } catch (err) {
-      logger.warn('[TablePlatformRealtime] broadcastPresence failed', { tableId, error: (err as Error).message });
+      logger.warn('[TablePlatformRealtime] broadcastPresence failed', {
+        tableId,
+        error: (err as Error).message,
+      });
     }
   }
 }

@@ -1,7 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { getCanonicalStatementTypes, getCanonicalStatementTypeOrder } from './financeCanonicalRegistry.js';
+import {
+  getCanonicalStatementTypeOrder,
+  getCanonicalStatementTypes,
+} from './financeCanonicalRegistry.js';
 
 export type StatementPackReadinessStatus = 'pending' | 'recoverable' | 'ready' | 'rejected';
 
@@ -59,7 +62,9 @@ function normalizeStatementType(value: unknown): string {
 }
 
 function packPeriodLabel(statements: PackStatementRow[]): string {
-  return normalizeText(statements[0]?.period_label) || normalizeText(statements[0]?.period_end) || '';
+  return (
+    normalizeText(statements[0]?.period_label) || normalizeText(statements[0]?.period_end) || ''
+  );
 }
 
 function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
@@ -135,7 +140,9 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
   }
 
   const scoreBase =
-    scores.length > 0 ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length) : 0;
+    scores.length > 0
+      ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
+      : 0;
   const completenessBonus = Math.round((statementTypesPresent.length / requiredTypes.length) * 25);
   const penalty =
     missingStatementTypes.length * 15 +
@@ -154,7 +161,9 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
       ? allConfirmed
         ? 'confirmed'
         : 'ready'
-      : reasonCodes.some((code) => code.startsWith('INCONSISTENT_') || code === 'DUPLICATE_STATEMENT_TYPE')
+      : reasonCodes.some(
+            (code) => code.startsWith('INCONSISTENT_') || code === 'DUPLICATE_STATEMENT_TYPE'
+          )
         ? 'needs_review'
         : normalized.length >= requiredTypes.length
           ? 'needs_review'
@@ -162,9 +171,11 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
 
   let packQualitySummary = 'Statement pack is still collecting required statements.';
   if (packReadinessStatus === 'ready') {
-    packQualitySummary = 'Statement pack contains a complete ready set of P&L, Balance Sheet, and Cash Flow.';
+    packQualitySummary =
+      'Statement pack contains a complete ready set of P&L, Balance Sheet, and Cash Flow.';
   } else if (packReadinessStatus === 'rejected') {
-    packQualitySummary = 'All statements in this pack are rejected and the pack cannot seed downstream work.';
+    packQualitySummary =
+      'All statements in this pack are rejected and the pack cannot seed downstream work.';
   } else if (reasonCodes.length > 0) {
     packQualitySummary = `Statement pack needs attention: ${reasonCodes.join(', ')}.`;
   }

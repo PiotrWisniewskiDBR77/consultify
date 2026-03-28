@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../database/Database.js', () => ({
   getDatabase: () => ({ query: vi.fn() }),
@@ -16,11 +16,7 @@ import {
 } from '../ViewQueryEngine.js';
 
 describe('ViewQueryEngine — buildFilterClause', () => {
-  function run(
-    filters: FilterGroup,
-    fieldTypes: Map<string, string>,
-    startIdx = 1
-  ) {
+  function run(filters: FilterGroup, fieldTypes: Map<string, string>, startIdx = 1) {
     const params: unknown[] = [];
     const result = buildFilterClause(filters, params, startIdx, fieldTypes);
     return { ...result, params };

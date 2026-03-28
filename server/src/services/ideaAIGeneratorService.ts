@@ -107,7 +107,9 @@ function getScopedGeneratorContext(
   );
   if (selectedIds.size === 0) return context;
 
-  const selectedNodes = context.existingNodes.filter((node: any) => selectedIds.has(String(node?.id)));
+  const selectedNodes = context.existingNodes.filter((node: any) =>
+    selectedIds.has(String(node?.id))
+  );
   if (selectedNodes.length === 0) return context;
 
   return {
@@ -708,10 +710,7 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
   return ctx;
 }
 
-async function verifyArtifactCandidate(
-  orgId: string,
-  artifact: any
-): Promise<any> {
+async function verifyArtifactCandidate(orgId: string, artifact: any): Promise<any> {
   const type = String(artifact?.type || '').toLowerCase();
   const rawId = String(artifact?.id || '').trim();
   if (!type || !rawId) {
@@ -957,21 +956,25 @@ Lanes: ${existingLaneLabels.join(', ') || 'none'}`,
     process_savings: isPl
       ? `Jesteś konsultantem automatyzacji procesów. Oceń każdy ważny krok procesu pod kątem potencjału automatyzacji i oszczędności. Zwróć recommendations[] z: nodeId, automationPotential, savingsEstimate, implementationEffort, rationale oraz summary z totalSavingsEstimate, topOpportunityNodeIds i notes. Odpowiedz TYLKO w JSON.${orgBlock}
 
-Elementy: ${ctx.existingNodes
-  .map(
-    (node: any, i: number) =>
-      `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
-  )
-  .join(', ') || 'brak'}
+Elementy: ${
+          ctx.existingNodes
+            .map(
+              (node: any, i: number) =>
+                `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
+            )
+            .join(', ') || 'brak'
+        }
 Lane'y: ${existingLaneLabels.join(', ') || 'brak'}`
       : `You are a process automation consultant. Assess each important process step for automation and savings potential. Return recommendations[] with: nodeId, automationPotential, savingsEstimate, implementationEffort, rationale plus a summary with totalSavingsEstimate, topOpportunityNodeIds, and notes. Respond ONLY in JSON.${orgBlock}
 
-Elements: ${ctx.existingNodes
-  .map(
-    (node: any, i: number) =>
-      `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
-  )
-  .join(', ') || 'none'}
+Elements: ${
+          ctx.existingNodes
+            .map(
+              (node: any, i: number) =>
+                `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
+            )
+            .join(', ') || 'none'
+        }
 Lanes: ${existingLaneLabels.join(', ') || 'none'}`,
 
     vsm_generator: isPl
@@ -1218,7 +1221,8 @@ function createGridPosition(index: number, startX = 80, startY = 80, columns = 3
 }
 
 function toWhiteboardColorIndex(color: unknown, fallback = 0): number {
-  if (typeof color === 'number' && Number.isFinite(color)) return Math.max(0, Math.round(color)) % 7;
+  if (typeof color === 'number' && Number.isFinite(color))
+    return Math.max(0, Math.round(color)) % 7;
   if (typeof color !== 'string' || !color.trim()) return fallback % 7;
   const normalized = color.trim().toLowerCase();
   const matchedIndex = WHITEBOARD_STICKY_PALETTE.findIndex(
@@ -1653,7 +1657,8 @@ export function formatIdeaGeneratorOutput(
     });
     const moveNodes = groups.flatMap((g: any, groupIndex: number) => {
       const frameId = g.id || `org-grp-${ts}-${groupIndex}`;
-      const framePosition = addNodes[groupIndex]?.position || createGridPosition(groupIndex, 80, 80, 2);
+      const framePosition =
+        addNodes[groupIndex]?.position || createGridPosition(groupIndex, 80, 80, 2);
       const nodeIds = Array.isArray(g.nodeIds) ? g.nodeIds : [];
       return nodeIds.map((nodeId: string, nodeIndex: number) => {
         const absolute = repositionMap.get(String(nodeId));
@@ -1885,7 +1890,9 @@ export function formatIdeaGeneratorOutput(
         {
           id: `prop-${ts}-process-brief`,
           type: 'view_patch',
-          rationale: isPl ? 'Structured brief procesu gotowy do review' : 'Structured process brief ready for review',
+          rationale: isPl
+            ? 'Structured brief procesu gotowy do review'
+            : 'Structured process brief ready for review',
           confidence: 0.82,
           citations: [
             { label: `${output?.currentGaps?.length || 0} gaps`, kind: 'note' },
@@ -1927,7 +1934,11 @@ export function formatIdeaGeneratorOutput(
             : `Savings analysis for ${recommendations.length} steps`,
           confidence: 0.8,
           citations: [
-            { label: output?.summary?.totalSavingsEstimate || (isPl ? 'Brak sumy' : 'No total estimate'), kind: 'note' },
+            {
+              label:
+                output?.summary?.totalSavingsEstimate || (isPl ? 'Brak sumy' : 'No total estimate'),
+              kind: 'note',
+            },
           ],
           maturity: 'real',
           patch: {
@@ -2297,9 +2308,7 @@ export function formatIdeaGeneratorOutput(
         {
           id: `prop-${ts}-wb-to-table`,
           type: 'view_patch',
-          rationale: isPl
-            ? `Tabela z ${rows.length} wierszami`
-            : `Table with ${rows.length} rows`,
+          rationale: isPl ? `Tabela z ${rows.length} wierszami` : `Table with ${rows.length} rows`,
           confidence: 0.8,
           maturity: 'real',
           generatorStatus: 'cross-tool',

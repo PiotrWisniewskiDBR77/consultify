@@ -24,9 +24,9 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
-import { isSuperAdminRole } from '@/utils/roleGuards';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { isSuperAdminRole } from '@/utils/roleGuards';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
@@ -337,7 +337,9 @@ const DocsSecurityView = React.lazy(() =>
 
 // Public Form Page (Table Platform)
 const PublicFormPage = React.lazy(() =>
-  import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({ default: m.PublicFormPage }))
+  import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({
+    default: m.PublicFormPage,
+  }))
 );
 
 // Public Mini Assessment (T015)
@@ -1374,7 +1376,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout
               breadcrumbs={
-                breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.outputs.breadcrumb.library', 'Library')]
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('rap.outputs.breadcrumb.library', 'Library'),
+                ]
               }
               noPadding
             >
@@ -1399,9 +1404,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/wizard"
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
-            >
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <PresentationWizard />
@@ -1413,9 +1416,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
-            >
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <DeckBuilder />

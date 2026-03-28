@@ -136,24 +136,29 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
   extractFinancialLines: (...args: unknown[]) => mockExtractFinancialLines(...args),
   getLatestStatementIngestRun: (...args: unknown[]) => mockGetLatestStatementIngestRun(...args),
-  loadPersistedStatementCandidateRows: (...args: unknown[]) => mockLoadPersistedStatementCandidateRows(...args),
+  loadPersistedStatementCandidateRows: (...args: unknown[]) =>
+    mockLoadPersistedStatementCandidateRows(...args),
   loadStatementSourceText: (...args: unknown[]) => mockLoadStatementSourceText(...args),
   locateStatementSections: (...args: unknown[]) => mockLocateStatementSections(...args),
   persistStatementCandidateRows: (...args: unknown[]) => mockPersistStatementCandidateRows(...args),
-  persistStatementExtractedSections: (...args: unknown[]) => mockPersistStatementExtractedSections(...args),
-  persistStatementMappingCandidates: (...args: unknown[]) => mockPersistStatementMappingCandidates(...args),
+  persistStatementExtractedSections: (...args: unknown[]) =>
+    mockPersistStatementExtractedSections(...args),
+  persistStatementMappingCandidates: (...args: unknown[]) =>
+    mockPersistStatementMappingCandidates(...args),
   persistStatementValidationLedger: (...args: unknown[]) =>
     mockPersistStatementValidationLedger(...args),
   recordStatementQualityRun: (...args: unknown[]) => mockRecordStatementQualityRun(...args),
   recordStatementSourceArtifact: (...args: unknown[]) => mockRecordStatementSourceArtifact(...args),
-  resolveStatementColumnSelection: (...args: unknown[]) => mockResolveStatementColumnSelection(...args),
-  resolveDuplicateSuggestedMappings: (...args: unknown[]) => mockResolveDuplicateSuggestedMappings(...args),
+  resolveStatementColumnSelection: (...args: unknown[]) =>
+    mockResolveStatementColumnSelection(...args),
+  resolveDuplicateSuggestedMappings: (...args: unknown[]) =>
+    mockResolveDuplicateSuggestedMappings(...args),
   saveStatementValues: (...args: unknown[]) => mockSaveStatementValues(...args),
-  snapshotCanonicalStatementVersion: (...args: unknown[]) => mockSnapshotCanonicalStatementVersion(...args),
+  snapshotCanonicalStatementVersion: (...args: unknown[]) =>
+    mockSnapshotCanonicalStatementVersion(...args),
   startStatementIngestRun: (...args: unknown[]) => mockStartStatementIngestRun(...args),
   updateStatementMetadata: (...args: unknown[]) => mockUpdateStatementMetadata(...args),
-  updateStatementReadinessState: (...args: unknown[]) =>
-    mockUpdateStatementReadinessState(...args),
+  updateStatementReadinessState: (...args: unknown[]) => mockUpdateStatementReadinessState(...args),
   updateStatementStatus: (...args: unknown[]) => mockUpdateStatementStatus(...args),
   updateStatementIngestRun: (...args: unknown[]) => mockUpdateStatementIngestRun(...args),
   validateStatement: (...args: unknown[]) => mockValidateStatement(...args),
@@ -173,7 +178,8 @@ vi.mock('../../../services/financeDiagnosticsService.js', () => ({
 vi.mock('../../../services/llmFinancialMappingService.js', () => ({
   applyLlmProposals: (...args: unknown[]) => mockApplyLlmProposals(...args),
   applySecondPassProposals: (...args: unknown[]) => mockApplySecondPassProposals(...args),
-  mapDuplicateConflictLinesWithLLM: (...args: unknown[]) => mockMapDuplicateConflictLinesWithLLM(...args),
+  mapDuplicateConflictLinesWithLLM: (...args: unknown[]) =>
+    mockMapDuplicateConflictLinesWithLLM(...args),
   mapUnmappedLinesWithLLM: (...args: unknown[]) => mockMapUnmappedLinesWithLLM(...args),
 }));
 
@@ -186,8 +192,10 @@ vi.mock('../../../services/financeMappingPolicy.js', () => ({
 
 vi.mock('../../../services/openAIFinancialExtractionService.js', () => ({
   analyzeAndExtractFullDocument: (...args: unknown[]) => mockAnalyzeAndExtractFullDocument(...args),
-  extractFinancialLinesWithAnthropic: (...args: unknown[]) => mockExtractFinancialLinesWithAnthropic(...args),
-  extractFinancialLinesWithOpenAI: (...args: unknown[]) => mockExtractFinancialLinesWithOpenAI(...args),
+  extractFinancialLinesWithAnthropic: (...args: unknown[]) =>
+    mockExtractFinancialLinesWithAnthropic(...args),
+  extractFinancialLinesWithOpenAI: (...args: unknown[]) =>
+    mockExtractFinancialLinesWithOpenAI(...args),
 }));
 
 vi.mock('../../../services/pdfParserService.js', () => ({
@@ -382,7 +390,9 @@ describe('V8 finance read-only routes', () => {
     mockPersistStatementCandidateRows.mockResolvedValue([
       { candidateRowId: 'candidate-1', sourceRow: 1 },
     ]);
-    mockPersistStatementExtractedSections.mockResolvedValue([{ sectionKey: 'primary', sectionId: 'section-1' }]);
+    mockPersistStatementExtractedSections.mockResolvedValue([
+      { sectionKey: 'primary', sectionId: 'section-1' },
+    ]);
     mockPersistStatementMappingCandidates.mockResolvedValue(undefined);
     mockRecordStatementQualityRun.mockResolvedValue(undefined);
     mockRecordStatementSourceArtifact.mockResolvedValue(undefined);
@@ -414,8 +424,16 @@ describe('V8 finance read-only routes', () => {
     mockValidateStatement.mockReturnValue({ status: 'warnings', messages: [] });
     mockApplyLlmProposals.mockReturnValue({ applied: 0, skipped: 0 });
     mockApplySecondPassProposals.mockReturnValue({ applied: 0, skipped: 0 });
-    mockMapDuplicateConflictLinesWithLLM.mockResolvedValue({ proposals: [], provider: 'openai', durationMs: 0 });
-    mockMapUnmappedLinesWithLLM.mockResolvedValue({ proposals: [], provider: 'openai', durationMs: 0 });
+    mockMapDuplicateConflictLinesWithLLM.mockResolvedValue({
+      proposals: [],
+      provider: 'openai',
+      durationMs: 0,
+    });
+    mockMapUnmappedLinesWithLLM.mockResolvedValue({
+      proposals: [],
+      provider: 'openai',
+      durationMs: 0,
+    });
     mockAssessCoverage.mockReturnValue({ coveragePct: 100, total: 1, suggested: 1 });
     mockClassifyMappingTier.mockReturnValue({ tier: 'mapped' });
     mockIsLikelySubtotalOrAggregate.mockReturnValue(false);
@@ -530,7 +548,7 @@ describe('V8 finance read-only routes', () => {
         name: 'Created model',
         startDate: '2026-01-01',
         currency: 'PLN',
-      }),
+      })
     );
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
   });
@@ -646,10 +664,7 @@ describe('V8 finance read-only routes', () => {
     mockComputeModel.mockResolvedValue({
       overallStatus: 'warning',
       periods: ['2026-01', '2026-02'],
-      validations: [
-        { status: 'pass' },
-        { status: 'warning' },
-      ],
+      validations: [{ status: 'pass' }, { status: 'warning' }],
     });
     mockPersistComputeResult.mockResolvedValue(undefined);
 
@@ -669,7 +684,7 @@ describe('V8 finance read-only routes', () => {
     expect(mockPersistComputeResult).toHaveBeenCalledWith(
       'model-1',
       expect.objectContaining({ overallStatus: 'warning' }),
-      'base',
+      'base'
     );
   });
 
@@ -700,9 +715,11 @@ describe('V8 finance read-only routes', () => {
     mockUpdateModel.mockResolvedValue(undefined);
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/finance/models/model-1').send({
-      assumptions: { initialCash: 1000 },
-    });
+    const res = await request(app)
+      .put('/api/v8/finance/models/model-1')
+      .send({
+        assumptions: { initialCash: 1000 },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
@@ -743,7 +760,7 @@ describe('V8 finance read-only routes', () => {
         periodStart: '2026-01-01',
         cfClassification: 'operating',
         createdBy: UID,
-      }),
+      })
     );
   });
 
@@ -759,7 +776,7 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data).toEqual({ success: true, deleted: 'event-1' });
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('FROM financial_model_events e'),
-      ['event-1', ORG],
+      ['event-1', ORG]
     );
     expect(mockDeleteEvent).toHaveBeenCalledWith('event-1');
   });
@@ -784,17 +801,17 @@ describe('V8 finance read-only routes', () => {
     expect(mockDbRun).toHaveBeenNthCalledWith(
       1,
       'DELETE FROM financial_model_outputs WHERE model_id = ?',
-      ['model-1'],
+      ['model-1']
     );
     expect(mockDbRun).toHaveBeenNthCalledWith(
       2,
       'DELETE FROM financial_model_validations WHERE model_id = ?',
-      ['model-1'],
+      ['model-1']
     );
     expect(mockDbRun).toHaveBeenNthCalledWith(
       3,
       'DELETE FROM financial_model_events WHERE model_id = ?',
-      ['model-1'],
+      ['model-1']
     );
     expect(mockDbRun).toHaveBeenNthCalledWith(4, 'DELETE FROM financial_models WHERE id = ?', [
       'model-1',
@@ -882,7 +899,9 @@ describe('V8 finance read-only routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app).get('/api/v8/finance/statements/statement-1/analytics').query({ level: 3 });
+    const res = await request(app)
+      .get('/api/v8/finance/statements/statement-1/analytics')
+      .query({ level: 3 });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
@@ -909,7 +928,9 @@ describe('V8 finance read-only routes', () => {
     ]);
 
     const app = createApp();
-    const res = await request(app).get('/api/v8/finance/statements').query({ readiness: 'recoverable' });
+    const res = await request(app)
+      .get('/api/v8/finance/statements')
+      .query({ readiness: 'recoverable' });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
@@ -1036,14 +1057,14 @@ describe('V8 finance read-only routes', () => {
     expect(mockDetectStatementType).toHaveBeenCalledWith('Revenue 100');
     expect(mockResolveStatementColumnSelection).toHaveBeenCalledWith(
       'Revenue 100',
-      expect.objectContaining({ statementType: 'P&L' }),
+      expect.objectContaining({ statementType: 'P&L' })
     );
     expect(mockUpdateStatementMetadata).toHaveBeenCalledWith(
       'statement-1',
       expect.objectContaining({
         statementType: 'P&L',
         currency: 'PLN',
-      }),
+      })
     );
     expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
     expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
@@ -1051,21 +1072,21 @@ describe('V8 finance read-only routes', () => {
         statementId: 'statement-1',
         artifactType: 'detection',
         stage: 'detect',
-      }),
+      })
     );
     expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
       expect.objectContaining({
         ingestRunId: 'ingest-run-1',
         currentStage: 'detect',
         runStatus: 'running',
-      }),
+      })
     );
     expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         organizationId: ORG,
         stage: 'detect',
-      }),
+      })
     );
   });
 
@@ -1099,13 +1120,13 @@ describe('V8 finance read-only routes', () => {
       expect.objectContaining({
         statementId: 'statement-1',
         ingestRunId: 'ingest-run-1',
-      }),
+      })
     );
     expect(mockPersistStatementCandidateRows).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         statementType: 'P&L',
-      }),
+      })
     );
     expect(mockUpdateStatementStatus).toHaveBeenCalledWith('statement-1', 'imported');
     expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
@@ -1113,14 +1134,14 @@ describe('V8 finance read-only routes', () => {
         statementId: 'statement-1',
         artifactType: 'extraction',
         stage: 'extract',
-      }),
+      })
     );
     expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         organizationId: ORG,
         stage: 'extract',
-      }),
+      })
     );
   });
 
@@ -1152,13 +1173,13 @@ describe('V8 finance read-only routes', () => {
     expect(mockAutoMapLines).toHaveBeenCalledWith(
       [{ originalLabel: 'Revenue', value: 100, confidence: 0.9, sourceRow: 1 }],
       'P&L',
-      { organizationId: ORG, templateFamily: 'standard' },
+      { organizationId: ORG, templateFamily: 'standard' }
     );
     expect(mockPersistStatementMappingCandidates).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         ingestRunId: 'ingest-run-1',
-      }),
+      })
     );
     expect(mockUpdateStatementStatus).toHaveBeenCalledWith('statement-1', 'mapped');
     expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
@@ -1166,14 +1187,14 @@ describe('V8 finance read-only routes', () => {
         statementId: 'statement-1',
         artifactType: 'mapping',
         stage: 'map',
-      }),
+      })
     );
     expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         organizationId: ORG,
         stage: 'map',
-      }),
+      })
     );
     expect(mockAssessCoverage).toHaveBeenCalled();
   });
@@ -1216,34 +1237,34 @@ describe('V8 finance read-only routes', () => {
     expect(mockConfirmStatement).toHaveBeenCalledWith(
       'statement-1',
       UID,
-      expect.objectContaining({ readinessStatus: 'ready' }),
+      expect.objectContaining({ readinessStatus: 'ready' })
     );
     expect(mockSnapshotCanonicalStatementVersion).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         versionKind: 'confirmed',
-      }),
+      })
     );
     expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
     expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         artifactType: 'confirmation',
-      }),
+      })
     );
     expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
       expect.objectContaining({
         ingestRunId: 'ingest-run-1',
         currentStage: 'confirm',
         runStatus: 'completed',
-      }),
+      })
     );
     expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
       expect.objectContaining({
         statementId: 'statement-1',
         organizationId: ORG,
         stage: 'confirm',
-      }),
+      })
     );
   });
 
@@ -1260,9 +1281,11 @@ describe('V8 finance read-only routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/finance/statements/statement-1/values').send({
-      values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
-    });
+    const res = await request(app)
+      .put('/api/v8/finance/statements/statement-1/values')
+      .send({
+        values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
@@ -1295,7 +1318,10 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.canonicalLines?.[0]?.line_name).toBe('Revenue');
-    expect(mockDbAll).toHaveBeenCalledWith(expect.stringContaining('FROM financial_statement_lines'), [ORG]);
+    expect(mockDbAll).toHaveBeenCalledWith(
+      expect.stringContaining('FROM financial_statement_lines'),
+      [ORG]
+    );
   });
 
   it('GET /api/v8/finance/valuations returns envelope and delegates to listValuations', async () => {
@@ -1363,7 +1389,7 @@ describe('V8 finance read-only routes', () => {
         analysisType: 'comprehensive',
         currency: 'PLN',
       }),
-      UID,
+      UID
     );
   });
 
@@ -1492,11 +1518,11 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data).toEqual({ success: true, deleted: 'analysis-1' });
     expect(mockDbRun).toHaveBeenCalledWith(
       'DELETE FROM financial_analysis_insights WHERE analysis_id = ?',
-      ['analysis-1'],
+      ['analysis-1']
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       'DELETE FROM financial_analysis_ratios WHERE analysis_id = ?',
-      ['analysis-1'],
+      ['analysis-1']
     );
     expect(mockDbRun).toHaveBeenCalledWith('DELETE FROM financial_analyses WHERE id = ?', [
       'analysis-1',

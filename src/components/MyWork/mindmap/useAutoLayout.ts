@@ -73,9 +73,10 @@ export function useAutoLayout() {
     layoutSubtree(rootId, 0, 0, adj, positions, visited);
 
     const orphans = nodes.filter((n) => !positions.has(n.id));
-    const maxY = positions.size > 0
-      ? Math.max(...Array.from(positions.values()).map((p) => p.y)) + V_GAP * 2
-      : 0;
+    const maxY =
+      positions.size > 0
+        ? Math.max(...Array.from(positions.values()).map((p) => p.y)) + V_GAP * 2
+        : 0;
 
     orphans.forEach((orphan, idx) => {
       const col = idx % 4;

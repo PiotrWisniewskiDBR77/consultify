@@ -20,23 +20,34 @@ export type HelpModuleId = string;
 export function getHelpMapping(viewId: string): ViewHelpMapping {
   const view = viewId.toUpperCase();
 
-  if (view === 'MES') return { moduleId: 'mes', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'WMS') return { moduleId: 'wms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'QMS') return { moduleId: 'qms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'CMMS') return { moduleId: 'cmms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'HSE') return { moduleId: 'hse', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'ESG') return { moduleId: 'esg', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'IOT') return { moduleId: 'iot', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
-  if (view === 'GEMBA') return { moduleId: 'gemba', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'MES')
+    return { moduleId: 'mes', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'WMS')
+    return { moduleId: 'wms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'QMS')
+    return { moduleId: 'qms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'CMMS')
+    return { moduleId: 'cmms', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'HSE')
+    return { moduleId: 'hse', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'ESG')
+    return { moduleId: 'esg', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'IOT')
+    return { moduleId: 'iot', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'GEMBA')
+    return { moduleId: 'gemba', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
   if (view === 'KPI') return { moduleId: 'kpi', stage: 'results', aiPromptKey: 'results' };
-  if (view === 'DATA_AI') return { moduleId: 'data_ai', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
+  if (view === 'DATA_AI')
+    return { moduleId: 'data_ai', stage: 'tools_assessments', aiPromptKey: 'tools_assessments' };
   if (view === 'MRP') return { moduleId: 'mrp', stage: 'execution', aiPromptKey: 'execution' };
   if (view === 'APS') return { moduleId: 'aps', stage: 'execution', aiPromptKey: 'execution' };
   if (view === 'DT') return { moduleId: 'dt', stage: 'results', aiPromptKey: 'results' };
   if (view === 'HRM') return { moduleId: 'hrm', stage: 'execution', aiPromptKey: 'execution' };
   if (view === 'LMS') return { moduleId: 'lms', stage: 'execution', aiPromptKey: 'execution' };
-  if (view === 'SKILLS') return { moduleId: 'skills', stage: 'execution', aiPromptKey: 'execution' };
-  if (view === 'BILLING') return { moduleId: 'billing', supportModule: 'finance', aiPromptKey: 'finance' };
+  if (view === 'SKILLS')
+    return { moduleId: 'skills', stage: 'execution', aiPromptKey: 'execution' };
+  if (view === 'BILLING')
+    return { moduleId: 'billing', supportModule: 'finance', aiPromptKey: 'finance' };
 
   switch (view) {
     case AppView.APP_INTRO:
@@ -138,14 +149,24 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
 
     case AppView.ECONOMICS:
     case AppView.FULL_STEP4_ROI:
-      return { moduleId: 'economics', supportModule: 'finance', stage: 'results', aiPromptKey: 'finance' };
+      return {
+        moduleId: 'economics',
+        supportModule: 'finance',
+        stage: 'results',
+        aiPromptKey: 'finance',
+      };
 
     case AppView.FULL_STEP6_REPORTS:
     case AppView.DRD_AUDIT_REPORT:
     case AppView.REPORTS_ENTRY:
     case AppView.REPORTS_MANAGEMENT:
     case AppView.PRESENTATIONS:
-      return { moduleId: 'reports', supportModule: 'presentations', stage: 'results', aiPromptKey: 'presentations' };
+      return {
+        moduleId: 'reports',
+        supportModule: 'presentations',
+        stage: 'results',
+        aiPromptKey: 'presentations',
+      };
 
     case AppView.MEETING:
       return { moduleId: 'knowledge', supportModule: 'ideas', aiPromptKey: 'ideas' };

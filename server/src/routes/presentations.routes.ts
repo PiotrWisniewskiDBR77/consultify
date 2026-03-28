@@ -71,19 +71,17 @@ function getDeckCards(row: any): any[] {
       : [];
 }
 
-async function syncArtifactRegistryForDeck(
-  params: {
-    deckId: string;
-    organizationId: string;
-    userId: string;
-    title: string;
-    slideCount?: number;
-    presentationMode?: string | null;
-    exportFormat?: string | null;
-    status?: string | null;
-    source?: unknown;
-  },
-): Promise<void> {
+async function syncArtifactRegistryForDeck(params: {
+  deckId: string;
+  organizationId: string;
+  userId: string;
+  title: string;
+  slideCount?: number;
+  presentationMode?: string | null;
+  exportFormat?: string | null;
+  status?: string | null;
+  source?: unknown;
+}): Promise<void> {
   await artifactRegistryService.registerArtifactOrigin({
     organizationId: params.organizationId,
     outputType: 'presentation',
@@ -121,7 +119,9 @@ function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
 }
 
 function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
-  const normalized = String(prompt || '').trim().toLowerCase();
+  const normalized = String(prompt || '')
+    .trim()
+    .toLowerCase();
   const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
   const appliedActions: string[] = [];
   const nowIso = new Date().toISOString();
@@ -186,7 +186,9 @@ function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
           block.content.items = block.content.items
             .slice(0, 4)
             .map((item: any) =>
-              typeof item === 'string' ? item.slice(0, 120) : String(item?.title || item).slice(0, 120)
+              typeof item === 'string'
+                ? item.slice(0, 120)
+                : String(item?.title || item).slice(0, 120)
             );
         }
       }
@@ -194,7 +196,11 @@ function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
     appliedActions.push(isPolish ? 'skrócono copy' : 'made copy concise');
   }
 
-  if (normalized.includes('note') || normalized.includes('speaker') || normalized.includes('notat')) {
+  if (
+    normalized.includes('note') ||
+    normalized.includes('speaker') ||
+    normalized.includes('notat')
+  ) {
     for (const card of cards) {
       const firstBlock = (card.blocks || []).find((block: any) => block?.content);
       const baseText = extractBlockText(firstBlock || {});
@@ -204,7 +210,11 @@ function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
     appliedActions.push(isPolish ? 'dodano speaker notes' : 'added speaker notes');
   }
 
-  if (normalized.includes('update data') || normalized.includes('refresh') || normalized.includes('odświe')) {
+  if (
+    normalized.includes('update data') ||
+    normalized.includes('refresh') ||
+    normalized.includes('odświe')
+  ) {
     for (const card of cards) {
       for (const block of card.blocks || []) {
         if (block?.is_refreshable) {
@@ -215,7 +225,11 @@ function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
     appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
   }
 
-  if (normalized.includes('visual') || normalized.includes('styl') || normalized.includes('design')) {
+  if (
+    normalized.includes('visual') ||
+    normalized.includes('styl') ||
+    normalized.includes('design')
+  ) {
     for (const card of cards.slice(0, 3)) {
       card.background = {
         type: 'gradient',
@@ -494,7 +508,14 @@ router.post(
       await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
          VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [deckId, orgId, title, theme || 'modern', slideCount, JSON.stringify({ source: source || 'idea_table' })]
+        [
+          deckId,
+          orgId,
+          title,
+          theme || 'modern',
+          slideCount,
+          JSON.stringify({ source: source || 'idea_table' }),
+        ]
       );
 
       if (Array.isArray(slides)) {
@@ -629,7 +650,10 @@ router.get(
       if (index > 0) doc.addPage();
       doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
       doc.moveDown(0.5);
-      doc.fontSize(10).fillColor('#666').text(`Slide ${index + 1}`);
+      doc
+        .fontSize(10)
+        .fillColor('#666')
+        .text(`Slide ${index + 1}`);
       doc.moveDown(1);
       const blocks = Array.isArray(card.blocks) ? card.blocks : [];
       if (blocks.length === 0) {
@@ -639,7 +663,10 @@ router.get(
       blocks.slice(0, 8).forEach((block: any) => {
         const text = extractBlockText(block);
         if (!text) return;
-        doc.fillColor('#111').fontSize(12).text(`• ${text.slice(0, 500)}`);
+        doc
+          .fillColor('#111')
+          .fontSize(12)
+          .text(`• ${text.slice(0, 500)}`);
         doc.moveDown(0.35);
       });
     });
@@ -912,7 +939,9 @@ router.post(
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
 
     const deck = parseDeckPayload(row);
-    const isPolish = String(req.headers['accept-language'] || '').toLowerCase().startsWith('pl');
+    const isPolish = String(req.headers['accept-language'] || '')
+      .toLowerCase()
+      .startsWith('pl');
     const result = applyAgentEdit(
       {
         ...deck,

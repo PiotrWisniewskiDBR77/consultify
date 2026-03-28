@@ -15,8 +15,7 @@ export function resetV8Metrics() {
 }
 
 export function getV8MetricsSnapshot() {
-  const avgLatency =
-    v8RequestCount > 0 ? Math.round(v8TotalLatencyMs / v8RequestCount) : 0;
+  const avgLatency = v8RequestCount > 0 ? Math.round(v8TotalLatencyMs / v8RequestCount) : 0;
   return {
     requests: v8RequestCount,
     errors: v8ErrorCount,

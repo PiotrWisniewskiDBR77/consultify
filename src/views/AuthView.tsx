@@ -48,6 +48,10 @@ interface AuthViewProps {
   onBack: () => void;
 }
 
+export function isQuickAccessEnabledHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('stage.');
+}
+
 export const AuthView: React.FC<AuthViewProps> = ({
   initialStep,
   targetMode,
@@ -61,6 +65,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
+  const quickAccessEnabled = isQuickAccessEnabledHost(window.location.hostname);
 
   // --- QUICK ACCESS BACKDOOR (Dev only) ---
   const [showQuickAccess, setShowQuickAccess] = useState(false);
@@ -69,6 +74,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   // Quick access login handler (dev/staging: 4-digit codes 7777/7776/7778)
   const handleQuickAccess = async (code: string) => {
+    if (!quickAccessEnabled) return;
     const quickAccessCodes: Record<string, { email: string; password: string } | { demo: true }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
       '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
@@ -99,10 +105,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   // Focus quick access input when shown
   React.useEffect(() => {
-    if (showQuickAccess && quickAccessRef.current) {
+    if (quickAccessEnabled && showQuickAccess && quickAccessRef.current) {
       quickAccessRef.current.focus();
     }
-  }, [showQuickAccess]);
+  }, [quickAccessEnabled, showQuickAccess]);
 
   // When targetMode === DEMO: show signup/login form (no anonymous demo)
   // User must sign up or log in to try demo — we track duration and contact for follow-up
@@ -766,8 +772,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="flex flex-col items-center mb-6">
           <div
             className="cursor-pointer select-none"
-            onClick={() => setShowQuickAccess(!showQuickAccess)}
-            title="DBR77"
+            onClick={() => {
+              if (quickAccessEnabled) {
+                setShowQuickAccess(!showQuickAccess);
+              }
+            }}
+            title={quickAccessEnabled ? 'DBR77' : undefined}
           >
             <img
               src="/assets/logos/logo-dark.svg?v=20260319"
@@ -782,7 +792,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
 
           {/* Quick Access Code Input (hidden by default) */}
-          {showQuickAccess && (
+          {quickAccessEnabled && showQuickAccess && (
             <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <input
                 ref={quickAccessRef}

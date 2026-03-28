@@ -57,7 +57,10 @@ const DEFAULT_TEAMS_SCOPES = ['offline_access', 'openid', 'profile', 'email', 'U
 const MICROSOFT_GRAPH_ME_ENDPOINT =
   'https://graph.microsoft.com/v1.0/me?$select=id,userPrincipalName,mail';
 
-function buildExternalAuthCallbackUrl(req: Pick<Request, 'protocol' | 'get'>, state: string): string {
+function buildExternalAuthCallbackUrl(
+  req: Pick<Request, 'protocol' | 'get'>,
+  state: string
+): string {
   const forwardedProto = req.get('x-forwarded-proto');
   const forwardedHost = req.get('x-forwarded-host');
   if (forwardedProto && forwardedHost) {
@@ -156,7 +159,7 @@ function parseGrantedScopes(rawScope: string | undefined, fallback: string[]): s
 
 export function getGovernedExternalAuthConfigFields(
   connectorId: string,
-  baseFields: string[],
+  baseFields: string[]
 ): string[] {
   if (normalizeConnectorId(connectorId) === 'jira') {
     return uniqueFields([...baseFields, 'client_id', 'client_secret']);
@@ -167,7 +170,7 @@ export function getGovernedExternalAuthConfigFields(
 
 export function buildGovernedExternalAuthSession(
   req: Pick<Request, 'protocol' | 'get'>,
-  context: GovernedExternalAuthContext,
+  context: GovernedExternalAuthContext
 ): GovernedExternalAuthSessionInfo {
   const session = issueSyncExternalAuthSession({
     integrationId: context.integrationId,
@@ -299,7 +302,9 @@ export async function materializeGovernedExternalAuthCallback(params: {
 }> {
   const normalizedConnectorId = normalizeConnectorId(params.session.connectorId);
   if (!shouldMaterializeCallbackDrivenAuth(normalizedConnectorId)) {
-    throw new Error(`Unsupported callback materialization connector: ${params.session.connectorId}`);
+    throw new Error(
+      `Unsupported callback materialization connector: ${params.session.connectorId}`
+    );
   }
 
   const callbackUrl = buildExternalAuthCallbackUrl(params.req, params.session.state);
@@ -329,8 +334,14 @@ export async function materializeGovernedExternalAuthCallback(params: {
       error_description?: string;
     };
 
-    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
-      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    if (
+      !response.ok ||
+      typeof payload.access_token !== 'string' ||
+      payload.access_token.length === 0
+    ) {
+      throw new Error(
+        payload.error_description || payload.error || 'Failed to exchange external auth code'
+      );
     }
 
     const tokenExpiresAt =
@@ -395,8 +406,14 @@ export async function materializeGovernedExternalAuthCallback(params: {
       error_description?: string;
     };
 
-    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
-      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    if (
+      !response.ok ||
+      typeof payload.access_token !== 'string' ||
+      payload.access_token.length === 0
+    ) {
+      throw new Error(
+        payload.error_description || payload.error || 'Failed to exchange external auth code'
+      );
     }
 
     const userInfoResponse = await fetch(GOOGLE_USERINFO_ENDPOINT, {
@@ -482,8 +499,14 @@ export async function materializeGovernedExternalAuthCallback(params: {
       error_description?: string;
     };
 
-    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
-      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    if (
+      !response.ok ||
+      typeof payload.access_token !== 'string' ||
+      payload.access_token.length === 0
+    ) {
+      throw new Error(
+        payload.error_description || payload.error || 'Failed to exchange external auth code'
+      );
     }
 
     const userResponse = await fetch(ASANA_USER_ENDPOINT, {
@@ -500,9 +523,14 @@ export async function materializeGovernedExternalAuthCallback(params: {
       errors?: Array<{ message?: string }>;
     };
 
-    if (!userResponse.ok || typeof userPayload.data?.gid !== 'string' || userPayload.data.gid.length === 0) {
+    if (
+      !userResponse.ok ||
+      typeof userPayload.data?.gid !== 'string' ||
+      userPayload.data.gid.length === 0
+    ) {
       throw new Error(
-        userPayload.errors?.[0]?.message || 'Failed to resolve Asana user info for governed external auth',
+        userPayload.errors?.[0]?.message ||
+          'Failed to resolve Asana user info for governed external auth'
       );
     }
 
@@ -572,8 +600,14 @@ export async function materializeGovernedExternalAuthCallback(params: {
       error_description?: string;
     };
 
-    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
-      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    if (
+      !response.ok ||
+      typeof payload.access_token !== 'string' ||
+      payload.access_token.length === 0
+    ) {
+      throw new Error(
+        payload.error_description || payload.error || 'Failed to exchange external auth code'
+      );
     }
 
     const meResponse = await fetch(MICROSOFT_GRAPH_ME_ENDPOINT, {

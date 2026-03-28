@@ -9,7 +9,12 @@ import organizationContextService from './organizationContext/OrganizationContex
 
 interface CompanyContext {
   initiatives: Array<{ id: string; title: string; status: string; level: string }>;
-  assessmentScores: Array<{ framework: string; dimension: string; score: number; maxScore: number }>;
+  assessmentScores: Array<{
+    framework: string;
+    dimension: string;
+    score: number;
+    maxScore: number;
+  }>;
   interviewInsights: Array<{ topic: string; insight: string; frequency: number }>;
   kpiHighlights: Array<{ name: string; target: number; actual: number; status: string }>;
 }
@@ -24,7 +29,15 @@ interface SuggestionContext {
 
 interface AISuggestion {
   id: string;
-  category: 'branch_suggestions' | 'row_suggestions' | 'connection_suggestions' | 'risk_flags' | 'framework_recommendations' | 'topics' | 'findings' | 'next_steps';
+  category:
+    | 'branch_suggestions'
+    | 'row_suggestions'
+    | 'connection_suggestions'
+    | 'risk_flags'
+    | 'framework_recommendations'
+    | 'topics'
+    | 'findings'
+    | 'next_steps';
   text: string;
   detail?: string;
   confidence: number;
@@ -81,7 +94,9 @@ export async function buildCompanyContext(
       status: String(i.status || ''),
       level: String(i.level || ''),
     }));
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const assessments = await queryHelpers.query(
@@ -91,9 +106,10 @@ export async function buildCompanyContext(
        ORDER BY updated_at DESC LIMIT 5`,
       [orgId]
     );
-    for (const a of (assessments || [])) {
+    for (const a of assessments || []) {
       try {
-        const scores = typeof a.dimensionScores === 'string' ? JSON.parse(a.dimensionScores) : a.dimensionScores;
+        const scores =
+          typeof a.dimensionScores === 'string' ? JSON.parse(a.dimensionScores) : a.dimensionScores;
         if (scores && typeof scores === 'object') {
           for (const [dim, val] of Object.entries(scores)) {
             const score = typeof val === 'number' ? val : (val as any)?.score;
@@ -107,9 +123,13 @@ export async function buildCompanyContext(
             }
           }
         }
-      } catch { /* parse error */ }
+      } catch {
+        /* parse error */
+      }
     }
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const insights = await queryHelpers.query(
@@ -129,7 +149,9 @@ export async function buildCompanyContext(
         frequency: Number(i.frequency) || 1,
       })),
     ];
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const kpis = await queryHelpers.query(
@@ -145,7 +167,9 @@ export async function buildCompanyContext(
       actual: Number(k.actualValue) || 0,
       status: String(k.status || ''),
     }));
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   return ctx;
 }
@@ -179,11 +203,24 @@ The user is working on: "${context.title}"
 Description: "${(context.seedText || '').slice(0, 2000)}"
 Active tool: ${context.activeTool}
 Existing nodes: ${existingLabels.join(', ')}
-${hasCompanyData ? `\nCompany context:
+${
+  hasCompanyData
+    ? `\nCompany context:
 - ${companyCtx.initiatives.length} active initiatives
-- Assessment scores: ${companyCtx.assessmentScores.slice(0, 5).map((s) => `${s.framework}/${s.dimension}: ${s.score}/${s.maxScore}`).join(', ')}
-- Interview insights: ${companyCtx.interviewInsights.slice(0, 5).map((i) => `"${i.insight}" (${i.frequency}x)`).join(', ')}
-- KPI highlights: ${companyCtx.kpiHighlights.slice(0, 5).map((k) => `${k.name}: ${k.actual}/${k.target} (${k.status})`).join(', ')}` : ''}
+- Assessment scores: ${companyCtx.assessmentScores
+        .slice(0, 5)
+        .map((s) => `${s.framework}/${s.dimension}: ${s.score}/${s.maxScore}`)
+        .join(', ')}
+- Interview insights: ${companyCtx.interviewInsights
+        .slice(0, 5)
+        .map((i) => `"${i.insight}" (${i.frequency}x)`)
+        .join(', ')}
+- KPI highlights: ${companyCtx.kpiHighlights
+        .slice(0, 5)
+        .map((k) => `${k.name}: ${k.actual}/${k.target} (${k.status})`)
+        .join(', ')}`
+    : ''
+}
 
 Respond in ${isPl ? 'Polish' : 'English'}.
 Return a JSON array of suggestions. Each suggestion has:
@@ -259,7 +296,9 @@ function generateFallbackSuggestions(
   const suggestions: AISuggestion[] = [];
 
   if (companyCtx.assessmentScores.length > 0) {
-    const weakest = [...companyCtx.assessmentScores].sort((a, b) => (a.score / a.maxScore) - (b.score / b.maxScore))[0];
+    const weakest = [...companyCtx.assessmentScores].sort(
+      (a, b) => a.score / a.maxScore - b.score / b.maxScore
+    )[0];
     if (weakest) {
       suggestions.push({
         id: `fb-${ts}-1`,
@@ -281,9 +320,7 @@ function generateFallbackSuggestions(
     suggestions.push({
       id: `fb-${ts}-2`,
       category: 'row_suggestions',
-      text: isPl
-        ? `Dodaj: ${top.insight.slice(0, 60)}`
-        : `Add: ${top.insight.slice(0, 60)}`,
+      text: isPl ? `Dodaj: ${top.insight.slice(0, 60)}` : `Add: ${top.insight.slice(0, 60)}`,
       detail: isPl
         ? `Wspomniane ${top.frequency}x w wywiadach (temat: ${top.topic})`
         : `Mentioned ${top.frequency}x in interviews (topic: ${top.topic})`,
@@ -293,7 +330,9 @@ function generateFallbackSuggestions(
   }
 
   if (companyCtx.kpiHighlights.length > 0) {
-    const atRisk = companyCtx.kpiHighlights.find((k) => k.status === 'at_risk' || k.actual < k.target * 0.7);
+    const atRisk = companyCtx.kpiHighlights.find(
+      (k) => k.status === 'at_risk' || k.actual < k.target * 0.7
+    );
     if (atRisk) {
       suggestions.push({
         id: `fb-${ts}-3`,
@@ -311,7 +350,9 @@ function generateFallbackSuggestions(
     {
       id: `fb-${ts}-4`,
       category: 'topics',
-      text: isPl ? 'Analiza interesariuszy i ich wpływu' : 'Stakeholder analysis and impact assessment',
+      text: isPl
+        ? 'Analiza interesariuszy i ich wpływu'
+        : 'Stakeholder analysis and impact assessment',
       detail: isPl ? 'Zidentyfikuj kluczowych interesariuszy' : 'Identify key stakeholders',
       confidence: 0.75,
     },
@@ -325,7 +366,9 @@ function generateFallbackSuggestions(
       id: `fb-${ts}-6`,
       category: 'framework_recommendations',
       text: isPl ? 'Rozważ użycie analizy SWOT' : 'Consider using SWOT analysis',
-      detail: isPl ? 'Strukturyzacja mocnych/słabych stron, szans i zagrożeń' : 'Structure strengths, weaknesses, opportunities, threats',
+      detail: isPl
+        ? 'Strukturyzacja mocnych/słabych stron, szans i zagrożeń'
+        : 'Structure strengths, weaknesses, opportunities, threats',
       confidence: 0.7,
       source: 'consulting templates',
     }
@@ -380,7 +423,10 @@ Return exactly one JSON action object.`;
     const content = String((response as any)?.content || (response as any)?.message?.content || '');
     return JSON.parse(content);
   } catch {
-    return { type: 'error', message: isPl ? 'Nie udało się przetworzyć polecenia' : 'Failed to process command' };
+    return {
+      type: 'error',
+      message: isPl ? 'Nie udało się przetworzyć polecenia' : 'Failed to process command',
+    };
   }
 }
 
@@ -397,11 +443,21 @@ export async function generateAIFill(
 
   const systemPrompt = `You are an AI column filler. For each row, generate a value based on the prompt and row data.
 Prompt: "${columnPrompt}"
-${companyCtx.assessmentScores.length > 0 ? `Company assessment data available: ${companyCtx.assessmentScores.slice(0, 5).map((s) => `${s.dimension}: ${s.score}/${s.maxScore}`).join(', ')}` : ''}
+${
+  companyCtx.assessmentScores.length > 0
+    ? `Company assessment data available: ${companyCtx.assessmentScores
+        .slice(0, 5)
+        .map((s) => `${s.dimension}: ${s.score}/${s.maxScore}`)
+        .join(', ')}`
+    : ''
+}
 Respond in ${isPl ? 'Polish' : 'English'}.
 Return a JSON array: [{ "rowId": "...", "value": "..." }]`;
 
-  const rowsDesc = rows.slice(0, 30).map((r) => `Row ${r.id}: ${JSON.stringify(r.data)}`).join('\n');
+  const rowsDesc = rows
+    .slice(0, 30)
+    .map((r) => `Row ${r.id}: ${JSON.stringify(r.data)}`)
+    .join('\n');
 
   try {
     const { llmService } = await import('./ai/llmService.js');

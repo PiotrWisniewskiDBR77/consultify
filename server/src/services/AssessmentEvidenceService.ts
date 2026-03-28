@@ -144,7 +144,10 @@ class AssessmentEvidenceService {
     return this.mapRow(row!);
   }
 
-  async getEvidenceReport(assessmentId: string, organizationId: string): Promise<{
+  async getEvidenceReport(
+    assessmentId: string,
+    organizationId: string
+  ): Promise<{
     frameworkId: string | null;
     totalDimensions: number;
     withEvidence: number;

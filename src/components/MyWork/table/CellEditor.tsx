@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FieldType, TablePlatformSelectOption } from '@/types/tablePlatform';
+
 import { LinkedRecordPicker } from './LinkedRecordPicker';
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ const TextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
         onCancel();
       }
     },
-    [draft, onSave, onCancel],
+    [draft, onSave, onCancel]
   );
 
   return (
@@ -89,15 +90,21 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
-        if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
+        if (e.key === 'b') {
+          e.preventDefault();
+          document.execCommand('bold');
+        }
+        if (e.key === 'i') {
+          e.preventDefault();
+          document.execCommand('italic');
+        }
       }
       if (e.key === 'Escape') {
         e.preventDefault();
         onCancel();
       }
     },
-    [onCancel],
+    [onCancel]
   );
 
   const commit = useCallback(() => {
@@ -107,15 +114,35 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
   return (
     <div className="space-y-1">
       <div className="flex gap-1 text-xs">
-        <button type="button" onClick={() => document.execCommand('bold')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 font-bold">B</button>
-        <button type="button" onClick={() => document.execCommand('italic')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 italic">I</button>
-        <button type="button" onClick={() => document.execCommand('insertUnorderedList')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800">• List</button>
+        <button
+          type="button"
+          onClick={() => document.execCommand('bold')}
+          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 font-bold"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => document.execCommand('italic')}
+          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 italic"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          onClick={() => document.execCommand('insertUnorderedList')}
+          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800"
+        >
+          • List
+        </button>
       </div>
       <div
         ref={editorRef}
         contentEditable
         className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500 text-slate-800 dark:text-slate-200"
-        onInput={() => {/* value tracked via ref */}}
+        onInput={() => {
+          /* value tracked via ref */
+        }}
         onKeyDown={handleKeyDown}
         onBlur={commit}
       />
@@ -144,7 +171,7 @@ const NumberEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) =>
         onCancel();
       }
     },
-    [draft, onSave, onCancel],
+    [draft, onSave, onCancel]
   );
 
   return (
@@ -180,7 +207,7 @@ const DateEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
         onCancel();
       }
     },
-    [draft, onSave, onCancel],
+    [draft, onSave, onCancel]
   );
 
   return (
@@ -280,7 +307,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
 }) => {
   const options = getSelectOptions(fieldOptions);
   const [selected, setSelected] = useState<string[]>(
-    Array.isArray(value) ? value.map(String) : value ? [String(value)] : [],
+    Array.isArray(value) ? value.map(String) : value ? [String(value)] : []
   );
   const ref = useRef<HTMLDivElement>(null);
 
@@ -304,9 +331,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
   }, [onSave, onCancel, selected]);
 
   const toggle = (val: string) => {
-    setSelected((prev) =>
-      prev.includes(val) ? prev.filter((s) => s !== val) : [...prev, val],
-    );
+    setSelected((prev) => (prev.includes(val) ? prev.filter((s) => s !== val) : [...prev, val]));
   };
 
   return (
@@ -348,13 +373,9 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
 
 // ── URL / Email / Phone Editor (with validation hint) ────────────────────────
 
-const ValidatedTextEditor: React.FC<CellEditorProps & { placeholder?: string; pattern?: RegExp }> = ({
-  value,
-  onSave,
-  onCancel,
-  placeholder,
-  pattern,
-}) => {
+const ValidatedTextEditor: React.FC<
+  CellEditorProps & { placeholder?: string; pattern?: RegExp }
+> = ({ value, onSave, onCancel, placeholder, pattern }) => {
   const [draft, setDraft] = useState(String(value ?? ''));
   const [invalid, setInvalid] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -369,7 +390,7 @@ const ValidatedTextEditor: React.FC<CellEditorProps & { placeholder?: string; pa
       if (!val || !pattern) return true;
       return pattern.test(val);
     },
-    [pattern],
+    [pattern]
   );
 
   const handleSave = useCallback(() => {
@@ -390,7 +411,7 @@ const ValidatedTextEditor: React.FC<CellEditorProps & { placeholder?: string; pa
         onCancel();
       }
     },
-    [handleSave, onCancel],
+    [handleSave, onCancel]
   );
 
   return (
@@ -411,15 +432,26 @@ const ValidatedTextEditor: React.FC<CellEditorProps & { placeholder?: string; pa
 
 // ── Linked Record Editor ─────────────────────────────────────────────────────
 
-const LinkedRecordEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, onCancel, linkedRecordContext }) => {
+const LinkedRecordEditor: React.FC<CellEditorProps> = ({
+  value,
+  fieldOptions,
+  onSave,
+  onCancel,
+  linkedRecordContext,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
-  const linkedTableId = linkedRecordContext?.linkedTableId
-    ?? (fieldOptions as { linkedTableId?: string })?.linkedTableId
-    ?? '';
+  const linkedTableId =
+    linkedRecordContext?.linkedTableId ??
+    (fieldOptions as { linkedTableId?: string })?.linkedTableId ??
+    '';
 
-  const currentIds: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
+  const currentIds: string[] = Array.isArray(value)
+    ? value.map(String)
+    : value
+      ? [String(value)]
+      : [];
   const currentLinks = currentIds.map((id) => ({ id, displayValue: id }));
 
   if (!linkedTableId) {
@@ -492,7 +524,11 @@ const RatingEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, 
         >
           <Star
             size={16}
-            className={i < draft ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'}
+            className={
+              i < draft
+                ? 'text-amber-400 fill-amber-400'
+                : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'
+            }
           />
         </button>
       ))}
@@ -549,7 +585,7 @@ const DurationEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
         onCancel();
       }
     },
-    [handleSave, onCancel],
+    [handleSave, onCancel]
   );
 
   return (
@@ -579,8 +615,12 @@ const EDITORS: Partial<Record<FieldType, React.FC<CellEditorProps>>> = {
   date: DateEditor,
   singleSelect: SingleSelectEditor,
   multiSelect: MultiSelectEditor,
-  url: (props) => <ValidatedTextEditor {...props} placeholder="https://..." pattern={URL_PATTERN} />,
-  email: (props) => <ValidatedTextEditor {...props} placeholder="name@example.com" pattern={EMAIL_PATTERN} />,
+  url: (props) => (
+    <ValidatedTextEditor {...props} placeholder="https://..." pattern={URL_PATTERN} />
+  ),
+  email: (props) => (
+    <ValidatedTextEditor {...props} placeholder="name@example.com" pattern={EMAIL_PATTERN} />
+  ),
   phone: (props) => <ValidatedTextEditor {...props} placeholder="+1 234 567 890" />,
   linkedRecord: LinkedRecordEditor,
   rating: RatingEditor,

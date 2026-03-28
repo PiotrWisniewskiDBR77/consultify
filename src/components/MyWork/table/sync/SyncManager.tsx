@@ -237,7 +237,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     }`}
                   >
                     {type === 'table'
-                      ? (isPl ? 'Tabela' : 'Table')
+                      ? isPl
+                        ? 'Tabela'
+                        : 'Table'
                       : type === 'csv_url'
                         ? 'CSV URL'
                         : 'Google Sheets'}
@@ -259,7 +261,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     {tables
                       .filter((t) => t.id !== tableId)
                       .map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
                       ))}
                   </select>
                 </div>
@@ -308,7 +312,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
               >
                 {tables.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
                 ))}
               </select>
               <p className="text-[11px] text-slate-400">
@@ -404,14 +410,24 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 <Row label={isPl ? 'Cel' : 'Target'} value={getTableName(targetTableId)} />
                 <Row
                   label={isPl ? 'Tryb' : 'Mode'}
-                  value={syncMode === 'one_way' ? (isPl ? 'Jednokierunkowa' : 'One-way') : (isPl ? 'Dwukierunkowa' : 'Two-way')}
+                  value={
+                    syncMode === 'one_way'
+                      ? isPl
+                        ? 'Jednokierunkowa'
+                        : 'One-way'
+                      : isPl
+                        ? 'Dwukierunkowa'
+                        : 'Two-way'
+                  }
                 />
                 <Row
                   label={isPl ? 'Pola' : 'Fields'}
                   value={
                     Object.keys(fieldMapping).filter((k) => fieldMapping[k]).length > 0
                       ? `${Object.keys(fieldMapping).filter((k) => fieldMapping[k]).length} ${isPl ? 'zmapowanych' : 'mapped'}`
-                      : (isPl ? 'Automatyczne' : 'Auto-match')
+                      : isPl
+                        ? 'Automatyczne'
+                        : 'Auto-match'
                   }
                 />
               </div>
@@ -428,7 +444,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
           >
-            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : (isPl ? 'Wstecz' : 'Back')}
+            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
           </button>
           {wizardStep === 'review' ? (
             <button
@@ -536,10 +552,16 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     <div className="mt-0.5 flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
                       <span>
                         {sync.sync_mode === 'two_way'
-                          ? (isPl ? 'Dwukierunkowa' : 'Two-way')
-                          : (isPl ? 'Jednokierunkowa' : 'One-way')}
+                          ? isPl
+                            ? 'Dwukierunkowa'
+                            : 'Two-way'
+                          : isPl
+                            ? 'Jednokierunkowa'
+                            : 'One-way'}
                       </span>
-                      <span>{isPl ? 'Ostatnia:' : 'Last:'} {formatTime(sync.last_synced_at)}</span>
+                      <span>
+                        {isPl ? 'Ostatnia:' : 'Last:'} {formatTime(sync.last_synced_at)}
+                      </span>
                     </div>
                   </div>
 

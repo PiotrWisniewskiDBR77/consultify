@@ -7,10 +7,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
-import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
-import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
-import { SlackServiceClass } from '../../services/slackService.js';
 import { CONNECTORS } from '../../services/integrationHubService.js';
+import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
+import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
+import { SlackServiceClass } from '../../services/slackService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -95,15 +95,22 @@ function extractWebhookUrl(cfg: Record<string, unknown>): string | null {
 
 type SyncScope = 'read_only' | 'bidirectional';
 
-function resolveSyncScope(provider: string | null | undefined, cfg?: Record<string, unknown>): SyncScope {
+function resolveSyncScope(
+  provider: string | null | undefined,
+  cfg?: Record<string, unknown>
+): SyncScope {
   const explicit = String((cfg as any)?.syncScope || (cfg as any)?.sync_scope || '')
     .trim()
     .toLowerCase();
   if (explicit === 'bidirectional') return 'bidirectional';
   if (explicit === 'read_only' || explicit === 'readonly') return 'read_only';
 
-  const providerKey = String(provider || '').trim().toLowerCase();
-  return ['jira', 'asana', 'monday', 'trello'].includes(providerKey) ? 'bidirectional' : 'read_only';
+  const providerKey = String(provider || '')
+    .trim()
+    .toLowerCase();
+  return ['jira', 'asana', 'monday', 'trello'].includes(providerKey)
+    ? 'bidirectional'
+    : 'read_only';
 }
 
 function syncScopeLabel(scope: SyncScope): string {
@@ -125,13 +132,12 @@ function normalizeConnectorId(provider: string): string {
   return CONNECTOR_ALIAS_MAP[normalized] || normalized;
 }
 
-function getConfiguredFields(
-  configFields: string[],
-  config: Record<string, unknown>
-): string[] {
+function getConfiguredFields(configFields: string[], config: Record<string, unknown>): string[] {
   return configFields.filter((field) => {
     const value = config[field];
-    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+    return typeof value === 'string'
+      ? value.trim().length > 0
+      : value !== undefined && value !== null;
   });
 }
 
@@ -929,7 +935,10 @@ router.get(
             status: r.status,
             syncType: r.sync_type,
             direction: r.direction,
-            syncScope: String(r.direction || '').toLowerCase() === 'bidirectional' ? 'bidirectional' : 'read_only',
+            syncScope:
+              String(r.direction || '').toLowerCase() === 'bidirectional'
+                ? 'bidirectional'
+                : 'read_only',
             syncScopeLabel:
               String(r.direction || '').toLowerCase() === 'bidirectional'
                 ? 'Bidirectional sync'
@@ -958,7 +967,10 @@ router.get(
             status: r.status,
             syncType: r.sync_type,
             direction: r.direction,
-            syncScope: String(r.direction || '').toLowerCase() === 'bidirectional' ? 'bidirectional' : 'read_only',
+            syncScope:
+              String(r.direction || '').toLowerCase() === 'bidirectional'
+                ? 'bidirectional'
+                : 'read_only',
             syncScopeLabel:
               String(r.direction || '').toLowerCase() === 'bidirectional'
                 ? 'Bidirectional sync'
@@ -1045,7 +1057,12 @@ router.post(
           status = 'failed';
           errors.push('integration_sync_mappings table missing');
         } else {
-          const tasks = await dbAll<{ id: string; title: string; description: string | null; status: string | null }>(
+          const tasks = await dbAll<{
+            id: string;
+            title: string;
+            description: string | null;
+            status: string | null;
+          }>(
             `SELECT id, title, description, status FROM tasks WHERE organization_id = ? ORDER BY created_at DESC LIMIT 200`,
             [orgId]
           );

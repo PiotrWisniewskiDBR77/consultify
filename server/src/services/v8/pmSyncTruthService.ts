@@ -8,26 +8,26 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  ConnectorAuthRecord,
-  ConnectorAuthState,
-  ProviderDepthProfile,
   BusinessObjectSyncState,
   ConflictRecord,
-  ConnectorSyncHealthSummary,
-  SyncStatus,
-  SetConnectorAuthStateParams,
-  RegisterProviderProfileParams,
-  UpdateObjectSyncStateParams,
-  RecordConflictParams,
-  ParityScore,
   ConflictResolutionPath,
+  ConnectorAuthRecord,
+  ConnectorAuthState,
+  ConnectorSyncHealthSummary,
+  ParityScore,
+  ProviderDepthProfile,
+  RecordConflictParams,
+  RegisterProviderProfileParams,
+  SetConnectorAuthStateParams,
+  SyncStatus,
+  UpdateObjectSyncStateParams,
 } from '../../types/pmSyncTruth.js';
 import {
   AUTH_STATE_TRANSITIONS,
-  SetConnectorAuthStateParamsSchema,
-  RegisterProviderProfileParamsSchema,
-  UpdateObjectSyncStateParamsSchema,
   RecordConflictParamsSchema,
+  RegisterProviderProfileParamsSchema,
+  SetConnectorAuthStateParamsSchema,
+  UpdateObjectSyncStateParamsSchema,
 } from '../../types/pmSyncTruth.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -180,7 +180,7 @@ const SYNC_STATUS_RANK: Record<SyncStatus, number> = {
 
 export function isValidAuthTransition(
   current: ConnectorAuthState,
-  target: ConnectorAuthState,
+  target: ConnectorAuthState
 ): boolean {
   const allowed = AUTH_STATE_TRANSITIONS[current];
   return (allowed as readonly string[]).includes(target);
@@ -191,7 +191,7 @@ export function isValidAuthTransition(
  * First transition from `not_connected` is always allowed (initial state).
  */
 export async function setConnectorAuthState(
-  params: SetConnectorAuthStateParams,
+  params: SetConnectorAuthStateParams
 ): Promise<ConnectorAuthRecord> {
   const validated = SetConnectorAuthStateParamsSchema.parse(params);
 
@@ -200,7 +200,7 @@ export async function setConnectorAuthState(
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY transitioned_at DESC LIMIT 1`,
     [validated.connectorId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const currentState: ConnectorAuthState = currentRow
@@ -208,9 +208,7 @@ export async function setConnectorAuthState(
     : 'not_connected';
 
   if (currentRow && !isValidAuthTransition(currentState, validated.targetState)) {
-    throw new Error(
-      `Invalid auth state transition: ${currentState} → ${validated.targetState}`,
-    );
+    throw new Error(`Invalid auth state transition: ${currentState} → ${validated.targetState}`);
   }
 
   const recordId = uuidv4();
@@ -230,11 +228,11 @@ export async function setConnectorAuthState(
       now,
       validated.transitionedBy,
       validated.reason ?? null,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Auth state transition: ${currentState} → ${validated.targetState} for connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Auth state transition: ${currentState} → ${validated.targetState} for connector ${validated.connectorId}`
   );
 
   return {
@@ -254,14 +252,14 @@ export async function setConnectorAuthState(
  */
 export async function getConnectorAuthState(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ConnectorAuthRecord | null> {
   const row = await dbGet<AuthStateRow>(
     `SELECT * FROM v8_connector_auth_states
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY transitioned_at DESC LIMIT 1`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -277,7 +275,7 @@ export async function getConnectorAuthState(
  * Uses upsert on (provider_id, organization_id).
  */
 export async function registerProviderProfile(
-  params: RegisterProviderProfileParams,
+  params: RegisterProviderProfileParams
 ): Promise<ProviderDepthProfile> {
   const validated = RegisterProviderProfileParamsSchema.parse(params);
 
@@ -285,7 +283,7 @@ export async function registerProviderProfile(
     `SELECT * FROM v8_provider_depth_profiles
      WHERE provider_id = ? AND organization_id = ?`,
     [validated.providerId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -304,10 +302,12 @@ export async function registerProviderProfile(
         validated.displayContract,
         now,
         existing.profile_id,
-      ],
+      ]
     );
 
-    logger.info(`${LOG_PREFIX} Updated provider profile ${existing.profile_id} for ${validated.providerId}`);
+    logger.info(
+      `${LOG_PREFIX} Updated provider profile ${existing.profile_id} for ${validated.providerId}`
+    );
 
     return {
       profileId: existing.profile_id,
@@ -342,7 +342,7 @@ export async function registerProviderProfile(
       validated.organizationId,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Registered provider profile ${profileId} for ${validated.providerId}`);
@@ -366,13 +366,13 @@ export async function registerProviderProfile(
  */
 export async function getProviderProfile(
   providerId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ProviderDepthProfile | null> {
   const row = await dbGet<ProviderProfileRow>(
     `SELECT * FROM v8_provider_depth_profiles
      WHERE provider_id = ? AND organization_id = ?`,
     [providerId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -388,7 +388,7 @@ export async function getProviderProfile(
  * Uses upsert on (object_type, object_id, connector_id, organization_id).
  */
 export async function updateObjectSyncState(
-  params: UpdateObjectSyncStateParams,
+  params: UpdateObjectSyncStateParams
 ): Promise<BusinessObjectSyncState> {
   const validated = UpdateObjectSyncStateParamsSchema.parse(params);
 
@@ -398,7 +398,7 @@ export async function updateObjectSyncState(
     `SELECT * FROM v8_business_object_sync_states
      WHERE object_type = ? AND object_id = ? AND connector_id = ? AND organization_id = ?`,
     [validated.objectType, validated.objectId, validated.connectorId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const lastSyncedAt = validated.syncStatus === 'synced' ? now : (existing?.last_synced_at ?? null);
@@ -422,11 +422,11 @@ export async function updateObjectSyncState(
         validated.errorClass ?? null,
         now,
         existing.sync_state_id,
-      ],
+      ]
     );
 
     logger.info(
-      `${LOG_PREFIX} Updated sync state for ${validated.objectType}:${validated.objectId} → ${validated.syncStatus}`,
+      `${LOG_PREFIX} Updated sync state for ${validated.objectType}:${validated.objectId} → ${validated.syncStatus}`
     );
 
     return {
@@ -464,11 +464,11 @@ export async function updateObjectSyncState(
       validated.errorClass ?? null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Created sync state ${syncStateId} for ${validated.objectType}:${validated.objectId}`,
+    `${LOG_PREFIX} Created sync state ${syncStateId} for ${validated.objectType}:${validated.objectId}`
   );
 
   return {
@@ -492,14 +492,14 @@ export async function updateObjectSyncState(
 export async function getObjectSyncState(
   objectType: string,
   objectId: string,
-  orgId: string,
+  orgId: string
 ): Promise<BusinessObjectSyncState | null> {
   const row = await dbGet<SyncStateRow>(
     `SELECT * FROM v8_business_object_sync_states
      WHERE object_type = ? AND object_id = ? AND organization_id = ?
      ORDER BY updated_at DESC LIMIT 1`,
     [objectType, objectId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -511,14 +511,14 @@ export async function getObjectSyncState(
  */
 export async function getObjectSyncStatesByConnector(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<BusinessObjectSyncState[]> {
   const rows = await dbAll<SyncStateRow>(
     `SELECT * FROM v8_business_object_sync_states
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY updated_at DESC`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSyncState);
@@ -531,9 +531,7 @@ export async function getObjectSyncStatesByConnector(
 /**
  * Record a new conflict instance.
  */
-export async function recordConflict(
-  params: RecordConflictParams,
-): Promise<ConflictRecord> {
+export async function recordConflict(params: RecordConflictParams): Promise<ConflictRecord> {
   const validated = RecordConflictParamsSchema.parse(params);
 
   const conflictId = uuidv4();
@@ -556,11 +554,11 @@ export async function recordConflict(
       null,
       null,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded conflict ${conflictId}: ${validated.conflictClass} (${validated.severity})`,
+    `${LOG_PREFIX} Recorded conflict ${conflictId}: ${validated.conflictClass} (${validated.severity})`
   );
 
   return {
@@ -584,7 +582,7 @@ export async function resolveConflict(
   conflictId: string,
   resolution: ConflictResolutionPath,
   resolvedBy: string,
-  organizationId?: string,
+  organizationId?: string
 ): Promise<ConflictRecord> {
   const now = new Date().toISOString();
   const whereClause = organizationId
@@ -594,7 +592,7 @@ export async function resolveConflict(
 
   const row = await dbGet<ConflictRow>(
     `SELECT * FROM v8_conflict_records WHERE ${whereClause}`,
-    whereParams,
+    whereParams
   );
 
   if (!row) {
@@ -609,7 +607,7 @@ export async function resolveConflict(
     `UPDATE v8_conflict_records
      SET resolution_path = ?, resolution_strategy = ?, resolved_at = ?, resolved_by = ?
      WHERE ${whereClause}`,
-    [resolution, resolution, now, resolvedBy, ...whereParams],
+    [resolution, resolution, now, resolvedBy, ...whereParams]
   );
 
   logger.info(`${LOG_PREFIX} Resolved conflict ${conflictId} via ${resolution}`);
@@ -628,14 +626,14 @@ export async function resolveConflict(
  */
 export async function getConflictsByObject(
   objectSyncStateId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ConflictRecord[]> {
   const rows = await dbAll<ConflictRow>(
     `SELECT * FROM v8_conflict_records
      WHERE object_sync_state_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [objectSyncStateId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToConflictRecord);
@@ -650,7 +648,7 @@ export async function getConflictsByObject(
  */
 export async function getConnectorHealth(
   connectorId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ConnectorSyncHealthSummary> {
   const auth = await getConnectorAuthState(connectorId, organizationId);
   const authState: ConnectorSyncHealthSummary['authState'] = auth?.authState ?? 'unknown';
@@ -680,15 +678,13 @@ export async function getConnectorHealth(
      INNER JOIN v8_business_object_sync_states s ON s.sync_state_id = cr.object_sync_state_id
      WHERE cr.organization_id = ? AND cr.resolved_at IS NULL AND s.connector_id = ?`,
     [organizationId, connectorId],
-    { fallback: true },
+    { fallback: true }
   );
   const conflictCount = countRow?.n ?? 0;
 
-  const authHealthy =
-    authState === 'healthy' || authState === 'connected_pending_verification';
+  const authHealthy = authState === 'healthy' || authState === 'connected_pending_verification';
   const syncClean =
-    rollupStatus === 'unknown' ||
-    !['error', 'dead_letter', 'conflict'].includes(rollupStatus);
+    rollupStatus === 'unknown' || !['error', 'dead_letter', 'conflict'].includes(rollupStatus);
   const healthy = authHealthy && conflictCount === 0 && syncClean;
 
   return {
@@ -705,7 +701,7 @@ export async function getConnectorHealth(
  */
 export async function getUnresolvedConflicts(
   organizationId: string,
-  limit?: number,
+  limit?: number
 ): Promise<ConflictRecord[]> {
   const cap = limit === undefined ? 500 : Math.min(Math.max(limit, 1), 2000);
 
@@ -715,7 +711,7 @@ export async function getUnresolvedConflicts(
      ORDER BY created_at DESC
      LIMIT ?`,
     [organizationId, cap],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToConflictRecord);

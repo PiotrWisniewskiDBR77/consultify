@@ -3,26 +3,17 @@
  * Automations, Sync, Webhooks, Sharing, and Distributions.
  * Shows summary cards with quick links to each manager.
  */
-import {
-  ArrowRight,
-  Bell,
-  Loader2,
-  RefreshCw,
-  Send,
-  Users,
-  Webhook,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight, Bell, Loader2, RefreshCw, Send, Users, Webhook, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { AutomationsManager } from './automations/AutomationsManager';
-import { SyncManager } from './sync/SyncManager';
-import { SharingManager } from './sharing/SharingManager';
-import { DistributionBuilder } from './DistributionBuilder';
 import { WebhookRelayPanel } from './connectors/WebhookRelayPanel';
+import { DistributionBuilder } from './DistributionBuilder';
+import { SharingManager } from './sharing/SharingManager';
+import { SyncManager } from './sync/SyncManager';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,19 +21,17 @@ export interface WorkflowDashboardProps {
   tableId: string;
   baseId: string;
   workspaceId: string;
-  tables?: { id: string; name: string; fields?: { id: string; name: string; fieldType: string }[] }[];
+  tables?: {
+    id: string;
+    name: string;
+    fields?: { id: string; name: string; fieldType: string }[];
+  }[];
   views?: { id: string; name: string; shareToken?: string }[];
   fields?: Array<{ id: string; name: string; fieldType: string }>;
   locked?: boolean;
 }
 
-type ActivePanel =
-  | null
-  | 'automations'
-  | 'sync'
-  | 'webhooks'
-  | 'sharing'
-  | 'distributions';
+type ActivePanel = null | 'automations' | 'sync' | 'webhooks' | 'sharing' | 'distributions';
 
 interface DashboardStats {
   automationsCount: number;
@@ -95,11 +84,20 @@ export function WorkflowDashboard({
           const relays = data?.relays ?? [];
           webhookCount = Array.isArray(relays) ? relays.length : 0;
         }
-      } catch { /* best-effort */ }
+      } catch {
+        /* best-effort */
+      }
 
-      const autoList = automations.status === 'fulfilled' && Array.isArray(automations.value) ? automations.value : [];
-      const syncList = syncs.status === 'fulfilled' && Array.isArray(syncs.value) ? syncs.value : [];
-      const distList = distributions.status === 'fulfilled' && Array.isArray(distributions.value) ? distributions.value : [];
+      const autoList =
+        automations.status === 'fulfilled' && Array.isArray(automations.value)
+          ? automations.value
+          : [];
+      const syncList =
+        syncs.status === 'fulfilled' && Array.isArray(syncs.value) ? syncs.value : [];
+      const distList =
+        distributions.status === 'fulfilled' && Array.isArray(distributions.value)
+          ? distributions.value
+          : [];
 
       setStats({
         automationsCount: autoList.length,
@@ -123,9 +121,23 @@ export function WorkflowDashboard({
   if (activePanel === 'automations') {
     return (
       <div className="h-full flex flex-col">
-        <BackBar label={isPl ? 'Automatyzacje' : 'Automations'} onBack={() => { setActivePanel(null); loadStats(); }} />
+        <BackBar
+          label={isPl ? 'Automatyzacje' : 'Automations'}
+          onBack={() => {
+            setActivePanel(null);
+            loadStats();
+          }}
+        />
         <div className="flex-1 overflow-y-auto p-4">
-          <AutomationsManager tableId={tableId} baseId={baseId} fields={fields} onClose={() => { setActivePanel(null); loadStats(); }} />
+          <AutomationsManager
+            tableId={tableId}
+            baseId={baseId}
+            fields={fields}
+            onClose={() => {
+              setActivePanel(null);
+              loadStats();
+            }}
+          />
         </div>
       </div>
     );
@@ -134,9 +146,23 @@ export function WorkflowDashboard({
   if (activePanel === 'sync') {
     return (
       <div className="h-full flex flex-col">
-        <BackBar label={isPl ? 'Synchronizacja' : 'Table Sync'} onBack={() => { setActivePanel(null); loadStats(); }} />
+        <BackBar
+          label={isPl ? 'Synchronizacja' : 'Table Sync'}
+          onBack={() => {
+            setActivePanel(null);
+            loadStats();
+          }}
+        />
         <div className="flex-1 overflow-y-auto p-4">
-          <SyncManager tableId={tableId} baseId={baseId} tables={tables} onClose={() => { setActivePanel(null); loadStats(); }} />
+          <SyncManager
+            tableId={tableId}
+            baseId={baseId}
+            tables={tables}
+            onClose={() => {
+              setActivePanel(null);
+              loadStats();
+            }}
+          />
         </div>
       </div>
     );
@@ -156,9 +182,21 @@ export function WorkflowDashboard({
   if (activePanel === 'webhooks') {
     return (
       <div className="h-full flex flex-col">
-        <BackBar label={isPl ? 'Webhook Relay' : 'Webhook Relays'} onBack={() => { setActivePanel(null); loadStats(); }} />
+        <BackBar
+          label={isPl ? 'Webhook Relay' : 'Webhook Relays'}
+          onBack={() => {
+            setActivePanel(null);
+            loadStats();
+          }}
+        />
         <div className="flex-1 overflow-y-auto p-4">
-          <WebhookRelayPanel workspaceId={workspaceId} onClose={() => { setActivePanel(null); loadStats(); }} />
+          <WebhookRelayPanel
+            workspaceId={workspaceId}
+            onClose={() => {
+              setActivePanel(null);
+              loadStats();
+            }}
+          />
         </div>
       </div>
     );
@@ -167,7 +205,13 @@ export function WorkflowDashboard({
   if (activePanel === 'distributions') {
     return (
       <div className="h-full flex flex-col">
-        <DistributionBuilder baseId={baseId} onClose={() => { setActivePanel(null); loadStats(); }} />
+        <DistributionBuilder
+          baseId={baseId}
+          onClose={() => {
+            setActivePanel(null);
+            loadStats();
+          }}
+        />
       </div>
     );
   }

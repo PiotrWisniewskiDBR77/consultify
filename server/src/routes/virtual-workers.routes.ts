@@ -8,12 +8,11 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
-
-import * as WorkerService from '../services/ai/virtualWorkerService.js';
 import * as ConversationLogger from '../services/ai/virtualWorkerConversationLogger.js';
 import * as InsightsEngine from '../services/ai/virtualWorkerInsightsEngine.js';
+import * as WorkerService from '../services/ai/virtualWorkerService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 

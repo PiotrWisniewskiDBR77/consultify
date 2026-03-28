@@ -498,8 +498,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
 
     const outputButtons: Array<{ type: OutputType; icon: React.ReactNode; label: string }> = [];
     const availableOutputs = STANDARD_OUTPUTS.filter(
-      (outputType) =>
-        outputType === 'idea' || config.outputCapabilities.includes(outputType)
+      (outputType) => outputType === 'idea' || config.outputCapabilities.includes(outputType)
     );
 
     if (availableOutputs.includes('initiative')) {

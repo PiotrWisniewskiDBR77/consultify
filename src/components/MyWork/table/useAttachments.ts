@@ -2,6 +2,7 @@
  * useAttachments — manages attachments for a record in the Table Platform.
  */
 import { useCallback, useEffect, useState } from 'react';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface UseAttachmentsOpts {
@@ -79,13 +80,10 @@ export function useAttachments(opts: UseAttachmentsOpts): UseAttachmentsReturn {
     [recordId, fetchAttachments]
   );
 
-  const removeAttachment = useCallback(
-    async (attachmentId: string) => {
-      await TablePlatformApi.deleteAttachment(attachmentId);
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-    },
-    []
-  );
+  const removeAttachment = useCallback(async (attachmentId: string) => {
+    await TablePlatformApi.deleteAttachment(attachmentId);
+    setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+  }, []);
 
   const refresh = useCallback(async () => {
     await fetchAttachments();

@@ -3,11 +3,11 @@
  * Complete AI API - Enterprise PMO Brain
  */
 
+import * as cheerio from 'cheerio';
 import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import * as cheerio from 'cheerio';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -16,18 +16,26 @@ import {
   validateParams,
   validateQuery,
 } from '../middleware/validation.middleware.js';
-import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
+import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
   triggerAIRecommendation,
   triggerAIRiskDetected,
 } from '../services/aiNotificationTriggers.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import {
+  AdvisorExecuteActionRequestSchema,
+  AdvisorFeedbackRequestSchema,
+  AdvisorRespondRequestSchema,
+  AdvisorResponseIdParamSchema,
+  AdvisorResponsesQuerySchema,
+  normalizeToAdvisorResponse,
+} from '../validators/advisorResponse.validators.js';
 import {
   ActionIdParamSchema,
   ActionTypeParamSchema,
@@ -75,14 +83,6 @@ import {
   UpdatePolicyRequestSchema,
   UpdateUserPreferencesRequestSchema,
 } from '../validators/ai.validators.js';
-import {
-  AdvisorExecuteActionRequestSchema,
-  AdvisorFeedbackRequestSchema,
-  AdvisorRespondRequestSchema,
-  AdvisorResponseIdParamSchema,
-  AdvisorResponsesQuerySchema,
-  normalizeToAdvisorResponse,
-} from '../validators/advisorResponse.validators.js';
 
 const router = Router();
 
@@ -380,11 +380,18 @@ router.post(
     }
 
     const finalUrl = String((resp as any)?.url || inputUrl);
-    if (finalUrl && finalUrl !== inputUrl && typeof isUrlSafeFn === 'function' && typeof getDefaultPolicyFn === 'function') {
+    if (
+      finalUrl &&
+      finalUrl !== inputUrl &&
+      typeof isUrlSafeFn === 'function' &&
+      typeof getDefaultPolicyFn === 'function'
+    ) {
       const basePolicy = getDefaultPolicyFn();
       const check = isUrlSafeFn(finalUrl, { ...basePolicy, internetEnabled: true });
       if (!check?.safe) {
-        return res.status(400).json({ error: check?.reason || 'Redirected URL blocked by security policy' });
+        return res
+          .status(400)
+          .json({ error: check?.reason || 'Redirected URL blocked by security policy' });
       }
     }
 
@@ -458,7 +465,8 @@ router.post(
         return urlObj.hostname;
       }
     })();
-    const fallbackName = `${hostname}${urlObj.pathname || ''}`.replace(/\/+$/, '') || hostname || 'url';
+    const fallbackName =
+      `${hostname}${urlObj.pathname || ''}`.replace(/\/+$/, '') || hostname || 'url';
     const filename = (detectedTitle || fallbackName).slice(0, 180);
     const docId = uuidv4();
 
@@ -469,9 +477,13 @@ router.post(
       { fallback: true } as any
     );
     try {
-      await dbRun(`UPDATE knowledge_docs SET category = ? WHERE id = ?`, ['chat_url_attachment', docId], {
-        fallback: true,
-      } as any);
+      await dbRun(
+        `UPDATE knowledge_docs SET category = ? WHERE id = ?`,
+        ['chat_url_attachment', docId],
+        {
+          fallback: true,
+        } as any
+      );
     } catch {
       /* ignore */
     }
@@ -484,7 +496,9 @@ router.post(
     }
 
     const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
-      const normalized = String(raw || '').replace(/\r\n/g, '\n').trim();
+      const normalized = String(raw || '')
+        .replace(/\r\n/g, '\n')
+        .trim();
       const MAX = 1200;
       const OVERLAP = 150;
       const out: Array<{ chunkIndex: number; content: string }> = [];
@@ -1621,7 +1635,9 @@ router.post(
       const resolvedChatPurpose = inferChatTaskPurpose({
         capability: 'chat',
         message,
-        attachments: Array.isArray((context as any)?.attachments) ? (context as any).attachments : [],
+        attachments: Array.isArray((context as any)?.attachments)
+          ? (context as any).attachments
+          : [],
         attachmentDocIds: attachmentDocIdsForPurpose,
         deepResearch: Boolean(aiModes?.deepResearch),
       });
@@ -6185,19 +6201,23 @@ router.post(
 const ClaimValidateRequestSchema = z.object({
   responseId: z.string().optional(),
   text: z.string().min(1),
-  citations: z.array(
-    z.object({
-      id: z.string(),
-      excerpt: z.string().optional(),
-      startOffset: z.number().optional(),
-      endOffset: z.number().optional(),
-    }),
-  ).default([]),
-  policy: z.object({
-    minCoverageScore: z.number().min(0).max(1).optional(),
-    requireAllFactualCited: z.boolean().optional(),
-    maxUncitedClaims: z.number().int().min(0).optional(),
-  }).optional(),
+  citations: z
+    .array(
+      z.object({
+        id: z.string(),
+        excerpt: z.string().optional(),
+        startOffset: z.number().optional(),
+        endOffset: z.number().optional(),
+      })
+    )
+    .default([]),
+  policy: z
+    .object({
+      minCoverageScore: z.number().min(0).max(1).optional(),
+      requireAllFactualCited: z.boolean().optional(),
+      maxUncitedClaims: z.number().int().min(0).optional(),
+    })
+    .optional(),
 });
 
 const ClaimExtractRequestSchema = z.object({
@@ -6216,16 +6236,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { text, citations, policy } = req.body;
 
-    const { extractClaims, matchClaimsToCitations, validateClaimCitations } = await import(
-      '../services/ai/claimCitationValidator.js'
-    );
+    const { extractClaims, matchClaimsToCitations, validateClaimCitations } =
+      await import('../services/ai/claimCitationValidator.js');
 
     const rawClaims = extractClaims(text);
     const matched = matchClaimsToCitations(rawClaims, citations, text);
     const result = validateClaimCitations(matched, policy || {});
 
     return res.json({ success: true, data: result });
-  }),
+  })
 );
 
 router.post(
@@ -6239,7 +6258,7 @@ router.post(
     const claims = extractClaims(text);
 
     return res.json({ success: true, data: { claims } });
-  }),
+  })
 );
 
 router.get(
@@ -6274,7 +6293,7 @@ router.get(
            SUM(CASE WHEN citations_count = 0 THEN 1 ELSE 0 END) as responsesBelowThreshold
          FROM advisor_response_log
          WHERE ${where}`,
-        params,
+        params
       );
 
       return res.json({
@@ -6292,7 +6311,7 @@ router.get(
         data: { totalResponses: 0, avgCoverage: 0, responsesBelowThreshold: 0 },
       });
     }
-  }),
+  })
 );
 
 // -------------------- V4-AI-02: Intent routing + context pack --------------------
@@ -6332,7 +6351,10 @@ router.post(
 
     const { classifyIntent, routeIntent } = await import('../services/ai/intentRouter.js');
     const { intent, confidence } = classifyIntent(message);
-    const routed = await routeIntent(message, req.organizationId || req.user?.organizationId || 'unknown');
+    const routed = await routeIntent(
+      message,
+      req.organizationId || req.user?.organizationId || 'unknown'
+    );
 
     const rule = [
       { intent: 'create', contextNeeds: ['tasks', 'initiatives'] },
@@ -6345,7 +6367,7 @@ router.post(
       { intent: 'plan', contextNeeds: ['tasks', 'milestones', 'dependencies'] },
       { intent: 'explain', contextNeeds: ['knowledge'] },
       { intent: 'clarify', contextNeeds: [] },
-    ].find(r => r.intent === intent);
+    ].find((r) => r.intent === intent);
 
     return res.json({
       success: true,
@@ -6356,7 +6378,7 @@ router.post(
         requiredContext: rule?.contextNeeds || ['knowledge'],
       },
     });
-  }),
+  })
 );
 
 router.post(
@@ -6369,9 +6391,8 @@ router.post(
     const userId = req.userId!;
 
     const { routeIntent } = await import('../services/ai/intentRouter.js');
-    const { buildContextForIntent, saveContextSnapshot } = await import(
-      '../services/ai/contextPackService.js'
-    );
+    const { buildContextForIntent, saveContextSnapshot } =
+      await import('../services/ai/contextPackService.js');
 
     const result = await routeIntent(message, orgId, { artifactIds });
 
@@ -6379,7 +6400,7 @@ router.post(
       orgId,
       result.intent,
       result.requiredContext,
-      artifactIds,
+      artifactIds
     );
     const snapshotId = await saveContextSnapshot(pack, conversationId);
 
@@ -6399,7 +6420,7 @@ router.post(
           result.suggestedModel.purpose,
           snapshotId,
           JSON.stringify(result.routingTrace),
-        ],
+        ]
       );
     } catch (logErr: any) {
       logger.warn('[IntentRouter] Failed to log routing decision:', logErr?.message);
@@ -6413,7 +6434,7 @@ router.post(
         tokenEstimate: pack.metadata.tokenEstimate,
       },
     });
-  }),
+  })
 );
 
 router.get(
@@ -6439,7 +6460,7 @@ router.get(
 
     const rows = await dbAll(sql, params);
     return res.json({ success: true, data: rows });
-  }),
+  })
 );
 
 router.post(
@@ -6454,7 +6475,7 @@ router.post(
     const pack = await buildContextForIntent(orgId, intent, requiredContext, artifactIds);
 
     return res.json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.get(
@@ -6477,7 +6498,7 @@ router.get(
     }
 
     return res.json({ success: true, data: snapshot });
-  }),
+  })
 );
 
 // ==================== V4-AI-05: Data Classification & Governance ====================
@@ -6494,13 +6515,12 @@ router.post(
       return res.status(400).json({ error: 'artifacts array is required' });
     }
 
-    const { classifyAndPersist } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { classifyAndPersist } = await import('../services/ai/dataClassificationService.js');
 
     const results = await Promise.all(
-      artifacts.map((a: { artifactType: string; artifactId: string; metadata?: Record<string, any> }) =>
-        classifyAndPersist(orgId, a.artifactType, a.artifactId, a.metadata)
+      artifacts.map(
+        (a: { artifactType: string; artifactId: string; metadata?: Record<string, any> }) =>
+          classifyAndPersist(orgId, a.artifactType, a.artifactId, a.metadata)
       )
     );
 
@@ -6520,9 +6540,8 @@ router.post(
       return res.status(400).json({ error: 'artifactType is required' });
     }
 
-    const { classifyDataClass, checkPermittedSource } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { classifyDataClass, checkPermittedSource } =
+      await import('../services/ai/dataClassificationService.js');
 
     const resolvedClass = dataClass || classifyDataClass(artifactType);
     const result = await checkPermittedSource(orgId, artifactType, resolvedClass);
@@ -6553,9 +6572,7 @@ router.post(
       return res.status(400).json({ error: 'actionType and dataClass are required' });
     }
 
-    const { createApprovalRequest } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { createApprovalRequest } = await import('../services/ai/dataClassificationService.js');
 
     const request = await createApprovalRequest(orgId, userId, actionType, dataClass, context);
     return res.json({ success: true, data: request });
@@ -6571,9 +6588,7 @@ router.get(
 
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
-    const { listApprovalRequests } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { listApprovalRequests } = await import('../services/ai/dataClassificationService.js');
 
     const requests = await listApprovalRequests(orgId, status);
     return res.json({ success: true, data: requests });
@@ -6588,9 +6603,7 @@ router.post(
     const userId = req.userId;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { approveRequest } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { approveRequest } = await import('../services/ai/dataClassificationService.js');
 
     const result = await approveRequest(req.params.id, orgId, userId);
     if (!result) {
@@ -6613,9 +6626,7 @@ router.post(
       return res.status(400).json({ error: 'reason is required' });
     }
 
-    const { rejectRequest } = await import(
-      '../services/ai/dataClassificationService.js'
-    );
+    const { rejectRequest } = await import('../services/ai/dataClassificationService.js');
 
     const result = await rejectRequest(req.params.id, orgId, userId, reason);
     if (!result) {
@@ -6639,9 +6650,7 @@ router.post(
       return res.status(400).json({ error: 'message is required' });
     }
 
-    const { preflightCostEstimate } = await import(
-      '../services/ai/preflightCostService.js'
-    );
+    const { preflightCostEstimate } = await import('../services/ai/preflightCostService.js');
 
     const estimate = await preflightCostEstimate(
       orgId,
@@ -6661,9 +6670,7 @@ router.get(
     const orgId = req.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { getBudgetStatus } = await import(
-      '../services/ai/preflightCostService.js'
-    );
+    const { getBudgetStatus } = await import('../services/ai/preflightCostService.js');
 
     const status = await getBudgetStatus(orgId);
     return res.json({ success: true, data: status });

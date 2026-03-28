@@ -31,10 +31,10 @@ import {
   History,
   KanbanSquare,
   Keyboard,
-  Layout,
-  LayoutTemplate,
   Layers,
+  Layout,
   LayoutGrid,
+  LayoutTemplate,
   Link2,
   Loader2,
   Maximize2,
@@ -64,15 +64,19 @@ import { useTranslation } from 'react-i18next';
 
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import { ActivityFeed } from './table/ActivityFeed';
 import { AddColumnDialog } from './table/AddColumnDialog';
 import { AICategorizeTool } from './table/AICategorizeTool';
 import { AICopilotMode } from './table/AICopilotMode';
 import { AITableAssistant } from './table/AITableAssistant';
 import { AITableProposal, type TableProposal } from './table/AITableProposal';
+import { AuditTrailPanel } from './table/AuditTrailPanel';
+import { AutomationsManager } from './table/automations/AutomationsManager';
 // Stage 3: Extracted view components
 import { CalendarView } from './table/CalendarView';
 import { CellExpandPopover } from './table/CellExpandPopover';
@@ -91,6 +95,11 @@ import {
   getConditionalStyle,
 } from './table/ConditionalFormatting';
 import { ConnectionLines } from './table/ConnectionLines';
+import { ConnectorList } from './table/connectors/ConnectorList';
+import { ConnectorWizard } from './table/connectors/ConnectorWizard';
+import { RunHistoryPanel } from './table/connectors/RunHistoryPanel';
+import { type Connector, useConnectors } from './table/connectors/useConnectors';
+import { WebhookRelayPanel } from './table/connectors/WebhookRelayPanel';
 import { CrossTableRelations } from './table/CrossTableRelations';
 import {
   copyTableToClipboard,
@@ -99,27 +108,38 @@ import {
   exportToCSV,
   parseCSV,
 } from './table/csvUtils';
+import { DistributionManager } from './table/distribution/DistributionManager';
+import { DistributionBuilder } from './table/DistributionBuilder';
 import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
-import { batchEvaluateFormulas } from './table/FormulaEngineV2';
-import { FrameworkGenerator } from './table/FrameworkGenerator';
-import { GridView } from './table/GridView';
-import { IdeaPipeline } from './table/IdeaPipeline';
 import FormBuilder from './table/FormBuilder';
 import { FormsIndex } from './table/forms/FormsIndex';
-import { InterfaceDesigner } from './table/InterfaceDesigner';
-import { InterfacesIndex } from './table/interfaces/InterfacesIndex';
+import { batchEvaluateFormulas } from './table/FormulaEngineV2';
+import { FrameworkGenerator } from './table/FrameworkGenerator';
+import { GovernedModelsDashboard } from './table/governed/GovernedModelsDashboard';
+import { GridView } from './table/GridView';
+import { IdeaPipeline } from './table/IdeaPipeline';
 import { IdeaScoringModel } from './table/IdeaScoringModel';
 import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
+import { ConsultifyLinkPanel } from './table/integration/ConsultifyLinkPanel';
+import { InterfaceDesigner } from './table/InterfaceDesigner';
+import { InterfacesIndex } from './table/interfaces/InterfacesIndex';
 import { KanbanView } from './table/KanbanView';
 import { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
 import { MatrixView } from './table/MatrixView';
+import { MobileToolbarMenu } from './table/MobileToolbarMenu';
+import { PresenceIndicators } from './table/PresenceIndicators';
 import { RecordExpandModal } from './table/RecordExpandModal';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
+import { SharingManager } from './table/sharing/SharingManager';
+import { SnapshotManager } from './table/SnapshotManager';
+import { StatusBar } from './table/StatusBar';
 import { StickyNoteView } from './table/StickyNoteView';
+import { SyncManager } from './table/sync/SyncManager';
+import { TableTabStrip } from './table/TableTabStrip';
 import type {
   ColumnDef,
   FilterGroup,
@@ -129,43 +149,23 @@ import type {
   TableNode,
 } from './table/tableTypes';
 import { computeAggregation } from './table/tableTypes';
+import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
-import { useTableKeyboard } from './table/useTableKeyboard';
-import { useTablePlatformIntegration } from './table/useTablePlatformIntegration';
-import * as TablePlatformApi from '@/services/api/tablePlatform.api';
-import { ActivityFeed } from './table/ActivityFeed';
-import { AuditTrailPanel } from './table/AuditTrailPanel';
-import { ViewRouter } from './table/views/ViewRouter';
-import type { ViewConfigState } from './table/views/ViewConfigPanel';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
+import { useTableKeyboard } from './table/useTableKeyboard';
 import { useTablePersistence } from './table/useTablePersistence';
+import { useTablePlatformIntegration } from './table/useTablePlatformIntegration';
 import { useTableQuickActions } from './table/useTableQuickActions';
+import { useTableRealtime } from './table/useTableRealtime';
 import { useTableRows } from './table/useTableRows';
 import { useTableSchema } from './table/useTableSchema';
 import { useTableViews } from './table/useTableViews';
 import { useUndoRedo } from './table/useUndoRedo';
-import { SnapshotManager } from './table/SnapshotManager';
+import type { ViewConfigState } from './table/views/ViewConfigPanel';
+import { ViewRouter } from './table/views/ViewRouter';
 import { VoiceImageInput } from './table/VoiceImageInput';
-import { ConnectorWizard } from './table/connectors/ConnectorWizard';
-import { ConnectorList } from './table/connectors/ConnectorList';
-import { RunHistoryPanel } from './table/connectors/RunHistoryPanel';
-import { useConnectors, type Connector } from './table/connectors/useConnectors';
-import { WebhookRelayPanel } from './table/connectors/WebhookRelayPanel';
-import { useTableRealtime } from './table/useTableRealtime';
-import { PresenceIndicators } from './table/PresenceIndicators';
-import { DistributionBuilder } from './table/DistributionBuilder';
-import { AutomationsManager } from './table/automations/AutomationsManager';
-import { SyncManager } from './table/sync/SyncManager';
-import { SharingManager } from './table/sharing/SharingManager';
-import { DistributionManager } from './table/distribution/DistributionManager';
-import { GovernedModelsDashboard } from './table/governed/GovernedModelsDashboard';
-import { ConsultifyLinkPanel } from './table/integration/ConsultifyLinkPanel';
 import { WorkflowDashboard } from './table/WorkflowDashboard';
-import { StatusBar } from './table/StatusBar';
-import { TableTabStrip } from './table/TableTabStrip';
-import { TemplateGallery } from './table/TemplateGallery';
-import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 
 interface IdeaTableToolProps {
   open: boolean;
@@ -374,13 +374,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
-  const effectiveProcessedRows = (usePlatform ? platformIntegration.processedRows : processedRows) ?? [];
+  const effectiveProcessedRows =
+    (usePlatform ? platformIntegration.processedRows : processedRows) ?? [];
   const effectiveGroupedRows = usePlatform ? platformIntegration.groupedRows : groupedRows;
   const effectiveSelectedRowIds = usePlatform ? platformIntegration.selectedRowIds : selectedRowIds;
-  const effectiveSetSelectedRowIds = usePlatform ? platformIntegration.setSelectedRowIds : setSelectedRowIds;
-  const effectiveHandleFieldChange = usePlatform ? platformIntegration.handleFieldChange : handleFieldChange;
+  const effectiveSetSelectedRowIds = usePlatform
+    ? platformIntegration.setSelectedRowIds
+    : setSelectedRowIds;
+  const effectiveHandleFieldChange = usePlatform
+    ? platformIntegration.handleFieldChange
+    : handleFieldChange;
   const effectiveHandleAddRow = usePlatform ? platformIntegration.handleAddRow : handleAddRow;
-  const effectiveHandleBulkDelete = usePlatform ? platformIntegration.handleBulkDelete : handleBulkDelete;
+  const effectiveHandleBulkDelete = usePlatform
+    ? platformIntegration.handleBulkDelete
+    : handleBulkDelete;
 
   const effectiveCycleSort = useCallback(
     (key: string) => {
@@ -442,7 +449,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // Platform override: persistence
   const effectiveLoading = usePlatform ? platformIntegration.loading : loading;
   const effectiveSaving = usePlatform ? platformIntegration.saving : saving;
-  const effectiveSaveStatusLabel = usePlatform ? platformIntegration.saveStatusLabel : saveStatusLabel;
+  const effectiveSaveStatusLabel = usePlatform
+    ? platformIntegration.saveStatusLabel
+    : saveStatusLabel;
   const effectiveHandleSave = usePlatform ? platformIntegration.handleSave : handleSave;
 
   // ── Platform switch: alias effective values for JSX consumption ────────────
@@ -452,7 +461,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const _visCols = (usePlatform ? effectiveVisibleColumns : visibleColumns) ?? [];
   const _vl = usePlatform ? effectiveViewLayout : viewLayout;
   const _sort = usePlatform ? effectiveSort : sort;
-  const _filters = (usePlatform ? effectiveFilters : filters) ?? { logic: 'and' as const, rules: [] };
+  const _filters = (usePlatform ? effectiveFilters : filters) ?? {
+    logic: 'and' as const,
+    rules: [],
+  };
   const _groupBy = usePlatform ? effectiveGroupBy : groupBy;
   const _savedViews = (usePlatform ? effectiveSavedViews : savedViews) ?? [];
   const _activeViewId = usePlatform ? effectiveActiveViewId : activeViewId;
@@ -512,7 +524,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showConnectorWizard, setShowConnectorWizard] = useState(false);
   const [showConnectorList, setShowConnectorList] = useState(false);
   const [showWebhookRelays, setShowWebhookRelays] = useState(false);
-  const [platformTab, setPlatformTab] = useState<'data' | 'forms' | 'interfaces' | 'models' | 'workflow'>('data');
+  const [platformTab, setPlatformTab] = useState<
+    'data' | 'forms' | 'interfaces' | 'models' | 'workflow'
+  >('data');
   const [showInterfaceDesigner, setShowInterfaceDesigner] = useState(false);
   const [showFormBuilder, setShowFormBuilder] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
@@ -579,7 +593,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // ── Multi-table tab strip: load tables list ─────────────────────────────────
   const platformTableId = usePlatform
-    ? (platformIntegration as any).platformFields?.[0]?.tableId ?? ideaId
+    ? ((platformIntegration as any).platformFields?.[0]?.tableId ?? ideaId)
     : null;
 
   useEffect(() => {
@@ -592,23 +606,33 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         if (!baseRow || cancelled) return;
         const baseId = String((baseRow as Record<string, unknown>).id ?? '');
         const fullBase = await TablePlatformApi.getBase(baseId);
-        const tables = ((fullBase as Record<string, unknown>)?.tables ?? []) as { id: string; name: string }[];
+        const tables = ((fullBase as Record<string, unknown>)?.tables ?? []) as {
+          id: string;
+          name: string;
+        }[];
         if (!cancelled) {
-          setBaseTables(tables.map((t: any) => ({ id: String(t.id), name: String(t.name ?? 'Untitled') })));
+          setBaseTables(
+            tables.map((t: any) => ({ id: String(t.id), name: String(t.name ?? 'Untitled') }))
+          );
         }
       } catch {
         // silently fail
       }
     })();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usePlatform, ideaId]);
 
-  const handleTabSelectTable = useCallback(async (tableId: string) => {
-    if (!usePlatform) return;
-    await platformIntegration.refresh();
-    toast(isPl ? 'Przełączono tabelę' : 'Switched table');
-  }, [usePlatform, platformIntegration, isPl]);
+  const handleTabSelectTable = useCallback(
+    async (tableId: string) => {
+      if (!usePlatform) return;
+      await platformIntegration.refresh();
+      toast(isPl ? 'Przełączono tabelę' : 'Switched table');
+    },
+    [usePlatform, platformIntegration, isPl]
+  );
 
   const handleTabCreateTable = useCallback(async () => {
     if (!usePlatform) return;
@@ -629,25 +653,41 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }
   }, [usePlatform, ideaId, isPl]);
 
-  const handleTabRenameTable = useCallback((_tableId: string, _newName: string) => {
-    setBaseTables((prev) => prev.map((t) => t.id === _tableId ? { ...t, name: _newName } : t));
-    toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
-  }, [isPl]);
+  const handleTabRenameTable = useCallback(
+    (_tableId: string, _newName: string) => {
+      setBaseTables((prev) => prev.map((t) => (t.id === _tableId ? { ...t, name: _newName } : t)));
+      toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
+    },
+    [isPl]
+  );
 
-  const handleTabDuplicateTable = useCallback(async (_tableId: string) => {
-    toast(isPl ? 'Duplikowanie tabeli — wkrótce' : 'Duplicate table — coming soon');
-  }, [isPl]);
+  const handleTabDuplicateTable = useCallback(
+    async (_tableId: string) => {
+      toast(isPl ? 'Duplikowanie tabeli — wkrótce' : 'Duplicate table — coming soon');
+    },
+    [isPl]
+  );
 
-  const handleTabDeleteTable = useCallback(async (tableId: string) => {
-    if (!window.confirm(isPl ? 'Czy na pewno chcesz usunąć tę tabelę?' : 'Are you sure you want to delete this table?')) return;
-    try {
-      await TablePlatformApi.deleteTable(tableId);
-      setBaseTables((prev) => prev.filter((t) => t.id !== tableId));
-      toast.success(isPl ? 'Tabela usunięta' : 'Table deleted');
-    } catch {
-      toast.error(isPl ? 'Nie udało się usunąć tabeli' : 'Failed to delete table');
-    }
-  }, [isPl]);
+  const handleTabDeleteTable = useCallback(
+    async (tableId: string) => {
+      if (
+        !window.confirm(
+          isPl
+            ? 'Czy na pewno chcesz usunąć tę tabelę?'
+            : 'Are you sure you want to delete this table?'
+        )
+      )
+        return;
+      try {
+        await TablePlatformApi.deleteTable(tableId);
+        setBaseTables((prev) => prev.filter((t) => t.id !== tableId));
+        toast.success(isPl ? 'Tabela usunięta' : 'Table deleted');
+      } catch {
+        toast.error(isPl ? 'Nie udało się usunąć tabeli' : 'Failed to delete table');
+      }
+    },
+    [isPl]
+  );
 
   // ── Quick action listener (extracted to hook) ────────────────────────────────
   useTableQuickActions({
@@ -1028,7 +1068,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)}
+            onChange={() =>
+              (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)
+            }
             onClick={(e) => e.stopPropagation()}
             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
           />
@@ -1086,12 +1128,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {col.key !== 'type' &&
                   !locked &&
                   (row?.data?.[col.key] == null || row.data[col.key] === '') && (
-                    <InlineAIFill
-                      node={row}
-                      column={col}
-                      ideaId={ideaId}
-                      onFill={_fieldChange}
-                    />
+                    <InlineAIFill node={row} column={col} ideaId={ideaId} onFill={_fieldChange} />
                   )}
                 {col.key !== 'type' && (
                   <button
@@ -1168,12 +1205,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     value={renamingViewName}
                     onChange={(e) => setRenamingViewName(e.target.value)}
                     onBlur={() => {
-                      if (renamingViewName.trim()) updateSavedView(v.id, { name: renamingViewName.trim() });
+                      if (renamingViewName.trim())
+                        updateSavedView(v.id, { name: renamingViewName.trim() });
                       setRenamingViewId(null);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        if (renamingViewName.trim()) updateSavedView(v.id, { name: renamingViewName.trim() });
+                        if (renamingViewName.trim())
+                          updateSavedView(v.id, { name: renamingViewName.trim() });
                         setRenamingViewId(null);
                       } else if (e.key === 'Escape') {
                         setRenamingViewId(null);
@@ -1186,7 +1225,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => applyView(v)}
                     onContextMenu={(e) => {
                       e.preventDefault();
-                      if (v.id !== 'default') setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
+                      if (v.id !== 'default')
+                        setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
                     }}
                     className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                       activeViewId === v.id
@@ -1201,7 +1241,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             ))}
             {!locked && (
               <button
-                onClick={() => { setSaveViewName(''); setShowSaveViewDialog(true); }}
+                onClick={() => {
+                  setSaveViewName('');
+                  setShowSaveViewDialog(true);
+                }}
                 className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
                 title={isPl ? 'Zapisz widok' : 'Save view'}
               >
@@ -1212,9 +1255,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
           {/* Save view dialog */}
           {showSaveViewDialog && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20" onClick={() => setShowSaveViewDialog(false)}>
-              <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">{isPl ? 'Zapisz widok' : 'Save view'}</h3>
+            <div
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
+              onClick={() => setShowSaveViewDialog(false)}
+            >
+              <div
+                className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">
+                  {isPl ? 'Zapisz widok' : 'Save view'}
+                </h3>
                 <input
                   autoFocus
                   value={saveViewName}
@@ -1229,12 +1280,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   }}
                 />
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => setShowSaveViewDialog(false)} className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800">{isPl ? 'Anuluj' : 'Cancel'}</button>
+                  <button
+                    onClick={() => setShowSaveViewDialog(false)}
+                    className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
+                    {isPl ? 'Anuluj' : 'Cancel'}
+                  </button>
                   <button
                     disabled={!saveViewName.trim()}
-                    onClick={() => { saveCurrentView(saveViewName.trim(), columns); setShowSaveViewDialog(false); }}
+                    onClick={() => {
+                      saveCurrentView(saveViewName.trim(), columns);
+                      setShowSaveViewDialog(false);
+                    }}
                     className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
-                  >{isPl ? 'Zapisz' : 'Save'}</button>
+                  >
+                    {isPl ? 'Zapisz' : 'Save'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1252,10 +1313,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                   onClick={() => {
                     const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
-                    if (v) { setRenamingViewId(v.id); setRenamingViewName(v.name); }
+                    if (v) {
+                      setRenamingViewId(v.id);
+                      setRenamingViewName(v.name);
+                    }
                     setViewContextMenu(null);
                   }}
-                >{isPl ? 'Zmień nazwę' : 'Rename'}</button>
+                >
+                  {isPl ? 'Zmień nazwę' : 'Rename'}
+                </button>
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                   onClick={() => {
@@ -1264,12 +1330,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       filters,
                       groupBy: groupBy ?? undefined,
                       layout: viewLayout,
-                      columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })),
+                      columns: columns.map((c) => ({
+                        key: c.key,
+                        visible: c.visible !== false,
+                        width: c.width,
+                      })),
                     });
                     toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
                     setViewContextMenu(null);
                   }}
-                >{isPl ? 'Aktualizuj' : 'Update'}</button>
+                >
+                  {isPl ? 'Aktualizuj' : 'Update'}
+                </button>
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
                   onClick={() => {
@@ -1277,7 +1349,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     toast.success(isPl ? 'Widok usunięty' : 'View deleted');
                     setViewContextMenu(null);
                   }}
-                >{isPl ? 'Usuń' : 'Delete'}</button>
+                >
+                  {isPl ? 'Usuń' : 'Delete'}
+                </button>
               </div>
             </div>
           )}
@@ -1322,9 +1396,24 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <FilterBuilder
                 open={showFilterPanel}
                 onClose={() => setShowFilterPanel(false)}
-                filters={{ logic: _filters.logic, rules: _filters.rules.map((r) => ({ fieldId: (r as any).fieldId ?? (r as any).column, operator: (r as any).operator, value: (r as any).value })) }}
+                filters={{
+                  logic: _filters.logic,
+                  rules: _filters.rules.map((r) => ({
+                    fieldId: (r as any).fieldId ?? (r as any).column,
+                    operator: (r as any).operator,
+                    value: (r as any).value,
+                  })),
+                }}
                 onChange={(pf) => {
-                  effectiveSetFilters({ logic: pf.logic, rules: pf.rules.map((r) => ({ id: `${r.fieldId}-${r.operator}`, column: r.fieldId, operator: r.operator as any, value: (r.value ?? '') as any })) });
+                  effectiveSetFilters({
+                    logic: pf.logic,
+                    rules: pf.rules.map((r) => ({
+                      id: `${r.fieldId}-${r.operator}`,
+                      column: r.fieldId,
+                      operator: r.operator as any,
+                      value: (r.value ?? '') as any,
+                    })),
+                  });
                   void platformIntegration.applyPlatformFilters(pf);
                 }}
                 fields={platformIntegration.platformFields}
@@ -1342,7 +1431,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
           {/* Group by */}
           <button
-            onClick={() => (usePlatform ? effectiveSetGroupBy : setGroupBy)(_groupBy ? null : 'status')}
+            onClick={() =>
+              (usePlatform ? effectiveSetGroupBy : setGroupBy)(_groupBy ? null : 'status')
+            }
             className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
               _groupBy
                 ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
@@ -1523,29 +1614,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <Keyboard size={12} />
             </button>
 
-          {/* Templates */}
-          {!locked && (
-            <button
-              onClick={() => setShowTemplateGallery(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Szablony' : 'Templates'}
-            >
-              <LayoutTemplate size={12} />
-            </button>
-          )}
+            {/* Templates */}
+            {!locked && (
+              <button
+                onClick={() => setShowTemplateGallery(true)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                title={isPl ? 'Szablony' : 'Templates'}
+              >
+                <LayoutTemplate size={12} />
+              </button>
+            )}
 
-          {/* Distribute */}
-          {!locked && (
-            <button
-              onClick={() => setShowDistributionBuilder(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Dystrybucja' : 'Distribute'}
-            >
-              <Send size={12} />
-            </button>
-          )}
+            {/* Distribute */}
+            {!locked && (
+              <button
+                onClick={() => setShowDistributionBuilder(true)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                title={isPl ? 'Dystrybucja' : 'Distribute'}
+              >
+                <Send size={12} />
+              </button>
+            )}
 
-          {/* Framework generator */}
+            {/* Framework generator */}
             {!locked && (
               <button
                 onClick={() => setShowFrameworkGen(true)}
@@ -1683,67 +1774,98 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 </button>
                 {showToolsMenu && (
                   <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Workflow' : 'Workflow'}</div>
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      {isPl ? 'Workflow' : 'Workflow'}
+                    </div>
                     <button
-                      onClick={() => { setShowAutomationsManager(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowAutomationsManager(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Rocket size={14} className="text-amber-500" />
                       {isPl ? 'Automatyzacje' : 'Automations'}
                     </button>
                     <button
-                      onClick={() => { setShowSyncManager(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowSyncManager(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Link2 size={14} className="text-cyan-500" />
                       {isPl ? 'Synchronizacja danych' : 'Data Sync'}
                     </button>
                     <button
-                      onClick={() => { setShowWebhookRelays(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowWebhookRelays(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Webhook size={14} className="text-indigo-500" />
                       {isPl ? 'Webhook Relay' : 'Webhook Relays'}
                     </button>
                     <button
-                      onClick={() => { setShowSharingManager(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowSharingManager(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Network size={14} className="text-green-500" />
                       {isPl ? 'Udostępnianie' : 'Sharing & Permissions'}
                     </button>
                     <button
-                      onClick={() => { setShowDistributionManager(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowDistributionManager(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Send size={14} className="text-pink-500" />
                       {isPl ? 'Dystrybucja' : 'Distribution'}
                     </button>
                     <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Budowanie' : 'Build'}</div>
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      {isPl ? 'Budowanie' : 'Build'}
+                    </div>
                     <button
-                      onClick={() => { setShowFormBuilder(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowFormBuilder(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <FileText size={14} className="text-blue-500" />
                       {isPl ? 'Formularze' : 'Forms'}
                     </button>
                     <button
-                      onClick={() => { setShowInterfaceDesigner(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowInterfaceDesigner(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Layout size={14} className="text-violet-500" />
                       {isPl ? 'Interfejsy' : 'Interfaces'}
                     </button>
                     <button
-                      onClick={() => { setShowTemplateGallery(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowTemplateGallery(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <LayoutTemplate size={14} className="text-emerald-500" />
                       {isPl ? 'Szablony' : 'Templates'}
                     </button>
                     <button
-                      onClick={() => { setShowConnectorWizard(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowConnectorWizard(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Download size={14} className="text-teal-500" />
@@ -1751,7 +1873,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     </button>
                     <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
                     <button
-                      onClick={() => { setShowConsultifyLink(true); setShowToolsMenu(false); }}
+                      onClick={() => {
+                        setShowConsultifyLink(true);
+                        setShowToolsMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
                       <Layers size={14} className="text-indigo-500" />
@@ -1761,56 +1886,97 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
               </div>
             )}
-
           </div>
 
           {/* Mobile overflow menu for secondary actions */}
           <MobileToolbarMenu>
             {!locked && (
-              <button onClick={() => setShowAICategorize(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <button
+                onClick={() => setShowAICategorize(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+              >
                 <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
               </button>
             )}
-            <button onClick={() => setShowScoringModel(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowScoringModel(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
             </button>
-            <button onClick={() => setShowExportPresentation(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowExportPresentation(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
             </button>
-            <button onClick={() => setShowPipeline(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowPipeline(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
             </button>
-            <button onClick={() => setShowCopilot(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowCopilot(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Brain size={14} /> AI Copilot
             </button>
-            <button onClick={() => setShowVoiceInput(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowVoiceInput(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
             </button>
-            <button onClick={() => setShowCrossRelations(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowCrossRelations(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
             </button>
-            <button onClick={() => setShowHeatmap(!showHeatmap)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowHeatmap(!showHeatmap)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
             </button>
-            <button onClick={() => setShowAuditTrail((p) => !p)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowAuditTrail((p) => !p)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <History size={14} /> {isPl ? 'Historia' : 'History'}
             </button>
-            <button onClick={() => setShowActivityFeed((p) => !p)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowActivityFeed((p) => !p)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
             </button>
-            <button onClick={() => setShowSnapshotManager(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowSnapshotManager(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
             </button>
-            <button onClick={() => setShowConditionalFmt(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+            <button
+              onClick={() => setShowConditionalFmt(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            >
               <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
             </button>
             {!locked && (
-              <button onClick={() => setShowFrameworkGen(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <button
+                onClick={() => setShowFrameworkGen(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+              >
                 <LayoutGrid size={14} /> Framework
               </button>
             )}
             {!locked && (
-              <button onClick={() => setShowTemplateGallery(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <button
+                onClick={() => setShowTemplateGallery(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+              >
                 <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
               </button>
             )}
@@ -1979,7 +2145,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             onClick={() => handleBulkConvert(t)}
                             className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize"
                           >
-                            → {t === 'initiative' ? (isPl ? 'Inicjatywa' : 'Initiative') : t === 'task' ? (isPl ? 'Zadanie' : 'Task') : (isPl ? 'Decyzja' : 'Decision')}
+                            →{' '}
+                            {t === 'initiative'
+                              ? isPl
+                                ? 'Inicjatywa'
+                                : 'Initiative'
+                              : t === 'task'
+                                ? isPl
+                                  ? 'Zadanie'
+                                  : 'Task'
+                                : isPl
+                                  ? 'Decyzja'
+                                  : 'Decision'}
                           </button>
                         ))}
                       </div>
@@ -2087,509 +2264,564 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         {/* Content area — switchable between Data / Forms / Interfaces + optional AI Panel */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           <div className="flex-1 overflow-hidden min-w-0">
-        {usePlatform && platformTab === 'forms' ? (
-          <div className="flex-1 overflow-y-auto">
-            <FormsIndex
-              tableId={platformTableId ?? ideaId}
-              tableFields={platformIntegration.platformFields.length > 0
-                ? platformIntegration.platformFields
-                : effectiveColumns.map((c) => ({
+            {usePlatform && platformTab === 'forms' ? (
+              <div className="flex-1 overflow-y-auto">
+                <FormsIndex
+                  tableId={platformTableId ?? ideaId}
+                  tableFields={
+                    platformIntegration.platformFields.length > 0
+                      ? platformIntegration.platformFields
+                      : effectiveColumns.map((c) => ({
+                          id: c.key,
+                          tableId: platformTableId ?? ideaId,
+                          name: c.header,
+                          fieldType: (c.type ??
+                            'singleLineText') as import('@/types/tablePlatform').FieldType,
+                          options: {},
+                          isComputed: false,
+                          order: 0,
+                          createdAt: '',
+                          updatedAt: '',
+                        }))
+                  }
+                  locked={locked}
+                />
+              </div>
+            ) : usePlatform && platformTab === 'interfaces' ? (
+              <div className="flex-1 overflow-y-auto">
+                <InterfacesIndex
+                  baseId={ideaId}
+                  tableId={platformTableId ?? ideaId}
+                  tables={[
+                    {
+                      id: platformTableId ?? ideaId,
+                      name: isPl ? 'Bieżąca tabela' : 'Current table',
+                      fields: _cols.map((c) => ({ id: c.key, name: c.header })),
+                    },
+                  ]}
+                  platformViews={platformIntegration.platformViews}
+                  onCreateView={platformIntegration.createPlatformView}
+                  locked={locked}
+                />
+              </div>
+            ) : usePlatform && platformTab === 'models' ? (
+              <div className="flex-1 overflow-y-auto">
+                <GovernedModelsDashboard
+                  baseId={ideaId}
+                  tables={baseTables.map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    fields:
+                      t.id === (platformTableId ?? ideaId)
+                        ? _cols.map((c) => ({ id: c.key, name: c.header }))
+                        : [],
+                  }))}
+                  locked={locked}
+                  onOpenTable={(tableId) => {
+                    const tab = baseTables.find((bt) => bt.id === tableId);
+                    if (tab) handleTabSelectTable(tab.id);
+                  }}
+                />
+              </div>
+            ) : usePlatform && platformTab === 'workflow' ? (
+              <div className="flex-1 overflow-hidden">
+                <WorkflowDashboard
+                  tableId={platformTableId ?? ideaId}
+                  baseId={ideaId}
+                  workspaceId={ideaId}
+                  tables={baseTables.map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    fields:
+                      t.id === (platformTableId ?? ideaId)
+                        ? _cols.map((c) => ({
+                            id: c.key,
+                            name: c.header,
+                            fieldType: c.type ?? 'singleLineText',
+                          }))
+                        : [],
+                  }))}
+                  fields={_cols.map((c) => ({
                     id: c.key,
-                    tableId: platformTableId ?? ideaId,
                     name: c.header,
-                    fieldType: (c.type ?? 'singleLineText') as import('@/types/tablePlatform').FieldType,
-                    options: {},
-                    isComputed: false,
-                    order: 0,
-                    createdAt: '',
-                    updatedAt: '',
-                  }))
-              }
-              locked={locked}
-            />
-          </div>
-        ) : usePlatform && platformTab === 'interfaces' ? (
-          <div className="flex-1 overflow-y-auto">
-            <InterfacesIndex
-              baseId={ideaId}
-              tableId={platformTableId ?? ideaId}
-              tables={[{
-                id: platformTableId ?? ideaId,
-                name: isPl ? 'Bieżąca tabela' : 'Current table',
-                fields: _cols.map((c) => ({ id: c.key, name: c.header })),
-              }]}
-              platformViews={platformIntegration.platformViews}
-              onCreateView={platformIntegration.createPlatformView}
-              locked={locked}
-            />
-          </div>
-        ) : usePlatform && platformTab === 'models' ? (
-          <div className="flex-1 overflow-y-auto">
-            <GovernedModelsDashboard
-              baseId={ideaId}
-              tables={baseTables.map((t) => ({
-                id: t.id,
-                name: t.name,
-                fields: t.id === (platformTableId ?? ideaId)
-                  ? _cols.map((c) => ({ id: c.key, name: c.header }))
-                  : [],
-              }))}
-              locked={locked}
-              onOpenTable={(tableId) => {
-                const tab = baseTables.find((bt) => bt.id === tableId);
-                if (tab) handleTabSelectTable(tab.id);
-              }}
-            />
-          </div>
-        ) : usePlatform && platformTab === 'workflow' ? (
-          <div className="flex-1 overflow-hidden">
-            <WorkflowDashboard
-              tableId={platformTableId ?? ideaId}
-              baseId={ideaId}
-              workspaceId={ideaId}
-              tables={baseTables.map((t) => ({
-                id: t.id,
-                name: t.name,
-                fields: t.id === (platformTableId ?? ideaId)
-                  ? _cols.map((c) => ({ id: c.key, name: c.header, fieldType: (c.type ?? 'singleLineText') }))
-                  : [],
-              }))}
-              fields={_cols.map((c) => ({ id: c.key, name: c.header, fieldType: (c.type ?? 'singleLineText') }))}
-              views={platformIntegration.platformViews.map((v: any) => ({
-                id: v.id,
-                name: v.name,
-                shareToken: v.shareToken,
-              }))}
-              locked={locked}
-            />
-          </div>
-        ) : _loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="animate-spin text-slate-400" size={24} />
-          </div>
-        ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
-          <ViewRouter
-            viewType={_vl === 'grid' ? 'gallery' : _vl as 'kanban' | 'calendar'}
-            records={processedRowsWithRollups}
-            columns={_cols}
-            viewConfig={{
-              ...platformViewConfig,
-              viewType: _vl === 'grid' ? 'gallery' : _vl as 'kanban' | 'calendar',
-              visibleFieldIds: platformViewConfig.visibleFieldIds.length > 0
-                ? platformViewConfig.visibleFieldIds
-                : _visCols.map((c) => c.key),
-              groupByFieldId: platformViewConfig.groupByFieldId || _groupBy || undefined,
-              dateFieldId: platformViewConfig.dateFieldId || _cols.find((c) => c.type === 'date')?.key,
-            }}
-            onRecordUpdate={_fieldChange}
-            onRecordClick={(id) => setDetailNodeId(id)}
-            onAddRecord={(defaults) => {
-              if (defaults) {
-                const id = `node-${Date.now()}`;
-                const now = new Date().toISOString();
-                const newNode = {
-                  id,
-                  type: 'idea',
-                  data: {
-                    label: '',
-                    status: 'todo',
-                    ...defaults,
-                    created_time: now,
-                    created_by: currentUserId,
-                    last_edited_time: now,
-                    last_edited_by: currentUserId,
-                  },
-                  position: { x: 0, y: 0 },
-                };
-                nodesUndo.push([...nodes, newNode]);
-              } else {
-                _addRow();
-              }
-            }}
-          />
-        ) : _vl === 'timeline' ? (
-          <TimelineView
-            nodes={processedRowsWithRollups}
-            edges={edges}
-            columns={_cols}
-            locked={locked}
-            onFieldChange={_fieldChange}
-            onNodeClick={(id) => setDetailNodeId(id)}
-          />
-        ) : _vl === 'sticky' ? (
-          <StickyNoteView
-            nodes={processedRowsWithRollups}
-            columns={_cols}
-            onNodeClick={(id) => setDetailNodeId(id)}
-            onReorder={handleReorderNode}
-            onFieldChange={_fieldChange}
-            groupBy={_groupBy}
-          />
-        ) : _vl === 'kanban' ? (
-          <KanbanView
-            nodes={processedRowsWithRollups}
-            groupByColumn={
-              _cols.find(
-                (c) =>
-                  c.key === (_groupBy || 'status') &&
-                  (c.type === 'select' || c.type === 'multiselect' || c.type === 'status')
-              ) ||
-              _cols.find((c) => c.type === 'status' || c.type === 'select') ||
-              _cols[0]
-            }
-            columns={_cols}
-            locked={locked}
-            onFieldChange={_fieldChange}
-            onAddRow={_addRow}
-            onNodeClick={(id) => setDetailNodeId(id)}
-          />
-        ) : _vl === 'calendar' ? (
-          <CalendarView
-            rows={processedRowsWithRollups}
-            columns={_cols}
-            locked={locked}
-            onNodeClick={(id) => setDetailNodeId(id)}
-            onFieldChange={_fieldChange}
-            onAddEventAtDate={handleAddEventAtDate}
-          />
-        ) : _vl === 'grid' ? (
-          <GridView
-            rows={processedRowsWithRollups}
-            columns={_cols}
-            onNodeClick={(id) => setDetailNodeId(id)}
-          />
-        ) : _vl === 'matrix' ? (
-          <MatrixView
-            nodes={processedRowsWithRollups}
-            columns={_cols}
-            xAxis={
-              (matrixAxisXKey && _cols.find((c) => c.key === matrixAxisXKey)) ||
-              _cols.find(
-                (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
-              ) ||
-              _cols.find((c) => c.type === 'rating') ||
-              _cols[0]!
-            }
-            yAxis={
-              (matrixAxisYKey && _cols.find((c) => c.key === matrixAxisYKey)) ||
-              _cols.find(
-                (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
-              ) ||
-              _cols.filter((c) => c.type === 'rating')[1] ||
-              _cols[1] ||
-              _cols[0]!
-            }
-            locked={locked}
-            onNodeClick={(id) => setDetailNodeId(id)}
-            onFieldChange={_fieldChange}
-            onAxisChange={(axis, col) => {
-              if (axis === 'x') setMatrixAxisXKey(col.key);
-              else setMatrixAxisYKey(col.key);
-            }}
-          />
-        ) : (
-          <div ref={tableContainerRef} className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch">
-            <ConnectionLines
-              selectedNodeId={selectedNodeForLines}
-              edges={edges}
-              allNodes={effectiveNodes}
-              containerRef={tableContainerRef}
-            />
-            <table
-              className="w-full text-left"
-              style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
-            >
-              <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
-                <tr>
-                  <th className="w-8 px-2 py-2">
-                    <input
-                      type="checkbox"
-                      checked={
-                        _selIds.size === processedRowsWithRollups.length && processedRowsWithRollups.length > 0
-                      }
-                      onChange={() => {
-                        const setSelFn = usePlatform ? effectiveSetSelectedRowIds : setSelectedRowIds;
-                        if (_selIds.size === processedRowsWithRollups.length) {
-                          setSelFn(new Set());
-                          onSelectionChange?.(EMPTY_SELECTION);
-                        } else {
-                          const all = new Set(processedRowsWithRollups.map((r) => r.id));
-                          setSelFn(all);
-                          onSelectionChange?.({
-                            type: 'row',
-                            count: all.size,
-                            ids: Array.from(all),
-                          });
-                        }
-                      }}
-                      className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
-                    />
-                  </th>
-                  <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">#</th>
-                  {stretchedVisibleCols.map((col) => (
-                    <th
-                      key={col.key}
-                      style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
-                      className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none group"
-                      draggable={editingHeaderKey !== col.key}
-                      onDragStart={() => handleColDragStart(col.key)}
-                      onDragOver={(e) => handleColDragOver(e, col.key)}
-                      onDragEnd={handleColDragEnd}
-                    >
-                      {editingHeaderKey === col.key ? (
+                    fieldType: c.type ?? 'singleLineText',
+                  }))}
+                  views={platformIntegration.platformViews.map((v: any) => ({
+                    id: v.id,
+                    name: v.name,
+                    shareToken: v.shareToken,
+                  }))}
+                  locked={locked}
+                />
+              </div>
+            ) : _loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="animate-spin text-slate-400" size={24} />
+              </div>
+            ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
+              <ViewRouter
+                viewType={_vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar')}
+                records={processedRowsWithRollups}
+                columns={_cols}
+                viewConfig={{
+                  ...platformViewConfig,
+                  viewType: _vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar'),
+                  visibleFieldIds:
+                    platformViewConfig.visibleFieldIds.length > 0
+                      ? platformViewConfig.visibleFieldIds
+                      : _visCols.map((c) => c.key),
+                  groupByFieldId: platformViewConfig.groupByFieldId || _groupBy || undefined,
+                  dateFieldId:
+                    platformViewConfig.dateFieldId || _cols.find((c) => c.type === 'date')?.key,
+                }}
+                onRecordUpdate={_fieldChange}
+                onRecordClick={(id) => setDetailNodeId(id)}
+                onAddRecord={(defaults) => {
+                  if (defaults) {
+                    const id = `node-${Date.now()}`;
+                    const now = new Date().toISOString();
+                    const newNode = {
+                      id,
+                      type: 'idea',
+                      data: {
+                        label: '',
+                        status: 'todo',
+                        ...defaults,
+                        created_time: now,
+                        created_by: currentUserId,
+                        last_edited_time: now,
+                        last_edited_by: currentUserId,
+                      },
+                      position: { x: 0, y: 0 },
+                    };
+                    nodesUndo.push([...nodes, newNode]);
+                  } else {
+                    _addRow();
+                  }
+                }}
+              />
+            ) : _vl === 'timeline' ? (
+              <TimelineView
+                nodes={processedRowsWithRollups}
+                edges={edges}
+                columns={_cols}
+                locked={locked}
+                onFieldChange={_fieldChange}
+                onNodeClick={(id) => setDetailNodeId(id)}
+              />
+            ) : _vl === 'sticky' ? (
+              <StickyNoteView
+                nodes={processedRowsWithRollups}
+                columns={_cols}
+                onNodeClick={(id) => setDetailNodeId(id)}
+                onReorder={handleReorderNode}
+                onFieldChange={_fieldChange}
+                groupBy={_groupBy}
+              />
+            ) : _vl === 'kanban' ? (
+              <KanbanView
+                nodes={processedRowsWithRollups}
+                groupByColumn={
+                  _cols.find(
+                    (c) =>
+                      c.key === (_groupBy || 'status') &&
+                      (c.type === 'select' || c.type === 'multiselect' || c.type === 'status')
+                  ) ||
+                  _cols.find((c) => c.type === 'status' || c.type === 'select') ||
+                  _cols[0]
+                }
+                columns={_cols}
+                locked={locked}
+                onFieldChange={_fieldChange}
+                onAddRow={_addRow}
+                onNodeClick={(id) => setDetailNodeId(id)}
+              />
+            ) : _vl === 'calendar' ? (
+              <CalendarView
+                rows={processedRowsWithRollups}
+                columns={_cols}
+                locked={locked}
+                onNodeClick={(id) => setDetailNodeId(id)}
+                onFieldChange={_fieldChange}
+                onAddEventAtDate={handleAddEventAtDate}
+              />
+            ) : _vl === 'grid' ? (
+              <GridView
+                rows={processedRowsWithRollups}
+                columns={_cols}
+                onNodeClick={(id) => setDetailNodeId(id)}
+              />
+            ) : _vl === 'matrix' ? (
+              <MatrixView
+                nodes={processedRowsWithRollups}
+                columns={_cols}
+                xAxis={
+                  (matrixAxisXKey && _cols.find((c) => c.key === matrixAxisXKey)) ||
+                  _cols.find(
+                    (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
+                  ) ||
+                  _cols.find((c) => c.type === 'rating') ||
+                  _cols[0]!
+                }
+                yAxis={
+                  (matrixAxisYKey && _cols.find((c) => c.key === matrixAxisYKey)) ||
+                  _cols.find(
+                    (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
+                  ) ||
+                  _cols.filter((c) => c.type === 'rating')[1] ||
+                  _cols[1] ||
+                  _cols[0]!
+                }
+                locked={locked}
+                onNodeClick={(id) => setDetailNodeId(id)}
+                onFieldChange={_fieldChange}
+                onAxisChange={(axis, col) => {
+                  if (axis === 'x') setMatrixAxisXKey(col.key);
+                  else setMatrixAxisYKey(col.key);
+                }}
+              />
+            ) : (
+              <div
+                ref={tableContainerRef}
+                className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
+              >
+                <ConnectionLines
+                  selectedNodeId={selectedNodeForLines}
+                  edges={edges}
+                  allNodes={effectiveNodes}
+                  containerRef={tableContainerRef}
+                />
+                <table
+                  className="w-full text-left"
+                  style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
+                >
+                  <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
+                    <tr>
+                      <th className="w-8 px-2 py-2">
                         <input
-                          autoFocus
-                          defaultValue={col.header}
-                          className="w-full bg-white dark:bg-navy-800 border border-primary-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
-                          onBlur={(e) => {
-                            renameColumn(col.key, e.target.value);
-                            setEditingHeaderKey(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              renameColumn(col.key, (e.target as HTMLInputElement).value);
-                              setEditingHeaderKey(null);
+                          type="checkbox"
+                          checked={
+                            _selIds.size === processedRowsWithRollups.length &&
+                            processedRowsWithRollups.length > 0
+                          }
+                          onChange={() => {
+                            const setSelFn = usePlatform
+                              ? effectiveSetSelectedRowIds
+                              : setSelectedRowIds;
+                            if (_selIds.size === processedRowsWithRollups.length) {
+                              setSelFn(new Set());
+                              onSelectionChange?.(EMPTY_SELECTION);
+                            } else {
+                              const all = new Set(processedRowsWithRollups.map((r) => r.id));
+                              setSelFn(all);
+                              onSelectionChange?.({
+                                type: 'row',
+                                count: all.size,
+                                ids: Array.from(all),
+                              });
                             }
-                            if (e.key === 'Escape') setEditingHeaderKey(null);
                           }}
-                          onClick={(e) => e.stopPropagation()}
+                          className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
                         />
-                      ) : (
-                        <div
-                          className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
-                          onClick={() => effectiveCycleSort(col.key)}
-                          onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            if (!locked) setEditingHeaderKey(col.key);
-                          }}
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            if (!locked) setColContextMenu({ colKey: col.key, x: e.clientX, y: e.clientY });
-                          }}
+                      </th>
+                      <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">
+                        #
+                      </th>
+                      {stretchedVisibleCols.map((col) => (
+                        <th
+                          key={col.key}
+                          style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                          className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none group"
+                          draggable={editingHeaderKey !== col.key}
+                          onDragStart={() => handleColDragStart(col.key)}
+                          onDragOver={(e) => handleColDragOver(e, col.key)}
+                          onDragEnd={handleColDragEnd}
                         >
-                          <GripVertical
-                            size={10}
-                            className="opacity-0 group-hover:opacity-40 cursor-grab"
-                          />
-                          {col.header}
-                          {_sort?.key === col.key ? (
-                            _sort.direction === 'asc' ? (
-                              <ArrowUp size={10} />
-                            ) : (
-                              <ArrowDown size={10} />
-                            )
+                          {editingHeaderKey === col.key ? (
+                            <input
+                              autoFocus
+                              defaultValue={col.header}
+                              className="w-full bg-white dark:bg-navy-800 border border-primary-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
+                              onBlur={(e) => {
+                                renameColumn(col.key, e.target.value);
+                                setEditingHeaderKey(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  renameColumn(col.key, (e.target as HTMLInputElement).value);
+                                  setEditingHeaderKey(null);
+                                }
+                                if (e.key === 'Escape') setEditingHeaderKey(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           ) : (
-                            <ArrowUpDown size={10} className="opacity-30" />
+                            <div
+                              className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+                              onClick={() => effectiveCycleSort(col.key)}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                if (!locked) setEditingHeaderKey(col.key);
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                if (!locked)
+                                  setColContextMenu({
+                                    colKey: col.key,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  });
+                              }}
+                            >
+                              <GripVertical
+                                size={10}
+                                className="opacity-0 group-hover:opacity-40 cursor-grab"
+                              />
+                              {col.header}
+                              {_sort?.key === col.key ? (
+                                _sort.direction === 'asc' ? (
+                                  <ArrowUp size={10} />
+                                ) : (
+                                  <ArrowDown size={10} />
+                                )
+                              ) : (
+                                <ArrowUpDown size={10} className="opacity-30" />
+                              )}
+                            </div>
                           )}
-                        </div>
-                      )}
-                      {/* Resize handle */}
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500/30 transition-colors"
-                        onMouseDown={(e) => handleResizeStart(col.key, e)}
-                      />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {effectiveGroupedRows ? (
-                  Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
-                    <React.Fragment key={groupKey}>
-                      <tr className="bg-slate-100/50 dark:bg-navy-800/50">
-                        <td
-                          colSpan={_visCols.length + 2}
-                          className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
-                        >
-                          {groupKey || (isPl ? '(brak wartości)' : '(empty)')} <span className="text-slate-400 font-normal ml-1">({rows.length})</span>
-                        </td>
-                      </tr>
-                      {rows.map((row, idx) => renderRow(row, idx))}
-                    </React.Fragment>
-                  ))
-                ) : processedRowsWithRollups.length === 0 ? (
-                  <tr>
-                    <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
-                      <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
-                        <div className="text-sm font-semibold mb-1">
-                          {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
-                        </div>
-                        <div className="text-[11px] leading-relaxed">
-                          {isPl
-                            ? 'Zacznij od struktury: wybierz framework, dodaj pierwszy wiersz lub użyj szablonu. AI zostaw na moment, gdy model tabeli będzie już wiarygodny.'
-                            : 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'}
-                        </div>
-                        {!locked && (
-                          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                            <button
-                              onClick={_addRow}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
-                            >
-                              <Plus size={14} />
-                              {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
-                            </button>
-                            <button
-                              onClick={handleAddRowWithTemplate}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-white/[0.05] dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
-                            >
-                              <Layers size={14} />
-                              {isPl ? 'Użyj szablonu wiersza' : 'Use row template'}
-                            </button>
-                            <button
-                              onClick={() => setShowFrameworkGen(true)}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
-                            >
-                              <LayoutGrid size={14} />
-                              {isPl ? 'Zbuduj framework' : 'Build framework'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
-                )}
-              </tbody>
-              {/* Footer aggregations */}
-              {processedRowsWithRollups.length > 0 &&
-                _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
-                  <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
-                    <tr className="bg-slate-50/50 dark:bg-navy-900/50">
-                      <td className="px-2 py-1.5" />
-                      <td className="w-10 px-1 py-1.5" />
-                      {stretchedVisibleCols.map((col) => {
-                        const agg = col.aggregation;
-                        if (!agg || agg === 'none')
-                          return <td key={col.key} className="px-2 py-1.5" />;
-                        const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
-                        return (
-                          <td
-                            key={col.key}
-                            className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
-                          >
-                            <span className="text-[8px] text-slate-400 uppercase mr-1">{agg}</span>
-                            {computeAggregation(agg, values)}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tfoot>
-                )}
-            </table>
-
-            {/* Edges table */}
-            {edges.length > 0 && (
-              <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-4">
-                <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
-                </div>
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                        {isPl ? 'Źródło' : 'Source'}
-                      </th>
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                        {isPl ? 'Cel' : 'Target'}
-                      </th>
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">
-                        Kind
-                      </th>
+                          {/* Resize handle */}
+                          <div
+                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500/30 transition-colors"
+                            onMouseDown={(e) => handleResizeStart(col.key, e)}
+                          />
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {edges.map((e) => (
-                      <tr
-                        key={e.id}
-                        className="border-b border-slate-200/20 dark:border-white/[0.02]"
-                      >
-                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                          {e.source}
-                        </td>
-                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                          {e.target}
-                        </td>
-                        <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
+                    {effectiveGroupedRows ? (
+                      Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
+                        <React.Fragment key={groupKey}>
+                          <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                            <td
+                              colSpan={_visCols.length + 2}
+                              className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                            >
+                              {groupKey || (isPl ? '(brak wartości)' : '(empty)')}{' '}
+                              <span className="text-slate-400 font-normal ml-1">
+                                ({rows.length})
+                              </span>
+                            </td>
+                          </tr>
+                          {rows.map((row, idx) => renderRow(row, idx))}
+                        </React.Fragment>
+                      ))
+                    ) : processedRowsWithRollups.length === 0 ? (
+                      <tr>
+                        <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
+                          <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
+                            <div className="text-sm font-semibold mb-1">
+                              {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
+                            </div>
+                            <div className="text-[11px] leading-relaxed">
+                              {isPl
+                                ? 'Zacznij od struktury: wybierz framework, dodaj pierwszy wiersz lub użyj szablonu. AI zostaw na moment, gdy model tabeli będzie już wiarygodny.'
+                                : 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'}
+                            </div>
+                            {!locked && (
+                              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                <button
+                                  onClick={_addRow}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                                >
+                                  <Plus size={14} />
+                                  {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+                                </button>
+                                <button
+                                  onClick={handleAddRowWithTemplate}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-white/[0.05] dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
+                                >
+                                  <Layers size={14} />
+                                  {isPl ? 'Użyj szablonu wiersza' : 'Use row template'}
+                                </button>
+                                <button
+                                  onClick={() => setShowFrameworkGen(true)}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                                >
+                                  <LayoutGrid size={14} />
+                                  {isPl ? 'Zbuduj framework' : 'Build framework'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
+                    )}
                   </tbody>
+                  {/* Footer aggregations */}
+                  {processedRowsWithRollups.length > 0 &&
+                    _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                      <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
+                        <tr className="bg-slate-50/50 dark:bg-navy-900/50">
+                          <td className="px-2 py-1.5" />
+                          <td className="w-10 px-1 py-1.5" />
+                          {stretchedVisibleCols.map((col) => {
+                            const agg = col.aggregation;
+                            if (!agg || agg === 'none')
+                              return <td key={col.key} className="px-2 py-1.5" />;
+                            const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
+                            return (
+                              <td
+                                key={col.key}
+                                className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
+                              >
+                                <span className="text-[8px] text-slate-400 uppercase mr-1">
+                                  {agg}
+                                </span>
+                                {computeAggregation(agg, values)}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      </tfoot>
+                    )}
                 </table>
+
+                {/* Edges table */}
+                {edges.length > 0 && (
+                  <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-4">
+                    <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
+                    </div>
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
+                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                            {isPl ? 'Źródło' : 'Source'}
+                          </th>
+                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                            {isPl ? 'Cel' : 'Target'}
+                          </th>
+                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">
+                            Kind
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {edges.map((e) => (
+                          <tr
+                            key={e.id}
+                            className="border-b border-slate-200/20 dark:border-white/[0.02]"
+                          >
+                            <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                              {e.source}
+                            </td>
+                            <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                              {e.target}
+                            </td>
+                            <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                              {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Status Bar — record count + aggregates */}
-        {usePlatform && (
-          <StatusBar
-            totalRecords={platformIntegration.totalRecords}
-            selectedCount={_selIds.size}
-            columns={platformIntegration.platformFields.map((f) => ({
-              id: f.id,
-              name: f.name,
-              fieldType: f.fieldType,
-            }))}
-            records={platformIntegration.nodes.map((n) => n.data ?? {})}
-            aggregateConfig={statusBarAggConfig as Record<string, 'none' | 'sum' | 'avg' | 'min' | 'max' | 'count'>}
-            onAggregateChange={(fieldId, mode) =>
-              setStatusBarAggConfig((prev) => ({ ...prev, [fieldId]: mode }))
-            }
-          />
-        )}
+            {/* Status Bar — record count + aggregates */}
+            {usePlatform && (
+              <StatusBar
+                totalRecords={platformIntegration.totalRecords}
+                selectedCount={_selIds.size}
+                columns={platformIntegration.platformFields.map((f) => ({
+                  id: f.id,
+                  name: f.name,
+                  fieldType: f.fieldType,
+                }))}
+                records={platformIntegration.nodes.map((n) => n.data ?? {})}
+                aggregateConfig={
+                  statusBarAggConfig as Record<
+                    string,
+                    'none' | 'sum' | 'avg' | 'min' | 'max' | 'count'
+                  >
+                }
+                onAggregateChange={(fieldId, mode) =>
+                  setStatusBarAggConfig((prev) => ({ ...prev, [fieldId]: mode }))
+                }
+              />
+            )}
 
-        {/* Table Tab Strip — multi-table navigation */}
-        {usePlatform && baseTables.length > 0 && (
-          <TableTabStrip
-            baseId={ideaId}
-            tables={baseTables}
-            activeTableId={platformTableId ?? baseTables[0]?.id ?? ''}
-            onSelectTable={handleTabSelectTable}
-            onCreateTable={handleTabCreateTable}
-            onRenameTable={handleTabRenameTable}
-            onDuplicateTable={handleTabDuplicateTable}
-            onDeleteTable={handleTabDeleteTable}
-          />
-        )}
-      </div>
-      </div>
-
-      {/* Column context menu */}
-      {colContextMenu && (
-        <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
-          <div
-            className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
-            style={{ left: colContextMenu.x, top: colContextMenu.y }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-              onClick={() => { setEditingHeaderKey(colContextMenu.colKey); setColContextMenu(null); }}
-            >{isPl ? 'Zmień nazwę' : 'Rename'}</button>
-            <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-              onClick={() => { effectiveCycleSort(colContextMenu.colKey); setColContextMenu(null); }}
-            >{isPl ? 'Sortuj' : 'Sort'}</button>
-            <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-              onClick={() => { toggleColumn(colContextMenu.colKey); setColContextMenu(null); }}
-            >{isPl ? 'Ukryj kolumnę' : 'Hide column'}</button>
-            <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
-            <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
-              onClick={() => {
-                deleteColumn(colContextMenu.colKey);
-                toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');
-                setColContextMenu(null);
-              }}
-            >{isPl ? 'Usuń kolumnę' : 'Delete column'}</button>
+            {/* Table Tab Strip — multi-table navigation */}
+            {usePlatform && baseTables.length > 0 && (
+              <TableTabStrip
+                baseId={ideaId}
+                tables={baseTables}
+                activeTableId={platformTableId ?? baseTables[0]?.id ?? ''}
+                onSelectTable={handleTabSelectTable}
+                onCreateTable={handleTabCreateTable}
+                onRenameTable={handleTabRenameTable}
+                onDuplicateTable={handleTabDuplicateTable}
+                onDeleteTable={handleTabDeleteTable}
+              />
+            )}
           </div>
         </div>
-      )}
 
-        </div>
+        {/* Column context menu */}
+        {colContextMenu && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
+            <div
+              className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
+              style={{ left: colContextMenu.x, top: colContextMenu.y }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                onClick={() => {
+                  setEditingHeaderKey(colContextMenu.colKey);
+                  setColContextMenu(null);
+                }}
+              >
+                {isPl ? 'Zmień nazwę' : 'Rename'}
+              </button>
+              <button
+                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                onClick={() => {
+                  effectiveCycleSort(colContextMenu.colKey);
+                  setColContextMenu(null);
+                }}
+              >
+                {isPl ? 'Sortuj' : 'Sort'}
+              </button>
+              <button
+                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                onClick={() => {
+                  toggleColumn(colContextMenu.colKey);
+                  setColContextMenu(null);
+                }}
+              >
+                {isPl ? 'Ukryj kolumnę' : 'Hide column'}
+              </button>
+              <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
+              <button
+                className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                onClick={() => {
+                  deleteColumn(colContextMenu.colKey);
+                  toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');
+                  setColContextMenu(null);
+                }}
+              >
+                {isPl ? 'Usuń kolumnę' : 'Delete column'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Row Detail Panel */}
       <RowDetailPanel
@@ -2843,13 +3075,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Interface Designer */}
       {showInterfaceDesigner && (
-        <div className="fixed inset-0 z-[160] flex items-stretch bg-black/20 backdrop-blur-[2px]" onClick={() => setShowInterfaceDesigner(false)}>
-          <div className="flex-1 m-4 bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[160] flex items-stretch bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowInterfaceDesigner(false)}
+        >
+          <div
+            className="flex-1 m-4 bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 {isPl ? 'Projektant interfejsu' : 'Interface Designer'}
               </h3>
-              <button onClick={() => setShowInterfaceDesigner(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+              <button
+                onClick={() => setShowInterfaceDesigner(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
                 <X size={14} className="text-slate-400" />
               </button>
             </div>
@@ -2857,11 +3098,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               interfaceId={`iface-${ideaId}`}
               baseId={ideaId}
               layout={{ blocks: [] }}
-              tables={[{
-                id: ideaId,
-                name: isPl ? 'Bieżąca tabela' : 'Current table',
-                fields: _cols.map((c) => ({ id: c.key, name: c.header })),
-              }]}
+              tables={[
+                {
+                  id: ideaId,
+                  name: isPl ? 'Bieżąca tabela' : 'Current table',
+                  fields: _cols.map((c) => ({ id: c.key, name: c.header })),
+                },
+              ]}
               onSave={() => {
                 setShowInterfaceDesigner(false);
               }}
@@ -2872,8 +3115,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Form Builder */}
       {showFormBuilder && usePlatform && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={() => setShowFormBuilder(false)}>
-          <div className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowFormBuilder(false)}
+        >
+          <div
+            className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <FormBuilder
               form={{
                 id: `form-${ideaId}`,
@@ -2889,7 +3138,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 id: c.key,
                 tableId: ideaId,
                 name: c.header,
-                fieldType: (c.type ?? 'singleLineText') as import('@/types/tablePlatform').FieldType,
+                fieldType: (c.type ??
+                  'singleLineText') as import('@/types/tablePlatform').FieldType,
                 options: {},
                 isComputed: false,
                 order: 0,
@@ -2937,24 +3187,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Distribution Builder */}
       {showDistributionBuilder && (
-        <DistributionBuilder
-          baseId={ideaId}
-          onClose={() => setShowDistributionBuilder(false)}
-        />
+        <DistributionBuilder baseId={ideaId} onClose={() => setShowDistributionBuilder(false)} />
       )}
 
       {/* Consultify Link Panel */}
       {showConsultifyLink && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowConsultifyLink(false)}>
-          <div className="w-[460px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowConsultifyLink(false)}
+        >
+          <div
+            className="w-[460px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ConsultifyLinkPanel
               baseId={ideaId}
               tables={baseTables.map((t) => ({
                 id: t.id,
                 name: t.name,
-                fields: t.id === (platformTableId ?? ideaId)
-                  ? _cols.map((c) => ({ id: c.key, name: c.header }))
-                  : [],
+                fields:
+                  t.id === (platformTableId ?? ideaId)
+                    ? _cols.map((c) => ({ id: c.key, name: c.header }))
+                    : [],
               }))}
               models={[]}
               onClose={() => setShowConsultifyLink(false)}
@@ -2965,27 +3219,44 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Webhook Relay Panel */}
       {showWebhookRelays && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowWebhookRelays(false)}>
-          <div className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
-            <WebhookRelayPanel
-              workspaceId={ideaId}
-              onClose={() => setShowWebhookRelays(false)}
-            />
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowWebhookRelays(false)}
+        >
+          <div
+            className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <WebhookRelayPanel workspaceId={ideaId} onClose={() => setShowWebhookRelays(false)} />
           </div>
         </div>
       )}
 
       {/* Automations Manager */}
       {showAutomationsManager && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowAutomationsManager(false)}>
-          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowAutomationsManager(false)}
+        >
+          <div
+            className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <AutomationsManager
               tableId={platformTableId ?? ideaId}
               baseId={ideaId}
               fields={
                 usePlatform && platformIntegration.platformFields
-                  ? platformIntegration.platformFields.map((f: any) => ({ id: f.id, name: f.name, fieldType: f.fieldType }))
-                  : _cols.map((c) => ({ id: c.key, name: c.header, fieldType: c.type ?? 'singleLineText' }))
+                  ? platformIntegration.platformFields.map((f: any) => ({
+                      id: f.id,
+                      name: f.name,
+                      fieldType: f.fieldType,
+                    }))
+                  : _cols.map((c) => ({
+                      id: c.key,
+                      name: c.header,
+                      fieldType: c.type ?? 'singleLineText',
+                    }))
               }
               onClose={() => setShowAutomationsManager(false)}
             />
@@ -2995,16 +3266,30 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Sync Manager */}
       {showSyncManager && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowSyncManager(false)}>
-          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowSyncManager(false)}
+        >
+          <div
+            className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <SyncManager
               tableId={platformTableId ?? ideaId}
               baseId={ideaId}
               tables={baseTables}
               fields={
                 usePlatform && platformIntegration.platformFields
-                  ? platformIntegration.platformFields.map((f: any) => ({ id: f.id, name: f.name, fieldType: f.fieldType }))
-                  : _cols.map((c) => ({ id: c.key, name: c.header, fieldType: c.type ?? 'singleLineText' }))
+                  ? platformIntegration.platformFields.map((f: any) => ({
+                      id: f.id,
+                      name: f.name,
+                      fieldType: f.fieldType,
+                    }))
+                  : _cols.map((c) => ({
+                      id: c.key,
+                      name: c.header,
+                      fieldType: c.type ?? 'singleLineText',
+                    }))
               }
               onClose={() => setShowSyncManager(false)}
             />
@@ -3014,11 +3299,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Sharing Manager */}
       {showSharingManager && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowSharingManager(false)}>
-          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowSharingManager(false)}
+        >
+          <div
+            className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <SharingManager
               baseId={ideaId}
-              views={effectiveSavedViews?.map((v: any) => ({ id: v.id, name: v.name, shareToken: v.shareToken })) ?? []}
+              views={
+                effectiveSavedViews?.map((v: any) => ({
+                  id: v.id,
+                  name: v.name,
+                  shareToken: v.shareToken,
+                })) ?? []
+              }
               onClose={() => setShowSharingManager(false)}
             />
           </div>
@@ -3027,8 +3324,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Distribution Manager */}
       {showDistributionManager && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowDistributionManager(false)}>
-          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowDistributionManager(false)}
+        >
+          <div
+            className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <DistributionManager
               baseId={ideaId}
               tableId={platformTableId ?? ideaId}
@@ -3041,8 +3344,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Connector List Panel */}
       {showConnectorList && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowConnectorList(false)}>
-          <div className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setShowConnectorList(false)}
+        >
+          <div
+            className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             {connectorHistoryTarget ? (
               <RunHistoryPanel
                 connector={connectorHistoryTarget}

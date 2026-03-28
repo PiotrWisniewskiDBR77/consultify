@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { useV8Gate } from '@/hooks/useV8Gate';
 import { useV8CreateHandoff, useV8Handoffs, useV8Snapshots } from '@/hooks/useV8Chat';
+import { useV8Gate } from '@/hooks/useV8Gate';
 import { useV8ConversationRetrievalTraces } from '@/hooks/useV8Retrieval';
 
 interface V8ContextIndicatorProps {
@@ -17,9 +17,11 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   const { showV8Chat } = useV8Gate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: snapshots, isLoading, isError } = useV8Snapshots(
-    showV8Chat && conversationId ? conversationId : undefined,
-  );
+  const {
+    data: snapshots,
+    isLoading,
+    isError,
+  } = useV8Snapshots(showV8Chat && conversationId ? conversationId : undefined);
   const {
     data: handoffs,
     isLoading: handoffsLoading,
@@ -33,7 +35,11 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   } = useV8ConversationRetrievalTraces(showV8Chat && conversationId ? conversationId : undefined);
 
   if (!showV8Chat) return null;
-  if ((isLoading || isError) && (retrievalLoading || retrievalError) && (handoffsLoading || handoffsError))
+  if (
+    (isLoading || isError) &&
+    (retrievalLoading || retrievalError) &&
+    (handoffsLoading || handoffsError)
+  )
     return null;
 
   const items = Array.isArray(snapshots) ? snapshots : [];
@@ -59,12 +65,14 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
         contextSnapshotId: latestSnapshot.snapshotId,
         goal: normalizedGoal,
       });
-      toast.success(t('v8.handoffCreated', 'Governed handoff created from the active conversation'));
+      toast.success(
+        t('v8.handoffCreated', 'Governed handoff created from the active conversation')
+      );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.handoffCreateFailed', 'Failed to create governed handoff'),
+          : t('v8.handoffCreateFailed', 'Failed to create governed handoff')
       );
     }
   };
@@ -88,8 +96,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
         )}
         {handoffItems.length > 0 && (
           <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-sky-700 dark:border-sky-800/70 dark:bg-sky-950/50 dark:text-sky-300">
-            <GitBranch size={10} />
-            H {handoffItems.length}
+            <GitBranch size={10} />H {handoffItems.length}
           </span>
         )}
       </button>
@@ -108,9 +115,13 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
               {t('v8.contextSnapshotsLabel', 'Snapshots')}
             </div>
             <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-200">
-              {t('v8.contextSnapshotsCount', '{{count}} snapshot(s) captured for this conversation', {
-                count: items.length,
-              })}
+              {t(
+                'v8.contextSnapshotsCount',
+                '{{count}} snapshot(s) captured for this conversation',
+                {
+                  count: items.length,
+                }
+              )}
             </div>
           </div>
 
@@ -138,7 +149,9 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                   </div>
                   <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.handoffIntent', 'Intent')}</div>
-                    <div className="mt-0.5 font-medium">{latestHandoff.intentClassification?.intentType || 'unknown'}</div>
+                    <div className="mt-0.5 font-medium">
+                      {latestHandoff.intentClassification?.intentType || 'unknown'}
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
@@ -146,15 +159,14 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                   <div className="mt-0.5 font-medium">{latestHandoff.goal}</div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px] text-sky-800 dark:text-sky-200">
-                  <span>{t('v8.handoffRun', 'Run')}: {latestHandoff.executionRunId}</span>
+                  <span>
+                    {t('v8.handoffRun', 'Run')}: {latestHandoff.executionRunId}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'v8.handoffEmpty',
-                  'No governed handoffs recorded for this conversation yet.',
-                )}
+                {t('v8.handoffEmpty', 'No governed handoffs recorded for this conversation yet.')}
               </div>
             )}
 
@@ -204,16 +216,22 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px] text-violet-800 dark:text-violet-200">
-                  <span>{t('v8.retrievalDenied', 'Denied')}: {latestTrace.deniedEntries.length}</span>
-                  <span>{t('v8.retrievalWarnings', 'Warnings')}: {latestTrace.freshnessWarnings.length}</span>
-                  <span>{t('v8.retrievalLatency', 'Latency')}: {latestTrace.totalLatencyMs}ms</span>
+                  <span>
+                    {t('v8.retrievalDenied', 'Denied')}: {latestTrace.deniedEntries.length}
+                  </span>
+                  <span>
+                    {t('v8.retrievalWarnings', 'Warnings')}: {latestTrace.freshnessWarnings.length}
+                  </span>
+                  <span>
+                    {t('v8.retrievalLatency', 'Latency')}: {latestTrace.totalLatencyMs}ms
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {t(
                   'v8.retrievalEmpty',
-                  'No governed retrieval traces recorded for this conversation yet.',
+                  'No governed retrieval traces recorded for this conversation yet.'
                 )}
               </div>
             )}

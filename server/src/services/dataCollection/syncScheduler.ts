@@ -9,8 +9,8 @@
  */
 
 import { getDatabase } from '../../database/Database.js';
-import { connectorRunner } from './connectorFramework.js';
 import logger from '../../utils/Logger.js';
+import { connectorRunner } from './connectorFramework.js';
 
 // ---------------------------------------------------------------------------
 // Refresh Policy types
@@ -121,7 +121,9 @@ export class SyncScheduler {
     switch (policy.type) {
       case 'manual':
       case 'on_change':
-        logger.info(`[SyncScheduler] connector ${connectorId} uses ${policy.type} policy — not scheduling`);
+        logger.info(
+          `[SyncScheduler] connector ${connectorId} uses ${policy.type} policy — not scheduling`
+        );
         return;
 
       case 'interval': {
@@ -139,21 +141,24 @@ export class SyncScheduler {
         const delayMs = nextRun.getTime() - Date.now();
         const intervalMs = 24 * 60 * 60 * 1000; // re-check daily
 
-        const timer = setTimeout(() => {
-          this.runConnector(connectorId);
-          const recurring = setInterval(() => {
-            const next = parseCronNextRun(policy.cron);
-            if (next && Math.abs(next.getTime() - Date.now()) < 60_000) {
-              this.runConnector(connectorId);
-            }
-          }, 60_000);
-          if (recurring.unref) recurring.unref();
+        const timer = setTimeout(
+          () => {
+            this.runConnector(connectorId);
+            const recurring = setInterval(() => {
+              const next = parseCronNextRun(policy.cron);
+              if (next && Math.abs(next.getTime() - Date.now()) < 60_000) {
+                this.runConnector(connectorId);
+              }
+            }, 60_000);
+            if (recurring.unref) recurring.unref();
 
-          const entry = this.timers.get(connectorId);
-          if (entry) {
-            entry.timer = recurring as unknown as NodeJS.Timeout;
-          }
-        }, Math.max(delayMs, 0));
+            const entry = this.timers.get(connectorId);
+            if (entry) {
+              entry.timer = recurring as unknown as NodeJS.Timeout;
+            }
+          },
+          Math.max(delayMs, 0)
+        );
 
         if (timer.unref) timer.unref();
 
@@ -165,7 +170,9 @@ export class SyncScheduler {
           timer: timer as unknown as NodeJS.Timeout,
         });
 
-        logger.info(`[SyncScheduler] scheduled connector ${connectorId} via cron "${policy.cron}", next run at ${nextRun.toISOString()}`);
+        logger.info(
+          `[SyncScheduler] scheduled connector ${connectorId} via cron "${policy.cron}", next run at ${nextRun.toISOString()}`
+        );
         return;
       }
     }

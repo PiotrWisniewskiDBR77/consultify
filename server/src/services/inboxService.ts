@@ -6,8 +6,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import * as queryHelpers from '../utils/queryHelpers.js';
+
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 export interface CanonicalInboxItem {
   id: string;
@@ -84,7 +85,12 @@ function rowToItem(r: any): CanonicalInboxItem {
   };
 }
 
-function sectionForTask(status: string, dueDate: string | null, today: string, isBlocked: boolean): string {
+function sectionForTask(
+  status: string,
+  dueDate: string | null,
+  today: string,
+  isBlocked: boolean
+): string {
   if (isBlocked) return 'blocked_escalations';
   const s = (status || '').toLowerCase();
   if (s === 'done' || s === 'completed' || s === 'validated') return 'assigned_tasks';
@@ -127,10 +133,12 @@ export async function materializeInboxItems(
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
       const results = await Promise.all(
-        batch.map((params) => queryHelpers.queryRun(UPSERT_SQL, params).catch((err: any) => {
-          logger.warn(`[InboxService] Upsert failed: ${err.message}`);
-          return null;
-        }))
+        batch.map((params) =>
+          queryHelpers.queryRun(UPSERT_SQL, params).catch((err: any) => {
+            logger.warn(`[InboxService] Upsert failed: ${err.message}`);
+            return null;
+          })
+        )
       );
       count += results.filter(Boolean).length;
     }
@@ -157,22 +165,34 @@ export async function materializeInboxItems(
        LIMIT 200`,
       [orgId, userId]
     ),
-    queryHelpers.queryAll<any>(
-      `SELECT id, type, title, COALESCE(message, body, '') as body, priority, created_at
+    queryHelpers
+      .queryAll<any>(
+        `SELECT id, type, title, COALESCE(message, body, '') as body, priority, created_at
        FROM notifications
        WHERE user_id = ? AND COALESCE(read, 0) = 0
        LIMIT 200`,
-      [userId]
-    ).catch(() => [] as any[]),
+        [userId]
+      )
+      .catch(() => [] as any[]),
   ]);
 
   const taskRows = tasks.map((t) => {
     const isBlocked = !!(t.blocked_reason || t.blocked_by_decision_id);
     const section = sectionForTask(t.status, t.due_date, today, isBlocked);
     return [
-      uuidv4(), userId, orgId, 'task', 'task', t.id,
-      t.title, t.description || null, priorityForItem(t.priority), section,
-      t.due_date || null, now, now,
+      uuidv4(),
+      userId,
+      orgId,
+      'task',
+      'task',
+      t.id,
+      t.title,
+      t.description || null,
+      priorityForItem(t.priority),
+      section,
+      t.due_date || null,
+      now,
+      now,
     ];
   });
 
@@ -180,9 +200,19 @@ export async function materializeInboxItems(
     const itemType = (d.type || '').toUpperCase().includes('APPROVAL') ? 'approval' : 'decision';
     const section = itemType === 'approval' ? 'approvals_gates' : 'decisions_required';
     return [
-      uuidv4(), userId, orgId, itemType, 'decision', d.id,
-      d.title, d.description || null, priorityForItem(d.priority), section,
-      d.deadline || null, now, now,
+      uuidv4(),
+      userId,
+      orgId,
+      itemType,
+      'decision',
+      d.id,
+      d.title,
+      d.description || null,
+      priorityForItem(d.priority),
+      section,
+      d.deadline || null,
+      now,
+      now,
     ];
   });
 
@@ -190,14 +220,33 @@ export async function materializeInboxItems(
     const nType = (n.type || '').toUpperCase();
     let itemType: CanonicalInboxItem['itemType'] = 'signal';
     let section = 'fyi_system';
-    if (nType.includes('MENTION')) { itemType = 'mention'; section = 'fyi_mentions'; }
-    else if (nType.includes('ESCALATION')) { itemType = 'escalation'; section = 'blocked_escalations'; }
-    else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) { itemType = 'approval'; section = 'approvals_gates'; }
-    else if (nType.includes('AI') || nType.includes('INSIGHT')) { itemType = 'signal'; section = 'ai_insights'; }
+    if (nType.includes('MENTION')) {
+      itemType = 'mention';
+      section = 'fyi_mentions';
+    } else if (nType.includes('ESCALATION')) {
+      itemType = 'escalation';
+      section = 'blocked_escalations';
+    } else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) {
+      itemType = 'approval';
+      section = 'approvals_gates';
+    } else if (nType.includes('AI') || nType.includes('INSIGHT')) {
+      itemType = 'signal';
+      section = 'ai_insights';
+    }
     return [
-      uuidv4(), userId, orgId, itemType, 'notification', n.id,
-      n.title || 'Notification', n.body || null, priorityForItem(n.priority), section,
-      null, now, now,
+      uuidv4(),
+      userId,
+      orgId,
+      itemType,
+      'notification',
+      n.id,
+      n.title || 'Notification',
+      n.body || null,
+      priorityForItem(n.priority),
+      section,
+      null,
+      now,
+      now,
     ];
   });
 
@@ -281,18 +330,12 @@ export async function triageItem(
          resolved_at = CASE WHEN ? = 'resolved' THEN ? ELSE resolved_at END,
          metadata_json = COALESCE(?, metadata_json)
      WHERE id = ?`,
-    [
-      newStatus, now,
-      newStatus, now,
-      params ? JSON.stringify(params) : null,
-      itemId,
-    ]
+    [newStatus, now, newStatus, now, params ? JSON.stringify(params) : null, itemId]
   );
 
-  const row = await queryHelpers.queryOne<any>(
-    `SELECT * FROM canonical_inbox_items WHERE id = ?`,
-    [itemId]
-  );
+  const row = await queryHelpers.queryOne<any>(`SELECT * FROM canonical_inbox_items WHERE id = ?`, [
+    itemId,
+  ]);
   return row ? rowToItem(row) : null;
 }
 
@@ -325,20 +368,26 @@ export async function delegateItem(
         title, description, priority, section, status, sla_deadline, metadata_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
     [
-      newId, toUserId, original.organization_id,
-      original.item_type, original.source_entity_type, original.source_entity_id,
-      original.title, original.description,
-      original.priority, original.section,
+      newId,
+      toUserId,
+      original.organization_id,
+      original.item_type,
+      original.source_entity_type,
+      original.source_entity_id,
+      original.title,
+      original.description,
+      original.priority,
+      original.section,
       original.sla_deadline || null,
       JSON.stringify({ delegatedFrom: delegatedBy, originalItemId: itemId }),
-      now, now,
+      now,
+      now,
     ]
   );
 
-  const row = await queryHelpers.queryOne<any>(
-    `SELECT * FROM canonical_inbox_items WHERE id = ?`,
-    [itemId]
-  );
+  const row = await queryHelpers.queryOne<any>(`SELECT * FROM canonical_inbox_items WHERE id = ?`, [
+    itemId,
+  ]);
   return row ? rowToItem(row) : null;
 }
 
@@ -373,10 +422,7 @@ export async function updateSlaStatus(orgId: string): Promise<{ updated: number 
   return { updated: (breached?.changes || 0) + (atRisk?.changes || 0) };
 }
 
-export async function getInboxStats(
-  userId: string,
-  orgId: string
-): Promise<InboxStats> {
+export async function getInboxStats(userId: string, orgId: string): Promise<InboxStats> {
   const rows = await queryHelpers.queryAll<any>(
     `SELECT section, sla_status, priority, status, COUNT(*) as cnt
      FROM canonical_inbox_items

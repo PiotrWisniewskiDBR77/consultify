@@ -166,11 +166,11 @@ export const DEFAULT_ESCALATION_LADDER: DegradedEscalationLadder = {
 // ==========================================
 
 export const TRANSIENT_FAILURE_TYPES: ReadonlySet<string> = new Set<string>(
-  TransientFailureTypeValues,
+  TransientFailureTypeValues
 );
 
 export const AUTH_BREAK_FAILURE_TYPES: ReadonlySet<string> = new Set<string>(
-  AuthBreakFailureTypeValues,
+  AuthBreakFailureTypeValues
 );
 
 // ==========================================

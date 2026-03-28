@@ -1,3 +1,5 @@
+import './calendar-theme.css';
+
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
@@ -5,8 +7,6 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import './calendar-theme.css';
 
 import type { CalendarEvent, CalendarEventSource, CalendarViewMode } from './calendarTypes';
 import { SOURCE_COLORS } from './calendarTypes';
@@ -19,7 +19,9 @@ const SOURCE_ICONS: Partial<Record<CalendarEventSource, string>> = {
 const CONSULTIFY_BADGE = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="24" height="24" rx="6" fill="#6d28d9" />
-    <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="700" fill="white">C</text>
+    <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="700" fill="white">
+      C
+    </text>
   </svg>
 );
 
@@ -97,7 +99,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const hasBadge = iconUrl || isConsultify;
 
     return (
-      <div className="fc-event-main-frame" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
+      <div
+        className="fc-event-main-frame"
+        style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}
+      >
         {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
         <div className="fc-event-title-container">
           <div className="fc-event-title fc-sticky">{arg.event.title || '\u00A0'}</div>

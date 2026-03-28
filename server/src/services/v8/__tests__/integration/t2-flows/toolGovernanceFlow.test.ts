@@ -8,7 +8,7 @@
  *       → verify tool identity consistent across governance + registry + adapter
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock DB layer ──────────────────────────────────────────────────────────
 
@@ -28,19 +28,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 // ── Real service imports ───────────────────────────────────────────────────
 
+import { registerAdapter } from '../../../toolCollaborationService.js';
+import { registerTool as registerToolGovernance } from '../../../toolGovernanceService.js';
 import {
-  registerTool as registerToolGovernance,
-} from '../../../toolGovernanceService.js';
-
-import {
-  registerTool as registerToolRegistry,
-  createSessionGovernance,
   createActionGovernance,
+  createSessionGovernance,
+  registerTool as registerToolRegistry,
 } from '../../../toolsOrgAdminService.js';
-
-import {
-  registerAdapter,
-} from '../../../toolCollaborationService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CaptureSnapshotParams, ContextSnapshot } from '../../../types/contextSnapshot.js';
 
@@ -27,11 +27,11 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 import {
   captureSnapshot,
-  getSnapshotChain,
-  getLatestSnapshotForSession,
-  getDriftEventsByOrg,
-  markForArchival,
   detectDrift,
+  getDriftEventsByOrg,
+  getLatestSnapshotForSession,
+  getSnapshotChain,
+  markForArchival,
 } from '../contextSnapshotService.js';
 
 // ==========================================
@@ -92,7 +92,12 @@ function makeFakeRow(overrides?: Partial<Record<string, unknown>>) {
     conversation_id: CONV_ID,
     execution_run_id: null,
     artifact_refs: JSON.stringify([
-      { artifactId: 'art-1', artifactType: 'initiative', artifactModule: 'execution', relationship: 'target' },
+      {
+        artifactId: 'art-1',
+        artifactType: 'initiative',
+        artifactModule: 'execution',
+        relationship: 'target',
+      },
     ]),
     effective_scope_ref: 'project:' + PROJECT_A,
     resolved_role_ref: 'admin',
@@ -100,7 +105,12 @@ function makeFakeRow(overrides?: Partial<Record<string, unknown>>) {
     consumer_class: 'chat',
     privacy_mode: 0,
     source_context_refs: JSON.stringify([
-      { sourceId: 'src-1', scopeType: 'session', sourceKind: 'conversation_history', freshnessAt: null },
+      {
+        sourceId: 'src-1',
+        scopeType: 'session',
+        sourceKind: 'conversation_history',
+        freshnessAt: null,
+      },
     ]),
     drift_events: '[]',
     created_at: '2026-03-23T10:00:00.000Z',
@@ -163,7 +173,7 @@ describe('captureSnapshot with parentSnapshotId', () => {
         parentSnapshotId: SNAP_A,
         projectId: PROJECT_B,
         resolvedRoleRef: 'viewer',
-      }),
+      })
     );
 
     expect(result.driftEvents).toHaveLength(2);
@@ -177,15 +187,13 @@ describe('captureSnapshot with parentSnapshotId', () => {
       .mockResolvedValueOnce(makeFakeRow({ project_id: PROJECT_A }))
       .mockResolvedValueOnce({ drift_events: '[]' });
 
-    await captureSnapshot(
-      makeParams({ parentSnapshotId: SNAP_A, projectId: PROJECT_B }),
-    );
+    await captureSnapshot(makeParams({ parentSnapshotId: SNAP_A, projectId: PROJECT_B }));
 
     const insertCall = mockDbRun.mock.calls[0];
     expect(insertCall[0]).toContain('INSERT INTO v8_context_snapshots');
 
-    const updateCalls = mockDbRun.mock.calls.filter(
-      (call: unknown[]) => (call[0] as string).includes('UPDATE'),
+    const updateCalls = mockDbRun.mock.calls.filter((call: unknown[]) =>
+      (call[0] as string).includes('UPDATE')
     );
     expect(updateCalls.length).toBeGreaterThanOrEqual(1);
   });
@@ -231,9 +239,7 @@ describe('getSnapshotChain', () => {
   });
 
   it('returns single-element chain for root snapshot', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeRow({ snapshot_id: SNAP_A, parent_snapshot_id: null }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeRow({ snapshot_id: SNAP_A, parent_snapshot_id: null }));
 
     const chain = await getSnapshotChain(SNAP_A, ORG_ID);
 
@@ -257,7 +263,7 @@ describe('getSnapshotChain', () => {
           snapshot_id: id,
           parent_snapshot_id: parentId,
           snapshot_version: i + 1,
-        }),
+        })
       );
     }
 
@@ -279,10 +285,7 @@ describe('getSnapshotChain', () => {
       parent_snapshot_id: SNAP_A,
     });
 
-    mockDbGet
-      .mockResolvedValueOnce(rowA)
-      .mockResolvedValueOnce(rowB)
-      .mockResolvedValue(null);
+    mockDbGet.mockResolvedValueOnce(rowA).mockResolvedValueOnce(rowB).mockResolvedValue(null);
 
     const chain = await getSnapshotChain(SNAP_A, ORG_ID);
 
@@ -296,7 +299,7 @@ describe('getLatestSnapshotForSession', () => {
       makeFakeRow({
         snapshot_id: SNAP_B,
         captured_at: '2026-03-23T12:00:00.000Z',
-      }),
+      })
     );
 
     const result = await getLatestSnapshotForSession(CONV_ID, ORG_ID);
@@ -352,7 +355,7 @@ describe('getDriftEventsByOrg', () => {
     const results = await getDriftEventsByOrg(
       ORG_ID,
       '2026-03-23T00:00:00.000Z',
-      '2026-03-24T00:00:00.000Z',
+      '2026-03-24T00:00:00.000Z'
     );
 
     expect(results).toHaveLength(1);
@@ -366,7 +369,7 @@ describe('getDriftEventsByOrg', () => {
     const results = await getDriftEventsByOrg(
       ORG_ID,
       '2026-03-23T00:00:00.000Z',
-      '2026-03-24T00:00:00.000Z',
+      '2026-03-24T00:00:00.000Z'
     );
 
     expect(results).toEqual([]);

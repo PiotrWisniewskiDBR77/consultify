@@ -27,9 +27,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
   const [title, setTitle] = useState(initialTitle);
   const [sourceType, setSourceType] = useState<
     'financial_model' | 'financial_analysis' | 'budget' | 'manual'
-  >(
-    initialSourceType || 'manual'
-  );
+  >(initialSourceType || 'manual');
   const [sourceId, setSourceId] = useState(initialSourceId || '');
   const [horizonYears, setHorizonYears] = useState(5);
   const [creating, setCreating] = useState(false);
@@ -124,7 +122,9 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
           >
             <option value="manual">{isPl ? 'Ręczne dane' : 'Manual data'}</option>
             <option value="financial_model">{isPl ? 'Model finansowy' : 'Financial model'}</option>
-            <option value="financial_analysis">{isPl ? 'Analiza finansowa' : 'Financial analysis'}</option>
+            <option value="financial_analysis">
+              {isPl ? 'Analiza finansowa' : 'Financial analysis'}
+            </option>
             <option value="budget">{isPl ? 'Budżet' : 'Budget'}</option>
           </select>
         </div>
@@ -139,9 +139,9 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
                   ? isPl
                     ? 'Wybierz analizę'
                     : 'Select analysis'
-                : isPl
-                  ? 'Wybierz budżet'
-                  : 'Select budget'}
+                  : isPl
+                    ? 'Wybierz budżet'
+                    : 'Select budget'}
             </label>
             <select
               value={sourceId}
@@ -161,11 +161,11 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
                         {analysis.title || analysis.id}
                       </option>
                     ))
-                : sources.budgets.map((b: any) => (
-                    <option key={b.id} value={b.id}>
-                      {b.title || b.name || b.id}
-                    </option>
-                  ))}
+                  : sources.budgets.map((b: any) => (
+                      <option key={b.id} value={b.id}>
+                        {b.title || b.name || b.id}
+                      </option>
+                    ))}
             </select>
           </div>
         )}

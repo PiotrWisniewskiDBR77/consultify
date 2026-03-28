@@ -124,8 +124,18 @@ export async function executeProposedAction({
         db.run(
           `INSERT INTO tasks (id, organization_id, title, description, status, priority, assignee_id, created_by, updated_by, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-          [taskId, organizationId, title, description, status, priority, assigneeId, userId, userId],
-          (err: any) => (err ? reject(err) : resolve()),
+          [
+            taskId,
+            organizationId,
+            title,
+            description,
+            status,
+            priority,
+            assigneeId,
+            userId,
+            userId,
+          ],
+          (err: any) => (err ? reject(err) : resolve())
         );
       });
 
@@ -142,7 +152,7 @@ export async function executeProposedAction({
         db.run(
           `UPDATE tasks SET status = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
           [status, userId, targetId, organizationId],
-          (err: any) => (err ? reject(err) : resolve()),
+          (err: any) => (err ? reject(err) : resolve())
         );
       });
 
@@ -159,7 +169,7 @@ export async function executeProposedAction({
         db.run(
           `UPDATE tasks SET assignee_id = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
           [assigneeId, userId, targetId, organizationId],
-          (err: any) => (err ? reject(err) : resolve()),
+          (err: any) => (err ? reject(err) : resolve())
         );
       });
 
@@ -177,7 +187,7 @@ export async function executeProposedAction({
         db.get(
           `SELECT custom_fields_json FROM tasks WHERE id = ? AND organization_id = ?`,
           [targetId, organizationId],
-          (err: any, row: any) => (err ? reject(err) : resolve(row || null)),
+          (err: any, row: any) => (err ? reject(err) : resolve(row || null))
         );
       });
 
@@ -190,7 +200,7 @@ export async function executeProposedAction({
         db.run(
           `UPDATE tasks SET custom_fields_json = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
           [JSON.stringify(customFields), userId, targetId, organizationId],
-          (err: any) => (err ? reject(err) : resolve()),
+          (err: any) => (err ? reject(err) : resolve())
         );
       });
 

@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -73,10 +74,7 @@ const tableSyncService = {
   async getSync(syncId: string): Promise<TableSync | null> {
     const db = getDatabase();
     try {
-      const result = await db.query(
-        'SELECT * FROM tp_table_syncs WHERE id = $1',
-        [syncId]
-      );
+      const result = await db.query('SELECT * FROM tp_table_syncs WHERE id = $1', [syncId]);
       return (result.rows[0] as TableSync) ?? null;
     } catch (e) {
       logger.error('[TableSyncService] getSync failed', {
@@ -109,10 +107,7 @@ const tableSyncService = {
   async deleteSync(syncId: string): Promise<boolean> {
     const db = getDatabase();
     try {
-      const result = await db.query(
-        'DELETE FROM tp_table_syncs WHERE id = $1',
-        [syncId]
-      );
+      const result = await db.query('DELETE FROM tp_table_syncs WHERE id = $1', [syncId]);
       return (result as any).rowCount > 0;
     } catch (e) {
       logger.error('[TableSyncService] deleteSync failed', {
@@ -154,10 +149,7 @@ const tableSyncService = {
         );
       }
 
-      await db.query(
-        'UPDATE tp_table_syncs SET last_synced_at = NOW() WHERE id = $1',
-        [syncId]
-      );
+      await db.query('UPDATE tp_table_syncs SET last_synced_at = NOW() WHERE id = $1', [syncId]);
 
       logger.info('[TableSyncService] sync completed', { syncId, stats });
       return stats;

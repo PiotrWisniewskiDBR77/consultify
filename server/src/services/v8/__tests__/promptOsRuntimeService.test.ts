@@ -1,26 +1,26 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   CreatePresetParams,
   CreateReleaseBundleParams,
+  EvalThresholds,
   EvaluateGateParams,
   SetCanaryConfigParams,
-  EvalThresholds,
 } from '../../../types/promptOsRuntime.js';
 import {
-  PromptPresetSchema,
-  ReleaseBundleSchema,
-  EvalGateSchema,
   CanaryConfigSchema,
-  RollbackRecordSchema,
-  DegradedPromptStateSchema,
   CreatePresetParamsSchema,
   CreateReleaseBundleParamsSchema,
-  EvaluateGateParamsSchema,
-  SetCanaryConfigParamsSchema,
   DEFAULT_EVAL_THRESHOLDS,
+  DegradedPromptStateSchema,
+  EvalGateSchema,
+  EvaluateGateParamsSchema,
+  PromptPresetSchema,
   PurposeFamilyValues,
+  ReleaseBundleSchema,
+  RollbackRecordSchema,
+  SetCanaryConfigParamsSchema,
 } from '../../../types/promptOsRuntime.js';
 
 // ==========================================
@@ -47,19 +47,19 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createPreset,
-  getPreset,
-  listPresetsByOrganization,
-  listBundlesByOrganization,
-  createReleaseBundle,
   activateBundle,
-  rollbackBundle,
+  createPreset,
+  createReleaseBundle,
   evaluateGate,
-  getGatesByBundle,
-  setCanaryConfig,
   getActiveBundle,
   getBundle,
   getCanaryConfig,
+  getGatesByBundle,
+  getPreset,
+  listBundlesByOrganization,
+  listPresetsByOrganization,
+  rollbackBundle,
+  setCanaryConfig,
 } from '../promptOsRuntimeService.js';
 
 // ==========================================
@@ -73,7 +73,7 @@ const BUNDLE_ID = '00000000-0000-4000-8000-bbbbbbbbbbbb';
 const PREV_BUNDLE_ID = '00000000-0000-4000-8000-cccccccccccc';
 
 const THRESHOLDS: EvalThresholds = {
-  qualityMin: 0.80,
+  qualityMin: 0.8,
   latencyP95MaxMs: 3000,
   costMaxPerInteraction: 0.05,
   trustDegradationMaxPct: 5,
@@ -94,7 +94,9 @@ function makePresetParams(overrides?: Partial<CreatePresetParams>): CreatePreset
   };
 }
 
-function makeBundleParams(overrides?: Partial<CreateReleaseBundleParams>): CreateReleaseBundleParams {
+function makeBundleParams(
+  overrides?: Partial<CreateReleaseBundleParams>
+): CreateReleaseBundleParams {
   return {
     organizationId: ORG_ID,
     version: '1.0.0',
@@ -176,7 +178,7 @@ describe('createPreset', () => {
     expect(result.name).toBe('consultative_chat');
     expect(result.purposeFamily).toBe('conversational');
     expect(result.gateType).toBe('hard');
-    expect(result.evalThresholds.qualityMin).toBe(0.80);
+    expect(result.evalThresholds.qualityMin).toBe(0.8);
     expect(result.organizationId).toBe(ORG_ID);
     expect(result.promptBlockRefs).toEqual(['block:role_advisor', 'block:output_structured']);
 
@@ -188,10 +190,12 @@ describe('createPreset', () => {
   it('creates presets for all purpose families (W2-8)', async () => {
     for (const family of PurposeFamilyValues) {
       vi.clearAllMocks();
-      const result = await createPreset(makePresetParams({
-        purposeFamily: family,
-        name: `preset_${family}`,
-      }));
+      const result = await createPreset(
+        makePresetParams({
+          purposeFamily: family,
+          name: `preset_${family}`,
+        })
+      );
       expect(result.purposeFamily).toBe(family);
     }
   });
@@ -208,20 +212,20 @@ describe('createPreset', () => {
 
   it('rejects invalid purpose family via Zod', async () => {
     await expect(
-      createPreset(makePresetParams({ purposeFamily: 'invalid' as any })),
+      createPreset(makePresetParams({ purposeFamily: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid gate type via Zod', async () => {
-    await expect(
-      createPreset(makePresetParams({ gateType: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(createPreset(makePresetParams({ gateType: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid organizationId via Zod', async () => {
-    await expect(
-      createPreset(makePresetParams({ organizationId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createPreset(makePresetParams({ organizationId: 'not-a-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -303,9 +307,9 @@ describe('createReleaseBundle', () => {
   });
 
   it('rejects invalid presetId via Zod', async () => {
-    await expect(
-      createReleaseBundle(makeBundleParams({ presetId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createReleaseBundle(makeBundleParams({ presetId: 'not-a-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -358,15 +362,17 @@ describe('activateBundle', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeBundleRow());
     mockDbAll.mockResolvedValueOnce([]);
     // getActiveBundle returns a different active bundle
-    mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({
-      bundle_id: PREV_BUNDLE_ID,
-      status: 'active',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeBundleRow({
+        bundle_id: PREV_BUNDLE_ID,
+        status: 'active',
+      })
+    );
 
     await activateBundle(BUNDLE_ID);
 
-    const updateCalls = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('UPDATE'),
+    const updateCalls = mockDbRun.mock.calls.filter((call) =>
+      (call[0] as string).includes('UPDATE')
     );
     expect(updateCalls.length).toBeGreaterThanOrEqual(2);
   });
@@ -425,7 +431,12 @@ describe('evaluateGate', () => {
   });
 
   it('supports all change types (W2-10)', async () => {
-    const changeTypes = ['minor_wording', 'block_edit', 'routing_policy_change', 'base_rewrite'] as const;
+    const changeTypes = [
+      'minor_wording',
+      'block_edit',
+      'routing_policy_change',
+      'base_rewrite',
+    ] as const;
     for (const ct of changeTypes) {
       vi.clearAllMocks();
       const result = await evaluateGate({
@@ -449,7 +460,7 @@ describe('evaluateGate', () => {
         changeType: 'invalid' as any,
         thresholds: THRESHOLDS,
         result: 'passed',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -457,9 +468,7 @@ describe('evaluateGate', () => {
 describe('hard gate blocks activation (W2-9)', () => {
   it('blocks activation when a hard gate has failed', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeBundleRow());
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeGateRow({ gate_type: 'hard', result: 'failed' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeGateRow({ gate_type: 'hard', result: 'failed' })]);
 
     await expect(activateBundle(BUNDLE_ID)).rejects.toThrow('hard gate(s) failed');
   });
@@ -544,7 +553,7 @@ describe('setCanaryConfig', () => {
         orgScoped: true,
         purposeFamilyScoped: false,
         presetScoped: false,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -558,10 +567,12 @@ describe('rollbackBundle', () => {
     // getBundle
     mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({ status: 'active' }));
     // find previous bundle
-    mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({
-      bundle_id: PREV_BUNDLE_ID,
-      status: 'staging',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeBundleRow({
+        bundle_id: PREV_BUNDLE_ID,
+        status: 'staging',
+      })
+    );
 
     const result = await rollbackBundle(BUNDLE_ID, 'quality regression', 'operator:admin');
 
@@ -571,23 +582,25 @@ describe('rollbackBundle', () => {
     expect(result.rolledBackBy).toBe('operator:admin');
     expect(result.previousBundleId).toBe(PREV_BUNDLE_ID);
 
-    const insertSql = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('INSERT INTO v8_rollback_records'),
+    const insertSql = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('INSERT INTO v8_rollback_records')
     );
     expect(insertSql).toBeDefined();
   });
 
   it('restores previous bundle to active status', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({ status: 'active' }));
-    mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({
-      bundle_id: PREV_BUNDLE_ID,
-      status: 'staging',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeBundleRow({
+        bundle_id: PREV_BUNDLE_ID,
+        status: 'staging',
+      })
+    );
 
     await rollbackBundle(BUNDLE_ID, 'cost regression', 'operator:admin');
 
-    const updateCalls = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('UPDATE'),
+    const updateCalls = mockDbRun.mock.calls.filter((call) =>
+      (call[0] as string).includes('UPDATE')
     );
     const reactivateCall = updateCalls.find((call) => {
       const params = call[1] as unknown[];
@@ -607,16 +620,14 @@ describe('rollbackBundle', () => {
 
   it('throws when bundle not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(
-      rollbackBundle(BUNDLE_ID, 'reason', 'operator'),
-    ).rejects.toThrow('not found');
+    await expect(rollbackBundle(BUNDLE_ID, 'reason', 'operator')).rejects.toThrow('not found');
   });
 
   it('throws when bundle is already rolled back', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeBundleRow({ status: 'rolled_back' }));
-    await expect(
-      rollbackBundle(BUNDLE_ID, 'reason', 'operator'),
-    ).rejects.toThrow('already rolled back');
+    await expect(rollbackBundle(BUNDLE_ID, 'reason', 'operator')).rejects.toThrow(
+      'already rolled back'
+    );
   });
 });
 
@@ -707,13 +718,15 @@ describe('DEFAULT_EVAL_THRESHOLDS', () => {
   });
 
   it('governed_proposal has stricter quality than conversational', () => {
-    expect(DEFAULT_EVAL_THRESHOLDS.governed_proposal.qualityMin)
-      .toBeGreaterThan(DEFAULT_EVAL_THRESHOLDS.conversational.qualityMin);
+    expect(DEFAULT_EVAL_THRESHOLDS.governed_proposal.qualityMin).toBeGreaterThan(
+      DEFAULT_EVAL_THRESHOLDS.conversational.qualityMin
+    );
   });
 
   it('background_automation has stricter failure rate than conversational', () => {
-    expect(DEFAULT_EVAL_THRESHOLDS.background_automation.failureRateMaxPct)
-      .toBeLessThan(DEFAULT_EVAL_THRESHOLDS.conversational.failureRateMaxPct);
+    expect(DEFAULT_EVAL_THRESHOLDS.background_automation.failureRateMaxPct).toBeLessThan(
+      DEFAULT_EVAL_THRESHOLDS.conversational.failureRateMaxPct
+    );
   });
 });
 
@@ -736,7 +749,7 @@ describe('Zod schema validation', () => {
         evalThresholds: THRESHOLDS,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -754,7 +767,7 @@ describe('Zod schema validation', () => {
         evalThresholds: THRESHOLDS,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -773,7 +786,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         activatedAt: null,
         rolledBackAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -792,7 +805,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         activatedAt: null,
         rolledBackAt: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -807,7 +820,7 @@ describe('Zod schema validation', () => {
         thresholds: THRESHOLDS,
         result: 'passed',
         evaluatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -821,7 +834,7 @@ describe('Zod schema validation', () => {
         presetScoped: true,
         rollbackEnabled: true,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -834,7 +847,7 @@ describe('Zod schema validation', () => {
         rolledBackBy: 'operator:admin',
         rolledBackAt: '2026-03-23T12:00:00.000Z',
         previousBundleId: PREV_BUNDLE_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -844,7 +857,7 @@ describe('Zod schema validation', () => {
         stateType: 'voice_transcript_partial',
         fallbackPresetId: PRESET_ID,
         userMessage: 'Transcript may be incomplete.',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -854,21 +867,23 @@ describe('Zod schema validation', () => {
         stateType: 'invalid',
         fallbackPresetId: null,
         userMessage: 'msg',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
   it('validates EvalThresholds boundaries', () => {
     expect(() =>
-      CreatePresetParamsSchema.parse(makePresetParams({
-        evalThresholds: {
-          qualityMin: 1.5,
-          latencyP95MaxMs: 3000,
-          costMaxPerInteraction: 0.05,
-          trustDegradationMaxPct: 5,
-          failureRateMaxPct: 3,
-        },
-      })),
+      CreatePresetParamsSchema.parse(
+        makePresetParams({
+          evalThresholds: {
+            qualityMin: 1.5,
+            latencyP95MaxMs: 3000,
+            costMaxPerInteraction: 0.05,
+            trustDegradationMaxPct: 5,
+            failureRateMaxPct: 3,
+          },
+        })
+      )
     ).toThrow(ZodError);
   });
 });

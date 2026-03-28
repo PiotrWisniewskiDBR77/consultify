@@ -9,14 +9,13 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
-
-import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 import {
   type NModeAction,
   type NModePropertyField,
   type NModeSection,
   NModeShell,
 } from '../shared/NModeLayout';
+import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
@@ -75,7 +74,9 @@ export function KnownToolDetailView(props: {
   const startSession = async () => {
     if (!tool) return;
     if (!tool.isActive) {
-      toast.error(isPolish ? 'To narzędzie nie jest jeszcze aktywne.' : 'This tool is not active yet.');
+      toast.error(
+        isPolish ? 'To narzędzie nie jest jeszcze aktywne.' : 'This tool is not active yet.'
+      );
       return;
     }
     try {
@@ -158,7 +159,9 @@ export function KnownToolDetailView(props: {
       if (safe.length === 0) {
         return (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Ta sekcja zostanie uzupełniona w kolejnych iteracjach.' : 'This section will be expanded in upcoming iterations.'}
+            {isPolish
+              ? 'Ta sekcja zostanie uzupełniona w kolejnych iteracjach.'
+              : 'This section will be expanded in upcoming iterations.'}
           </div>
         );
       }
@@ -318,7 +321,9 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
-              {isPolish ? 'Co sprawia, że SWOT jest tutaj dynamiczny' : 'What makes the SWOT dynamic here'}
+              {isPolish
+                ? 'Co sprawia, że SWOT jest tutaj dynamiczny'
+                : 'What makes the SWOT dynamic here'}
             </div>
             {chipRow(
               isPolish
@@ -479,9 +484,13 @@ export function KnownToolDetailView(props: {
                     {step.id}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{step.title}</div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {step.title}
+                    </div>
                     {!isOpen && (
-                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{step.oneLiner}</div>
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {step.oneLiner}
+                      </div>
                     )}
                   </div>
                   <span className={`mr-1 h-2 w-2 shrink-0 rounded-full ${step.accent}`} />
@@ -492,7 +501,13 @@ export function KnownToolDetailView(props: {
                     fill="none"
                     className={`shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   >
-                    <path d="M3 5.5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M3 5.5l4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
                 {isOpen && (
@@ -537,7 +552,9 @@ export function KnownToolDetailView(props: {
         <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-              {isPolish ? 'Jak wygląda dobra sesja końcowa' : 'What a strong finished session looks like'}
+              {isPolish
+                ? 'Jak wygląda dobra sesja końcowa'
+                : 'What a strong finished session looks like'}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
               Quality
@@ -585,29 +602,86 @@ export function KnownToolDetailView(props: {
           <div className="mt-4 grid grid-cols-2 gap-3">
             {(isPolish
               ? [
-                  { label: 'Siła + Szansa', desc: 'Masz przewagę i rynek daje okazję. Graj ofensywnie — wykorzystaj to, co masz, żeby wejść w szansę.', accent: 'emerald' },
-                  { label: 'Słabość + Szansa', desc: 'Szansa jest, ale wewnętrzna luka ją blokuje. Najpierw napraw lukę, potem wejdź w szansę.', accent: 'sky' },
-                  { label: 'Siła + Zagrożenie', desc: 'Zewnętrzne ryzyko rośnie, ale masz przewagę. Użyj jej, żeby obronić pozycję.', accent: 'amber' },
-                  { label: 'Słabość + Zagrożenie', desc: 'Słabość zwiększa ekspozycję na ryzyko. Najpierw ogranicz słabość, żeby zmniejszyć zagrożenie.', accent: 'rose' },
+                  {
+                    label: 'Siła + Szansa',
+                    desc: 'Masz przewagę i rynek daje okazję. Graj ofensywnie — wykorzystaj to, co masz, żeby wejść w szansę.',
+                    accent: 'emerald',
+                  },
+                  {
+                    label: 'Słabość + Szansa',
+                    desc: 'Szansa jest, ale wewnętrzna luka ją blokuje. Najpierw napraw lukę, potem wejdź w szansę.',
+                    accent: 'sky',
+                  },
+                  {
+                    label: 'Siła + Zagrożenie',
+                    desc: 'Zewnętrzne ryzyko rośnie, ale masz przewagę. Użyj jej, żeby obronić pozycję.',
+                    accent: 'amber',
+                  },
+                  {
+                    label: 'Słabość + Zagrożenie',
+                    desc: 'Słabość zwiększa ekspozycję na ryzyko. Najpierw ogranicz słabość, żeby zmniejszyć zagrożenie.',
+                    accent: 'rose',
+                  },
                 ]
               : [
-                  { label: 'Strength + Opportunity', desc: 'You have advantage and the market offers an opening. Play offensively — use what you have to capture the opportunity.', accent: 'emerald' },
-                  { label: 'Weakness + Opportunity', desc: 'The opportunity exists, but an internal gap blocks it. Fix the gap first, then move in.', accent: 'sky' },
-                  { label: 'Strength + Threat', desc: 'External risk is rising, but you have advantage. Use it to defend your position.', accent: 'amber' },
-                  { label: 'Weakness + Threat', desc: 'A weakness increases exposure to risk. Reduce the weakness first to lower the threat.', accent: 'rose' },
+                  {
+                    label: 'Strength + Opportunity',
+                    desc: 'You have advantage and the market offers an opening. Play offensively — use what you have to capture the opportunity.',
+                    accent: 'emerald',
+                  },
+                  {
+                    label: 'Weakness + Opportunity',
+                    desc: 'The opportunity exists, but an internal gap blocks it. Fix the gap first, then move in.',
+                    accent: 'sky',
+                  },
+                  {
+                    label: 'Strength + Threat',
+                    desc: 'External risk is rising, but you have advantage. Use it to defend your position.',
+                    accent: 'amber',
+                  },
+                  {
+                    label: 'Weakness + Threat',
+                    desc: 'A weakness increases exposure to risk. Reduce the weakness first to lower the threat.',
+                    accent: 'rose',
+                  },
                 ]
             ).map((item) => {
-              const accentMap: Record<string, { border: string; bg: string; title: string; dot: string }> = {
-                emerald: { border: 'border-emerald-200/70', bg: 'bg-emerald-500/5', title: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
-                sky: { border: 'border-sky-200/70', bg: 'bg-sky-500/5', title: 'text-sky-700 dark:text-sky-300', dot: 'bg-sky-500' },
-                amber: { border: 'border-amber-200/70', bg: 'bg-amber-500/5', title: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
-                rose: { border: 'border-rose-200/70', bg: 'bg-rose-500/5', title: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-500' },
+              const accentMap: Record<
+                string,
+                { border: string; bg: string; title: string; dot: string }
+              > = {
+                emerald: {
+                  border: 'border-emerald-200/70',
+                  bg: 'bg-emerald-500/5',
+                  title: 'text-emerald-700 dark:text-emerald-300',
+                  dot: 'bg-emerald-500',
+                },
+                sky: {
+                  border: 'border-sky-200/70',
+                  bg: 'bg-sky-500/5',
+                  title: 'text-sky-700 dark:text-sky-300',
+                  dot: 'bg-sky-500',
+                },
+                amber: {
+                  border: 'border-amber-200/70',
+                  bg: 'bg-amber-500/5',
+                  title: 'text-amber-700 dark:text-amber-300',
+                  dot: 'bg-amber-500',
+                },
+                rose: {
+                  border: 'border-rose-200/70',
+                  bg: 'bg-rose-500/5',
+                  title: 'text-rose-700 dark:text-rose-300',
+                  dot: 'bg-rose-500',
+                },
               };
               const a = accentMap[item.accent] || accentMap.emerald;
               return (
                 <div key={item.label} className={`rounded-xl border ${a.border} ${a.bg} p-3`}>
                   <div className={`text-xs font-semibold ${a.title}`}>{item.label}</div>
-                  <div className="mt-1.5 text-[13px] leading-relaxed text-slate-700 dark:text-slate-200">{item.desc}</div>
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-slate-700 dark:text-slate-200">
+                    {item.desc}
+                  </div>
                 </div>
               );
             })}
@@ -751,31 +825,36 @@ export function KnownToolDetailView(props: {
     const colorMap = {
       violet: {
         card: 'border-violet-200/70 bg-violet-500/5 dark:border-violet-900/40',
-        badge: 'border-violet-300/50 bg-white/70 text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200',
+        badge:
+          'border-violet-300/50 bg-white/70 text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200',
         title: 'text-violet-700 dark:text-violet-300',
         dot: 'bg-violet-500',
       },
       sky: {
         card: 'border-sky-200/70 bg-sky-500/5 dark:border-sky-900/40',
-        badge: 'border-sky-300/50 bg-white/70 text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200',
+        badge:
+          'border-sky-300/50 bg-white/70 text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200',
         title: 'text-sky-700 dark:text-sky-300',
         dot: 'bg-sky-500',
       },
       amber: {
         card: 'border-amber-200/70 bg-amber-500/5 dark:border-amber-900/40',
-        badge: 'border-amber-300/50 bg-white/70 text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200',
+        badge:
+          'border-amber-300/50 bg-white/70 text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200',
         title: 'text-amber-700 dark:text-amber-300',
         dot: 'bg-amber-500',
       },
       emerald: {
         card: 'border-emerald-200/70 bg-emerald-500/5 dark:border-emerald-900/40',
-        badge: 'border-emerald-300/50 bg-white/70 text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200',
+        badge:
+          'border-emerald-300/50 bg-white/70 text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200',
         title: 'text-emerald-700 dark:text-emerald-300',
         dot: 'bg-emerald-500',
       },
       rose: {
         card: 'border-rose-200/70 bg-rose-500/5 dark:border-rose-900/40',
-        badge: 'border-rose-300/50 bg-white/70 text-rose-800 dark:border-rose-800/50 dark:bg-white/[0.05] dark:text-rose-200',
+        badge:
+          'border-rose-300/50 bg-white/70 text-rose-800 dark:border-rose-800/50 dark:bg-white/[0.05] dark:text-rose-200',
         title: 'text-rose-700 dark:text-rose-300',
         dot: 'bg-rose-500',
       },
@@ -805,10 +884,14 @@ export function KnownToolDetailView(props: {
             return (
               <div key={block.id} className={`rounded-2xl border p-4 ${c.card}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <div className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${c.title}`}>
+                  <div
+                    className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${c.title}`}
+                  >
                     {block.title}
                   </div>
-                  <span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${c.badge}`}>
+                  <span
+                    className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${c.badge}`}
+                  >
                     {block.badge}
                   </span>
                 </div>
@@ -818,19 +901,25 @@ export function KnownToolDetailView(props: {
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Co zawiera' : 'Contains'}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{block.what}</div>
+                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                      {block.what}
+                    </div>
                   </div>
                   <div>
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Dlaczego ważne' : 'Why it matters'}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{block.why}</div>
+                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                      {block.why}
+                    </div>
                   </div>
                   <div>
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Co uruchamia dalej' : 'Enables next'}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-900 dark:text-white">{block.next}</div>
+                    <div className="text-sm leading-relaxed text-slate-900 dark:text-white">
+                      {block.next}
+                    </div>
                   </div>
                 </div>
               </div>

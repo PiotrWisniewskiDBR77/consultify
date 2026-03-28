@@ -48,7 +48,10 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
           <CheckSquare size={12} className="text-primary-500" />
           {isPl ? 'Szybkie zadanie' : 'Quick task'}
         </span>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <button
+          onClick={onClose}
+          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+        >
           <X size={12} />
         </button>
       </div>

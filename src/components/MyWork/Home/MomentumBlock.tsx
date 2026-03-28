@@ -25,8 +25,13 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
 
         <div className="grid grid-cols-3 gap-3">
           {payload.stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">{stat.label}</div>
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+            >
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+                {stat.label}
+              </div>
               <div className="mt-1 text-2xl font-semibold text-white">{stat.value}</div>
               <div className="mt-1 text-xs text-slate-300/65">{stat.trend}</div>
             </div>

@@ -17,13 +17,13 @@ import { recordDeckGeneration } from './organizationStyleProfileService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
-import * as artifactRegistryService from './v8/artifactRegistryService.js';
 import type {
   SlideIntent,
   UnifiedReportJSON,
   UnifiedReportMeta,
   UnifiedSlide,
 } from './report/pptx/types.js';
+import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
 // ============================================================
 // TYPES
@@ -489,9 +489,11 @@ async function loadArtifactData(
             }));
           data._raidSummary = {
             risks: ((raidItems || []) as any[]).filter((r: any) => r.type === 'RISK').length,
-            assumptions: ((raidItems || []) as any[]).filter((r: any) => r.type === 'ASSUMPTION').length,
+            assumptions: ((raidItems || []) as any[]).filter((r: any) => r.type === 'ASSUMPTION')
+              .length,
             issues: ((raidItems || []) as any[]).filter((r: any) => r.type === 'ISSUE').length,
-            dependencies: ((raidItems || []) as any[]).filter((r: any) => r.type === 'DEPENDENCY').length,
+            dependencies: ((raidItems || []) as any[]).filter((r: any) => r.type === 'DEPENDENCY')
+              .length,
           };
           break;
         }
@@ -698,11 +700,13 @@ export async function generateOutline(
 
   const validationWarnings = validateOutline(outline, setup);
   if (validationWarnings.length > 0) {
-    await dbRun(
-      `UPDATE presentation_decks SET validation_warnings = ? WHERE id = ?`,
-      [JSON.stringify(validationWarnings), deckId]
+    await dbRun(`UPDATE presentation_decks SET validation_warnings = ? WHERE id = ?`, [
+      JSON.stringify(validationWarnings),
+      deckId,
+    ]);
+    logger.info(
+      `[PresentationGen] Outline validation: ${validationWarnings.length} warning(s) for deck ${deckId}`
     );
-    logger.info(`[PresentationGen] Outline validation: ${validationWarnings.length} warning(s) for deck ${deckId}`);
   }
 
   return { outline, deckId, validationWarnings };
@@ -738,7 +742,9 @@ export async function generateDeck(
     }));
     const contextPack = await buildContextPack(organizationId, sourceRefs, setup.language);
     await saveContextPackSnapshot(deckId, contextPack);
-    logger.info(`[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`);
+    logger.info(
+      `[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`
+    );
 
     const artifactData = await loadArtifactData(setup.sourceArtifacts, organizationId);
     // Enrich artifact data with ContextPack extracted data
@@ -801,9 +807,10 @@ export async function generateDeck(
           report_config: {
             report_type_v3: 'presentation',
             goal_v3: setup.goal,
-            communication_register: setup.audience === 'sponsor' || setup.audience === 'executive'
-              ? 'executive'
-              : 'professional',
+            communication_register:
+              setup.audience === 'sponsor' || setup.audience === 'executive'
+                ? 'executive'
+                : 'professional',
             density: 'concise',
             form: 'presentation',
             data_level: 'summary',
@@ -824,7 +831,9 @@ export async function generateDeck(
             facts_used: narrativeOutput.facts_used.length,
             observations_used: narrativeOutput.observations_used.length,
           };
-          logger.info(`[PresentationGen] Narrative Engine enriched slide ${i} (${slide.intent}): ${narrativeOutput.content.length} chars`);
+          logger.info(
+            `[PresentationGen] Narrative Engine enriched slide ${i} (${slide.intent}): ${narrativeOutput.content.length} chars`
+          );
         }
       } catch (err) {
         logger.warn(`[PresentationGen] Narrative Engine skipped for slide ${i}: ${err}`);
@@ -907,10 +916,14 @@ export async function generateDeck(
                   }
                 );
                 if (qaResult.wasRegenerated) {
-                  logger.info(`[PresentationGen] VisionQA improved image for slide ${i}, QA score: ${qaResult.qaScore.toFixed(2)}`);
+                  logger.info(
+                    `[PresentationGen] VisionQA improved image for slide ${i}, QA score: ${qaResult.qaScore.toFixed(2)}`
+                  );
                 }
               } catch (qaErr) {
-                logger.warn(`[PresentationGen] VisionQA gate failed, using original image`, { qaErr });
+                logger.warn(`[PresentationGen] VisionQA gate failed, using original image`, {
+                  qaErr,
+                });
               }
             }
             planned[j] = visual;
@@ -980,7 +993,9 @@ export async function generateDeck(
         cardCount: result.slideCount,
         totalBlocks,
       });
-      logger.info(`[PresentationGen] Recorded deck generation to style profile for org=${organizationId}`);
+      logger.info(
+        `[PresentationGen] Recorded deck generation to style profile for org=${organizationId}`
+      );
     } catch (profileErr) {
       logger.warn('[PresentationGen] Failed to record to style profile', { profileErr });
     }

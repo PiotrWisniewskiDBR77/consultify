@@ -1,8 +1,9 @@
 // @ts-nocheck
+import crypto from 'node:crypto';
+
 import bcrypt from 'bcryptjs';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'node:crypto';
 import * as uuid from 'uuid';
 
 import { config } from '../config/index.js';
@@ -1932,14 +1933,55 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
         description: 'Service Organization Control 2 — Trust Services Criteria',
         version: '2017',
         requirements: JSON.stringify([
-          { id: 'CC1.1', category: 'Control Environment', title: 'COSO Principle 1', description: 'The entity demonstrates a commitment to integrity and ethical values.' },
-          { id: 'CC1.2', category: 'Control Environment', title: 'COSO Principle 2', description: 'The board of directors demonstrates independence from management.' },
-          { id: 'CC2.1', category: 'Communication', title: 'COSO Principle 13', description: 'The entity obtains or generates relevant, quality information.' },
-          { id: 'CC3.1', category: 'Risk Assessment', title: 'COSO Principle 6', description: 'The entity specifies objectives with sufficient clarity.' },
-          { id: 'CC5.1', category: 'Control Activities', title: 'COSO Principle 10', description: 'The entity selects and develops control activities.' },
-          { id: 'CC6.1', category: 'Logical Access', title: 'Logical Access Security', description: 'Logical access security measures are implemented.' },
-          { id: 'CC7.1', category: 'System Operations', title: 'Detection of Changes', description: 'Procedures exist to detect changes to software and infrastructure.' },
-          { id: 'CC8.1', category: 'Change Management', title: 'Change Management Process', description: 'Authorization, design, development, testing, and implementation of changes.' },
+          {
+            id: 'CC1.1',
+            category: 'Control Environment',
+            title: 'COSO Principle 1',
+            description: 'The entity demonstrates a commitment to integrity and ethical values.',
+          },
+          {
+            id: 'CC1.2',
+            category: 'Control Environment',
+            title: 'COSO Principle 2',
+            description: 'The board of directors demonstrates independence from management.',
+          },
+          {
+            id: 'CC2.1',
+            category: 'Communication',
+            title: 'COSO Principle 13',
+            description: 'The entity obtains or generates relevant, quality information.',
+          },
+          {
+            id: 'CC3.1',
+            category: 'Risk Assessment',
+            title: 'COSO Principle 6',
+            description: 'The entity specifies objectives with sufficient clarity.',
+          },
+          {
+            id: 'CC5.1',
+            category: 'Control Activities',
+            title: 'COSO Principle 10',
+            description: 'The entity selects and develops control activities.',
+          },
+          {
+            id: 'CC6.1',
+            category: 'Logical Access',
+            title: 'Logical Access Security',
+            description: 'Logical access security measures are implemented.',
+          },
+          {
+            id: 'CC7.1',
+            category: 'System Operations',
+            title: 'Detection of Changes',
+            description: 'Procedures exist to detect changes to software and infrastructure.',
+          },
+          {
+            id: 'CC8.1',
+            category: 'Change Management',
+            title: 'Change Management Process',
+            description:
+              'Authorization, design, development, testing, and implementation of changes.',
+          },
         ]),
       },
       {
@@ -1949,14 +1991,54 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
         description: 'EU General Data Protection Regulation',
         version: '2016/679',
         requirements: JSON.stringify([
-          { id: 'Art5', category: 'Principles', title: 'Principles of Processing', description: 'Lawfulness, fairness, transparency, purpose limitation.' },
-          { id: 'Art6', category: 'Lawful Basis', title: 'Lawfulness of Processing', description: 'At least one lawful basis for processing personal data.' },
-          { id: 'Art12', category: 'Data Subject Rights', title: 'Transparent Information', description: 'Communication and modalities for exercising data subject rights.' },
-          { id: 'Art25', category: 'Design', title: 'Data Protection by Design', description: 'Data protection by design and by default.' },
-          { id: 'Art30', category: 'Records', title: 'Records of Processing', description: 'Records of processing activities.' },
-          { id: 'Art32', category: 'Security', title: 'Security of Processing', description: 'Appropriate technical and organisational measures.' },
-          { id: 'Art33', category: 'Breach', title: 'Breach Notification', description: 'Notification to supervisory authority within 72 hours.' },
-          { id: 'Art35', category: 'Impact', title: 'DPIA', description: 'Data protection impact assessment for high-risk processing.' },
+          {
+            id: 'Art5',
+            category: 'Principles',
+            title: 'Principles of Processing',
+            description: 'Lawfulness, fairness, transparency, purpose limitation.',
+          },
+          {
+            id: 'Art6',
+            category: 'Lawful Basis',
+            title: 'Lawfulness of Processing',
+            description: 'At least one lawful basis for processing personal data.',
+          },
+          {
+            id: 'Art12',
+            category: 'Data Subject Rights',
+            title: 'Transparent Information',
+            description: 'Communication and modalities for exercising data subject rights.',
+          },
+          {
+            id: 'Art25',
+            category: 'Design',
+            title: 'Data Protection by Design',
+            description: 'Data protection by design and by default.',
+          },
+          {
+            id: 'Art30',
+            category: 'Records',
+            title: 'Records of Processing',
+            description: 'Records of processing activities.',
+          },
+          {
+            id: 'Art32',
+            category: 'Security',
+            title: 'Security of Processing',
+            description: 'Appropriate technical and organisational measures.',
+          },
+          {
+            id: 'Art33',
+            category: 'Breach',
+            title: 'Breach Notification',
+            description: 'Notification to supervisory authority within 72 hours.',
+          },
+          {
+            id: 'Art35',
+            category: 'Impact',
+            title: 'DPIA',
+            description: 'Data protection impact assessment for high-risk processing.',
+          },
         ]),
       },
       {
@@ -1966,13 +2048,50 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
         description: 'Health Insurance Portability and Accountability Act',
         version: '2013',
         requirements: JSON.stringify([
-          { id: '164.308a1', category: 'Administrative', title: 'Security Management', description: 'Implement policies to prevent, detect, contain, and correct security violations.' },
-          { id: '164.308a3', category: 'Administrative', title: 'Workforce Security', description: 'Implement policies ensuring appropriate access to ePHI.' },
-          { id: '164.308a5', category: 'Administrative', title: 'Security Awareness', description: 'Security awareness and training program.' },
-          { id: '164.310a1', category: 'Physical', title: 'Facility Access', description: 'Limit physical access to electronic information systems.' },
-          { id: '164.312a1', category: 'Technical', title: 'Access Control', description: 'Implement technical policies to allow access only to authorized persons.' },
-          { id: '164.312c1', category: 'Technical', title: 'Integrity Controls', description: 'Implement mechanisms to authenticate ePHI.' },
-          { id: '164.312e1', category: 'Technical', title: 'Transmission Security', description: 'Implement measures to guard against unauthorized access during transmission.' },
+          {
+            id: '164.308a1',
+            category: 'Administrative',
+            title: 'Security Management',
+            description:
+              'Implement policies to prevent, detect, contain, and correct security violations.',
+          },
+          {
+            id: '164.308a3',
+            category: 'Administrative',
+            title: 'Workforce Security',
+            description: 'Implement policies ensuring appropriate access to ePHI.',
+          },
+          {
+            id: '164.308a5',
+            category: 'Administrative',
+            title: 'Security Awareness',
+            description: 'Security awareness and training program.',
+          },
+          {
+            id: '164.310a1',
+            category: 'Physical',
+            title: 'Facility Access',
+            description: 'Limit physical access to electronic information systems.',
+          },
+          {
+            id: '164.312a1',
+            category: 'Technical',
+            title: 'Access Control',
+            description: 'Implement technical policies to allow access only to authorized persons.',
+          },
+          {
+            id: '164.312c1',
+            category: 'Technical',
+            title: 'Integrity Controls',
+            description: 'Implement mechanisms to authenticate ePHI.',
+          },
+          {
+            id: '164.312e1',
+            category: 'Technical',
+            title: 'Transmission Security',
+            description:
+              'Implement measures to guard against unauthorized access during transmission.',
+          },
         ]),
       },
       {
@@ -1982,12 +2101,43 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
         description: 'Information Security Management System standard',
         version: '2022',
         requirements: JSON.stringify([
-          { id: 'A5.1', category: 'Organizational', title: 'Information Security Policies', description: 'Management direction for information security.' },
-          { id: 'A6.1', category: 'People', title: 'Screening', description: 'Background verification checks on candidates.' },
-          { id: 'A7.1', category: 'Physical', title: 'Physical Security Perimeters', description: 'Security perimeters to protect information and assets.' },
-          { id: 'A8.1', category: 'Technology', title: 'User Endpoint Devices', description: 'Information stored on, processed by or accessible via user endpoint devices.' },
-          { id: 'A8.5', category: 'Technology', title: 'Secure Authentication', description: 'Secure authentication technologies and procedures.' },
-          { id: 'A8.9', category: 'Technology', title: 'Configuration Management', description: 'Configurations of hardware, software, services and networks.' },
+          {
+            id: 'A5.1',
+            category: 'Organizational',
+            title: 'Information Security Policies',
+            description: 'Management direction for information security.',
+          },
+          {
+            id: 'A6.1',
+            category: 'People',
+            title: 'Screening',
+            description: 'Background verification checks on candidates.',
+          },
+          {
+            id: 'A7.1',
+            category: 'Physical',
+            title: 'Physical Security Perimeters',
+            description: 'Security perimeters to protect information and assets.',
+          },
+          {
+            id: 'A8.1',
+            category: 'Technology',
+            title: 'User Endpoint Devices',
+            description:
+              'Information stored on, processed by or accessible via user endpoint devices.',
+          },
+          {
+            id: 'A8.5',
+            category: 'Technology',
+            title: 'Secure Authentication',
+            description: 'Secure authentication technologies and procedures.',
+          },
+          {
+            id: 'A8.9',
+            category: 'Technology',
+            title: 'Configuration Management',
+            description: 'Configurations of hardware, software, services and networks.',
+          },
         ]),
       },
     ];
@@ -2019,7 +2169,8 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
         (rows || []).map((r: any) => {
           let reqs: any[] = [];
           try {
-            reqs = typeof r?.requirements === 'string' ? JSON.parse(r.requirements) : r?.requirements;
+            reqs =
+              typeof r?.requirements === 'string' ? JSON.parse(r.requirements) : r?.requirements;
           } catch {
             reqs = [];
           }
@@ -2090,7 +2241,9 @@ const getComplianceStatus = catchAsync(async (req, res, next) => {
   let requirements: any[] = [];
   try {
     requirements =
-      typeof fwRow?.requirements === 'string' ? JSON.parse(fwRow.requirements) : fwRow?.requirements;
+      typeof fwRow?.requirements === 'string'
+        ? JSON.parse(fwRow.requirements)
+        : fwRow?.requirements;
   } catch {
     requirements = [];
   }
@@ -2195,26 +2348,32 @@ const getComplianceAudits = catchAsync(async (req, res, next) => {
   try {
     const db = deps.db;
     const audits = await new Promise<any[]>((resolve, reject) => {
-      db.all('SELECT * FROM compliance_audits ORDER BY planned_start DESC LIMIT 50', [], (err: any, rows: any[]) => {
-        if (err) {
-          if (err.message?.includes('no such table')) {
-            resolve([]);
+      db.all(
+        'SELECT * FROM compliance_audits ORDER BY planned_start DESC LIMIT 50',
+        [],
+        (err: any, rows: any[]) => {
+          if (err) {
+            if (err.message?.includes('no such table')) {
+              resolve([]);
+            } else {
+              reject(err);
+            }
           } else {
-            reject(err);
+            resolve(
+              (rows || []).map((r: any) => ({
+                id: r.id,
+                name: r.name,
+                frameworkId: r.framework_id,
+                auditType: r.audit_type || 'internal',
+                status: r.status || 'planned',
+                plannedStart: r.planned_start,
+                plannedEnd: r.planned_end,
+                findingsCount: r.findings_count || 0,
+              }))
+            );
           }
-        } else {
-          resolve((rows || []).map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            frameworkId: r.framework_id,
-            auditType: r.audit_type || 'internal',
-            status: r.status || 'planned',
-            plannedStart: r.planned_start,
-            plannedEnd: r.planned_end,
-            findingsCount: r.findings_count || 0,
-          })));
         }
-      });
+      );
     });
     res.json({ audits });
   } catch (error) {
@@ -2259,13 +2418,17 @@ const updateComplianceControl = catchAsync(async (req, res, next) => {
   }
 
   const existing = await new Promise<any>((resolve, reject) => {
-    deps.db.get(`SELECT * FROM compliance_controls WHERE id = ?`, [controlId], (err: any, row: any) => {
-      if (err) {
-        if (err.message?.includes('no such table')) return resolve(null);
-        return reject(err);
+    deps.db.get(
+      `SELECT * FROM compliance_controls WHERE id = ?`,
+      [controlId],
+      (err: any, row: any) => {
+        if (err) {
+          if (err.message?.includes('no such table')) return resolve(null);
+          return reject(err);
+        }
+        resolve(row || null);
       }
-      resolve(row || null);
-    });
+    );
   });
 
   const userId = (req as any).user?.id || 'system';
@@ -2285,14 +2448,27 @@ const updateComplianceControl = catchAsync(async (req, res, next) => {
       deps.db.run(
         `INSERT INTO compliance_controls (id, name, description, status, category, priority, notes, updated_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [controlId, name || controlId, description || '', status || 'pending', category || '', priority || 'medium', notes || '', userId],
+        [
+          controlId,
+          name || controlId,
+          description || '',
+          status || 'pending',
+          category || '',
+          priority || 'medium',
+          notes || '',
+          userId,
+        ],
         (err: any) => (err ? reject(err) : resolve())
       );
     });
   }
 
   const updated = await new Promise<any>((resolve) => {
-    deps.db.get(`SELECT * FROM compliance_controls WHERE id = ?`, [controlId], (_e: any, row: any) => resolve(row || {}));
+    deps.db.get(
+      `SELECT * FROM compliance_controls WHERE id = ?`,
+      [controlId],
+      (_e: any, row: any) => resolve(row || {})
+    );
   });
 
   res.json({ control: updated });
@@ -2345,7 +2521,9 @@ const createDsarRequest = catchAsync(async (req, res, next) => {
   });
 
   const created = await new Promise<any>((resolve) => {
-    deps.db.get(`SELECT * FROM dsar_requests WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+    deps.db.get(`SELECT * FROM dsar_requests WHERE id = ?`, [id], (_e: any, row: any) =>
+      resolve(row || {})
+    );
   });
 
   res.status(201).json({ request: created });
@@ -2413,19 +2591,32 @@ const createComplianceAudit = catchAsync(async (req, res, next) => {
 
   const id = `audit_${uuid.v4().slice(0, 8)}`;
   const plannedStart = scheduledDate || new Date().toISOString();
-  const plannedEnd = new Date(new Date(plannedStart).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const plannedEnd = new Date(
+    new Date(plannedStart).getTime() + 14 * 24 * 60 * 60 * 1000
+  ).toISOString();
 
   await new Promise<void>((resolve, reject) => {
     deps.db.run(
       `INSERT INTO compliance_audits (id, name, framework_id, audit_type, status, planned_start, planned_end, scope, auditor)
        VALUES (?, ?, ?, ?, 'planned', ?, ?, ?, ?)`,
-      [id, name, frameworkId || '', auditType || 'internal', plannedStart, plannedEnd, scope || '', auditor || ''],
+      [
+        id,
+        name,
+        frameworkId || '',
+        auditType || 'internal',
+        plannedStart,
+        plannedEnd,
+        scope || '',
+        auditor || '',
+      ],
       (err: any) => (err ? reject(err) : resolve())
     );
   });
 
   const created = await new Promise<any>((resolve) => {
-    deps.db.get(`SELECT * FROM compliance_audits WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+    deps.db.get(`SELECT * FROM compliance_audits WHERE id = ?`, [id], (_e: any, row: any) =>
+      resolve(row || {})
+    );
   });
 
   res.status(201).json({
@@ -2487,7 +2678,9 @@ const createProcessingRecord = catchAsync(async (req, res, next) => {
   });
 
   const created = await new Promise<any>((resolve) => {
-    deps.db.get(`SELECT * FROM processing_records WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+    deps.db.get(`SELECT * FROM processing_records WHERE id = ?`, [id], (_e: any, row: any) =>
+      resolve(row || {})
+    );
   });
 
   res.status(201).json({ record: created });
@@ -2498,13 +2691,17 @@ const createProcessingRecord = catchAsync(async (req, res, next) => {
  */
 const getProcessingRecords = catchAsync(async (req, res, next) => {
   const records = await new Promise<any[]>((resolve, reject) => {
-    deps.db.all(`SELECT * FROM processing_records ORDER BY created_at DESC LIMIT 100`, [], (err: any, rows: any[]) => {
-      if (err) {
-        if (err.message?.includes('no such table')) return resolve([]);
-        return reject(err);
+    deps.db.all(
+      `SELECT * FROM processing_records ORDER BY created_at DESC LIMIT 100`,
+      [],
+      (err: any, rows: any[]) => {
+        if (err) {
+          if (err.message?.includes('no such table')) return resolve([]);
+          return reject(err);
+        }
+        resolve(rows || []);
       }
-      resolve(rows || []);
-    });
+    );
   });
   res.json({ records });
 });
@@ -2514,23 +2711,43 @@ const getProcessingRecords = catchAsync(async (req, res, next) => {
  */
 const exportComplianceReport = catchAsync(async (req, res, next) => {
   const frameworks = await new Promise<any[]>((resolve) => {
-    deps.db.all(`SELECT * FROM compliance_frameworks WHERE is_active = 1`, [], (_e: any, rows: any[]) => resolve(rows || []));
+    deps.db.all(
+      `SELECT * FROM compliance_frameworks WHERE is_active = 1`,
+      [],
+      (_e: any, rows: any[]) => resolve(rows || [])
+    );
   }).catch(() => []);
 
   const dsars = await new Promise<any[]>((resolve) => {
-    deps.db.all(`SELECT * FROM dsar_requests ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+    deps.db.all(
+      `SELECT * FROM dsar_requests ORDER BY created_at DESC`,
+      [],
+      (_e: any, rows: any[]) => resolve(rows || [])
+    );
   }).catch(() => []);
 
   const audits = await new Promise<any[]>((resolve) => {
-    deps.db.all(`SELECT * FROM compliance_audits ORDER BY planned_start DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+    deps.db.all(
+      `SELECT * FROM compliance_audits ORDER BY planned_start DESC`,
+      [],
+      (_e: any, rows: any[]) => resolve(rows || [])
+    );
   }).catch(() => []);
 
   const processingRecords = await new Promise<any[]>((resolve) => {
-    deps.db.all(`SELECT * FROM processing_records ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+    deps.db.all(
+      `SELECT * FROM processing_records ORDER BY created_at DESC`,
+      [],
+      (_e: any, rows: any[]) => resolve(rows || [])
+    );
   }).catch(() => []);
 
   const controls = await new Promise<any[]>((resolve) => {
-    deps.db.all(`SELECT * FROM compliance_controls ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+    deps.db.all(
+      `SELECT * FROM compliance_controls ORDER BY created_at DESC`,
+      [],
+      (_e: any, rows: any[]) => resolve(rows || [])
+    );
   }).catch(() => []);
 
   const report = {
@@ -2543,7 +2760,10 @@ const exportComplianceReport = catchAsync(async (req, res, next) => {
   };
 
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', `attachment; filename="compliance-report-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="compliance-report-${new Date().toISOString().slice(0, 10)}.json"`
+  );
   res.json(report);
 });
 
@@ -6709,12 +6929,14 @@ export {
   createApprovalWorkflow,
   createAutomationRule,
   createBusinessMetric,
+  createComplianceAudit,
   createContractAmendment,
   createCustomerContract,
   createCustomerSuccessNote,
   createDashboard,
   createDataRetentionPolicy,
   createDLPPolicy,
+  createDsarRequest,
   createEmailCampaign,
   createEmailTemplate,
   createFeedbackItem,
@@ -6722,6 +6944,7 @@ export {
   createLifecycleStage,
   createPredictiveModel,
   createPricingPlan,
+  createProcessingRecord,
   createRevenueForecast,
   createRevenueRecognition,
   createSecurityIncident,
@@ -6754,6 +6977,7 @@ export {
   executeSuccessPlaybook,
   exportAttribution,
   exportAuditLogs,
+  exportComplianceReport,
   generateRevenueForecast,
   getAccessCodes,
   getAccessRequests,
@@ -6784,13 +7008,6 @@ export {
   getComplianceStatus,
   getComplianceSummary,
   getContractAmendments,
-  createComplianceAudit,
-  createDsarRequest,
-  createProcessingRecord,
-  exportComplianceReport,
-  getDsarRequestById,
-  getProcessingRecords,
-  updateComplianceControl,
   getContractStats,
   getCustomerContracts,
   getCustomerHealthCheck,
@@ -6811,6 +7028,7 @@ export {
   getDLPStats,
   getDLPViolationById,
   getDLPViolations,
+  getDsarRequestById,
   getDsarRequests,
   getEmailCampaigns,
   // Enterprise Customers Module - Communication
@@ -6857,6 +7075,7 @@ export {
   getPredictiveModels,
   // Phase 5: Revenue Management Module
   getPricingPlans,
+  getProcessingRecords,
   getRecentHighRiskActions,
   getRecognitionSchedule,
   getReportExecutions,
@@ -6941,6 +7160,7 @@ export {
   updateApprovalWorkflow,
   updateAutomationRule,
   updateBusinessMetric,
+  updateComplianceControl,
   updateCustomerContract,
   updateDashboard,
   updateDashboardWidget,

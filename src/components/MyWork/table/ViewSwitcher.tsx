@@ -21,6 +21,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TablePlatformView } from '@/types/tablePlatform';
+
 import { ShareViewDialog } from './ShareViewDialog';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -36,7 +37,10 @@ export interface ViewSwitcherProps {
 
 // ── View type icons and labels ───────────────────────────────────────────────
 
-const VIEW_TYPE_META: Record<ViewType, { icon: React.FC<{ size?: number; className?: string }>; labelEn: string; labelPl: string }> = {
+const VIEW_TYPE_META: Record<
+  ViewType,
+  { icon: React.FC<{ size?: number; className?: string }>; labelEn: string; labelPl: string }
+> = {
   grid: { icon: Table2, labelEn: 'Grid', labelPl: 'Tabela' },
   kanban: { icon: KanbanSquare, labelEn: 'Kanban', labelPl: 'Kanban' },
   calendar: { icon: Calendar, labelEn: 'Calendar', labelPl: 'Kalendarz' },
@@ -84,9 +88,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   }, [creating]);
 
   const activeView = views.find((v) => v.id === activeViewId);
-  const ActiveIcon = activeView
-    ? VIEW_TYPE_META[activeView.viewType]?.icon ?? Table2
-    : Table2;
+  const ActiveIcon = activeView ? (VIEW_TYPE_META[activeView.viewType]?.icon ?? Table2) : Table2;
 
   const handleCreate = useCallback(() => {
     const trimmed = newName.trim();
@@ -109,7 +111,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
         setCreating(false);
       }
     },
-    [handleCreate],
+    [handleCreate]
   );
 
   return (
@@ -262,20 +264,21 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           </div>
         </div>
       )}
-      {sharingViewId && (() => {
-        const view = views.find(v => v.id === sharingViewId);
-        if (!view) return null;
-        return (
-          <ShareViewDialog
-            viewId={view.id}
-            viewName={view.name}
-            isShared={view.isShared}
-            shareToken={view.shareToken}
-            onClose={() => setSharingViewId(null)}
-            onUpdated={() => setSharingViewId(null)}
-          />
-        );
-      })()}
+      {sharingViewId &&
+        (() => {
+          const view = views.find((v) => v.id === sharingViewId);
+          if (!view) return null;
+          return (
+            <ShareViewDialog
+              viewId={view.id}
+              viewName={view.name}
+              isShared={view.isShared}
+              shareToken={view.shareToken}
+              onClose={() => setSharingViewId(null)}
+              onUpdated={() => setSharingViewId(null)}
+            />
+          );
+        })()}
     </div>
   );
 };

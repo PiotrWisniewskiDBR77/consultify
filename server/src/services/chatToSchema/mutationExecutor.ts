@@ -43,7 +43,7 @@ const REF_PATTERN = /^@ref:(.+)$/;
 
 function resolveReferences(
   operations: SchemaOperation[],
-  createdEntities: Map<string, string>,
+  createdEntities: Map<string, string>
 ): SchemaOperation[] {
   return operations.map((op) => ({
     ...op,
@@ -52,10 +52,7 @@ function resolveReferences(
   }));
 }
 
-function resolveObject(
-  obj: unknown,
-  createdEntities: Map<string, string>,
-): unknown {
+function resolveObject(obj: unknown, createdEntities: Map<string, string>): unknown {
   if (typeof obj === 'string') {
     const match = REF_PATTERN.exec(obj);
     if (match) {
@@ -139,7 +136,7 @@ export class MutationExecutor {
     baseId: string,
     userId?: string,
     organizationId?: string,
-    workspaceId?: string,
+    workspaceId?: string
   ): Promise<ExecutionOutcome> {
     const sorted = sortByDependencies(operations);
     const createdEntities = new Map<string, string>();
@@ -157,7 +154,7 @@ export class MutationExecutor {
           createdEntities,
           userId,
           organizationId,
-          workspaceId,
+          workspaceId
         );
         results.push(result);
 
@@ -228,7 +225,7 @@ export class MutationExecutor {
     createdEntities: Map<string, string>,
     userId?: string,
     organizationId?: string,
-    workspaceId?: string,
+    workspaceId?: string
   ): Promise<MutationResult> {
     const opType = op.operation_type;
     const target = (op.target ?? {}) as Record<string, string>;
@@ -283,7 +280,7 @@ export class MutationExecutor {
     payload: Record<string, unknown>,
     workspaceId?: string,
     organizationId?: string,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     if (!organizationId || !workspaceId) {
       return {
@@ -310,7 +307,7 @@ export class MutationExecutor {
     payload: Record<string, unknown>,
     defaultBaseId: string,
     createdEntities: Map<string, string>,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     const resolvedBaseId = target.base_id ?? target.baseId ?? defaultBaseId;
     const effectiveBaseId = createdEntities.get(resolvedBaseId) ?? resolvedBaseId;
@@ -331,7 +328,7 @@ export class MutationExecutor {
     target: Record<string, string>,
     payload: Record<string, unknown>,
     createdEntities: Map<string, string>,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     const rawTableId = target.table_id ?? target.tableId;
     const tableId = createdEntities.get(rawTableId) ?? rawTableId;
@@ -361,7 +358,7 @@ export class MutationExecutor {
     opId: string,
     target: Record<string, string>,
     payload: Record<string, unknown>,
-    createdEntities: Map<string, string>,
+    createdEntities: Map<string, string>
   ): Promise<MutationResult> {
     const rawFieldId = target.field_id ?? target.fieldId;
     const fieldId = createdEntities.get(rawFieldId) ?? rawFieldId;
@@ -375,7 +372,9 @@ export class MutationExecutor {
     }
 
     const db = getDatabase();
-    const before = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0] as Record<string, unknown> | undefined;
+    const before = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0] as
+      | Record<string, unknown>
+      | undefined;
     if (!before) {
       return {
         operationId: opId,
@@ -410,7 +409,7 @@ export class MutationExecutor {
     opId: string,
     target: Record<string, string>,
     createdEntities: Map<string, string>,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     const rawFieldId = target.field_id ?? target.fieldId;
     const fieldId = createdEntities.get(rawFieldId) ?? rawFieldId;
@@ -424,7 +423,9 @@ export class MutationExecutor {
     }
 
     const db = getDatabase();
-    const before = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0] as Record<string, unknown> | undefined;
+    const before = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0] as
+      | Record<string, unknown>
+      | undefined;
     if (!before) {
       return {
         operationId: opId,
@@ -458,7 +459,7 @@ export class MutationExecutor {
     target: Record<string, string>,
     payload: Record<string, unknown>,
     createdEntities: Map<string, string>,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     const rawTableId = target.table_id ?? target.tableId;
     const tableId = createdEntities.get(rawTableId) ?? rawTableId;
@@ -488,7 +489,7 @@ export class MutationExecutor {
     target: Record<string, string>,
     payload: Record<string, unknown>,
     createdEntities: Map<string, string>,
-    userId?: string,
+    userId?: string
   ): Promise<MutationResult> {
     const rawTableId = target.table_id ?? target.tableId;
     const tableId = createdEntities.get(rawTableId) ?? rawTableId;
@@ -537,17 +538,14 @@ export class MutationExecutor {
           action.params.tableId as string,
           action.params.name as string,
           action.params.fieldType as string,
-          action.params.options as Record<string, unknown> | undefined,
+          action.params.options as Record<string, unknown> | undefined
         );
         break;
       case 'updateField':
-        await metadataService.updateField(
-          action.params.fieldId as string,
-          {
-            name: action.params.name as string | undefined,
-            options: action.params.options as Record<string, unknown> | undefined,
-          },
-        );
+        await metadataService.updateField(action.params.fieldId as string, {
+          name: action.params.name as string | undefined,
+          options: action.params.options as Record<string, unknown> | undefined,
+        });
         break;
       default:
         logger.warn('[MutationExecutor] Unknown rollback action type', { type: action.type });

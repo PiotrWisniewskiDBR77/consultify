@@ -41,16 +41,16 @@ export enum MappingTier {
 
 export const POLICY_THRESHOLDS = {
   /** Heuristic score above which mapping is auto-accepted (Tier 1) */
-  HEURISTIC_AUTO_ACCEPT: 0.60,
+  HEURISTIC_AUTO_ACCEPT: 0.6,
 
   /** LLM confidence above which mapping is auto-accepted (Tier 2) */
   LLM_AUTO_ACCEPT: 0.75,
 
   /** LLM confidence below which mapping is rejected (not even Tier 3) */
-  LLM_REJECT: 0.40,
+  LLM_REJECT: 0.4,
 
   /** LLM confidence range for review_required (Tier 3) */
-  LLM_REVIEW_MIN: 0.50,
+  LLM_REVIEW_MIN: 0.5,
   LLM_REVIEW_MAX: 0.75,
 
   /** Maximum number of lines sent to LLM per pass (cost control) */
@@ -107,7 +107,12 @@ export function isNonFinancialByPolicy(label: string): boolean {
   const trimmed = label.trim();
   if (NON_FINANCIAL_PATTERNS.some((rx) => rx.test(trimmed))) return true;
   const cleaned = trimmed.replace(/\s+\d{4}$/, '').trim();
-  if (/^(december|styczeń|luty|marzec|kwiecień|maj|czerwiec|lipiec|sierpień|wrzesień|październik|listopad|grudzień)$/i.test(cleaned)) return true;
+  if (
+    /^(december|styczeń|luty|marzec|kwiecień|maj|czerwiec|lipiec|sierpień|wrzesień|październik|listopad|grudzień)$/i.test(
+      cleaned
+    )
+  )
+    return true;
   return false;
 }
 

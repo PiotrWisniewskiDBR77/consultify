@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS tp_interfaces (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_tp_interfaces_base ON tp_interfaces(base_id);
-CREATE INDEX idx_tp_interfaces_share ON tp_interfaces(share_token) WHERE share_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tp_interfaces_base ON tp_interfaces(base_id);
+CREATE INDEX IF NOT EXISTS idx_tp_interfaces_share ON tp_interfaces(share_token) WHERE share_token IS NOT NULL;

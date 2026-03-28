@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ExtensionHostProps {
   extensionId: string;
@@ -19,7 +19,11 @@ type SDKMessage =
   | { type: 'tp:getSchema'; requestId: string; tableId: string }
   | { type: 'tp:getConfig'; requestId: string }
   | { type: 'tp:setConfig'; requestId: string; config: unknown }
-  | { type: 'tp:showNotification'; message: string; notificationType: 'info' | 'success' | 'error' };
+  | {
+      type: 'tp:showNotification';
+      message: string;
+      notificationType: 'info' | 'success' | 'error';
+    };
 
 export const ExtensionHost: React.FC<ExtensionHostProps> = ({
   extensionId,
@@ -63,7 +67,9 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
             return;
           }
           try {
-            const resp = await fetch(`/api/table-platform/tables/${msg.tableId}/records?pageSize=100`);
+            const resp = await fetch(
+              `/api/table-platform/tables/${msg.tableId}/records?pageSize=100`
+            );
             const data = await resp.json();
             sendResponse(msg.requestId, data);
           } catch (err: unknown) {
@@ -177,7 +183,9 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
         <span className="text-sm font-medium text-gray-700">Extension</span>
         <div className="flex items-center gap-2">
           {!isReady && <span className="text-xs text-gray-400">Loading...</span>}
-          <span className="text-xs text-gray-400">{scopes.length} scope{scopes.length !== 1 ? 's' : ''}</span>
+          <span className="text-xs text-gray-400">
+            {scopes.length} scope{scopes.length !== 1 ? 's' : ''}
+          </span>
           {onClose && (
             <button
               onClick={onClose}

@@ -1500,9 +1500,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     if (isDynamicSwot) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
-        const isDynamicSwotSessionPhase = ['mission', 'input', 'swot', 'insights', 'outputs'].includes(
-          phaseStep.id
-        );
+        const isDynamicSwotSessionPhase = [
+          'mission',
+          'input',
+          'swot',
+          'insights',
+          'outputs',
+        ].includes(phaseStep.id);
 
         return (
           <div className="space-y-6">

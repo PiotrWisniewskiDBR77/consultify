@@ -9,10 +9,10 @@
  * - Public Anna endpoints (HTTP)
  */
 
-import * as WorkerService from '../src/services/ai/virtualWorkerService.js';
+import { getDatabase } from '../src/database/Database.js';
 import * as ConversationLogger from '../src/services/ai/virtualWorkerConversationLogger.js';
 import * as InsightsEngine from '../src/services/ai/virtualWorkerInsightsEngine.js';
-import { getDatabase } from '../src/database/Database.js';
+import * as WorkerService from '../src/services/ai/virtualWorkerService.js';
 
 const BASE_URL = 'http://localhost:3001';
 const TEST_SLUG = `test-worker-${Date.now()}`;
@@ -64,7 +64,7 @@ async function testWorkersCRUD() {
   await test('List workers (should include Anna and Teresa)', async () => {
     const workers = await WorkerService.listWorkers();
     assert(workers.length >= 2, `Expected >= 2 workers, got ${workers.length}`);
-    const slugs = workers.map(w => w.slug);
+    const slugs = workers.map((w) => w.slug);
     assert(slugs.includes('anna'), 'Anna not found');
     assert(slugs.includes('teresa'), 'Teresa not found');
   });
@@ -81,8 +81,14 @@ async function testWorkersCRUD() {
   await test('Get worker by slug (teresa)', async () => {
     const teresa = await WorkerService.getWorkerBySlug('teresa');
     assert(teresa !== null, 'Teresa not found by slug');
-    assert(teresa!.role === 'internal_consultant', `Expected role internal_consultant, got ${teresa!.role}`);
-    assert(teresa!.surface === 'in_platform', `Expected surface in_platform, got ${teresa!.surface}`);
+    assert(
+      teresa!.role === 'internal_consultant',
+      `Expected role internal_consultant, got ${teresa!.role}`
+    );
+    assert(
+      teresa!.surface === 'in_platform',
+      `Expected surface in_platform, got ${teresa!.surface}`
+    );
     assert(teresa!.voice_enabled === false, 'Teresa should not have voice enabled');
   });
 
@@ -186,9 +192,12 @@ async function testKnowledge() {
     assert(anna !== null, 'Anna not found');
     const assignments = await WorkerService.listKnowledgeAssignments(anna!.id);
     assert(assignments.length >= 7, `Expected >= 7 assignments, got ${assignments.length}`);
-    const consultify = assignments.find(a => a.product_slug === 'consultify');
+    const consultify = assignments.find((a) => a.product_slug === 'consultify');
     assert(consultify !== undefined, 'Consultify assignment not found');
-    assert(consultify!.priority_weight === 1.2, `Expected weight 1.2, got ${consultify!.priority_weight}`);
+    assert(
+      consultify!.priority_weight === 1.2,
+      `Expected weight 1.2, got ${consultify!.priority_weight}`
+    );
   });
 
   await test('Assign knowledge to test worker', async () => {
@@ -200,7 +209,10 @@ async function testKnowledge() {
     });
     testAssignmentId = assignment.id;
     assert(assignment.product_slug === 'consultify', 'Product slug mismatch');
-    assert(assignment.priority_weight === 1.5, `Expected weight 1.5, got ${assignment.priority_weight}`);
+    assert(
+      assignment.priority_weight === 1.5,
+      `Expected weight 1.5, got ${assignment.priority_weight}`
+    );
   });
 
   await test('List test worker knowledge', async () => {
@@ -312,11 +324,20 @@ async function testConversations() {
     const analytics = await ConversationLogger.getWorkerAnalytics({
       workerId: testWorkerId,
     });
-    assert(analytics.totalConversations >= 2, `Expected >= 2 conversations, got ${analytics.totalConversations}`);
+    assert(
+      analytics.totalConversations >= 2,
+      `Expected >= 2 conversations, got ${analytics.totalConversations}`
+    );
     assert(analytics.totalMessages >= 2, `Expected >= 2 messages, got ${analytics.totalMessages}`);
     assert(typeof analytics.avgDurationSeconds === 'number', 'avgDuration should be number');
-    assert(typeof analytics.outcomeDistribution === 'object', 'outcomeDistribution should be object');
-    assert(typeof analytics.channelDistribution === 'object', 'channelDistribution should be object');
+    assert(
+      typeof analytics.outcomeDistribution === 'object',
+      'outcomeDistribution should be object'
+    );
+    assert(
+      typeof analytics.channelDistribution === 'object',
+      'channelDistribution should be object'
+    );
   });
 }
 
@@ -352,7 +373,10 @@ async function testInsights() {
     const result = await InsightsEngine.listInsights({ workerId: testWorkerId, status: 'new' });
     if (result.insights.length > 0) {
       await InsightsEngine.reviewInsight(result.insights[0].id, 'applied', 'test-admin');
-      const updated = await InsightsEngine.listInsights({ workerId: testWorkerId, status: 'applied' });
+      const updated = await InsightsEngine.listInsights({
+        workerId: testWorkerId,
+        status: 'applied',
+      });
       assert(updated.total >= 1, 'Should have at least 1 applied insight');
     }
   });
@@ -375,7 +399,9 @@ async function testAnnaPublicChat() {
     const data: any = await response.json();
     assert(typeof data.message === 'string', 'Response should have message string');
     assert(data.message.length > 10, `Response too short: "${data.message}"`);
-    console.log(`    → Response (${data.message.length} chars): "${data.message.slice(0, 100)}..."`);
+    console.log(
+      `    → Response (${data.message.length} chars): "${data.message.slice(0, 100)}..."`
+    );
     if (data.knowledgeSources) {
       console.log(`    → Knowledge sources: ${JSON.stringify(data.knowledgeSources)}`);
     }
@@ -401,7 +427,9 @@ async function testAnnaPublicChat() {
     assert(response.ok, `HTTP ${response.status}`);
     const data: any = await response.json();
     assert(typeof data.message === 'string', 'Response should have message string');
-    console.log(`    → Response (${data.message.length} chars): "${data.message.slice(0, 100)}..."`);
+    console.log(
+      `    → Response (${data.message.length} chars): "${data.message.slice(0, 100)}..."`
+    );
   });
 
   await test('POST /api/public/anna/chat — validation error', async () => {
@@ -471,7 +499,9 @@ async function testConversationLogging() {
     // The integration test chat should have been logged
     if (result.total > 0) {
       const latest = result.conversations[0];
-      console.log(`    → Latest: ${latest.channel}, ${latest.message_count} msgs, outcome=${latest.outcome}`);
+      console.log(
+        `    → Latest: ${latest.channel}, ${latest.message_count} msgs, outcome=${latest.outcome}`
+      );
     }
   });
 }

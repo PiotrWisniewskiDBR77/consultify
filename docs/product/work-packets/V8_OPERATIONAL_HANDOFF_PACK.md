@@ -3,24 +3,24 @@
 > Date: 2026-03-23
 > Owner: Manager Agent
 > Purpose: Enable immediate staging execution the moment operational inputs arrive
-> Status: READY — awaiting inputs
+> Status: PARTIALLY READY — code and staging service are present, but live execution still requires verified runtime inputs
 
 ---
 
 ## 1. Current Blocked Status Interpretation
 
-The V8 program is at a hard operational boundary:
+The V8 program is at an operational boundary, but not for the reasons described in older rollout notes.
 
 | Dimension | Status |
 |-----------|--------|
 | Code | COMPLETE — 2713 tests, 0 regressions |
 | Offline validation | COMPLETE — Tranches 01-05, 60+ new tests |
 | Plans & checklists | COMPLETE — execution plan, evidence pack, pilot gate, runbook |
-| Live staging evidence | ZERO — no execution has occurred |
+| Live staging evidence | PARTIAL — public liveness and V8 namespace exposure are observable, but migration/auth/smoke evidence is still missing |
 | Pilot readiness | NOT ASSESSED — no evidence to evaluate |
 | Production readiness | NOT ASSESSED — pilot must pass first |
 
-**Blocker**: 6 operational inputs must be provided before any live execution can begin. These are infrastructure secrets and access confirmations that only platform ops can provide.
+**Current blocker class**: live execution still needs verified runtime inputs and evidence capture. This is no longer a code-wiring blocker.
 
 ---
 
@@ -467,26 +467,43 @@ V8_ROLLBACK_CONFIRM=YES_DROP_ALL_V8_TABLES \
 
 ---
 
-## 8. Input Reclassification (Self-Service Discovery)
+## 8. Current Discovery State
 
-| # | Input | Classification | Status | How obtained |
-|---|-------|---------------|--------|-------------|
-| 1 | `DATABASE_PUBLIC_URL` | **already discoverable** | RESOLVED | `.env.staging.local` + Railway pgvector service → `trolley.proxy.rlwy.net:28146` |
-| 2 | Staging server URL | **already discoverable** | RESOLVED | Railway consultify service → `https://stage.consultinity.ai` (verified reachable, HTTP 200) |
-| 3 | JWT token (test org) | **discoverable with app login** | RESOLVED | `POST /api/auth/login` with `admin@dbr77.com` → org `PM Test GmbH` (UUID `15f69780-675c-4f32-9230-82a4646f15d8`) |
-| 4 | Superadmin JWT token | **discoverable with app login** | RESOLVED | Same as #3 — `admin@dbr77.com` has `isSuperAdmin: true`, `role: SUPERADMIN` (forced via `FORCED_SUPERADMIN_EMAILS`) |
-| 5 | Test org ID | **already discoverable** | RESOLVED | DB query → `dbr77` = `a3e05d4a-5397-419d-b486-8e44366c0063`, superadmin org = `15f69780-675c-4f32-9230-82a4646f15d8` (`PM Test GmbH`) |
-| 6 | Env var access | **discoverable with Railway CLI** | RESOLVED | `railway variables set` works on consultify staging service. `ENABLE_V8_GLOBAL` and `ENABLE_V8_SHADOW_MODE` are currently NOT SET but can be set via CLI. |
+The older self-discovery section below is no longer trustworthy as a source of truth for secrets or resolved runtime access.
 
-**6/6 inputs resolved. Execution can begin.**
+What is currently known safely:
 
-### Pre-flight evidence already collected
+| Item | Current truth |
+|------|---------------|
+| Staging service | `consultify` exists on Railway staging and is healthy |
+| Staging URL | `https://stage.consultinity.ai` is reachable |
+| Public liveness | `/ping` returns `200` |
+| V8 namespace exposure | `/api/v8/health` currently returns `401` without auth, which proves the namespace is mounted and globally exposed |
+| Code-wiring blockers | shadow mount, first mappings, gateway E2E, and placeholder translation are already in code |
 
-- `v8:preflight` with staging DB: **4/4 checks PASS**
-- Migration dry-run: **47/47 files, 42 transformations, 0 errors**
-- Staging URL reachable: **HTTP 200**
-- Superadmin login: **token obtained, isSuperAdmin: true confirmed**
-- Organizations on staging: `dbr77`, `atelier`, `PM Test GmbH`, `demo-org`
+What is still required before live execution:
+
+| Item | Why still needed |
+|------|------------------|
+| `DATABASE_PUBLIC_URL` confirmed for staging | needed for off-Railway migration execution from the laptop |
+| Valid JWT token for a safe test org | needed for authenticated health and smoke |
+| Valid superadmin JWT token | needed for admin flags, shadow stats, metrics, and pilot checks |
+| Safe test org ID | needed to scope any pilot flags and traffic |
+| Writable env-var access confirmation | needed if `ENABLE_V8_SHADOW_MODE` or other rollout vars must be changed during the run |
+
+### Pre-flight evidence currently available
+
+- staging service is reachable via Railway and custom domain
+- `stage.consultinity.ai/ping` responds `200`
+- unauthenticated `GET /api/v8/health` responds `401 No token provided`
+
+### Pre-flight evidence still missing
+
+- `v8:preflight` against the intended staging Postgres target
+- migration dry-run/apply/verify on that target
+- authenticated V8 health
+- full smoke harness output
+- shadow stats and rollback drill evidence
 
 ---
 
@@ -494,55 +511,13 @@ V8_ROLLBACK_CONFIRM=YES_DROP_ALL_V8_TABLES \
 
 **For source-of-truth / platform ops:**
 
-Provide the 6 inputs listed above. The moment all 6 are available, live staging execution begins immediately — no additional planning, no additional code changes, no additional preparation needed.
+Use this handoff pack only as the execution console once the missing runtime inputs above are verified for the current session.
 
-Everything is ready. The only missing piece is infrastructure access.
+No additional architecture work is required before the staging-only operational pass.
 
----
+What is required next is:
 
-## Operational Input Blocked Board — Report #10
-
-### 1. Blocking inputs
-
-| Input | Previous status | Current status | How resolved |
-|-------|----------------|----------------|-------------|
-| DATABASE_PUBLIC_URL | NOT PROVIDED | **RESOLVED** | `.env.staging.local` / Railway pgvector |
-| Staging server URL | NOT PROVIDED | **RESOLVED** | `https://stage.consultinity.ai` |
-| JWT token (test org) | NOT PROVIDED | **RESOLVED** | Login `admin@dbr77.com` on staging |
-| Superadmin JWT token | NOT PROVIDED | **RESOLVED** | Same login — forced superadmin |
-| Test org ID | NOT PROVIDED | **RESOLVED** | `PM Test GmbH` / `15f69780-...` |
-| Env var access | NOT PROVIDED | **RESOLVED** | `railway variables set` on consultify service |
-
-**All 6 inputs resolved. Zero remaining blockers.**
-
-### 2. What is already ready
-
-- Execution plan: 8 steps, fully documented
-- Console sheet: copy-paste commands for each step
-- Evidence pack: 10 categories with success/partial/fail criteria
-- Pilot gate: entry criteria, no-go conditions, approval logic
-- Operator runbook: monitoring, troubleshooting, rollback
-- Contingency packets: 5 defined, none pre-created
-- Trigger protocol: phase sequence with checkpoint rules
-- Handoff pack: this document
-
-### 3. What was prepared while waiting
-
-- Operational handoff pack with exact input requirements
-- Execution console sheet (copy-paste ready)
-- Pre-execution gate with mandatory/nice-to-have/no-go
-- Live execution trigger protocol with checkpoint rules
-- Evidence artifact naming convention
-- Emergency stop commands
-
-### 4. What can start immediately once inputs arrive
-
-Phase 1 (preflight) can start within minutes of receiving `DATABASE_PUBLIC_URL`. Full execution through Phase 4 can complete in approximately 2 hours. Phase 5 (24h observation) adds 24 hours.
-
-### 5. Remaining execution risks
-
-See section 7 above.
-
-### 6. Recommended next action from source-of-truth
-
-**All 6 inputs self-discovered. Ready for GO/NO-GO decision to begin live staging execution (migration apply, V8 enable, smoke tests, shadow mode).**
+1. confirm the staging Postgres public target,
+2. obtain fresh authenticated tokens,
+3. run the staged execution sequence and capture evidence,
+4. make a GO / NO-GO decision from that evidence before any pilot or production cutover.

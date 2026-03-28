@@ -33,7 +33,10 @@ export function evaluateQuestionQuality(params: {
     warnings.push({
       ruleId: 'too_short',
       severity: 'error',
-      message: { en: 'Question is too short (min 10 chars)', pl: 'Pytanie jest za krótkie (min 10 znaków)' },
+      message: {
+        en: 'Question is too short (min 10 chars)',
+        pl: 'Pytanie jest za krótkie (min 10 znaków)',
+      },
     });
   }
 
@@ -42,7 +45,10 @@ export function evaluateQuestionQuality(params: {
     warnings.push({
       ruleId: 'too_long',
       severity: 'warning',
-      message: { en: 'Question is very long — consider splitting', pl: 'Pytanie jest bardzo długie — rozważ podział' },
+      message: {
+        en: 'Question is very long — consider splitting',
+        pl: 'Pytanie jest bardzo długie — rozważ podział',
+      },
     });
   }
 
@@ -67,7 +73,10 @@ export function evaluateQuestionQuality(params: {
     warnings.push({
       ruleId: 'leading',
       severity: 'warning',
-      message: { en: 'Question may be leading — rephrase neutrally', pl: 'Pytanie może być sugerujące — przeformułuj neutralnie' },
+      message: {
+        en: 'Question may be leading — rephrase neutrally',
+        pl: 'Pytanie może być sugerujące — przeformułuj neutralnie',
+      },
     });
   }
 
@@ -76,17 +85,26 @@ export function evaluateQuestionQuality(params: {
     warnings.push({
       ruleId: 'no_question_mark',
       severity: 'info',
-      message: { en: 'Consider ending with a question mark', pl: 'Rozważ zakończenie znakiem zapytania' },
+      message: {
+        en: 'Consider ending with a question mark',
+        pl: 'Rozważ zakończenie znakiem zapytania',
+      },
     });
   }
 
   // Rule 6: Choice question without enough options
   const choiceTypes = ['single_choice', 'multi_choice', 'dropdown', 'select'];
-  if (choiceTypes.includes(params.answerType) && (!params.answerOptions || params.answerOptions.length < 2)) {
+  if (
+    choiceTypes.includes(params.answerType) &&
+    (!params.answerOptions || params.answerOptions.length < 2)
+  ) {
     warnings.push({
       ruleId: 'missing_options',
       severity: 'error',
-      message: { en: 'Choice question needs at least 2 options', pl: 'Pytanie wyboru wymaga co najmniej 2 opcji' },
+      message: {
+        en: 'Choice question needs at least 2 options',
+        pl: 'Pytanie wyboru wymaga co najmniej 2 opcji',
+      },
     });
   }
 
@@ -108,7 +126,10 @@ export function evaluateQuestionQuality(params: {
     warnings.push({
       ruleId: 'vague',
       severity: 'warning',
-      message: { en: 'Question is too vague — add context or specifics', pl: 'Pytanie jest zbyt ogólne — dodaj kontekst lub szczegóły' },
+      message: {
+        en: 'Question is too vague — add context or specifics',
+        pl: 'Pytanie jest zbyt ogólne — dodaj kontekst lub szczegóły',
+      },
     });
   }
 

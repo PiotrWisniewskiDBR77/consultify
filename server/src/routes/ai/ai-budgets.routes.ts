@@ -335,8 +335,16 @@ router.post(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { scopeType, scopeId, modelId, modelProvider, isAllowed, maxTokensPerRequest, dailyTokenLimit, priority } =
-        req.body;
+      const {
+        scopeType,
+        scopeId,
+        modelId,
+        modelProvider,
+        isAllowed,
+        maxTokensPerRequest,
+        dailyTokenLimit,
+        priority,
+      } = req.body;
       const organizationId = req.user?.organizationId || req.organizationId;
       const userId = req.user?.id;
       if (!organizationId || !userId) {
@@ -359,7 +367,11 @@ router.post(
         priority,
         createdBy: userId,
       });
-      return res.json({ success: true, data: result, message: 'Model permission set successfully' });
+      return res.json({
+        success: true,
+        data: result,
+        message: 'Model permission set successfully',
+      });
     } catch (error: unknown) {
       logger.error('[AI Budgets] Set model permission error:', error);
       return res.status(500).json({ success: false, error: 'Failed to set model permission' });

@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Brain,
@@ -9,6 +8,7 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
@@ -83,10 +83,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const response = await Api.post(
-        `/api/virtual-workers/${workerId}/insights/generate`,
-        {}
-      );
+      const response = await Api.post(`/api/virtual-workers/${workerId}/insights/generate`, {});
       if (response?.data?.generated > 0) {
         fetchInsights();
       }
@@ -140,11 +137,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
             disabled={generating}
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm font-medium"
           >
-            {generating ? (
-              <RefreshCw size={14} className="animate-spin" />
-            ) : (
-              <Sparkles size={14} />
-            )}
+            {generating ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {generating ? 'Analyzing...' : 'Generate Insights'}
           </button>
         </div>
@@ -171,7 +164,9 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
                   <div className="mt-0.5">
-                    {TYPE_ICONS[insight.insight_type] || <Lightbulb size={16} className="text-slate-400" />}
+                    {TYPE_ICONS[insight.insight_type] || (
+                      <Lightbulb size={16} className="text-slate-400" />
+                    )}
                   </div>
                   <div className="flex-1">
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -183,10 +178,14 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLORS[insight.priority] || PRIORITY_COLORS.medium}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLORS[insight.priority] || PRIORITY_COLORS.medium}`}
+                      >
                         {insight.priority}
                       </span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[insight.status] || STATUS_COLORS.new}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[insight.status] || STATUS_COLORS.new}`}
+                      >
                         {insight.status}
                       </span>
                       <span className="text-xs text-slate-400 dark:text-slate-500">

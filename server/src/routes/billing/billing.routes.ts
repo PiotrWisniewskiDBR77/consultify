@@ -124,12 +124,18 @@ router.get(
         ORDER BY sp.price_monthly DESC
       `)) as any[];
 
-      const mrr = plans.reduce((sum: number, p: any) => sum + (p.price_monthly || 0) * (p.subscriber_count || 0), 0);
+      const mrr = plans.reduce(
+        (sum: number, p: any) => sum + (p.price_monthly || 0) * (p.subscriber_count || 0),
+        0
+      );
 
       return res.json({
         mrr,
         arr: mrr * 12,
-        activeSubscriptions: plans.reduce((sum: number, p: any) => sum + (p.subscriber_count || 0), 0),
+        activeSubscriptions: plans.reduce(
+          (sum: number, p: any) => sum + (p.subscriber_count || 0),
+          0
+        ),
         planDistribution: plans.map((p: any) => ({
           plan: p.name,
           price: p.price_monthly,
@@ -3437,14 +3443,31 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region } = req.body;
+      const {
+        display_name,
+        displayName,
+        jurisdiction,
+        percentage,
+        tax_type,
+        taxType,
+        country,
+        region,
+      } = req.body;
       const resolvedDisplayName = display_name || displayName;
       const resolvedTaxType = tax_type || taxType;
       const id = uuidv4();
       await dbRun(
         `INSERT INTO tax_rates (id, display_name, jurisdiction, percentage, tax_type, country, region, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [id, resolvedDisplayName, jurisdiction, percentage, resolvedTaxType || 'vat', country, region || null]
+        [
+          id,
+          resolvedDisplayName,
+          jurisdiction,
+          percentage,
+          resolvedTaxType || 'vat',
+          country,
+          region || null,
+        ]
       );
       return res.json({ success: true, id });
     } catch (error: any) {
@@ -3461,14 +3484,31 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region } = req.body;
+      const {
+        display_name,
+        displayName,
+        jurisdiction,
+        percentage,
+        tax_type,
+        taxType,
+        country,
+        region,
+      } = req.body;
       const resolvedDisplayName = display_name || displayName;
       const resolvedTaxType = tax_type || taxType;
       const id = uuidv4();
       await dbRun(
         `INSERT INTO tax_rates (id, display_name, jurisdiction, percentage, tax_type, country, region, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [id, resolvedDisplayName, jurisdiction, percentage, resolvedTaxType || 'vat', country, region || null]
+        [
+          id,
+          resolvedDisplayName,
+          jurisdiction,
+          percentage,
+          resolvedTaxType || 'vat',
+          country,
+          region || null,
+        ]
       );
       return res.json({ success: true, id });
     } catch (error: any) {
@@ -3486,8 +3526,17 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region, isActive } =
-        req.body;
+      const {
+        display_name,
+        displayName,
+        jurisdiction,
+        percentage,
+        tax_type,
+        taxType,
+        country,
+        region,
+        isActive,
+      } = req.body;
       const resolvedDisplayName = display_name || displayName;
       const resolvedTaxType = tax_type || taxType;
       await dbRun(
@@ -4797,10 +4846,9 @@ router.get(
   validateParams(UsagePricingTierIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const row: any = await dbGet(
-        `SELECT * FROM usage_pricing_tiers WHERE id = ?`,
-        [req.params.id]
-      );
+      const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [
+        req.params.id,
+      ]);
       if (!row) return res.status(404).json({ error: 'Tier not found' });
       return res.json({
         id: row.id,
@@ -4835,12 +4883,23 @@ router.post(
   validateBody(CreateUsagePricingTierSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { name, unit, pricePerUnit, currency, tierType, minQuantity, maxQuantity, isActive } = req.body;
+      const { name, unit, pricePerUnit, currency, tierType, minQuantity, maxQuantity, isActive } =
+        req.body;
       const id = `upt-${uuidv4()}`;
       await dbRun(
         `INSERT INTO usage_pricing_tiers (id, name, unit, price_per_unit, currency, tier_type, min_quantity, max_quantity, is_active)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, unit, pricePerUnit, currency ?? 'USD', tierType ?? 'standard', minQuantity ?? 0, maxQuantity ?? null, isActive === false ? 0 : 1]
+        [
+          id,
+          name,
+          unit,
+          pricePerUnit,
+          currency ?? 'USD',
+          tierType ?? 'standard',
+          minQuantity ?? 0,
+          maxQuantity ?? null,
+          isActive === false ? 0 : 1,
+        ]
       );
       const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [id]);
       return res.status(201).json({
@@ -4877,7 +4936,9 @@ router.put(
   validateBody(UpdateUsagePricingTierSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [
+        req.params.id,
+      ]);
       if (!existing) return res.status(404).json({ error: 'Tier not found' });
 
       const fields: string[] = [];
@@ -4907,12 +4968,11 @@ router.put(
       fields.push("updated_at = datetime('now')");
       values.push(req.params.id);
 
-      await dbRun(
-        `UPDATE usage_pricing_tiers SET ${fields.join(', ')} WHERE id = ?`,
-        values
-      );
+      await dbRun(`UPDATE usage_pricing_tiers SET ${fields.join(', ')} WHERE id = ?`, values);
 
-      const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [
+        req.params.id,
+      ]);
       return res.json({
         id: row.id,
         name: row.name,
@@ -4946,7 +5006,9 @@ router.delete(
   validateParams(UsagePricingTierIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [
+        req.params.id,
+      ]);
       if (!existing) return res.status(404).json({ error: 'Tier not found' });
       await dbRun(`DELETE FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
       return res.json({ success: true });

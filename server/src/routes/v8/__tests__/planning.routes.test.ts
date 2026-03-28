@@ -31,7 +31,8 @@ vi.mock('../../../services/v8/planningContinuityService.js', () => ({
   getDecompositionTree: (...args: unknown[]) => mockGetDecompositionTree(...args),
   validateWBSCompleteness: (...args: unknown[]) => mockValidateWBSCompleteness(...args),
   getCriticalPath: (...args: unknown[]) => mockGetCriticalPath(...args),
-  getCrossInitiativeDependencies: (...args: unknown[]) => mockGetCrossInitiativeDependencies(...args),
+  getCrossInitiativeDependencies: (...args: unknown[]) =>
+    mockGetCrossInitiativeDependencies(...args),
   getDecisionChainsByInitiative: (...args: unknown[]) => mockGetDecisionChainsByInitiative(...args),
   getPendingDecisions: (...args: unknown[]) => mockGetPendingDecisions(...args),
 }));
@@ -39,19 +40,23 @@ vi.mock('../../../services/v8/planningContinuityService.js', () => ({
 vi.mock('../../../services/v8/planningPortfolioReadService.js', () => ({
   getPortfolioRead: (...args: unknown[]) => mockGetPortfolioRead(...args),
   getInitiativeDetailRead: (...args: unknown[]) => mockGetInitiativeDetailRead(...args),
-  getInitiativeTaskDependenciesRead: (...args: unknown[]) => mockGetInitiativeTaskDependenciesRead(...args),
+  getInitiativeTaskDependenciesRead: (...args: unknown[]) =>
+    mockGetInitiativeTaskDependenciesRead(...args),
   getInitiativeWatchersRead: (...args: unknown[]) => mockGetInitiativeWatchersRead(...args),
   getInitiativeStakeholdersRead: (...args: unknown[]) => mockGetInitiativeStakeholdersRead(...args),
   getInitiativeGateRolesRead: (...args: unknown[]) => mockGetInitiativeGateRolesRead(...args),
-  getInitiativeStatusHistoryRead: (...args: unknown[]) => mockGetInitiativeStatusHistoryRead(...args),
+  getInitiativeStatusHistoryRead: (...args: unknown[]) =>
+    mockGetInitiativeStatusHistoryRead(...args),
   getInitiativeHistoryRead: (...args: unknown[]) => mockGetInitiativeHistoryRead(...args),
   getInitiativeCommentsRead: (...args: unknown[]) => mockGetInitiativeCommentsRead(...args),
-  getInitiativeGateReadinessRead: (...args: unknown[]) => mockGetInitiativeGateReadinessRead(...args),
+  getInitiativeGateReadinessRead: (...args: unknown[]) =>
+    mockGetInitiativeGateReadinessRead(...args),
   getInitiativeResourcesRead: (...args: unknown[]) => mockGetInitiativeResourcesRead(...args),
   getInitiativeKpisRead: (...args: unknown[]) => mockGetInitiativeKpisRead(...args),
   getInitiativeBudgetItemsRead: (...args: unknown[]) => mockGetInitiativeBudgetItemsRead(...args),
   getInitiativeToolsRead: (...args: unknown[]) => mockGetInitiativeToolsRead(...args),
-  getInitiativeIntangibleAssetsRead: (...args: unknown[]) => mockGetInitiativeIntangibleAssetsRead(...args),
+  getInitiativeIntangibleAssetsRead: (...args: unknown[]) =>
+    mockGetInitiativeIntangibleAssetsRead(...args),
   getInitiativeRaidRead: (...args: unknown[]) => mockGetInitiativeRaidRead(...args),
 }));
 
@@ -139,7 +144,10 @@ describe('V8 Planning continuity read-only routes', () => {
     mockGetCrossInitiativeDependencies.mockResolvedValue([]);
     mockGetDecisionChainsByInitiative.mockResolvedValue([]);
     mockGetPendingDecisions.mockResolvedValue([]);
-    mockGetPortfolioRead.mockResolvedValue({ initiatives: [], stats: { total: 0, byStatus: {}, avgProgress: 0 } });
+    mockGetPortfolioRead.mockResolvedValue({
+      initiatives: [],
+      stats: { total: 0, byStatus: {}, avgProgress: 0 },
+    });
     mockGetInitiativeDetailRead.mockResolvedValue({ id: INIT, name: 'Initiative V8' });
     mockGetInitiativeTaskDependenciesRead.mockResolvedValue([]);
     mockGetInitiativeWatchersRead.mockResolvedValue([]);
@@ -258,7 +266,9 @@ describe('V8 Planning continuity read-only routes', () => {
   });
 
   it('GET /api/v8/planning/initiatives/:id/gate-roles returns V8 envelope and org-scoped roles', async () => {
-    mockGetInitiativeGateRolesRead.mockResolvedValue([{ id: 'role-1', gateRole: 'PROJECT_SPONSOR' }]);
+    mockGetInitiativeGateRolesRead.mockResolvedValue([
+      { id: 'role-1', gateRole: 'PROJECT_SPONSOR' },
+    ]);
 
     const app = createApp();
     const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/gate-roles`);
@@ -270,7 +280,9 @@ describe('V8 Planning continuity read-only routes', () => {
   });
 
   it('GET /api/v8/planning/initiatives/:id/status-history returns V8 envelope and org-scoped history', async () => {
-    mockGetInitiativeStatusHistoryRead.mockResolvedValue([{ id: 'hist-1', fromStatus: 'DRAFT', toStatus: 'REVIEW' }]);
+    mockGetInitiativeStatusHistoryRead.mockResolvedValue([
+      { id: 'hist-1', fromStatus: 'DRAFT', toStatus: 'REVIEW' },
+    ]);
 
     const app = createApp();
     const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/status-history`);
@@ -373,7 +385,9 @@ describe('V8 Planning continuity read-only routes', () => {
   });
 
   it('GET /api/v8/planning/initiatives/:id/intangible-assets returns V8 envelope and org-scoped intangible assets', async () => {
-    mockGetInitiativeIntangibleAssetsRead.mockResolvedValue([{ id: 'ia-1', name: 'Enablement pack' }]);
+    mockGetInitiativeIntangibleAssetsRead.mockResolvedValue([
+      { id: 'ia-1', name: 'Enablement pack' },
+    ]);
 
     const app = createApp();
     const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/intangible-assets`);
@@ -385,7 +399,9 @@ describe('V8 Planning continuity read-only routes', () => {
   });
 
   it('GET /api/v8/planning/initiatives/:id/raid returns V8 envelope and org-scoped raid items', async () => {
-    mockGetInitiativeRaidRead.mockResolvedValue([{ id: 'raid-1', type: 'risk', title: 'Vendor risk' }]);
+    mockGetInitiativeRaidRead.mockResolvedValue([
+      { id: 'raid-1', type: 'risk', title: 'Vendor risk' },
+    ]);
 
     const app = createApp();
     const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/raid?limit=25`);

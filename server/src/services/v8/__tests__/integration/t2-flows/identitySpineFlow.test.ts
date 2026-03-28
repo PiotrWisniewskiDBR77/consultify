@@ -1,6 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ContextSnapshot, V8ArtifactRef, SourceRef } from '../../../../../types/contextSnapshot.js';
+import type {
+  ContextSnapshot,
+  SourceRef,
+  V8ArtifactRef,
+} from '../../../../../types/contextSnapshot.js';
 
 // ==========================================
 // MOCK DB LAYER
@@ -29,19 +33,18 @@ import {
   captureForChat,
   captureForExecution,
   captureForRetrieval,
-  validateConsumerClass,
   getInheritanceChain,
+  validateConsumerClass,
 } from '../../../contextConsumerBindingService.js';
-
 import {
   captureSnapshot,
-  getSnapshot,
-  getSnapshotsByConversation,
-  getSnapshotChain,
-  getLatestSnapshotForSession,
-  getDriftEventsByOrg,
-  markForArchival,
   detectDrift,
+  getDriftEventsByOrg,
+  getLatestSnapshotForSession,
+  getSnapshot,
+  getSnapshotChain,
+  getSnapshotsByConversation,
+  markForArchival,
 } from '../../../contextSnapshotService.js';
 
 // ==========================================
@@ -121,7 +124,7 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
           snapshot_id: chatSnapshot.snapshotId,
           snapshot_version: 1,
           consumer_class: 'chat',
-        }),
+        })
       );
 
       const execSnapshot = await captureForExecution({
@@ -146,7 +149,7 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
           snapshot_version: 2,
           consumer_class: 'execution',
           parent_snapshot_id: chatSnapshot.snapshotId,
-        }),
+        })
       );
 
       const retrievalSnapshot = await captureForRetrieval({
@@ -227,10 +230,7 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
         .mockResolvedValueOnce(execRow)
         .mockResolvedValueOnce(chatRow);
 
-      const chain = await getSnapshotChain(
-        'a0000000-0000-4000-a000-000000000003',
-        ORG_ID,
-      );
+      const chain = await getSnapshotChain('a0000000-0000-4000-a000-000000000003', ORG_ID);
 
       expect(chain).toHaveLength(3);
       expect(chain[0].consumerClass).toBe('chat');
@@ -247,13 +247,13 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
         makeSnapshotRow({
           snapshot_id: 'a0000000-0000-4000-a000-000000000001',
           consumer_class: 'execution',
-        }),
+        })
       );
 
       const result = await validateConsumerClass(
         'a0000000-0000-4000-a000-000000000001',
         'execution',
-        ORG_ID,
+        ORG_ID
       );
 
       expect(result.valid).toBe(true);
@@ -265,13 +265,13 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
         makeSnapshotRow({
           snapshot_id: 'a0000000-0000-4000-a000-000000000001',
           consumer_class: 'chat',
-        }),
+        })
       );
 
       const result = await validateConsumerClass(
         'a0000000-0000-4000-a000-000000000001',
         'execution',
-        ORG_ID,
+        ORG_ID
       );
 
       expect(result.valid).toBe(false);
@@ -300,7 +300,7 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
       const results = await getDriftEventsByOrg(
         ORG_ID,
         '2026-03-23T00:00:00.000Z',
-        '2026-03-24T00:00:00.000Z',
+        '2026-03-24T00:00:00.000Z'
       );
 
       expect(results).toHaveLength(1);
@@ -318,7 +318,7 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
       expect(count).toBe(5);
       expect(mockDbRun).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE v8_context_snapshots'),
-        expect.arrayContaining([ORG_ID]),
+        expect.arrayContaining([ORG_ID])
       );
     });
   });
@@ -377,14 +377,9 @@ describe('WP-20W2-04 — Identity Spine Integration Proof', () => {
         parent_snapshot_id: 'a0000000-0000-4000-a000-000000000001',
       });
 
-      mockDbGet
-        .mockResolvedValueOnce(execRow)
-        .mockResolvedValueOnce(chatRow);
+      mockDbGet.mockResolvedValueOnce(execRow).mockResolvedValueOnce(chatRow);
 
-      const chain = await getInheritanceChain(
-        'a0000000-0000-4000-a000-000000000002',
-        ORG_ID,
-      );
+      const chain = await getInheritanceChain('a0000000-0000-4000-a000-000000000002', ORG_ID);
 
       expect(chain).toHaveLength(2);
       expect(chain[0].consumerClass).toBe('chat');

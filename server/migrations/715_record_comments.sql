@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS tp_record_comments (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_tp_comments_record ON tp_record_comments(record_id);
-CREATE INDEX idx_tp_comments_table ON tp_record_comments(table_id);
+CREATE INDEX IF NOT EXISTS idx_tp_comments_record ON tp_record_comments(record_id);
+CREATE INDEX IF NOT EXISTS idx_tp_comments_table ON tp_record_comments(table_id);

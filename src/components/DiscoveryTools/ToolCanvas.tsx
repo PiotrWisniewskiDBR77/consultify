@@ -6,7 +6,13 @@
 
 import React from 'react';
 
-import { ProposalCardType, SessionGenerationStatus, StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
+import {
+  ProposalCardType,
+  SessionGenerationStatus,
+  StepDefinition,
+  ToolSession,
+  ToolType,
+} from '@/store/useToolStore';
 
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';

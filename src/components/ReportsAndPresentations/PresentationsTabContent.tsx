@@ -51,8 +51,9 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedGovernance, setSelectedGovernance] =
-    useState<PresentationItem['governance'] | null>(null);
+  const [selectedGovernance, setSelectedGovernance] = useState<
+    PresentationItem['governance'] | null
+  >(null);
   const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
@@ -350,11 +351,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         onSelect={setSelectedId}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => (
-          <PresentationPreviewBody
-            presentation={item}
-          />
-        )}
+        renderPreview={(item) => <PresentationPreviewBody presentation={item} />}
         renderPreviewFooter={(item) => (
           <PresentationPreviewFooter
             presentation={item}

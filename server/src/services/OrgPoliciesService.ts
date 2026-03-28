@@ -2,8 +2,8 @@
  * V4-ENT-04: Org policies service (retention, legal hold, residency)
  * Enforces org_policies before delete/export operations.
  */
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 export class OrgPoliciesError extends Error {
   constructor(
@@ -85,16 +85,25 @@ export async function getAllOrgPolicies(): Promise<OrgPolicyRow[]> {
 
 export async function upsertOrgPolicy(
   organizationId: string,
-  patch: { retentionDays?: number | null; legalHoldEnabled?: boolean; residencyRegion?: string | null }
+  patch: {
+    retentionDays?: number | null;
+    legalHoldEnabled?: boolean;
+    residencyRegion?: string | null;
+  }
 ): Promise<OrgPolicyRow> {
   const { v4: uuidv4 } = await import('uuid');
   const now = new Date().toISOString();
 
   const existing = await getOrgPolicy(organizationId);
   if (existing) {
-    const retentionDays = patch.retentionDays !== undefined ? patch.retentionDays : existing.retention_days;
+    const retentionDays =
+      patch.retentionDays !== undefined ? patch.retentionDays : existing.retention_days;
     const legalHoldEnabled =
-      patch.legalHoldEnabled !== undefined ? (patch.legalHoldEnabled ? 1 : 0) : existing.legal_hold_enabled;
+      patch.legalHoldEnabled !== undefined
+        ? patch.legalHoldEnabled
+          ? 1
+          : 0
+        : existing.legal_hold_enabled;
     const residencyRegion =
       patch.residencyRegion !== undefined ? patch.residencyRegion : existing.residency_region;
 

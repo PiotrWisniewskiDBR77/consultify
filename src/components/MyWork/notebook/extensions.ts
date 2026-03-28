@@ -198,7 +198,9 @@ export const EmbeddedRefNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes, node }) {
-    const label = String(node.attrs.label || node.attrs.title || node.attrs.artifactType || 'Reference');
+    const label = String(
+      node.attrs.label || node.attrs.title || node.attrs.artifactType || 'Reference'
+    );
     return [
       'button',
       mergeAttributes(

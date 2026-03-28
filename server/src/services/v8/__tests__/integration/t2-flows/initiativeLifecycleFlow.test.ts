@@ -8,7 +8,7 @@
  * Services: sourceTruthService, planningContinuityService, executionVisibilityService
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -33,13 +33,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
   },
 }));
 
-import { recordSourceMaterialization } from '../../../sourceTruthService.js';
-import { recordDecomposition } from '../../../planningContinuityService.js';
 import {
-  emitSignal,
   aggregateSignals,
   emitResultsHandoffEvent,
+  emitSignal,
 } from '../../../executionVisibilityService.js';
+import { recordDecomposition } from '../../../planningContinuityService.js';
+import { recordSourceMaterialization } from '../../../sourceTruthService.js';
 
 // ==========================================
 // FIXTURES
@@ -119,41 +119,35 @@ describe('F04 — Initiative lifecycle end-to-end flow', () => {
     expect(signal2.severity).toBe('critical');
 
     // Step 4: Aggregate signals — should roll up to highest severity
-    mockDbAll.mockImplementation(
-      (sql: string) => {
-        if (typeof sql === 'string' && sql.includes('v8_execution_signals')) {
-          return Promise.resolve([
-            {
-              signal_id: signal1.signalId,
-              signal_type: 'overdue_tasks_count',
-              source_object_type: 'initiative',
-              source_object_id: INITIATIVE_ID,
-              organization_id: ORG_ID,
-              severity: 'info',
-              payload: JSON.stringify({ completion: 0.25 }),
-              timestamp: signal1.timestamp,
-            },
-            {
-              signal_id: signal2.signalId,
-              signal_type: 'blocked_tasks_count',
-              source_object_type: 'initiative',
-              source_object_id: INITIATIVE_ID,
-              organization_id: ORG_ID,
-              severity: 'critical',
-              payload: JSON.stringify({ blocker: 'Resource allocation pending' }),
-              timestamp: signal2.timestamp,
-            },
-          ]);
-        }
-        return Promise.resolve([]);
-      },
-    );
+    mockDbAll.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('v8_execution_signals')) {
+        return Promise.resolve([
+          {
+            signal_id: signal1.signalId,
+            signal_type: 'overdue_tasks_count',
+            source_object_type: 'initiative',
+            source_object_id: INITIATIVE_ID,
+            organization_id: ORG_ID,
+            severity: 'info',
+            payload: JSON.stringify({ completion: 0.25 }),
+            timestamp: signal1.timestamp,
+          },
+          {
+            signal_id: signal2.signalId,
+            signal_type: 'blocked_tasks_count',
+            source_object_type: 'initiative',
+            source_object_id: INITIATIVE_ID,
+            organization_id: ORG_ID,
+            severity: 'critical',
+            payload: JSON.stringify({ blocker: 'Resource allocation pending' }),
+            timestamp: signal2.timestamp,
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
 
-    const aggregation = await aggregateSignals(
-      'initiative',
-      INITIATIVE_ID,
-      ORG_ID,
-    );
+    const aggregation = await aggregateSignals('initiative', INITIATIVE_ID, ORG_ID);
     expect(aggregation.aggregationId).toBeDefined();
     expect(aggregation.level).toBe('initiative');
     expect(aggregation.sourceSignals).toHaveLength(2);

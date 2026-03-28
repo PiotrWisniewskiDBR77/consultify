@@ -40,13 +40,17 @@ export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = (
     >
       <svg width={size} height={size} viewBox="0 0 20 20" className="rotate-[-90deg]">
         <circle
-          cx="10" cy="10" r={RADIUS}
+          cx="10"
+          cy="10"
+          r={RADIUS}
           fill="none"
           strokeWidth="2.5"
           className="stroke-slate-200/60 dark:stroke-white/[0.06]"
         />
         <circle
-          cx="10" cy="10" r={RADIUS}
+          cx="10"
+          cy="10"
+          r={RADIUS}
           fill="none"
           strokeWidth="2.5"
           strokeDasharray={CIRCUMFERENCE}
@@ -66,7 +70,10 @@ export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = (
           </div>
           <ul className="space-y-0.5">
             {missingFields.map((field) => (
-              <li key={field} className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
+              <li
+                key={field}
+                className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1"
+              >
                 <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
                 {field}
               </li>

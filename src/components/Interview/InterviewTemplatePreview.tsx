@@ -2,13 +2,13 @@ import { Copy, ExternalLink, Pencil, Trash2, UserPlus } from 'lucide-react';
 import React from 'react';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 
@@ -66,12 +66,12 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
 }) => {
   const pills: MetaPill[] = [
     { label: isPolish ? 'Szablon' : 'Template', className: TEMPLATE_BADGE_CLASS },
-    ...(template.category
+    ...((template.category
       ? [{ label: template.category, className: NEUTRAL_PILL_CLASS }]
-      : []) as MetaPill[],
-    ...(template.scope
+      : []) as MetaPill[]),
+    ...((template.scope
       ? [{ label: getTemplateSourceLabel(template.scope, isPolish), className: NEUTRAL_PILL_CLASS }]
-      : []) as MetaPill[],
+      : []) as MetaPill[]),
     {
       label: template.isDefault
         ? isPolish
@@ -86,13 +86,13 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
       label: `${template.questionCount ?? 0} ${isPolish ? 'pytań' : 'questions'}`,
       className: NEUTRAL_PILL_CLASS,
     },
-    ...(template.estimatedTimeMinutes
+    ...((template.estimatedTimeMinutes
       ? [{ label: `${template.estimatedTimeMinutes} min`, className: NEUTRAL_PILL_CLASS }]
-      : []) as MetaPill[],
-    ...(template.areaTags || []).map((tag) => ({
+      : []) as MetaPill[]),
+    ...((template.areaTags || []).map((tag) => ({
       label: getTemplateAreaTagLabel(tag, isPolish),
       className: NEUTRAL_PILL_CLASS,
-    })) as MetaPill[],
+    })) as MetaPill[]),
   ];
 
   const descriptionText = (template.description || '').trim()

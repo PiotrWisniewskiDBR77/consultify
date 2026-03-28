@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -50,11 +50,7 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
   }, []);
 
   return (
-    <span
-      className="relative"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-    >
+    <span className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <Tag
         key={`${item.label}-${idx}`}
         className={`${PREVIEW_RELATION_CHIP} ${tone}${item.onClick ? ' cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/[0.04]' : ''}`}
@@ -94,7 +90,11 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
   );
 };
 
-export const PreviewRelations: React.FC<PreviewRelationsProps> = ({ items, emptyLabel, groupByType }) => {
+export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
+  items,
+  emptyLabel,
+  groupByType,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -144,7 +144,8 @@ const RelationGroup: React.FC<{ type: string; items: RelationItem[] }> = ({ type
         onClick={() => setExpanded(!expanded)}
         className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors mb-1"
       >
-        {items.length} {type}{items.length > 1 ? 's' : ''}
+        {items.length} {type}
+        {items.length > 1 ? 's' : ''}
         <span className="ml-1 text-[10px]">{expanded ? '▾' : '▸'}</span>
       </button>
       {expanded ? (

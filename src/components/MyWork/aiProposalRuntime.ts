@@ -38,7 +38,9 @@ function mergeExtensionValue(existing: unknown, next: unknown): unknown {
 
 function normalizeAddNode(node: Record<string, any>): RuntimeNode {
   const data =
-    node?.data && typeof node.data === 'object' && !Array.isArray(node.data) ? { ...node.data } : {};
+    node?.data && typeof node.data === 'object' && !Array.isArray(node.data)
+      ? { ...node.data }
+      : {};
   const parentId = node?.parentNode || node?.parentId || data.parentId;
   const normalized: RuntimeNode = {
     id: node.id,
@@ -55,7 +57,10 @@ function normalizeAddNode(node: Record<string, any>): RuntimeNode {
   return normalized;
 }
 
-function createTableNodesFromRows(table: Record<string, any>, existingNodes: RuntimeNode[]): RuntimeNode[] {
+function createTableNodesFromRows(
+  table: Record<string, any>,
+  existingNodes: RuntimeNode[]
+): RuntimeNode[] {
   const generatedRows = Array.isArray(table.generatedRowNodes) ? table.generatedRowNodes : [];
   if (generatedRows.length > 0) {
     const existingIds = new Set(existingNodes.map((node) => String(node?.id)));
@@ -161,7 +166,11 @@ export function applyAIProposalRuntime({
         });
       }
     }
-    if (patch.extensions && typeof patch.extensions === 'object' && !Array.isArray(patch.extensions)) {
+    if (
+      patch.extensions &&
+      typeof patch.extensions === 'object' &&
+      !Array.isArray(patch.extensions)
+    ) {
       for (const [key, value] of Object.entries(patch.extensions)) {
         const mergedValue = mergeExtensionValue(extensions[key], value);
         extensions[key] = mergedValue;

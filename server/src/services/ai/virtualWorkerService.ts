@@ -204,10 +204,7 @@ export async function updateWorker(
   sets.push(`updated_at = NOW()`);
   params.push(id);
 
-  await db().query(
-    `UPDATE virtual_workers SET ${sets.join(', ')} WHERE id = $${idx}`,
-    params
-  );
+  await db().query(`UPDATE virtual_workers SET ${sets.join(', ')} WHERE id = $${idx}`, params);
   return getWorkerById(id);
 }
 
@@ -255,10 +252,9 @@ export async function createProfile(data: {
   const shouldActivate = data.activate !== false;
 
   if (shouldActivate) {
-    await db().query(
-      'UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1',
-      [data.worker_id]
-    );
+    await db().query('UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1', [
+      data.worker_id,
+    ]);
   }
 
   await db().query(
@@ -279,7 +275,9 @@ export async function createProfile(data: {
     ]
   );
 
-  logger.info(`[VirtualWorkerService] Created profile v${nextVersion} for worker ${data.worker_id}`);
+  logger.info(
+    `[VirtualWorkerService] Created profile v${nextVersion} for worker ${data.worker_id}`
+  );
   return rowToProfile({
     id,
     worker_id: data.worker_id,
@@ -303,10 +301,9 @@ export async function activateProfile(profileId: string): Promise<void> {
   const workerId = result.rows[0]?.worker_id;
   if (!workerId) return;
 
-  await db().query(
-    'UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1',
-    [workerId]
-  );
+  await db().query('UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1', [
+    workerId,
+  ]);
   await db().query(
     'UPDATE virtual_worker_profiles SET is_active = TRUE, activated_at = NOW() WHERE id = $1',
     [profileId]

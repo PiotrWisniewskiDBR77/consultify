@@ -1497,34 +1497,43 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
     );
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
 
-    const org = await db.get<any>(
-      `SELECT industry FROM organizations WHERE id = ?`,
-      [String(organizationId)]
-    );
+    const org = await db.get<any>(`SELECT industry FROM organizations WHERE id = ?`, [
+      String(organizationId),
+    ]);
 
     const framework = String(assessment.assessment_type || 'SIRI').toUpperCase();
-    const industry = String(org?.industry || 'manufacturing').toLowerCase().replace(/[^a-z_]/g, '_');
+    const industry = String(org?.industry || 'manufacturing')
+      .toLowerCase()
+      .replace(/[^a-z_]/g, '_');
     const normalizedIndustry =
-      industry === 'manufacturing_discrete' || industry === 'manufacturing_process' ? 'manufacturing' : industry;
+      industry === 'manufacturing_discrete' || industry === 'manufacturing_process'
+        ? 'manufacturing'
+        : industry;
 
     let orgScore = assessment.overall_score != null ? Number(assessment.overall_score) : 0;
     const categories: Record<string, number> = {};
 
     if (assessment.score_summary) {
       try {
-        const ss = typeof assessment.score_summary === 'string'
-          ? JSON.parse(assessment.score_summary)
-          : assessment.score_summary;
+        const ss =
+          typeof assessment.score_summary === 'string'
+            ? JSON.parse(assessment.score_summary)
+            : assessment.score_summary;
         if (typeof ss?.overall?.actual === 'number') {
           orgScore = ss.overall.actual;
         }
         if (typeof ss === 'object') {
           for (const [k, v] of Object.entries(ss)) {
-            const num = typeof v === 'number' ? v : (v as any)?.actual ?? (v as any)?.score ?? (v as any)?.value;
+            const num =
+              typeof v === 'number'
+                ? v
+                : ((v as any)?.actual ?? (v as any)?.score ?? (v as any)?.value);
             if (typeof num === 'number') categories[k] = num;
           }
         }
-      } catch { /* ignore parse */ }
+      } catch {
+        /* ignore parse */
+      }
     }
 
     const dataset = await queryHelpers.queryOne<any>(
@@ -1567,9 +1576,12 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
 
     let percentile: number;
     if (orgScore <= p25) percentile = 25;
-    else if (orgScore <= p50) percentile = Math.round(25 + ((orgScore - p25) / Math.max(p50 - p25, 0.01)) * 25);
-    else if (orgScore <= p75) percentile = Math.round(50 + ((orgScore - p50) / Math.max(p75 - p50, 0.01)) * 25);
-    else if (orgScore <= p90) percentile = Math.round(75 + ((orgScore - p75) / Math.max(p90 - p75, 0.01)) * 15);
+    else if (orgScore <= p50)
+      percentile = Math.round(25 + ((orgScore - p25) / Math.max(p50 - p25, 0.01)) * 25);
+    else if (orgScore <= p75)
+      percentile = Math.round(50 + ((orgScore - p50) / Math.max(p75 - p50, 0.01)) * 25);
+    else if (orgScore <= p90)
+      percentile = Math.round(75 + ((orgScore - p75) / Math.max(p90 - p75, 0.01)) * 15);
     else percentile = 95;
 
     const orgScores = Object.entries(categories).map(([k, v]) => ({
@@ -1578,7 +1590,8 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
     }));
     const comparisons = industryBenchmarkService.compareToBenchmarks(normalizedIndustry, orgScores);
 
-    const categoryComparison: Record<string, { score: number; benchmark: number; gap: number }> = {};
+    const categoryComparison: Record<string, { score: number; benchmark: number; gap: number }> =
+      {};
     for (const c of comparisons) {
       categoryComparison[c.axis] = { score: c.orgScore, benchmark: c.industryAverage, gap: c.gap };
     }
@@ -1601,7 +1614,9 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
     });
   } catch (err: any) {
     logger.error('[AssessmentWorkflowV2] Error fetching benchmark comparison:', err);
-    return res.status(500).json({ error: 'Failed to fetch benchmark comparison', message: err.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to fetch benchmark comparison', message: err.message });
   }
 });
 

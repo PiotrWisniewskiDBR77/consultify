@@ -15,27 +15,27 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  InitiativeDecomposition,
-  MaterialChangeCheck,
-  CrossInitiativeDependency,
-  DecisionChain,
-  DecisionChainEntry,
-  RecordDecompositionParams,
   CheckMaterialChangeParams,
   CreateCrossInitiativeDependencyParams,
   CreateDecisionChainParams,
-  WBSLevel,
   CrossDependencyStatus,
+  CrossInitiativeDependency,
+  DecisionChain,
+  DecisionChainEntry,
+  InitiativeDecomposition,
+  MaterialChangeCheck,
+  RecordDecompositionParams,
+  WBSLevel,
 } from '../../types/planningContinuity.js';
 import {
-  RecordDecompositionParamsSchema,
   CheckMaterialChangeParamsSchema,
   CreateCrossInitiativeDependencyParamsSchema,
   CreateDecisionChainParamsSchema,
-  WBS_DEPTH_MAP,
-  WBS_MAX_DEPTH,
   HIGH_IMPACT_DIMENSIONS,
   MATERIALITY_MIN_DIMENSIONS,
+  RecordDecompositionParamsSchema,
+  WBS_DEPTH_MAP,
+  WBS_MAX_DEPTH,
 } from '../../types/planningContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -157,7 +157,7 @@ function rowToDecisionChain(row: DecisionChainRow): DecisionChain {
  * Validates max depth (4 levels) by computing ancestry depth from parentId.
  */
 export async function recordDecomposition(
-  params: RecordDecompositionParams,
+  params: RecordDecompositionParams
 ): Promise<InitiativeDecomposition> {
   const validated = RecordDecompositionParamsSchema.parse(params);
 
@@ -165,7 +165,7 @@ export async function recordDecomposition(
   if (requestedDepth > WBS_MAX_DEPTH) {
     throw new Error(
       `WBS depth violation: level '${validated.wbsLevel}' (depth ${requestedDepth}) ` +
-      `exceeds maximum allowed depth of ${WBS_MAX_DEPTH}`,
+        `exceeds maximum allowed depth of ${WBS_MAX_DEPTH}`
     );
   }
 
@@ -173,12 +173,12 @@ export async function recordDecomposition(
     const parentRow = await dbGet<DecompositionRow>(
       `SELECT * FROM v8_initiative_decompositions
        WHERE decomposition_id = ? AND organization_id = ?`,
-      [validated.parentId, validated.organizationId],
+      [validated.parentId, validated.organizationId]
     );
 
     if (!parentRow) {
       throw new Error(
-        `Parent decomposition ${validated.parentId} not found in organization ${validated.organizationId}`,
+        `Parent decomposition ${validated.parentId} not found in organization ${validated.organizationId}`
       );
     }
 
@@ -186,7 +186,7 @@ export async function recordDecomposition(
     if (requestedDepth <= parentDepth) {
       throw new Error(
         `WBS hierarchy violation: child level '${validated.wbsLevel}' (depth ${requestedDepth}) ` +
-        `must be deeper than parent level '${parentRow.wbs_level}' (depth ${parentDepth})`,
+          `must be deeper than parent level '${parentRow.wbs_level}' (depth ${parentDepth})`
       );
     }
   }
@@ -226,12 +226,12 @@ export async function recordDecomposition(
       entry.createdAt,
       entry.updatedAt,
       JSON.stringify(entry.metadata),
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Recorded decomposition ${decompositionId} ` +
-    `[${entry.wbsLevel}/${entry.objectType}] for initiative ${entry.initiativeId}`,
+      `[${entry.wbsLevel}/${entry.objectType}] for initiative ${entry.initiativeId}`
   );
 
   return entry;
@@ -242,7 +242,7 @@ export async function recordDecomposition(
  */
 export async function getDecompositionTree(
   initiativeId: string,
-  orgId: string,
+  orgId: string
 ): Promise<InitiativeDecomposition[]> {
   const rows = await dbAll<DecompositionRow>(
     `SELECT * FROM v8_initiative_decompositions
@@ -256,7 +256,7 @@ export async function getDecompositionTree(
        END ASC,
        created_at ASC`,
     [initiativeId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToDecomposition);
@@ -267,13 +267,13 @@ export async function getDecompositionTree(
  */
 export async function getDecomposition(
   decompositionId: string,
-  orgId: string,
+  orgId: string
 ): Promise<InitiativeDecomposition | null> {
   const row = await dbGet<DecompositionRow>(
     `SELECT * FROM v8_initiative_decompositions
      WHERE decomposition_id = ? AND organization_id = ?`,
     [decompositionId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -293,9 +293,7 @@ export async function getDecomposition(
  *
  * Material changes require change management.
  */
-export function checkMaterialChange(
-  params: CheckMaterialChangeParams,
-): MaterialChangeCheck {
+export function checkMaterialChange(params: CheckMaterialChangeParams): MaterialChangeCheck {
   const validated = CheckMaterialChangeParamsSchema.parse(params);
 
   const dimensions = validated.affectedDimensions;
@@ -321,14 +319,12 @@ export function checkMaterialChange(
  * Validates that source and target are different initiatives.
  */
 export async function createCrossInitiativeDependency(
-  params: CreateCrossInitiativeDependencyParams,
+  params: CreateCrossInitiativeDependencyParams
 ): Promise<CrossInitiativeDependency> {
   const validated = CreateCrossInitiativeDependencyParamsSchema.parse(params);
 
   if (validated.sourceInitiativeId === validated.targetInitiativeId) {
-    throw new Error(
-      'Cross-initiative dependency requires different source and target initiatives',
-    );
+    throw new Error('Cross-initiative dependency requires different source and target initiatives');
   }
 
   const dependencyId = uuidv4();
@@ -363,12 +359,12 @@ export async function createCrossInitiativeDependency(
       dep.createdAt,
       dep.updatedAt,
       JSON.stringify(dep.metadata),
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created cross-initiative dependency ${dependencyId}: ` +
-    `${dep.sourceInitiativeId} → ${dep.targetInitiativeId} (${dep.dependencyType})`,
+      `${dep.sourceInitiativeId} → ${dep.targetInitiativeId} (${dep.dependencyType})`
   );
 
   return dep;
@@ -379,7 +375,7 @@ export async function createCrossInitiativeDependency(
  */
 export async function getCrossInitiativeDependencies(
   initiativeId: string,
-  orgId: string,
+  orgId: string
 ): Promise<CrossInitiativeDependency[]> {
   const rows = await dbAll<CrossDependencyRow>(
     `SELECT * FROM v8_cross_initiative_dependencies
@@ -387,7 +383,7 @@ export async function getCrossInitiativeDependencies(
        AND (source_initiative_id = ? OR target_initiative_id = ?)
      ORDER BY created_at ASC`,
     [orgId, initiativeId, initiativeId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToCrossDependency);
@@ -399,17 +395,17 @@ export async function getCrossInitiativeDependencies(
 export async function updateCrossInitiativeDependencyStatus(
   dependencyId: string,
   orgId: string,
-  status: CrossDependencyStatus,
+  status: CrossDependencyStatus
 ): Promise<CrossInitiativeDependency> {
   const row = await dbGet<CrossDependencyRow>(
     `SELECT * FROM v8_cross_initiative_dependencies
      WHERE dependency_id = ? AND organization_id = ?`,
-    [dependencyId, orgId],
+    [dependencyId, orgId]
   );
 
   if (!row) {
     throw new Error(
-      `Cross-initiative dependency ${dependencyId} not found in organization ${orgId}`,
+      `Cross-initiative dependency ${dependencyId} not found in organization ${orgId}`
     );
   }
 
@@ -419,7 +415,7 @@ export async function updateCrossInitiativeDependencyStatus(
     `UPDATE v8_cross_initiative_dependencies
      SET status = ?, updated_at = ?
      WHERE dependency_id = ? AND organization_id = ?`,
-    [status, now, dependencyId, orgId],
+    [status, now, dependencyId, orgId]
   );
 
   logger.info(`${LOG_PREFIX} Dependency ${dependencyId} status → ${status}`);
@@ -440,7 +436,7 @@ export async function updateCrossInitiativeDependencyStatus(
  * All decisions start as 'pending'.
  */
 export async function createDecisionChain(
-  params: CreateDecisionChainParams,
+  params: CreateDecisionChainParams
 ): Promise<DecisionChain> {
   const validated = CreateDecisionChainParamsSchema.parse(params);
 
@@ -482,12 +478,12 @@ export async function createDecisionChain(
       chain.createdAt,
       chain.updatedAt,
       JSON.stringify(chain.metadata),
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created decision chain ${chainId} (${chain.chainType}) ` +
-    `with ${decisions.length} decisions for initiative ${chain.initiativeId}`,
+      `with ${decisions.length} decisions for initiative ${chain.initiativeId}`
   );
 
   return chain;
@@ -498,13 +494,13 @@ export async function createDecisionChain(
  */
 export async function getDecisionChain(
   chainId: string,
-  orgId: string,
+  orgId: string
 ): Promise<DecisionChain | null> {
   const row = await dbGet<DecisionChainRow>(
     `SELECT * FROM v8_decision_chains
      WHERE chain_id = ? AND organization_id = ?`,
     [chainId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -516,14 +512,14 @@ export async function getDecisionChain(
  */
 export async function getDecisionChainsByInitiative(
   initiativeId: string,
-  orgId: string,
+  orgId: string
 ): Promise<DecisionChain[]> {
   const rows = await dbAll<DecisionChainRow>(
     `SELECT * FROM v8_decision_chains
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [initiativeId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToDecisionChain);
@@ -556,7 +552,7 @@ export interface WBSCompletenessResult {
  */
 export async function getWBSByInitiative(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<InitiativeDecomposition[]> {
   return getDecompositionTree(initiativeId, organizationId);
 }
@@ -567,7 +563,7 @@ export async function getWBSByInitiative(
  */
 export async function validateWBSCompleteness(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WBSCompletenessResult> {
   const nodes = await getDecompositionTree(initiativeId, organizationId);
   const byParent = new Map<string | null, InitiativeDecomposition[]>();
@@ -607,7 +603,7 @@ export async function validateWBSCompleteness(
  */
 export async function getCriticalPath(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<InitiativeDecomposition[]> {
   const nodes = await getDecompositionTree(initiativeId, organizationId);
   if (nodes.length === 0) {
@@ -683,7 +679,7 @@ export async function getPendingDecisions(organizationId: string): Promise<Decis
      WHERE organization_id = ?
      ORDER BY updated_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const chains = (rows || []).map(rowToDecisionChain);

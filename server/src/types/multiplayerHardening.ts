@@ -12,8 +12,9 @@
  */
 
 import { z } from 'zod';
-import type { PresenceType, EventDelivery } from './collaborationRoom.js';
-import { PresenceTypeValues, EventDeliveryValues } from './collaborationRoom.js';
+
+import type { EventDelivery, PresenceType } from './collaborationRoom.js';
+import { EventDeliveryValues, PresenceTypeValues } from './collaborationRoom.js';
 
 // ==========================================
 // ENUMS / LITERALS
@@ -29,10 +30,7 @@ export const WorkspaceToolValues = [
 ] as const;
 export type WorkspaceTool = (typeof WorkspaceToolValues)[number];
 
-export const RoomGranularityValues = [
-  'per_workspace',
-  'per_resource',
-] as const;
+export const RoomGranularityValues = ['per_workspace', 'per_resource'] as const;
 export type RoomGranularity = (typeof RoomGranularityValues)[number];
 
 export const SurfaceValues = [
@@ -44,11 +42,7 @@ export const SurfaceValues = [
 ] as const;
 export type Surface = (typeof SurfaceValues)[number];
 
-export const FacilitationSessionStateValues = [
-  'active',
-  'paused_degraded',
-  'ended',
-] as const;
+export const FacilitationSessionStateValues = ['active', 'paused_degraded', 'ended'] as const;
 export type FacilitationSessionState = (typeof FacilitationSessionStateValues)[number];
 
 export const FacilitationPauseReasonValues = [
@@ -70,24 +64,25 @@ export const SeamTypeValues = [
 ] as const;
 export type SeamType = (typeof SeamTypeValues)[number];
 
-export const SeamCurrentStateValues = [
-  'module_local',
-  'platform_migrated',
-  'eliminated',
-] as const;
+export const SeamCurrentStateValues = ['module_local', 'platform_migrated', 'eliminated'] as const;
 export type SeamCurrentState = (typeof SeamCurrentStateValues)[number];
 
 // ==========================================
 // FACILITATION STATE MACHINE
 // ==========================================
 
-export const VALID_FACILITATION_TRANSITIONS: Record<FacilitationSessionState, readonly FacilitationSessionState[]> = {
+export const VALID_FACILITATION_TRANSITIONS: Record<
+  FacilitationSessionState,
+  readonly FacilitationSessionState[]
+> = {
   active: ['paused_degraded', 'ended'],
   paused_degraded: ['active', 'ended'],
   ended: [],
 } as const;
 
-export const TERMINAL_FACILITATION_STATES: ReadonlySet<FacilitationSessionState> = new Set(['ended']);
+export const TERMINAL_FACILITATION_STATES: ReadonlySet<FacilitationSessionState> = new Set([
+  'ended',
+]);
 
 // ==========================================
 // INTERFACES

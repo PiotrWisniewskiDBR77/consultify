@@ -376,9 +376,9 @@ export function isRecognizedStatement(
   return (
     ['ready', 'recoverable', 'rejected'].includes(normalizedReadiness) ||
     (['imported', 'mapped', 'confirmed'].includes(normalizedRawStatus) &&
-    ['P&L', 'PL', 'BS', 'BALANCE_SHEET', 'CF', 'CASH_FLOW'].includes(normalizedStatementType) &&
-    mapped > 0 &&
-    total > 0)
+      ['P&L', 'PL', 'BS', 'BALANCE_SHEET', 'CF', 'CASH_FLOW'].includes(normalizedStatementType) &&
+      mapped > 0 &&
+      total > 0)
   );
 }
 
@@ -404,7 +404,11 @@ export function deriveStatementReadinessStatus(
   const normalizedRawStatus = String(rawStatus || '')
     .trim()
     .toLowerCase();
-  if (total > 0 && mapped > 0 && ['imported', 'mapped', 'confirmed'].includes(normalizedRawStatus)) {
+  if (
+    total > 0 &&
+    mapped > 0 &&
+    ['imported', 'mapped', 'confirmed'].includes(normalizedRawStatus)
+  ) {
     return 'recoverable';
   }
   if (total > 0 && mapped === 0) return 'rejected';

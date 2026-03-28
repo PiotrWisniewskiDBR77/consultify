@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import type { SidekickContext } from '../aiSidekickContext';
 import type { IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
+import type { SidekickContext } from '../aiSidekickContext';
 
 interface AIActionsPopoverProps {
   isPl: boolean;
@@ -25,18 +25,53 @@ interface AIActionsPopoverProps {
 
 const GENERAL_GENERATORS = [
   { action: 'mm_ai_expand', iconEl: Zap, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
-  { action: 'mm_ai_suggest', iconEl: Lightbulb, labelPl: 'Zasugeruj gałęzie', labelEn: 'Suggest branches' },
+  {
+    action: 'mm_ai_suggest',
+    iconEl: Lightbulb,
+    labelPl: 'Zasugeruj gałęzie',
+    labelEn: 'Suggest branches',
+  },
   { action: 'mm_ai_gap_analysis', iconEl: Search, labelPl: 'Analiza luk', labelEn: 'Gap analysis' },
-  { action: 'mm_ai_cluster', iconEl: GitMerge, labelPl: 'Auto-klasteryzacja', labelEn: 'Auto-clustering' },
-  { action: 'mm_ai_summarize', iconEl: Brain, labelPl: 'Podsumowanie mapy', labelEn: 'Map summary' },
-  { action: 'mm_ai_auto_connect', iconEl: Target, labelPl: 'Auto-linki między gałęziami', labelEn: 'Auto cross-links' },
+  {
+    action: 'mm_ai_cluster',
+    iconEl: GitMerge,
+    labelPl: 'Auto-klasteryzacja',
+    labelEn: 'Auto-clustering',
+  },
+  {
+    action: 'mm_ai_summarize',
+    iconEl: Brain,
+    labelPl: 'Podsumowanie mapy',
+    labelEn: 'Map summary',
+  },
+  {
+    action: 'mm_ai_auto_connect',
+    iconEl: Target,
+    labelPl: 'Auto-linki między gałęziami',
+    labelEn: 'Auto cross-links',
+  },
 ];
 
 const NODE_SPECIFIC_GENERATORS = [
-  { action: 'mm_ai_expand_node', iconEl: Zap, labelPl: 'Rozwiń ten węzeł', labelEn: 'Expand this node' },
+  {
+    action: 'mm_ai_expand_node',
+    iconEl: Zap,
+    labelPl: 'Rozwiń ten węzeł',
+    labelEn: 'Expand this node',
+  },
   { action: 'mm_ai_deepen', iconEl: Wand2, labelPl: 'Pogłęb temat', labelEn: 'Deepen topic' },
-  { action: 'mm_ai_summarize_branch', iconEl: Brain, labelPl: 'Podsumuj gałąź', labelEn: 'Summarize branch' },
-  { action: 'mm_ai_what_if', iconEl: Lightbulb, labelPl: 'What-if analiza', labelEn: 'What-if analysis' },
+  {
+    action: 'mm_ai_summarize_branch',
+    iconEl: Brain,
+    labelPl: 'Podsumuj gałąź',
+    labelEn: 'Summarize branch',
+  },
+  {
+    action: 'mm_ai_what_if',
+    iconEl: Lightbulb,
+    labelPl: 'What-if analiza',
+    labelEn: 'What-if analysis',
+  },
 ];
 
 export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
@@ -57,8 +92,9 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
     return () => window.removeEventListener('idea-mindmap-sidekick-context', handler);
   }, []);
 
-  const resolvedHint = sidekickHintProp
-    ?? (eventCtx ? (isPl ? eventCtx.promptHintPl : eventCtx.promptHint) : undefined);
+  const resolvedHint =
+    sidekickHintProp ??
+    (eventCtx ? (isPl ? eventCtx.promptHintPl : eventCtx.promptHint) : undefined);
 
   const hasNodeSelected = selection.type === 'node' && selection.count >= 1;
 
@@ -87,9 +123,12 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         >
           <MessageCircle size={14} className="shrink-0" />
           {hasNodeSelected
-            ? (isPl ? 'Zapytaj AI o ten węzeł' : 'Ask AI about this node')
-            : (isPl ? 'Nowa rozmowa AI' : 'New AI conversation')
-          }
+            ? isPl
+              ? 'Zapytaj AI o ten węzeł'
+              : 'Ask AI about this node'
+            : isPl
+              ? 'Nowa rozmowa AI'
+              : 'New AI conversation'}
         </button>
       </div>
 

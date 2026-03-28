@@ -174,7 +174,8 @@ const MOCK_SCREEN: HomeScreenData = {
       ctaIntents: ['summarize', 'prioritize'],
       payload: {
         headline: 'Three threads moved forward since yesterday.',
-        summary: 'Momentum is strongest in ideation and execution prep, but decision flow is still constraining scale.',
+        summary:
+          'Momentum is strongest in ideation and execution prep, but decision flow is still constraining scale.',
         stats: [
           { label: 'Ideas shaped', value: '3', trend: '+2 vs yesterday' },
           { label: 'Tasks closed', value: '7', trend: 'steady flow' },
@@ -318,14 +319,16 @@ const MOCK_SCREEN: HomeScreenData = {
         marketSignal: {
           id: 'industry-market',
           title: 'Energy volatility is reshaping transformation payback cases',
-          summary: 'Manufacturing programs with energy and planning levers are now being funded faster than isolated automation pilots.',
+          summary:
+            'Manufacturing programs with energy and planning levers are now being funded faster than isolated automation pilots.',
           tag: 'Market signal',
           tone: 'warning',
         },
         technologySignal: {
           id: 'industry-tech',
           title: 'Computer vision pilots are shifting into operating model redesign',
-          summary: 'Leaders are no longer buying “AI inspection” alone. They are redesigning triage, escalation, and quality governance around it.',
+          summary:
+            'Leaders are no longer buying “AI inspection” alone. They are redesigning triage, escalation, and quality governance around it.',
           tag: 'Technology signal',
           tone: 'positive',
         },
@@ -333,11 +336,13 @@ const MOCK_SCREEN: HomeScreenData = {
           label: 'Transformation benchmark',
           value: '14-18%',
           delta: 'value uplift in 12 months',
-          implication: 'Programs that combine quality + planning + governance outperform isolated pilots.',
+          implication:
+            'Programs that combine quality + planning + governance outperform isolated pilots.',
         },
         peerCase: {
           title: 'Tier-1 supplier reframed AI from tool to operating lane',
-          summary: 'Instead of launching another PoC, they created one cross-functional lane with KPIs, owners, and weekly decision cadences.',
+          summary:
+            'Instead of launching another PoC, they created one cross-functional lane with KPIs, owners, and weekly decision cadences.',
           implication: 'Your current strongest idea would benefit from the same reframing.',
         },
       },
@@ -547,10 +552,15 @@ function buildLegacyBrief(screen: HomeScreenData): HomeBriefData | null {
   const payload = getBlockPayload(screen, 'aiPulseCore');
   const focusItems = Array.isArray(payload.focusItems)
     ? payload.focusItems
-        .filter((item: any) => item && typeof item.id === 'string' && typeof item.title === 'string')
+        .filter(
+          (item: any) => item && typeof item.id === 'string' && typeof item.title === 'string'
+        )
         .map((item: any) => ({
           id: item.id,
-          type: item.type === 'task' || item.type === 'decision' || item.type === 'idea' ? item.type : 'idea',
+          type:
+            item.type === 'task' || item.type === 'decision' || item.type === 'idea'
+              ? item.type
+              : 'idea',
           title: item.title,
           meta: item.meta || '',
         }))
@@ -728,7 +738,10 @@ export function useHomeData(refreshTrigger?: number): HomeData {
     fetchData();
   }, [fetchData, refreshTrigger]);
 
-  const blocks = useMemo(() => mergeBlocksWithLayout(screen.blocks, layout), [layout, screen.blocks]);
+  const blocks = useMemo(
+    () => mergeBlocksWithLayout(screen.blocks, layout),
+    [layout, screen.blocks]
+  );
   const brief = useMemo(() => buildLegacyBrief(screen), [screen]);
   const spark = useMemo(() => buildLegacySpark(screen), [screen]);
   const pulse = useMemo(() => buildLegacyPulse(screen), [screen]);

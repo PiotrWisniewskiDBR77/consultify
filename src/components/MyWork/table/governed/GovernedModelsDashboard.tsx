@@ -2,7 +2,6 @@
  * GovernedModelsDashboard — browse, create, and manage governed data models.
  * Each model aggregates KPIs, dimensions, and source tables with trust metadata.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -19,10 +18,12 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import * as Api from '@/services/api/tablePlatform.api';
+
 import { DataLineageView } from './DataLineageView';
 
 /* ------------------------------------------------------------------ */
@@ -77,7 +78,10 @@ interface KpiValue {
 /* Sub-components                                                      */
 /* ------------------------------------------------------------------ */
 
-const TRUST_CONFIG: Record<string, { label: string; labelPl: string; color: string; icon: React.ReactNode }> = {
+const TRUST_CONFIG: Record<
+  string,
+  { label: string; labelPl: string; color: string; icon: React.ReactNode }
+> = {
   certified: {
     label: 'Certified',
     labelPl: 'Certyfikowany',
@@ -101,14 +105,24 @@ const TRUST_CONFIG: Record<string, { label: string; labelPl: string; color: stri
 function TrustBadge({ status, isPl }: { status?: string; isPl: boolean }) {
   const cfg = TRUST_CONFIG[status ?? 'draft'] ?? TRUST_CONFIG.draft;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${cfg.color}`}
+    >
       {cfg.icon}
       {isPl ? cfg.labelPl : cfg.label}
     </span>
   );
 }
 
-function KpiProgressBar({ value, target, unit }: { value: number | null; target?: number; unit?: string }) {
+function KpiProgressBar({
+  value,
+  target,
+  unit,
+}: {
+  value: number | null;
+  target?: number;
+  unit?: string;
+}) {
   if (value === null) return <span className="text-xs text-slate-400">—</span>;
   const pct = target && target > 0 ? Math.min((value / target) * 100, 100) : 0;
   return (
@@ -120,7 +134,8 @@ function KpiProgressBar({ value, target, unit }: { value: number | null; target?
         />
       </div>
       <span className="text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
-        {value.toLocaleString()}{unit ? ` ${unit}` : ''}
+        {value.toLocaleString()}
+        {unit ? ` ${unit}` : ''}
         {target ? ` / ${target.toLocaleString()}` : ''}
       </span>
     </div>
@@ -137,12 +152,26 @@ interface WizardState {
   name: string;
   description: string;
   sourceTables: string[];
-  kpis: Array<{ code: string; labelEn: string; labelPl: string; formulaType: string; unit: string; targetValue: string }>;
+  kpis: Array<{
+    code: string;
+    labelEn: string;
+    labelPl: string;
+    formulaType: string;
+    unit: string;
+    targetValue: string;
+  }>;
   dimensions: Array<{ name: string; sourceFieldId: string; dimensionType: string }>;
   trustLevel: string;
 }
 
-const EMPTY_KPI = { code: '', labelEn: '', labelPl: '', formulaType: 'field_sum', unit: '', targetValue: '' };
+const EMPTY_KPI = {
+  code: '',
+  labelEn: '',
+  labelPl: '',
+  formulaType: 'field_sum',
+  unit: '',
+  targetValue: '',
+};
 const EMPTY_DIM = { name: '', sourceFieldId: '', dimensionType: 'categorical' };
 
 function CreateModelWizard({
@@ -178,11 +207,17 @@ function CreateModelWizard({
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const model = await Api.createGovernedModel(baseId, { name: wiz.name, description: wiz.description });
+      const model = await Api.createGovernedModel(baseId, {
+        name: wiz.name,
+        description: wiz.description,
+      });
       const modelId = model.model_id ?? model.modelId;
 
       for (const tid of wiz.sourceTables) {
-        await Api.addModelSource(modelId, { tableId: tid, trusted: wiz.trustLevel === 'certified' });
+        await Api.addModelSource(modelId, {
+          tableId: tid,
+          trusted: wiz.trustLevel === 'certified',
+        });
       }
       for (const k of wiz.kpis.filter((k) => k.code.trim())) {
         await Api.addModelKpi(modelId, {
@@ -220,7 +255,10 @@ function CreateModelWizard({
     'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/30 backdrop-blur-[2px]" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[160] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
       <div
         className="w-[560px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -230,7 +268,10 @@ function CreateModelWizard({
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Nowy model danych' : 'New Data Model'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={16} className="text-slate-400" />
           </button>
         </div>
@@ -287,11 +328,16 @@ function CreateModelWizard({
                 {isPl ? 'Wybierz tabele źródłowe:' : 'Select source tables:'}
               </p>
               {tables.length === 0 && (
-                <p className="text-xs text-slate-400 italic">{isPl ? 'Brak tabel' : 'No tables available'}</p>
+                <p className="text-xs text-slate-400 italic">
+                  {isPl ? 'Brak tabel' : 'No tables available'}
+                </p>
               )}
               <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
                 {tables.map((t) => (
-                  <label key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer">
+                  <label
+                    key={t.id}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={wiz.sourceTables.includes(t.id)}
@@ -319,7 +365,10 @@ function CreateModelWizard({
                 {isPl ? 'Zdefiniuj KPI:' : 'Define KPIs:'}
               </p>
               {wiz.kpis.map((k, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2">
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2"
+                >
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       className={inputCls}
@@ -381,7 +430,9 @@ function CreateModelWizard({
                   </div>
                   {wiz.kpis.length > 1 && (
                     <button
-                      onClick={() => setWiz((p) => ({ ...p, kpis: p.kpis.filter((_, i) => i !== idx) }))}
+                      onClick={() =>
+                        setWiz((p) => ({ ...p, kpis: p.kpis.filter((_, i) => i !== idx) }))
+                      }
                       className="text-[11px] text-red-500 hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
@@ -404,7 +455,10 @@ function CreateModelWizard({
                 {isPl ? 'Zdefiniuj wymiary:' : 'Define dimensions:'}
               </p>
               {wiz.dimensions.map((d, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2">
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2"
+                >
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       className={inputCls}
@@ -432,7 +486,12 @@ function CreateModelWizard({
                   </div>
                   {wiz.dimensions.length > 1 && (
                     <button
-                      onClick={() => setWiz((p) => ({ ...p, dimensions: p.dimensions.filter((_, i) => i !== idx) }))}
+                      onClick={() =>
+                        setWiz((p) => ({
+                          ...p,
+                          dimensions: p.dimensions.filter((_, i) => i !== idx),
+                        }))
+                      }
                       className="text-[11px] text-red-500 hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
@@ -441,7 +500,9 @@ function CreateModelWizard({
                 </div>
               ))}
               <button
-                onClick={() => setWiz((p) => ({ ...p, dimensions: [...p.dimensions, { ...EMPTY_DIM }] }))}
+                onClick={() =>
+                  setWiz((p) => ({ ...p, dimensions: [...p.dimensions, { ...EMPTY_DIM }] }))
+                }
                 className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
               >
                 <Plus size={12} /> {isPl ? 'Dodaj wymiar' : 'Add dimension'}
@@ -457,7 +518,10 @@ function CreateModelWizard({
               {(['draft', 'certified', 'deprecated'] as const).map((lvl) => {
                 const cfg = TRUST_CONFIG[lvl];
                 return (
-                  <label key={lvl} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer mb-1">
+                  <label
+                    key={lvl}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer mb-1"
+                  >
                     <input
                       type="radio"
                       name="trust"
@@ -465,7 +529,9 @@ function CreateModelWizard({
                       onChange={() => setWiz((p) => ({ ...p, trustLevel: lvl }))}
                       className="text-indigo-600"
                     />
-                    <span className={`inline-flex items-center gap-1 text-sm font-medium ${cfg.color} px-2 py-0.5 rounded-full`}>
+                    <span
+                      className={`inline-flex items-center gap-1 text-sm font-medium ${cfg.color} px-2 py-0.5 rounded-full`}
+                    >
                       {cfg.icon} {isPl ? cfg.labelPl : cfg.label}
                     </span>
                   </label>
@@ -481,7 +547,7 @@ function CreateModelWizard({
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            {step === 1 ? (isPl ? 'Anuluj' : 'Cancel') : (isPl ? 'Wstecz' : 'Back')}
+            {step === 1 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
           </button>
           {step < 5 ? (
             <button
@@ -537,9 +603,13 @@ function ModelCard({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-slate-800 dark:text-white truncate">{model.name}</h4>
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+            {model.name}
+          </h4>
           {model.description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{model.description}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+              {model.description}
+            </p>
           )}
         </div>
         <TrustBadge status={model.status} isPl={isPl} />
@@ -562,7 +632,10 @@ function ModelCard({
       {model.sources && model.sources.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {model.sources.slice(0, 3).map((s) => (
-            <span key={s.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+            <span
+              key={s.id}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+            >
               <Database size={10} />
               {s.table_name || s.table_id.slice(0, 8)}
               {s.trusted && <CheckCircle2 size={10} className="text-emerald-500" />}
@@ -600,14 +673,20 @@ function ModelCard({
         </span>
         <div className="flex items-center gap-1">
           <button
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 hover:text-slate-600"
             title={isPl ? 'Edytuj' : 'Edit'}
           >
             <Pencil size={12} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500"
             title={isPl ? 'Usuń' : 'Delete'}
           >
@@ -668,7 +747,9 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
           try {
             const v = await Api.computeKpi(k.kpi_id);
             values[k.kpi_id] = v;
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         })
       );
       setKpiValues(values);
@@ -683,16 +764,19 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
     loadModels();
   }, [loadModels]);
 
-  const handleDelete = useCallback(async (modelId: string) => {
-    if (!confirm(isPl ? 'Usunąć model?' : 'Delete this model?')) return;
-    try {
-      await Api.deleteGovernedModel(modelId);
-      toast.success(isPl ? 'Model usunięty' : 'Model deleted');
-      loadModels();
-    } catch {
-      toast.error(isPl ? 'Błąd usuwania' : 'Failed to delete');
-    }
-  }, [isPl, loadModels]);
+  const handleDelete = useCallback(
+    async (modelId: string) => {
+      if (!confirm(isPl ? 'Usunąć model?' : 'Delete this model?')) return;
+      try {
+        await Api.deleteGovernedModel(modelId);
+        toast.success(isPl ? 'Model usunięty' : 'Model deleted');
+        loadModels();
+      } catch {
+        toast.error(isPl ? 'Błąd usuwania' : 'Failed to delete');
+      }
+    },
+    [isPl, loadModels]
+  );
 
   if (loading) {
     return (
@@ -742,11 +826,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
       {/* Lineage view */}
       {showLineage && (
-        <DataLineageView
-          baseId={baseId}
-          tables={tables}
-          onClose={() => setShowLineage(false)}
-        />
+        <DataLineageView baseId={baseId} tables={tables} onClose={() => setShowLineage(false)} />
       )}
 
       {/* Empty state */}
@@ -788,40 +868,59 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
       {/* Detail slide-over for selected model */}
       {selectedModel && (
-        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setSelectedModel(null)}>
+        <div
+          className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+          onClick={() => setSelectedModel(null)}
+        >
           <div
             className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-white">{selectedModel.name}</h3>
-              <button onClick={() => setSelectedModel(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                {selectedModel.name}
+              </h3>
+              <button
+                onClick={() => setSelectedModel(null)}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
                 <X size={16} className="text-slate-400" />
               </button>
             </div>
 
             {selectedModel.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{selectedModel.description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                {selectedModel.description}
+              </p>
             )}
 
             <TrustBadge status={selectedModel.status} isPl={isPl} />
 
             {/* KPIs */}
             <div className="mt-6">
-              <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">KPIs</h4>
+              <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+                KPIs
+              </h4>
               {(selectedModel.kpis ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">{isPl ? 'Brak KPI' : 'No KPIs defined'}</p>
+                <p className="text-xs text-slate-400 italic">
+                  {isPl ? 'Brak KPI' : 'No KPIs defined'}
+                </p>
               )}
               <div className="space-y-2">
                 {(selectedModel.kpis ?? []).map((kpi) => {
                   const val = kpiValues[kpi.kpi_id];
                   return (
-                    <div key={kpi.kpi_id} className="p-3 rounded-lg border border-slate-100 dark:border-navy-800">
+                    <div
+                      key={kpi.kpi_id}
+                      className="p-3 rounded-lg border border-slate-100 dark:border-navy-800"
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {isPl ? kpi.label_pl || kpi.label_en : kpi.label_en}
                         </span>
-                        <span className="text-[10px] text-slate-400 uppercase">{kpi.formula_type}</span>
+                        <span className="text-[10px] text-slate-400 uppercase">
+                          {kpi.formula_type}
+                        </span>
                       </div>
                       <KpiProgressBar value={val?.value ?? null} unit={kpi.unit} />
                     </div>
@@ -836,11 +935,16 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {isPl ? 'Wymiary' : 'Dimensions'}
               </h4>
               {(selectedModel.dimensions ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">{isPl ? 'Brak wymiarów' : 'No dimensions'}</p>
+                <p className="text-xs text-slate-400 italic">
+                  {isPl ? 'Brak wymiarów' : 'No dimensions'}
+                </p>
               )}
               <div className="flex flex-wrap gap-1.5">
                 {(selectedModel.dimensions ?? []).map((d) => (
-                  <span key={d.dimension_id} className="px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 text-[11px] text-slate-600 dark:text-slate-400">
+                  <span
+                    key={d.dimension_id}
+                    className="px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 text-[11px] text-slate-600 dark:text-slate-400"
+                  >
                     {d.name} <span className="opacity-50">({d.dimension_type})</span>
                   </span>
                 ))}
@@ -853,13 +957,20 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {isPl ? 'Źródła' : 'Sources'}
               </h4>
               {(selectedModel.sources ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">{isPl ? 'Brak źródeł' : 'No sources'}</p>
+                <p className="text-xs text-slate-400 italic">
+                  {isPl ? 'Brak źródeł' : 'No sources'}
+                </p>
               )}
               <div className="space-y-1.5">
                 {(selectedModel.sources ?? []).map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-100 dark:border-navy-800">
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-100 dark:border-navy-800"
+                  >
                     <Database size={14} className="text-slate-400" />
-                    <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">{s.table_name || s.table_id}</span>
+                    <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">
+                      {s.table_name || s.table_id}
+                    </span>
                     {s.trusted ? (
                       <CheckCircle2 size={14} className="text-emerald-500" />
                     ) : (

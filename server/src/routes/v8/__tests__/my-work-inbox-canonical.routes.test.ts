@@ -174,7 +174,9 @@ describe('B-05 V8 My Work inbox canonical routes', () => {
   it('POST /api/v8/my-work/inbox/canonical/materialize returns 201 with upsert counts', async () => {
     mockMaterializeInboxItems.mockResolvedValue({ upserted: 3 });
 
-    const res = await request(createApp()).post('/api/v8/my-work/inbox/canonical/materialize').send({});
+    const res = await request(createApp())
+      .post('/api/v8/my-work/inbox/canonical/materialize')
+      .send({});
 
     expect(res.status).toBe(201);
     expect(res.body.meta.version).toBe('v8');
@@ -218,15 +220,17 @@ describe('B-05 V8 My Work inbox canonical routes', () => {
       processed: 2,
     });
 
-    const res = await request(createApp()).post('/api/v8/my-work/inbox/bulk-triage').send({
-      action: 'done',
-      itemKeys: ['task:t-1', 'task:t-2'],
-      items: [
-        { itemId: 'item-1', itemKey: 'task:t-1' },
-        { itemId: 'item-2', itemKey: 'task:t-2' },
-      ],
-      aiItems: [{ itemKey: 'task:t-2', confidence: 0.92 }],
-    });
+    const res = await request(createApp())
+      .post('/api/v8/my-work/inbox/bulk-triage')
+      .send({
+        action: 'done',
+        itemKeys: ['task:t-1', 'task:t-2'],
+        items: [
+          { itemId: 'item-1', itemKey: 'task:t-1' },
+          { itemId: 'item-2', itemKey: 'task:t-2' },
+        ],
+        aiItems: [{ itemKey: 'task:t-2', confidence: 0.92 }],
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta.contract).toBe('my_work_inbox_triage_mutation_v1');

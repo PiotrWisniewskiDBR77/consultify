@@ -54,10 +54,7 @@ export interface InterviewEvidence {
 export interface EvidencePanelProps {
   evidence: InterviewEvidence[];
   activeCategory?: InterviewCategory;
-  onUploadFile: (
-    file: File,
-    category?: InterviewCategory
-  ) => Promise<void | InterviewEvidence>;
+  onUploadFile: (file: File, category?: InterviewCategory) => Promise<void | InterviewEvidence>;
   onAddLink: (
     name: string,
     url: string,

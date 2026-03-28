@@ -39,7 +39,7 @@ function makeEncryptedSecret() {
       clientSecret: 'secret-1',
       refreshToken: 'refresh-1',
       tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
-    }),
+    })
   );
 }
 
@@ -48,7 +48,15 @@ describe('pmSyncRefreshExecutionService', () => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
     mockGetTableColumns.mockResolvedValue(
-      new Set(['id', 'organization_id', 'connector_id', 'secret_key', 'encrypted_value', 'created_at', 'rotated_at']),
+      new Set([
+        'id',
+        'organization_id',
+        'connector_id',
+        'secret_key',
+        'encrypted_value',
+        'created_at',
+        'rotated_at',
+      ])
     );
   });
 
@@ -111,7 +119,7 @@ describe('pmSyncRefreshExecutionService', () => {
     }
     expect(fetchMock).toHaveBeenCalledWith(
       'https://auth.atlassian.com/oauth/token',
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({ method: 'POST' })
     );
     expect(mockDbRun).toHaveBeenCalled();
   });
@@ -126,7 +134,7 @@ describe('pmSyncRefreshExecutionService', () => {
         ok: false,
         status: 400,
         text: async () => JSON.stringify({ error: 'invalid_grant' }),
-      }),
+      })
     );
 
     const result = await executeRefreshExecution(CONNECTOR_ID, ORG_ID);

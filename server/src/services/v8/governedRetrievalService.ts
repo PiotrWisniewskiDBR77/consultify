@@ -11,6 +11,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { ScopeType } from '../../types/contextSnapshot.js';
 import type {
   ACLCheckResult,
   ACLLayerResult,
@@ -22,8 +23,8 @@ import type {
   RetrievalRequest,
   RetrievalResult,
   RetrievalTrace,
-  SearchPreset,
   ScopeResolutionSummary,
+  SearchPreset,
   SensitivityLabel,
 } from '../../types/governedRetrieval.js';
 import { PipelineStageValues } from '../../types/governedRetrieval.js';
@@ -31,7 +32,6 @@ import {
   CreateRetrievalRequestParamsSchema,
   LogRetrievalTraceParamsSchema,
 } from '../../types/governedRetrieval.js';
-import type { ScopeType } from '../../types/contextSnapshot.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -138,7 +138,7 @@ function rowToTrace(row: TraceRow): RetrievalTrace {
  * background consumers may use a RetrievalScopeToken.
  */
 export async function createRetrievalRequest(
-  params: CreateRetrievalRequestParams,
+  params: CreateRetrievalRequestParams
 ): Promise<RetrievalRequest> {
   const validated = CreateRetrievalRequestParamsSchema.parse(params);
 
@@ -177,13 +177,13 @@ export async function createRetrievalRequest(
       request.workingMemoryContextRef,
       request.status,
       request.createdAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created retrieval request ${requestId} ` +
-    `[consumer=${request.consumerClass}, preset=${request.searchPreset}] ` +
-    `for org ${request.organizationId}`,
+      `[consumer=${request.consumerClass}, preset=${request.searchPreset}] ` +
+      `for org ${request.organizationId}`
   );
 
   return request;
@@ -191,13 +191,13 @@ export async function createRetrievalRequest(
 
 export async function getRequest(
   requestId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RetrievalRequest | null> {
   const row = await dbGet<RequestRow>(
     `SELECT * FROM v8_retrieval_requests
      WHERE request_id = ? AND organization_id = ?`,
     [requestId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -209,9 +209,9 @@ export async function getRequest(
 // ==========================================
 
 const ACL_STALENESS_WINDOWS_MS: Record<SensitivityLabel, number> = {
-  confidential: 3_600_000,   // 1 hour
-  internal: 14_400_000,      // 4 hours
-  public: 86_400_000,        // 24 hours
+  confidential: 3_600_000, // 1 hour
+  internal: 14_400_000, // 4 hours
+  public: 86_400_000, // 24 hours
 };
 
 const PRESET_SENSITIVITY_CEILING: Record<SearchPreset, SensitivityLabel[]> = {
@@ -239,7 +239,7 @@ export interface SourceACLContext {
  */
 export async function checkACL(
   request: RetrievalRequest,
-  source?: SourceACLContext,
+  source?: SourceACLContext
 ): Promise<ACLCheckResult> {
   const now = new Date();
   const nowIso = now.toISOString();
@@ -354,9 +354,7 @@ export async function checkACL(
     aclStalenessMs,
   };
 
-  logger.info(
-    `${LOG_PREFIX} ACL check for request ${request.requestId}: ${result.overallVerdict}`,
-  );
+  logger.info(`${LOG_PREFIX} ACL check for request ${request.requestId}: ${result.overallVerdict}`);
 
   return result;
 }
@@ -364,9 +362,7 @@ export async function checkACL(
 /**
  * Record a support-visible pipeline trace for a retrieval request.
  */
-export async function logRetrievalTrace(
-  params: LogRetrievalTraceParams,
-): Promise<RetrievalTrace> {
+export async function logRetrievalTrace(params: LogRetrievalTraceParams): Promise<RetrievalTrace> {
   const validated = LogRetrievalTraceParamsSchema.parse(params);
 
   const traceId = uuidv4();
@@ -415,12 +411,12 @@ export async function logRetrievalTrace(
       JSON.stringify(trace.freshnessWarnings),
       trace.totalLatencyMs,
       trace.createdAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Logged trace ${traceId} for request ${trace.requestId} ` +
-    `[${trace.resultsReturned} results, ${trace.deniedEntries.length} denied, ${trace.totalLatencyMs}ms]`,
+      `[${trace.resultsReturned} results, ${trace.deniedEntries.length} denied, ${trace.totalLatencyMs}ms]`
   );
 
   return trace;
@@ -431,14 +427,14 @@ export async function logRetrievalTrace(
  */
 export async function getTracesByRequest(
   requestId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RetrievalTrace[]> {
   const rows = await dbAll<TraceRow>(
     `SELECT * FROM v8_retrieval_traces
      WHERE request_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [requestId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTrace);
@@ -450,14 +446,14 @@ export async function getTracesByRequest(
  */
 export async function getTracesByConversation(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RetrievalTrace[]> {
   const rows = await dbAll<TraceRow>(
     `SELECT * FROM v8_retrieval_traces
      WHERE conversation_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [conversationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTrace);
@@ -477,7 +473,7 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 export function checkFreshness(
   sourceRef: string,
   connectorId: string | null,
-  freshnessAt: string | null,
+  freshnessAt: string | null
 ): FreshnessState {
   if (freshnessAt === null) return 'disconnected';
 
@@ -517,7 +513,7 @@ export interface PipelineOutput {
  */
 export async function runPipeline(
   request: RetrievalRequest,
-  sources: CandidateSource[],
+  sources: CandidateSource[]
 ): Promise<PipelineOutput> {
   const denied: DeniedEntry[] = [];
   const stages: PipelineStageTrace[] = [];
@@ -679,9 +675,7 @@ export async function runPipeline(
         { layer: 'scope_sensitivity', verdict: 'allowed', denialReason: null, detail: null },
       ],
       checkedAt: new Date().toISOString(),
-      aclStalenessMs: s.aclCheckedAt
-        ? Date.now() - new Date(s.aclCheckedAt).getTime()
-        : null,
+      aclStalenessMs: s.aclCheckedAt ? Date.now() - new Date(s.aclCheckedAt).getTime() : null,
     };
 
     return {
@@ -689,7 +683,7 @@ export async function runPipeline(
       connectorId: s.connectorId,
       scopeType: s.scopeType,
       relevanceScore: 1,
-      trustClass: freshnessState === 'fresh' ? 'verified' as const : 'provisional' as const,
+      trustClass: freshnessState === 'fresh' ? ('verified' as const) : ('provisional' as const),
       sensitivityLabel: s.sensitivityLabel,
       freshnessState,
       aclCheckResult,
@@ -699,7 +693,7 @@ export async function runPipeline(
   });
 
   logger.info(
-    `${LOG_PREFIX} Pipeline completed: ${sources.length} candidates → ${results.length} results, ${denied.length} denied`,
+    `${LOG_PREFIX} Pipeline completed: ${sources.length} candidates → ${results.length} results, ${denied.length} denied`
   );
 
   return { results, denied, stages };
@@ -714,7 +708,7 @@ export async function runPipeline(
  */
 export async function getRequestsByOrg(
   organizationId: string,
-  limit: number = 50,
+  limit: number = 50
 ): Promise<RetrievalRequest[]> {
   const rows = await dbAll<RequestRow>(
     `SELECT * FROM v8_retrieval_requests
@@ -722,7 +716,7 @@ export async function getRequestsByOrg(
      ORDER BY created_at DESC
      LIMIT ?`,
     [organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRequest);
@@ -767,14 +761,14 @@ export function buildScopeResolution(request: RetrievalRequest): ScopeResolution
  */
 export async function getTracesBySnapshot(
   snapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RetrievalTrace[]> {
   const rows = await dbAll<TraceRow>(
     `SELECT * FROM v8_retrieval_traces
      WHERE snapshot_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [snapshotId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTrace);

@@ -128,8 +128,13 @@ export function computeDuPont(v: V): DuPontDecomposition {
   const financialLeverage = eq !== 0 ? ta / eq : null;
 
   let roe: number | null = null;
-  if (taxBurden !== null && interestBurden !== null && operatingMargin !== null &&
-      assetTurnover !== null && financialLeverage !== null) {
+  if (
+    taxBurden !== null &&
+    interestBurden !== null &&
+    operatingMargin !== null &&
+    assetTurnover !== null &&
+    financialLeverage !== null
+  ) {
     roe = taxBurden * interestBurden * operatingMargin * assetTurnover * financialLeverage * 100;
   }
 
@@ -151,7 +156,19 @@ export function computeAltmanZ(
   options?: { model?: 'original' | 'private' | 'emerging'; marketCapEquity?: number }
 ): AltmanZScore {
   const ta = g0(v, 'TOTAL_ASSETS');
-  if (ta === 0) return { score: null, zone: 'na', components: { x1_wc_ta: null, x2_re_ta: null, x3_ebit_ta: null, x4_mve_tl: null, x5_rev_ta: null }, model: options?.model || 'private' };
+  if (ta === 0)
+    return {
+      score: null,
+      zone: 'na',
+      components: {
+        x1_wc_ta: null,
+        x2_re_ta: null,
+        x3_ebit_ta: null,
+        x4_mve_tl: null,
+        x5_rev_ta: null,
+      },
+      model: options?.model || 'private',
+    };
 
   const wc = g0(v, 'CURRENT_ASSETS') - g0(v, 'CURRENT_LIABILITIES');
   const re = g0(v, 'RETAINED_EARNINGS');
@@ -181,12 +198,12 @@ export function computeAltmanZ(
   } else if (model === 'emerging') {
     x4 = tl !== 0 ? eq / tl : 0;
     score = 6.56 * x1 + 3.26 * x2 + 6.72 * x3 + 1.05 * x4 + 3.25;
-    safeThreshold = 2.60;
-    distressThreshold = 1.10;
+    safeThreshold = 2.6;
+    distressThreshold = 1.1;
   } else {
     x4 = tl !== 0 ? eq / tl : 0;
-    score = 0.717 * x1 + 0.847 * x2 + 3.107 * x3 + 0.420 * x4 + 0.998 * x5;
-    safeThreshold = 2.90;
+    score = 0.717 * x1 + 0.847 * x2 + 3.107 * x3 + 0.42 * x4 + 0.998 * x5;
+    safeThreshold = 2.9;
     distressThreshold = 1.23;
   }
 
@@ -225,32 +242,99 @@ export function computePiotroskiF(current: V, previous: V): PiotroskiFScore | nu
   const ltdRatio_c = ta_c !== 0 ? ltd_c / ta_c : 0;
   const ltdRatio_p = ta_p !== 0 ? ltd_p / ta_p : 0;
 
-  const cr_c = g0(current, 'CURRENT_LIABILITIES') !== 0
-    ? g0(current, 'CURRENT_ASSETS') / g0(current, 'CURRENT_LIABILITIES') : 0;
-  const cr_p = g0(previous, 'CURRENT_LIABILITIES') !== 0
-    ? g0(previous, 'CURRENT_ASSETS') / g0(previous, 'CURRENT_LIABILITIES') : 0;
+  const cr_c =
+    g0(current, 'CURRENT_LIABILITIES') !== 0
+      ? g0(current, 'CURRENT_ASSETS') / g0(current, 'CURRENT_LIABILITIES')
+      : 0;
+  const cr_p =
+    g0(previous, 'CURRENT_LIABILITIES') !== 0
+      ? g0(previous, 'CURRENT_ASSETS') / g0(previous, 'CURRENT_LIABILITIES')
+      : 0;
 
   const shares_c = g(current, 'SHARES_OUTSTANDING');
   const shares_p = g(previous, 'SHARES_OUTSTANDING');
 
-  const gm_c = g0(current, 'REVENUE') !== 0
-    ? g0(current, 'GROSS_PROFIT') / g0(current, 'REVENUE') : 0;
-  const gm_p = g0(previous, 'REVENUE') !== 0
-    ? g0(previous, 'GROSS_PROFIT') / g0(previous, 'REVENUE') : 0;
+  const gm_c =
+    g0(current, 'REVENUE') !== 0 ? g0(current, 'GROSS_PROFIT') / g0(current, 'REVENUE') : 0;
+  const gm_p =
+    g0(previous, 'REVENUE') !== 0 ? g0(previous, 'GROSS_PROFIT') / g0(previous, 'REVENUE') : 0;
 
   const at_c = g0(current, 'REVENUE') / (avgTA || 1);
   const at_p = ta_p !== 0 ? g0(previous, 'REVENUE') / ta_p : 0;
 
   const signals: PiotroskiSignal[] = [
-    { code: 'F1_ROA', name: 'Positive ROA', namePl: 'Dodatni ROA', passed: roa_c > 0, value: round4(roa_c), description: 'Net income / avg total assets > 0' },
-    { code: 'F2_OCF', name: 'Positive Operating CF', namePl: 'Dodatni CF operacyjny', passed: ocf_c > 0, value: ocf_c, description: 'Operating cash flow > 0' },
-    { code: 'F3_ROA_DELTA', name: 'Improving ROA', namePl: 'Rosnący ROA', passed: roa_c > roa_p, value: round4(roa_c - roa_p), description: 'Current ROA > Prior ROA' },
-    { code: 'F4_ACCRUALS', name: 'Cash > Accruals', namePl: 'Gotówka > Memoriał', passed: ocf_c > ni_c, value: round4(ocf_c - ni_c), description: 'Operating CF > Net Income (quality of earnings)' },
-    { code: 'F5_LEVERAGE', name: 'Decreasing Leverage', namePl: 'Spadające zadłużenie', passed: ltdRatio_c < ltdRatio_p, value: round4(ltdRatio_c - ltdRatio_p), description: 'Debt/Assets ratio declining' },
-    { code: 'F6_LIQUIDITY', name: 'Improving Liquidity', namePl: 'Rosnąca płynność', passed: cr_c > cr_p, value: round4(cr_c - cr_p), description: 'Current Ratio improving' },
-    { code: 'F7_NO_DILUTION', name: 'No Share Dilution', namePl: 'Brak rozwodnienia akcji', passed: shares_c === undefined || shares_p === undefined || shares_c <= shares_p, value: shares_c !== undefined && shares_p !== undefined ? shares_c - shares_p : null, description: 'No new shares issued' },
-    { code: 'F8_GROSS_MARGIN', name: 'Improving Gross Margin', namePl: 'Rosnąca marża brutto', passed: gm_c > gm_p, value: round4((gm_c - gm_p) * 100), description: 'Gross margin improving' },
-    { code: 'F9_ASSET_TURNOVER', name: 'Improving Asset Turnover', namePl: 'Rosnąca obrotowość aktywów', passed: at_c > at_p, value: round4(at_c - at_p), description: 'Asset turnover improving' },
+    {
+      code: 'F1_ROA',
+      name: 'Positive ROA',
+      namePl: 'Dodatni ROA',
+      passed: roa_c > 0,
+      value: round4(roa_c),
+      description: 'Net income / avg total assets > 0',
+    },
+    {
+      code: 'F2_OCF',
+      name: 'Positive Operating CF',
+      namePl: 'Dodatni CF operacyjny',
+      passed: ocf_c > 0,
+      value: ocf_c,
+      description: 'Operating cash flow > 0',
+    },
+    {
+      code: 'F3_ROA_DELTA',
+      name: 'Improving ROA',
+      namePl: 'Rosnący ROA',
+      passed: roa_c > roa_p,
+      value: round4(roa_c - roa_p),
+      description: 'Current ROA > Prior ROA',
+    },
+    {
+      code: 'F4_ACCRUALS',
+      name: 'Cash > Accruals',
+      namePl: 'Gotówka > Memoriał',
+      passed: ocf_c > ni_c,
+      value: round4(ocf_c - ni_c),
+      description: 'Operating CF > Net Income (quality of earnings)',
+    },
+    {
+      code: 'F5_LEVERAGE',
+      name: 'Decreasing Leverage',
+      namePl: 'Spadające zadłużenie',
+      passed: ltdRatio_c < ltdRatio_p,
+      value: round4(ltdRatio_c - ltdRatio_p),
+      description: 'Debt/Assets ratio declining',
+    },
+    {
+      code: 'F6_LIQUIDITY',
+      name: 'Improving Liquidity',
+      namePl: 'Rosnąca płynność',
+      passed: cr_c > cr_p,
+      value: round4(cr_c - cr_p),
+      description: 'Current Ratio improving',
+    },
+    {
+      code: 'F7_NO_DILUTION',
+      name: 'No Share Dilution',
+      namePl: 'Brak rozwodnienia akcji',
+      passed: shares_c === undefined || shares_p === undefined || shares_c <= shares_p,
+      value: shares_c !== undefined && shares_p !== undefined ? shares_c - shares_p : null,
+      description: 'No new shares issued',
+    },
+    {
+      code: 'F8_GROSS_MARGIN',
+      name: 'Improving Gross Margin',
+      namePl: 'Rosnąca marża brutto',
+      passed: gm_c > gm_p,
+      value: round4((gm_c - gm_p) * 100),
+      description: 'Gross margin improving',
+    },
+    {
+      code: 'F9_ASSET_TURNOVER',
+      name: 'Improving Asset Turnover',
+      namePl: 'Rosnąca obrotowość aktywów',
+      passed: at_c > at_p,
+      value: round4(at_c - at_p),
+      description: 'Asset turnover improving',
+    },
   ];
 
   const score = signals.filter((s) => s.passed).length;
@@ -293,9 +377,10 @@ export function computeWaccInputs(v: V): WaccInputs {
   const tax = Math.abs(g0(v, 'TAX_EXPENSE'));
   const effectiveTaxRate = Math.abs(ebt) > 0 ? (tax / Math.abs(ebt)) * 100 : null;
 
-  const afterTaxCostOfDebt = costOfDebt !== null && effectiveTaxRate !== null
-    ? costOfDebt * (1 - effectiveTaxRate / 100)
-    : null;
+  const afterTaxCostOfDebt =
+    costOfDebt !== null && effectiveTaxRate !== null
+      ? costOfDebt * (1 - effectiveTaxRate / 100)
+      : null;
 
   return {
     costOfDebt: costOfDebt !== null ? round4(costOfDebt) : null,
@@ -344,10 +429,7 @@ export function computeUnleveredFcf(v: V): UnleveredFcf {
 
 // ─── 7. Enterprise Value Bridge ─────────────────────────────────────────────
 
-export function computeEvBridge(
-  v: V,
-  options?: { marketCapEquity?: number }
-): EvBridge {
+export function computeEvBridge(v: V, options?: { marketCapEquity?: number }): EvBridge {
   const equity = options?.marketCapEquity ?? g0(v, 'TOTAL_EQUITY');
   const ltd = g0(v, 'LONG_TERM_DEBT');
   const std = g0(v, 'SHORT_TERM_DEBT');

@@ -1,14 +1,10 @@
-import { ArrowRight, Bot, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Bot, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  getLocalizedText,
-  getOverviewCards,
-  HELP_SYSTEM_OVERVIEW,
-} from '../config/helpExperience';
 import DynamicIcon from '../components/shared/DynamicIcon';
+import { getLocalizedText, getOverviewCards, HELP_SYSTEM_OVERVIEW } from '../config/helpExperience';
 import { ROUTES } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
@@ -96,7 +92,11 @@ export const AppIntroView: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                    <DynamicIcon name={card.icon} size={18} className="text-purple-600 dark:text-purple-300" />
+                    <DynamicIcon
+                      name={card.icon}
+                      size={18}
+                      className="text-purple-600 dark:text-purple-300"
+                    />
                   </div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     {String(index + 1).padStart(2, '0')}
@@ -131,7 +131,11 @@ export const AppIntroView: React.FC = () => {
                 className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-4"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-                  <DynamicIcon name={card.icon} size={18} className="text-purple-600 dark:text-purple-300" />
+                  <DynamicIcon
+                    name={card.icon}
+                    size={18}
+                    className="text-purple-600 dark:text-purple-300"
+                  />
                 </div>
                 <div className="mt-4 text-sm font-semibold text-slate-900 dark:text-white">
                   {card.title}

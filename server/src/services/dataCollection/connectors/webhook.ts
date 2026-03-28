@@ -4,13 +4,10 @@
  */
 
 import { timingSafeEqual } from 'crypto';
-import type {
-  IConnector,
-  ExternalSchema,
-  ExternalRecord,
-} from '../connectorFramework.js';
+
 import { getDatabase } from '../../../database/Database.js';
 import logger from '../../../utils/Logger.js';
+import type { ExternalRecord, ExternalSchema, IConnector } from '../connectorFramework.js';
 
 const MAX_BUFFER_FETCH = 5_000;
 

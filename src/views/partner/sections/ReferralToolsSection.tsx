@@ -29,9 +29,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
-  type V8PartnerAttribution,
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
+  type V8PartnerAttribution,
   type V8PartnerReferralAnalytics,
   type V8PartnerReferralTools,
 } from '@/services/api/v8';
@@ -147,7 +147,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           ? undefined
           : Number(payload.commissionRatePercent),
       commissionDurationMonths:
-        payload?.commissionDurationMonths === null || payload?.commissionDurationMonths === undefined
+        payload?.commissionDurationMonths === null ||
+        payload?.commissionDurationMonths === undefined
           ? undefined
           : Number(payload.commissionDurationMonths),
       attributedAt: String(payload?.attributedAt ?? ''),
@@ -416,12 +417,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {pageCopy.title}
-        </h2>
-        <p className="text-slate-400 dark:text-slate-500">
-          {pageCopy.subtitle}
-        </p>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{pageCopy.title}</h2>
+        <p className="text-slate-400 dark:text-slate-500">{pageCopy.subtitle}</p>
       </div>
 
       {v8Analytics && (
@@ -517,7 +514,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm text-slate-400 dark:text-slate-500">
                     <span>
-                      {t('partner.referrals.customerAttributedAt', 'Attributed')} {customer.attributedAt}
+                      {t('partner.referrals.customerAttributedAt', 'Attributed')}{' '}
+                      {customer.attributedAt}
                     </span>
                     <span>
                       {t('partner.referrals.customerCommissionEarned', 'Commission earned')} €

@@ -32,9 +32,7 @@ export function v8Error(
   status: number,
   code: V8ErrorCode,
   message: string,
-  details?: unknown,
+  details?: unknown
 ) {
-  return res
-    .status(status)
-    .json({ error: message, code, ...(details ? { details } : {}) });
+  return res.status(status).json({ error: message, code, ...(details ? { details } : {}) });
 }

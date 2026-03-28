@@ -1,13 +1,17 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
-import type { CaptureSnapshotParams, ContextSnapshot, V8ArtifactRef } from '../../../types/contextSnapshot.js';
+import type {
+  CaptureSnapshotParams,
+  ContextSnapshot,
+  V8ArtifactRef,
+} from '../../../types/contextSnapshot.js';
 import {
-  ContextSnapshotSchema,
   CaptureSnapshotParamsSchema,
-  V8ArtifactRefSchema,
-  SourceRefSchema,
+  ContextSnapshotSchema,
   DriftEventSchema,
+  SourceRefSchema,
+  V8ArtifactRefSchema,
 } from '../../../types/contextSnapshot.js';
 
 // ==========================================
@@ -35,10 +39,10 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 import {
   captureSnapshot,
+  detectDrift,
   getSnapshot,
   getSnapshotsByConversation,
   getSnapshotsByRun,
-  detectDrift,
   recordDriftEvent,
 } from '../contextSnapshotService.js';
 
@@ -97,7 +101,12 @@ function makeFakeRow(overrides?: Partial<Record<string, unknown>>) {
     conversation_id: CONV_ID,
     execution_run_id: null,
     artifact_refs: JSON.stringify([
-      { artifactId: 'art-1', artifactType: 'initiative', artifactModule: 'execution', relationship: 'target' },
+      {
+        artifactId: 'art-1',
+        artifactType: 'initiative',
+        artifactModule: 'execution',
+        relationship: 'target',
+      },
     ]),
     effective_scope_ref: 'project:' + PROJECT_A,
     resolved_role_ref: 'admin',
@@ -105,7 +114,12 @@ function makeFakeRow(overrides?: Partial<Record<string, unknown>>) {
     consumer_class: 'chat',
     privacy_mode: 0,
     source_context_refs: JSON.stringify([
-      { sourceId: 'src-1', scopeType: 'session', sourceKind: 'conversation_history', freshnessAt: null },
+      {
+        sourceId: 'src-1',
+        scopeType: 'session',
+        sourceKind: 'conversation_history',
+        freshnessAt: null,
+      },
     ]),
     drift_events: '[]',
     created_at: '2026-03-23T10:00:00.000Z',
@@ -156,15 +170,13 @@ describe('captureSnapshot', () => {
   });
 
   it('rejects invalid consumerClass via Zod', async () => {
-    await expect(
-      captureSnapshot(makeParams({ consumerClass: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(captureSnapshot(makeParams({ consumerClass: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      captureSnapshot({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(captureSnapshot({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 });
 
@@ -214,9 +226,7 @@ describe('getSnapshotsByConversation', () => {
 
 describe('getSnapshotsByRun', () => {
   it('returns snapshots for an execution run', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeRow({ execution_run_id: RUN_ID }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeRow({ execution_run_id: RUN_ID })]);
 
     const results = await getSnapshotsByRun(RUN_ID, ORG_ID);
 
@@ -237,7 +247,12 @@ describe('detectDrift', () => {
       conversationId: CONV_ID,
       executionRunId: null,
       artifactRefs: [
-        { artifactId: 'art-1', artifactType: 'initiative', artifactModule: 'execution', relationship: 'target' },
+        {
+          artifactId: 'art-1',
+          artifactType: 'initiative',
+          artifactModule: 'execution',
+          relationship: 'target',
+        },
       ],
       effectiveScopeRef: 'project:' + PROJECT_A,
       resolvedRoleRef: 'admin',
@@ -275,13 +290,28 @@ describe('detectDrift', () => {
   it('detects artifact removal', () => {
     const prev = makeSnapshot({
       artifactRefs: [
-        { artifactId: 'art-1', artifactType: 'initiative', artifactModule: 'execution', relationship: 'target' },
-        { artifactId: 'art-2', artifactType: 'task', artifactModule: 'execution', relationship: 'reference' },
+        {
+          artifactId: 'art-1',
+          artifactType: 'initiative',
+          artifactModule: 'execution',
+          relationship: 'target',
+        },
+        {
+          artifactId: 'art-2',
+          artifactType: 'task',
+          artifactModule: 'execution',
+          relationship: 'reference',
+        },
       ],
     });
     const curr = makeSnapshot({
       artifactRefs: [
-        { artifactId: 'art-1', artifactType: 'initiative', artifactModule: 'execution', relationship: 'target' },
+        {
+          artifactId: 'art-1',
+          artifactType: 'initiative',
+          artifactModule: 'execution',
+          relationship: 'target',
+        },
       ],
     });
 
@@ -372,7 +402,7 @@ describe('recordDriftEvent', () => {
         previousValue: 'admin',
         currentValue: 'viewer',
         resolution: 'user_confirmed',
-      }),
+      })
     ).resolves.toBeUndefined();
 
     expect(mockDbRun).not.toHaveBeenCalled();
@@ -423,7 +453,7 @@ describe('Zod schema validation', () => {
         privacyMode: false,
         sourceContextRefs: [],
         driftEvents: [],
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -434,7 +464,7 @@ describe('Zod schema validation', () => {
         artifactType: 'initiative',
         artifactModule: 'execution',
         relationship: 'target',
-      }),
+      })
     ).not.toThrow();
 
     expect(() =>
@@ -443,7 +473,7 @@ describe('Zod schema validation', () => {
         artifactType: 'initiative',
         artifactModule: 'execution',
         relationship: 'target',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -454,7 +484,7 @@ describe('Zod schema validation', () => {
         scopeType: 'session',
         sourceKind: 'conversation_history',
         freshnessAt: null,
-      }),
+      })
     ).not.toThrow();
 
     expect(() =>
@@ -463,7 +493,7 @@ describe('Zod schema validation', () => {
         scopeType: 'invalid_scope',
         sourceKind: 'test',
         freshnessAt: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -475,7 +505,7 @@ describe('Zod schema validation', () => {
         previousValue: 'a',
         currentValue: 'b',
         resolution: 'revalidated',
-      }),
+      })
     ).not.toThrow();
 
     expect(() =>
@@ -485,7 +515,7 @@ describe('Zod schema validation', () => {
         previousValue: 'a',
         currentValue: 'b',
         resolution: 'revalidated',
-      }),
+      })
     ).toThrow(ZodError);
   });
 

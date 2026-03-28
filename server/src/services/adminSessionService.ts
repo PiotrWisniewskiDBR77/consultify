@@ -43,7 +43,8 @@ class AdminSessionServiceClass {
       userAgent: r.user_agent || r.userAgent || 'Unknown',
       mfaVerified: !!(r.mfa_verified ?? r.mfaVerified),
       createdAt: r.created_at || r.createdAt || new Date().toISOString(),
-      expiresAt: r.expires_at || r.expiresAt || r.created_at || r.createdAt || new Date().toISOString(),
+      expiresAt:
+        r.expires_at || r.expiresAt || r.created_at || r.createdAt || new Date().toISOString(),
       isActive: !!(r.is_active ?? r.isActive),
       admin: {
         email: r.admin_email || r.email || '',
@@ -186,7 +187,12 @@ class AdminSessionServiceClass {
 
   async getSessionStats(): Promise<any> {
     try {
-      const row = await this.db.get<{ total: number; active: number; mfaVerified: number; uniqueAdmins: number }>(`
+      const row = await this.db.get<{
+        total: number;
+        active: number;
+        mfaVerified: number;
+        uniqueAdmins: number;
+      }>(`
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,

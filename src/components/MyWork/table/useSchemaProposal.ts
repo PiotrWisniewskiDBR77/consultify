@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useState } from 'react';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface ProposalHistoryEntry {
@@ -75,7 +76,11 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       message: string,
       existingSchema?: unknown,
       language?: string,
-      companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] }
+      companyContext?: {
+        workspaceName?: string;
+        moduleName?: string;
+        existingTableNames?: string[];
+      }
     ): Promise<void> => {
       setLoading(true);
       setError(null);

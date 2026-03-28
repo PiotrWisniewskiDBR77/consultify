@@ -31,12 +31,7 @@ interface Props {
 
 function ConfidenceDot({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
-  const color =
-    pct >= 70
-      ? 'bg-emerald-500'
-      : pct >= 40
-        ? 'bg-amber-500'
-        : 'bg-rose-500';
+  const color = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-500';
   const bgColor =
     pct >= 70
       ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
@@ -45,7 +40,9 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
         : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300';
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${bgColor}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${bgColor}`}
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
       {pct}%
     </span>
@@ -114,7 +111,11 @@ function SearchableSelect({
   const selectedLabel = useMemo(() => {
     if (!value) return '';
     const opt = options.find((o) => o.id === value);
-    return opt ? (isPl ? opt.line_name_pl || opt.line_name : opt.line_name || opt.line_name_pl || '') : '';
+    return opt
+      ? isPl
+        ? opt.line_name_pl || opt.line_name
+        : opt.line_name || opt.line_name_pl || ''
+      : '';
   }, [value, options, isPl]);
 
   return (
@@ -149,7 +150,11 @@ function SearchableSelect({
                 className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none dark:text-slate-200"
               />
               {search && (
-                <button type="button" onClick={() => setSearch('')} className="text-slate-400 hover:text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="text-slate-400 hover:text-slate-600"
+                >
                   <X size={12} />
                 </button>
               )}
@@ -157,7 +162,10 @@ function SearchableSelect({
             <div className="max-h-48 overflow-auto">
               <button
                 type="button"
-                onClick={() => { onChange(''); setOpen(false); }}
+                onClick={() => {
+                  onChange('');
+                  setOpen(false);
+                }}
                 className="w-full px-3 py-2 text-left text-xs text-amber-600 hover:bg-slate-50 dark:text-amber-400 dark:hover:bg-white/[0.04]"
               >
                 {placeholder}
@@ -166,7 +174,10 @@ function SearchableSelect({
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => { onChange(opt.id); setOpen(false); }}
+                  onClick={() => {
+                    onChange(opt.id);
+                    setOpen(false);
+                  }}
                   className={`w-full px-3 py-2 text-left text-xs transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
                     opt.id === value
                       ? 'bg-cyan-50/60 text-cyan-700 font-medium dark:bg-cyan-500/10 dark:text-cyan-300'
@@ -214,7 +225,9 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-navy-900 ${className}`}>
+    <div
+      className={`overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-navy-900 ${className}`}
+    >
       {/* Summary bar */}
       {mappedValues.length > 0 && (
         <div className="flex items-center gap-3 border-b border-slate-200/60 px-4 py-2 dark:border-white/[0.06]">
@@ -235,7 +248,9 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
           <div className="ml-auto h-1.5 w-24 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-              style={{ width: `${mappedValues.length > 0 ? (mappedCount / mappedValues.length) * 100 : 0}%` }}
+              style={{
+                width: `${mappedValues.length > 0 ? (mappedCount / mappedValues.length) * 100 : 0}%`,
+              }}
             />
           </div>
         </div>
@@ -294,7 +309,10 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                         }
                       }}
                       onBlur={() => setEditingIdx(null)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') setEditingIdx(null); if (e.key === 'Escape') setEditingIdx(null); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setEditingIdx(null);
+                        if (e.key === 'Escape') setEditingIdx(null);
+                      }}
                       autoFocus
                       className="w-28 rounded-lg border border-cyan-400 bg-white px-2 py-1 text-right font-mono text-xs text-slate-900 shadow-sm outline-none ring-2 ring-cyan-100 dark:border-cyan-500/40 dark:bg-navy-800 dark:text-white dark:ring-cyan-500/10"
                       aria-label={`${value.originalLabel} value`}

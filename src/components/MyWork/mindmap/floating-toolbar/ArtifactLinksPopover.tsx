@@ -1,7 +1,7 @@
 import { ExternalLink, Link2, Paperclip, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { getArtifactLabel, type ArtifactLink } from '@/utils/artifactLinks';
+import { type ArtifactLink, getArtifactLabel } from '@/utils/artifactLinks';
 
 interface ArtifactLinksPopoverProps {
   isPl: boolean;
@@ -82,7 +82,9 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-200/80 dark:border-navy-700/80 px-3 py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
-          {isPl ? 'Brak podłączonych artefaktów do tego węzła.' : 'No artifacts linked to this node yet.'}
+          {isPl
+            ? 'Brak podłączonych artefaktów do tego węzła.'
+            : 'No artifacts linked to this node yet.'}
         </div>
       )}
 

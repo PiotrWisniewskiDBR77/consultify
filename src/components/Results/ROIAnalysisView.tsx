@@ -20,7 +20,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
+import {
+  shouldFallbackToLegacyResults,
+  V8ResultsApi,
+  type V8ResultsRoiPortfolioSummary,
+} from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -58,6 +62,20 @@ interface FilterOption {
   value: string;
   label: string;
   color?: string;
+}
+
+function normalizePortfolioSummary(
+  payload:
+    | V8ResultsRoiPortfolioSummary
+    | { items: PortfolioSummary['items']; summary: PortfolioSummary['summary'] | null }
+): { items: PortfolioSummary['items']; summary: PortfolioSummary['summary'] | null } {
+  return {
+    items: (payload.items || []).map((item) => ({
+      ...item,
+      confidence: item.confidence ?? undefined,
+    })),
+    summary: payload.summary || null,
+  };
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
@@ -187,19 +205,25 @@ export const ROIAnalysisView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let payload: { items: PortfolioSummary['items']; summary: PortfolioSummary['summary'] | null } = {
+      let payload: {
+        items: PortfolioSummary['items'];
+        summary: PortfolioSummary['summary'] | null;
+      } = {
         items: [],
         summary: null,
       };
       try {
-        payload = await V8ResultsApi.getRoiPortfolioSummary();
+        payload = normalizePortfolioSummary(await V8ResultsApi.getRoiPortfolioSummary());
       } catch (error) {
         if (!shouldFallbackToLegacyResults(error)) {
           throw error;
         }
         const res = await Api.get('/benefits/roi/portfolio/summary');
         const data = (res as any)?.data || res;
-        payload = typeof data?.items !== 'undefined' ? data : { items: [], summary: null };
+        payload =
+          typeof data?.items !== 'undefined'
+            ? normalizePortfolioSummary(data)
+            : { items: [], summary: null };
       }
       setItems(payload.items || []);
       setSummary(payload.summary || null);

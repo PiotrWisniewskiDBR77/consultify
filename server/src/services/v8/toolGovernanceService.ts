@@ -15,31 +15,31 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { ConsumerClass } from '../../types/contextSnapshot.js';
+import type { ApprovalClass } from '../../types/executionSpine.js';
 import type {
-  ToolCapability,
+  ApprovalOverride,
+  ClassifyToolParams,
   ConsumerToolPolicy,
+  LogInvocationTraceParams,
+  RegisterToolParams,
+  RequestInvocationParams,
+  SetConsumerPolicyParams,
+  ToolApprovalResult,
+  ToolApprovalState,
+  ToolCapability,
   ToolInvocationRequest,
   ToolInvocationTrace,
-  ToolApprovalResult,
-  RegisterToolParams,
-  ClassifyToolParams,
-  SetConsumerPolicyParams,
-  RequestInvocationParams,
-  LogInvocationTraceParams,
-  ToolApprovalState,
-  ApprovalOverride,
 } from '../../types/toolGovernance.js';
 import {
-  RegisterToolParamsSchema,
-  ClassifyToolParamsSchema,
-  SetConsumerPolicyParamsSchema,
-  RequestInvocationParamsSchema,
-  LogInvocationTraceParamsSchema,
-  RISK_CLASS_DEFAULT_APPROVAL,
   APPROVAL_CLASS_STRICTNESS,
+  ClassifyToolParamsSchema,
+  LogInvocationTraceParamsSchema,
+  RegisterToolParamsSchema,
+  RequestInvocationParamsSchema,
+  RISK_CLASS_DEFAULT_APPROVAL,
+  SetConsumerPolicyParamsSchema,
 } from '../../types/toolGovernance.js';
-import type { ApprovalClass } from '../../types/executionSpine.js';
-import type { ConsumerClass } from '../../types/contextSnapshot.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -266,10 +266,12 @@ export async function registerTool(params: RegisterToolParams): Promise<ToolCapa
       tool.version,
       tool.createdAt,
       tool.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered tool ${toolId} "${validated.name}" for org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Registered tool ${toolId} "${validated.name}" for org ${validated.organizationId}`
+  );
   return tool;
 }
 
@@ -278,13 +280,13 @@ export async function registerTool(params: RegisterToolParams): Promise<ToolCapa
  */
 export async function getTool(
   toolId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolCapability | null> {
   const row = await dbGet<ToolRow>(
     `SELECT * FROM v8_tool_catalog
      WHERE tool_id = ? AND organization_id = ?`,
     [toolId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -300,7 +302,7 @@ export async function getToolCatalog(organizationId: string): Promise<ToolCapabi
      WHERE organization_id = ?
      ORDER BY name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTool);
@@ -317,7 +319,7 @@ export async function classifyTool(params: ClassifyToolParams): Promise<ToolCapa
   const existing = await getTool(validated.toolId, validated.organizationId);
   if (!existing) {
     throw new Error(
-      `Tool ${validated.toolId} not found in organization ${validated.organizationId}`,
+      `Tool ${validated.toolId} not found in organization ${validated.organizationId}`
     );
   }
 
@@ -338,11 +340,11 @@ export async function classifyTool(params: ClassifyToolParams): Promise<ToolCapa
       now,
       validated.toolId,
       validated.organizationId,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Classified tool ${validated.toolId} as ${validated.riskClass} by ${validated.classifiedBy}`,
+    `${LOG_PREFIX} Classified tool ${validated.toolId} as ${validated.riskClass} by ${validated.classifiedBy}`
   );
 
   return {
@@ -361,7 +363,7 @@ export async function classifyTool(params: ClassifyToolParams): Promise<ToolCapa
  * If projectId is provided, this is a project-level policy (narrowing only — D20).
  */
 export async function setConsumerPolicy(
-  params: SetConsumerPolicyParams,
+  params: SetConsumerPolicyParams
 ): Promise<ConsumerToolPolicy> {
   const validated = SetConsumerPolicyParamsSchema.parse(params);
 
@@ -403,11 +405,11 @@ export async function setConsumerPolicy(
       policy.effectiveUntil,
       policy.createdAt,
       policy.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Set policy ${policyId} for consumer=${validated.consumerClass} tool=${validated.toolId}`,
+    `${LOG_PREFIX} Set policy ${policyId} for consumer=${validated.consumerClass} tool=${validated.toolId}`
   );
   return policy;
 }
@@ -425,7 +427,7 @@ export async function getEffectivePolicy(
   toolId: string,
   consumerClass: ConsumerClass,
   organizationId: string,
-  projectId?: string | null,
+  projectId?: string | null
 ): Promise<ToolApprovalResult> {
   const tool = await getTool(toolId, organizationId);
   if (!tool) {
@@ -449,7 +451,7 @@ export async function getEffectivePolicy(
        AND effective_from <= ?
        AND (effective_until IS NULL OR effective_until > ?)`,
     [organizationId, toolId, consumerClass, now, now],
-    { fallback: true },
+    { fallback: true }
   );
 
   for (const row of orgPolicies || []) {
@@ -477,7 +479,7 @@ export async function getEffectivePolicy(
          AND effective_from <= ?
          AND (effective_until IS NULL OR effective_until > ?)`,
       [organizationId, toolId, consumerClass, projectId, now, now],
-      { fallback: true },
+      { fallback: true }
     );
 
     for (const row of projectPolicies || []) {
@@ -498,10 +500,7 @@ export async function getEffectivePolicy(
     }
   }
 
-  if (
-    consumerClass === 'background' &&
-    tool.mutationType !== 'read_only'
-  ) {
+  if (consumerClass === 'background' && tool.mutationType !== 'read_only') {
     effectiveApproval = stricterApproval(effectiveApproval, 'requires_human_approval');
 
     const state: ToolApprovalState = 'deferred_approval';
@@ -532,14 +531,14 @@ export async function getEffectivePolicy(
  * Create a tool invocation request. Evaluates policy and records the result.
  */
 export async function requestInvocation(
-  params: RequestInvocationParams,
+  params: RequestInvocationParams
 ): Promise<ToolInvocationRequest> {
   const validated = RequestInvocationParamsSchema.parse(params);
 
   const policyResult = await getEffectivePolicy(
     validated.toolId,
     validated.consumerClass,
-    validated.organizationId,
+    validated.organizationId
   );
 
   const invocationId = uuidv4();
@@ -579,11 +578,11 @@ export async function requestInvocation(
       invocation.policyRef,
       invocation.blockReason,
       invocation.createdAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Invocation ${invocationId}: tool=${validated.toolId} result=${policyResult.state}`,
+    `${LOG_PREFIX} Invocation ${invocationId}: tool=${validated.toolId} result=${policyResult.state}`
   );
   return invocation;
 }
@@ -592,7 +591,7 @@ export async function requestInvocation(
  * Record a 7-step invocation trace for support visibility.
  */
 export async function logInvocationTrace(
-  params: LogInvocationTraceParams,
+  params: LogInvocationTraceParams
 ): Promise<ToolInvocationTrace> {
   const validated = LogInvocationTraceParamsSchema.parse(params);
 
@@ -646,7 +645,7 @@ export async function logInvocationTrace(
       trace.approvalRef,
       trace.invocationResult,
       trace.timestamp,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Trace ${traceId} for invocation ${validated.invocationId}`);
@@ -674,7 +673,7 @@ export async function enforceConsumerPolicy(
   toolId: string,
   consumerClass: ConsumerClass,
   organizationId: string,
-  projectId?: string | null,
+  projectId?: string | null
 ): Promise<EnforcementResult> {
   const tool = await getTool(toolId, organizationId);
   if (!tool) {
@@ -706,10 +705,7 @@ export async function enforceConsumerPolicy(
     };
   }
 
-  if (
-    consumerClass === 'background' &&
-    tool.mutationType !== 'read_only'
-  ) {
+  if (consumerClass === 'background' && tool.mutationType !== 'read_only') {
     return {
       allowed: false,
       approvalState: 'deferred_approval',
@@ -751,7 +747,7 @@ export async function getEffectiveConsumerPolicy(
   toolId: string,
   consumerClass: ConsumerClass,
   organizationId: string,
-  projectId?: string | null,
+  projectId?: string | null
 ): Promise<ConsumerToolPolicy | null> {
   const now = new Date().toISOString();
 
@@ -763,10 +759,10 @@ export async function getEffectiveConsumerPolicy(
        AND (effective_until IS NULL OR effective_until > ?)
      ORDER BY created_at DESC LIMIT 1`,
     [organizationId, toolId, consumerClass, now, now],
-    { fallback: true },
+    { fallback: true }
   );
 
-  const orgPolicy = (orgRows && orgRows.length > 0) ? rowToPolicy(orgRows[0]) : null;
+  const orgPolicy = orgRows && orgRows.length > 0 ? rowToPolicy(orgRows[0]) : null;
 
   if (!projectId) return orgPolicy;
 
@@ -778,10 +774,10 @@ export async function getEffectiveConsumerPolicy(
        AND (effective_until IS NULL OR effective_until > ?)
      ORDER BY created_at DESC LIMIT 1`,
     [organizationId, toolId, consumerClass, projectId, now, now],
-    { fallback: true },
+    { fallback: true }
   );
 
-  const projectPolicy = (projectRows && projectRows.length > 0) ? rowToPolicy(projectRows[0]) : null;
+  const projectPolicy = projectRows && projectRows.length > 0 ? rowToPolicy(projectRows[0]) : null;
 
   if (!orgPolicy && !projectPolicy) return null;
   if (!projectPolicy) return orgPolicy;
@@ -800,13 +796,17 @@ export async function getEffectiveConsumerPolicy(
     force_blocked: 3,
   };
 
-  if (OVERRIDE_STRICTNESS[projectPolicy.approvalOverride] > OVERRIDE_STRICTNESS[merged.approvalOverride]) {
+  if (
+    OVERRIDE_STRICTNESS[projectPolicy.approvalOverride] >
+    OVERRIDE_STRICTNESS[merged.approvalOverride]
+  ) {
     merged.approvalOverride = projectPolicy.approvalOverride;
   }
 
   if (
     projectPolicy.maxInvocationsPerRun !== null &&
-    (merged.maxInvocationsPerRun === null || projectPolicy.maxInvocationsPerRun < merged.maxInvocationsPerRun)
+    (merged.maxInvocationsPerRun === null ||
+      projectPolicy.maxInvocationsPerRun < merged.maxInvocationsPerRun)
   ) {
     merged.maxInvocationsPerRun = projectPolicy.maxInvocationsPerRun;
   }
@@ -825,7 +825,7 @@ export async function getEffectiveConsumerPolicy(
  */
 export async function getDeferredApprovals(
   organizationId: string,
-  limit: number = 50,
+  limit: number = 50
 ): Promise<ToolInvocationRequest[]> {
   const rows = await dbAll<InvocationRow>(
     `SELECT * FROM v8_tool_invocation_log
@@ -833,7 +833,7 @@ export async function getDeferredApprovals(
      ORDER BY created_at ASC
      LIMIT ?`,
     [organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToInvocation);
@@ -846,12 +846,12 @@ export async function processDeferredApproval(
   invocationId: string,
   decision: 'approve' | 'reject',
   resolvedBy: string,
-  reason?: string | null,
+  reason?: string | null
 ): Promise<ToolInvocationRequest> {
   const row = await dbGet<InvocationRow>(
     `SELECT * FROM v8_tool_invocation_log WHERE invocation_id = ?`,
     [invocationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -860,7 +860,7 @@ export async function processDeferredApproval(
 
   if (row.approval_result !== 'deferred_approval') {
     throw new Error(
-      `Invocation ${invocationId} is not in deferred_approval state (current: ${row.approval_result})`,
+      `Invocation ${invocationId} is not in deferred_approval state (current: ${row.approval_result})`
     );
   }
 
@@ -880,12 +880,10 @@ export async function processDeferredApproval(
       now,
       resolvedBy,
       invocationId,
-    ],
+    ]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Deferred approval ${invocationId}: ${decision} by ${resolvedBy}`,
-  );
+  logger.info(`${LOG_PREFIX} Deferred approval ${invocationId}: ${decision} by ${resolvedBy}`);
 
   const updated = rowToInvocation({
     ...row,
@@ -919,13 +917,13 @@ export interface RunToolUsage {
 export async function validateSubagentAccess(
   toolId: string,
   parentRunId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SubagentAccessResult> {
   const runRow = await dbGet<{ run_id: string; state: string; organization_id: string }>(
     `SELECT run_id, state, organization_id FROM v8_execution_runs
      WHERE run_id = ? AND organization_id = ?`,
     [parentRunId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRow) {
@@ -933,7 +931,10 @@ export async function validateSubagentAccess(
   }
 
   if (runRow.state !== 'applying') {
-    return { allowed: false, reason: `parent_run_not_in_applying_state (current: ${runRow.state})` };
+    return {
+      allowed: false,
+      reason: `parent_run_not_in_applying_state (current: ${runRow.state})`,
+    };
   }
 
   const tool = await getTool(toolId, organizationId);
@@ -953,14 +954,14 @@ export async function validateSubagentAccess(
  */
 export async function getToolUsageByRun(
   runId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RunToolUsage> {
   const invocationRows = await dbAll<InvocationRow>(
     `SELECT * FROM v8_tool_invocation_log
      WHERE execution_run_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [runId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const invocations = (invocationRows || []).map(rowToInvocation);
@@ -970,7 +971,7 @@ export async function getToolUsageByRun(
      WHERE execution_run_id = ?
      ORDER BY timestamp ASC`,
     [runId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const traces = (traceRows || []).map(rowToTrace);
@@ -982,10 +983,7 @@ export async function getToolUsageByRun(
 // INTERNAL HELPERS
 // ==========================================
 
-function resolveOverride(
-  override: ApprovalOverride,
-  current: ApprovalClass,
-): ApprovalClass {
+function resolveOverride(override: ApprovalOverride, current: ApprovalClass): ApprovalClass {
   switch (override) {
     case 'force_human_approval':
       return 'requires_human_approval';

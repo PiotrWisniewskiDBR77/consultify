@@ -54,7 +54,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             <div className="mt-2 text-3xl font-semibold text-white">{payload.benchmark.value}</div>
             <div className="text-sm text-slate-300/80">{payload.benchmark.label}</div>
             <div className="mt-1 text-xs text-emerald-100/80">{payload.benchmark.delta}</div>
-            <p className="mt-3 text-sm leading-7 text-slate-300/75">{payload.benchmark.implication}</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300/75">
+              {payload.benchmark.implication}
+            </p>
           </div>
           <button
             onClick={() =>
@@ -83,7 +85,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             <div className="text-xs uppercase tracking-[0.18em] text-white/45">
               {isPolish ? 'Peer case' : 'Peer case'}
             </div>
-            <div className="mt-2 text-lg font-semibold leading-snug text-white">{payload.peerCase.title}</div>
+            <div className="mt-2 text-lg font-semibold leading-snug text-white">
+              {payload.peerCase.title}
+            </div>
             <p className="mt-2 text-sm leading-7 text-slate-300/78">{payload.peerCase.summary}</p>
             <div className="mt-3 flex items-center gap-2 text-xs font-medium text-primary-200">
               {payload.peerCase.implication}

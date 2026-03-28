@@ -863,12 +863,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     const loadRiskSignals = async () => {
       try {
-        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId || undefined).catch(
-          (error) => {
-            if (!shouldFallbackToLegacyExecutionControl(error)) {
-              throw error;
-            }
-            return (async () => {
+        const data = await V8ExecutionControlApi.getRiskSignals(
+          currentProjectId || undefined
+        ).catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return (async () => {
             const token = localStorage.getItem('token');
             if (!token) return { signals: [] };
             const params = new URLSearchParams();
@@ -878,9 +879,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             });
             if (!res.ok) return { signals: [] };
             return res.json();
-            })();
-          }
-        );
+          })();
+        });
         setRiskSignals(data.signals || []);
       } catch {
         // risk signals are non-blocking
@@ -921,15 +921,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const loadGovernedControlTower = async () => {
       try {
         const [warningsData, alertsData, timelineData] = await Promise.all([
-          V8ExecutionControlApi.getTimelineWarnings(currentProjectId || undefined).catch((error) => {
-            if (!shouldFallbackToLegacyExecutionControl(error)) {
-              throw error;
+          V8ExecutionControlApi.getTimelineWarnings(currentProjectId || undefined).catch(
+            (error) => {
+              if (!shouldFallbackToLegacyExecutionControl(error)) {
+                throw error;
+              }
+              return fetchLegacyExecutionControl<{
+                warnings: GovernedTimelineWarning[];
+                total: number;
+              }>(
+                '/api/execution-control/warnings',
+                currentProjectId ? { projectId: currentProjectId } : undefined
+              );
             }
-            return fetchLegacyExecutionControl<{ warnings: GovernedTimelineWarning[]; total: number }>(
-              '/api/execution-control/warnings',
-              currentProjectId ? { projectId: currentProjectId } : undefined
-            );
-          }),
+          ),
           V8ExecutionControlApi.getCapacityLevelingAlerts().catch((error) => {
             if (!shouldFallbackToLegacyExecutionControl(error)) {
               throw error;
@@ -953,7 +958,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setTimelineWarnings(warningsData.warnings || []);
         setTimelineWarningTotal(
           Number(
-            warningsData.total ?? (Array.isArray(warningsData.warnings) ? warningsData.warnings.length : 0)
+            warningsData.total ??
+              (Array.isArray(warningsData.warnings) ? warningsData.warnings.length : 0)
           )
         );
         setCapacityAlerts(alertsData.alerts || []);
@@ -2579,7 +2585,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const json = await response.json().catch(() => ({}));
         if (!response.ok) {
           const msg =
-            (json as any)?.error || (json as any)?.message || `HTTP ${(response as Response).status}`;
+            (json as any)?.error ||
+            (json as any)?.message ||
+            `HTTP ${(response as Response).status}`;
           throw new Error(String(msg));
         }
 
@@ -4001,7 +4009,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             selectedItem={selectedItem}
             onSelect={setSummaryPreviewInitiativeId}
             itemIds={itemIds}
-            getItemById={(id) => { const x = summaryInitiatives.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+            getItemById={(id) => {
+              const x = summaryInitiatives.find((i) => i.id === id);
+              return x ? ({ ...x, title: x.name || x.id } as any) : null;
+            }}
             onOpenFull={(id) => {
               const init = summaryInitiatives.find((x) => x.id === id);
               if (init) handleOpenDocument(init);

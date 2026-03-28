@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunState } from '../../../types/executionSpine.js';
 
@@ -26,16 +26,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  submitForReview,
-  approveRun,
-  rejectRun,
   applyRun,
+  approveRun,
   completeRun,
-  replanFromRejection,
-  getRunsByOrg,
-  getActiveRuns,
-  resolveProposalsBatch,
   createRun,
+  getActiveRuns,
+  getRunsByOrg,
+  rejectRun,
+  replanFromRejection,
+  resolveProposalsBatch,
+  submitForReview,
   transitionRunState,
 } from '../executionSpineService.js';
 
@@ -138,7 +138,7 @@ describe('submitForReview', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('UPDATE v8_action_proposals') &&
-        call[0].includes("status = 'pending_review'"),
+        call[0].includes("status = 'pending_review'")
     );
     expect(proposalUpdateCall).toBeDefined();
     expect(proposalUpdateCall![1]).toContain(RUN_ID);
@@ -148,7 +148,7 @@ describe('submitForReview', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'drafting' }));
 
     await expect(submitForReview(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow(
-      'Invalid state transition',
+      'Invalid state transition'
     );
   });
 });
@@ -165,7 +165,7 @@ describe('approveRun', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('UPDATE v8_action_proposals') &&
-        call[0].includes("status = 'approved'"),
+        call[0].includes("status = 'approved'")
     );
     expect(proposalUpdateCall).toBeDefined();
     expect(proposalUpdateCall![1]).toContain(REVIEWER_ID);
@@ -180,7 +180,7 @@ describe('approveRun', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('review_completed_at') &&
-        call[0].includes('UPDATE v8_execution_runs'),
+        call[0].includes('UPDATE v8_execution_runs')
     );
     expect(reviewUpdateCall).toBeDefined();
     expect(reviewUpdateCall![1]).toContain(REVIEWER_ID);
@@ -190,7 +190,7 @@ describe('approveRun', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'planning' }));
 
     await expect(approveRun(RUN_ID, ORG_ID, REVIEWER_ID)).rejects.toThrow(
-      'Invalid state transition',
+      'Invalid state transition'
     );
   });
 });
@@ -207,7 +207,7 @@ describe('rejectRun', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('UPDATE v8_action_proposals') &&
-        call[0].includes("status = 'rejected'"),
+        call[0].includes("status = 'rejected'")
     );
     expect(proposalUpdateCall).toBeDefined();
   });
@@ -221,7 +221,7 @@ describe('rejectRun', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('review_completed_at') &&
-        call[0].includes('UPDATE v8_execution_runs'),
+        call[0].includes('UPDATE v8_execution_runs')
     );
     expect(reviewUpdateCall).toBeDefined();
     expect(reviewUpdateCall![1]).toContain(REVIEWER_ID);
@@ -231,7 +231,7 @@ describe('rejectRun', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'approved_for_apply' }));
 
     await expect(rejectRun(RUN_ID, ORG_ID, REVIEWER_ID, 'Nope')).rejects.toThrow(
-      'Invalid state transition',
+      'Invalid state transition'
     );
   });
 });
@@ -255,7 +255,7 @@ describe('replanFromRejection', () => {
       (call) =>
         typeof call[0] === 'string' &&
         call[0].includes('UPDATE v8_action_proposals') &&
-        call[0].includes("status = 'expired'"),
+        call[0].includes("status = 'expired'")
     );
     expect(expireCall).toBeDefined();
     expect(expireCall![1]).toContain(RUN_ID);
@@ -265,7 +265,7 @@ describe('replanFromRejection', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'planning' }));
 
     await expect(replanFromRejection(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow(
-      'Invalid state transition',
+      'Invalid state transition'
     );
   });
 });
@@ -282,9 +282,7 @@ describe('applyRun', () => {
   it('throws when run is not in approved_for_apply state', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'waiting_for_review' }));
 
-    await expect(applyRun(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow(
-      'Invalid state transition',
-    );
+    await expect(applyRun(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow('Invalid state transition');
   });
 });
 
@@ -301,9 +299,7 @@ describe('completeRun', () => {
   it('throws when run is not in applying state', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'approved_for_apply' }));
 
-    await expect(completeRun(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow(
-      'Invalid state transition',
-    );
+    await expect(completeRun(RUN_ID, ORG_ID, USER_ID)).rejects.toThrow('Invalid state transition');
   });
 });
 
@@ -311,12 +307,14 @@ describe('resolveProposalsBatch', () => {
   it('resolves multiple proposals at once', async () => {
     mockDbGet
       .mockResolvedValueOnce(makeFakeProposalRow({ proposal_id: PROPOSAL_1_ID, status: 'draft' }))
-      .mockResolvedValueOnce(makeFakeProposalRow({ proposal_id: PROPOSAL_2_ID, status: 'pending_review' }));
+      .mockResolvedValueOnce(
+        makeFakeProposalRow({ proposal_id: PROPOSAL_2_ID, status: 'pending_review' })
+      );
 
     const results = await resolveProposalsBatch(
       [PROPOSAL_1_ID, PROPOSAL_2_ID],
       'approved',
-      REVIEWER_ID,
+      REVIEWER_ID
     );
 
     expect(results).toHaveLength(2);
@@ -328,10 +326,12 @@ describe('resolveProposalsBatch', () => {
   it('throws if any proposal is already resolved', async () => {
     mockDbGet
       .mockResolvedValueOnce(makeFakeProposalRow({ proposal_id: PROPOSAL_1_ID, status: 'draft' }))
-      .mockResolvedValueOnce(makeFakeProposalRow({ proposal_id: PROPOSAL_2_ID, status: 'approved' }));
+      .mockResolvedValueOnce(
+        makeFakeProposalRow({ proposal_id: PROPOSAL_2_ID, status: 'approved' })
+      );
 
     await expect(
-      resolveProposalsBatch([PROPOSAL_1_ID, PROPOSAL_2_ID], 'approved', REVIEWER_ID),
+      resolveProposalsBatch([PROPOSAL_1_ID, PROPOSAL_2_ID], 'approved', REVIEWER_ID)
     ).rejects.toThrow('Cannot resolve proposal');
   });
 
@@ -360,9 +360,7 @@ describe('getRunsByOrg', () => {
   });
 
   it('filters by state when stateFilter is provided', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeRunRow({ state: 'planning' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeRunRow({ state: 'planning' })]);
 
     await getRunsByOrg(ORG_ID, 'planning');
 
@@ -395,7 +393,10 @@ describe('getActiveRuns', () => {
   it('excludes terminal states (completed, cancelled, expired)', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeFakeRunRow({ state: 'planning' }),
-      makeFakeRunRow({ run_id: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'waiting_for_review' }),
+      makeFakeRunRow({
+        run_id: '00000000-0000-4000-8000-aaaaaaaaaaaa',
+        state: 'waiting_for_review',
+      }),
     ]);
 
     const results = await getActiveRuns(ORG_ID);
@@ -442,7 +443,7 @@ describe('full approval lifecycle', () => {
     // proposals_ready → waiting_for_review (submitForReview)
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId }),
+      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId })
     );
     const submitted = await submitForReview(run.runId, ORG_ID, USER_ID);
     expect(submitted.state).toBe('waiting_for_review');
@@ -451,7 +452,7 @@ describe('full approval lifecycle', () => {
     // waiting_for_review → approved_for_apply (approveRun)
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId }),
+      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId })
     );
     const approved = await approveRun(run.runId, ORG_ID, REVIEWER_ID, 'LGTM');
     expect(approved.state).toBe('approved_for_apply');
@@ -459,16 +460,14 @@ describe('full approval lifecycle', () => {
     // approved_for_apply → applying (applyRun)
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'approved_for_apply', run_id: run.runId }),
+      makeFakeRunRow({ state: 'approved_for_apply', run_id: run.runId })
     );
     const applying = await applyRun(run.runId, ORG_ID, USER_ID);
     expect(applying.state).toBe('applying');
 
     // applying → completed (completeRun)
     vi.clearAllMocks();
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'applying', run_id: run.runId }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeRunRow({ state: 'applying', run_id: run.runId }));
     const completed = await completeRun(run.runId, ORG_ID, USER_ID);
     expect(completed.state).toBe('completed');
     expect(completed.resolvedAt).not.toBeNull();
@@ -494,13 +493,13 @@ describe('full approval lifecycle', () => {
 
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId }),
+      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId })
     );
     await submitForReview(run.runId, ORG_ID, USER_ID);
 
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId }),
+      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId })
     );
     const rejected = await rejectRun(run.runId, ORG_ID, REVIEWER_ID, 'Needs rework');
     expect(rejected.state).toBe('rejected');
@@ -508,7 +507,7 @@ describe('full approval lifecycle', () => {
     // rejected → planning (replanFromRejection) — increments planVersion
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'rejected', run_id: run.runId, plan_version: 1 }),
+      makeFakeRunRow({ state: 'rejected', run_id: run.runId, plan_version: 1 })
     );
     const replanned = await replanFromRejection(run.runId, ORG_ID, USER_ID);
     expect(replanned.state).toBe('planning');
@@ -517,19 +516,19 @@ describe('full approval lifecycle', () => {
     // planning → proposals_ready → waiting_for_review → approved_for_apply
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'planning', run_id: run.runId, plan_version: 2 }),
+      makeFakeRunRow({ state: 'planning', run_id: run.runId, plan_version: 2 })
     );
     await transitionRunState(run.runId, ORG_ID, 'proposals_ready', 'system');
 
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId, plan_version: 2 }),
+      makeFakeRunRow({ state: 'proposals_ready', run_id: run.runId, plan_version: 2 })
     );
     await submitForReview(run.runId, ORG_ID, USER_ID);
 
     vi.clearAllMocks();
     mockDbGet.mockResolvedValueOnce(
-      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId, plan_version: 2 }),
+      makeFakeRunRow({ state: 'waiting_for_review', run_id: run.runId, plan_version: 2 })
     );
     const approved = await approveRun(run.runId, ORG_ID, REVIEWER_ID, 'Now it looks good');
     expect(approved.state).toBe('approved_for_apply');

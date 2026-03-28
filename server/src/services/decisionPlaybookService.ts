@@ -44,19 +44,19 @@ export type RequiredField = z.infer<typeof RequiredFieldSchema>;
 export function validateRequiredFields(
   playbook: DecisionPlaybook,
   decision: Record<string, unknown>,
-  currentStage?: string,
+  currentStage?: string
 ): { complete: boolean; missing: Array<{ key: string; label: string }> } {
   const fieldsForStage = currentStage
-    ? playbook.requiredFields.filter(f => !f.stage || f.stage === currentStage)
-    : playbook.requiredFields.filter(f => f.required);
+    ? playbook.requiredFields.filter((f) => !f.stage || f.stage === currentStage)
+    : playbook.requiredFields.filter((f) => f.required);
 
-  const missing = fieldsForStage.filter(field => {
+  const missing = fieldsForStage.filter((field) => {
     const value = decision[field.key];
     return value === undefined || value === null || value === '';
   });
 
   return {
     complete: missing.length === 0,
-    missing: missing.map(f => ({ key: f.key, label: f.label })),
+    missing: missing.map((f) => ({ key: f.key, label: f.label })),
   };
 }

@@ -30,17 +30,16 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewMetaCard,
-  PreviewDetailsSection,
-  PreviewAIHintStrip,
-  PreviewRelations,
-  PreviewActionBar,
-  type MetaPill,
-  type RelationItem,
   type ActionRow,
   type ExtraCopyFormat,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Modal } from '@/components/ui/primitives/Modal';
@@ -57,6 +56,7 @@ import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api, type DataContextSummary } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
@@ -472,7 +472,9 @@ const TaskTableRow: React.FC<{
     task.assignee?.firstName || task.assignee?.lastName
       ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
       : task.assigneeId
-        ? (isPolish ? 'Ty' : 'You')
+        ? isPolish
+          ? 'Ty'
+          : 'You'
         : 'Unassigned';
   const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
 
@@ -1673,9 +1675,20 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             const detailsText = detailsOverride ?? desc;
 
             const pills: MetaPill[] = [
-              { label: statusCfg.label, className: `${statusCfg.bg} ${statusCfg.color}`, dot: statusCfg.dot },
+              {
+                label: statusCfg.label,
+                className: `${statusCfg.bg} ${statusCfg.color}`,
+                dot: statusCfg.dot,
+              },
               { label: priCfg.label, dot: priCfg.dot },
-              ...(task.projectName ? [{ label: task.projectName, className: 'text-slate-500 dark:text-slate-400 truncate max-w-[120px]' }] : []),
+              ...(task.projectName
+                ? [
+                    {
+                      label: task.projectName,
+                      className: 'text-slate-500 dark:text-slate-400 truncate max-w-[120px]',
+                    },
+                  ]
+                : []),
             ];
 
             const trailing = (
@@ -1794,7 +1807,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               {
                 buttons: [
                   {
-                    label: isCompleted ? (isPolish ? 'Wznów' : 'Reopen') : isPolish ? 'Gotowe' : 'Done',
+                    label: isCompleted
+                      ? isPolish
+                        ? 'Wznów'
+                        : 'Reopen'
+                      : isPolish
+                        ? 'Gotowe'
+                        : 'Done',
                     icon: CheckCircle2,
                     onClick: () => handleToggleComplete(task.id, !isCompleted),
                     colorScheme: 'green',

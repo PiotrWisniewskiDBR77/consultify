@@ -102,16 +102,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/;
 const BOOL_VALS = new Set(['true', 'false', '1', '0', 'yes', 'no', 'y', 'n', 't', 'f']);
 
-export function inferFieldType(
-  externalType: string,
-  sampleValues: unknown[]
-): string {
+export function inferFieldType(externalType: string, sampleValues: unknown[]): string {
   const mapped = EXTERNAL_TYPE_MAP[externalType.toLowerCase()];
   if (mapped) return mapped;
 
-  const stringVals = sampleValues
-    .filter((v) => v != null && v !== '')
-    .map((v) => String(v).trim());
+  const stringVals = sampleValues.filter((v) => v != null && v !== '').map((v) => String(v).trim());
 
   if (stringVals.length === 0) return 'singleLineText';
 
@@ -141,11 +136,7 @@ export function inferFieldType(
 // transformValue
 // ---------------------------------------------------------------------------
 
-export function transformValue(
-  value: unknown,
-  _sourceType: string,
-  targetType: string
-): unknown {
+export function transformValue(value: unknown, _sourceType: string, targetType: string): unknown {
   if (value === null || value === undefined) return null;
 
   const str = String(value).trim();

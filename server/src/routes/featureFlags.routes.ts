@@ -29,7 +29,9 @@ async function ensureTable(): Promise<void> {
   );
 
   const addCol = async (col: string, def: string) => {
-    await dbRun(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS ${col} ${def}`, [], { fallback: true });
+    await dbRun(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS ${col} ${def}`, [], {
+      fallback: true,
+    });
   };
   await addCol('name', "TEXT DEFAULT ''");
   await addCol('flag_type', "TEXT DEFAULT 'boolean'");
@@ -76,7 +78,11 @@ interface FlagRow {
 
 function safeJsonParse(value: string | null | undefined, fallback: unknown[] = []): unknown[] {
   if (!value) return fallback;
-  try { return JSON.parse(value); } catch { return fallback; }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
 }
 
 function rowToFlag(row: FlagRow) {
@@ -215,7 +221,15 @@ router.post(
     await dbRun(
       `INSERT INTO feature_flag_history (id, flag_id, change_type, old_value, new_value, changed_by, changed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [randomUUID(), id, 'created', null, JSON.stringify({ flag_key, name, enabled: !!enabled }), req.user?.email || req.userId || 'unknown', now]
+      [
+        randomUUID(),
+        id,
+        'created',
+        null,
+        JSON.stringify({ flag_key, name, enabled: !!enabled }),
+        req.user?.email || req.userId || 'unknown',
+        now,
+      ]
     );
 
     const created = await dbGet<FlagRow>('SELECT * FROM feature_flags WHERE id = ?', [id], {
@@ -256,7 +270,10 @@ router.put(
 
     const now = new Date().toISOString();
 
-    const rulesJson = targeting_rules !== undefined ? JSON.stringify(targeting_rules) : (existing.targeting_rules ?? existing.rules);
+    const rulesJson =
+      targeting_rules !== undefined
+        ? JSON.stringify(targeting_rules)
+        : (existing.targeting_rules ?? existing.rules);
 
     const result = await dbRun(
       `UPDATE feature_flags
@@ -290,7 +307,15 @@ router.put(
     await dbRun(
       `INSERT INTO feature_flag_history (id, flag_id, change_type, old_value, new_value, changed_by, changed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [randomUUID(), id, 'updated', JSON.stringify(rowToFlag(existing)), JSON.stringify(req.body), req.user?.email || req.userId || 'unknown', now]
+      [
+        randomUUID(),
+        id,
+        'updated',
+        JSON.stringify(rowToFlag(existing)),
+        JSON.stringify(req.body),
+        req.user?.email || req.userId || 'unknown',
+        now,
+      ]
     );
 
     const updated = await dbGet<FlagRow>('SELECT * FROM feature_flags WHERE id = ?', [id], {
@@ -315,20 +340,29 @@ router.put(
       return;
     }
 
-    const wasEnabled = existing.enabled === true || existing.enabled === 1 || (existing.enabled as any) === 't';
+    const wasEnabled =
+      existing.enabled === true || existing.enabled === 1 || (existing.enabled as any) === 't';
     const newEnabled = req.body.enabled !== undefined ? !!req.body.enabled : !wasEnabled;
     const now = new Date().toISOString();
 
-    await dbRun('UPDATE feature_flags SET enabled = ?, updated_at = ? WHERE id = ?', [
-      newEnabled,
-      now,
-      id,
-    ], { fallback: false });
+    await dbRun(
+      'UPDATE feature_flags SET enabled = ?, updated_at = ? WHERE id = ?',
+      [newEnabled, now, id],
+      { fallback: false }
+    );
 
     await dbRun(
       `INSERT INTO feature_flag_history (id, flag_id, change_type, old_value, new_value, changed_by, changed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [randomUUID(), id, 'toggled', JSON.stringify({ enabled: wasEnabled }), JSON.stringify({ enabled: newEnabled }), req.user?.email || req.userId || 'unknown', now]
+      [
+        randomUUID(),
+        id,
+        'toggled',
+        JSON.stringify({ enabled: wasEnabled }),
+        JSON.stringify({ enabled: newEnabled }),
+        req.user?.email || req.userId || 'unknown',
+        now,
+      ]
     );
 
     const updated = await dbGet<FlagRow>('SELECT * FROM feature_flags WHERE id = ?', [id], {
@@ -358,7 +392,15 @@ router.delete(
     await dbRun(
       `INSERT INTO feature_flag_history (id, flag_id, change_type, old_value, new_value, changed_by, changed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [randomUUID(), id, 'deleted', JSON.stringify(rowToFlag(existing)), null, req.user?.email || req.userId || 'unknown', now]
+      [
+        randomUUID(),
+        id,
+        'deleted',
+        JSON.stringify(rowToFlag(existing)),
+        null,
+        req.user?.email || req.userId || 'unknown',
+        now,
+      ]
     );
 
     await dbRun('DELETE FROM feature_flags WHERE id = ?', [id], { fallback: false });
@@ -468,12 +510,19 @@ router.post(
         return;
       }
       const hash = hashCode(userId + flag_key);
-      const totalWeight = (parsed.variants as any[]).reduce((acc: number, v: any) => acc + (v.weight || 0), 0);
+      const totalWeight = (parsed.variants as any[]).reduce(
+        (acc: number, v: any) => acc + (v.weight || 0),
+        0
+      );
       let bucket = Math.abs(hash % totalWeight);
       for (const variant of parsed.variants as any[]) {
         bucket -= variant.weight || 0;
         if (bucket < 0) {
-          res.json({ enabled: true, variant: variant.name, reason: `A/B test variant: ${variant.name}` });
+          res.json({
+            enabled: true,
+            variant: variant.name,
+            reason: `A/B test variant: ${variant.name}`,
+          });
           return;
         }
       }
@@ -495,11 +544,9 @@ router.post(
       return;
     }
 
-    const row = await dbGet<FlagRow>(
-      'SELECT * FROM feature_flags WHERE flag_key = ?',
-      [flag_key],
-      { fallback: false }
-    );
+    const row = await dbGet<FlagRow>('SELECT * FROM feature_flags WHERE flag_key = ?', [flag_key], {
+      fallback: false,
+    });
 
     if (!row) {
       res.json({ enabled: false, reason: 'Flag not found' });
@@ -562,7 +609,11 @@ router.post(
       for (const variant of variants) {
         bucket -= variant.weight || 0;
         if (bucket < 0) {
-          res.json({ enabled: true, variant: variant.name, reason: `A/B test variant: ${variant.name}` });
+          res.json({
+            enabled: true,
+            variant: variant.name,
+            reason: `A/B test variant: ${variant.name}`,
+          });
           return;
         }
       }

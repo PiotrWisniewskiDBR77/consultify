@@ -11,9 +11,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: [
-      'src/services/v8/__tests__/v8-db-compatibility.test.ts',
-    ],
+    include: ['src/services/v8/__tests__/v8-db-compatibility.test.ts'],
     exclude: ['**/node_modules/**'],
     environment: 'node',
     globals: true,

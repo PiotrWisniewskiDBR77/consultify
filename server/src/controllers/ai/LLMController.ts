@@ -26,7 +26,9 @@ export class LLMController {
       return providers.filter((provider) => !!provider.isDefault);
     }
 
-    if (providers.some((provider) => String(provider.provider || '').toLowerCase() === 'openrouter')) {
+    if (
+      providers.some((provider) => String(provider.provider || '').toLowerCase() === 'openrouter')
+    ) {
       return providers.filter(
         (provider) => String(provider.provider || '').toLowerCase() === 'openrouter'
       );

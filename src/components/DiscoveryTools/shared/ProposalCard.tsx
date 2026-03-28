@@ -26,7 +26,10 @@ const STATUS_STYLES: Record<ProposalStatus, string> = {
     'border-l-4 border-l-amber-400 border border-amber-200/60 bg-amber-50/20 animate-pulse dark:border-l-amber-500 dark:border-amber-800/40 dark:bg-amber-950/10',
 };
 
-const STATUS_BADGE: Record<ProposalStatus, { label: string; labelPl: string; icon: React.ReactNode; tone: string }> = {
+const STATUS_BADGE: Record<
+  ProposalStatus,
+  { label: string; labelPl: string; icon: React.ReactNode; tone: string }
+> = {
   'ai-proposed': {
     label: 'AI Proposal',
     labelPl: 'Propozycja AI',
@@ -85,12 +88,16 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   if (isRejected) return null;
 
   return (
-    <div className={`rounded-xl ${STATUS_STYLES[status]} ${compact ? 'p-3' : 'p-4'} transition-all duration-200 ${className}`}>
+    <div
+      className={`rounded-xl ${STATUS_STYLES[status]} ${compact ? 'p-3' : 'p-4'} transition-all duration-200 ${className}`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">{children}</div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${badge.tone}`}>
+          <div
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${badge.tone}`}
+          >
             {badge.icon}
             <span>{badge.label}</span>
           </div>

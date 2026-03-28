@@ -14,7 +14,9 @@ export { buildMyWorkSheetTableOpenPath } from './artifactLinks';
 /**
  * Returns the idea workspace id (`tp_bases.workspace_id`) that owns the table, or null.
  */
-export async function resolveTablePlatformWorkspaceIdForTable(tableId: string): Promise<string | null> {
+export async function resolveTablePlatformWorkspaceIdForTable(
+  tableId: string
+): Promise<string | null> {
   try {
     const table = (await TablePlatformApi.getTable(tableId)) as Record<string, unknown>;
     const baseId = String(table.base_id ?? table.baseId ?? '');

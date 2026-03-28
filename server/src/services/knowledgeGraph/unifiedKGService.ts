@@ -354,13 +354,14 @@ class UnifiedKGService {
     const offset = options.offset || 0;
     params.push(limit, offset);
 
-    const rows = (await db.all(
-      `SELECT * FROM knowledge_graph_entities e
+    const rows =
+      (await db.all(
+        `SELECT * FROM knowledge_graph_entities e
        WHERE ${conditions.join(' AND ')}
        ORDER BY e.mentions DESC, e.confidence DESC, e.last_seen DESC
        LIMIT ? OFFSET ?`,
-      params
-    )) || [];
+        params
+      )) || [];
 
     return rows.map(mapEntityRow);
   }
@@ -377,7 +378,11 @@ class UnifiedKGService {
   async getRelationsForEntity(
     orgId: string,
     entityId: string,
-    options?: { direction?: 'outgoing' | 'incoming' | 'both'; relationTypes?: KGRelationType[]; limit?: number }
+    options?: {
+      direction?: 'outgoing' | 'incoming' | 'both';
+      relationTypes?: KGRelationType[];
+      limit?: number;
+    }
   ): Promise<KGRelation[]> {
     const db = await this.getDb();
     const conditions = ['r.organization_id = ?'];
@@ -404,13 +409,14 @@ class UnifiedKGService {
     const limit = Math.min(options?.limit || 50, 200);
     params.push(limit);
 
-    const rows = (await db.all(
-      `SELECT * FROM knowledge_graph_relations r
+    const rows =
+      (await db.all(
+        `SELECT * FROM knowledge_graph_relations r
        WHERE ${conditions.join(' AND ')}
        ORDER BY r.confidence DESC, r.weight DESC, r.created_at DESC
        LIMIT ?`,
-      params
-    )) || [];
+        params
+      )) || [];
 
     return rows.map(mapRelationRow);
   }
@@ -453,7 +459,8 @@ class UnifiedKGService {
       for (const rel of relations) {
         if (rel.confidence < minConfidence) continue;
         allRelations.push(rel);
-        const nextId = rel.sourceEntityId === current.entityId ? rel.targetEntityId : rel.sourceEntityId;
+        const nextId =
+          rel.sourceEntityId === current.entityId ? rel.targetEntityId : rel.sourceEntityId;
         if (!visitedEntities.has(nextId)) {
           queue.push({
             entityId: nextId,
@@ -490,12 +497,13 @@ class UnifiedKGService {
       });
     }
 
-    const sameNameRows = (await db.all(
-      `SELECT source_artifact_type, source_artifact_id, extraction_method, confidence, actor_id, first_seen
+    const sameNameRows =
+      (await db.all(
+        `SELECT source_artifact_type, source_artifact_id, extraction_method, confidence, actor_id, first_seen
        FROM knowledge_graph_entities
        WHERE organization_id = ? AND canonical_name = ? AND id != ? AND merged_into_id = ?`,
-      [orgId, entity.canonicalName, entityId, entityId]
-    )) || [];
+        [orgId, entity.canonicalName, entityId, entityId]
+      )) || [];
 
     for (const r of sameNameRows as any[]) {
       if (r.source_artifact_type) {
@@ -527,14 +535,19 @@ class UnifiedKGService {
     const whyParts: string[] = [];
     whyParts.push(
       `"${entity.name}" (${entity.type}) was first seen on ${entity.firstSeen.slice(0, 10)} ` +
-      `and has been mentioned ${entity.mentions} time(s).`
+        `and has been mentioned ${entity.mentions} time(s).`
     );
     if (sourceArtifacts.length > 0) {
-      const sources = sourceArtifacts.map(s => `${s.type}:${s.id} (${s.extractionMethod})`).join(', ');
+      const sources = sourceArtifacts
+        .map((s) => `${s.type}:${s.id} (${s.extractionMethod})`)
+        .join(', ');
       whyParts.push(`Extracted from: ${sources}.`);
     }
     if (relatedRelations.length > 0) {
-      const rels = relatedRelations.slice(0, 5).map(r => `${r.relationType} → ${r.otherEntityName}`).join('; ');
+      const rels = relatedRelations
+        .slice(0, 5)
+        .map((r) => `${r.relationType} → ${r.otherEntityName}`)
+        .join('; ');
       whyParts.push(`Key relationships: ${rels}.`);
     }
     whyParts.push(`Confidence: ${(entity.confidence * 100).toFixed(0)}%.`);
@@ -567,7 +580,17 @@ class UnifiedKGService {
       await db.run(
         `INSERT INTO kg_audit_log (id, organization_id, actor_id, action, resource_type, resource_id, query_text, result_count, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), orgId, actorId, action, resourceType, resourceId ?? null, queryText ?? null, resultCount ?? null, JSON.stringify(metadata || {})]
+        [
+          uuidv4(),
+          orgId,
+          actorId,
+          action,
+          resourceType,
+          resourceId ?? null,
+          queryText ?? null,
+          resultCount ?? null,
+          JSON.stringify(metadata || {}),
+        ]
       );
     } catch (err: any) {
       logger.debug(`[UnifiedKG] Audit log error: ${err.message}`);
@@ -577,7 +600,18 @@ class UnifiedKGService {
   async getAuditLog(
     orgId: string,
     options?: { actorId?: string; action?: string; limit?: number; offset?: number }
-  ): Promise<Array<{ id: string; actorId: string; action: string; resourceType: string; resourceId: string | null; queryText: string | null; resultCount: number | null; createdAt: string }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      actorId: string;
+      action: string;
+      resourceType: string;
+      resourceId: string | null;
+      queryText: string | null;
+      resultCount: number | null;
+      createdAt: string;
+    }>
+  > {
     const db = await this.getDb();
     const conditions = ['organization_id = ?'];
     const params: unknown[] = [orgId];
@@ -595,10 +629,11 @@ class UnifiedKGService {
     const offset = options?.offset || 0;
     params.push(limit, offset);
 
-    const rows = (await db.all(
-      `SELECT * FROM kg_audit_log WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      params
-    )) || [];
+    const rows =
+      (await db.all(
+        `SELECT * FROM kg_audit_log WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        params
+      )) || [];
 
     return rows.map((r: any) => ({
       id: r.id,
@@ -646,12 +681,21 @@ class UnifiedKGService {
     const entitiesRemoved = entResult?.changes || 0;
     const relationsRemoved = relResult?.changes || 0;
 
-    await this.logAudit(orgId, actorId, 'retention_cleanup', 'kg', undefined, undefined, entitiesRemoved + relationsRemoved, {
-      retentionDays,
-      cutoff,
-      entitiesRemoved,
-      relationsRemoved,
-    });
+    await this.logAudit(
+      orgId,
+      actorId,
+      'retention_cleanup',
+      'kg',
+      undefined,
+      undefined,
+      entitiesRemoved + relationsRemoved,
+      {
+        retentionDays,
+        cutoff,
+        entitiesRemoved,
+        relationsRemoved,
+      }
+    );
 
     return { entitiesRemoved, relationsRemoved };
   }
@@ -693,26 +737,38 @@ class UnifiedKGService {
       [keepEntityId, mergeEntityId, orgId]
     );
 
-    await this.logAudit(orgId, actorId, 'merge_entities', 'entity', keepEntityId, undefined, undefined, {
-      mergedEntityId: mergeEntityId,
-      mergedEntityName: merge.name,
-    });
+    await this.logAudit(
+      orgId,
+      actorId,
+      'merge_entities',
+      'entity',
+      keepEntityId,
+      undefined,
+      undefined,
+      {
+        mergedEntityId: mergeEntityId,
+        mergedEntityName: merge.name,
+      }
+    );
 
     return true;
   }
 
-  async findDuplicates(orgId: string): Promise<Array<{ canonicalName: string; type: KGEntityType; ids: string[]; names: string[] }>> {
+  async findDuplicates(
+    orgId: string
+  ): Promise<Array<{ canonicalName: string; type: KGEntityType; ids: string[]; names: string[] }>> {
     const db = await this.getDb();
-    const rows = (await db.all(
-      `SELECT canonical_name, type, GROUP_CONCAT(id) as ids, GROUP_CONCAT(name, '|||') as names
+    const rows =
+      (await db.all(
+        `SELECT canonical_name, type, GROUP_CONCAT(id) as ids, GROUP_CONCAT(name, '|||') as names
        FROM knowledge_graph_entities
        WHERE organization_id = ? AND merged_into_id IS NULL AND (redacted = 0 OR redacted IS NULL)
        GROUP BY canonical_name, type
        HAVING COUNT(*) > 1
        ORDER BY COUNT(*) DESC
        LIMIT 100`,
-      [orgId]
-    )) || [];
+        [orgId]
+      )) || [];
 
     return rows.map((r: any) => ({
       canonicalName: r.canonical_name || '',
@@ -722,7 +778,11 @@ class UnifiedKGService {
     }));
   }
 
-  async applyConfidenceDecay(orgId: string, decayFactor: number = 0.95, staleAfterDays: number = 90): Promise<number> {
+  async applyConfidenceDecay(
+    orgId: string,
+    decayFactor: number = 0.95,
+    staleAfterDays: number = 90
+  ): Promise<number> {
     const db = await this.getDb();
     const cutoff = new Date(Date.now() - staleAfterDays * 86400000).toISOString();
 
@@ -736,7 +796,10 @@ class UnifiedKGService {
     return result?.changes || 0;
   }
 
-  async startRebuildJob(orgId: string, triggerType: 'manual' | 'scheduled' | 'event' = 'manual'): Promise<KGRebuildJob> {
+  async startRebuildJob(
+    orgId: string,
+    triggerType: 'manual' | 'scheduled' | 'event' = 'manual'
+  ): Promise<KGRebuildJob> {
     const db = await this.getDb();
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -748,7 +811,7 @@ class UnifiedKGService {
     );
 
     let entitiesProcessed = 0;
-    let relationsProcessed = 0;
+    const relationsProcessed = 0;
     let duplicatesMerged = 0;
 
     try {
@@ -776,9 +839,17 @@ class UnifiedKGService {
       );
 
       return {
-        id, organizationId: orgId, status: 'completed', triggerType,
-        entitiesProcessed, relationsProcessed, duplicatesMerged,
-        startedAt: now, completedAt, errorMessage: null, createdAt: now,
+        id,
+        organizationId: orgId,
+        status: 'completed',
+        triggerType,
+        entitiesProcessed,
+        relationsProcessed,
+        duplicatesMerged,
+        startedAt: now,
+        completedAt,
+        errorMessage: null,
+        createdAt: now,
       };
     } catch (err: any) {
       await db.run(
@@ -791,10 +862,11 @@ class UnifiedKGService {
 
   async getRebuildJobs(orgId: string, limit: number = 10): Promise<KGRebuildJob[]> {
     const db = await this.getDb();
-    const rows = (await db.all(
-      `SELECT * FROM kg_rebuild_jobs WHERE organization_id = ? ORDER BY created_at DESC LIMIT ?`,
-      [orgId, limit]
-    )) || [];
+    const rows =
+      (await db.all(
+        `SELECT * FROM kg_rebuild_jobs WHERE organization_id = ? ORDER BY created_at DESC LIMIT ?`,
+        [orgId, limit]
+      )) || [];
 
     return rows.map((r: any) => ({
       id: r.id,
@@ -835,12 +907,13 @@ class UnifiedKGService {
       [orgId]
     )) as any;
 
-    const typeRows = (await db.all(
-      `SELECT type, COUNT(*) as cnt FROM knowledge_graph_entities
+    const typeRows =
+      (await db.all(
+        `SELECT type, COUNT(*) as cnt FROM knowledge_graph_entities
        WHERE organization_id = ? AND merged_into_id IS NULL
        GROUP BY type`,
-      [orgId]
-    )) || [];
+        [orgId]
+      )) || [];
 
     const avgConf = (await db.get(
       `SELECT AVG(confidence) as avg FROM knowledge_graph_entities WHERE organization_id = ? AND merged_into_id IS NULL`,

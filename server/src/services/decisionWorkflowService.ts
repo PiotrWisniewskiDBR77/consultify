@@ -14,7 +14,9 @@ const ALLOWED_WORKFLOW_TRANSITIONS: Record<string, DecisionWorkflowStatus[]> = {
 };
 
 function normalizeWorkflowStatus(s: string | null | undefined): DecisionWorkflowStatus {
-  const v = String(s || 'proposed').toLowerCase().replace(/[\s-]/g, '_');
+  const v = String(s || 'proposed')
+    .toLowerCase()
+    .replace(/[\s-]/g, '_');
   if (v === 'publish') return 'published';
   if (WORKFLOW_STATUSES.includes(v as DecisionWorkflowStatus)) return v as DecisionWorkflowStatus;
   return 'proposed';

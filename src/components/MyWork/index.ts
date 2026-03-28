@@ -117,15 +117,9 @@ export { AddColumnDialog } from './table/AddColumnDialog';
 export { AICategorizeTool } from './table/AICategorizeTool';
 export { AICopilotMode } from './table/AICopilotMode';
 export { AITableAssistant } from './table/AITableAssistant';
-export { ChatToSchemaPanel } from './table/ChatToSchemaPanel';
-export {
-  SchemaProposalCard,
-  type SchemaProposalCardProposal,
-  type SchemaProposalOperation,
-  type SchemaProposalWarning,
-} from './table/SchemaProposalCard';
 export { CellExpandPopover } from './table/CellExpandPopover';
 export { CellRenderer } from './table/CellRenderer';
+export { ChatToSchemaPanel } from './table/ChatToSchemaPanel';
 export type { PresenceUser } from './table/CollaborationPresence';
 export { CellCursor, CollaborationPresence } from './table/CollaborationPresence';
 export { autoAssignColors, ColorPalette } from './table/ColorPalette';
@@ -178,6 +172,12 @@ export {
   ROW_TEMPLATES,
   RowTemplatePicker,
 } from './table/RowTemplatePicker';
+export {
+  SchemaProposalCard,
+  type SchemaProposalCardProposal,
+  type SchemaProposalOperation,
+  type SchemaProposalWarning,
+} from './table/SchemaProposalCard';
 export type { SmartSuggestion } from './table/SmartSuggestionsBar';
 export { SmartSuggestionsBar } from './table/SmartSuggestionsBar';
 export { StickyNoteView } from './table/StickyNoteView';

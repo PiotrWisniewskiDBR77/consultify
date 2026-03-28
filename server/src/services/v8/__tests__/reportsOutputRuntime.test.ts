@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -94,15 +94,15 @@ describe('getArtifactsByOrg', () => {
   });
 
   it('rejects invalid outputType filter', async () => {
-    await expect(
-      getArtifactsByOrg(ORG_ID, 'deck' as 'report'),
-    ).rejects.toThrow('Invalid outputType filter');
+    await expect(getArtifactsByOrg(ORG_ID, 'deck' as 'report')).rejects.toThrow(
+      'Invalid outputType filter'
+    );
   });
 
   it('rejects invalid state filter', async () => {
-    await expect(
-      getArtifactsByOrg(ORG_ID, undefined, 'shipped' as 'draft'),
-    ).rejects.toThrow('Invalid delivery state filter');
+    await expect(getArtifactsByOrg(ORG_ID, undefined, 'shipped' as 'draft')).rejects.toThrow(
+      'Invalid delivery state filter'
+    );
   });
 
   it('clamps limit to 1..1000', async () => {
@@ -151,9 +151,7 @@ describe('cloneArtifact', () => {
 
   it('throws when source artifact missing', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(
-      cloneArtifact(ARTIFACT_ID, ORG_ID, USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(cloneArtifact(ARTIFACT_ID, ORG_ID, USER_ID)).rejects.toThrow('not found');
   });
 });
 
@@ -186,7 +184,7 @@ describe('scoreArtifactQuality', () => {
         designScore: 1,
         dataAccuracy: 1,
         overallScore: 1,
-      }),
+      })
     ).rejects.toThrow('Invalid quality score field');
   });
 
@@ -198,7 +196,7 @@ describe('scoreArtifactQuality', () => {
         designScore: 1,
         dataAccuracy: 1,
         overallScore: 1,
-      }),
+      })
     ).rejects.toThrow('not found');
   });
 });
@@ -253,16 +251,14 @@ describe('scheduleExport', () => {
 
   it('rejects invalid format', async () => {
     mockDbGet.mockResolvedValueOnce(artifactRow());
-    await expect(
-      scheduleExport(ARTIFACT_ID, ORG_ID, 'docx' as 'pdf', USER_ID),
-    ).rejects.toThrow('Invalid export format');
+    await expect(scheduleExport(ARTIFACT_ID, ORG_ID, 'docx' as 'pdf', USER_ID)).rejects.toThrow(
+      'Invalid export format'
+    );
   });
 
   it('throws when artifact missing', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(
-      scheduleExport(ARTIFACT_ID, ORG_ID, 'html', USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(scheduleExport(ARTIFACT_ID, ORG_ID, 'html', USER_ID)).rejects.toThrow('not found');
   });
 });
 
@@ -301,9 +297,7 @@ describe('getDeliveryPipeline', () => {
         { output_type: 'report', cnt: 2 },
         { output_type: 'presentation', cnt: 1 },
       ]);
-    mockDbGet
-      .mockResolvedValueOnce({ avg: 0.75 })
-      .mockResolvedValueOnce({ cnt: 4 });
+    mockDbGet.mockResolvedValueOnce({ avg: 0.75 }).mockResolvedValueOnce({ cnt: 4 });
 
     const summary = await getDeliveryPipeline(ORG_ID);
 

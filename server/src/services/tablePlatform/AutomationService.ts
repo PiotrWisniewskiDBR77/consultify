@@ -72,17 +72,25 @@ export class AutomationService {
       const autoResult = await db.query(
         `INSERT INTO tp_automations (base_id, table_id, name, description, trigger_type, trigger_config, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [baseId, tableId, data.name, data.description ?? null, data.triggerType, JSON.stringify(triggerConfig), data.createdBy ?? null]
+        [
+          baseId,
+          tableId,
+          data.name,
+          data.description ?? null,
+          data.triggerType,
+          JSON.stringify(triggerConfig),
+          data.createdBy ?? null,
+        ]
       );
       const automation = autoResult.rows[0] as AutomationRow;
 
       if (data.triggerType === 'webhook_received') {
         const webhookUrl = this.getWebhookUrl(automation.id);
         const updatedConfig = { ...triggerConfig, webhookUrl };
-        await db.query(
-          `UPDATE tp_automations SET trigger_config = $2 WHERE id = $1`,
-          [automation.id, JSON.stringify(updatedConfig)]
-        );
+        await db.query(`UPDATE tp_automations SET trigger_config = $2 WHERE id = $1`, [
+          automation.id,
+          JSON.stringify(updatedConfig),
+        ]);
         automation.trigger_config = updatedConfig;
       }
 
@@ -125,10 +133,10 @@ export class AutomationService {
 
   async toggleAutomation(automationId: string, enabled: boolean): Promise<void> {
     const db = getDatabase();
-    await db.query(
-      'UPDATE tp_automations SET enabled = $2, updated_at = NOW() WHERE id = $1',
-      [automationId, enabled]
-    );
+    await db.query('UPDATE tp_automations SET enabled = $2, updated_at = NOW() WHERE id = $1', [
+      automationId,
+      enabled,
+    ]);
   }
 
   async deleteAutomation(automationId: string): Promise<void> {
@@ -289,9 +297,10 @@ export class AutomationService {
         if (fieldUpdates && triggerRecord?.id) {
           const data: Record<string, unknown> = {};
           for (const [fieldId, value] of Object.entries(fieldUpdates)) {
-            data[fieldId] = typeof value === 'string' && value.startsWith('{{')
-              ? resolveTemplate(value, context)
-              : value;
+            data[fieldId] =
+              typeof value === 'string' && value.startsWith('{{')
+                ? resolveTemplate(value, context)
+                : value;
           }
           await db.query(
             `UPDATE tp_records SET data = data || $2::jsonb, updated_at = NOW() WHERE id = $1`,
@@ -308,11 +317,14 @@ export class AutomationService {
         const data = action.actionConfig?.data || {};
         const resolvedData: Record<string, unknown> = {};
         for (const [key, val] of Object.entries(data)) {
-          resolvedData[key] = typeof val === 'string' && val.startsWith('{{')
-            ? resolveTemplate(val, context)
-            : val;
+          resolvedData[key] =
+            typeof val === 'string' && val.startsWith('{{') ? resolveTemplate(val, context) : val;
         }
-        const record = await recordsService.createRecord(tableId as string, resolvedData, context.userId as string);
+        const record = await recordsService.createRecord(
+          tableId as string,
+          resolvedData,
+          context.userId as string
+        );
         return { success: true, recordId: record.id };
       }
 
@@ -392,7 +404,11 @@ export class AutomationService {
           action.actionConfig?.fieldId
         );
         for (const lr of linked) {
-          await recordsService.updateRecord(lr.id, action.actionConfig?.updates, context.userId as string);
+          await recordsService.updateRecord(
+            lr.id,
+            action.actionConfig?.updates,
+            context.userId as string
+          );
         }
         return { success: true, updatedCount: linked.length };
       }
@@ -406,7 +422,9 @@ export class AutomationService {
         delete newData.__created_by;
         delete newData.__created_by_name;
         const newRecord = await recordsService.createRecord(
-          (original as any).table_id, newData, context.userId as string
+          (original as any).table_id,
+          newData,
+          context.userId as string
         );
         return { success: true, recordId: newRecord.id };
       }

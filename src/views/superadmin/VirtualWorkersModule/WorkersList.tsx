@@ -1,13 +1,5 @@
+import { Bot, Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  Bot,
-  Globe,
-  Mic,
-  Monitor,
-  MoreVertical,
-  Plus,
-  RefreshCw,
-} from 'lucide-react';
 
 import { Api } from '../../../services/api';
 
@@ -110,11 +102,7 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {workers.map((worker) => (
-          <WorkerCard
-            key={worker.id}
-            worker={worker}
-            onClick={() => onSelectWorker(worker.id)}
-          />
+          <WorkerCard key={worker.id} worker={worker} onClick={() => onSelectWorker(worker.id)} />
         ))}
 
         {workers.length === 0 && (
@@ -155,7 +143,10 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
           </p>
         </div>
       </div>
-      <MoreVertical size={16} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <MoreVertical
+        size={16}
+        className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+      />
     </div>
 
     {worker.description && (
@@ -165,7 +156,9 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
     )}
 
     <div className="flex items-center gap-2 flex-wrap">
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[worker.status] || STATUS_COLORS.draft}`}>
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[worker.status] || STATUS_COLORS.draft}`}
+      >
         {worker.status}
       </span>
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300">

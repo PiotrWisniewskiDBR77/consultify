@@ -12,43 +12,43 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  KPIDefinition,
-  KPIStatus,
-  DeviationRecord,
-  ROIRealizationEntry,
-  ExecutiveReviewPack,
-  KPIFinanceReconciliation,
-  ReconciliationStatus,
-  KPISummary,
-  DeviationHighlight,
-  ROISnapshot,
+  CreateExecutiveReviewPackParams,
   CreateKPIParams,
+  DeviationHighlight,
+  DeviationRecord,
+  DeviationSeverity,
+  ExecutiveReviewPack,
+  InitiateReconciliationParams,
+  KPIDefinition,
+  KPIFinanceReconciliation,
+  KPIScorecardSummary,
+  KPIStatus,
+  KPISummary,
+  KPITrendPoint,
+  ReconciliationHealthSummary,
+  ReconciliationStatus,
   RecordDeviationParams,
   RecordROIRealizationParams,
-  CreateExecutiveReviewPackParams,
-  InitiateReconciliationParams,
-  DeviationSeverity,
-  KPIScorecardSummary,
-  KPITrendPoint,
-  ROIDashboardSummary,
-  ROIPortfolioSummary,
-  ROIInitiativeDetail,
-  ResultsKpiDrawerDetail,
-  ResultsKpiCatalog,
-  ReviewPackTimelineEntry,
-  ReconciliationHealthSummary,
   ResultsDashboardSnapshot,
+  ResultsKpiCatalog,
+  ResultsKpiDrawerDetail,
+  ReviewPackTimelineEntry,
+  ROIDashboardSummary,
+  ROIInitiativeDetail,
+  ROIPortfolioSummary,
+  ROIRealizationEntry,
+  ROISnapshot,
 } from '../../types/resultsROIContinuity.js';
 import {
-  CreateKPIParamsSchema,
-  RecordDeviationParamsSchema,
-  RecordROIRealizationParamsSchema,
   CreateExecutiveReviewPackParamsSchema,
+  CreateKPIParamsSchema,
+  DeviationSeverityValues,
   InitiateReconciliationParamsSchema,
   KPI_STATUS_TRANSITIONS,
   KPIStatusValues,
   ReconciliationStatusValues,
-  DeviationSeverityValues,
+  RecordDeviationParamsSchema,
+  RecordROIRealizationParamsSchema,
 } from '../../types/resultsROIContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -218,7 +218,8 @@ function rowToReconciliation(row: ReconciliationRow): KPIFinanceReconciliation {
     organizationId: row.organization_id,
     kpiId: row.kpi_id,
     financeRef: row.finance_ref,
-    reconciliationStatus: row.reconciliation_status as KPIFinanceReconciliation['reconciliationStatus'],
+    reconciliationStatus:
+      row.reconciliation_status as KPIFinanceReconciliation['reconciliationStatus'],
     initiatedBy: row.initiated_by as KPIFinanceReconciliation['initiatedBy'],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -275,7 +276,7 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
       kpi.status,
       kpi.createdAt,
       kpi.updatedAt,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created KPI ${kpiId} (${kpi.mode}) for org ${kpi.organizationId}`);
@@ -285,15 +286,12 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
 /**
  * Retrieve a KPI by ID with organization-level isolation.
  */
-export async function getKPI(
-  kpiId: string,
-  organizationId: string,
-): Promise<KPIDefinition | null> {
+export async function getKPI(kpiId: string, organizationId: string): Promise<KPIDefinition | null> {
   const row = await dbGet<KPIRow>(
     `SELECT * FROM v8_kpi_definitions
      WHERE kpi_id = ? AND organization_id = ?`,
     [kpiId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -307,7 +305,7 @@ export async function getKPI(
 export async function updateKPIStatus(
   kpiId: string,
   organizationId: string,
-  newStatus: KPIStatus,
+  newStatus: KPIStatus
 ): Promise<KPIDefinition> {
   if (!KPIStatusValues.includes(newStatus)) {
     throw new Error(`Invalid KPI status: ${newStatus}`);
@@ -322,7 +320,7 @@ export async function updateKPIStatus(
   if (!allowedTransitions.includes(newStatus)) {
     throw new Error(
       `Invalid status transition: ${existing.status} → ${newStatus}. ` +
-      `Allowed: ${allowedTransitions.join(', ') || 'none (terminal state)'}`,
+        `Allowed: ${allowedTransitions.join(', ') || 'none (terminal state)'}`
     );
   }
 
@@ -332,7 +330,7 @@ export async function updateKPIStatus(
     `UPDATE v8_kpi_definitions
      SET status = ?, updated_at = ?
      WHERE kpi_id = ? AND organization_id = ?`,
-    [newStatus, now, kpiId, organizationId],
+    [newStatus, now, kpiId, organizationId]
   );
 
   const updated: KPIDefinition = { ...existing, status: newStatus, updatedAt: now };
@@ -343,9 +341,7 @@ export async function updateKPIStatus(
 /**
  * Record a deviation against a KPI — closed-loop governance.
  */
-export async function recordDeviation(
-  params: RecordDeviationParams,
-): Promise<DeviationRecord> {
+export async function recordDeviation(params: RecordDeviationParams): Promise<DeviationRecord> {
   const validated = RecordDeviationParamsSchema.parse(params);
 
   const deviationId = uuidv4();
@@ -388,7 +384,7 @@ export async function recordDeviation(
       record.resolution,
       record.observedActual,
       record.observedTarget,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Recorded deviation ${deviationId} for KPI ${record.kpiId}`);
@@ -400,14 +396,14 @@ export async function recordDeviation(
  */
 export async function getDeviationsByKPI(
   kpiId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<DeviationRecord[]> {
   const rows = await dbAll<DeviationRow>(
     `SELECT * FROM v8_deviation_records
      WHERE kpi_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [kpiId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToDeviation);
@@ -417,7 +413,7 @@ export async function getDeviationsByKPI(
  * Record a ROI realization entry — benefits tracking.
  */
 export async function recordROIRealization(
-  params: RecordROIRealizationParams,
+  params: RecordROIRealizationParams
 ): Promise<ROIRealizationEntry> {
   const validated = RecordROIRealizationParamsSchema.parse(params);
 
@@ -451,7 +447,7 @@ export async function recordROIRealization(
       entry.provenanceRef,
       entry.verifiedBy,
       entry.createdAt,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Recorded ROI entry ${entryId} for KPI ${entry.kpiId}`);
@@ -463,14 +459,14 @@ export async function recordROIRealization(
  */
 export async function getROIByInitiative(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ROIRealizationEntry[]> {
   const rows = await dbAll<ROIRow>(
     `SELECT * FROM v8_roi_realization_entries
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToROI);
@@ -480,7 +476,7 @@ export async function getROIByInitiative(
  * Create an executive review pack (Decision W6-7: Results-native).
  */
 export async function createExecutiveReviewPack(
-  params: CreateExecutiveReviewPackParams,
+  params: CreateExecutiveReviewPackParams
 ): Promise<ExecutiveReviewPack> {
   const validated = CreateExecutiveReviewPackParamsSchema.parse(params);
 
@@ -515,10 +511,12 @@ export async function createExecutiveReviewPack(
       pack.status,
       pack.createdAt,
       pack.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created executive review pack ${packId} for period ${pack.reviewPeriod}`);
+  logger.info(
+    `${LOG_PREFIX} Created executive review pack ${packId} for period ${pack.reviewPeriod}`
+  );
   return pack;
 }
 
@@ -527,13 +525,13 @@ export async function createExecutiveReviewPack(
  */
 export async function getExecutiveReviewPack(
   packId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ExecutiveReviewPack | null> {
   const row = await dbGet<ReviewPackRow>(
     `SELECT * FROM v8_executive_review_packs
      WHERE pack_id = ? AND organization_id = ?`,
     [packId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -544,7 +542,7 @@ export async function getExecutiveReviewPack(
  * Initiate a KPI-Finance reconciliation (Decision W6-5: Results starts).
  */
 export async function initiateReconciliation(
-  params: InitiateReconciliationParams,
+  params: InitiateReconciliationParams
 ): Promise<KPIFinanceReconciliation> {
   const validated = InitiateReconciliationParamsSchema.parse(params);
 
@@ -576,11 +574,11 @@ export async function initiateReconciliation(
       reconciliation.initiatedBy,
       reconciliation.createdAt,
       reconciliation.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Initiated reconciliation ${reconciliationId} for KPI ${reconciliation.kpiId} by ${reconciliation.initiatedBy}`,
+    `${LOG_PREFIX} Initiated reconciliation ${reconciliationId} for KPI ${reconciliation.kpiId} by ${reconciliation.initiatedBy}`
   );
   return reconciliation;
 }
@@ -591,7 +589,7 @@ export async function initiateReconciliation(
 export async function resolveReconciliation(
   reconciliationId: string,
   organizationId: string,
-  newStatus: ReconciliationStatus,
+  newStatus: ReconciliationStatus
 ): Promise<KPIFinanceReconciliation> {
   if (!ReconciliationStatusValues.includes(newStatus)) {
     throw new Error(`Invalid reconciliation status: ${newStatus}`);
@@ -601,12 +599,12 @@ export async function resolveReconciliation(
     `SELECT * FROM v8_kpi_finance_reconciliations
      WHERE reconciliation_id = ? AND organization_id = ?`,
     [reconciliationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
     throw new Error(
-      `Reconciliation ${reconciliationId} not found in organization ${organizationId}`,
+      `Reconciliation ${reconciliationId} not found in organization ${organizationId}`
     );
   }
 
@@ -616,16 +614,14 @@ export async function resolveReconciliation(
     `UPDATE v8_kpi_finance_reconciliations
      SET reconciliation_status = ?, updated_at = ?
      WHERE reconciliation_id = ? AND organization_id = ?`,
-    [newStatus, now, reconciliationId, organizationId],
+    [newStatus, now, reconciliationId, organizationId]
   );
 
   const updated = rowToReconciliation(row);
   updated.reconciliationStatus = newStatus;
   updated.updatedAt = now;
 
-  logger.info(
-    `${LOG_PREFIX} Reconciliation ${reconciliationId} resolved to ${newStatus}`,
-  );
+  logger.info(`${LOG_PREFIX} Reconciliation ${reconciliationId} resolved to ${newStatus}`);
   return updated;
 }
 
@@ -652,7 +648,7 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
   const totalRow = await dbGet<{ total: number }>(
     `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const totalKpis = totalRow?.total ?? 0;
 
@@ -660,14 +656,14 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
     `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
      WHERE organization_id = ? GROUP BY status`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
     `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
      WHERE organization_id = ? GROUP BY metric_type`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   // Cap achievement ratio at 1.0 without scalar MIN(): Postgres MIN() is aggregate-only
@@ -686,7 +682,7 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
      ) AS avg_rate
      FROM v8_kpi_definitions WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const byStatus = emptyKpiStatusCounts();
@@ -726,7 +722,7 @@ interface TrendJoinRow {
 export async function getKPITrend(
   kpiId: string,
   organizationId: string,
-  periods?: number,
+  periods?: number
 ): Promise<KPITrendPoint[]> {
   const rows = await dbAll<TrendJoinRow>(
     `SELECT d.created_at, d.observed_actual, d.observed_target,
@@ -737,16 +733,13 @@ export async function getKPITrend(
      WHERE d.kpi_id = ? AND d.organization_id = ?
      ORDER BY d.created_at ASC`,
     [kpiId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   let points: KPITrendPoint[] = (rows || []).map((row) => {
-    const actualValue =
-      row.observed_actual != null ? row.observed_actual : row.current_value;
-    const targetValue =
-      row.observed_target != null ? row.observed_target : row.target_value;
-    const deviation =
-      actualValue != null && targetValue != null ? actualValue - targetValue : null;
+    const actualValue = row.observed_actual != null ? row.observed_actual : row.current_value;
+    const targetValue = row.observed_target != null ? row.observed_target : row.target_value;
+    const deviation = actualValue != null && targetValue != null ? actualValue - targetValue : null;
     return {
       period: row.created_at,
       actualValue,
@@ -767,7 +760,7 @@ export async function getKPITrend(
  */
 export async function getActiveDeviations(
   organizationId: string,
-  severity?: DeviationSeverity,
+  severity?: DeviationSeverity
 ): Promise<DeviationRecord[]> {
   if (severity != null && !DeviationSeverityValues.includes(severity)) {
     throw new Error(`Invalid deviation severity: ${severity}`);
@@ -779,14 +772,14 @@ export async function getActiveDeviations(
          WHERE organization_id = ? AND resolved_at IS NULL AND severity = ?
          ORDER BY created_at DESC`,
         [organizationId, severity],
-        { fallback: true },
+        { fallback: true }
       )
     : await dbAll<DeviationRow>(
         `SELECT * FROM v8_deviation_records
          WHERE organization_id = ? AND resolved_at IS NULL
          ORDER BY created_at DESC`,
         [organizationId],
-        { fallback: true },
+        { fallback: true }
       );
 
   return (rows || []).map((row) => rowToDeviation(normalizeDeviationRow(row)));
@@ -810,13 +803,13 @@ export async function resolveDeviation(
   deviationId: string,
   organizationId: string,
   resolution: string,
-  resolvedBy: string,
+  resolvedBy: string
 ): Promise<DeviationRecord> {
   const row = await dbGet<DeviationRow>(
     `SELECT * FROM v8_deviation_records
      WHERE deviation_id = ? AND organization_id = ?`,
     [deviationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -829,7 +822,7 @@ export async function resolveDeviation(
     `UPDATE v8_deviation_records
      SET resolved_at = ?, resolved_by = ?, resolution = ?
      WHERE deviation_id = ? AND organization_id = ?`,
-    [now, resolvedBy, resolution, deviationId, organizationId],
+    [now, resolvedBy, resolution, deviationId, organizationId]
   );
 
   const updated = normalizeDeviationRow({
@@ -978,7 +971,7 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
     `SELECT COUNT(*) AS total_entries, COALESCE(SUM(realized_value), 0) AS total_realized
      FROM v8_roi_realization_entries WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const projectedRow = await dbGet<{ projected: number | null }>(
@@ -991,7 +984,7 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
          WHERE r.organization_id = k.organization_id AND r.kpi_id = k.kpi_id
        )`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const initiativeRows = await dbAll<RoiInitiativeAggRow>(
@@ -1000,7 +993,7 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
      WHERE organization_id = ?
      GROUP BY initiative_id`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const totalEntries = totalRow?.total_entries ?? 0;
@@ -1043,7 +1036,7 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
      JOIN initiatives i ON i.id = ra.initiative_id
      WHERE ra.organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const realized = await dbAll<LegacyRoiRealizedAggRow>(
@@ -1056,7 +1049,7 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
      WHERE organization_id = ?
      GROUP BY initiative_id`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const realizedMap = new Map<string, LegacyRoiRealizedAggRow>();
@@ -1094,7 +1087,9 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
   const totalRealized = items.reduce((sum, item) => sum + item.realizedBenefit, 0);
   const totalCapex = items.reduce((sum, item) => sum + item.capex, 0);
   const coveragePercent =
-    items.length > 0 ? Math.round((items.filter((item) => item.hasRealized).length / items.length) * 100) : 0;
+    items.length > 0
+      ? Math.round((items.filter((item) => item.hasRealized).length / items.length) * 100)
+      : 0;
 
   return {
     organizationId,
@@ -1115,12 +1110,12 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
  */
 export async function getROIInitiativeDetail(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ROIInitiativeDetail> {
   const assumptionRow = await dbGet<LegacyRoiAssumptionRow & Record<string, unknown>>(
     `SELECT * FROM roi_assumptions WHERE initiative_id = ? AND organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const realizedRows = await dbAll<LegacyRoiRealizedRow>(
@@ -1128,13 +1123,22 @@ export async function getROIInitiativeDetail(
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY period_month DESC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const realizedList = realizedRows || [];
-  const totalRealizedRevDelta = realizedList.reduce((sum, row) => sum + (row.realized_revenue_delta || 0), 0);
-  const totalRealizedCostDelta = realizedList.reduce((sum, row) => sum + (row.realized_cost_delta || 0), 0);
-  const totalRealizedSavings = realizedList.reduce((sum, row) => sum + (row.realized_savings || 0), 0);
+  const totalRealizedRevDelta = realizedList.reduce(
+    (sum, row) => sum + (row.realized_revenue_delta || 0),
+    0
+  );
+  const totalRealizedCostDelta = realizedList.reduce(
+    (sum, row) => sum + (row.realized_cost_delta || 0),
+    0
+  );
+  const totalRealizedSavings = realizedList.reduce(
+    (sum, row) => sum + (row.realized_savings || 0),
+    0
+  );
 
   let variance: ROIInitiativeDetail['variance'];
   let assumptions: ROIInitiativeDetail['assumptions'] = null;
@@ -1143,7 +1147,8 @@ export async function getROIInitiativeDetail(
     variance = { hasAssumptions: false, variance: null };
   } else {
     const projectedBenefit =
-      Number(assumptionRow.expected_revenue_delta || 0) + Number(assumptionRow.expected_cost_delta || 0);
+      Number(assumptionRow.expected_revenue_delta || 0) +
+      Number(assumptionRow.expected_cost_delta || 0);
     const realizedBenefit = totalRealizedRevDelta + totalRealizedCostDelta + totalRealizedSavings;
     const varianceAbs = realizedBenefit - projectedBenefit;
     const variancePct =
@@ -1213,7 +1218,7 @@ export async function getROIInitiativeDetail(
  */
 export async function getResultsKpiCatalog(
   organizationId: string,
-  options: { kpiId?: string } = {},
+  options: { kpiId?: string } = {}
 ): Promise<ResultsKpiCatalog> {
   const params: Array<string> = [organizationId, organizationId, organizationId, organizationId];
   let kpiFilterSql = '';
@@ -1284,7 +1289,7 @@ export async function getResultsKpiCatalog(
      WHERE COALESCE(k.organization_id, i.organization_id) = ?${kpiFilterSql}
      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
     params,
-    { fallback: true },
+    { fallback: true }
   );
 
   const mappingParams: Array<string> = [organizationId];
@@ -1307,7 +1312,7 @@ export async function getResultsKpiCatalog(
      LEFT JOIN initiatives i ON i.id = m.initiative_id
      WHERE m.organization_id = ?${mappingFilterSql}`,
     mappingParams,
-    { fallback: true },
+    { fallback: true }
   );
 
   const kpis = (kpiRows || []).map((row) => {
@@ -1381,7 +1386,7 @@ export async function getResultsKpiCatalog(
 
 function deriveLegacyKpiPeriodKey(
   periodStart: string | null,
-  measurementFrequency: string | null,
+  measurementFrequency: string | null
 ): string | null {
   if (!periodStart) return null;
   const d = new Date(periodStart);
@@ -1407,7 +1412,7 @@ function deriveLegacyKpiPeriodKey(
  */
 export async function getResultsKpiDrawerDetail(
   kpiId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ResultsKpiDrawerDetail> {
   const measurementRows = await dbAll<LegacyKpiTimeSeriesRow>(
     `SELECT
@@ -1422,7 +1427,7 @@ export async function getResultsKpiDrawerDetail(
      WHERE ts.kpi_id = ? AND ts.organization_id = ?
      ORDER BY ts.period_start DESC, ts.created_at DESC`,
     [kpiId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const caseRows = await dbAll<LegacyDeviationCaseRow>(
@@ -1432,7 +1437,7 @@ export async function getResultsKpiDrawerDetail(
        AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
      ORDER BY detected_at DESC, created_at DESC`,
     [organizationId, kpiId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const openCaseRow = (caseRows || [])[0] || null;
@@ -1443,7 +1448,7 @@ export async function getResultsKpiDrawerDetail(
          WHERE case_id = ?
          ORDER BY created_at ASC`,
         [openCaseRow.id],
-        { fallback: true },
+        { fallback: true }
       )
     : [];
 
@@ -1509,14 +1514,14 @@ export async function getResultsKpiDrawerDetail(
 export async function getROIByDateRange(
   organizationId: string,
   fromDate: string,
-  toDate: string,
+  toDate: string
 ): Promise<ROIRealizationEntry[]> {
   const rows = await dbAll<ROIRow>(
     `SELECT * FROM v8_roi_realization_entries
      WHERE organization_id = ? AND created_at >= ? AND created_at <= ?
      ORDER BY created_at ASC`,
     [organizationId, fromDate, toDate],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToROI);
@@ -1526,14 +1531,14 @@ export async function getROIByDateRange(
  * Executive review packs on a timeline with lightweight rollups.
  */
 export async function getReviewPackTimeline(
-  organizationId: string,
+  organizationId: string
 ): Promise<ReviewPackTimelineEntry[]> {
   const rows = await dbAll<ReviewPackRow>(
     `SELECT * FROM v8_executive_review_packs
      WHERE organization_id = ?
      ORDER BY created_at ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map((row) => {
@@ -1571,7 +1576,7 @@ interface ReconResolvedRow {
  * KPI–Finance reconciliation health for an organization.
  */
 export async function getReconciliationHealth(
-  organizationId: string,
+  organizationId: string
 ): Promise<ReconciliationHealthSummary> {
   const statusRows = await dbAll<ReconStatusRow>(
     `SELECT reconciliation_status, COUNT(*) AS cnt
@@ -1579,20 +1584,20 @@ export async function getReconciliationHealth(
      WHERE organization_id = ?
      GROUP BY reconciliation_status`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const totalRow = await dbGet<{ total: number }>(
     `SELECT COUNT(*) AS total FROM v8_kpi_finance_reconciliations WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const resolvedRows = await dbAll<ReconResolvedRow>(
     `SELECT created_at, updated_at FROM v8_kpi_finance_reconciliations
      WHERE organization_id = ? AND reconciliation_status = 'reconciled'`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const byStatus = emptyReconciliationStatusCounts();
@@ -1631,7 +1636,7 @@ export async function getReconciliationHealth(
  * Master Results surface: composes scorecard, deviations, ROI, reconciliation, recent packs.
  */
 export async function getResultsDashboard(
-  organizationId: string,
+  organizationId: string
 ): Promise<ResultsDashboardSnapshot> {
   const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
     await Promise.all([

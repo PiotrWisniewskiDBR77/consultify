@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
-import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
@@ -603,7 +603,8 @@ export const DeckBuilder: React.FC = () => {
       const res = (await Api.post(`/presentations/decks/${deck.deck_id}/agent-edit`, {
         prompt,
       })) as any;
-      const payload = res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
+      const payload =
+        res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
       const nextDeck = payload?.deck;
       if (nextDeck) {
         setDeck(nextDeck);

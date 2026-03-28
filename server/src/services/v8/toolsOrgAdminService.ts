@@ -16,23 +16,23 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  SharedToolsRegistryEntry,
-  ToolSessionGovernance,
-  ToolActionGovernance,
   AdminSurfaceOwnership,
-  ToolsV8BridgingContract,
-  RegisterToolParams,
-  CreateSessionGovernanceParams,
   CreateActionGovernanceParams,
-  RegisterAdminSurfaceParams,
   CreateBridgingContractParams,
+  CreateSessionGovernanceParams,
+  RegisterAdminSurfaceParams,
+  RegisterToolParams,
+  SharedToolsRegistryEntry,
+  ToolActionGovernance,
+  ToolSessionGovernance,
+  ToolsV8BridgingContract,
 } from '../../types/toolsOrgAdminHardening.js';
 import {
-  RegisterToolParamsSchema,
-  CreateSessionGovernanceParamsSchema,
   CreateActionGovernanceParamsSchema,
-  RegisterAdminSurfaceParamsSchema,
   CreateBridgingContractParamsSchema,
+  CreateSessionGovernanceParamsSchema,
+  RegisterAdminSurfaceParamsSchema,
+  RegisterToolParamsSchema,
 } from '../../types/toolsOrgAdminHardening.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -235,10 +235,12 @@ export async function registerTool(params: RegisterToolParams): Promise<SharedTo
       entry.catalogVisibility,
       entry.createdAt,
       entry.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered tool ${toolId} "${validated.toolName}" family=${validated.toolFamily}`);
+  logger.info(
+    `${LOG_PREFIX} Registered tool ${toolId} "${validated.toolName}" family=${validated.toolFamily}`
+  );
   return entry;
 }
 
@@ -247,13 +249,13 @@ export async function registerTool(params: RegisterToolParams): Promise<SharedTo
  */
 export async function getTool(
   toolId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SharedToolsRegistryEntry | null> {
   const row = await dbGet<RegistryRow>(
     `SELECT * FROM v8_shared_tools_registry
      WHERE tool_id = ? AND organization_id = ?`,
     [toolId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -265,14 +267,14 @@ export async function getTool(
  */
 export async function getToolsByFamily(
   family: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SharedToolsRegistryEntry[]> {
   const rows = await dbAll<RegistryRow>(
     `SELECT * FROM v8_shared_tools_registry
      WHERE tool_family = ? AND organization_id = ?
      ORDER BY tool_name ASC`,
     [family, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRegistryEntry);
@@ -287,7 +289,7 @@ export async function getToolsByFamily(
  * W7-6: session sets the sandbox.
  */
 export async function createSessionGovernance(
-  params: CreateSessionGovernanceParams,
+  params: CreateSessionGovernanceParams
 ): Promise<ToolSessionGovernance> {
   const validated = CreateSessionGovernanceParamsSchema.parse(params);
 
@@ -324,10 +326,12 @@ export async function createSessionGovernance(
       session.aiEnabled ? 1 : 0,
       session.createdAt,
       session.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Session ${sessionId} mode=${validated.sessionMode} tool=${validated.toolId}`);
+  logger.info(
+    `${LOG_PREFIX} Session ${sessionId} mode=${validated.sessionMode} tool=${validated.toolId}`
+  );
   return session;
 }
 
@@ -340,7 +344,7 @@ export async function createSessionGovernance(
  * W7-6: action decides the gate.
  */
 export async function createActionGovernance(
-  params: CreateActionGovernanceParams,
+  params: CreateActionGovernanceParams
 ): Promise<ToolActionGovernance> {
   const validated = CreateActionGovernanceParamsSchema.parse(params);
 
@@ -370,10 +374,12 @@ export async function createActionGovernance(
       action.gateDecision,
       action.gateReason,
       action.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Action ${actionId} gate=${validated.gateDecision} session=${validated.sessionId}`);
+  logger.info(
+    `${LOG_PREFIX} Action ${actionId} gate=${validated.gateDecision} session=${validated.sessionId}`
+  );
   return action;
 }
 
@@ -382,14 +388,14 @@ export async function createActionGovernance(
  */
 export async function getActionsBySession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolActionGovernance[]> {
   const rows = await dbAll<ActionGovRow>(
     `SELECT * FROM v8_tool_action_governance
      WHERE session_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToActionGov);
@@ -404,7 +410,7 @@ export async function getActionsBySession(
  * W7-7: shared IA at top, module settings underneath.
  */
 export async function registerAdminSurface(
-  params: RegisterAdminSurfaceParams,
+  params: RegisterAdminSurfaceParams
 ): Promise<AdminSurfaceOwnership> {
   const validated = RegisterAdminSurfaceParamsSchema.parse(params);
 
@@ -437,25 +443,25 @@ export async function registerAdminSurface(
       surface.horizontalLayerRef,
       surface.createdAt,
       surface.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Admin surface ${surfaceId} "${validated.surfaceName}" layer=${validated.ownerLayer}`);
+  logger.info(
+    `${LOG_PREFIX} Admin surface ${surfaceId} "${validated.surfaceName}" layer=${validated.ownerLayer}`
+  );
   return surface;
 }
 
 /**
  * Retrieve all admin surfaces for an organization.
  */
-export async function getAdminSurfaces(
-  organizationId: string,
-): Promise<AdminSurfaceOwnership[]> {
+export async function getAdminSurfaces(organizationId: string): Promise<AdminSurfaceOwnership[]> {
   const rows = await dbAll<AdminSurfaceRow>(
     `SELECT * FROM v8_admin_surface_ownership
      WHERE organization_id = ?
      ORDER BY owner_layer ASC, surface_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToAdminSurface);
@@ -470,7 +476,7 @@ export async function getAdminSurfaces(
  * W7-8: connects V3 tool contracts with V8 platform requirements.
  */
 export async function createBridgingContract(
-  params: CreateBridgingContractParams,
+  params: CreateBridgingContractParams
 ): Promise<ToolsV8BridgingContract> {
   const validated = CreateBridgingContractParamsSchema.parse(params);
 
@@ -508,10 +514,12 @@ export async function createBridgingContract(
       contract.bridgingStatus,
       contract.createdAt,
       contract.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Bridging contract ${contractId} tool=${validated.toolId} status=${validated.bridgingStatus}`);
+  logger.info(
+    `${LOG_PREFIX} Bridging contract ${contractId} tool=${validated.toolId} status=${validated.bridgingStatus}`
+  );
   return contract;
 }
 
@@ -520,14 +528,14 @@ export async function createBridgingContract(
  */
 export async function getBridgingContract(
   toolId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolsV8BridgingContract | null> {
   const row = await dbGet<BridgingRow>(
     `SELECT * FROM v8_tools_v8_bridging_contracts
      WHERE tool_id = ? AND organization_id = ?
      ORDER BY created_at DESC LIMIT 1`,
     [toolId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;

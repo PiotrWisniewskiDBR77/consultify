@@ -102,7 +102,7 @@ function budgetRowToDto(row: Row) {
     period: (row.period as string) ?? 'monthly',
     budgetLimit: (row.budget_limit as number) ?? 0,
     currentUsage: (row.current_usage as number) ?? 0,
-    warningThreshold: typeof wt === 'number' && wt > 1 ? wt / 100 : wt ?? 0.8,
+    warningThreshold: typeof wt === 'number' && wt > 1 ? wt / 100 : (wt ?? 0.8),
     hardLimit: hardLimitRaw === true || hardLimitRaw === 1 || hardLimitRaw === 't',
     isActive: isActiveRaw === true || isActiveRaw === 1 || isActiveRaw === 't',
     createdAt: (row.created_at as string) ?? '',
@@ -162,10 +162,7 @@ const MODEL_COSTS: Record<string, { input: number; output: number }> = {
 const aiBudgetService = {
   // ------ BUDGETS ------
 
-  async getOrganizationBudgets(
-    organizationId: string,
-    includeUserBudgets = true
-  ) {
+  async getOrganizationBudgets(organizationId: string, includeUserBudgets = true) {
     await ensureTables();
     let sql = 'SELECT * FROM ai_budgets WHERE organization_id = ?';
     const params: unknown[] = [organizationId];
@@ -369,7 +366,8 @@ const aiBudgetService = {
 
     for (const b of budgets) {
       const budgetType = b.budget_type as string;
-      const addedUsage = budgetType === 'cost' ? cost : budgetType === 'tokens' ? tokens : (data.requestCount ?? 1);
+      const addedUsage =
+        budgetType === 'cost' ? cost : budgetType === 'tokens' ? tokens : (data.requestCount ?? 1);
       await dbRun(
         'UPDATE ai_budgets SET current_usage = current_usage + ?, updated_at = ? WHERE id = ?',
         [addedUsage, new Date().toISOString(), b.id]
@@ -453,20 +451,13 @@ const aiBudgetService = {
     await ensureTables();
     const existing = await dbGet<Row>('SELECT * FROM ai_spending_alerts WHERE id = ?', [id]);
     if (!existing) return { dismissed: false };
-    await dbRun(
-      "UPDATE ai_spending_alerts SET status = 'dismissed' WHERE id = ?",
-      [id]
-    );
+    await dbRun("UPDATE ai_spending_alerts SET status = 'dismissed' WHERE id = ?", [id]);
     return { dismissed: true };
   },
 
   // ------ MODEL PERMISSIONS ------
 
-  async getModelPermissions(
-    organizationId: string,
-    scopeType?: string,
-    scopeId?: string
-  ) {
+  async getModelPermissions(organizationId: string, scopeType?: string, scopeId?: string) {
     await ensureTables();
     let sql = 'SELECT * FROM ai_model_permissions WHERE organization_id = ? AND is_active = true';
     const params: unknown[] = [organizationId];

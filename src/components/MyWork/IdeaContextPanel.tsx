@@ -124,14 +124,26 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
-    new Set(['selected_node', 'map_stats', 'warnings', 'notes', 'evidence', 'artifacts', 'initiatives', 'gaps', 'insights'])
+    new Set([
+      'selected_node',
+      'map_stats',
+      'warnings',
+      'notes',
+      'evidence',
+      'artifacts',
+      'initiatives',
+      'gaps',
+      'insights',
+    ])
   );
 
   // V5-IDEA-28: Notes, evidence, artifacts
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [linkedArtifacts, setLinkedArtifacts] = useState<LinkedArtifact[]>([]);
-  const [nodeArtifactMap, setNodeArtifactMap] = useState<(LinkedArtifact & { nodeId?: string })[]>([]);
+  const [nodeArtifactMap, setNodeArtifactMap] = useState<(LinkedArtifact & { nodeId?: string })[]>(
+    []
+  );
   const [newNoteText, setNewNoteText] = useState('');
 
   const extractGraphData = useCallback((graphNodes: any[]) => {
@@ -171,7 +183,9 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     const nodeArtLinks: (LinkedArtifact & { nodeId?: string })[] = graphNodes.flatMap((n: any) => {
       const links = Array.isArray(n?.data?.artifactLinks)
         ? n.data.artifactLinks
-        : Array.isArray(n?.artifactLinks) ? n.artifactLinks : null;
+        : Array.isArray(n?.artifactLinks)
+          ? n.artifactLinks
+          : null;
       if (!Array.isArray(links)) return [];
       return links.map((link: any) => {
         const realType = link.artifactRef?.type || link.artifactType || link.type || 'unknown';
@@ -187,10 +201,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       });
     });
     const seen = new Set(extractedArtifacts.map((a) => a.id));
-    const merged = [
-      ...extractedArtifacts,
-      ...nodeArtLinks.filter((a) => !seen.has(a.id)),
-    ];
+    const merged = [...extractedArtifacts, ...nodeArtLinks.filter((a) => !seen.has(a.id))];
     setLinkedArtifacts(merged);
     setNodeArtifactMap(nodeArtLinks);
   }, []);
@@ -252,7 +263,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   const warnings = useMemo(() => {
     const nodes = liveGraphNodes || [];
     const edges = liveGraphEdges || [];
-    const result: Array<{ type: 'orphan' | 'no_label' | 'broken_link'; message: string; nodeId?: string }> = [];
+    const result: Array<{
+      type: 'orphan' | 'no_label' | 'broken_link';
+      message: string;
+      nodeId?: string;
+    }> = [];
 
     const connectedIds = new Set<string>();
     for (const e of edges) {
@@ -266,14 +281,18 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       if (!label) {
         result.push({
           type: 'no_label',
-          message: isPl ? `Węzeł bez etykiety: ${nid.slice(0, 12)}` : `Node without label: ${nid.slice(0, 12)}`,
+          message: isPl
+            ? `Węzeł bez etykiety: ${nid.slice(0, 12)}`
+            : `Node without label: ${nid.slice(0, 12)}`,
           nodeId: nid,
         });
       }
       if (nodes.length > 1 && !connectedIds.has(nid)) {
         result.push({
           type: 'orphan',
-          message: isPl ? `Osierocony węzeł: "${label || nid.slice(0, 12)}"` : `Orphan node: "${label || nid.slice(0, 12)}"`,
+          message: isPl
+            ? `Osierocony węzeł: "${label || nid.slice(0, 12)}"`
+            : `Orphan node: "${label || nid.slice(0, 12)}"`,
           nodeId: nid,
         });
       }
@@ -284,10 +303,20 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       const src = String(e?.source || '');
       const tgt = String(e?.target || '');
       if (src && !nodeIdSet.has(src)) {
-        result.push({ type: 'broken_link', message: isPl ? `Uszkodzony link: źródło ${src.slice(0, 12)} nie istnieje` : `Broken link: source ${src.slice(0, 12)} missing` });
+        result.push({
+          type: 'broken_link',
+          message: isPl
+            ? `Uszkodzony link: źródło ${src.slice(0, 12)} nie istnieje`
+            : `Broken link: source ${src.slice(0, 12)} missing`,
+        });
       }
       if (tgt && !nodeIdSet.has(tgt)) {
-        result.push({ type: 'broken_link', message: isPl ? `Uszkodzony link: cel ${tgt.slice(0, 12)} nie istnieje` : `Broken link: target ${tgt.slice(0, 12)} missing` });
+        result.push({
+          type: 'broken_link',
+          message: isPl
+            ? `Uszkodzony link: cel ${tgt.slice(0, 12)} nie istnieje`
+            : `Broken link: target ${tgt.slice(0, 12)} missing`,
+        });
       }
     }
 
@@ -601,31 +630,43 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 )}
                 {selectedNodeData.description && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300 bg-white/40 dark:bg-navy-950/30 rounded-lg p-2">
-                    {selectedNodeData.description.slice(0, 200)}{selectedNodeData.description.length > 200 ? '…' : ''}
+                    {selectedNodeData.description.slice(0, 200)}
+                    {selectedNodeData.description.length > 200 ? '…' : ''}
                   </div>
                 )}
                 {selectedNodeData.notes && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold text-slate-500">{isPl ? 'Notatki: ' : 'Notes: '}</span>
-                    {selectedNodeData.notes.slice(0, 150)}{selectedNodeData.notes.length > 150 ? '…' : ''}
+                    <span className="font-semibold text-slate-500">
+                      {isPl ? 'Notatki: ' : 'Notes: '}
+                    </span>
+                    {selectedNodeData.notes.slice(0, 150)}
+                    {selectedNodeData.notes.length > 150 ? '…' : ''}
                   </div>
                 )}
                 {selectedNodeData.context && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold text-slate-500">{isPl ? 'Kontekst: ' : 'Context: '}</span>
-                    {selectedNodeData.context.slice(0, 150)}{selectedNodeData.context.length > 150 ? '…' : ''}
+                    <span className="font-semibold text-slate-500">
+                      {isPl ? 'Kontekst: ' : 'Context: '}
+                    </span>
+                    {selectedNodeData.context.slice(0, 150)}
+                    {selectedNodeData.context.length > 150 ? '…' : ''}
                   </div>
                 )}
                 {selectedNodeData.goal && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold text-slate-500">{isPl ? 'Cel: ' : 'Goal: '}</span>
+                    <span className="font-semibold text-slate-500">
+                      {isPl ? 'Cel: ' : 'Goal: '}
+                    </span>
                     {selectedNodeData.goal.slice(0, 150)}
                   </div>
                 )}
                 {selectedNodeData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {selectedNodeData.tags.map((tag: string) => (
-                      <span key={tag} className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                      <span
+                        key={tag}
+                        className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"
+                      >
                         #{tag}
                       </span>
                     ))}
@@ -675,11 +716,15 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             <div className="mt-2 space-y-1.5">
               <div className="grid grid-cols-2 gap-1.5">
                 <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
-                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">{mapStats.total}</div>
+                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
+                    {mapStats.total}
+                  </div>
                   <div className="text-[9px] text-slate-400">{isPl ? 'Węzłów' : 'Nodes'}</div>
                 </div>
                 <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
-                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">{mapStats.edges}</div>
+                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
+                    {mapStats.edges}
+                  </div>
                   <div className="text-[9px] text-slate-400">{isPl ? 'Połączeń' : 'Edges'}</div>
                 </div>
               </div>
@@ -690,7 +735,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(mapStats.byStatus).map(([s, count]) => (
-                      <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                      <span
+                        key={s}
+                        className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300"
+                      >
                         {s}: {count}
                       </span>
                     ))}
@@ -703,11 +751,16 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                     {isPl ? 'Wg typu' : 'By type'}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {Object.entries(mapStats.byType).slice(0, 8).map(([t, count]) => (
-                      <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                        {t}: {count}
-                      </span>
-                    ))}
+                    {Object.entries(mapStats.byType)
+                      .slice(0, 8)
+                      .map(([t, count]) => (
+                        <span
+                          key={t}
+                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300"
+                        >
+                          {t}: {count}
+                        </span>
+                      ))}
                   </div>
                 </div>
               )}
@@ -1001,8 +1054,12 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             <Paperclip size={12} className="text-indigo-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex-1">
               {selectedNodeId
-                ? (isPl ? 'Artefakty węzła' : 'Node Artifacts')
-                : (isPl ? 'Powiązane artefakty' : 'Linked Artifacts')}{' '}
+                ? isPl
+                  ? 'Artefakty węzła'
+                  : 'Node Artifacts'
+                : isPl
+                  ? 'Powiązane artefakty'
+                  : 'Linked Artifacts'}{' '}
               ({displayedArtifacts.length})
             </span>
             {expandedSections.has('artifacts') ? (

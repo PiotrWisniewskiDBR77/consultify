@@ -145,7 +145,9 @@ describe('V8 Knowledge Base read-only routes', () => {
 
   it('GET /api/public/kb-v8/featured is anonymous-safe and delegates to getFeaturedArticles', async () => {
     mockUser = null;
-    mockGetFeaturedArticles.mockResolvedValue([{ id: 'feat-1', slug: 'featured', title: 'Featured' }]);
+    mockGetFeaturedArticles.mockResolvedValue([
+      { id: 'feat-1', slug: 'featured', title: 'Featured' },
+    ]);
 
     const res = await request(createApp()).get('/api/public/kb-v8/featured?lang=en&limit=5');
 
@@ -250,7 +252,12 @@ describe('V8 Knowledge Base read-only routes', () => {
       .send({ sessionId: 'sess-public', source: 'public_docs' });
 
     expect(res.status).toBe(200);
-    expect(mockTrackView).toHaveBeenCalledWith('article-1', undefined, 'sess-public', 'public_docs');
+    expect(mockTrackView).toHaveBeenCalledWith(
+      'article-1',
+      undefined,
+      'sess-public',
+      'public_docs'
+    );
     expect(res.body.data.success).toBe(true);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -293,7 +300,9 @@ describe('V8 Knowledge Base read-only routes', () => {
   });
 
   it('GET /api/v8/kb/search returns empty data without calling service when q is too short', async () => {
-    const res = await request(createApp()).get('/api/v8/kb/search?q=a').set('Authorization', 'Bearer x');
+    const res = await request(createApp())
+      .get('/api/v8/kb/search?q=a')
+      .set('Authorization', 'Bearer x');
 
     expect(res.status).toBe(200);
     expect(res.body.data.articles).toEqual([]);
@@ -302,7 +311,20 @@ describe('V8 Knowledge Base read-only routes', () => {
   });
 
   it('GET /api/v8/kb/search delegates to KnowledgeBaseService.searchArticles', async () => {
-    mockSearchArticles.mockResolvedValue([{ id: '1', slug: 's', title: 'T', summary: '', category_slug: 'c', category_name: 'C', category_icon: 'i', reading_time_minutes: 1, is_featured: false, view_count: 0 }]);
+    mockSearchArticles.mockResolvedValue([
+      {
+        id: '1',
+        slug: 's',
+        title: 'T',
+        summary: '',
+        category_slug: 'c',
+        category_name: 'C',
+        category_icon: 'i',
+        reading_time_minutes: 1,
+        is_featured: false,
+        view_count: 0,
+      },
+    ]);
 
     const res = await request(createApp())
       .get('/api/v8/kb/search?q=hello&lang=pl&limit=3')
@@ -317,7 +339,9 @@ describe('V8 Knowledge Base read-only routes', () => {
   it('GET /api/v8/kb/articles/:slug returns 404 when service returns null', async () => {
     mockGetArticleBySlug.mockResolvedValue(null);
 
-    const res = await request(createApp()).get('/api/v8/kb/articles/missing').set('Authorization', 'Bearer x');
+    const res = await request(createApp())
+      .get('/api/v8/kb/articles/missing')
+      .set('Authorization', 'Bearer x');
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('KB_ARTICLE_NOT_FOUND');

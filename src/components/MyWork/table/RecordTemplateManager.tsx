@@ -2,18 +2,10 @@
  * RecordTemplateManager — Create, manage, and use record templates.
  * Templates are pre-filled field values stored as special records.
  */
-import {
-  Copy,
-  Edit3,
-  FileText,
-  Loader2,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Copy, Edit3, FileText, Loader2, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
@@ -269,9 +261,19 @@ interface TemplateEditorProps {
 }
 
 const EDITABLE_FIELD_TYPES = new Set([
-  'singleLineText', 'longText', 'number', 'currency', 'percent',
-  'checkbox', 'date', 'singleSelect', 'multiSelect', 'url',
-  'email', 'phone', 'rating',
+  'singleLineText',
+  'longText',
+  'number',
+  'currency',
+  'percent',
+  'checkbox',
+  'date',
+  'singleSelect',
+  'multiSelect',
+  'url',
+  'email',
+  'phone',
+  'rating',
 ]);
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
@@ -283,15 +285,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   onSaved,
 }) => {
   const [name, setName] = useState(template?.name ?? '');
-  const [data, setData] = useState<Record<string, unknown>>(
-    () => {
-      if (!template?.data) return {};
-      const d = { ...template.data };
-      delete d._is_template;
-      delete d._template_name;
-      return d;
-    }
-  );
+  const [data, setData] = useState<Record<string, unknown>>(() => {
+    if (!template?.data) return {};
+    const d = { ...template.data };
+    delete d._is_template;
+    delete d._template_name;
+    return d;
+  });
   const [saving, setSaving] = useState(false);
 
   const editableFields = fields.filter(
@@ -341,8 +341,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {template
-              ? isPl ? 'Edytuj szablon' : 'Edit Template'
-              : isPl ? 'Nowy szablon' : 'New Template'}
+              ? isPl
+                ? 'Edytuj szablon'
+                : 'Edit Template'
+              : isPl
+                ? 'Nowy szablon'
+                : 'New Template'}
           </h3>
           <button
             onClick={onClose}
@@ -407,9 +411,15 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             {saving ? (
               <Loader2 size={12} className="animate-spin" />
             ) : template ? (
-              isPl ? 'Zapisz' : 'Save'
+              isPl ? (
+                'Zapisz'
+              ) : (
+                'Save'
+              )
+            ) : isPl ? (
+              'Utwórz'
             ) : (
-              isPl ? 'Utwórz' : 'Create'
+              'Create'
             )}
           </button>
         </div>
@@ -429,7 +439,12 @@ interface TemplateFieldInputProps {
   isPl: boolean;
 }
 
-const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({ field, value, onChange, isPl }) => {
+const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
+  field,
+  value,
+  onChange,
+  isPl,
+}) => {
   const inputClass =
     'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30';
 
@@ -475,7 +490,8 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({ field, value, o
         );
 
       case 'singleSelect': {
-        const opts = (field.options as { options?: Array<{ name?: string; id?: string }> })?.options ?? [];
+        const opts =
+          (field.options as { options?: Array<{ name?: string; id?: string }> })?.options ?? [];
         return (
           <select
             value={String(value ?? '')}
@@ -588,7 +604,10 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {isPl ? 'Z szablonu' : 'From Template'}
           </span>
-          <button onClick={onClose} className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={11} className="text-slate-400" />
           </button>
         </div>

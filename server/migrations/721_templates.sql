@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS tp_base_templates (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_tp_templates_category ON tp_base_templates(category);
-CREATE INDEX idx_tp_templates_featured ON tp_base_templates(is_featured) WHERE is_featured = true;
+CREATE INDEX IF NOT EXISTS idx_tp_templates_category ON tp_base_templates(category);
+CREATE INDEX IF NOT EXISTS idx_tp_templates_featured ON tp_base_templates(is_featured) WHERE is_featured = true;

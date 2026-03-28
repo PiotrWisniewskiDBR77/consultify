@@ -6,14 +6,14 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
   buildHeatmap,
   calculateRiskScore,
   categorizeScore,
   DEFAULT_THRESHOLDS,
 } from '../services/raidScoringService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -37,7 +37,8 @@ router.get(
       params.push(initiativeId);
     }
     if (projectId) {
-      query += ' AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)';
+      query +=
+        ' AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)';
       params.push(projectId, orgId);
     }
     if (type) {
@@ -57,7 +58,17 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
-    const { projectId, initiativeId, type, title, description, severity, probability, ownerId, dueDate } = req.body;
+    const {
+      projectId,
+      initiativeId,
+      type,
+      title,
+      description,
+      severity,
+      probability,
+      ownerId,
+      dueDate,
+    } = req.body;
     if (!type || !title) return res.status(400).json({ error: 'Type and title required' });
     const id = uuidv4();
     const initId = initiativeId || null;
@@ -127,9 +138,13 @@ router.put(
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
 
     if (severity !== undefined || probability !== undefined) {
-      const existing = await dbGet('SELECT probability, impact FROM raid_items WHERE id = ?', [req.params.id]) as any;
-      const finalProb = probability ? String(probability).toUpperCase() : (existing?.probability || 'LOW');
-      const finalImpact = severity ? String(severity).toUpperCase() : (existing?.impact || 'LOW');
+      const existing = (await dbGet('SELECT probability, impact FROM raid_items WHERE id = ?', [
+        req.params.id,
+      ])) as any;
+      const finalProb = probability
+        ? String(probability).toUpperCase()
+        : existing?.probability || 'LOW';
+      const finalImpact = severity ? String(severity).toUpperCase() : existing?.impact || 'LOW';
       const riskScore = calculateRiskScore(finalProb, finalImpact);
       const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
       updates.push('risk_score = ?');
@@ -205,7 +220,11 @@ router.get(
     )) as any;
 
     const thresholds = thresholdRow
-      ? { greenMax: thresholdRow.green_max, amberMax: thresholdRow.amber_max, redMin: thresholdRow.red_min }
+      ? {
+          greenMax: thresholdRow.green_max,
+          amberMax: thresholdRow.amber_max,
+          redMin: thresholdRow.red_min,
+        }
       : DEFAULT_THRESHOLDS;
 
     let query = `SELECT id, title, probability, impact, initiative_id as initiativeId
@@ -281,7 +300,8 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    const { initiativeId, riskAppetiteLevel, greenMax, amberMax, redMin, autoEscalateAbove } = req.body;
+    const { initiativeId, riskAppetiteLevel, greenMax, amberMax, redMin, autoEscalateAbove } =
+      req.body;
 
     const existing = (await dbGet(
       initiativeId
@@ -300,7 +320,14 @@ router.put(
              auto_escalate_above = COALESCE(?, auto_escalate_above),
              updated_at = datetime('now')
          WHERE id = ?`,
-        [riskAppetiteLevel ?? null, greenMax ?? null, amberMax ?? null, redMin ?? null, autoEscalateAbove ?? null, existing.id]
+        [
+          riskAppetiteLevel ?? null,
+          greenMax ?? null,
+          amberMax ?? null,
+          redMin ?? null,
+          autoEscalateAbove ?? null,
+          existing.id,
+        ]
       );
       res.json({ success: true, id: existing.id });
     } else {
@@ -336,7 +363,11 @@ router.post(
       [orgId]
     )) as any;
     const thresholds = thresholdRow
-      ? { greenMax: thresholdRow.green_max, amberMax: thresholdRow.amber_max, redMin: thresholdRow.red_min }
+      ? {
+          greenMax: thresholdRow.green_max,
+          amberMax: thresholdRow.amber_max,
+          redMin: thresholdRow.red_min,
+        }
       : DEFAULT_THRESHOLDS;
 
     const rows = ((await dbAll(

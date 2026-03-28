@@ -87,7 +87,8 @@ export async function getBlockingReadinessItems(
       );
     } catch (e: unknown) {
       const msg = String((e as Error)?.message || e || '').toLowerCase();
-      const missing = msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+      const missing =
+        msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
       blocking.push({
         key: 'schedule_milestones',
         label: missing ? 'Milestones schema available' : 'Milestones defined',
@@ -96,7 +97,9 @@ export async function getBlockingReadinessItems(
         requirement: missing
           ? 'Scheduling gate requires milestone storage to be available.'
           : 'Scheduling gate requires at least one milestone.',
-        suggestedAction: missing ? 'Milestones table is missing. Run migrations (initiative_milestones).' : 'Add at least one milestone to lock the schedule baseline.',
+        suggestedAction: missing
+          ? 'Milestones table is missing. Run migrations (initiative_milestones).'
+          : 'Add at least one milestone to lock the schedule baseline.',
       });
     }
   }

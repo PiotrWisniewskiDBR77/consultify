@@ -107,7 +107,10 @@ function buildSlots(start: Date, end: Date, zoom: GanttZoom, isPl: boolean): Slo
       const now = new Date();
       slots.push({
         date: new Date(cur),
-        label: cur.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', year: '2-digit' }),
+        label: cur.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
+          month: 'short',
+          year: '2-digit',
+        }),
         isToday: cur.getFullYear() === now.getFullYear() && cur.getMonth() === now.getMonth(),
       });
       cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
@@ -153,16 +156,26 @@ export const GanttView: React.FC<GanttViewProps> = ({
         const end = parseDate(r.data?.[config.endDateFieldId]);
         if (!start || !end) return null;
         const title = String(r.data?.[config.titleFieldId] || r.data?.label || r.id);
-        const progress = config.progressFieldId ? Math.min(Math.max(Number(r.data?.[config.progressFieldId]) || 0, 0), 100) : 0;
+        const progress = config.progressFieldId
+          ? Math.min(Math.max(Number(r.data?.[config.progressFieldId]) || 0, 0), 100)
+          : 0;
 
         let deps: string[] = [];
         if (config.dependencyFieldId) {
           const depVal = r.data?.[config.dependencyFieldId];
           if (Array.isArray(depVal)) deps = depVal.map(String);
-          else if (typeof depVal === 'string' && depVal) deps = depVal.split(',').map((s) => s.trim());
+          else if (typeof depVal === 'string' && depVal)
+            deps = depVal.split(',').map((s) => s.trim());
         }
 
-        return { record: r, start, end: end < start ? start : end, title, progress, dependencies: deps };
+        return {
+          record: r,
+          start,
+          end: end < start ? start : end,
+          title,
+          progress,
+          dependencies: deps,
+        };
       })
       .filter(Boolean) as GanttRecord[];
   }, [records, config]);
@@ -188,7 +201,10 @@ export const GanttView: React.FC<GanttViewProps> = ({
     return { rangeStart: addDays(min, -pad), rangeEnd: addDays(max, pad) };
   }, [ganttRecords, zoom]);
 
-  const slots = useMemo(() => buildSlots(rangeStart, rangeEnd, zoom, isPl), [rangeStart, rangeEnd, zoom, isPl]);
+  const slots = useMemo(
+    () => buildSlots(rangeStart, rangeEnd, zoom, isPl),
+    [rangeStart, rangeEnd, zoom, isPl]
+  );
   const colWidth = COL_WIDTHS[zoom];
   const totalWidth = slots.length * colWidth;
   const totalHeight = ganttRecords.length * ROW_HEIGHT;
@@ -265,7 +281,17 @@ export const GanttView: React.FC<GanttViewProps> = ({
             <ZoomIn size={14} className="text-slate-500" />
           </button>
           <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 min-w-[50px] text-center capitalize">
-            {zoom === 'day' ? (isPl ? 'Dzień' : 'Day') : zoom === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+            {zoom === 'day'
+              ? isPl
+                ? 'Dzień'
+                : 'Day'
+              : zoom === 'week'
+                ? isPl
+                  ? 'Tydzień'
+                  : 'Week'
+                : isPl
+                  ? 'Miesiąc'
+                  : 'Month'}
           </span>
           <button
             onClick={() => cycleZoom('out')}
@@ -317,11 +343,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
         </div>
 
         {/* Right panel: timeline */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-auto relative"
-          onScroll={handleScroll}
-        >
+        <div ref={scrollRef} className="flex-1 overflow-auto relative" onScroll={handleScroll}>
           {/* Header */}
           <div
             className="sticky top-0 z-10 flex bg-slate-50 dark:bg-navy-900 border-b border-slate-200/60 dark:border-navy-700/60"

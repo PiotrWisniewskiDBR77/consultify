@@ -52,10 +52,7 @@ export function pillColorScheme(scheme: PillColorScheme): string {
   return COLOR_MAP[scheme] ?? COLOR_MAP.neutral;
 }
 
-export function actionPillClass(
-  scheme: PillColorScheme,
-  extra?: string
-): string {
+export function actionPillClass(scheme: PillColorScheme, extra?: string): string {
   return [PREVIEW_PILL_BASE, pillColorScheme(scheme), extra].filter(Boolean).join(' ');
 }
 

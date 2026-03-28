@@ -8,6 +8,7 @@
  */
 
 import crypto from 'crypto';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -22,7 +23,7 @@ export class SCIMService {
       `INSERT INTO tp_scim_tokens (organization_id, token_hash, token_prefix)
        VALUES ($1, $2, $3)
        ON CONFLICT (organization_id) DO UPDATE SET token_hash = $2, token_prefix = $3`,
-      [organizationId, tokenHash, tokenPrefix],
+      [organizationId, tokenHash, tokenPrefix]
     );
 
     return { token: rawToken };
@@ -35,7 +36,7 @@ export class SCIMService {
     const db = getDatabase();
     const result = await db.query(
       'SELECT organization_id FROM tp_scim_tokens WHERE token_hash = $1 AND enabled = true',
-      [tokenHash],
+      [tokenHash]
     );
 
     if (result.rows.length === 0) return { valid: false };
@@ -47,7 +48,7 @@ export class SCIMService {
     organizationId: string,
     filter?: string,
     startIndex = 1,
-    count = 100,
+    count = 100
   ): Promise<any> {
     const db = getDatabase();
     let query = 'SELECT * FROM users WHERE organization_id = $1';
@@ -70,7 +71,7 @@ export class SCIMService {
     const result = await db.query(query, params);
     const totalResult = await db.query(
       'SELECT COUNT(*) as total FROM users WHERE organization_id = $1',
-      [organizationId],
+      [organizationId]
     );
 
     const totalRow = totalResult.rows[0] as { total: string };
@@ -100,7 +101,7 @@ export class SCIMService {
        VALUES ($1, $2, $3, $4, 'member', 'active')
        ON CONFLICT (email) DO UPDATE SET first_name = $2, last_name = $3, status = 'active'
        RETURNING *`,
-      [email, name.givenName || '', name.familyName || '', organizationId],
+      [email, name.givenName || '', name.familyName || '', organizationId]
     );
 
     return this.toSCIMUser(result.rows[0]);
@@ -114,7 +115,7 @@ export class SCIMService {
     const result = await db.query(
       `UPDATE users SET first_name = COALESCE($2, first_name), last_name = COALESCE($3, last_name),
        status = $4 WHERE id = $1 RETURNING *`,
-      [userId, name.givenName, name.familyName, active ? 'active' : 'deactivated'],
+      [userId, name.givenName, name.familyName, active ? 'active' : 'deactivated']
     );
 
     return result.rows[0] ? this.toSCIMUser(result.rows[0]) : null;

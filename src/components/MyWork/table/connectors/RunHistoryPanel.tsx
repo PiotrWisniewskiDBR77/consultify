@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -9,7 +9,7 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Connector, ConnectorRun } from './useConnectors';
@@ -118,10 +118,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
 
       {/* Stats strip */}
       <div className="grid grid-cols-4 gap-2">
-        <StatCard
-          label={isPl ? 'Uruchomienia' : 'Total runs'}
-          value={String(stats.total)}
-        />
+        <StatCard label={isPl ? 'Uruchomienia' : 'Total runs'} value={String(stats.total)} />
         <StatCard
           label={isPl ? 'Sukces' : 'Success rate'}
           value={`${stats.successRate}%`}
@@ -131,10 +128,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
           label={isPl ? 'Zaimportowane' : 'Imported'}
           value={stats.totalImported.toLocaleString()}
         />
-        <StatCard
-          label={isPl ? 'Udane' : 'Successes'}
-          value={String(stats.successes)}
-        />
+        <StatCard label={isPl ? 'Udane' : 'Successes'} value={String(stats.successes)} />
       </div>
 
       {/* Run list */}
@@ -205,13 +199,12 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                     </div>
                   )}
 
-                  {run.error && (
-                    isExpanded ? (
+                  {run.error &&
+                    (isExpanded ? (
                       <ChevronDown size={14} className="text-slate-400" />
                     ) : (
                       <ChevronRight size={14} className="text-slate-400" />
-                    )
-                  )}
+                    ))}
                 </button>
 
                 {/* Expanded error details */}

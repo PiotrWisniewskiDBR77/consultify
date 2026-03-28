@@ -8,7 +8,7 @@
  *       → recallOutput() → verify full lifecycle with lineage preserved
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock DB layer ──────────────────────────────────────────────────────────
 
@@ -29,16 +29,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 // ── Real service imports ───────────────────────────────────────────────────
 
 import {
-  createOutputArtifact,
-} from '../../../reportsPresModelService.js';
-
-import {
-  createPublishRecord,
-  transitionPublishState,
-  submitReviewGate,
   createCoordinatedPublish,
+  createPublishRecord,
   recallOutput,
+  submitReviewGate,
+  transitionPublishState,
 } from '../../../publishReviewService.js';
+import { createOutputArtifact } from '../../../reportsPresModelService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 

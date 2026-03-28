@@ -4,16 +4,7 @@
  * Groups events by time window (Today, Yesterday, This week, Earlier),
  * supports compact/expanded modes, and polls for real-time updates.
  */
-import {
-  Activity,
-  ChevronRight,
-  Clock,
-  Edit3,
-  Loader2,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Activity, ChevronRight, Clock, Edit3, Loader2, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -233,9 +224,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 px-4 text-center">
             <Activity size={20} className="mb-2 opacity-40" />
-            <span className="text-[11px]">
-              {isPl ? 'Brak aktywności' : 'No activity yet'}
-            </span>
+            <span className="text-[11px]">{isPl ? 'Brak aktywności' : 'No activity yet'}</span>
           </div>
         ) : (
           TIME_GROUP_ORDER.map((group) => {

@@ -75,26 +75,37 @@ const schemaValidationService = {
       return { valid: false, error: 'Field name cannot be empty' };
     }
     if (trimmed.length > MAX_FIELD_NAME_LENGTH) {
-      return { valid: false, error: `Field name must be at most ${MAX_FIELD_NAME_LENGTH} characters` };
+      return {
+        valid: false,
+        error: `Field name must be at most ${MAX_FIELD_NAME_LENGTH} characters`,
+      };
     }
     if (RESERVED_FIELD_NAMES.includes(trimmed.toLowerCase())) {
       return { valid: false, error: `'${trimmed}' is a reserved field name` };
     }
     if (!FIELD_NAME_REGEX.test(trimmed)) {
-      return { valid: false, error: 'Field name must start with a letter and contain only letters, numbers, underscores, and spaces' };
+      return {
+        valid: false,
+        error:
+          'Field name must start with a letter and contain only letters, numbers, underscores, and spaces',
+      };
     }
 
     const db = getDatabase();
     try {
       const params: unknown[] = [tableId, trimmed];
-      let sql = 'SELECT id FROM tp_fields WHERE table_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2))';
+      let sql =
+        'SELECT id FROM tp_fields WHERE table_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2))';
       if (excludeFieldId) {
         sql += ' AND id != $3';
         params.push(excludeFieldId);
       }
       const result = await (db as any).query(sql, params);
       if (result.rows?.length > 0) {
-        return { valid: false, error: `A field with name '${trimmed}' already exists in this table` };
+        return {
+          valid: false,
+          error: `A field with name '${trimmed}' already exists in this table`,
+        };
       }
       return { valid: true };
     } catch (e) {
@@ -113,7 +124,10 @@ const schemaValidationService = {
     }
     const normalized = fieldType.trim();
     if (!ALLOWED_FIELD_TYPES.includes(normalized as any)) {
-      return { valid: false, error: `Invalid field type '${fieldType}'. Allowed: ${ALLOWED_FIELD_TYPES.join(', ')}` };
+      return {
+        valid: false,
+        error: `Invalid field type '${fieldType}'. Allowed: ${ALLOWED_FIELD_TYPES.join(', ')}`,
+      };
     }
     return { valid: true };
   },
@@ -197,7 +211,10 @@ const schemaValidationService = {
         }
       }
       if (options.actionType === 'run_automation') {
-        if (options.actionConfig?.automationId && typeof options.actionConfig.automationId !== 'string') {
+        if (
+          options.actionConfig?.automationId &&
+          typeof options.actionConfig.automationId !== 'string'
+        ) {
           errors.push('button actionConfig.automationId must be a string');
         }
       }
@@ -235,20 +252,27 @@ const schemaValidationService = {
       return { valid: false, error: 'Table name cannot be empty' };
     }
     if (trimmed.length > MAX_FIELD_NAME_LENGTH) {
-      return { valid: false, error: `Table name must be at most ${MAX_FIELD_NAME_LENGTH} characters` };
+      return {
+        valid: false,
+        error: `Table name must be at most ${MAX_FIELD_NAME_LENGTH} characters`,
+      };
     }
 
     const db = getDatabase();
     try {
       const params: unknown[] = [baseId, trimmed];
-      let sql = 'SELECT id FROM tp_tables WHERE base_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2))';
+      let sql =
+        'SELECT id FROM tp_tables WHERE base_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2))';
       if (excludeTableId) {
         sql += ' AND id != $3';
         params.push(excludeTableId);
       }
       const result = await (db as any).query(sql, params);
       if (result.rows?.length > 0) {
-        return { valid: false, error: `A table with name '${trimmed}' already exists in this base` };
+        return {
+          valid: false,
+          error: `A table with name '${trimmed}' already exists in this base`,
+        };
       }
       return { valid: true };
     } catch (e) {
@@ -261,14 +285,18 @@ const schemaValidationService = {
     }
   },
 
-  async validateLinkedRecordTarget(targetTableId: string): Promise<{ valid: boolean; error?: string }> {
+  async validateLinkedRecordTarget(
+    targetTableId: string
+  ): Promise<{ valid: boolean; error?: string }> {
     if (!targetTableId || typeof targetTableId !== 'string') {
       return { valid: false, error: 'Target table ID is required' };
     }
 
     const db = getDatabase();
     try {
-      const result = await (db as any).query('SELECT id FROM tp_tables WHERE id = $1', [targetTableId]);
+      const result = await (db as any).query('SELECT id FROM tp_tables WHERE id = $1', [
+        targetTableId,
+      ]);
       if (!result.rows?.length) {
         return { valid: false, error: `Target table '${targetTableId}' does not exist` };
       }
@@ -287,10 +315,9 @@ const schemaValidationService = {
     data: Record<string, unknown>
   ): Promise<{ valid: boolean; errors: Array<{ fieldId: string; message: string }> }> {
     const db = getDatabase();
-    const fieldsResult = await (db as any).query(
-      'SELECT * FROM tp_fields WHERE table_id = $1',
-      [tableId]
-    );
+    const fieldsResult = await (db as any).query('SELECT * FROM tp_fields WHERE table_id = $1', [
+      tableId,
+    ]);
     const fields = fieldsResult.rows as Array<{
       id: string;
       name: string;
@@ -298,15 +325,19 @@ const schemaValidationService = {
       options: Record<string, unknown>;
     }>;
 
-    const fieldByName = new Map<string, typeof fields[number]>();
-    const fieldById = new Map<string, typeof fields[number]>();
+    const fieldByName = new Map<string, (typeof fields)[number]>();
+    const fieldById = new Map<string, (typeof fields)[number]>();
     for (const f of fields) {
       fieldByName.set(f.name, f);
       fieldById.set(f.id, f);
     }
 
     const AUTO_FIELD_TYPES = new Set([
-      'createdTime', 'createdBy', 'lastModifiedTime', 'lastModifiedBy', 'autoNumber',
+      'createdTime',
+      'createdBy',
+      'lastModifiedTime',
+      'lastModifiedBy',
+      'autoNumber',
     ]);
     const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -319,7 +350,10 @@ const schemaValidationService = {
       if (!field) continue;
 
       if (AUTO_FIELD_TYPES.has(field.field_type)) {
-        errors.push({ fieldId: field.id, message: `Cannot set auto field '${field.name}' (type: ${field.field_type})` });
+        errors.push({
+          fieldId: field.id,
+          message: `Cannot set auto field '${field.name}' (type: ${field.field_type})`,
+        });
         continue;
       }
 
@@ -331,7 +365,10 @@ const schemaValidationService = {
           if (typeof value !== 'string') {
             errors.push({ fieldId: field.id, message: `'${field.name}' must be a string` });
           } else if (value.length > 10000) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' exceeds max length of 10000` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' exceeds max length of 10000`,
+            });
           }
           break;
 
@@ -340,7 +377,10 @@ const schemaValidationService = {
           if (typeof value !== 'string') {
             errors.push({ fieldId: field.id, message: `'${field.name}' must be a string` });
           } else if (value.length > 100000) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' exceeds max length of 100000` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' exceeds max length of 100000`,
+            });
           }
           break;
 
@@ -369,8 +409,14 @@ const schemaValidationService = {
           break;
 
         case 'date':
-          if (typeof value !== 'string' || (!ISO_DATE_REGEX.test(value) && isNaN(Date.parse(value)))) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be a valid ISO date string` });
+          if (
+            typeof value !== 'string' ||
+            (!ISO_DATE_REGEX.test(value) && isNaN(Date.parse(value)))
+          ) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be a valid ISO date string`,
+            });
           }
           break;
 
@@ -380,7 +426,10 @@ const schemaValidationService = {
             const opts = field.options as { options?: Array<{ value: string }> };
             const allowed = opts?.options?.map((o) => o.value) ?? [];
             if (allowed.length > 0 && !allowed.includes(String(value))) {
-              errors.push({ fieldId: field.id, message: `'${field.name}' value '${value}' is not in allowed options` });
+              errors.push({
+                fieldId: field.id,
+                message: `'${field.name}' value '${value}' is not in allowed options`,
+              });
             }
           }
           break;
@@ -396,7 +445,10 @@ const schemaValidationService = {
             if (allowed.length > 0) {
               for (const v of value) {
                 if (!allowed.includes(String(v))) {
-                  errors.push({ fieldId: field.id, message: `'${field.name}' value '${v}' is not in allowed options` });
+                  errors.push({
+                    fieldId: field.id,
+                    message: `'${field.name}' value '${v}' is not in allowed options`,
+                  });
                 }
               }
             }
@@ -418,7 +470,10 @@ const schemaValidationService = {
 
         case 'email':
           if (typeof value !== 'string' || !EMAIL_REGEX.test(value)) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be a valid email address` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be a valid email address`,
+            });
           }
           break;
 
@@ -433,11 +488,17 @@ const schemaValidationService = {
         case 'linkedRecord':
         case 'linked_record':
           if (!Array.isArray(value)) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be an array of UUIDs` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be an array of UUIDs`,
+            });
           } else {
             for (const v of value) {
               if (typeof v !== 'string' || !UUID_REGEX.test(v)) {
-                errors.push({ fieldId: field.id, message: `'${field.name}' contains invalid UUID: ${v}` });
+                errors.push({
+                  fieldId: field.id,
+                  message: `'${field.name}' contains invalid UUID: ${v}`,
+                });
               }
             }
           }
@@ -445,11 +506,17 @@ const schemaValidationService = {
 
         case 'attachment':
           if (!Array.isArray(value)) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be an array of UUIDs` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be an array of UUIDs`,
+            });
           } else {
             for (const v of value) {
               if (typeof v !== 'string' || !UUID_REGEX.test(v)) {
-                errors.push({ fieldId: field.id, message: `'${field.name}' contains invalid UUID: ${v}` });
+                errors.push({
+                  fieldId: field.id,
+                  message: `'${field.name}' contains invalid UUID: ${v}`,
+                });
               }
             }
           }
@@ -459,7 +526,10 @@ const schemaValidationService = {
         case 'lookup':
         case 'rollup':
         case 'formula':
-          errors.push({ fieldId: field.id, message: `Cannot set computed field '${field.name}' (type: ${field.field_type})` });
+          errors.push({
+            fieldId: field.id,
+            message: `Cannot set computed field '${field.name}' (type: ${field.field_type})`,
+          });
           break;
 
         case 'button':
@@ -471,7 +541,10 @@ const schemaValidationService = {
           } else {
             const max = Number((field.options as { max?: number })?.max) || 5;
             if (value < 0 || value > max) {
-              errors.push({ fieldId: field.id, message: `'${field.name}' must be between 0 and ${max}` });
+              errors.push({
+                fieldId: field.id,
+                message: `'${field.name}' must be between 0 and ${max}`,
+              });
             }
           }
           break;
@@ -479,7 +552,10 @@ const schemaValidationService = {
 
         case 'duration':
           if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be a non-negative number (seconds)` });
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be a non-negative number (seconds)`,
+            });
           }
           break;
 

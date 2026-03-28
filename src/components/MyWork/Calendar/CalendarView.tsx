@@ -27,7 +27,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const { events, loading, filter, setFilter, refetch } = useCalendarData(dateRange, refreshTrigger);
+  const { events, loading, filter, setFilter, refetch } = useCalendarData(
+    dateRange,
+    refreshTrigger
+  );
 
   const handleEventClick = useCallback(
     (eventId: string, source: string) => {

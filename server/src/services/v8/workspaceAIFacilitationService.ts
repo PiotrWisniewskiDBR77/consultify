@@ -14,21 +14,21 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type {
   AISuggestion,
-  SessionInsight,
   CollaborativeDecision,
+  CreateDecisionParams,
   DecisionOption,
-  SuggestionState,
-  InsightSeverity,
   DecisionStatus,
   GenerateSuggestionParams,
+  InsightSeverity,
   RecordInsightParams,
-  CreateDecisionParams,
   SessionAISummary,
+  SessionInsight,
+  SuggestionState,
 } from '../../types/workspaceAIFacilitation.js';
 import {
+  CreateDecisionParamsSchema,
   GenerateSuggestionParamsSchema,
   RecordInsightParamsSchema,
-  CreateDecisionParamsSchema,
 } from '../../types/workspaceAIFacilitation.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -146,9 +146,7 @@ function rowToDecision(row: DecisionRow): CollaborativeDecision {
 /**
  * Generate an AI suggestion for a facilitation session.
  */
-export async function generateSuggestion(
-  params: GenerateSuggestionParams,
-): Promise<AISuggestion> {
+export async function generateSuggestion(params: GenerateSuggestionParams): Promise<AISuggestion> {
   const validated = GenerateSuggestionParamsSchema.parse(params);
 
   const suggestionId = uuidv4();
@@ -186,12 +184,12 @@ export async function generateSuggestion(
       suggestion.createdAt,
       suggestion.resolvedAt,
       suggestion.resolvedBy,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Generated suggestion ${suggestionId} (${validated.suggestionType}) ` +
-    `for session ${validated.sessionId}`,
+      `for session ${validated.sessionId}`
   );
 
   return suggestion;
@@ -203,7 +201,7 @@ export async function generateSuggestion(
 export async function getSuggestions(
   sessionId: string,
   organizationId: string,
-  state?: SuggestionState,
+  state?: SuggestionState
 ): Promise<AISuggestion[]> {
   if (state) {
     const rows = await dbAll<SuggestionRow>(
@@ -211,7 +209,7 @@ export async function getSuggestions(
        WHERE session_id = ? AND organization_id = ? AND state = ?
        ORDER BY created_at DESC`,
       [sessionId, organizationId, state],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToSuggestion);
   }
@@ -221,7 +219,7 @@ export async function getSuggestions(
      WHERE session_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToSuggestion);
 }
@@ -232,13 +230,13 @@ export async function getSuggestions(
 export async function acceptSuggestion(
   suggestionId: string,
   organizationId: string,
-  acceptedBy: string,
+  acceptedBy: string
 ): Promise<AISuggestion> {
   const row = await dbGet<SuggestionRow>(
     `SELECT * FROM v8_ai_suggestions
      WHERE suggestion_id = ? AND organization_id = ?`,
     [suggestionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -247,7 +245,7 @@ export async function acceptSuggestion(
 
   if (row.state !== 'pending') {
     throw new Error(
-      `Cannot accept suggestion ${suggestionId}: current state is '${row.state}', expected 'pending'`,
+      `Cannot accept suggestion ${suggestionId}: current state is '${row.state}', expected 'pending'`
     );
   }
 
@@ -257,7 +255,7 @@ export async function acceptSuggestion(
     `UPDATE v8_ai_suggestions
      SET state = 'accepted', resolved_at = ?, resolved_by = ?
      WHERE suggestion_id = ? AND organization_id = ?`,
-    [now, acceptedBy, suggestionId, organizationId],
+    [now, acceptedBy, suggestionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Suggestion ${suggestionId} accepted by ${acceptedBy}`);
@@ -276,13 +274,13 @@ export async function acceptSuggestion(
 export async function dismissSuggestion(
   suggestionId: string,
   organizationId: string,
-  dismissedBy: string,
+  dismissedBy: string
 ): Promise<AISuggestion> {
   const row = await dbGet<SuggestionRow>(
     `SELECT * FROM v8_ai_suggestions
      WHERE suggestion_id = ? AND organization_id = ?`,
     [suggestionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -291,7 +289,7 @@ export async function dismissSuggestion(
 
   if (row.state !== 'pending') {
     throw new Error(
-      `Cannot dismiss suggestion ${suggestionId}: current state is '${row.state}', expected 'pending'`,
+      `Cannot dismiss suggestion ${suggestionId}: current state is '${row.state}', expected 'pending'`
     );
   }
 
@@ -301,7 +299,7 @@ export async function dismissSuggestion(
     `UPDATE v8_ai_suggestions
      SET state = 'dismissed', resolved_at = ?, resolved_by = ?
      WHERE suggestion_id = ? AND organization_id = ?`,
-    [now, dismissedBy, suggestionId, organizationId],
+    [now, dismissedBy, suggestionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Suggestion ${suggestionId} dismissed by ${dismissedBy}`);
@@ -320,7 +318,7 @@ export async function dismissSuggestion(
 export async function expireStaleSuggestions(
   sessionId: string,
   organizationId: string,
-  maxAgeMs: number = DEFAULT_STALE_THRESHOLD_MS,
+  maxAgeMs: number = DEFAULT_STALE_THRESHOLD_MS
 ): Promise<AISuggestion[]> {
   const cutoff = new Date(Date.now() - maxAgeMs).toISOString();
   const now = new Date().toISOString();
@@ -331,7 +329,7 @@ export async function expireStaleSuggestions(
        AND created_at < ?
      ORDER BY created_at ASC`,
     [sessionId, organizationId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   const rows = staleRows || [];
@@ -342,12 +340,10 @@ export async function expireStaleSuggestions(
      SET state = 'expired', resolved_at = ?
      WHERE session_id = ? AND organization_id = ? AND state = 'pending'
        AND created_at < ?`,
-    [now, sessionId, organizationId, cutoff],
+    [now, sessionId, organizationId, cutoff]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Expired ${rows.length} stale suggestions in session ${sessionId}`,
-  );
+  logger.info(`${LOG_PREFIX} Expired ${rows.length} stale suggestions in session ${sessionId}`);
 
   return rows.map((r) => ({
     ...rowToSuggestion(r),
@@ -363,9 +359,7 @@ export async function expireStaleSuggestions(
 /**
  * Record a session insight.
  */
-export async function recordInsight(
-  params: RecordInsightParams,
-): Promise<SessionInsight> {
+export async function recordInsight(params: RecordInsightParams): Promise<SessionInsight> {
   const validated = RecordInsightParamsSchema.parse(params);
 
   const insightId = uuidv4();
@@ -396,12 +390,12 @@ export async function recordInsight(
       insight.body,
       insight.severity,
       insight.createdAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Recorded insight ${insightId} (${validated.severity}) ` +
-    `for session ${validated.sessionId}`,
+      `for session ${validated.sessionId}`
   );
 
   return insight;
@@ -413,7 +407,7 @@ export async function recordInsight(
 export async function getInsights(
   sessionId: string,
   organizationId: string,
-  severity?: InsightSeverity,
+  severity?: InsightSeverity
 ): Promise<SessionInsight[]> {
   if (severity) {
     const rows = await dbAll<InsightRow>(
@@ -421,7 +415,7 @@ export async function getInsights(
        WHERE session_id = ? AND organization_id = ? AND severity = ?
        ORDER BY created_at DESC`,
       [sessionId, organizationId, severity],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToInsight);
   }
@@ -431,7 +425,7 @@ export async function getInsights(
      WHERE session_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToInsight);
 }
@@ -444,7 +438,7 @@ export async function getInsights(
  * Create a collaborative decision with voting options.
  */
 export async function createCollaborativeDecision(
-  params: CreateDecisionParams,
+  params: CreateDecisionParams
 ): Promise<CollaborativeDecision> {
   const validated = CreateDecisionParamsSchema.parse(params);
 
@@ -484,12 +478,12 @@ export async function createCollaborativeDecision(
       decision.outcome,
       decision.createdAt,
       decision.closedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created decision ${decisionId} with ${options.length} options ` +
-    `for session ${validated.sessionId}`,
+      `for session ${validated.sessionId}`
   );
 
   return decision;
@@ -502,13 +496,13 @@ export async function voteOnDecision(
   decisionId: string,
   optionId: string,
   voterId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CollaborativeDecision> {
   const row = await dbGet<DecisionRow>(
     `SELECT * FROM v8_collaborative_decisions
      WHERE decision_id = ? AND organization_id = ?`,
     [decisionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -536,11 +530,11 @@ export async function voteOnDecision(
     `UPDATE v8_collaborative_decisions
      SET options = ?
      WHERE decision_id = ? AND organization_id = ?`,
-    [JSON.stringify(options), decisionId, organizationId],
+    [JSON.stringify(options), decisionId, organizationId]
   );
 
   logger.info(
-    `${LOG_PREFIX} Vote recorded: ${voterId} → option ${optionId} on decision ${decisionId}`,
+    `${LOG_PREFIX} Vote recorded: ${voterId} → option ${optionId} on decision ${decisionId}`
   );
 
   return {
@@ -555,13 +549,13 @@ export async function voteOnDecision(
 export async function closeDecision(
   decisionId: string,
   organizationId: string,
-  outcome: string,
+  outcome: string
 ): Promise<CollaborativeDecision> {
   const row = await dbGet<DecisionRow>(
     `SELECT * FROM v8_collaborative_decisions
      WHERE decision_id = ? AND organization_id = ?`,
     [decisionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -578,7 +572,7 @@ export async function closeDecision(
     `UPDATE v8_collaborative_decisions
      SET status = 'closed', outcome = ?, closed_at = ?
      WHERE decision_id = ? AND organization_id = ?`,
-    [outcome, now, decisionId, organizationId],
+    [outcome, now, decisionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Decision ${decisionId} closed with outcome: ${outcome}`);
@@ -597,7 +591,7 @@ export async function closeDecision(
 export async function getDecisions(
   sessionId: string,
   organizationId: string,
-  status?: DecisionStatus,
+  status?: DecisionStatus
 ): Promise<CollaborativeDecision[]> {
   if (status) {
     const rows = await dbAll<DecisionRow>(
@@ -605,7 +599,7 @@ export async function getDecisions(
        WHERE session_id = ? AND organization_id = ? AND status = ?
        ORDER BY created_at DESC`,
       [sessionId, organizationId, status],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToDecision);
   }
@@ -615,7 +609,7 @@ export async function getDecisions(
      WHERE session_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToDecision);
 }
@@ -630,27 +624,27 @@ export async function getDecisions(
  */
 export async function getSessionAISummary(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SessionAISummary> {
   const suggestions = await dbAll<SuggestionRow>(
     `SELECT * FROM v8_ai_suggestions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const insights = await dbAll<InsightRow>(
     `SELECT * FROM v8_session_insights
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const decisions = await dbAll<DecisionRow>(
     `SELECT * FROM v8_collaborative_decisions
      WHERE session_id = ? AND organization_id = ? AND status = 'open'`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const suggestionCounts: Record<string, number> = {
@@ -680,8 +674,8 @@ export async function getSessionAISummary(
 
   logger.info(
     `${LOG_PREFIX} Session AI summary for ${sessionId}: ` +
-    `suggestions=${(suggestions || []).length}, insights=${(insights || []).length}, ` +
-    `openDecisions=${(decisions || []).length}`,
+      `suggestions=${(suggestions || []).length}, insights=${(insights || []).length}, ` +
+      `openDecisions=${(decisions || []).length}`
   );
 
   return {

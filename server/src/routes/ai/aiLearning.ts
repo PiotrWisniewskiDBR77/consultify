@@ -8,16 +8,15 @@
  * - GET /interactions
  * - GET /metrics
  */
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
+import { getPatterns as getLearningPatterns } from '../../services/ai/aiLearningService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-
-import { getPatterns as getLearningPatterns } from '../../services/ai/aiLearningService.js';
 
 const router = Router();
 
@@ -152,11 +151,9 @@ router.get(
     }
 
     try {
-      const patternsCount = await dbGet(
-        `SELECT COUNT(*) as total FROM ai_learning_patterns`,
-        [],
-        { fallback: true } as any
-      );
+      const patternsCount = await dbGet(`SELECT COUNT(*) as total FROM ai_learning_patterns`, [], {
+        fallback: true,
+      } as any);
       patternsLearned = Number((patternsCount as any)?.total || 0);
     } catch {
       // ignore
@@ -193,4 +190,3 @@ router.get(
 );
 
 export default router;
-

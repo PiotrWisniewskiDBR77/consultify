@@ -15,11 +15,19 @@ interface QuickNotesPopoverProps {
   onClose: () => void;
 }
 
-export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({ isPl, nodeId, currentNotes, onSave, onClose }) => {
+export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
+  isPl,
+  nodeId,
+  currentNotes,
+  onSave,
+  onClose,
+}) => {
   const [value, setValue] = useState(currentNotes || '');
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { ref.current?.focus(); }, []);
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
 
   const handleSave = useCallback(() => {
     onSave(nodeId, value);
@@ -33,7 +41,10 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({ isPl, node
           <StickyNote size={12} />
           {isPl ? 'Notatki' : 'Notes'}
         </div>
-        <button onClick={onClose} className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10">
+        <button
+          onClick={onClose}
+          className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
+        >
           <X size={12} className="text-slate-400" />
         </button>
       </div>
@@ -43,9 +54,14 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({ isPl, node
         onChange={(e) => setValue(e.target.value)}
         placeholder={isPl ? 'Dodaj notatkę…' : 'Add a note…'}
         className="w-full h-20 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
-        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave();
+        }}
       />
-      <button onClick={handleSave} className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors">
+      <button
+        onClick={handleSave}
+        className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors"
+      >
         {isPl ? 'Zapisz' : 'Save'}
       </button>
     </div>
@@ -62,12 +78,20 @@ interface QuickTagsPopoverProps {
   onClose: () => void;
 }
 
-export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({ isPl, nodeId, currentTags, onSave, onClose }) => {
+export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
+  isPl,
+  nodeId,
+  currentTags,
+  onSave,
+  onClose,
+}) => {
   const [tags, setTags] = useState<string[]>(currentTags || []);
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const addTag = useCallback(() => {
     const trimmed = input.trim();
@@ -79,11 +103,14 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({ isPl, nodeId
     setInput('');
   }, [input, tags, nodeId, onSave]);
 
-  const removeTag = useCallback((tag: string) => {
-    const next = tags.filter((t) => t !== tag);
-    setTags(next);
-    onSave(nodeId, next);
-  }, [tags, nodeId, onSave]);
+  const removeTag = useCallback(
+    (tag: string) => {
+      const next = tags.filter((t) => t !== tag);
+      setTags(next);
+      onSave(nodeId, next);
+    },
+    [tags, nodeId, onSave]
+  );
 
   return (
     <div className="w-64 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-3">
@@ -92,14 +119,20 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({ isPl, nodeId
           <Hash size={12} />
           {isPl ? 'Tagi' : 'Tags'}
         </div>
-        <button onClick={onClose} className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10">
+        <button
+          onClick={onClose}
+          className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
+        >
           <X size={12} className="text-slate-400" />
         </button>
       </div>
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {tags.map((tag) => (
-            <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+            >
               {tag}
               <button onClick={() => removeTag(tag)} className="hover:text-red-500">
                 <X size={10} />
@@ -113,11 +146,19 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({ isPl, nodeId
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addTag();
+            }
+          }}
           placeholder={isPl ? 'Nowy tag…' : 'New tag…'}
           className="flex-1 h-7 px-2 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
-        <button onClick={addTag} className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">
+        <button
+          onClick={addTag}
+          className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+        >
           <Plus size={12} />
         </button>
       </div>
@@ -135,11 +176,19 @@ interface QuickLinkPopoverProps {
   onClose: () => void;
 }
 
-export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({ isPl, nodeId, currentLink, onSave, onClose }) => {
+export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
+  isPl,
+  nodeId,
+  currentLink,
+  onSave,
+  onClose,
+}) => {
   const [value, setValue] = useState(currentLink || '');
   const ref = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { ref.current?.focus(); }, []);
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
 
   const handleSave = useCallback(() => {
     onSave(nodeId, value.trim());
@@ -153,7 +202,10 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({ isPl, nodeId
           <Link2 size={12} />
           {isPl ? 'Link' : 'Link'}
         </div>
-        <button onClick={onClose} className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10">
+        <button
+          onClick={onClose}
+          className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
+        >
           <X size={12} className="text-slate-400" />
         </button>
       </div>
@@ -163,9 +215,14 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({ isPl, nodeId
         onChange={(e) => setValue(e.target.value)}
         placeholder="https://…"
         className="w-full h-8 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
-        onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSave();
+        }}
       />
-      <button onClick={handleSave} className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors">
+      <button
+        onClick={handleSave}
+        className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors"
+      >
         {isPl ? 'Zapisz' : 'Save'}
       </button>
     </div>

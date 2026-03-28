@@ -1,16 +1,16 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import {
-  ProposalStatusValues,
-  RunStateValues,
-  type ProposalStatus,
-  type RunState,
-} from '../../types/executionSpine.js';
 import * as executionSpineService from '../../services/v8/executionSpineService.js';
+import {
+  type ProposalStatus,
+  ProposalStatusValues,
+  type RunState,
+  RunStateValues,
+} from '../../types/executionSpine.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -36,7 +36,11 @@ function isResolvableProposalStatus(value: string): value is ProposalStatus {
   return (RESOLVABLE_PROPOSAL_STATUSES as readonly string[]).includes(value);
 }
 
-function handleExecutionError(err: unknown, res: Response, fallbackMessage: string): Response | null {
+function handleExecutionError(
+  err: unknown,
+  res: Response,
+  fallbackMessage: string
+): Response | null {
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: fallbackMessage,
@@ -85,7 +89,7 @@ async function ensureProposalBelongsToRun(
   runId: string,
   proposalId: string,
   organizationId: string,
-  res: Response,
+  res: Response
 ) {
   const proposals = await executionSpineService.getProposalsByRun(runId, organizationId);
   const proposal = proposals.find((item) => item.proposalId === proposalId);
@@ -119,7 +123,7 @@ router.get(
       : await executionSpineService.getRunsByOrg(organizationId, state, limit);
 
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -139,7 +143,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -149,7 +153,7 @@ router.get(
     const run = await ensureRunExists(req.params.runId, organizationId, res);
     if (!run) return;
     return res.json({ data: run, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -161,7 +165,7 @@ router.get(
 
     const data = await executionSpineService.getRunTransitions(req.params.runId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -173,7 +177,7 @@ router.get(
 
     const data = await executionSpineService.getProposalsByRun(req.params.runId, organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -194,7 +198,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -203,14 +207,18 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
 
     try {
-      const data = await executionSpineService.submitForReview(req.params.runId, organizationId, userId);
+      const data = await executionSpineService.submitForReview(
+        req.params.runId,
+        organizationId,
+        userId
+      );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       const handled = handleExecutionError(err, res, 'Unable to submit run for review');
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -223,7 +231,7 @@ router.post(
         req.params.runId,
         organizationId,
         userId,
-        req.body?.reason,
+        req.body?.reason
       );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
@@ -231,7 +239,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -248,14 +256,19 @@ router.post(
     }
 
     try {
-      const data = await executionSpineService.rejectRun(req.params.runId, organizationId, userId, reason);
+      const data = await executionSpineService.rejectRun(
+        req.params.runId,
+        organizationId,
+        userId,
+        reason
+      );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       const handled = handleExecutionError(err, res, 'Unable to reject run');
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -271,7 +284,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -280,14 +293,18 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
 
     try {
-      const data = await executionSpineService.completeRun(req.params.runId, organizationId, userId);
+      const data = await executionSpineService.completeRun(
+        req.params.runId,
+        organizationId,
+        userId
+      );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       const handled = handleExecutionError(err, res, 'Unable to complete run');
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -296,14 +313,18 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
 
     try {
-      const data = await executionSpineService.replanFromRejection(req.params.runId, organizationId, userId);
+      const data = await executionSpineService.replanFromRejection(
+        req.params.runId,
+        organizationId,
+        userId
+      );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       const handled = handleExecutionError(err, res, 'Unable to replan run');
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -329,9 +350,14 @@ router.post(
     const run = await ensureRunExists(req.params.runId, organizationId, res);
     if (!run) return;
 
-    const proposals = await executionSpineService.getProposalsByRun(req.params.runId, organizationId);
+    const proposals = await executionSpineService.getProposalsByRun(
+      req.params.runId,
+      organizationId
+    );
     const allowedIds = new Set(proposals.map((item) => item.proposalId));
-    const hasForeignProposal = proposalIds.some((proposalId: unknown) => !allowedIds.has(String(proposalId)));
+    const hasForeignProposal = proposalIds.some(
+      (proposalId: unknown) => !allowedIds.has(String(proposalId))
+    );
 
     if (hasForeignProposal) {
       return res.status(404).json({
@@ -344,7 +370,7 @@ router.post(
       const data = await executionSpineService.resolveProposalsBatch(
         proposalIds.map((proposalId: unknown) => String(proposalId)),
         status,
-        userId,
+        userId
       );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
@@ -352,7 +378,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -375,19 +401,23 @@ router.post(
       req.params.runId,
       req.params.proposalId,
       organizationId,
-      res,
+      res
     );
     if (!proposal) return;
 
     try {
-      const data = await executionSpineService.resolveProposal(req.params.proposalId, status, userId);
+      const data = await executionSpineService.resolveProposal(
+        req.params.proposalId,
+        status,
+        userId
+      );
       return res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       const handled = handleExecutionError(err, res, 'Unable to resolve proposal');
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 export default router;

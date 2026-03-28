@@ -1,33 +1,33 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   CreateDeadLetterRecordParams,
-  SetRetryPolicyParams,
-  RequestReplayParams,
   RecordProviderHealthParams,
   RecordSchemaDriftParams,
+  RequestReplayParams,
+  SetRetryPolicyParams,
 } from '../../../types/replayDeadLetterReliability.js';
 import {
-  ErrorClassValues,
-  ReplayEligibilityValues,
-  ResolutionStateValues,
   BackoffFamilyValues,
-  ReplayTypeValues,
-  ReplayStatusValues,
-  HealthStatusValues,
-  DriftTypeValues,
-  DeadLetterRecordSchema,
-  RetryPolicySchema,
-  ReplayRequestSchema,
-  ProviderHealthModelSchema,
-  SchemaDriftEventSchema,
   CreateDeadLetterRecordParamsSchema,
-  SetRetryPolicyParamsSchema,
-  RequestReplayParamsSchema,
+  DEAD_LETTER_RETENTION_DAYS,
+  DeadLetterRecordSchema,
+  DriftTypeValues,
+  ErrorClassValues,
+  HealthStatusValues,
+  ProviderHealthModelSchema,
   RecordProviderHealthParamsSchema,
   RecordSchemaDriftParamsSchema,
-  DEAD_LETTER_RETENTION_DAYS,
+  ReplayEligibilityValues,
+  ReplayRequestSchema,
+  ReplayStatusValues,
+  ReplayTypeValues,
+  RequestReplayParamsSchema,
+  ResolutionStateValues,
+  RetryPolicySchema,
+  SchemaDriftEventSchema,
+  SetRetryPolicyParamsSchema,
 } from '../../../types/replayDeadLetterReliability.js';
 
 // ==========================================
@@ -56,16 +56,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 import {
   createDeadLetterRecord,
   getDeadLetterQueue,
-  updateDeadLetterResolution,
-  setRetryPolicy,
-  getRetryPolicy,
-  requestReplay,
-  getReplayRequests,
-  recordProviderHealth,
-  getProviderHealth,
-  recordSchemaDrift,
-  getRetentionCutoffDate,
   getExpiredResolvedRecords,
+  getProviderHealth,
+  getReplayRequests,
+  getRetentionCutoffDate,
+  getRetryPolicy,
+  recordProviderHealth,
+  recordSchemaDrift,
+  requestReplay,
+  setRetryPolicy,
+  updateDeadLetterResolution,
 } from '../replayDeadLetterService.js';
 
 // ==========================================
@@ -78,7 +78,9 @@ const CONNECTOR_ID = 'jira-connector-1';
 const DL_ID = '00000000-0000-4000-8000-dddddddddd01';
 const USER_ID = 'operator-1';
 
-function makeDeadLetterParams(overrides?: Partial<CreateDeadLetterRecordParams>): CreateDeadLetterRecordParams {
+function makeDeadLetterParams(
+  overrides?: Partial<CreateDeadLetterRecordParams>
+): CreateDeadLetterRecordParams {
   return {
     originalJobRef: 'job-ref-001',
     originalPayloadRef: 'payload-ref-001',
@@ -127,7 +129,9 @@ function makeReplayParams(overrides?: Partial<RequestReplayParams>): RequestRepl
   };
 }
 
-function makeHealthParams(overrides?: Partial<RecordProviderHealthParams>): RecordProviderHealthParams {
+function makeHealthParams(
+  overrides?: Partial<RecordProviderHealthParams>
+): RecordProviderHealthParams {
   return {
     providerKey: 'jira',
     organizationId: ORG_ID,
@@ -267,21 +271,19 @@ describe('createDeadLetterRecord', () => {
 
   it('stores original payload ref for forensic inspection', async () => {
     const result = await createDeadLetterRecord(
-      makeDeadLetterParams({ originalPayloadRef: 'blob-ref-xyz' }),
+      makeDeadLetterParams({ originalPayloadRef: 'blob-ref-xyz' })
     );
     expect(result.originalPayloadRef).toBe('blob-ref-xyz');
   });
 
   it('allows null original payload ref', async () => {
-    const result = await createDeadLetterRecord(
-      makeDeadLetterParams({ originalPayloadRef: null }),
-    );
+    const result = await createDeadLetterRecord(makeDeadLetterParams({ originalPayloadRef: null }));
     expect(result.originalPayloadRef).toBeNull();
   });
 
   it('preserves correlation chain', async () => {
     const result = await createDeadLetterRecord(
-      makeDeadLetterParams({ correlationId: 'chain-abc-123' }),
+      makeDeadLetterParams({ correlationId: 'chain-abc-123' })
     );
     expect(result.correlationId).toBe('chain-abc-123');
   });
@@ -289,7 +291,7 @@ describe('createDeadLetterRecord', () => {
   it('supports all 7 error classes', () => {
     for (const ec of ErrorClassValues) {
       expect(() =>
-        CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ errorClass: ec })),
+        CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ errorClass: ec }))
       ).not.toThrow();
     }
   });
@@ -297,7 +299,7 @@ describe('createDeadLetterRecord', () => {
   it('supports all 3 replay eligibility values', () => {
     for (const re of ReplayEligibilityValues) {
       expect(() =>
-        CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ replayEligibility: re })),
+        CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ replayEligibility: re }))
       ).not.toThrow();
     }
   });
@@ -305,20 +307,20 @@ describe('createDeadLetterRecord', () => {
   it('rejects invalid error class via Zod', () => {
     expect(() =>
       CreateDeadLetterRecordParamsSchema.parse(
-        makeDeadLetterParams({ errorClass: 'invalid_class' as any }),
-      ),
+        makeDeadLetterParams({ errorClass: 'invalid_class' as any })
+      )
     ).toThrow(ZodError);
   });
 
   it('rejects empty reason via Zod', () => {
     expect(() =>
-      CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ reason: '' })),
+      CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ reason: '' }))
     ).toThrow(ZodError);
   });
 
   it('rejects negative retry count via Zod', () => {
     expect(() =>
-      CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ retryCount: -1 })),
+      CreateDeadLetterRecordParamsSchema.parse(makeDeadLetterParams({ retryCount: -1 }))
     ).toThrow(ZodError);
   });
 });
@@ -396,65 +398,53 @@ describe('updateDeadLetterResolution', () => {
   });
 
   it('transitions escalated → replayed', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ resolution_state: 'escalated' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ resolution_state: 'escalated' }));
 
     const result = await updateDeadLetterResolution(DL_ID, 'replayed');
     expect(result.resolutionState).toBe('replayed');
   });
 
   it('transitions escalated → dismissed', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ resolution_state: 'escalated' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ resolution_state: 'escalated' }));
 
     const result = await updateDeadLetterResolution(DL_ID, 'dismissed');
     expect(result.resolutionState).toBe('dismissed');
   });
 
   it('rejects replayed → pending_review (terminal state)', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ resolution_state: 'replayed' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ resolution_state: 'replayed' }));
 
-    await expect(
-      updateDeadLetterResolution(DL_ID, 'pending_review'),
-    ).rejects.toThrow('Invalid resolution transition');
+    await expect(updateDeadLetterResolution(DL_ID, 'pending_review')).rejects.toThrow(
+      'Invalid resolution transition'
+    );
   });
 
   it('rejects dismissed → replayed (terminal state)', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ resolution_state: 'dismissed' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ resolution_state: 'dismissed' }));
 
-    await expect(
-      updateDeadLetterResolution(DL_ID, 'replayed'),
-    ).rejects.toThrow('Invalid resolution transition');
+    await expect(updateDeadLetterResolution(DL_ID, 'replayed')).rejects.toThrow(
+      'Invalid resolution transition'
+    );
   });
 
   it('rejects remapped → escalated (terminal state)', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ resolution_state: 'remapped' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ resolution_state: 'remapped' }));
 
-    await expect(
-      updateDeadLetterResolution(DL_ID, 'escalated'),
-    ).rejects.toThrow('Invalid resolution transition');
+    await expect(updateDeadLetterResolution(DL_ID, 'escalated')).rejects.toThrow(
+      'Invalid resolution transition'
+    );
   });
 
   it('throws when dead-letter record not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      updateDeadLetterResolution('nonexistent', 'replayed'),
-    ).rejects.toThrow('not found');
+    await expect(updateDeadLetterResolution('nonexistent', 'replayed')).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('preserves existing operator note when no new note provided', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ operator_note: 'existing note' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ operator_note: 'existing note' }));
 
     const result = await updateDeadLetterResolution(DL_ID, 'dismissed');
     expect(result.operatorNote).toBe('existing note');
@@ -485,7 +475,7 @@ describe('setRetryPolicy', () => {
     mockDbGet.mockResolvedValueOnce(makeRetryPolicyRow());
 
     const result = await setRetryPolicy(
-      makeRetryPolicyParams({ backoffFamily: 'linear', jitterEnabled: false }),
+      makeRetryPolicyParams({ backoffFamily: 'linear', jitterEnabled: false })
     );
 
     expect(result.backoffFamily).toBe('linear');
@@ -498,7 +488,7 @@ describe('setRetryPolicy', () => {
   it('supports all 3 backoff families', () => {
     for (const bf of BackoffFamilyValues) {
       expect(() =>
-        SetRetryPolicyParamsSchema.parse(makeRetryPolicyParams({ backoffFamily: bf })),
+        SetRetryPolicyParamsSchema.parse(makeRetryPolicyParams({ backoffFamily: bf }))
       ).not.toThrow();
     }
   });
@@ -506,25 +496,21 @@ describe('setRetryPolicy', () => {
   it('validates max attempt classes have positive values', () => {
     expect(() =>
       SetRetryPolicyParamsSchema.parse(
-        makeRetryPolicyParams({ maxAttemptClasses: { auth_failure: 0 } }),
-      ),
+        makeRetryPolicyParams({ maxAttemptClasses: { auth_failure: 0 } })
+      )
     ).toThrow(ZodError);
   });
 
   it('rejects invalid backoff family via Zod', () => {
     expect(() =>
-      SetRetryPolicyParamsSchema.parse(
-        makeRetryPolicyParams({ backoffFamily: 'quadratic' as any }),
-      ),
+      SetRetryPolicyParamsSchema.parse(makeRetryPolicyParams({ backoffFamily: 'quadratic' as any }))
     ).toThrow(ZodError);
   });
 
   it('allows null escalation handoff', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    const result = await setRetryPolicy(
-      makeRetryPolicyParams({ escalationHandoff: null }),
-    );
+    const result = await setRetryPolicy(makeRetryPolicyParams({ escalationHandoff: null }));
     expect(result.escalationHandoff).toBeNull();
   });
 });
@@ -577,9 +563,7 @@ describe('requestReplay', () => {
       requireConfirmation: true,
     };
 
-    const result = await requestReplay(
-      makeReplayParams({ replayType: 'bulk', safeguards }),
-    );
+    const result = await requestReplay(makeReplayParams({ replayType: 'bulk', safeguards }));
 
     expect(result.replayType).toBe('bulk');
     expect(result.safeguards).not.toBeNull();
@@ -590,24 +574,18 @@ describe('requestReplay', () => {
 
   it('rejects bulk replay without safeguards (Decision W5-7)', async () => {
     await expect(
-      requestReplay(makeReplayParams({ replayType: 'bulk', safeguards: null })),
+      requestReplay(makeReplayParams({ replayType: 'bulk', safeguards: null }))
     ).rejects.toThrow('Bulk replay requires safeguards');
   });
 
   it('rejects replay for blocked dead-letter record', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ replay_eligibility: 'blocked' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ replay_eligibility: 'blocked' }));
 
-    await expect(
-      requestReplay(makeReplayParams()),
-    ).rejects.toThrow('not replay-eligible');
+    await expect(requestReplay(makeReplayParams())).rejects.toThrow('not replay-eligible');
   });
 
   it('allows replay for requires_fix eligibility', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeDeadLetterRow({ replay_eligibility: 'requires_fix' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeDeadLetterRow({ replay_eligibility: 'requires_fix' }));
 
     const result = await requestReplay(makeReplayParams());
     expect(result.status).toBe('pending');
@@ -616,9 +594,7 @@ describe('requestReplay', () => {
   it('throws when dead-letter record not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      requestReplay(makeReplayParams()),
-    ).rejects.toThrow('not found');
+    await expect(requestReplay(makeReplayParams())).rejects.toThrow('not found');
   });
 
   it('supports both replay types', () => {
@@ -627,11 +603,12 @@ describe('requestReplay', () => {
         RequestReplayParamsSchema.parse(
           makeReplayParams({
             replayType: rt,
-            safeguards: rt === 'bulk'
-              ? { scopeFilter: {}, previewCount: 10, rateLimit: 5, requireConfirmation: true }
-              : null,
-          }),
-        ),
+            safeguards:
+              rt === 'bulk'
+                ? { scopeFilter: {}, previewCount: 10, rateLimit: 5, requireConfirmation: true }
+                : null,
+          })
+        )
       ).not.toThrow();
     }
   });
@@ -687,7 +664,7 @@ describe('recordProviderHealth', () => {
         authHealth: 'unhealthy',
         transportHealth: 'degraded',
         overallHealth: 'unhealthy',
-      }),
+      })
     );
 
     expect(result.authHealth).toBe('unhealthy');
@@ -701,7 +678,7 @@ describe('recordProviderHealth', () => {
   it('supports all 4 health status values for auth dimension', () => {
     for (const hs of HealthStatusValues) {
       expect(() =>
-        RecordProviderHealthParamsSchema.parse(makeHealthParams({ authHealth: hs })),
+        RecordProviderHealthParamsSchema.parse(makeHealthParams({ authHealth: hs }))
       ).not.toThrow();
     }
   });
@@ -709,7 +686,7 @@ describe('recordProviderHealth', () => {
   it('supports all 4 health status values for transport dimension', () => {
     for (const hs of HealthStatusValues) {
       expect(() =>
-        RecordProviderHealthParamsSchema.parse(makeHealthParams({ transportHealth: hs })),
+        RecordProviderHealthParamsSchema.parse(makeHealthParams({ transportHealth: hs }))
       ).not.toThrow();
     }
   });
@@ -717,7 +694,7 @@ describe('recordProviderHealth', () => {
   it('supports all 4 health status values for schema dimension', () => {
     for (const hs of HealthStatusValues) {
       expect(() =>
-        RecordProviderHealthParamsSchema.parse(makeHealthParams({ schemaHealth: hs })),
+        RecordProviderHealthParamsSchema.parse(makeHealthParams({ schemaHealth: hs }))
       ).not.toThrow();
     }
   });
@@ -725,7 +702,7 @@ describe('recordProviderHealth', () => {
   it('supports all 4 health status values for sync freshness dimension', () => {
     for (const hs of HealthStatusValues) {
       expect(() =>
-        RecordProviderHealthParamsSchema.parse(makeHealthParams({ syncFreshness: hs })),
+        RecordProviderHealthParamsSchema.parse(makeHealthParams({ syncFreshness: hs }))
       ).not.toThrow();
     }
   });
@@ -733,16 +710,14 @@ describe('recordProviderHealth', () => {
   it('supports all 4 health status values for replay pressure dimension', () => {
     for (const hs of HealthStatusValues) {
       expect(() =>
-        RecordProviderHealthParamsSchema.parse(makeHealthParams({ replayPressure: hs })),
+        RecordProviderHealthParamsSchema.parse(makeHealthParams({ replayPressure: hs }))
       ).not.toThrow();
     }
   });
 
   it('rejects invalid health status via Zod', () => {
     expect(() =>
-      RecordProviderHealthParamsSchema.parse(
-        makeHealthParams({ overallHealth: 'critical' as any }),
-      ),
+      RecordProviderHealthParamsSchema.parse(makeHealthParams({ overallHealth: 'critical' as any }))
     ).toThrow(ZodError);
   });
 });
@@ -790,22 +765,20 @@ describe('recordSchemaDrift', () => {
   it('supports all 6 drift types', () => {
     for (const dt of DriftTypeValues) {
       expect(() =>
-        RecordSchemaDriftParamsSchema.parse(makeDriftParams({ driftType: dt })),
+        RecordSchemaDriftParamsSchema.parse(makeDriftParams({ driftType: dt }))
       ).not.toThrow();
     }
   });
 
   it('requires at least one affected field', () => {
     expect(() =>
-      RecordSchemaDriftParamsSchema.parse(makeDriftParams({ affectedFields: [] })),
+      RecordSchemaDriftParamsSchema.parse(makeDriftParams({ affectedFields: [] }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid drift type via Zod', () => {
     expect(() =>
-      RecordSchemaDriftParamsSchema.parse(
-        makeDriftParams({ driftType: 'invalid_drift' as any }),
-      ),
+      RecordSchemaDriftParamsSchema.parse(makeDriftParams({ driftType: 'invalid_drift' as any }))
     ).toThrow(ZodError);
   });
 
@@ -814,7 +787,7 @@ describe('recordSchemaDrift', () => {
       makeDriftParams({
         driftType: 'breaking_response_change',
         affectedFields: ['response.status'],
-      }),
+      })
     );
     expect(result.driftType).toBe('breaking_response_change');
   });
@@ -905,9 +878,9 @@ describe('org isolation', () => {
   it('replay request validates org matches dead-letter record', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      requestReplay(makeReplayParams({ organizationId: ORG_ID_2 })),
-    ).rejects.toThrow('not found');
+    await expect(requestReplay(makeReplayParams({ organizationId: ORG_ID_2 }))).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('expired records query scoped to org', async () => {
@@ -946,7 +919,7 @@ describe('Zod schema validation (output types)', () => {
         resolutionState: 'pending_review',
         createdAt: '2026-03-23T10:05:00.000Z',
         updatedAt: '2026-03-23T10:05:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -962,7 +935,7 @@ describe('Zod schema validation (output types)', () => {
         escalationHandoff: 'ops-team',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -978,7 +951,7 @@ describe('Zod schema validation (output types)', () => {
         safeguards: null,
         createdAt: '2026-03-23T11:00:00.000Z',
         updatedAt: '2026-03-23T11:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -998,7 +971,7 @@ describe('Zod schema validation (output types)', () => {
         lastCheckedAt: '2026-03-23T10:00:00.000Z',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1012,7 +985,7 @@ describe('Zod schema validation (output types)', () => {
         affectedFields: ['summary'],
         detectedAt: '2026-03-23T10:00:00.000Z',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 

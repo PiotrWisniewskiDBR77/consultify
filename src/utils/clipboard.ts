@@ -27,7 +27,8 @@ export async function copyAsMarkdown(item: CopyableItem, lang: 'pl' | 'en' = 'en
 export async function copyForSlack(item: CopyableItem, lang: 'pl' | 'en' = 'en'): Promise<void> {
   const parts: string[] = [`*${item.title}*`];
   if (item.status) parts.push(`Status: \`${item.status}\``);
-  if (item.description) parts.push(`> ${item.description.slice(0, 300)}${item.description.length > 300 ? '…' : ''}`);
+  if (item.description)
+    parts.push(`> ${item.description.slice(0, 300)}${item.description.length > 300 ? '…' : ''}`);
   if (item.aiSummary) parts.push(`_AI: ${item.aiSummary}_`);
   await copyPlainText(parts.join('\n'), lang);
 }

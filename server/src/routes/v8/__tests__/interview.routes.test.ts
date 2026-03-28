@@ -25,7 +25,8 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
   },
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
-  loadAcceptedInterviewSessionsForManager: (...args: unknown[]) => mockListAcceptedSessions(...args),
+  loadAcceptedInterviewSessionsForManager: (...args: unknown[]) =>
+    mockListAcceptedSessions(...args),
   loadInterviewSessionForOrganization: (...args: unknown[]) => mockGetSession(...args),
 }));
 

@@ -1,23 +1,23 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  CaptureSnapshotParams,
   ActorAttribution,
+  CaptureSnapshotParams,
   RecordAuditEntryParams,
 } from '../../../types/versionReplay.js';
 import {
-  VersionSnapshotSchema,
-  RestoreRequestSchema,
-  AuditEntrySchema,
   ActorAttributionSchema,
-  VersionCompareResultSchema,
-  SnapshotTriggerValues,
-  RestoreStatusValues,
   AuditActionValues,
+  AuditEntrySchema,
   CaptureSnapshotParamsSchema,
   RecordAuditEntryParamsSchema,
   RequestRestoreParamsSchema,
+  RestoreRequestSchema,
+  RestoreStatusValues,
+  SnapshotTriggerValues,
+  VersionCompareResultSchema,
+  VersionSnapshotSchema,
 } from '../../../types/versionReplay.js';
 
 // ==========================================
@@ -44,14 +44,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
+  applyRestore,
   captureVersionSnapshot,
+  compareVersions,
+  getAuditTrail,
   getVersionHistory,
   getVersionSnapshot,
-  compareVersions,
-  requestRestore,
-  applyRestore,
   recordAuditEntry,
-  getAuditTrail,
+  requestRestore,
 } from '../versionReplayService.js';
 
 // ==========================================
@@ -197,9 +197,7 @@ describe('captureVersionSnapshot', () => {
     for (const trigger of SnapshotTriggerValues) {
       mockDbGet.mockResolvedValueOnce({ max_version: null });
 
-      const result = await captureVersionSnapshot(
-        makeSnapshotParams({ triggerType: trigger }),
-      );
+      const result = await captureVersionSnapshot(makeSnapshotParams({ triggerType: trigger }));
 
       expect(result.triggerType).toBe(trigger);
     }
@@ -208,9 +206,7 @@ describe('captureVersionSnapshot', () => {
   it('supports null roomId for out-of-room snapshots', async () => {
     mockDbGet.mockResolvedValueOnce({ max_version: null });
 
-    const result = await captureVersionSnapshot(
-      makeSnapshotParams({ roomId: null }),
-    );
+    const result = await captureVersionSnapshot(makeSnapshotParams({ roomId: null }));
 
     expect(result.roomId).toBeNull();
   });
@@ -218,22 +214,20 @@ describe('captureVersionSnapshot', () => {
   it('defaults metadata to empty object', async () => {
     mockDbGet.mockResolvedValueOnce({ max_version: null });
 
-    const result = await captureVersionSnapshot(
-      makeSnapshotParams({ metadata: undefined }),
-    );
+    const result = await captureVersionSnapshot(makeSnapshotParams({ metadata: undefined }));
 
     expect(result.metadata).toEqual({});
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      captureVersionSnapshot({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(captureVersionSnapshot({ organizationId: ORG_ID } as any)).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid organizationId UUID', async () => {
     await expect(
-      captureVersionSnapshot(makeSnapshotParams({ organizationId: 'not-uuid' })),
+      captureVersionSnapshot(makeSnapshotParams({ organizationId: 'not-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -260,9 +254,7 @@ describe('getVersionHistory', () => {
   });
 
   it('filters by triggerType when provided', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeSnapshotRow({ trigger_type: 'auto_cadence' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeSnapshotRow({ trigger_type: 'auto_cadence' })]);
 
     const results = await getVersionHistory(ROOM_ID, ORG_ID, { triggerType: 'auto_cadence' });
 
@@ -326,16 +318,20 @@ describe('getVersionSnapshot', () => {
 describe('compareVersions', () => {
   it('produces structural diff between two snapshots', async () => {
     mockDbGet
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_1,
-        state_version: 0,
-        state_data: JSON.stringify({ title: 'Old', content: 'Hello' }),
-      }))
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_2,
-        state_version: 1,
-        state_data: JSON.stringify({ title: 'New', content: 'Hello', extra: true }),
-      }));
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_1,
+          state_version: 0,
+          state_data: JSON.stringify({ title: 'Old', content: 'Hello' }),
+        })
+      )
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_2,
+          state_version: 1,
+          state_data: JSON.stringify({ title: 'New', content: 'Hello', extra: true }),
+        })
+      );
 
     const result = await compareVersions(SNAPSHOT_ID_1, SNAPSHOT_ID_2, ORG_ID);
 
@@ -360,16 +356,20 @@ describe('compareVersions', () => {
 
   it('detects removed keys', async () => {
     mockDbGet
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_1,
-        state_version: 0,
-        state_data: JSON.stringify({ title: 'Test', removed_field: 'gone' }),
-      }))
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_2,
-        state_version: 1,
-        state_data: JSON.stringify({ title: 'Test' }),
-      }));
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_1,
+          state_version: 0,
+          state_data: JSON.stringify({ title: 'Test', removed_field: 'gone' }),
+        })
+      )
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_2,
+          state_version: 1,
+          state_data: JSON.stringify({ title: 'Test' }),
+        })
+      );
 
     const result = await compareVersions(SNAPSHOT_ID_1, SNAPSHOT_ID_2, ORG_ID);
 
@@ -391,19 +391,17 @@ describe('compareVersions', () => {
   it('throws when source snapshot not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      compareVersions('nonexistent', SNAPSHOT_ID_2, ORG_ID),
-    ).rejects.toThrow('Source snapshot nonexistent not found');
+    await expect(compareVersions('nonexistent', SNAPSHOT_ID_2, ORG_ID)).rejects.toThrow(
+      'Source snapshot nonexistent not found'
+    );
   });
 
   it('throws when target snapshot not found', async () => {
-    mockDbGet
-      .mockResolvedValueOnce(makeFakeSnapshotRow())
-      .mockResolvedValueOnce(null);
+    mockDbGet.mockResolvedValueOnce(makeFakeSnapshotRow()).mockResolvedValueOnce(null);
 
-    await expect(
-      compareVersions(SNAPSHOT_ID_1, 'nonexistent', ORG_ID),
-    ).rejects.toThrow('Target snapshot nonexistent not found');
+    await expect(compareVersions(SNAPSHOT_ID_1, 'nonexistent', ORG_ID)).rejects.toThrow(
+      'Target snapshot nonexistent not found'
+    );
   });
 
   it('throws when comparing snapshots from different resources', async () => {
@@ -411,9 +409,9 @@ describe('compareVersions', () => {
       .mockResolvedValueOnce(makeFakeSnapshotRow({ resource_id: 'ws-001' }))
       .mockResolvedValueOnce(makeFakeSnapshotRow({ resource_id: 'ws-002' }));
 
-    await expect(
-      compareVersions(SNAPSHOT_ID_1, SNAPSHOT_ID_2, ORG_ID),
-    ).rejects.toThrow('Cannot compare snapshots from different resources');
+    await expect(compareVersions(SNAPSHOT_ID_1, SNAPSHOT_ID_2, ORG_ID)).rejects.toThrow(
+      'Cannot compare snapshots from different resources'
+    );
   });
 });
 
@@ -458,7 +456,7 @@ describe('requestRestore', () => {
         targetVersionSnapshotId: SNAPSHOT_ID_1,
         requestedBy: HUMAN_ACTOR,
         currentStateData: {},
-      }),
+      })
     ).rejects.toThrow(`Target snapshot ${SNAPSHOT_ID_1} not found`);
   });
 });
@@ -471,23 +469,27 @@ describe('applyRestore', () => {
   it('applies a pending restore as a forward operation (stateVersion increments)', async () => {
     mockDbGet
       .mockResolvedValueOnce(makeFakeRestoreRow({ status: 'pending' }))
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_1,
-        state_data: JSON.stringify({ title: 'Restored' }),
-      }))
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_1,
+          state_data: JSON.stringify({ title: 'Restored' }),
+        })
+      )
       .mockResolvedValueOnce({ max_version: 5 })
-      .mockResolvedValueOnce(makeFakeSnapshotRow({
-        snapshot_id: SNAPSHOT_ID_2,
-        state_version: 3,
-      }));
+      .mockResolvedValueOnce(
+        makeFakeSnapshotRow({
+          snapshot_id: SNAPSHOT_ID_2,
+          state_version: 3,
+        })
+      );
 
     const result = await applyRestore(RESTORE_ID, ORG_ID);
 
     expect(result.status).toBe('applied');
     expect(result.resolvedAt).not.toBeNull();
 
-    const updateSql = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('UPDATE v8_restore_requests'),
+    const updateSql = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('UPDATE v8_restore_requests')
     );
     expect(updateSql).toBeDefined();
   });
@@ -495,9 +497,9 @@ describe('applyRestore', () => {
   it('throws when restore request not found', async () => {
     mockDbGet.mockResolvedValue(null);
 
-    await expect(
-      applyRestore(RESTORE_ID, ORG_ID),
-    ).rejects.toThrow(`Restore request ${RESTORE_ID} not found`);
+    await expect(applyRestore(RESTORE_ID, ORG_ID)).rejects.toThrow(
+      `Restore request ${RESTORE_ID} not found`
+    );
 
     mockDbGet.mockReset().mockResolvedValue(null);
   });
@@ -505,17 +507,15 @@ describe('applyRestore', () => {
   it('throws when restore request is already applied', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRestoreRow({ status: 'applied' }));
 
-    await expect(
-      applyRestore(RESTORE_ID, ORG_ID),
-    ).rejects.toThrow('already applied, cannot apply');
+    await expect(applyRestore(RESTORE_ID, ORG_ID)).rejects.toThrow('already applied, cannot apply');
   });
 
   it('throws when restore request is rejected', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRestoreRow({ status: 'rejected' }));
 
-    await expect(
-      applyRestore(RESTORE_ID, ORG_ID),
-    ).rejects.toThrow('already rejected, cannot apply');
+    await expect(applyRestore(RESTORE_ID, ORG_ID)).rejects.toThrow(
+      'already rejected, cannot apply'
+    );
   });
 });
 
@@ -527,9 +527,7 @@ describe('actor attribution', () => {
   it('captures human actor attribution on snapshot', async () => {
     mockDbGet.mockResolvedValueOnce({ max_version: null });
 
-    const result = await captureVersionSnapshot(
-      makeSnapshotParams({ capturedBy: HUMAN_ACTOR }),
-    );
+    const result = await captureVersionSnapshot(makeSnapshotParams({ capturedBy: HUMAN_ACTOR }));
 
     expect(result.capturedBy.actorType).toBe('human');
     expect(result.capturedBy.actorDisplayName).toBe('Jan Kowalski');
@@ -538,9 +536,7 @@ describe('actor attribution', () => {
   it('captures AI actor attribution on snapshot', async () => {
     mockDbGet.mockResolvedValueOnce({ max_version: null });
 
-    const result = await captureVersionSnapshot(
-      makeSnapshotParams({ capturedBy: AI_ACTOR }),
-    );
+    const result = await captureVersionSnapshot(makeSnapshotParams({ capturedBy: AI_ACTOR }));
 
     expect(result.capturedBy.actorType).toBe('ai_agent');
     expect(result.capturedBy.actorDisplayName).toBe('Teresa AI');
@@ -553,7 +549,7 @@ describe('actor attribution', () => {
       makeSnapshotParams({
         capturedBy: SYSTEM_ACTOR,
         triggerType: 'auto_cadence',
-      }),
+      })
     );
 
     expect(result.capturedBy.actorType).toBe('system');
@@ -643,7 +639,7 @@ describe('recordAuditEntry', () => {
         organizationId: ORG_ID,
         actorAttribution: HUMAN_ACTOR,
         action: 'invalid.action' as any,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -668,9 +664,7 @@ describe('getAuditTrail', () => {
   });
 
   it('filters by action when provided', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeAuditRow({ action: 'restore.applied' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeAuditRow({ action: 'restore.applied' })]);
 
     await getAuditTrail(ROOM_ID, ORG_ID, { action: 'restore.applied' });
 
@@ -738,9 +732,9 @@ describe('org isolation', () => {
   it('applyRestore enforces organization_id in query', async () => {
     mockDbGet.mockResolvedValue(null);
 
-    await expect(
-      applyRestore(RESTORE_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Restore request ${RESTORE_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(applyRestore(RESTORE_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Restore request ${RESTORE_ID} not found in organization ${OTHER_ORG_ID}`
+    );
 
     mockDbGet.mockReset().mockResolvedValue(null);
   });
@@ -758,9 +752,9 @@ describe('Zod schema validation', () => {
   });
 
   it('rejects ActorAttribution with invalid actorType', () => {
-    expect(() =>
-      ActorAttributionSchema.parse({ ...HUMAN_ACTOR, actorType: 'robot' }),
-    ).toThrow(ZodError);
+    expect(() => ActorAttributionSchema.parse({ ...HUMAN_ACTOR, actorType: 'robot' })).toThrow(
+      ZodError
+    );
   });
 
   it('validates VersionSnapshot', () => {
@@ -777,7 +771,7 @@ describe('Zod schema validation', () => {
         capturedBy: HUMAN_ACTOR,
         capturedAt: '2026-03-23T10:00:00.000Z',
         metadata: {},
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -795,7 +789,7 @@ describe('Zod schema validation', () => {
         capturedBy: HUMAN_ACTOR,
         capturedAt: '2026-03-23T10:00:00.000Z',
         metadata: {},
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -813,7 +807,7 @@ describe('Zod schema validation', () => {
         safetySnapshotId: SNAPSHOT_ID_2,
         requestedAt: '2026-03-23T10:00:00.000Z',
         resolvedAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -831,7 +825,7 @@ describe('Zod schema validation', () => {
         stateVersionAfter: 0,
         metadata: {},
         timestamp: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -848,7 +842,7 @@ describe('Zod schema validation', () => {
         organizationId: ORG_ID,
         actorAttribution: HUMAN_ACTOR,
         action: 'snapshot.created',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -862,14 +856,14 @@ describe('Zod schema validation', () => {
         targetVersionSnapshotId: SNAPSHOT_ID_1,
         requestedBy: HUMAN_ACTOR,
         currentStateData: { title: 'Current' },
-      }),
+      })
     ).not.toThrow();
   });
 
   it('validates all SnapshotTrigger values', () => {
     for (const trigger of SnapshotTriggerValues) {
       expect(() =>
-        CaptureSnapshotParamsSchema.parse(makeSnapshotParams({ triggerType: trigger })),
+        CaptureSnapshotParamsSchema.parse(makeSnapshotParams({ triggerType: trigger }))
       ).not.toThrow();
     }
   });
@@ -889,7 +883,7 @@ describe('Zod schema validation', () => {
           safetySnapshotId: null,
           requestedAt: '2026-03-23T10:00:00.000Z',
           resolvedAt: null,
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -909,7 +903,7 @@ describe('Zod schema validation', () => {
           stateVersionAfter: null,
           metadata: {},
           timestamp: '2026-03-23T10:00:00.000Z',
-        }),
+        })
       ).not.toThrow();
     }
   });

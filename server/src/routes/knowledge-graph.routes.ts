@@ -5,13 +5,17 @@
  * All endpoints are permission-aware (org-scoped) and audit-logged.
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import type {
+  ExtractionMethod,
+  KGEntityType,
+  KGRelationType,
+} from '../services/knowledgeGraph/unifiedKGService.js';
 import { unifiedKGService } from '../services/knowledgeGraph/unifiedKGService.js';
-import type { KGEntityType, KGRelationType, ExtractionMethod } from '../services/knowledgeGraph/unifiedKGService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
@@ -42,7 +46,9 @@ router.get(
     const { orgId, userId } = identity;
 
     const query = req.query.q ? String(req.query.q) : undefined;
-    const types = req.query.types ? String(req.query.types).split(',') as KGEntityType[] : undefined;
+    const types = req.query.types
+      ? (String(req.query.types).split(',') as KGEntityType[])
+      : undefined;
     const minConfidence = req.query.minConfidence ? Number(req.query.minConfidence) : undefined;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
     const offset = req.query.offset ? Number(req.query.offset) : 0;
@@ -55,7 +61,15 @@ router.get(
       offset,
     });
 
-    await unifiedKGService.logAudit(orgId, userId, 'search_entities', 'entity', undefined, query, entities.length);
+    await unifiedKGService.logAudit(
+      orgId,
+      userId,
+      'search_entities',
+      'entity',
+      undefined,
+      query,
+      entities.length
+    );
 
     res.json({ entities, total: entities.length });
   })
@@ -95,7 +109,9 @@ const storeEntitySchema = z.object({
   confidence: z.number().min(0).max(1).optional(),
   sourceArtifactType: z.string().optional(),
   sourceArtifactId: z.string().optional(),
-  extractionMethod: z.enum(['pattern', 'llm', 'manual', 'import', 'link_graph']).optional() as z.ZodType<ExtractionMethod | undefined>,
+  extractionMethod: z
+    .enum(['pattern', 'llm', 'manual', 'import', 'link_graph'])
+    .optional() as z.ZodType<ExtractionMethod | undefined>,
   piiFlag: z.boolean().optional(),
 });
 
@@ -135,7 +151,7 @@ router.get(
 
     const direction = (req.query.direction as 'outgoing' | 'incoming' | 'both') || 'both';
     const relationTypes = req.query.relationTypes
-      ? String(req.query.relationTypes).split(',') as KGRelationType[]
+      ? (String(req.query.relationTypes).split(',') as KGRelationType[])
       : undefined;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
 
@@ -145,7 +161,15 @@ router.get(
       limit,
     });
 
-    await unifiedKGService.logAudit(orgId, userId, 'read_relations', 'entity', req.params.entityId, undefined, relations.length);
+    await unifiedKGService.logAudit(
+      orgId,
+      userId,
+      'read_relations',
+      'entity',
+      req.params.entityId,
+      undefined,
+      relations.length
+    );
     res.json({ relations });
   })
 );
@@ -163,7 +187,9 @@ const storeRelationSchema = z.object({
   weight: z.number().min(0).optional(),
   sourceArtifactType: z.string().optional(),
   sourceArtifactId: z.string().optional(),
-  extractionMethod: z.enum(['pattern', 'llm', 'manual', 'import', 'link_graph']).optional() as z.ZodType<ExtractionMethod | undefined>,
+  extractionMethod: z
+    .enum(['pattern', 'llm', 'manual', 'import', 'link_graph'])
+    .optional() as z.ZodType<ExtractionMethod | undefined>,
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
 });
@@ -219,7 +245,15 @@ router.post(
 
     const result = await unifiedKGService.traverse(orgId, parsed.data);
 
-    await unifiedKGService.logAudit(orgId, userId, 'traverse', 'graph', parsed.data.startEntityId, undefined, result.entities.length);
+    await unifiedKGService.logAudit(
+      orgId,
+      userId,
+      'traverse',
+      'graph',
+      parsed.data.startEntityId,
+      undefined,
+      result.entities.length
+    );
     res.json(result);
   })
 );
@@ -241,7 +275,13 @@ router.get(
       return;
     }
 
-    await unifiedKGService.logAudit(orgId, userId, 'read_provenance', 'entity', req.params.entityId);
+    await unifiedKGService.logAudit(
+      orgId,
+      userId,
+      'read_provenance',
+      'entity',
+      req.params.entityId
+    );
     res.json(provenance);
   })
 );
@@ -285,7 +325,11 @@ router.post(
       return;
     }
 
-    const result = await unifiedKGService.applyRetentionPolicy(orgId, parsed.data.retentionDays, userId);
+    const result = await unifiedKGService.applyRetentionPolicy(
+      orgId,
+      parsed.data.retentionDays,
+      userId
+    );
     res.json(result);
   })
 );
@@ -348,7 +392,12 @@ router.post(
       return;
     }
 
-    const success = await unifiedKGService.mergeEntities(orgId, parsed.data.keepEntityId, parsed.data.mergeEntityId, userId);
+    const success = await unifiedKGService.mergeEntities(
+      orgId,
+      parsed.data.keepEntityId,
+      parsed.data.mergeEntityId,
+      userId
+    );
     if (!success) {
       res.status(404).json({ error: 'One or both entities not found' });
       return;

@@ -400,13 +400,15 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             if (!respRoom || !targetId) break;
             for (const [otherWs, otherUser] of respRoom) {
               if (otherUser.id === targetId && otherWs.readyState === 1) {
-                otherWs.send(JSON.stringify({
-                  type: 'graph_full_state',
-                  nodes: msg.nodes,
-                  edges: msg.edges,
-                  version: msg.version,
-                  fromUserId: user.id,
-                }));
+                otherWs.send(
+                  JSON.stringify({
+                    type: 'graph_full_state',
+                    nodes: msg.nodes,
+                    edges: msg.edges,
+                    version: msg.version,
+                    fromUserId: user.id,
+                  })
+                );
                 break;
               }
             }

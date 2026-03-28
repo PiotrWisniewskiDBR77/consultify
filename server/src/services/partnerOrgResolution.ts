@@ -14,7 +14,7 @@ export async function getActivePartnerOrgIdForUser(userId: string): Promise<stri
      FROM partner_users
      WHERE user_id = ? AND status = 'active'
      LIMIT 1`,
-    [userId],
+    [userId]
   );
   return row?.partner_org_id || null;
 }

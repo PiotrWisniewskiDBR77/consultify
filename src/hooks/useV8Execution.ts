@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-  V8ExecutionApi,
   type ExecutionProposalRecord,
   type ExecutionRunRecord,
   type ExecutionTransitionRecord,
+  V8ExecutionApi,
 } from '@/services/api/v8Execution';
 
 export type {
-  ExecutionRunState,
+  ExecutionProposalRecord,
   ExecutionProposalStatus,
   ExecutionRunRecord,
-  ExecutionProposalRecord,
+  ExecutionRunState,
   ExecutionTransitionRecord,
 } from '@/services/api/v8Execution';
 

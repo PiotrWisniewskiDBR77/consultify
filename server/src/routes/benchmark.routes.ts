@@ -7,8 +7,8 @@ import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 import BenchmarkingService from '../services/benchmarkingService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
@@ -97,7 +97,9 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const framework = String(req.query.framework || 'SIRI').toUpperCase();
     let score = parseFloat(String(req.query.score || '0'));
-    const industry = String(req.query.industry || 'manufacturing').toLowerCase().replace(/[^a-z_]/g, '_');
+    const industry = String(req.query.industry || 'manufacturing')
+      .toLowerCase()
+      .replace(/[^a-z_]/g, '_');
     const region = String(req.query.region || '');
     const size = String(req.query.size || '');
     const assessmentId = (req.query.assessmentId as string) || undefined;
@@ -125,7 +127,10 @@ router.get(
               categories = { overall: score };
             } else if (typeof ss === 'object') {
               for (const [k, v] of Object.entries(ss)) {
-                const num = typeof v === 'number' ? v : (v as any)?.actual ?? (v as any)?.score ?? (v as any)?.value;
+                const num =
+                  typeof v === 'number'
+                    ? v
+                    : ((v as any)?.actual ?? (v as any)?.score ?? (v as any)?.value);
                 if (typeof num === 'number') categories[k] = num;
               }
             }
@@ -137,7 +142,9 @@ router.get(
     }
 
     const normalizedIndustry =
-      industry === 'manufacturing_discrete' || industry === 'manufacturing_process' ? 'manufacturing' : industry;
+      industry === 'manufacturing_discrete' || industry === 'manufacturing_process'
+        ? 'manufacturing'
+        : industry;
     const normalizedRegion = normalizeRegion(region);
     const normalizedSize = normalizeCompanySize(size);
 
@@ -175,9 +182,16 @@ router.get(
         await queryHelpers.run(
           `INSERT OR IGNORE INTO benchmark_datasets (id, framework, industry, region, company_size, p25, p50, p75, p90, cohort_size, last_updated, version_tag)
            VALUES (?, ?, ?, NULL, NULL, 2.0, 3.0, 3.8, 4.2, 0, datetime('now'), ?)`,
-          [`seed_${framework}_${normalizedIndustry}`, framework, normalizedIndustry, DEFAULT_DATASET_VERSION]
+          [
+            `seed_${framework}_${normalizedIndustry}`,
+            framework,
+            normalizedIndustry,
+            DEFAULT_DATASET_VERSION,
+          ]
         );
-      } catch { /* seed best-effort */ }
+      } catch {
+        /* seed best-effort */
+      }
 
       return res.json({
         percentiles: null,
@@ -226,7 +240,10 @@ router.get(
     const avgOverall = Number(dataset.p50 ?? score);
     const gapToAverage = parseFloat((score - avgOverall).toFixed(2));
 
-    const categoryComparison: Record<string, { score: number; benchmark: number; gap: number; status: 'above' | 'below' }> = {};
+    const categoryComparison: Record<
+      string,
+      { score: number; benchmark: number; gap: number; status: 'above' | 'below' }
+    > = {};
     const strengths: Array<{ id: string; gap: number }> = [];
     const weaknesses: Array<{ id: string; gap: number }> = [];
 

@@ -64,12 +64,19 @@ router.get(
         totalCommitted: 0,
         totalForecast: summary.forecast.total,
         remaining: Math.max(0, summary.planned.total - summary.actual.total),
-        consumedPercent: summary.planned.total > 0 ? Math.round((summary.actual.total / summary.planned.total) * 100) : 0,
+        consumedPercent:
+          summary.planned.total > 0
+            ? Math.round((summary.actual.total / summary.planned.total) * 100)
+            : 0,
         varianceAmount: summary.variance.total,
         variancePercent: summary.variance.percent,
         contingencyAmount: 0,
         isOverBudget: summary.forecast.isOverBudget,
-        status: (statusMap[summary.status] || 'ON_TRACK') as 'ON_TRACK' | 'WARNING' | 'CRITICAL' | 'OVERRUN',
+        status: (statusMap[summary.status] || 'ON_TRACK') as
+          | 'ON_TRACK'
+          | 'WARNING'
+          | 'CRITICAL'
+          | 'OVERRUN',
       },
     };
     res.json({
@@ -83,12 +90,18 @@ router.get(
         estimateToComplete: Math.max(0, summary.planned.total - summary.actual.total),
         estimateAtCompletion: summary.forecast.total,
         varianceAtCompletion: summary.forecast.total - summary.planned.total,
-        costPerformanceIndex: summary.planned.total > 0 ? summary.actual.total / summary.planned.total : 0,
+        costPerformanceIndex:
+          summary.planned.total > 0 ? summary.actual.total / summary.planned.total : 0,
         isProjectedOverrun: summary.forecast.isOverBudget,
-        projectedOverrunPercent: summary.planned.total > 0
-          ? Math.round(((summary.forecast.total - summary.planned.total) / summary.planned.total) * 100)
-          : 0,
-        recommendation: summary.forecast.isOverBudget ? 'Review scope or secure additional budget.' : 'On track.',
+        projectedOverrunPercent:
+          summary.planned.total > 0
+            ? Math.round(
+                ((summary.forecast.total - summary.planned.total) / summary.planned.total) * 100
+              )
+            : 0,
+        recommendation: summary.forecast.isOverBudget
+          ? 'Review scope or secure additional budget.'
+          : 'On track.',
       },
     });
   })
@@ -104,7 +117,8 @@ router.post(
     const { initiativeId } = req.params;
     const { plannedAmount, budgetType, contingencyPercent } = req.body || {};
     const amount = Number(plannedAmount) || 0;
-    if (amount <= 0) return res.status(400).json({ error: 'plannedAmount required and must be > 0' });
+    if (amount <= 0)
+      return res.status(400).json({ error: 'plannedAmount required and must be > 0' });
     const costType = budgetType === 'CAPEX' ? 'CAPEX' : 'OPEX';
     const id = `ibi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await dbRun(

@@ -1938,10 +1938,10 @@ export class AIPipeline {
       endpoint: routed.endpoint,
       apiKey: routed.apiKey,
       routingTrace: (routed as any).routingTrace,
-        releaseBundleId: (routed as any).releaseBundleId || null,
-        promptKey: (routed as any).promptKey || null,
-        promptVersion: (routed as any).promptVersion || null,
-        policyVersion: (routed as any).policyVersion || null,
+      releaseBundleId: (routed as any).releaseBundleId || null,
+      promptKey: (routed as any).promptKey || null,
+      promptVersion: (routed as any).promptVersion || null,
+      policyVersion: (routed as any).policyVersion || null,
     };
   }
 

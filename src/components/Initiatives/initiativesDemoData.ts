@@ -366,11 +366,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
         'Weekly control review established',
         'Escalation path agreed across finance and commercial teams',
       ],
-      deliverables: [
-        'Leakage control register',
-        'Weekly recovery cockpit',
-        'Control owner matrix',
-      ],
+      deliverables: ['Leakage control register', 'Weekly recovery cockpit', 'Control owner matrix'],
       inScope: ['Freight leakage', 'Claims leakage', 'Pricing override leakage'],
       outScope: ['Full ERP pricing redesign', 'Commercial comp redesign'],
       killCriteria: ['Control owners not assigned', 'Recovery value not measurable'],
@@ -477,7 +473,13 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       tags: ['revenue', 'control-tower', 'governance'],
       dependencyKeys: ['margin-leakage-recovery'],
       kpis: [
-        { name: 'Value interventions per month', unit: 'count', baseline: 0, target: 8, current: 1 },
+        {
+          name: 'Value interventions per month',
+          unit: 'count',
+          baseline: 0,
+          target: 8,
+          current: 1,
+        },
         { name: 'Protected margin', unit: 'EURk', baseline: 0, target: 850, current: 130 },
       ],
     },
@@ -668,11 +670,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
         'New-hire readiness score improved by 20 points',
         'Duplicate onboarding steps eliminated',
       ],
-      deliverables: [
-        'Unified onboarding checklist',
-        'Manager handoff view',
-        'Automated reminders',
-      ],
+      deliverables: ['Unified onboarding checklist', 'Manager handoff view', 'Automated reminders'],
       inScope: ['First-week workflow', 'Manager handoff', 'Reminder automation'],
       outScope: ['Full learning platform redesign', 'Performance review process'],
       killCriteria: ['No HR owner available', 'Checklist not adopted by line managers'],
@@ -795,7 +793,9 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
     } as PortfolioInitiative & Record<string, any>;
   });
 
-  const initiativeByKey = Object.fromEntries(initiatives.map((initiative) => [initiative.id, initiative]));
+  const initiativeByKey = Object.fromEntries(
+    initiatives.map((initiative) => [initiative.id, initiative])
+  );
 
   const initiativeDetailsById = Object.fromEntries(
     blueprints.map((blueprint) => {
@@ -829,7 +829,9 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       const taskIds = blueprint.deliverables.map(
         (_deliverable, index) => `${SHOWCASE_TASK_PREFIX}${blueprint.key}-${index + 1}`
       );
-      const decisionIds = [1, 2].map((index) => `${SHOWCASE_DECISION_PREFIX}${blueprint.key}-${index}`);
+      const decisionIds = [1, 2].map(
+        (index) => `${SHOWCASE_DECISION_PREFIX}${blueprint.key}-${index}`
+      );
 
       const detail = {
         initiative: {
@@ -858,11 +860,23 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           killCriteria: blueprint.killCriteria,
           tags: blueprint.tags,
           resources: [
-            { id: `${initiativeId}-res-1`, name: ownerBusiness.name, role: 'Business Owner', allocation: 50 },
-            { id: `${initiativeId}-res-2`, name: ownerExecution.name, role: 'Delivery Lead', allocation: 70 },
+            {
+              id: `${initiativeId}-res-1`,
+              name: ownerBusiness.name,
+              role: 'Business Owner',
+              allocation: 50,
+            },
+            {
+              id: `${initiativeId}-res-2`,
+              name: ownerExecution.name,
+              role: 'Delivery Lead',
+              allocation: 70,
+            },
             { id: `${initiativeId}-res-3`, name: sponsor.name, role: 'Sponsor', allocation: 15 },
           ],
-          toolsNeeded: blueprint.deliverables.slice(0, 2).map((deliverable) => `${deliverable} workspace`),
+          toolsNeeded: blueprint.deliverables
+            .slice(0, 2)
+            .map((deliverable) => `${deliverable} workspace`),
           milestones: blueprint.deliverables.map((deliverable, index) => ({
             id: `${initiativeId}-ms-${index + 1}`,
             name: deliverable,
@@ -889,7 +903,11 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
               startDate: isoOffsetDays(blueprint.startOffsetDays + 26),
               endDate: isoOffsetDays(blueprint.endOffsetDays - 20),
               status:
-                blueprint.progress > 70 ? 'completed' : blueprint.progress > 35 ? 'active' : 'pending',
+                blueprint.progress > 70
+                  ? 'completed'
+                  : blueprint.progress > 35
+                    ? 'active'
+                    : 'pending',
             },
             {
               id: `${initiativeId}-phase-3`,
@@ -917,7 +935,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           {
             id: decisionIds[0],
             title: `Approve scope and success measures for ${blueprint.name}`,
-            description: 'Confirms the initiative boundary and the first wave of measurable outcomes.',
+            description:
+              'Confirms the initiative boundary and the first wave of measurable outcomes.',
             type: 'GATE_APPROVAL',
             status: blueprint.status === InitiativeStatus.DRAFT ? 'PENDING' : 'APPROVED',
             priority: blueprint.priority,
@@ -935,7 +954,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             status:
               blueprint.status === InitiativeStatus.BLOCKED
                 ? 'ESCALATED'
-                : blueprint.status === InitiativeStatus.DONE || blueprint.status === InitiativeStatus.TRACKING
+                : blueprint.status === InitiativeStatus.DONE ||
+                    blueprint.status === InitiativeStatus.TRACKING
                   ? 'APPROVED'
                   : 'PENDING',
             priority: blueprint.priority === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
@@ -952,10 +972,12 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             type: 'risk',
             title: `${blueprint.name} may stall if ownership is not explicit`,
             description: blueprint.rootCause,
-            severity: blueprint.riskScore > 75 ? 'CRITICAL' : blueprint.riskScore > 55 ? 'HIGH' : 'MEDIUM',
+            severity:
+              blueprint.riskScore > 75 ? 'CRITICAL' : blueprint.riskScore > 55 ? 'HIGH' : 'MEDIUM',
             status: blueprint.status === InitiativeStatus.BLOCKED ? 'open' : 'tracked',
             owner: ownerBusiness.name,
-            mitigationPlan: 'Assign explicit owner decision rights before the next governance review.',
+            mitigationPlan:
+              'Assign explicit owner decision rights before the next governance review.',
           },
           {
             id: `${initiativeId}-raid-2`,
@@ -985,8 +1007,18 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           },
         ],
         watchers: [
-          { id: `${initiativeId}-watcher-1`, userId: ownerBusiness.id, name: ownerBusiness.name, email: ownerBusiness.email },
-          { id: `${initiativeId}-watcher-2`, userId: sponsor.id, name: sponsor.name, email: sponsor.email },
+          {
+            id: `${initiativeId}-watcher-1`,
+            userId: ownerBusiness.id,
+            name: ownerBusiness.name,
+            email: ownerBusiness.email,
+          },
+          {
+            id: `${initiativeId}-watcher-2`,
+            userId: sponsor.id,
+            name: sponsor.name,
+            email: sponsor.email,
+          },
         ],
         history: [
           {
@@ -1032,7 +1064,10 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           assigneeId: index % 2 === 0 ? ownerExecution.id : ownerBusiness.id,
           assigneeName: index % 2 === 0 ? ownerExecution.name : ownerBusiness.name,
           isMilestone: index === blueprint.deliverables.length - 1,
-          milestoneDate: index === blueprint.deliverables.length - 1 ? isoOffsetDays(blueprint.endOffsetDays) : undefined,
+          milestoneDate:
+            index === blueprint.deliverables.length - 1
+              ? isoOffsetDays(blueprint.endOffsetDays)
+              : undefined,
         })),
         dependencies: dependencyTitles.map((title, index) => ({
           id: `${initiativeId}-dep-${index + 1}`,
@@ -1093,7 +1128,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           },
         ],
         pendingApprovals:
-          blueprint.status === InitiativeStatus.REVIEW || blueprint.status === InitiativeStatus.APPROVED
+          blueprint.status === InitiativeStatus.REVIEW ||
+          blueprint.status === InitiativeStatus.APPROVED
             ? [
                 {
                   id: `${initiativeId}-approval-1`,
@@ -1199,7 +1235,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
               workflowActions: [
                 {
                   targetStatus: transitionTarget,
-                  gate: blueprint.status === InitiativeStatus.BLOCKED ? 'RECOVERY_GATE' : 'NEXT_GATE',
+                  gate:
+                    blueprint.status === InitiativeStatus.BLOCKED ? 'RECOVERY_GATE' : 'NEXT_GATE',
                 },
               ],
               contextCreateActions: ['task', 'decision', 'risk'],

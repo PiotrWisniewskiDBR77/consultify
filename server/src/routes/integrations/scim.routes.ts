@@ -5,7 +5,6 @@
  * Admin endpoints: /admin/service-provider, /admin/tokens, /admin/group-mappings, /admin/sync-logs, /admin/conflicts, /admin/sync
  */
 import crypto from 'crypto';
-
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -111,7 +110,10 @@ const verifyScimToken = asyncHandler(async (req: ScimRequest, res: Response, nex
   }
   req.scimTokenId = row.id;
   req.scimOrgId = row.organization_id || undefined;
-  await dbRun('UPDATE scim_tokens SET last_used_at = datetime(\'now\'), usage_count = usage_count + 1 WHERE id = ?', [row.id]);
+  await dbRun(
+    "UPDATE scim_tokens SET last_used_at = datetime('now'), usage_count = usage_count + 1 WHERE id = ?",
+    [row.id]
+  );
   next();
 });
 
@@ -155,20 +157,50 @@ async function formatScimGroup(g: any) {
   };
 }
 
-async function logSyncOp(operation: string, resourceType: string, resourceId?: string, externalId?: string, status = 'success', errorMessage?: string) {
+async function logSyncOp(
+  operation: string,
+  resourceType: string,
+  resourceId?: string,
+  externalId?: string,
+  status = 'success',
+  errorMessage?: string
+) {
   await dbRun(
     `INSERT INTO scim_sync_logs (id, operation, resource_type, resource_id, external_id, status, error_message)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [uuidv4(), operation, resourceType, resourceId || null, externalId || null, status, errorMessage || null]
+    [
+      uuidv4(),
+      operation,
+      resourceType,
+      resourceId || null,
+      externalId || null,
+      status,
+      errorMessage || null,
+    ]
   );
 }
 
-async function logConflict(orgId: string, conflictType: string, resourceType: string, externalId?: string, internalId?: string, details?: any) {
+async function logConflict(
+  orgId: string,
+  conflictType: string,
+  resourceType: string,
+  externalId?: string,
+  internalId?: string,
+  details?: any
+) {
   const id = uuidv4();
   await dbRun(
     `INSERT INTO scim_conflict_log (id, organization_id, conflict_type, resource_type, external_id, internal_id, details_json)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, orgId, conflictType, resourceType, externalId || null, internalId || null, details ? JSON.stringify(details) : null]
+    [
+      id,
+      orgId,
+      conflictType,
+      resourceType,
+      externalId || null,
+      internalId || null,
+      details ? JSON.stringify(details) : null,
+    ]
   );
   return id;
 }
@@ -233,7 +265,9 @@ router.post(
       });
     }
 
-    const existing = await dbGet<any>('SELECT id, email, is_active FROM users WHERE email = ?', [email.toLowerCase()]);
+    const existing = await dbGet<any>('SELECT id, email, is_active FROM users WHERE email = ?', [
+      email.toLowerCase(),
+    ]);
     if (existing) {
       const orgId = req.scimOrgId || 'unknown';
       await logConflict(orgId, 'duplicate_email', 'User', externalId, existing.id, { email });
@@ -254,13 +288,30 @@ router.post(
     await dbRun(
       `INSERT INTO users (id, email, first_name, last_name, is_active, scim_external_id, scim_provisioned, scim_last_sync_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
-      [id, email.toLowerCase(), name?.givenName || '', name?.familyName || '', active !== false ? 1 : 0, externalId || null]
+      [
+        id,
+        email.toLowerCase(),
+        name?.givenName || '',
+        name?.familyName || '',
+        active !== false ? 1 : 0,
+        externalId || null,
+      ]
     );
     await logSyncOp('create', 'User', id, externalId);
     logger.info(`[SCIM] Created user: ${email}`);
 
     const created = await dbGet<any>('SELECT * FROM users WHERE id = ?', [id]);
-    res.status(201).json(formatScimUser(created || { id, email, first_name: name?.givenName, last_name: name?.familyName, is_active: 1 }));
+    res.status(201).json(
+      formatScimUser(
+        created || {
+          id,
+          email,
+          first_name: name?.givenName,
+          last_name: name?.familyName,
+          is_active: 1,
+        }
+      )
+    );
   })
 );
 
@@ -354,12 +405,14 @@ router.patch(
         const givenName = typeof op.value === 'string' ? op.value : op.value?.givenName;
         const familyName = typeof op.value === 'object' ? op.value?.familyName : undefined;
         if (givenName) await dbRun('UPDATE users SET first_name = ? WHERE id = ?', [givenName, id]);
-        if (familyName) await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [familyName, id]);
+        if (familyName)
+          await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [familyName, id]);
       } else if (op.path === 'name.familyName') {
         await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [op.value, id]);
       } else if (op.path === 'emails' || op.path === 'userName') {
         const email = Array.isArray(op.value) ? op.value[0]?.value : op.value;
-        if (email) await dbRun('UPDATE users SET email = ? WHERE id = ?', [email.toLowerCase(), id]);
+        if (email)
+          await dbRun('UPDATE users SET email = ? WHERE id = ?', [email.toLowerCase(), id]);
       } else if (op.path === 'active') {
         const isActive = op.value === true || op.value === 'true';
         await dbRun('UPDATE users SET is_active = ? WHERE id = ?', [isActive ? 1 : 0, id]);
@@ -374,16 +427,27 @@ router.patch(
           if (!isActive) await revokeUserSessions(id);
         }
         if (op.value.name) {
-          if (op.value.name.givenName) await dbRun('UPDATE users SET first_name = ? WHERE id = ?', [op.value.name.givenName, id]);
-          if (op.value.name.familyName) await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [op.value.name.familyName, id]);
+          if (op.value.name.givenName)
+            await dbRun('UPDATE users SET first_name = ? WHERE id = ?', [
+              op.value.name.givenName,
+              id,
+            ]);
+          if (op.value.name.familyName)
+            await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [
+              op.value.name.familyName,
+              id,
+            ]);
         }
         if (op.value.emails?.[0]?.value) {
-          await dbRun('UPDATE users SET email = ? WHERE id = ?', [op.value.emails[0].value.toLowerCase(), id]);
+          await dbRun('UPDATE users SET email = ? WHERE id = ?', [
+            op.value.emails[0].value.toLowerCase(),
+            id,
+          ]);
         }
       }
     }
 
-    await dbRun('UPDATE users SET scim_last_sync_at = datetime(\'now\') WHERE id = ?', [id]);
+    await dbRun("UPDATE users SET scim_last_sync_at = datetime('now') WHERE id = ?", [id]);
     await logSyncOp('patch', 'User', id);
     logger.info(`[SCIM] Patched user: ${id}`);
 
@@ -431,9 +495,15 @@ router.get(
     let groups: any[];
     if (filter && typeof filter === 'string' && filter.startsWith('displayName eq ')) {
       const name = filter.replace('displayName eq ', '').replace(/"/g, '');
-      groups = await dbAll('SELECT id, name, created_at FROM user_groups WHERE name = ?', [name], { fallback: true });
+      groups = await dbAll('SELECT id, name, created_at FROM user_groups WHERE name = ?', [name], {
+        fallback: true,
+      });
     } else {
-      groups = await dbAll('SELECT id, name, created_at FROM user_groups LIMIT ? OFFSET ?', [parsedCount, parsedStart - 1], { fallback: true });
+      groups = await dbAll(
+        'SELECT id, name, created_at FROM user_groups LIMIT ? OFFSET ?',
+        [parsedCount, parsedStart - 1],
+        { fallback: true }
+      );
     }
 
     const resources = await Promise.all((groups || []).map(formatScimGroup));
@@ -460,10 +530,14 @@ router.post(
       });
     }
 
-    const existing = await dbGet<any>('SELECT id, name FROM user_groups WHERE name = ?', [displayName]);
+    const existing = await dbGet<any>('SELECT id, name FROM user_groups WHERE name = ?', [
+      displayName,
+    ]);
     if (existing) {
       const orgId = req.scimOrgId || 'unknown';
-      await logConflict(orgId, 'duplicate_group_name', 'Group', undefined, existing.id, { displayName });
+      await logConflict(orgId, 'duplicate_group_name', 'Group', undefined, existing.id, {
+        displayName,
+      });
       logger.warn(`[SCIM] Conflict: group "${displayName}" already exists (id=${existing.id})`);
       const formatted = await formatScimGroup(existing);
       return res.status(200).json(formatted);
@@ -491,7 +565,9 @@ router.post(
     await logSyncOp('create', 'Group', id);
     logger.info(`[SCIM] Created group: ${displayName}`);
 
-    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [id]);
+    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
+      id,
+    ]);
     const formatted = await formatScimGroup(group || { id, name: displayName });
     res.status(201).json(formatted);
   })
@@ -501,7 +577,9 @@ router.get(
   '/Groups/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
-    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [req.params.id]);
+    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
+      req.params.id,
+    ]);
     if (!group) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -548,11 +626,17 @@ router.patch(
       } else if (opType === 'remove' && op.path?.startsWith('members')) {
         const memberMatch = op.path.match(/members\[value eq "(.+?)"\]/);
         if (memberMatch) {
-          await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [id, memberMatch[1]]);
+          await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [
+            id,
+            memberMatch[1],
+          ]);
         } else if (Array.isArray(op.value)) {
           for (const member of op.value) {
             if (member?.value) {
-              await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [id, member.value]);
+              await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [
+                id,
+                member.value,
+              ]);
             }
           }
         }
@@ -574,7 +658,9 @@ router.patch(
     await logSyncOp('patch', 'Group', id);
     logger.info(`[SCIM] Patched group: ${id}`);
 
-    const updated = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [id]);
+    const updated = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
+      id,
+    ]);
     const formatted = await formatScimGroup(updated || group);
     res.json(formatted);
   })
@@ -645,10 +731,11 @@ router.post(
       ]);
     } else {
       const id = uuidv4();
-      await dbRun(
-        `INSERT INTO scim_service_providers (id, base_url, is_active) VALUES (?, ?, ?)`,
-        [id, '/api/scim/v2', isActive ? 1 : 0]
-      );
+      await dbRun(`INSERT INTO scim_service_providers (id, base_url, is_active) VALUES (?, ?, ?)`, [
+        id,
+        '/api/scim/v2',
+        isActive ? 1 : 0,
+      ]);
     }
     logger.info(`[SCIM] Service provider ${isActive ? 'enabled' : 'disabled'}`);
     res.json({ success: true });
@@ -661,11 +748,9 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     await ensureScimTables();
-    const rows = await dbAll(
-      `SELECT * FROM scim_tokens ORDER BY created_at DESC`,
-      [],
-      { fallback: true }
-    );
+    const rows = await dbAll(`SELECT * FROM scim_tokens ORDER BY created_at DESC`, [], {
+      fallback: true,
+    });
     const data = (rows || []).map((t: any) => ({
       id: t.id,
       name: t.name,
@@ -697,7 +782,15 @@ router.post(
     await dbRun(
       `INSERT INTO scim_tokens (id, name, description, token_hash, token_prefix, organization_id, scopes)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, description || null, tokenHash, tokenPrefix, organizationId || null, JSON.stringify(scopes || [])]
+      [
+        id,
+        name,
+        description || null,
+        tokenHash,
+        tokenPrefix,
+        organizationId || null,
+        JSON.stringify(scopes || []),
+      ]
     );
     logger.info(`[SCIM] Token generated: ${name}`);
     res.json({
@@ -737,11 +830,9 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     await ensureScimTables();
-    const rows = await dbAll(
-      `SELECT * FROM scim_group_mappings ORDER BY created_at DESC`,
-      [],
-      { fallback: true }
-    );
+    const rows = await dbAll(`SELECT * FROM scim_group_mappings ORDER BY created_at DESC`, [], {
+      fallback: true,
+    });
     const data = (rows || []).map((m: any) => ({
       id: m.id,
       externalGroupId: m.external_group_id,
@@ -876,7 +967,12 @@ router.post(
       `UPDATE scim_conflict_log SET resolution = ?, resolved_at = datetime('now') WHERE id = ?`,
       [resolution, id]
     );
-    await logSyncOp('conflict_resolve', conflict.resource_type, conflict.internal_id, conflict.external_id);
+    await logSyncOp(
+      'conflict_resolve',
+      conflict.resource_type,
+      conflict.internal_id,
+      conflict.external_id
+    );
     logger.info(`[SCIM] Conflict ${id} resolved as: ${resolution}`);
 
     res.json({ success: true, resolution });
@@ -898,7 +994,13 @@ router.post(
       { fallback: true }
     );
 
-    const results: Array<{ mappingId: string; externalGroupName: string; added: number; removed: number; memberCount: number }> = [];
+    const results: Array<{
+      mappingId: string;
+      externalGroupName: string;
+      added: number;
+      removed: number;
+      memberCount: number;
+    }> = [];
 
     for (const mapping of mappings || []) {
       const internalGroup = await dbGet<any>(
@@ -907,7 +1009,14 @@ router.post(
       );
 
       if (!internalGroup) {
-        await logSyncOp('sync_skip', 'Group', mapping.id, mapping.external_group_id, 'warning', 'No matching internal group');
+        await logSyncOp(
+          'sync_skip',
+          'Group',
+          mapping.id,
+          mapping.external_group_id,
+          'warning',
+          'No matching internal group'
+        );
         continue;
       }
 
@@ -941,10 +1050,10 @@ router.post(
 
       for (const userId of currentMemberIds) {
         if (!targetMemberIds.has(userId)) {
-          await dbRun(
-            'DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?',
-            [internalGroup.id, userId]
-          );
+          await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [
+            internalGroup.id,
+            userId,
+          ]);
           removed++;
         }
       }

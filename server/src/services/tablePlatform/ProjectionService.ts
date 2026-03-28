@@ -207,10 +207,7 @@ const projectionService = {
   /**
    * Build extensions.table compatible payload from table platform metadata.
    */
-  async projectTableExtensions(
-    _baseId: string,
-    tableId: string
-  ): Promise<TableExtensions> {
+  async projectTableExtensions(_baseId: string, tableId: string): Promise<TableExtensions> {
     if (!tableId) return { columns: [], views: [] };
     const db = getDatabase();
     try {

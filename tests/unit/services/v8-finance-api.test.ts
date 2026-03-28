@@ -352,7 +352,7 @@ describe('V8FinanceApi', () => {
     const data = await V8FinanceApi.getStatementAnalytics('statement-1', { level: 3 });
 
     expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/analytics', {
-      level: 3,
+      level: '3',
     });
     expect(data.periods?.[0]?.label).toBe('Q1 2026');
     expect(data.rows?.[0]?.id).toBe('row-1');
@@ -435,7 +435,7 @@ describe('V8FinanceApi', () => {
 
     expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/document-intelligence/search', {
       q: 'revenue',
-      limit: 3,
+      limit: '3',
     });
     expect(data.statementId).toBe('statement-1');
     expect(data.matches[0].chunkText).toBe('Revenue increased due to seasonality.');

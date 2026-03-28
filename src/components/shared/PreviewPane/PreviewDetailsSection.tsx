@@ -1,4 +1,12 @@
-import { ChevronDown, Copy, FileText, type LucideIcon, MessageSquare, MoreVertical, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  Copy,
+  FileText,
+  type LucideIcon,
+  MessageSquare,
+  MoreVertical,
+  Sparkles,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -193,7 +201,11 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
               {text}
             </div>
           ) : !children ? (
-            <div className={compact ? 'text-xs text-slate-400 italic' : 'text-sm text-slate-400 italic'}>
+            <div
+              className={
+                compact ? 'text-xs text-slate-400 italic' : 'text-sm text-slate-400 italic'
+              }
+            >
               {isPolish ? 'Brak opisu.' : 'No description.'}
             </div>
           ) : null}

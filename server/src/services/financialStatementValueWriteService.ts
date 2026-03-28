@@ -1,4 +1,5 @@
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { syncStatementToPack } from './financialStatementPackService.js';
 import {
   evaluateStatementReadiness,
   getLatestStatementIngestRun,
@@ -18,7 +19,6 @@ import {
   updateStatementStatus,
   validateStatement,
 } from './financialStatementService.js';
-import { syncStatementToPack } from './financialStatementPackService.js';
 
 async function ensureStatementIngestRun(params: {
   statementId: string;
@@ -51,16 +51,19 @@ async function ensureStatementIngestRun(params: {
   });
 }
 
-async function loadCandidateRowLookup(statementId: string): Promise<
-  Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>
-> {
+async function loadCandidateRowLookup(
+  statementId: string
+): Promise<Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>> {
   const rows = (await dbAll(
     `SELECT id, source_row, source_page, row_label
      FROM financial_statement_candidate_rows
      WHERE statement_id = ?`,
-    [statementId],
+    [statementId]
   )) as Array<{ id: string; source_row?: number; source_page?: number | null; row_label?: string }>;
-  const lookup = new Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>();
+  const lookup = new Map<
+    number,
+    { candidateRowId: string; sourcePage: number | null; rowLabel: string }
+  >();
   for (const row of rows || []) {
     if (row.source_row == null) continue;
     lookup.set(Number(row.source_row), {
@@ -77,7 +80,7 @@ async function loadSelectedMappingLookup(statementId: string): Promise<Map<strin
     `SELECT candidate_row_id, canonical_line_id, id
      FROM financial_statement_mapping_candidates
      WHERE statement_id = ? AND is_selected = TRUE`,
-    [statementId],
+    [statementId]
   )) as Array<{ candidate_row_id?: string; canonical_line_id?: string; id: string }>;
   const lookup = new Map<string, string>();
   for (const row of rows || []) {
@@ -137,22 +140,21 @@ export async function saveStatementValuesFlow(params: {
     const canonicalLineId = value.canonicalLineId || null;
     const mappingStatus = String(value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped'));
     const isNonFinancial = Boolean(value.isNonFinancial);
-    const valueOrigin = (
-      String(value.valueOrigin || '').trim() ||
+    const valueOrigin = (String(value.valueOrigin || '').trim() ||
       (mappingStatus === 'manual'
         ? 'manual'
         : mappingStatus === 'computed'
           ? 'computed'
           : canonicalLineId
             ? 'mapped'
-            : 'source')
-    ) as 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
+            : 'source')) as 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
     const evidenceJson =
       value.evidenceJson && typeof value.evidenceJson === 'object'
         ? value.evidenceJson
         : {
             sourceRow,
-            sourcePage: value.sourcePage != null ? Number(value.sourcePage) : candidate?.sourcePage || null,
+            sourcePage:
+              value.sourcePage != null ? Number(value.sourcePage) : candidate?.sourcePage || null,
             candidateRowId: candidate?.candidateRowId || null,
             originalLabel: String(value.originalLabel || candidate?.rowLabel || ''),
             mappingStatus,
@@ -174,7 +176,8 @@ export async function saveStatementValuesFlow(params: {
       originalLabel: String(value.originalLabel || ''),
       value: Number(value.value || 0),
       confidence: Number(value.confidence || 0),
-      sourcePage: value.sourcePage != null ? Number(value.sourcePage) : candidate?.sourcePage ?? null,
+      sourcePage:
+        value.sourcePage != null ? Number(value.sourcePage) : (candidate?.sourcePage ?? null),
       sourceRow,
       mappingStatus,
       isNonFinancial,
@@ -217,7 +220,9 @@ export async function saveStatementValuesFlow(params: {
   await persistStatementValueEvidence(
     insertedValues.flatMap((row: any, index: number) => {
       const normalized = normalizedValues[index];
-      const provided = Array.isArray((values[index] as any)?.evidences) ? (values[index] as any).evidences : [];
+      const provided = Array.isArray((values[index] as any)?.evidences)
+        ? (values[index] as any).evidences
+        : [];
       if (provided.length > 0) {
         return provided.map((evidence: any) => ({
           statementValueId: row.id,
@@ -248,7 +253,7 @@ export async function saveStatementValuesFlow(params: {
           explanation: `Mapped from source row for "${row.originalLabel}".`,
         },
       ];
-    }),
+    })
   );
 
   const validationResult = validateStatement(
@@ -259,7 +264,7 @@ export async function saveStatementValuesFlow(params: {
       mappingStatus: value.mappingStatus,
       isNonFinancial: value.isNonFinancial,
     })),
-    statement.statement_type,
+    statement.statement_type
   );
   const readiness = evaluateStatementReadiness({
     rawStatus: 'mapped',
@@ -294,7 +299,7 @@ export async function saveStatementValuesFlow(params: {
   for (const derived of cfoResult.derivedLines) {
     if (!derived.canonicalLineId) continue;
     const existsAlready = normalizedValues.some(
-      (value: any) => value.canonicalLineId === derived.canonicalLineId && !value.isNonFinancial,
+      (value: any) => value.canonicalLineId === derived.canonicalLineId && !value.isNonFinancial
     );
     if (existsAlready) continue;
     normalizedValues.push({
@@ -321,7 +326,12 @@ export async function saveStatementValuesFlow(params: {
     });
   }
 
-  await updateStatementStatus(statementId, 'mapped', validationResult.status, validationResult.messages);
+  await updateStatementStatus(
+    statementId,
+    'mapped',
+    validationResult.status,
+    validationResult.messages
+  );
   await persistStatementValidationLedger({
     statementId,
     statementType: statement.statement_type,

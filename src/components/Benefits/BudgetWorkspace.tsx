@@ -379,10 +379,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     []
   );
 
-  const baseScenario = useMemo(
-    () => scenarios.find((s) => s.scenarioType === 'base'),
-    [scenarios]
-  );
+  const baseScenario = useMemo(() => scenarios.find((s) => s.scenarioType === 'base'), [scenarios]);
 
   const tabItems = [
     { id: 'inputs' as const, label: t('finance.budget.tabs.inputs', 'Inputs') },
@@ -438,7 +435,12 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     {line.source === 'kpi' && (
                       <span
                         className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-semibold uppercase cursor-default"
-                        title={t('finance.budget.kpiHint', 'Driven by linked KPI — updates automatically') as string}
+                        title={
+                          t(
+                            'finance.budget.kpiHint',
+                            'Driven by linked KPI — updates automatically'
+                          ) as string
+                        }
                       >
                         KPI
                       </span>
@@ -517,7 +519,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 >
                   <div className="font-medium truncate">{b.title}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getStatusBadgeClass(b.status)}`}>
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getStatusBadgeClass(b.status)}`}
+                    >
                       {b.status}
                     </span>
                     <span className="text-xs text-slate-500">v{b.version}</span>
@@ -590,7 +594,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 </button>
               </div>
             </div>
-            <div role="tablist" className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1">
+            <div
+              role="tablist"
+              className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1"
+            >
               {tabItems.map((tab) => (
                 <button
                   key={tab.id}
@@ -691,8 +698,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                   {fmtNumber.format(sc.summaryMetrics?.totalRevenue ?? 0)}
                                 </span>
                                 {!isBase && revenueDelta !== 0 && (
-                                  <span className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                    {revenueDelta > 0 ? '+' : ''}{fmtNumber.format(revenueDelta)}
+                                  <span
+                                    className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                  >
+                                    {revenueDelta > 0 ? '+' : ''}
+                                    {fmtNumber.format(revenueDelta)}
                                   </span>
                                 )}
                               </div>
@@ -706,8 +716,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                   {fmtNumber.format(sc.summaryMetrics?.netIncome ?? 0)}
                                 </span>
                                 {!isBase && netIncomeDelta !== 0 && (
-                                  <span className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                    {netIncomeDelta > 0 ? '+' : ''}{fmtNumber.format(netIncomeDelta)}
+                                  <span
+                                    className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                  >
+                                    {netIncomeDelta > 0 ? '+' : ''}
+                                    {fmtNumber.format(netIncomeDelta)}
                                   </span>
                                 )}
                               </div>
@@ -764,8 +777,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                     >
                                       {fmtNumber.format(val)}
                                       {!isBase && delta !== 0 && (
-                                        <span className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                          ({delta > 0 ? '+' : ''}{fmtNumber.format(delta)})
+                                        <span
+                                          className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                        >
+                                          ({delta > 0 ? '+' : ''}
+                                          {fmtNumber.format(delta)})
                                         </span>
                                       )}
                                     </td>
@@ -876,12 +892,16 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </button>
                               </td>
                               <td className="px-4 py-2">
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(ini.status)}`}>
+                                <span
+                                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(ini.status)}`}
+                                >
                                   {ini.status}
                                 </span>
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">
-                                {ini.revenueUplift ? `+${fmtNumber.format(ini.revenueUplift)}` : '—'}
+                                {ini.revenueUplift
+                                  ? `+${fmtNumber.format(ini.revenueUplift)}`
+                                  : '—'}
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-blue-600 dark:text-blue-400">
                                 {ini.costSavings ? `+${fmtNumber.format(ini.costSavings)}` : '—'}

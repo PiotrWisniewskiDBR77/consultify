@@ -33,5 +33,7 @@ export interface V8RetrievalTrace {
 
 export const V8RetrievalApi = {
   getConversationTraces: (conversationId: string) =>
-    v8Get<V8RetrievalTrace[]>(`/retrieval/conversations/${encodeURIComponent(conversationId)}/traces`),
+    v8Get<V8RetrievalTrace[]>(
+      `/retrieval/conversations/${encodeURIComponent(conversationId)}/traces`
+    ),
 };

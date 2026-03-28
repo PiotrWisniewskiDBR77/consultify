@@ -21,7 +21,9 @@ const AIContextBuilder = {
     const helpEvents = await AIContextBuilder._getHelpEvents(orgId);
     const metrics = await AIContextBuilder._getMetrics(orgId);
     const lifecycleEvents = await AIContextBuilder._getLifecycleEvents(orgId);
-    const resolvedContext = await organizationContextService.buildResolvedContext(orgId).catch(() => null);
+    const resolvedContext = await organizationContextService
+      .buildResolvedContext(orgId)
+      .catch(() => null);
 
     return {
       orgId,

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Migration Runner', () => {
   it('all 27 migration files exist (700-726)', () => {
@@ -37,7 +37,10 @@ describe('Migration Runner', () => {
 
   it('foundation migration 700 creates core tables', () => {
     const migrationsDir = path.resolve(process.cwd(), 'server/migrations');
-    const content = fs.readFileSync(path.join(migrationsDir, '700_table_platform_foundation.sql'), 'utf-8');
+    const content = fs.readFileSync(
+      path.join(migrationsDir, '700_table_platform_foundation.sql'),
+      'utf-8'
+    );
     expect(content).toContain('tp_bases');
     expect(content).toContain('tp_tables');
     expect(content).toContain('tp_fields');

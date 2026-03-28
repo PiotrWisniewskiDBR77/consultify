@@ -3,10 +3,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import RecordsService from '../tablePlatform/RecordsService.js';
-import { schemaDriftDetector, type DriftReport } from './schemaDriftDetector.js';
+import { type DriftReport, schemaDriftDetector } from './schemaDriftDetector.js';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -115,10 +116,9 @@ export const connectorRunner = {
     const db = getDatabase();
     const startTime = Date.now();
 
-    const connectorResult = await db.query(
-      'SELECT * FROM tp_connectors WHERE id = $1',
-      [connectorId]
-    );
+    const connectorResult = await db.query('SELECT * FROM tp_connectors WHERE id = $1', [
+      connectorId,
+    ]);
     const connector = connectorResult.rows[0] as ConnectorRow | undefined;
     if (!connector) {
       throw new Error(`Connector not found: ${connectorId}`);
@@ -157,12 +157,14 @@ export const connectorRunner = {
           result.driftReport = drift;
           logger.info('[ConnectorRunner] schema drift detected', { connectorId, drift });
 
-          await db.query(
-            `UPDATE tp_connector_runs SET metadata = $2 WHERE id = $1`,
-            [runId, JSON.stringify({ drift_report: drift })]
-          );
+          await db.query(`UPDATE tp_connector_runs SET metadata = $2 WHERE id = $1`, [
+            runId,
+            JSON.stringify({ drift_report: drift }),
+          ]);
 
-          const onDrift = (connector.config as Record<string, unknown>).onDrift as string | undefined;
+          const onDrift = (connector.config as Record<string, unknown>).onDrift as
+            | string
+            | undefined;
           if (onDrift === 'auto') {
             await schemaDriftDetector.autoResolveDrift(connectorId, drift);
           } else if (onDrift === 'pause') {
@@ -189,9 +191,10 @@ export const connectorRunner = {
         });
       }
 
-      const fetchConfig = connector.connector_type === 'webhook'
-        ? { ...connector.config, _connectorId: connectorId }
-        : connector.config;
+      const fetchConfig =
+        connector.connector_type === 'webhook'
+          ? { ...connector.config, _connectorId: connectorId }
+          : connector.config;
       const externalRecords = await impl.fetchRecords(fetchConfig);
       result.recordsFetched = externalRecords.length;
 

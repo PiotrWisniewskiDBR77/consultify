@@ -7,25 +7,45 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 class InitiativeGovernanceService {
-
   // ── V4-INIT-04: Goals/OKR ──
 
-  async createGoal(orgId: string, data: {
-    parentGoalId?: string; goalType?: string; title: string; description?: string;
-    ownerId?: string; timeFrame?: string; startDate?: string; endDate?: string;
-    targetValue?: number; unit?: string;
-  }) {
+  async createGoal(
+    orgId: string,
+    data: {
+      parentGoalId?: string;
+      goalType?: string;
+      title: string;
+      description?: string;
+      ownerId?: string;
+      timeFrame?: string;
+      startDate?: string;
+      endDate?: string;
+      targetValue?: number;
+      unit?: string;
+    }
+  ) {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO goals (id, organization_id, parent_goal_id, goal_type, title, description, owner_id, time_frame, start_date, end_date, target_value, unit)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-      [id, orgId, data.parentGoalId ?? null, data.goalType ?? 'objective',
-       data.title, data.description ?? null, data.ownerId ?? null,
-       data.timeFrame ?? null, data.startDate ?? null, data.endDate ?? null,
-       data.targetValue ?? null, data.unit ?? null],
+      [
+        id,
+        orgId,
+        data.parentGoalId ?? null,
+        data.goalType ?? 'objective',
+        data.title,
+        data.description ?? null,
+        data.ownerId ?? null,
+        data.timeFrame ?? null,
+        data.startDate ?? null,
+        data.endDate ?? null,
+        data.targetValue ?? null,
+        data.unit ?? null,
+      ]
     );
     return { id };
   }
@@ -38,31 +58,59 @@ class InitiativeGovernanceService {
   }
 
   async getGoal(orgId: string, goalId: string) {
-    return queryHelpers.queryFirst(
-      `SELECT * FROM goals WHERE id=$1 AND organization_id=$2`, [goalId, orgId],
-    );
+    return queryHelpers.queryFirst(`SELECT * FROM goals WHERE id=$1 AND organization_id=$2`, [
+      goalId,
+      orgId,
+    ]);
   }
 
-  async updateGoal(orgId: string, goalId: string, data: Partial<{
-    title: string; description: string; status: string; progress: number;
-    currentValue: number; ownerId: string;
-  }>) {
+  async updateGoal(
+    orgId: string,
+    goalId: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      status: string;
+      progress: number;
+      currentValue: number;
+      ownerId: string;
+    }>
+  ) {
     const sets: string[] = [];
     const params: unknown[] = [];
     let idx = 1;
 
-    if (data.title !== undefined) { sets.push(`title=$${idx++}`); params.push(data.title); }
-    if (data.description !== undefined) { sets.push(`description=$${idx++}`); params.push(data.description); }
-    if (data.status !== undefined) { sets.push(`status=$${idx++}`); params.push(data.status); }
-    if (data.progress !== undefined) { sets.push(`progress=$${idx++}`); params.push(data.progress); }
-    if (data.currentValue !== undefined) { sets.push(`current_value=$${idx++}`); params.push(data.currentValue); }
-    if (data.ownerId !== undefined) { sets.push(`owner_id=$${idx++}`); params.push(data.ownerId); }
+    if (data.title !== undefined) {
+      sets.push(`title=$${idx++}`);
+      params.push(data.title);
+    }
+    if (data.description !== undefined) {
+      sets.push(`description=$${idx++}`);
+      params.push(data.description);
+    }
+    if (data.status !== undefined) {
+      sets.push(`status=$${idx++}`);
+      params.push(data.status);
+    }
+    if (data.progress !== undefined) {
+      sets.push(`progress=$${idx++}`);
+      params.push(data.progress);
+    }
+    if (data.currentValue !== undefined) {
+      sets.push(`current_value=$${idx++}`);
+      params.push(data.currentValue);
+    }
+    if (data.ownerId !== undefined) {
+      sets.push(`owner_id=$${idx++}`);
+      params.push(data.ownerId);
+    }
 
     if (sets.length === 0) return { ok: true };
     sets.push(`updated_at=CURRENT_TIMESTAMP`);
     params.push(goalId, orgId);
     await queryHelpers.queryRun(
-      `UPDATE goals SET ${sets.join(', ')} WHERE id=$${idx++} AND organization_id=$${idx}`, params,
+      `UPDATE goals SET ${sets.join(', ')} WHERE id=$${idx++} AND organization_id=$${idx}`,
+      params
     );
     return { ok: true };
   }
@@ -73,7 +121,7 @@ class InitiativeGovernanceService {
       `INSERT INTO goal_initiative_links (id, goal_id, initiative_id, contribution_weight)
        VALUES ($1,$2,$3,$4)
        ON CONFLICT (goal_id, initiative_id) DO UPDATE SET contribution_weight=$4`,
-      [id, goalId, initiativeId, weight ?? 1.0],
+      [id, goalId, initiativeId, weight ?? 1.0]
     );
     return { id };
   }
@@ -84,30 +132,36 @@ class InitiativeGovernanceService {
        FROM goal_initiative_links gil
        LEFT JOIN initiatives i ON i.id = gil.initiative_id
        WHERE gil.goal_id=$1 ORDER BY gil.created_at`,
-      [goalId],
+      [goalId]
     );
   }
 
   async getGoalRollup(orgId: string, goalId: string) {
     const goal = await this.getGoal(orgId, goalId);
-    const links = await queryHelpers.queryAll<{ contribution_weight: number; initiative_id: string }>(
-      `SELECT * FROM goal_initiative_links WHERE goal_id=$1`, [goalId],
-    );
+    const links = await queryHelpers.queryAll<{
+      contribution_weight: number;
+      initiative_id: string;
+    }>(`SELECT * FROM goal_initiative_links WHERE goal_id=$1`, [goalId]);
     const childGoals = await queryHelpers.queryAll<{ id: string; progress: number }>(
-      `SELECT id, progress FROM goals WHERE parent_goal_id=$1`, [goalId],
+      `SELECT id, progress FROM goals WHERE parent_goal_id=$1`,
+      [goalId]
     );
-    const linkedInitiatives = await queryHelpers.queryAll<{ id: string; progress: number; contribution_weight: number }>(
+    const linkedInitiatives = await queryHelpers.queryAll<{
+      id: string;
+      progress: number;
+      contribution_weight: number;
+    }>(
       `SELECT i.id, COALESCE(i.progress, 0) as progress, COALESCE(gil.contribution_weight, 1.0) as contribution_weight
        FROM goal_initiative_links gil
        JOIN initiatives i ON i.id = gil.initiative_id
        WHERE gil.goal_id=$1 AND i.organization_id=$2`,
-      [goalId, orgId],
+      [goalId, orgId]
     );
 
     let weightedProgress = 0;
     let totalWeight = 0;
     for (const child of childGoals) {
-      weightedProgress += (child.progress || 0);
+      weightedProgress += child.progress || 0;
       totalWeight += 1;
     }
     for (const initiative of linkedInitiatives) {
@@ -129,28 +183,46 @@ class InitiativeGovernanceService {
   async unlinkGoalFromInitiative(goalId: string, initiativeId: string) {
     await queryHelpers.queryRun(
       `DELETE FROM goal_initiative_links WHERE goal_id=$1 AND initiative_id=$2`,
-      [goalId, initiativeId],
+      [goalId, initiativeId]
     );
     return { deleted: true };
   }
 
   // ── V4-INIT-06: AI Blueprint Generator ──
 
-  async createBlueprint(orgId: string, data: {
-    initiativeId?: string; promptText?: string; generatedWbs?: object[];
-    generatedMilestones?: object[]; generatedDeps?: object[];
-    generatedResources?: object[]; citations?: string[];
-    aiModelUsed?: string; confidence?: number; createdBy: string;
-  }) {
+  async createBlueprint(
+    orgId: string,
+    data: {
+      initiativeId?: string;
+      promptText?: string;
+      generatedWbs?: object[];
+      generatedMilestones?: object[];
+      generatedDeps?: object[];
+      generatedResources?: object[];
+      citations?: string[];
+      aiModelUsed?: string;
+      confidence?: number;
+      createdBy: string;
+    }
+  ) {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO initiative_ai_blueprints (id, organization_id, initiative_id, prompt_text, generated_wbs, generated_milestones, generated_deps, generated_resources, citations, ai_model_used, confidence, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-      [id, orgId, data.initiativeId ?? null, data.promptText ?? null,
-       JSON.stringify(data.generatedWbs ?? []), JSON.stringify(data.generatedMilestones ?? []),
-       JSON.stringify(data.generatedDeps ?? []), JSON.stringify(data.generatedResources ?? []),
-       JSON.stringify(data.citations ?? []), data.aiModelUsed ?? null,
-       data.confidence ?? 0.0, data.createdBy],
+      [
+        id,
+        orgId,
+        data.initiativeId ?? null,
+        data.promptText ?? null,
+        JSON.stringify(data.generatedWbs ?? []),
+        JSON.stringify(data.generatedMilestones ?? []),
+        JSON.stringify(data.generatedDeps ?? []),
+        JSON.stringify(data.generatedResources ?? []),
+        JSON.stringify(data.citations ?? []),
+        data.aiModelUsed ?? null,
+        data.confidence ?? 0.0,
+        data.createdBy,
+      ]
     );
     return { id };
   }
@@ -165,7 +237,7 @@ class InitiativeGovernanceService {
   async applyBlueprint(orgId: string, blueprintId: string, userId: string) {
     const blueprint = await queryHelpers.queryFirst<any>(
       `SELECT * FROM initiative_ai_blueprints WHERE id=$1 AND organization_id=$2`,
-      [blueprintId, orgId],
+      [blueprintId, orgId]
     );
     if (!blueprint) return { ok: false, reason: 'not_found' };
     if (!blueprint.initiative_id) return { ok: false, reason: 'initiative_missing' };
@@ -209,7 +281,7 @@ class InitiativeGovernanceService {
           JSON.stringify(normalized.tags),
           normalized.taskType,
           normalized.acceptanceCriteria,
-        ],
+        ]
       );
       tasksCreated++;
       taskIds.push(taskId);
@@ -226,7 +298,7 @@ class InitiativeGovernanceService {
       await queryHelpers.queryRun(
         `INSERT INTO task_dependencies (id, from_task_id, to_task_id, type, created_at)
          VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP)`,
-        [uuidv4(), fromId, toId, normalized.type],
+        [uuidv4(), fromId, toId, normalized.type]
       );
       dependenciesCreated++;
     }
@@ -250,7 +322,7 @@ class InitiativeGovernanceService {
           normalized.isGate ? 1 : 0,
           normalized.gateDecisionId,
           userId,
-        ],
+        ]
       );
       milestoneIds.push(milestoneId);
     }
@@ -273,7 +345,7 @@ class InitiativeGovernanceService {
           normalized.startDate,
           normalized.endDate,
           normalized.notes,
-        ],
+        ]
       );
       resourceIds.push(resourceId);
     }
@@ -282,7 +354,7 @@ class InitiativeGovernanceService {
       `UPDATE initiative_ai_blueprints
        SET status='applied', applied_at=CURRENT_TIMESTAMP
        WHERE id=$1 AND organization_id=$2`,
-      [blueprintId, orgId],
+      [blueprintId, orgId]
     );
 
     return {
@@ -302,26 +374,38 @@ class InitiativeGovernanceService {
   async rejectBlueprint(orgId: string, blueprintId: string) {
     const result = await queryHelpers.queryRun(
       `UPDATE initiative_ai_blueprints SET status='rejected' WHERE id=$1 AND organization_id=$2`,
-      [blueprintId, orgId],
+      [blueprintId, orgId]
     );
     return { ok: result.changes > 0 };
   }
 
   // ── V4-INIT-07: Governance Gates ──
 
-  async createGovernanceGate(orgId: string, data: {
-    initiativeId: string; gateType?: string; gateName: string;
-    requiredDecisions?: string[]; requiredRaidStatus?: object;
-    requiredApprovers?: string[];
-  }) {
+  async createGovernanceGate(
+    orgId: string,
+    data: {
+      initiativeId: string;
+      gateType?: string;
+      gateName: string;
+      requiredDecisions?: string[];
+      requiredRaidStatus?: object;
+      requiredApprovers?: string[];
+    }
+  ) {
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO initiative_governance_gates (id, organization_id, initiative_id, gate_type, gate_name, required_decisions, required_raid_status, required_approvers)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [id, orgId, data.initiativeId, data.gateType ?? 'phase_gate', data.gateName,
-       JSON.stringify(data.requiredDecisions ?? []),
-       JSON.stringify(data.requiredRaidStatus ?? {}),
-       JSON.stringify(data.requiredApprovers ?? [])],
+      [
+        id,
+        orgId,
+        data.initiativeId,
+        data.gateType ?? 'phase_gate',
+        data.gateName,
+        JSON.stringify(data.requiredDecisions ?? []),
+        JSON.stringify(data.requiredRaidStatus ?? {}),
+        JSON.stringify(data.requiredApprovers ?? []),
+      ]
     );
     return { id };
   }
@@ -329,17 +413,20 @@ class InitiativeGovernanceService {
   async getGovernanceGates(orgId: string, initiativeId: string) {
     return queryHelpers.queryAll(
       `SELECT * FROM initiative_governance_gates WHERE organization_id=$1 AND initiative_id=$2 ORDER BY created_at`,
-      [orgId, initiativeId],
+      [orgId, initiativeId]
     );
   }
 
   async evaluateGate(orgId: string, gateId: string) {
     const gate = await queryHelpers.queryFirst<{
-      required_decisions: string; required_approvers: string; required_raid_status: string; initiative_id: string;
-    }>(
-      `SELECT * FROM initiative_governance_gates WHERE id=$1 AND organization_id=$2`,
-      [gateId, orgId],
-    );
+      required_decisions: string;
+      required_approvers: string;
+      required_raid_status: string;
+      initiative_id: string;
+    }>(`SELECT * FROM initiative_governance_gates WHERE id=$1 AND organization_id=$2`, [
+      gateId,
+      orgId,
+    ]);
     if (!gate) return null;
 
     const requiredDecisions = JSON.parse(gate.required_decisions || '[]');
@@ -348,7 +435,8 @@ class InitiativeGovernanceService {
     const decisionsMet: boolean[] = [];
     for (const decId of requiredDecisions) {
       const dec = await queryHelpers.queryFirst<{ workflow_status: string }>(
-        `SELECT workflow_status FROM decisions WHERE id=$1`, [decId],
+        `SELECT workflow_status FROM decisions WHERE id=$1`,
+        [decId]
       );
       decisionsMet.push(dec?.workflow_status === 'published');
     }
@@ -359,7 +447,7 @@ class InitiativeGovernanceService {
     for (const [statusKey, minRequired] of raidChecks) {
       const countRow = await queryHelpers.queryFirst<{ cnt: number }>(
         `SELECT COUNT(*) as cnt FROM raid_items WHERE initiative_id=$1 AND organization_id=$2 AND lower(status)=lower($3)`,
-        [gate.initiative_id, orgId, statusKey],
+        [gate.initiative_id, orgId, statusKey]
       );
       const count = Number(countRow?.cnt ?? 0);
       raidDetails[statusKey] = count;
@@ -369,14 +457,15 @@ class InitiativeGovernanceService {
     let approversReady = true;
     const approverDetails: Array<{ userId: string; approved: boolean }> = [];
     for (const approverId of requiredApprovers as string[]) {
-      const approved = decisionsMet.length > 0
-        ? !!(await queryHelpers.queryFirst(
-            `SELECT id FROM decisions
+      const approved =
+        decisionsMet.length > 0
+          ? !!(await queryHelpers.queryFirst(
+              `SELECT id FROM decisions
              WHERE initiative_id=$1 AND lower(workflow_status)='published' AND approved_by=$2
              LIMIT 1`,
-            [gate.initiative_id, approverId],
-          ))
-        : !!approverId;
+              [gate.initiative_id, approverId]
+            ))
+          : !!approverId;
       approverDetails.push({ userId: approverId, approved });
       if (!approved) approversReady = false;
     }
@@ -394,7 +483,7 @@ class InitiativeGovernanceService {
 
     await queryHelpers.queryRun(
       `UPDATE initiative_governance_gates SET status=$1, evaluated_at=CURRENT_TIMESTAMP, evaluation_result=$2 WHERE id=$3`,
-      [status, JSON.stringify(result), gateId],
+      [status, JSON.stringify(result), gateId]
     );
 
     return { status, ...result };
@@ -406,7 +495,7 @@ class InitiativeGovernanceService {
       `INSERT INTO initiative_decision_links (id, initiative_id, decision_id, link_type)
        VALUES ($1,$2,$3,$4)
        ON CONFLICT (initiative_id, decision_id) DO UPDATE SET link_type=$4`,
-      [id, initiativeId, decisionId, linkType ?? 'required'],
+      [id, initiativeId, decisionId, linkType ?? 'required']
     );
     return { id };
   }
@@ -417,7 +506,7 @@ class InitiativeGovernanceService {
        FROM initiative_decision_links idl
        LEFT JOIN decisions d ON d.id = idl.decision_id
        WHERE idl.initiative_id=$1 ORDER BY idl.created_at`,
-      [initiativeId],
+      [initiativeId]
     );
   }
 }
@@ -435,14 +524,7 @@ function safeJsonArray(value: unknown): any[] {
 
 function normalizeBlueprintWbsItem(item: any, index: number) {
   const title = String(item?.title || item?.name || item?.label || `Task ${index + 1}`).trim();
-  const identityKeys = [
-    item?.id,
-    item?.key,
-    item?.templateKey,
-    item?.ref,
-    title,
-    String(index),
-  ]
+  const identityKeys = [item?.id, item?.key, item?.templateKey, item?.ref, title, String(index)]
     .filter(Boolean)
     .map((value) => String(value));
 
@@ -495,6 +577,7 @@ function normalizeBlueprintResource(item: any) {
     allocationPercentage: item?.allocationPercentage ?? item?.allocationPct ?? 100,
     startDate: item?.startDate || null,
     endDate: item?.endDate || null,
-    notes: item?.notes || (Array.isArray(item?.skills) ? `Skills: ${item.skills.join(', ')}` : null),
+    notes:
+      item?.notes || (Array.isArray(item?.skills) ? `Skills: ${item.skills.join(', ')}` : null),
   };
 }

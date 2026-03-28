@@ -36,7 +36,11 @@ export const normalizeInterviewTemplateAreaTags = (value: unknown): InterviewTem
       : [];
 
   return raw
-    .map((item) => String(item || '').trim().toLowerCase())
+    .map((item) =>
+      String(item || '')
+        .trim()
+        .toLowerCase()
+    )
     .filter((item, index, array) => array.indexOf(item) === index)
     .filter((item): item is InterviewTemplateAreaTag => AREA_TAG_SET.has(item))
     .slice(0, 6);
@@ -58,7 +62,9 @@ export const getTemplateSourceLabel = (scope: string | undefined, isPolish: bool
 };
 
 export const getTemplateAreaTagLabel = (tag: string, isPolish: boolean): string => {
-  const normalized = String(tag || '').trim().toLowerCase();
+  const normalized = String(tag || '')
+    .trim()
+    .toLowerCase();
   const labels: Record<string, { pl: string; en: string }> = {
     strategy: { pl: 'Strategia', en: 'Strategy' },
     operations: { pl: 'Operacje', en: 'Operations' },

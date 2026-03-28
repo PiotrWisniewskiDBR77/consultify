@@ -1,14 +1,14 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { type AuthRequest, requireSuperAdmin } from '../../../middleware/auth.middleware.js';
-import { asyncHandler } from '../../../utils/asyncHandler.js';
 import {
-  getPlatformHealth,
   getCrossDomainIntegrity,
-  getPlatformMetrics,
   getDomainReadiness,
+  getPlatformHealth,
+  getPlatformMetrics,
 } from '../../../services/v8/platformHealthService.js';
+import { asyncHandler } from '../../../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ router.get(
       data: { health, integrity, metrics, readiness },
       meta: { version: 'v8', timestamp: new Date().toISOString() },
     });
-  }),
+  })
 );
 
 export default router;

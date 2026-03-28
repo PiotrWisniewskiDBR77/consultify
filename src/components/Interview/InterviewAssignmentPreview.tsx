@@ -2,13 +2,13 @@ import { ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 

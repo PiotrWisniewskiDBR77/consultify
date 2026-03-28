@@ -33,8 +33,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import Api from '../../services/api';
+import {
+  shouldFallbackToLegacyFinance,
+  V8FinanceApi,
+  type V8FinanceModelCreatePayload,
+  type V8FinanceModelEventCreatePayload,
+} from '../../services/api/v8/finance';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 import { ExportButton } from './ExportButton';
 
 // ---------------------------------------------------------------------------
@@ -177,7 +182,7 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
-async function createModelWithFallback(body: Record<string, unknown>) {
+async function createModelWithFallback(body: V8FinanceModelCreatePayload) {
   try {
     return await V8FinanceApi.createModel(body);
   } catch (error) {
@@ -188,7 +193,7 @@ async function createModelWithFallback(body: Record<string, unknown>) {
   }
 }
 
-async function addModelEventWithFallback(modelId: string, body: Record<string, unknown>) {
+async function addModelEventWithFallback(modelId: string, body: V8FinanceModelEventCreatePayload) {
   try {
     return await V8FinanceApi.addModelEvent(modelId, body);
   } catch (error) {
@@ -282,23 +287,17 @@ const EVENT_TYPES = [
   { value: 'dividend', label: 'Dividend', labelPl: 'Dywidenda', cf: 'financing', icon: '🎯' },
 ];
 
-const STATUS_CONFIG: Record<
-  string,
-  { badgeClass: string; icon: React.ReactNode }
-> = {
+const STATUS_CONFIG: Record<string, { badgeClass: string; icon: React.ReactNode }> = {
   draft: {
-    badgeClass:
-      'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+    badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
     icon: <Edit3 size={12} />,
   },
   review: {
-    badgeClass:
-      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     icon: <AlertTriangle size={12} />,
   },
   approved: {
-    badgeClass:
-      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     icon: <CheckCircle2 size={12} />,
   },
 };
@@ -388,7 +387,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
           getModelOutputsWithFallback(modelId).catch(() => null),
           getModelValidationsWithFallback(modelId).catch(() => null),
         ]);
-        setOutputs(((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>);
+        setOutputs(
+          ((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>
+        );
         setValidations(((valData as any)?.validations || []) as ValidationItem[]);
         setValidationSummary(
           ((valData as any)?.summary || { total: 0, pass: 0, fail: 0, warning: 0 }) as {
@@ -781,7 +782,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     {missingBaselineLines.length > 0 && (
                       <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                        {t('finance.model.missingBaselineLines', 'Missing baseline lines')}: {' '}
+                        {t('finance.model.missingBaselineLines', 'Missing baseline lines')}:{' '}
                         {missingBaselineLines.join(', ')}
                       </div>
                     )}
@@ -858,7 +859,10 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         ['Tax', baselineAssumptions.tax],
                         ['CAPEX', baselineAssumptions.capex],
                       ].map(([label, value]) => (
-                        <div key={String(label)} className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3">
+                        <div
+                          key={String(label)}
+                          className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3"
+                        >
                           <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {label}
                           </div>
@@ -963,9 +967,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             </p>
                             <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
                               <span>{isPl ? cfg?.labelPl : cfg?.label}</span>
-                              <span className="font-mono">
-                                {formatCurrency(ev.amount)}
-                              </span>
+                              <span className="font-mono">{formatCurrency(ev.amount)}</span>
                               <span>{ev.recurrence}</span>
                               {ev.growth_rate !== 0 && (
                                 <span className="text-emerald-500">+{ev.growth_rate}%/yr</span>
@@ -1191,7 +1193,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       </p>
                       {missingBaselineLines.length > 0 && (
                         <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
-                          {t('finance.model.missingBaselineLines', 'Missing baseline lines')}: {' '}
+                          {t('finance.model.missingBaselineLines', 'Missing baseline lines')}:{' '}
                           {missingBaselineLines.join(', ')}
                         </p>
                       )}

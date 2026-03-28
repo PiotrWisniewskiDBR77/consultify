@@ -1,20 +1,17 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
-import type {
-  CreateRoomParams,
-  RoomState,
-} from '../../../types/collaborationRoom.js';
+import type { CreateRoomParams, RoomState } from '../../../types/collaborationRoom.js';
 import {
-  CollaborationRoomSchema,
-  RoomPresenceSchema,
-  RoomMembershipSchema,
   CollaborationEventSchema,
+  CollaborationRoomSchema,
   CreateRoomParamsSchema,
   JoinRoomParamsSchema,
   RecordEventParamsSchema,
-  VALID_ROOM_TRANSITIONS,
+  RoomMembershipSchema,
+  RoomPresenceSchema,
   TERMINAL_ROOM_STATES,
+  VALID_ROOM_TRANSITIONS,
 } from '../../../types/collaborationRoom.js';
 
 // ==========================================
@@ -41,17 +38,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
+  cleanStalePresence,
   createRoom,
+  getActivePresence,
+  getEventsByRoom,
   getRoom,
   getRoomByResource,
-  transitionRoomState,
   joinRoom,
   leaveRoom,
-  updatePresence,
-  getActivePresence,
-  cleanStalePresence,
   recordEvent,
-  getEventsByRoom,
+  transitionRoomState,
+  updatePresence,
 } from '../collaborationRoomService.js';
 
 // ==========================================
@@ -159,15 +156,13 @@ describe('createRoom', () => {
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createRoom({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createRoom({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
-    await expect(
-      createRoom(makeRoomParams({ organizationId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createRoom(makeRoomParams({ organizationId: 'not-a-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -278,17 +273,17 @@ describe('transitionRoomState', () => {
   it('rejects invalid transition: closed → active', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow({ room_state: 'closed' }));
 
-    await expect(
-      transitionRoomState(ROOM_ID, ORG_ID, 'active'),
-    ).rejects.toThrow('Invalid room state transition: closed → active');
+    await expect(transitionRoomState(ROOM_ID, ORG_ID, 'active')).rejects.toThrow(
+      'Invalid room state transition: closed → active'
+    );
   });
 
   it('rejects invalid transition: idle → error', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow({ room_state: 'idle' }));
 
-    await expect(
-      transitionRoomState(ROOM_ID, ORG_ID, 'error'),
-    ).rejects.toThrow('Invalid room state transition');
+    await expect(transitionRoomState(ROOM_ID, ORG_ID, 'error')).rejects.toThrow(
+      'Invalid room state transition'
+    );
   });
 
   it('transitions error → active (recovery path)', async () => {
@@ -302,9 +297,9 @@ describe('transitionRoomState', () => {
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      transitionRoomState('nonexistent', ORG_ID, 'idle'),
-    ).rejects.toThrow('Room nonexistent not found');
+    await expect(transitionRoomState('nonexistent', ORG_ID, 'idle')).rejects.toThrow(
+      'Room nonexistent not found'
+    );
   });
 });
 
@@ -344,9 +339,7 @@ describe('joinRoom', () => {
   });
 
   it('rejects invalid presenceType via Zod', async () => {
-    await expect(
-      joinRoom(ROOM_ID, USER_ID, 'invalid' as any, CLIENT_ID),
-    ).rejects.toThrow(ZodError);
+    await expect(joinRoom(ROOM_ID, USER_ID, 'invalid' as any, CLIENT_ID)).rejects.toThrow(ZodError);
   });
 });
 
@@ -387,7 +380,7 @@ describe('leaveRoom', () => {
 describe('updatePresence', () => {
   it('updates heartbeat and cursor state', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakePresenceRow({ cursor_state: JSON.stringify({ x: 100, y: 200 }) }),
+      makeFakePresenceRow({ cursor_state: JSON.stringify({ x: 100, y: 200 }) })
     );
 
     const result = await updatePresence(ROOM_ID, USER_ID, CLIENT_ID, {
@@ -414,9 +407,9 @@ describe('updatePresence', () => {
   it('throws when presence not found after update', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      updatePresence(ROOM_ID, 'unknown-user', CLIENT_ID, {}),
-    ).rejects.toThrow('Presence not found');
+    await expect(updatePresence(ROOM_ID, 'unknown-user', CLIENT_ID, {})).rejects.toThrow(
+      'Presence not found'
+    );
   });
 
   it('resets is_stale to false on heartbeat', async () => {
@@ -547,7 +540,7 @@ describe('recordEvent', () => {
         actorId: USER_ID,
         actorType: 'human',
         delivery: 'durable',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -571,9 +564,7 @@ describe('getEventsByRoom', () => {
   });
 
   it('filters by eventType when provided', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeEventRow({ event_type: 'membership.joined' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeEventRow({ event_type: 'membership.joined' })]);
 
     const results = await getEventsByRoom(ROOM_ID, { eventType: 'membership.joined' });
 
@@ -622,9 +613,9 @@ describe('org isolation', () => {
   it('transitionRoomState enforces organization_id', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      transitionRoomState(ROOM_ID, OTHER_ORG_ID, 'idle'),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(transitionRoomState(ROOM_ID, OTHER_ORG_ID, 'idle')).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -675,7 +666,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         closedAt: null,
         metadata: {},
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -690,7 +681,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         closedAt: null,
         metadata: {},
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -706,7 +697,7 @@ describe('Zod schema validation', () => {
         connectedAt: '2026-03-23T10:00:00.000Z',
         clientId: CLIENT_ID,
         isStale: false,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -719,7 +710,7 @@ describe('Zod schema validation', () => {
         joinedAt: '2026-03-23T10:00:00.000Z',
         leftAt: null,
         role: 'editor',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -735,7 +726,7 @@ describe('Zod schema validation', () => {
         payload: {},
         timestamp: '2026-03-23T10:00:00.000Z',
         stateVersion: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -750,7 +741,7 @@ describe('Zod schema validation', () => {
         userId: USER_ID,
         presenceType: 'editor',
         clientId: CLIENT_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -762,7 +753,7 @@ describe('Zod schema validation', () => {
         actorId: 'system',
         actorType: 'system',
         delivery: 'durable',
-      }),
+      })
     ).not.toThrow();
   });
 });

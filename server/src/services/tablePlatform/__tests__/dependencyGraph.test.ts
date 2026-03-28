@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { DependencyGraph } from '../dependencyGraph.js';
 
 describe('DependencyGraph', () => {

@@ -102,10 +102,9 @@ class ConsultingTemplatesService {
   async getTemplate(slug: string, lang?: string): Promise<ConsultingTemplateItem | null> {
     const db = await this.getDb();
     const qa = new QueryAdapter(db);
-    const row = await qa.get<TemplateRow>(
-      'SELECT * FROM consulting_templates WHERE slug = $1',
-      [slug]
-    );
+    const row = await qa.get<TemplateRow>('SELECT * FROM consulting_templates WHERE slug = $1', [
+      slug,
+    ]);
     if (!row) return null;
     return this.mapRow(row, lang === 'pl' ? 'pl' : 'en');
   }

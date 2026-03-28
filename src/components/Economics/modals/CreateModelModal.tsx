@@ -3,9 +3,17 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import {
+  shouldFallbackToLegacyFinance,
+  V8FinanceApi,
+  type V8FinanceModelCreatePayload,
+} from '@/services/api/v8/finance';
 
-import { type FinanceModelRow, type FinanceStatementRow, normalizeModelStatus } from '../financeTypes';
+import {
+  type FinanceModelRow,
+  type FinanceStatementRow,
+  normalizeModelStatus,
+} from '../financeTypes';
 
 interface CreateModelModalProps {
   onCreated: (row: FinanceModelRow) => void;
@@ -33,7 +41,9 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
   const [mode, setMode] = useState<'manual' | 'statement'>(
     initialSourceStatementPackId ? 'statement' : 'manual'
   );
-  const [sourceStatementPackId, setSourceStatementPackId] = useState(initialSourceStatementPackId || '');
+  const [sourceStatementPackId, setSourceStatementPackId] = useState(
+    initialSourceStatementPackId || ''
+  );
   const [form, setForm] = useState({
     name: '',
     startDate: new Date().toISOString().slice(0, 10),
@@ -72,7 +82,7 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
     }
   }, [initialSourceStatementPackId, updateFromStatement]);
 
-  const createModelWithFallback = useCallback(async (payload: Record<string, unknown>) => {
+  const createModelWithFallback = useCallback(async (payload: V8FinanceModelCreatePayload) => {
     try {
       return await V8FinanceApi.createModel(payload);
     } catch (error) {
@@ -197,11 +207,13 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
                   onChange={(e) => updateFromStatement(e.target.value)}
                   className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
                 >
-                  <option value="">{t('finance.model.selectStatement', 'Select statement pack')}</option>
+                  <option value="">
+                    {t('finance.model.selectStatement', 'Select statement pack')}
+                  </option>
                   {availableStatements.map((statement) => (
                     <option key={statement.id} value={statement.id}>
-                      {statement.entityName || statement.title} - {statement.periodLabel || statement.periodEnd} -{' '}
-                      {statement.currency}
+                      {statement.entityName || statement.title} -{' '}
+                      {statement.periodLabel || statement.periodEnd} - {statement.currency}
                     </option>
                   ))}
                 </select>
@@ -212,7 +224,8 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
                     {t('finance.model.seedEntity', 'Entity')}: {selectedStatement.entityName || '—'}
                   </div>
                   <div>
-                    {t('finance.model.seedPeriod', 'Period')}: {selectedStatement.periodLabel || '—'}
+                    {t('finance.model.seedPeriod', 'Period')}:{' '}
+                    {selectedStatement.periodLabel || '—'}
                   </div>
                   <div>
                     {t('finance.model.seedStatus', 'Seed status')}:{' '}

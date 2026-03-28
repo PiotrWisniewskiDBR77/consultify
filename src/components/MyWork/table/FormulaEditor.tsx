@@ -19,13 +19,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -64,32 +58,162 @@ interface FunctionDef {
 }
 
 const FORMULA_FUNCTIONS: FunctionDef[] = [
-  { name: 'SUM', signature: 'SUM(field1, field2, ...)', description: { en: 'Sum of values', pl: 'Suma wartości' }, category: 'math' },
-  { name: 'AVG', signature: 'AVG(field1, field2, ...)', description: { en: 'Average of values', pl: 'Średnia wartości' }, category: 'math' },
-  { name: 'MIN', signature: 'MIN(field1, field2, ...)', description: { en: 'Minimum value', pl: 'Wartość minimalna' }, category: 'math' },
-  { name: 'MAX', signature: 'MAX(field1, field2, ...)', description: { en: 'Maximum value', pl: 'Wartość maksymalna' }, category: 'math' },
-  { name: 'ABS', signature: 'ABS(value)', description: { en: 'Absolute value', pl: 'Wartość bezwzględna' }, category: 'math' },
-  { name: 'ROUND', signature: 'ROUND(value, decimals)', description: { en: 'Round to N decimals', pl: 'Zaokrąglij do N miejsc' }, category: 'math' },
-  { name: 'CEIL', signature: 'CEIL(value)', description: { en: 'Round up to integer', pl: 'Zaokrąglij w górę' }, category: 'math' },
-  { name: 'FLOOR', signature: 'FLOOR(value)', description: { en: 'Round down to integer', pl: 'Zaokrąglij w dół' }, category: 'math' },
-  { name: 'IF', signature: 'IF(condition, true_val, false_val)', description: { en: 'Conditional expression', pl: 'Wyrażenie warunkowe' }, category: 'logic' },
-  { name: 'AND', signature: 'AND(cond1, cond2, ...)', description: { en: 'All conditions true', pl: 'Wszystkie warunki prawdziwe' }, category: 'logic' },
-  { name: 'OR', signature: 'OR(cond1, cond2, ...)', description: { en: 'Any condition true', pl: 'Dowolny warunek prawdziwy' }, category: 'logic' },
-  { name: 'NOT', signature: 'NOT(condition)', description: { en: 'Negate condition', pl: 'Negacja warunku' }, category: 'logic' },
-  { name: 'SWITCH', signature: 'SWITCH(expr, case1, val1, ...)', description: { en: 'Multi-case conditional', pl: 'Wielokrotny warunek' }, category: 'logic' },
-  { name: 'CONCAT', signature: 'CONCAT(a, " ", b)', description: { en: 'Join text values', pl: 'Łączenie tekstów' }, category: 'text' },
-  { name: 'LEFT', signature: 'LEFT(text, count)', description: { en: 'First N characters', pl: 'Pierwsze N znaków' }, category: 'text' },
-  { name: 'RIGHT', signature: 'RIGHT(text, count)', description: { en: 'Last N characters', pl: 'Ostatnie N znaków' }, category: 'text' },
-  { name: 'LEN', signature: 'LEN(text)', description: { en: 'Text length', pl: 'Długość tekstu' }, category: 'text' },
-  { name: 'UPPER', signature: 'UPPER(text)', description: { en: 'Convert to uppercase', pl: 'Zamień na wielkie litery' }, category: 'text' },
-  { name: 'LOWER', signature: 'LOWER(text)', description: { en: 'Convert to lowercase', pl: 'Zamień na małe litery' }, category: 'text' },
-  { name: 'TRIM', signature: 'TRIM(text)', description: { en: 'Remove whitespace', pl: 'Usuń białe znaki' }, category: 'text' },
-  { name: 'NOW', signature: 'NOW()', description: { en: 'Current date/time', pl: 'Aktualna data/czas' }, category: 'date' },
-  { name: 'TODAY', signature: 'TODAY()', description: { en: 'Current date', pl: 'Aktualna data' }, category: 'date' },
-  { name: 'DATEADD', signature: 'DATEADD(date, count, unit)', description: { en: 'Add time to date', pl: 'Dodaj czas do daty' }, category: 'date' },
-  { name: 'DATEDIFF', signature: 'DATEDIFF(date1, date2, unit)', description: { en: 'Difference between dates', pl: 'Różnica między datami' }, category: 'date' },
-  { name: 'COUNTA', signature: 'COUNTA(field)', description: { en: 'Count non-empty values', pl: 'Policz niepuste wartości' }, category: 'aggregate' },
-  { name: 'COUNTALL', signature: 'COUNTALL(field)', description: { en: 'Count all values', pl: 'Policz wszystkie wartości' }, category: 'aggregate' },
+  {
+    name: 'SUM',
+    signature: 'SUM(field1, field2, ...)',
+    description: { en: 'Sum of values', pl: 'Suma wartości' },
+    category: 'math',
+  },
+  {
+    name: 'AVG',
+    signature: 'AVG(field1, field2, ...)',
+    description: { en: 'Average of values', pl: 'Średnia wartości' },
+    category: 'math',
+  },
+  {
+    name: 'MIN',
+    signature: 'MIN(field1, field2, ...)',
+    description: { en: 'Minimum value', pl: 'Wartość minimalna' },
+    category: 'math',
+  },
+  {
+    name: 'MAX',
+    signature: 'MAX(field1, field2, ...)',
+    description: { en: 'Maximum value', pl: 'Wartość maksymalna' },
+    category: 'math',
+  },
+  {
+    name: 'ABS',
+    signature: 'ABS(value)',
+    description: { en: 'Absolute value', pl: 'Wartość bezwzględna' },
+    category: 'math',
+  },
+  {
+    name: 'ROUND',
+    signature: 'ROUND(value, decimals)',
+    description: { en: 'Round to N decimals', pl: 'Zaokrąglij do N miejsc' },
+    category: 'math',
+  },
+  {
+    name: 'CEIL',
+    signature: 'CEIL(value)',
+    description: { en: 'Round up to integer', pl: 'Zaokrąglij w górę' },
+    category: 'math',
+  },
+  {
+    name: 'FLOOR',
+    signature: 'FLOOR(value)',
+    description: { en: 'Round down to integer', pl: 'Zaokrąglij w dół' },
+    category: 'math',
+  },
+  {
+    name: 'IF',
+    signature: 'IF(condition, true_val, false_val)',
+    description: { en: 'Conditional expression', pl: 'Wyrażenie warunkowe' },
+    category: 'logic',
+  },
+  {
+    name: 'AND',
+    signature: 'AND(cond1, cond2, ...)',
+    description: { en: 'All conditions true', pl: 'Wszystkie warunki prawdziwe' },
+    category: 'logic',
+  },
+  {
+    name: 'OR',
+    signature: 'OR(cond1, cond2, ...)',
+    description: { en: 'Any condition true', pl: 'Dowolny warunek prawdziwy' },
+    category: 'logic',
+  },
+  {
+    name: 'NOT',
+    signature: 'NOT(condition)',
+    description: { en: 'Negate condition', pl: 'Negacja warunku' },
+    category: 'logic',
+  },
+  {
+    name: 'SWITCH',
+    signature: 'SWITCH(expr, case1, val1, ...)',
+    description: { en: 'Multi-case conditional', pl: 'Wielokrotny warunek' },
+    category: 'logic',
+  },
+  {
+    name: 'CONCAT',
+    signature: 'CONCAT(a, " ", b)',
+    description: { en: 'Join text values', pl: 'Łączenie tekstów' },
+    category: 'text',
+  },
+  {
+    name: 'LEFT',
+    signature: 'LEFT(text, count)',
+    description: { en: 'First N characters', pl: 'Pierwsze N znaków' },
+    category: 'text',
+  },
+  {
+    name: 'RIGHT',
+    signature: 'RIGHT(text, count)',
+    description: { en: 'Last N characters', pl: 'Ostatnie N znaków' },
+    category: 'text',
+  },
+  {
+    name: 'LEN',
+    signature: 'LEN(text)',
+    description: { en: 'Text length', pl: 'Długość tekstu' },
+    category: 'text',
+  },
+  {
+    name: 'UPPER',
+    signature: 'UPPER(text)',
+    description: { en: 'Convert to uppercase', pl: 'Zamień na wielkie litery' },
+    category: 'text',
+  },
+  {
+    name: 'LOWER',
+    signature: 'LOWER(text)',
+    description: { en: 'Convert to lowercase', pl: 'Zamień na małe litery' },
+    category: 'text',
+  },
+  {
+    name: 'TRIM',
+    signature: 'TRIM(text)',
+    description: { en: 'Remove whitespace', pl: 'Usuń białe znaki' },
+    category: 'text',
+  },
+  {
+    name: 'NOW',
+    signature: 'NOW()',
+    description: { en: 'Current date/time', pl: 'Aktualna data/czas' },
+    category: 'date',
+  },
+  {
+    name: 'TODAY',
+    signature: 'TODAY()',
+    description: { en: 'Current date', pl: 'Aktualna data' },
+    category: 'date',
+  },
+  {
+    name: 'DATEADD',
+    signature: 'DATEADD(date, count, unit)',
+    description: { en: 'Add time to date', pl: 'Dodaj czas do daty' },
+    category: 'date',
+  },
+  {
+    name: 'DATEDIFF',
+    signature: 'DATEDIFF(date1, date2, unit)',
+    description: { en: 'Difference between dates', pl: 'Różnica między datami' },
+    category: 'date',
+  },
+  {
+    name: 'COUNTA',
+    signature: 'COUNTA(field)',
+    description: { en: 'Count non-empty values', pl: 'Policz niepuste wartości' },
+    category: 'aggregate',
+  },
+  {
+    name: 'COUNTALL',
+    signature: 'COUNTALL(field)',
+    description: { en: 'Count all values', pl: 'Policz wszystkie wartości' },
+    category: 'aggregate',
+  },
 ];
 
 const FUNCTION_CATEGORIES = [
@@ -116,17 +240,21 @@ function useDebounce<T>(value: T, delay: number): T {
 function highlightFormula(
   expression: string,
   fieldNames: string[],
-  functionNames: string[],
+  functionNames: string[]
 ): React.ReactNode[] {
   if (!expression) return [];
 
   const tokens: React.ReactNode[] = [];
-  let remaining = expression;
+  const remaining = expression;
   let keyIdx = 0;
 
-  const fieldPattern = fieldNames.length > 0
-    ? new RegExp(`\\{(${fieldNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\}`, 'g')
-    : null;
+  const fieldPattern =
+    fieldNames.length > 0
+      ? new RegExp(
+          `\\{(${fieldNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\}`,
+          'g'
+        )
+      : null;
   const funcPattern = new RegExp(`\\b(${functionNames.join('|')})\\b`, 'gi');
   const stringPattern = /"[^"]*"|'[^']*'/g;
   const numberPattern = /\b\d+(\.\d+)?\b/g;
@@ -135,14 +263,21 @@ function highlightFormula(
   // Simple token-based highlighting
   const allPatterns = [
     { pattern: stringPattern, cls: 'text-orange-500 dark:text-orange-400' },
-    ...(fieldPattern ? [{ pattern: fieldPattern, cls: 'text-emerald-600 dark:text-emerald-400 font-semibold' }] : []),
+    ...(fieldPattern
+      ? [{ pattern: fieldPattern, cls: 'text-emerald-600 dark:text-emerald-400 font-semibold' }]
+      : []),
     { pattern: funcPattern, cls: 'text-blue-600 dark:text-blue-400 font-semibold' },
     { pattern: numberPattern, cls: 'text-violet-600 dark:text-violet-400' },
     { pattern: operatorPattern, cls: 'text-slate-400 dark:text-zinc-500' },
   ];
 
   // Build a combined match list
-  interface Match { start: number; end: number; text: string; cls: string }
+  interface Match {
+    start: number;
+    end: number;
+    text: string;
+    cls: string;
+  }
   const matches: Match[] = [];
 
   for (const { pattern, cls } of allPatterns) {
@@ -170,13 +305,13 @@ function highlightFormula(
       tokens.push(
         <span key={keyIdx++} className="text-slate-700 dark:text-zinc-300">
           {expression.slice(pos, m.start)}
-        </span>,
+        </span>
       );
     }
     tokens.push(
       <span key={keyIdx++} className={m.cls}>
         {m.text}
-      </span>,
+      </span>
     );
     pos = m.end;
   }
@@ -185,7 +320,7 @@ function highlightFormula(
     tokens.push(
       <span key={keyIdx++} className="text-slate-700 dark:text-zinc-300">
         {expression.slice(pos)}
-      </span>,
+      </span>
     );
   }
 
@@ -218,10 +353,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
     const debouncedValue = useDebounce(value, 500);
 
     const fieldNames = useMemo(() => fields.map((f) => f.name), [fields]);
-    const functionNames = useMemo(
-      () => FORMULA_FUNCTIONS.map((f) => f.name),
-      [],
-    );
+    const functionNames = useMemo(() => FORMULA_FUNCTIONS.map((f) => f.name), []);
 
     // Sync scroll between textarea and highlight overlay
     const handleScroll = useCallback(() => {
@@ -244,10 +376,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
       (async () => {
         try {
-          const res = await TablePlatformApi.validateFormula(
-            tableId,
-            debouncedValue,
-          );
+          const res = await TablePlatformApi.validateFormula(tableId, debouncedValue);
           if (cancelled) return;
           const result: ValidationResult = {
             valid: Boolean((res as Record<string, unknown>)?.valid ?? true),
@@ -259,7 +388,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           onValidationChange?.(result);
         } catch {
           if (!cancelled) {
-            const fallback: ValidationResult = { valid: false, error: isPl ? 'Błąd walidacji' : 'Validation error' };
+            const fallback: ValidationResult = {
+              valid: false,
+              error: isPl ? 'Błąd walidacji' : 'Validation error',
+            };
             setValidation(fallback);
             onValidationChange?.(fallback);
           }
@@ -337,16 +469,14 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
         // Function suggestions (only if not in a field ref)
         if (!isFieldRef) {
-          FORMULA_FUNCTIONS.filter((fn) => fn.name.toLowerCase().includes(q)).forEach(
-            (fn) => {
-              items.push({
-                label: fn.name,
-                value: `${fn.name}(`,
-                type: 'function',
-                detail: fn.signature,
-              });
-            },
-          );
+          FORMULA_FUNCTIONS.filter((fn) => fn.name.toLowerCase().includes(q)).forEach((fn) => {
+            items.push({
+              label: fn.name,
+              value: `${fn.name}(`,
+              type: 'function',
+              detail: fn.signature,
+            });
+          });
         }
 
         if (items.length > 0) {
@@ -357,7 +487,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           setShowAutocomplete(false);
         }
       },
-      [value, fields],
+      [value, fields]
     );
 
     const insertAutocomplete = useCallback(
@@ -370,8 +500,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         const wordMatch = textBefore.match(/[\w{]*$/);
         const wordStart = wordMatch ? cursorPos - wordMatch[0].length : cursorPos;
 
-        const newValue =
-          value.slice(0, wordStart) + item.value + value.slice(cursorPos);
+        const newValue = value.slice(0, wordStart) + item.value + value.slice(cursorPos);
         onChange(newValue);
         setShowAutocomplete(false);
 
@@ -381,7 +510,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           textarea.focus();
         });
       },
-      [value, onChange],
+      [value, onChange]
     );
 
     const handleKeyDown = useCallback(
@@ -389,9 +518,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         if (showAutocomplete) {
           if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setAcHighlightIdx((prev) =>
-              Math.min(prev + 1, autocompleteItems.length - 1),
-            );
+            setAcHighlightIdx((prev) => Math.min(prev + 1, autocompleteItems.length - 1));
             return;
           }
           if (e.key === 'ArrowUp') {
@@ -420,13 +547,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           if (textarea) updateAutocomplete(textarea.selectionStart);
         }
       },
-      [
-        showAutocomplete,
-        autocompleteItems,
-        acHighlightIdx,
-        insertAutocomplete,
-        updateAutocomplete,
-      ],
+      [showAutocomplete, autocompleteItems, acHighlightIdx, insertAutocomplete, updateAutocomplete]
     );
 
     const handleChange = useCallback(
@@ -435,12 +556,12 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         onChange(newVal);
         updateAutocomplete(e.target.selectionStart);
       },
-      [onChange, updateAutocomplete],
+      [onChange, updateAutocomplete]
     );
 
     const highlighted = useMemo(
       () => highlightFormula(value, fieldNames, functionNames),
-      [value, fieldNames, functionNames],
+      [value, fieldNames, functionNames]
     );
 
     return (
@@ -468,7 +589,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
               onScroll={handleScroll}
               disabled={locked}
               rows={4}
-              placeholder={isPl ? 'np. IF({status} = "Done", 1, 0)' : 'e.g. IF({status} = "Done", 1, 0)'}
+              placeholder={
+                isPl ? 'np. IF({status} = "Done", 1, 0)' : 'e.g. IF({status} = "Done", 1, 0)'
+              }
               className="relative w-full resize-y rounded-xl bg-transparent p-3 font-mono text-xs leading-relaxed text-transparent caret-slate-800 outline-none placeholder:text-slate-400 dark:caret-zinc-200 dark:placeholder:text-zinc-600"
               spellCheck={false}
             />
@@ -597,16 +720,12 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           {showFuncRef && (
             <div className="border-t border-slate-100 px-2 py-2 dark:border-zinc-800">
               {FUNCTION_CATEGORIES.map((cat) => {
-                const funcs = FORMULA_FUNCTIONS.filter(
-                  (f) => f.category === cat.key,
-                );
+                const funcs = FORMULA_FUNCTIONS.filter((f) => f.category === cat.key);
                 const isExpanded = expandedCategory === cat.key;
                 return (
                   <div key={cat.key} className="mb-1">
                     <button
-                      onClick={() =>
-                        setExpandedCategory(isExpanded ? null : cat.key)
-                      }
+                      onClick={() => setExpandedCategory(isExpanded ? null : cat.key)}
                       className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
                     >
                       {isExpanded ? (
@@ -627,8 +746,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                               if (!textarea) return;
                               const pos = textarea.selectionStart;
                               const insert = `${fn.name}(`;
-                              const newVal =
-                                value.slice(0, pos) + insert + value.slice(pos);
+                              const newVal = value.slice(0, pos) + insert + value.slice(pos);
                               onChange(newVal);
                               requestAnimationFrame(() => {
                                 const newPos = pos + insert.length;
@@ -659,25 +777,24 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         </div>
 
         {/* Cycle warning placeholder */}
-        {validation?.valid === false &&
-          validation.error?.toLowerCase().includes('cycle') && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
-              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-              <div>
-                <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                  {isPl ? 'Wykryto cykl zależności' : 'Dependency cycle detected'}
-                </div>
-                <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                  {isPl
-                    ? 'Ta formuła tworzy cykliczną zależność. Zmień wyrażenie, aby uniknąć pętli.'
-                    : 'This formula creates a circular dependency. Modify the expression to avoid loops.'}
-                </div>
+        {validation?.valid === false && validation.error?.toLowerCase().includes('cycle') && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+            <div>
+              <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                {isPl ? 'Wykryto cykl zależności' : 'Dependency cycle detected'}
+              </div>
+              <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                {isPl
+                  ? 'Ta formuła tworzy cykliczną zależność. Zmień wyrażenie, aby uniknąć pętli.'
+                  : 'This formula creates a circular dependency. Modify the expression to avoid loops.'}
               </div>
             </div>
-          )}
+          </div>
+        )}
       </div>
     );
-  },
+  }
 );
 
 FormulaEditor.displayName = 'FormulaEditor';

@@ -30,18 +30,22 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { FieldType, TablePlatformField } from '@/types/tablePlatform';
+
 import { DateDependencyConfig } from './DateDependencyConfig';
 
 // ---------------------------------------------------------------------------
 // Field type → icon mapping
 // ---------------------------------------------------------------------------
 
-const FIELD_TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const FIELD_TYPE_ICONS: Record<
+  string,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
   singleLineText: Type,
   longText: AlignLeft,
   number: Hash,
@@ -110,10 +114,24 @@ const FIELD_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
 };
 
 const CREATABLE_FIELD_TYPES: FieldType[] = [
-  'singleLineText', 'longText', 'number', 'currency', 'percent',
-  'checkbox', 'date', 'singleSelect', 'multiSelect', 'url',
-  'email', 'phone', 'attachment', 'linkedRecord', 'formula',
-  'rating', 'duration', 'barcode',
+  'singleLineText',
+  'longText',
+  'number',
+  'currency',
+  'percent',
+  'checkbox',
+  'date',
+  'singleSelect',
+  'multiSelect',
+  'url',
+  'email',
+  'phone',
+  'attachment',
+  'linkedRecord',
+  'formula',
+  'rating',
+  'duration',
+  'barcode',
 ];
 
 // ---------------------------------------------------------------------------
@@ -152,7 +170,9 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
   const [dateDepsExpanded, setDateDepsExpanded] = useState(false);
 
   const dateFieldCount = useMemo(
-    () => fields.filter((f) => ['date', 'createdTime', 'lastModifiedTime'].includes(f.fieldType)).length,
+    () =>
+      fields.filter((f) => ['date', 'createdTime', 'lastModifiedTime'].includes(f.fieldType))
+        .length,
     [fields]
   );
   const showDateDependencies = dateFieldCount >= 2;
@@ -166,9 +186,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
     if (!searchQuery.trim()) return sorted;
     const q = searchQuery.toLowerCase();
     return sorted.filter(
-      (f) =>
-        f.name.toLowerCase().includes(q) ||
-        f.fieldType.toLowerCase().includes(q)
+      (f) => f.name.toLowerCase().includes(q) || f.fieldType.toLowerCase().includes(q)
     );
   }, [fields, searchQuery]);
 
@@ -249,7 +267,10 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
         {/* Search */}
         <div className="px-4 py-2">
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={12}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -328,7 +349,9 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                         onFieldsChanged();
                         toast.success(isPl ? 'Pole zaktualizowane' : 'Field updated');
                       } catch {
-                        toast.error(isPl ? 'Nie udało się zaktualizować pola' : 'Failed to update field');
+                        toast.error(
+                          isPl ? 'Nie udało się zaktualizować pola' : 'Failed to update field'
+                        );
                       }
                     }}
                     onDelete={async () => {
@@ -429,12 +452,14 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
 }) => {
   const [name, setName] = useState(field.name);
   const [description, setDescription] = useState(
-    (field.options as Record<string, unknown>)?.description as string ?? ''
+    ((field.options as Record<string, unknown>)?.description as string) ?? ''
   );
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const hasChanges = name !== field.name || description !== ((field.options as Record<string, unknown>)?.description ?? '');
+  const hasChanges =
+    name !== field.name ||
+    description !== ((field.options as Record<string, unknown>)?.description ?? '');
 
   const handleSave = async () => {
     if (!hasChanges || locked) return;
@@ -535,7 +560,10 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
 // FieldOptionsDisplay — read-only display of type-specific options
 // ---------------------------------------------------------------------------
 
-const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }> = ({ field, isPl }) => {
+const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }> = ({
+  field,
+  isPl,
+}) => {
   const opts = field.options as Record<string, unknown>;
   if (!opts || Object.keys(opts).length === 0) return null;
 
@@ -553,13 +581,19 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
 
   if (field.fieldType === 'linkedRecord') {
     if (opts.linkedTableId) {
-      items.push({ label: isPl ? 'Tabela docelowa' : 'Linked table', value: String(opts.linkedTableId) });
+      items.push({
+        label: isPl ? 'Tabela docelowa' : 'Linked table',
+        value: String(opts.linkedTableId),
+      });
     }
   }
 
   if (field.fieldType === 'formula') {
     if (opts.expression || opts.formula) {
-      items.push({ label: isPl ? 'Formuła' : 'Formula', value: String(opts.expression ?? opts.formula) });
+      items.push({
+        label: isPl ? 'Formuła' : 'Formula',
+        value: String(opts.expression ?? opts.formula),
+      });
     }
   }
 
@@ -585,8 +619,12 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
     <div className="rounded-lg bg-slate-50 dark:bg-navy-900/50 p-2 space-y-1">
       {items.map((item, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">{item.label}:</span>
-          <span className="text-[9px] text-slate-600 dark:text-slate-400 break-all">{item.value}</span>
+          <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+            {item.label}:
+          </span>
+          <span className="text-[9px] text-slate-600 dark:text-slate-400 break-all">
+            {item.value}
+          </span>
         </div>
       ))}
     </div>
@@ -619,7 +657,10 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
     const options: Record<string, unknown> = {};
 
     if (fieldType === 'singleSelect' || fieldType === 'multiSelect') {
-      const opts = selectOptions.split(',').map((s) => s.trim()).filter(Boolean);
+      const opts = selectOptions
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       options.options = opts.map((o, i) => ({ id: `opt_${i}`, name: o }));
     }
     if (fieldType === 'linkedRecord' && linkedTableId) {
@@ -775,7 +816,9 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
               >
                 {['$', '€', 'zł', '£', '¥', 'CHF'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -797,7 +840,11 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           >
             {adding ? (
               <Loader2 size={12} className="animate-spin" />
-            ) : isPl ? 'Utwórz pole' : 'Create Field'}
+            ) : isPl ? (
+              'Utwórz pole'
+            ) : (
+              'Create Field'
+            )}
           </button>
         </div>
       </div>

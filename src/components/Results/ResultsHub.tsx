@@ -1,18 +1,11 @@
-import {
-  BarChart3,
-  ClipboardList,
-  DollarSign,
-  FileText,
-  Plus,
-  Target,
-} from 'lucide-react';
+import { BarChart3, ClipboardList, DollarSign, FileText, Plus, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
-  V8ResultsApi,
   shouldFallbackToLegacyResults,
+  V8ResultsApi,
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
 import { InitiativeKPI } from '@/types/core';

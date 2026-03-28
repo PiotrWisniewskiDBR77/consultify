@@ -1,12 +1,12 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
+import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -22,7 +22,10 @@ router.get(
     const { conversationId, runId } = req.query;
 
     if (conversationId && typeof conversationId === 'string') {
-      const data = await contextSnapshotService.getSnapshotsByConversation(conversationId, organizationId);
+      const data = await contextSnapshotService.getSnapshotsByConversation(
+        conversationId,
+        organizationId
+      );
       return res.json({ data, meta: { version: 'v8' } });
     }
 
@@ -35,7 +38,7 @@ router.get(
       error: 'Either conversationId or runId query parameter is required',
       code: 'MISSING_QUERY_PARAM',
     });
-  }),
+  })
 );
 
 router.get(
@@ -53,7 +56,7 @@ router.get(
     }
 
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -78,7 +81,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ==========================================
@@ -98,9 +101,12 @@ router.get(
       });
     }
 
-    const data = await chatExecutionService.getHandoffsByConversation(conversationId, organizationId);
+    const data = await chatExecutionService.getHandoffsByConversation(
+      conversationId,
+      organizationId
+    );
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -131,7 +137,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ==========================================
@@ -160,7 +166,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -185,7 +191,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -210,7 +216,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 export default router;

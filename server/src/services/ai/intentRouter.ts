@@ -3,8 +3,18 @@ import { z } from 'zod';
 import { aiLogger } from './logger.js';
 
 export const IntentSchema = z.enum([
-  'answer', 'analyze', 'recommend', 'create', 'update', 'explain',
-  'compare', 'summarize', 'diagnose', 'plan', 'clarify', 'unknown',
+  'answer',
+  'analyze',
+  'recommend',
+  'create',
+  'update',
+  'explain',
+  'compare',
+  'summarize',
+  'diagnose',
+  'plan',
+  'clarify',
+  'unknown',
 ]);
 
 export type Intent = z.infer<typeof IntentSchema>;
@@ -32,11 +42,13 @@ export const IntentRoutingResultSchema = z.object({
     reason: z.string(),
   }),
   contextArtifacts: z.array(ContextArtifactRefSchema),
-  routingTrace: z.array(z.object({
-    step: z.string(),
-    result: z.string(),
-    durationMs: z.number().optional(),
-  })),
+  routingTrace: z.array(
+    z.object({
+      step: z.string(),
+      result: z.string(),
+      durationMs: z.number().optional(),
+    })
+  ),
 });
 
 export type IntentRoutingResult = z.infer<typeof IntentRoutingResultSchema>;
@@ -46,16 +58,56 @@ const INTENT_PATTERNS: Array<{
   patterns: RegExp[];
   contextNeeds: string[];
 }> = [
-  { intent: 'create', patterns: [/\b(create|add|new|make|generate|build)\b/i], contextNeeds: ['tasks', 'initiatives'] },
-  { intent: 'update', patterns: [/\b(update|change|modify|edit|set|assign)\b/i], contextNeeds: ['tasks', 'initiatives'] },
-  { intent: 'analyze', patterns: [/\b(analyze|analysis|assess|evaluate|review)\b/i], contextNeeds: ['kpis', 'risks', 'tasks', 'initiatives'] },
-  { intent: 'recommend', patterns: [/\b(recommend|suggest|advise|propose|what should)\b/i], contextNeeds: ['tasks', 'risks', 'decisions', 'initiatives'] },
-  { intent: 'compare', patterns: [/\b(compare|versus|vs|difference|between)\b/i], contextNeeds: ['initiatives', 'kpis', 'benchmarks'] },
-  { intent: 'summarize', patterns: [/\b(summarize|summary|overview|brief|recap)\b/i], contextNeeds: ['initiatives', 'tasks', 'decisions'] },
-  { intent: 'diagnose', patterns: [/\b(diagnose|why|root cause|problem|issue|blocked)\b/i], contextNeeds: ['tasks', 'risks', 'decisions', 'signals'] },
-  { intent: 'plan', patterns: [/\b(plan|schedule|roadmap|timeline|milestone)\b/i], contextNeeds: ['tasks', 'milestones', 'dependencies'] },
-  { intent: 'explain', patterns: [/\b(explain|how|what is|describe|tell me about)\b/i], contextNeeds: ['knowledge'] },
-  { intent: 'clarify', patterns: [/\b(clarify|unclear|confused|what do you mean)\b/i], contextNeeds: [] },
+  {
+    intent: 'create',
+    patterns: [/\b(create|add|new|make|generate|build)\b/i],
+    contextNeeds: ['tasks', 'initiatives'],
+  },
+  {
+    intent: 'update',
+    patterns: [/\b(update|change|modify|edit|set|assign)\b/i],
+    contextNeeds: ['tasks', 'initiatives'],
+  },
+  {
+    intent: 'analyze',
+    patterns: [/\b(analyze|analysis|assess|evaluate|review)\b/i],
+    contextNeeds: ['kpis', 'risks', 'tasks', 'initiatives'],
+  },
+  {
+    intent: 'recommend',
+    patterns: [/\b(recommend|suggest|advise|propose|what should)\b/i],
+    contextNeeds: ['tasks', 'risks', 'decisions', 'initiatives'],
+  },
+  {
+    intent: 'compare',
+    patterns: [/\b(compare|versus|vs|difference|between)\b/i],
+    contextNeeds: ['initiatives', 'kpis', 'benchmarks'],
+  },
+  {
+    intent: 'summarize',
+    patterns: [/\b(summarize|summary|overview|brief|recap)\b/i],
+    contextNeeds: ['initiatives', 'tasks', 'decisions'],
+  },
+  {
+    intent: 'diagnose',
+    patterns: [/\b(diagnose|why|root cause|problem|issue|blocked)\b/i],
+    contextNeeds: ['tasks', 'risks', 'decisions', 'signals'],
+  },
+  {
+    intent: 'plan',
+    patterns: [/\b(plan|schedule|roadmap|timeline|milestone)\b/i],
+    contextNeeds: ['tasks', 'milestones', 'dependencies'],
+  },
+  {
+    intent: 'explain',
+    patterns: [/\b(explain|how|what is|describe|tell me about)\b/i],
+    contextNeeds: ['knowledge'],
+  },
+  {
+    intent: 'clarify',
+    patterns: [/\b(clarify|unclear|confused|what do you mean)\b/i],
+    contextNeeds: [],
+  },
 ];
 
 const INTENT_TO_TIER: Record<string, string> = {
@@ -91,7 +143,9 @@ const INTENT_TO_PURPOSE: Record<string, string> = {
 function inferWorkflow(message: string, intent: Intent): Workflow {
   const lower = String(message || '').toLowerCase();
   if (
-    /\b(research|sources|evidence|citations|market|competitor|benchmark|deep research)\b/i.test(lower)
+    /\b(research|sources|evidence|citations|market|competitor|benchmark|deep research)\b/i.test(
+      lower
+    )
   ) {
     return 'deep_research';
   }
@@ -129,7 +183,7 @@ export function classifyIntent(message: string): { intent: Intent; confidence: n
 export async function routeIntent(
   message: string,
   orgId: string,
-  conversationContext?: { recentIntents?: string[]; artifactIds?: string[] },
+  conversationContext?: { recentIntents?: string[]; artifactIds?: string[] }
 ): Promise<IntentRoutingResult> {
   const startTime = Date.now();
   const trace: IntentRoutingResult['routingTrace'] = [];
@@ -142,18 +196,23 @@ export async function routeIntent(
     durationMs: Date.now() - startTime,
   });
 
-  const rule = INTENT_PATTERNS.find(r => r.intent === intent);
+  const rule = INTENT_PATTERNS.find((r) => r.intent === intent);
   const requiredContext = rule?.contextNeeds || ['knowledge'];
   trace.push({ step: 'determine_context', result: requiredContext.join(', ') });
 
-  const contextArtifacts: ContextArtifactRef[] = (conversationContext?.artifactIds || []).map(id => ({
-    artifactType: 'unknown',
-    artifactId: id,
-    relevanceScore: 0.8,
-  }));
+  const contextArtifacts: ContextArtifactRef[] = (conversationContext?.artifactIds || []).map(
+    (id) => ({
+      artifactType: 'unknown',
+      artifactId: id,
+      relevanceScore: 0.8,
+    })
+  );
   trace.push({ step: 'resolve_artifacts', result: `${contextArtifacts.length} artifacts` });
 
-  const tier = workflow === 'deep_research' || intent === 'analyze' || intent === 'diagnose' ? 'PREMIUM' : INTENT_TO_TIER[intent] || 'STANDARD';
+  const tier =
+    workflow === 'deep_research' || intent === 'analyze' || intent === 'diagnose'
+      ? 'PREMIUM'
+      : INTENT_TO_TIER[intent] || 'STANDARD';
   const purpose =
     workflow === 'deep_research'
       ? 'deep_research_synthesis'
@@ -164,9 +223,15 @@ export async function routeIntent(
           : workflow === 'execution'
             ? 'task_management'
             : INTENT_TO_PURPOSE[intent] || 'general';
-  trace.push({ step: 'select_model', result: `tier=${tier}, purpose=${purpose}, workflow=${workflow}` });
+  trace.push({
+    step: 'select_model',
+    result: `tier=${tier}, purpose=${purpose}, workflow=${workflow}`,
+  });
 
-  aiLogger.info('IntentRouter', `Routed intent="${intent}" conf=${confidence} tier=${tier} org=${orgId}`);
+  aiLogger.info(
+    'IntentRouter',
+    `Routed intent="${intent}" conf=${confidence} tier=${tier} org=${orgId}`
+  );
 
   return {
     intent,

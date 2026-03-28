@@ -7,14 +7,14 @@
  * Base CRUD remains in my-work.routes.ts; these routes add V4 capabilities.
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { notebookService } from '../services/notebookService.js';
 import type { CaptureSource } from '../services/notebookService.js';
+import { notebookService } from '../services/notebookService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -121,7 +121,11 @@ router.post(
       return;
     }
 
-    const tags = req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : [];
+    const tags = req.body.tags
+      ? Array.isArray(req.body.tags)
+        ? req.body.tags
+        : [req.body.tags]
+      : [];
     const projectId = req.body.projectId || undefined;
 
     const result = await notebookService.capture(identity.orgId, identity.userId, {
@@ -274,7 +278,10 @@ router.get(
     const status = req.query.status ? String(req.query.status) : undefined;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
 
-    const proposals = await notebookService.getProposalsForPage(identity.orgId, req.params.pageId, { status, limit });
+    const proposals = await notebookService.getProposalsForPage(identity.orgId, req.params.pageId, {
+      status,
+      limit,
+    });
     res.json({ proposals });
   })
 );
@@ -323,10 +330,15 @@ router.post(
     if (!identity) return;
 
     const schema = z.object({
-      refs: z.array(z.object({
-        type: z.string().min(1),
-        id: z.string().min(1),
-      })).min(1).max(50),
+      refs: z
+        .array(
+          z.object({
+            type: z.string().min(1),
+            id: z.string().min(1),
+          })
+        )
+        .min(1)
+        .max(50),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -335,7 +347,11 @@ router.post(
       return;
     }
 
-    const chips = await notebookService.resolveEmbedChips(identity.orgId, identity.userId, parsed.data.refs);
+    const chips = await notebookService.resolveEmbedChips(
+      identity.orgId,
+      identity.userId,
+      parsed.data.refs
+    );
     res.json({ chips });
   })
 );

@@ -24,43 +24,211 @@ interface MindmapCommandPaletteProps {
 
 const COMMANDS: CommandItem[] = [
   // Nodes
-  { id: 'add_child', labelPl: 'Dodaj gałąź', labelEn: 'Add child', shortcut: 'Tab', category: 'nodes', action: 'mm_add_child' },
-  { id: 'add_sibling', labelPl: 'Dodaj sąsiada', labelEn: 'Add sibling', shortcut: 'Enter', category: 'nodes', action: 'mm_add_sibling' },
-  { id: 'add_root', labelPl: 'Dodaj temat główny', labelEn: 'Add root topic', category: 'nodes', action: 'mm_add_root' },
-  { id: 'delete', labelPl: 'Usuń zaznaczony', labelEn: 'Delete selected', shortcut: 'Del', category: 'nodes', action: 'mm_delete' },
-  { id: 'duplicate', labelPl: 'Duplikuj', labelEn: 'Duplicate', shortcut: '⌘D', category: 'nodes', action: 'mm_duplicate' },
+  {
+    id: 'add_child',
+    labelPl: 'Dodaj gałąź',
+    labelEn: 'Add child',
+    shortcut: 'Tab',
+    category: 'nodes',
+    action: 'mm_add_child',
+  },
+  {
+    id: 'add_sibling',
+    labelPl: 'Dodaj sąsiada',
+    labelEn: 'Add sibling',
+    shortcut: 'Enter',
+    category: 'nodes',
+    action: 'mm_add_sibling',
+  },
+  {
+    id: 'add_root',
+    labelPl: 'Dodaj temat główny',
+    labelEn: 'Add root topic',
+    category: 'nodes',
+    action: 'mm_add_root',
+  },
+  {
+    id: 'delete',
+    labelPl: 'Usuń zaznaczony',
+    labelEn: 'Delete selected',
+    shortcut: 'Del',
+    category: 'nodes',
+    action: 'mm_delete',
+  },
+  {
+    id: 'duplicate',
+    labelPl: 'Duplikuj',
+    labelEn: 'Duplicate',
+    shortcut: '⌘D',
+    category: 'nodes',
+    action: 'mm_duplicate',
+  },
 
   // AI
-  { id: 'ai_expand', labelPl: 'AI Rozwiń', labelEn: 'AI Expand', category: 'ai', action: 'mm_ai_expand' },
-  { id: 'ai_summarize', labelPl: 'AI Podsumuj', labelEn: 'AI Summarize', category: 'ai', action: 'mm_ai_summarize' },
-  { id: 'ai_gap', labelPl: 'AI Analiza luk', labelEn: 'AI Gap Analysis', category: 'ai', action: 'mm_ai_gap_analysis' },
-  { id: 'ai_suggest', labelPl: 'AI Sugestie', labelEn: 'AI Suggest', category: 'ai', action: 'mm_ai_suggest' },
+  {
+    id: 'ai_expand',
+    labelPl: 'AI Rozwiń',
+    labelEn: 'AI Expand',
+    category: 'ai',
+    action: 'mm_ai_expand',
+  },
+  {
+    id: 'ai_summarize',
+    labelPl: 'AI Podsumuj',
+    labelEn: 'AI Summarize',
+    category: 'ai',
+    action: 'mm_ai_summarize',
+  },
+  {
+    id: 'ai_gap',
+    labelPl: 'AI Analiza luk',
+    labelEn: 'AI Gap Analysis',
+    category: 'ai',
+    action: 'mm_ai_gap_analysis',
+  },
+  {
+    id: 'ai_suggest',
+    labelPl: 'AI Sugestie',
+    labelEn: 'AI Suggest',
+    category: 'ai',
+    action: 'mm_ai_suggest',
+  },
 
   // Layout
-  { id: 'auto_cluster', labelPl: 'Auto-grupowanie', labelEn: 'Auto-cluster', category: 'layout', action: 'mm_auto_cluster' },
-  { id: 'auto_layout', labelPl: 'Auto-układ', labelEn: 'Auto-layout', category: 'layout', action: 'mm_auto_layout' },
-  { id: 'struct_mindmap', labelPl: 'Struktura: Mapa myśli', labelEn: 'Structure: Mind Map', category: 'layout', action: 'mm_set_structure:mindmap' },
-  { id: 'struct_org', labelPl: 'Struktura: Schemat org.', labelEn: 'Structure: Org Chart', category: 'layout', action: 'mm_set_structure:org_chart' },
-  { id: 'struct_tree', labelPl: 'Struktura: Drzewo (prawo)', labelEn: 'Structure: Tree (Right)', category: 'layout', action: 'mm_set_structure:tree_right' },
-  { id: 'struct_fishbone', labelPl: 'Struktura: Ishikawa', labelEn: 'Structure: Fishbone', category: 'layout', action: 'mm_set_structure:fishbone' },
-  { id: 'struct_timeline', labelPl: 'Struktura: Oś czasu', labelEn: 'Structure: Timeline', category: 'layout', action: 'mm_set_structure:timeline' },
-  { id: 'struct_semantic', labelPl: 'Struktura: Semantyczny', labelEn: 'Structure: Semantic', category: 'layout', action: 'mm_set_structure:semantic' },
+  {
+    id: 'auto_cluster',
+    labelPl: 'Auto-grupowanie',
+    labelEn: 'Auto-cluster',
+    category: 'layout',
+    action: 'mm_auto_cluster',
+  },
+  {
+    id: 'auto_layout',
+    labelPl: 'Auto-układ',
+    labelEn: 'Auto-layout',
+    category: 'layout',
+    action: 'mm_auto_layout',
+  },
+  {
+    id: 'struct_mindmap',
+    labelPl: 'Struktura: Mapa myśli',
+    labelEn: 'Structure: Mind Map',
+    category: 'layout',
+    action: 'mm_set_structure:mindmap',
+  },
+  {
+    id: 'struct_org',
+    labelPl: 'Struktura: Schemat org.',
+    labelEn: 'Structure: Org Chart',
+    category: 'layout',
+    action: 'mm_set_structure:org_chart',
+  },
+  {
+    id: 'struct_tree',
+    labelPl: 'Struktura: Drzewo (prawo)',
+    labelEn: 'Structure: Tree (Right)',
+    category: 'layout',
+    action: 'mm_set_structure:tree_right',
+  },
+  {
+    id: 'struct_fishbone',
+    labelPl: 'Struktura: Ishikawa',
+    labelEn: 'Structure: Fishbone',
+    category: 'layout',
+    action: 'mm_set_structure:fishbone',
+  },
+  {
+    id: 'struct_timeline',
+    labelPl: 'Struktura: Oś czasu',
+    labelEn: 'Structure: Timeline',
+    category: 'layout',
+    action: 'mm_set_structure:timeline',
+  },
+  {
+    id: 'struct_semantic',
+    labelPl: 'Struktura: Semantyczny',
+    labelEn: 'Structure: Semantic',
+    category: 'layout',
+    action: 'mm_set_structure:semantic',
+  },
 
   // View
-  { id: 'toggle_health', labelPl: 'Pokaż/ukryj Health Score', labelEn: 'Toggle health score', category: 'view', action: 'mm_toggle_health' },
-  { id: 'presentation', labelPl: 'Tryb prezentacji', labelEn: 'Toggle presentation', category: 'view', action: 'mm_presentation' },
-  { id: 'fit_view', labelPl: 'Dopasuj widok', labelEn: 'Zoom to fit', category: 'view', action: 'mm_fit_view' },
-  { id: 'toggle_minimap', labelPl: 'Pokaż/ukryj minimapę', labelEn: 'Toggle minimap', category: 'view', action: 'mm_toggle_minimap' },
+  {
+    id: 'toggle_health',
+    labelPl: 'Pokaż/ukryj Health Score',
+    labelEn: 'Toggle health score',
+    category: 'view',
+    action: 'mm_toggle_health',
+  },
+  {
+    id: 'presentation',
+    labelPl: 'Tryb prezentacji',
+    labelEn: 'Toggle presentation',
+    category: 'view',
+    action: 'mm_presentation',
+  },
+  {
+    id: 'fit_view',
+    labelPl: 'Dopasuj widok',
+    labelEn: 'Zoom to fit',
+    category: 'view',
+    action: 'mm_fit_view',
+  },
+  {
+    id: 'toggle_minimap',
+    labelPl: 'Pokaż/ukryj minimapę',
+    labelEn: 'Toggle minimap',
+    category: 'view',
+    action: 'mm_toggle_minimap',
+  },
 
   // Export
-  { id: 'export_md', labelPl: 'Eksport: Markdown', labelEn: 'Export: Markdown', category: 'export', action: 'mm_export_markdown' },
-  { id: 'export_png', labelPl: 'Eksport: PNG', labelEn: 'Export: PNG', category: 'export', action: 'mm_export_png' },
-  { id: 'export_svg', labelPl: 'Eksport: SVG', labelEn: 'Export: SVG', category: 'export', action: 'mm_export_svg' },
-  { id: 'export_pptx', labelPl: 'Eksport: PPTX', labelEn: 'Export: PPTX', category: 'export', action: 'mm_export_pptx' },
+  {
+    id: 'export_md',
+    labelPl: 'Eksport: Markdown',
+    labelEn: 'Export: Markdown',
+    category: 'export',
+    action: 'mm_export_markdown',
+  },
+  {
+    id: 'export_png',
+    labelPl: 'Eksport: PNG',
+    labelEn: 'Export: PNG',
+    category: 'export',
+    action: 'mm_export_png',
+  },
+  {
+    id: 'export_svg',
+    labelPl: 'Eksport: SVG',
+    labelEn: 'Export: SVG',
+    category: 'export',
+    action: 'mm_export_svg',
+  },
+  {
+    id: 'export_pptx',
+    labelPl: 'Eksport: PPTX',
+    labelEn: 'Export: PPTX',
+    category: 'export',
+    action: 'mm_export_pptx',
+  },
 
   // Edit
-  { id: 'undo', labelPl: 'Cofnij', labelEn: 'Undo', shortcut: '⌘Z', category: 'edit', action: 'mm_undo' },
-  { id: 'redo', labelPl: 'Ponów', labelEn: 'Redo', shortcut: '⌘⇧Z', category: 'edit', action: 'mm_redo' },
+  {
+    id: 'undo',
+    labelPl: 'Cofnij',
+    labelEn: 'Undo',
+    shortcut: '⌘Z',
+    category: 'edit',
+    action: 'mm_undo',
+  },
+  {
+    id: 'redo',
+    labelPl: 'Ponów',
+    labelEn: 'Redo',
+    shortcut: '⌘⇧Z',
+    category: 'edit',
+    action: 'mm_redo',
+  },
 ];
 
 const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {
@@ -84,7 +252,11 @@ function fuzzyMatch(query: string, text: string): boolean {
   return false;
 }
 
-export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({ open, onClose, onAction }) => {
+export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
+  open,
+  onClose,
+  onAction,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [query, setQuery] = useState('');
@@ -108,35 +280,45 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({ op
     });
   }, [query]);
 
-  useEffect(() => { setSelectedIdx(0); }, [query]);
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [query]);
 
-  const execute = useCallback((cmd: CommandItem) => {
-    if (cmd.action.startsWith('mm_set_structure:')) {
-      const structureType = cmd.action.split(':')[1];
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', {
-        detail: { action: 'mm_set_structure', structureType },
-      }));
-    } else {
-      onAction(cmd.action);
-    }
-    onClose();
-  }, [onAction, onClose]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIdx((p) => Math.min(p + 1, filtered.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIdx((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filtered[selectedIdx]) execute(filtered[selectedIdx]);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
+  const execute = useCallback(
+    (cmd: CommandItem) => {
+      if (cmd.action.startsWith('mm_set_structure:')) {
+        const structureType = cmd.action.split(':')[1];
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'mm_set_structure', structureType },
+          })
+        );
+      } else {
+        onAction(cmd.action);
+      }
       onClose();
-    }
-  }, [filtered, selectedIdx, execute, onClose]);
+    },
+    [onAction, onClose]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIdx((p) => Math.min(p + 1, filtered.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIdx((p) => Math.max(p - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filtered[selectedIdx]) execute(filtered[selectedIdx]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    },
+    [filtered, selectedIdx, execute, onClose]
+  );
 
   useEffect(() => {
     const el = listRef.current?.querySelector(`[data-cmd-idx="${selectedIdx}"]`);
@@ -203,11 +385,13 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({ op
                           {isPl ? cmd.labelPl : cmd.labelEn}
                         </span>
                         {cmd.shortcut && (
-                          <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                            isActive
-                              ? 'bg-primary-200/60 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300'
-                              : 'bg-slate-100 dark:bg-white/10 text-slate-400'
-                          }`}>
+                          <kbd
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                              isActive
+                                ? 'bg-primary-200/60 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300'
+                                : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+                            }`}
+                          >
                             {cmd.shortcut}
                           </kbd>
                         )}

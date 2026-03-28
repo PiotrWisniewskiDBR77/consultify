@@ -61,7 +61,11 @@ function parseJsonb<T>(raw: unknown): T | null {
   if (!raw) return null;
   if (typeof raw === 'object' && !Array.isArray(raw)) return raw as T;
   if (Array.isArray(raw)) return raw as unknown as T;
-  try { return JSON.parse(String(raw)) as T; } catch { return null; }
+  try {
+    return JSON.parse(String(raw)) as T;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -128,14 +132,19 @@ export async function logMessage(opts: {
     ]
   );
 
-  await db().query(
-    `UPDATE virtual_worker_conversations
+  await db()
+    .query(
+      `UPDATE virtual_worker_conversations
      SET message_count = message_count + 1
      WHERE id = $1`,
-    [opts.conversationId]
-  ).catch((err: unknown) => {
-    logger.warn('[ConversationLogger] message_count update failed:', err instanceof Error ? err.message : String(err));
-  });
+      [opts.conversationId]
+    )
+    .catch((err: unknown) => {
+      logger.warn(
+        '[ConversationLogger] message_count update failed:',
+        err instanceof Error ? err.message : String(err)
+      );
+    });
 
   return id;
 }
@@ -319,12 +328,14 @@ export async function getWorkerAnalytics(opts: {
     params
   );
 
-  const msgCountResult = await db().query<{ cnt: string }>(
-    `SELECT COUNT(*) as cnt FROM virtual_worker_messages m
+  const msgCountResult = await db()
+    .query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM virtual_worker_messages m
      JOIN virtual_worker_conversations c ON m.conversation_id = c.id
      WHERE ${where}`,
-    params
-  ).catch(() => ({ rows: [{ cnt: '0' }] }));
+      params
+    )
+    .catch(() => ({ rows: [{ cnt: '0' }] }));
   const directMessageCount = parseInt(String(msgCountResult.rows[0]?.cnt || '0'), 10);
 
   const summary = summaryResult.rows[0] || {};
@@ -370,8 +381,9 @@ export async function getWorkerAnalytics(opts: {
     count: parseInt(String(row.count), 10),
   }));
 
-  const sourcesResult = await db().query<{ source: string; count: string }>(
-    `SELECT s.source, COUNT(*) as count
+  const sourcesResult = await db()
+    .query<{ source: string; count: string }>(
+      `SELECT s.source, COUNT(*) as count
      FROM virtual_worker_messages m
      JOIN virtual_worker_conversations c ON m.conversation_id = c.id
      CROSS JOIN LATERAL jsonb_array_elements_text(
@@ -384,8 +396,9 @@ export async function getWorkerAnalytics(opts: {
      GROUP BY s.source
      ORDER BY count DESC
      LIMIT 10`,
-    params
-  ).catch(() => ({ rows: [] as Array<{ source: string; count: string }> }));
+      params
+    )
+    .catch(() => ({ rows: [] as Array<{ source: string; count: string }> }));
 
   const topKnowledgeSources = (sourcesResult.rows || []).map((row) => ({
     source: String(row.source || ''),

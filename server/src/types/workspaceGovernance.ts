@@ -33,7 +33,12 @@ export const PermissionActionValues = [
 ] as const;
 export type PermissionAction = (typeof PermissionActionValues)[number];
 
-export const ContentClassificationValues = ['public', 'internal', 'confidential', 'restricted'] as const;
+export const ContentClassificationValues = [
+  'public',
+  'internal',
+  'confidential',
+  'restricted',
+] as const;
 export type ContentClassification = (typeof ContentClassificationValues)[number];
 
 // ==========================================

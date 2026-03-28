@@ -100,6 +100,7 @@ import {
   InterviewAssignmentPreviewBody,
   InterviewAssignmentPreviewFooter,
 } from './InterviewAssignmentPreview';
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
@@ -122,7 +123,6 @@ import {
   type TemplateScope,
   type TemplateSourceFilter,
 } from './templateLibraryMeta';
-import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
@@ -535,9 +535,7 @@ export const InterviewHub: React.FC = () => {
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
   const [previewAiError, setPreviewAiError] = useState<string | null>(null);
   type AssignmentAiIntent = 'summary' | 'risks' | 'next_steps';
-  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<
-    AssignmentAiIntent
-  >('summary');
+  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<AssignmentAiIntent>('summary');
 
   // Sessions preview (Outlook-style)
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
@@ -841,7 +839,9 @@ export const InterviewHub: React.FC = () => {
         setTemplateQuestionsById((prev) => ({
           ...prev,
           [templateId]:
-            apiRows.length > 0 ? apiRows : interviewDemoData.templateQuestionsById[templateId] || [],
+            apiRows.length > 0
+              ? apiRows
+              : interviewDemoData.templateQuestionsById[templateId] || [],
         }));
       })
       .catch((err) => {
@@ -1036,13 +1036,7 @@ export const InterviewHub: React.FC = () => {
     }
 
     return result;
-  }, [
-    templates,
-    searchQuery,
-    templateSourceFilter,
-    templateAreaTagFilter,
-    templateStatusFilter,
-  ]);
+  }, [templates, searchQuery, templateSourceFilter, templateAreaTagFilter, templateStatusFilter]);
 
   // -------------------------
   // Assignments (Assigned tab) status filter
@@ -1322,11 +1316,13 @@ export const InterviewHub: React.FC = () => {
         type: 'template',
         name: template?.name || (isPolish ? 'Template' : 'Template'),
         status: (template?.status as ItemStatus) || 'draft',
-        data: template || ({
-          id: templateId,
-          name: isPolish ? 'Template' : 'Template',
-          status: 'draft',
-        } as unknown as InterviewTemplate),
+        data:
+          template ||
+          ({
+            id: templateId,
+            name: isPolish ? 'Template' : 'Template',
+            status: 'draft',
+          } as unknown as InterviewTemplate),
       });
     },
     [handleOpenDocument, isPolish, templates]
@@ -1435,7 +1431,13 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [isPolish, loadManagedAssignments, loadMyAssignments, loadOverdueAssignments, selectedAssignment]
+    [
+      isPolish,
+      loadManagedAssignments,
+      loadMyAssignments,
+      loadOverdueAssignments,
+      selectedAssignment,
+    ]
   );
 
   const handleApproveAssignment = useCallback(
@@ -1497,11 +1499,9 @@ export const InterviewHub: React.FC = () => {
   const openSessionById = useCallback(
     async (sessionId: string) => {
       try {
-        const s = (
-          await V8InterviewApi.getSession(sessionId)
-            .then((res) => res.session)
-            .catch(() => Api.get(`/interview/sessions/${sessionId}`))
-        ) as any;
+        const s = (await V8InterviewApi.getSession(sessionId)
+          .then((res) => res.session)
+          .catch(() => Api.get(`/interview/sessions/${sessionId}`))) as any;
         if (!s?.id) throw new Error('Session not found');
         handleViewSession(s as InterviewSession);
       } catch (error: any) {
@@ -3153,21 +3153,33 @@ export const InterviewHub: React.FC = () => {
           const isSystem = template.scope === 'system';
           const isOrg = template.scope === 'organization';
           const scopeLabel = isSystem
-            ? (isPolish ? 'Systemowy' : 'System')
+            ? isPolish
+              ? 'Systemowy'
+              : 'System'
             : isOrg
-              ? (isPolish ? 'Organizacja' : 'Organization')
-              : (isPolish ? 'Prywatny' : 'Private');
+              ? isPolish
+                ? 'Organizacja'
+                : 'Organization'
+              : isPolish
+                ? 'Prywatny'
+                : 'Private';
           const scopeColor = isSystem
             ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
             : isOrg
               ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
               : 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
-          const statusLabel = template.status === 'approved'
-            ? (isPolish ? 'Opublikowany' : 'Published')
-            : (isPolish ? 'Wersja robocza' : 'Draft');
-          const statusColor = template.status === 'approved'
-            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+          const statusLabel =
+            template.status === 'approved'
+              ? isPolish
+                ? 'Opublikowany'
+                : 'Published'
+              : isPolish
+                ? 'Wersja robocza'
+                : 'Draft';
+          const statusColor =
+            template.status === 'approved'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
           const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
 
           return (
@@ -3189,10 +3201,14 @@ export const InterviewHub: React.FC = () => {
             >
               <div className="p-4 flex-1 space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}
+                  >
                     {scopeLabel}
                   </span>
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}
+                  >
                     {statusLabel}
                   </span>
                   {template.isDefault && (
@@ -3232,10 +3248,10 @@ export const InterviewHub: React.FC = () => {
               </div>
 
               <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>{template.questionCount} {isPolish ? 'pytań' : 'questions'}</span>
-                {template.estimatedTimeMinutes && (
-                  <span>{template.estimatedTimeMinutes} min</span>
-                )}
+                <span>
+                  {template.questionCount} {isPolish ? 'pytań' : 'questions'}
+                </span>
+                {template.estimatedTimeMinutes && <span>{template.estimatedTimeMinutes} min</span>}
                 <span>{template.category}</span>
               </div>
             </button>
@@ -3556,7 +3572,14 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [canViewManaged, ensureProjectId, handleOpenDocument, isPolish, loadManagedAssignments, loadMyAssignments]
+    [
+      canViewManaged,
+      ensureProjectId,
+      handleOpenDocument,
+      isPolish,
+      loadManagedAssignments,
+      loadMyAssignments,
+    ]
   );
 
   const openInterviewAssignmentFull = useCallback(
@@ -4362,7 +4385,10 @@ Return ONLY the answer text (no markdown fences).`;
                 if (s) handleViewSession(s);
               }}
               itemIds={rows.map((r) => r.id)}
-              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || 'Interview Session' } as any : null; }}
+              getItemById={(id) => {
+                const x = rows.find((i) => i.id === id);
+                return x ? ({ ...x, title: x.name || 'Interview Session' } as any) : null;
+              }}
               renderPreview={(item) => {
                 const s = item as InterviewSession;
                 const progress =
@@ -4378,9 +4404,7 @@ Return ONLY the answer text (no markdown fences).`;
                     statusConfig={statusCfg}
                     progress={progress}
                     detailsExpanded={sessionPreviewDetailsExpanded}
-                    onToggleDetailsExpanded={() =>
-                      setSessionPreviewDetailsExpanded((v) => !v)
-                    }
+                    onToggleDetailsExpanded={() => setSessionPreviewDetailsExpanded((v) => !v)}
                     onCopyStats={() =>
                       copyToClipboard(
                         [
@@ -4432,7 +4456,11 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     relations={relations}
                     onOpenFull={() => handleViewSession(s)}
-                    onGenerateInsight={canRunAi ? (type) => handleGenerateInsight(s, type as InsightPromptType) : undefined}
+                    onGenerateInsight={
+                      canRunAi
+                        ? (type) => handleGenerateInsight(s, type as InsightPromptType)
+                        : undefined
+                    }
                     onCopyId={() => copyToClipboard(s.id)}
                   />
                 );
@@ -4613,11 +4641,13 @@ Return ONLY the answer text (no markdown fences).`;
                 typeConfig={typeConfig}
                 statusConfig={sc}
                 sourceLabel={sourceLabel}
-                dateStr={createdRelative
-                  ? isPolish
-                    ? `Utworzono ${createdRelative}`
-                    : `Created ${createdRelative}`
-                  : dateStr}
+                dateStr={
+                  createdRelative
+                    ? isPolish
+                      ? `Utworzono ${createdRelative}`
+                      : `Created ${createdRelative}`
+                    : dateStr
+                }
                 detailsText={detailsText}
                 detailsExpanded={insightPreviewDetailsExpanded}
                 onToggleDetailsExpanded={() => setInsightPreviewDetailsExpanded((v) => !v)}
@@ -4638,9 +4668,7 @@ Return ONLY the answer text (no markdown fences).`;
                 isPolish={isPolish}
                 onOpenFull={() => handleViewInsight(item)}
                 onExportToTools={
-                  !item.exportedToTools
-                    ? () => handleExportInsightToTools(item.id)
-                    : undefined
+                  !item.exportedToTools ? () => handleExportInsightToTools(item.id) : undefined
                 }
                 onCopyLink={() => copyToClipboard(item.title || '')}
               />
@@ -4780,7 +4808,10 @@ Return ONLY the answer text (no markdown fences).`;
             onSelect={(id) => setSelectedTemplateId(id)}
             onOpenFull={onOpenFull}
             itemIds={rows.map((t) => t.id)}
-            getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+            getItemById={(id) => {
+              const x = rows.find((i) => i.id === id);
+              return x ? ({ ...x, title: x.name || x.id } as any) : null;
+            }}
             renderPreview={(item) => {
               const itemQuestions = templateQuestionsById[item.id] || [];
               const isLoadingQuestions = !!templateQuestionsLoading[item.id];
@@ -4815,7 +4846,9 @@ Return ONLY the answer text (no markdown fences).`;
                   usageCount={usage}
                   onOpenFull={() => onOpenFull(item.id)}
                   onClone={() => handleCloneTemplate(item)}
-                  onDelete={canAssign && !item.isDefault ? () => handleDeleteTemplate(item) : undefined}
+                  onDelete={
+                    canAssign && !item.isDefault ? () => handleDeleteTemplate(item) : undefined
+                  }
                   aiHints={
                     isPolish
                       ? ['Podsumuj', 'Usprawnienia', 'Luki']
@@ -4909,7 +4942,10 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, false);
               }}
               itemIds={rows.map((r) => r.id)}
-              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
+              getItemById={(id) => {
+                const x = rows.find((i) => i.id === id);
+                return x ? ({ ...x, title: getAssignmentTitle(x) } as any) : null;
+              }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -4988,8 +5024,7 @@ Return ONLY the answer text (no markdown fences).`;
                       const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
-                      if (!text)
-                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -4997,14 +5032,19 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     onRegenerateAi={async () => {
                       const text = await runAssignmentAi(previewAiLastIntent, a);
-                      if (!text)
-                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
                       }
                     }}
-                    onCopyAi={previewAiText ? async () => { await copyToClipboard(previewAiText!); } : undefined}
+                    onCopyAi={
+                      previewAiText
+                        ? async () => {
+                            await copyToClipboard(previewAiText!);
+                          }
+                        : undefined
+                    }
                     onClearAi={() => {
                       setPreviewAiText(null);
                       setPreviewAiError(null);
@@ -5114,7 +5154,10 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, true);
               }}
               itemIds={rows.map((r) => r.id)}
-              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
+              getItemById={(id) => {
+                const x = rows.find((i) => i.id === id);
+                return x ? ({ ...x, title: getAssignmentTitle(x) } as any) : null;
+              }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -5193,8 +5236,7 @@ Return ONLY the answer text (no markdown fences).`;
                       const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
-                      if (!text)
-                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -5202,14 +5244,19 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     onRegenerateAi={async () => {
                       const text = await runAssignmentAi(previewAiLastIntent, a);
-                      if (!text)
-                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
                       }
                     }}
-                    onCopyAi={previewAiText ? async () => { await copyToClipboard(previewAiText!); } : undefined}
+                    onCopyAi={
+                      previewAiText
+                        ? async () => {
+                            await copyToClipboard(previewAiText!);
+                          }
+                        : undefined
+                    }
                     onClearAi={() => {
                       setPreviewAiText(null);
                       setPreviewAiError(null);

@@ -21,9 +21,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  IDEA_STAGES_V5,
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
   type IdeaStageV5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
@@ -94,7 +94,8 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
   const advanceBlocked = useMemo(() => {
     if (v5Stage === 'spark' && !data.title?.trim()) return isPl ? 'Dodaj tytuł' : 'Add a title';
     if (v5Stage === 'exploring' && nodeCount < 2) return isPl ? 'Dodaj węzły' : 'Add nodes first';
-    if (v5Stage === 'validating' && evidenceCount < 1) return isPl ? 'Dodaj dowody' : 'Add evidence';
+    if (v5Stage === 'validating' && evidenceCount < 1)
+      return isPl ? 'Dodaj dowody' : 'Add evidence';
     return null;
   }, [v5Stage, data.title, nodeCount, evidenceCount, isPl]);
 
@@ -227,7 +228,10 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               onClick={handleRevert}
               className="text-[10px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
-              ← {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].en}
+              ←{' '}
+              {isPl
+                ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].pl
+                : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].en}
             </button>
           )}
           <div className="flex-1" />
@@ -242,7 +246,10 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
                   : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
               }`}
             >
-              {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en} →
+              {isPl
+                ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl
+                : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en}{' '}
+              →
             </button>
           )}
         </div>

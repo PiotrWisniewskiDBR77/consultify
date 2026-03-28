@@ -142,7 +142,9 @@ export function parseBpmnXml(raw: string): IdeaWorkspaceImportPayload {
   q('exclusiveGateway, bpmn\\:exclusiveGateway, parallelGateway, bpmn\\:parallelGateway').forEach(
     (el, idx) => addNode(el, 'bpmn_gateway', idx + nodes.length)
   );
-  q('endEvent, bpmn\\:endEvent').forEach((el, idx) => addNode(el, 'bpmn_event', idx + nodes.length));
+  q('endEvent, bpmn\\:endEvent').forEach((el, idx) =>
+    addNode(el, 'bpmn_event', idx + nodes.length)
+  );
 
   q('sequenceFlow, bpmn\\:sequenceFlow').forEach((el, idx) => {
     const source = el.getAttribute('sourceRef');
@@ -159,7 +161,10 @@ export function parseBpmnXml(raw: string): IdeaWorkspaceImportPayload {
 
   return {
     sourceFormat: 'bpmn_xml',
-    title: safeText(xml.querySelector('process, bpmn\\:process')?.getAttribute('name'), 'Imported BPMN'),
+    title: safeText(
+      xml.querySelector('process, bpmn\\:process')?.getAttribute('name'),
+      'Imported BPMN'
+    ),
     nodes,
     edges,
     extensions: {

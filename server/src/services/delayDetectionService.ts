@@ -5,8 +5,8 @@
  * Supports configurable thresholds, "why slip" context, and alert throttling.
  */
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 
 // ── Types ──────────────────────────────────────────────────────
 

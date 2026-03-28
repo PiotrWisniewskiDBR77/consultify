@@ -295,7 +295,12 @@ function evaluateProviderPolicy(
       : (orgPolicy.requireLocalForDataClasses as string[]) || []
     ).map((item) => String(item).toLowerCase())
   );
-  if (requireLocal.has('no_pii') && providerType && providerType !== 'local' && providerType !== 'customer_managed') {
+  if (
+    requireLocal.has('no_pii') &&
+    providerType &&
+    providerType !== 'local' &&
+    providerType !== 'customer_managed'
+  ) {
     return { policyAllowed: false, residencyStatus: 'restricted' };
   }
 
@@ -305,7 +310,11 @@ function evaluateProviderPolicy(
       : (orgPolicy.allowedExecutionRegions as string[]) || []
     ).map((item) => String(item).toUpperCase())
   );
-  if (allowedRegions.size > 0 && regions.length > 0 && !regions.some((region) => allowedRegions.has(region))) {
+  if (
+    allowedRegions.size > 0 &&
+    regions.length > 0 &&
+    !regions.some((region) => allowedRegions.has(region))
+  ) {
     return { policyAllowed: false, residencyStatus: 'restricted' };
   }
   if (allowedRegions.size > 0 && regions.length === 0) {
@@ -390,7 +399,8 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
     const providerKey = String(p.provider || '').toLowerCase();
     const modelKey = String(p.model_id || p.model || p.id || '').toLowerCase();
     const health =
-      healthByProvider.get(`${providerKey}::${modelKey}`) || healthByProvider.get(`${providerKey}::`);
+      healthByProvider.get(`${providerKey}::${modelKey}`) ||
+      healthByProvider.get(`${providerKey}::`);
     return sanitizeProviderForStatus({
       ...p,
       // normalize to shape expected by UI (AdminLLMView / ModelsProvidersTab)
@@ -982,7 +992,10 @@ router.get(
       ? await llmConfigService.getOrganizationProviders(organizationId).catch(() => [])
       : [];
     const orgProviderState = new Map(
-      (orgProviders || []).map((provider: any) => [String(provider.id), provider.is_enabled_for_org !== false])
+      (orgProviders || []).map((provider: any) => [
+        String(provider.id),
+        provider.is_enabled_for_org !== false,
+      ])
     );
     const entrypointByUseCase: Record<string, string> = {
       chat: '/ai-chat',
@@ -1089,14 +1102,19 @@ router.get(
             const releaseBundleId = String(primary?.release_bundle_id || '').trim() || null;
             const bundle =
               (releaseBundleId ? bundleById.get(releaseBundleId) : null) ||
-              releaseBundles.find((item) => getRoutingPurposeKeys(String(item.purpose || '')).includes(purpose)) ||
+              releaseBundles.find((item) =>
+                getRoutingPurposeKeys(String(item.purpose || '')).includes(purpose)
+              ) ||
               null;
-            const promptKey = String(primary?.prompt_key || bundle?.prompt_key || '').trim() || null;
+            const promptKey =
+              String(primary?.prompt_key || bundle?.prompt_key || '').trim() || null;
             const promptVersion =
               String(primary?.prompt_version || bundle?.prompt_version || '').trim() || null;
             const policyVersion =
               String(primary?.policy_version || bundle?.policy_version || '').trim() || null;
-            const releasePublished = releaseBundleId ? publishedBundleIds.has(releaseBundleId) : false;
+            const releasePublished = releaseBundleId
+              ? publishedBundleIds.has(releaseBundleId)
+              : false;
             const entrypoint = entrypointByUseCase[useCase.key] || useCase.key;
             const fallbacks = assignments.slice(1, 4).map((row) => ({
               providerId: row.provider_id,
@@ -1107,7 +1125,9 @@ router.get(
             }));
             const eligibleAssignments = assignments.filter((row) => {
               const policy = evaluateProviderPolicy(row, orgPolicy);
-              const enabledForOrg = organizationId ? orgProviderState.get(String(row.provider_id)) !== false : true;
+              const enabledForOrg = organizationId
+                ? orgProviderState.get(String(row.provider_id)) !== false
+                : true;
               return policy.policyAllowed && enabledForOrg;
             });
             const primaryPolicy = primary ? evaluateProviderPolicy(primary, orgPolicy) : null;
@@ -1133,7 +1153,11 @@ router.get(
               blockers.length === 0
                 ? 'ready'
                 : blockers.some((blocker) =>
-                      ['missing_assignment', 'no_eligible_assignment', 'release_not_published'].includes(blocker)
+                      [
+                        'missing_assignment',
+                        'no_eligible_assignment',
+                        'release_not_published',
+                      ].includes(blocker)
                     )
                   ? 'blocked'
                   : 'partial';
@@ -1156,10 +1180,16 @@ router.get(
               eligibleAssignmentCount: eligibleAssignments.length,
               status,
               policyAllowed: primaryPolicy?.policyAllowed ?? assignments.length === 0,
-              enabledForOrg: organizationId ? orgProviderState.get(String(primary?.provider_id || '')) !== false : true,
+              enabledForOrg: organizationId
+                ? orgProviderState.get(String(primary?.provider_id || '')) !== false
+                : true,
               residencyStatus: primaryPolicy?.residencyStatus ?? 'allowed',
               releaseBundleId: releaseBundleId || String(bundle?.id || '').trim() || null,
-              releaseStatus: releasePublished ? 'published' : bundle ? String(bundle.status || 'draft') : 'missing',
+              releaseStatus: releasePublished
+                ? 'published'
+                : bundle
+                  ? String(bundle.status || 'draft')
+                  : 'missing',
               promptKey,
               promptVersion,
               policyVersion,
@@ -1209,13 +1239,16 @@ router.get(
         const completenessScore =
           purposes.length > 0
             ? Math.round(
-                purposes.reduce((sum, item) => sum + Number(item.completenessScore || 0), 0) / purposes.length
+                purposes.reduce((sum, item) => sum + Number(item.completenessScore || 0), 0) /
+                  purposes.length
               )
             : 0;
         const releaseCoveragePct =
           purposes.length > 0
             ? Math.round(
-                (purposes.filter((item) => item.releaseStatus === 'published').length / purposes.length) * 100
+                (purposes.filter((item) => item.releaseStatus === 'published').length /
+                  purposes.length) *
+                  100
               )
             : 0;
 

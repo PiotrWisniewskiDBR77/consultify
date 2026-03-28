@@ -11,10 +11,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
-import { getVerifiedPackSeed } from './financialStatementPackService.js';
-import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import logger from '../utils/Logger.js';
+import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
+import { getVerifiedPackSeed } from './financialStatementPackService.js';
+import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -221,7 +221,9 @@ function mergeAssumptions(
   };
 }
 
-async function loadSeedValueRows(statementIds: string[]): Promise<Array<{ line_code: string; value: number }>> {
+async function loadSeedValueRows(
+  statementIds: string[]
+): Promise<Array<{ line_code: string; value: number }>> {
   const rowsFromSnapshots: Array<{ line_code: string; value: number }> = [];
   let snapshotCoverage = 0;
 
@@ -280,7 +282,9 @@ async function buildSeededAssumptionsFromStatement(
 
   const readinessStatus = String(
     stmt.readiness_status ||
-      (['confirmed', 'mapped'].includes(String(stmt.status || '').toLowerCase()) ? 'ready' : 'recoverable')
+      (['confirmed', 'mapped'].includes(String(stmt.status || '').toLowerCase())
+        ? 'ready'
+        : 'recoverable')
   ).toLowerCase();
   if (readinessStatus !== 'ready') {
     throw new Error('Statement must be statement-ready before it can seed a model');
@@ -464,7 +468,12 @@ async function buildSeededAssumptionsFromPack(
       periodEnd: String(statements[0]?.period_end || ''),
       currency: String(packSeed.currency || statements[0]?.currency || 'PLN'),
       scaling: String(statements[0]?.scaling || 'units'),
-      sourceFileName: String((statements || []).map((row) => row.source_file_name).filter(Boolean).join(', ')),
+      sourceFileName: String(
+        (statements || [])
+          .map((row) => row.source_file_name)
+          .filter(Boolean)
+          .join(', ')
+      ),
       status: 'ready',
       readinessStatus: 'ready',
     },
@@ -1025,8 +1034,8 @@ export async function createModel(params: {
     params.sourceStatementPackId && params.organizationId
       ? await buildSeededAssumptionsFromPack(params.organizationId, params.sourceStatementPackId)
       : params.sourceStatementId && params.organizationId
-      ? await buildSeededAssumptionsFromStatement(params.organizationId, params.sourceStatementId)
-      : null;
+        ? await buildSeededAssumptionsFromStatement(params.organizationId, params.sourceStatementId)
+        : null;
   const assumptions = mergeAssumptions(seeded?.assumptions || {}, params.assumptions);
   try {
     await dbRun(

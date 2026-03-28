@@ -228,13 +228,18 @@ async function updateRule(id: string, patch: UpdateInput, actorId: string): Prom
 
   const next = {
     organizationId:
-      patch.organizationId !== undefined ? (patch.organizationId ? String(patch.organizationId) : null) : existing.organizationId,
+      patch.organizationId !== undefined
+        ? patch.organizationId
+          ? String(patch.organizationId)
+          : null
+        : existing.organizationId,
     name: patch.name !== undefined ? String(patch.name).trim() : existing.name,
-    description: patch.description !== undefined ? String(patch.description || '') : existing.description,
+    description:
+      patch.description !== undefined ? String(patch.description || '') : existing.description,
     type: patch.type !== undefined ? (String(patch.type) as RoutingRuleType) : existing.type,
     priority: patch.priority !== undefined ? Number(patch.priority || 0) : existing.priority,
     isActive: patch.isActive !== undefined ? !!patch.isActive : existing.isActive,
-    config: patch.config !== undefined ? (patch.config || {}) : existing.config,
+    config: patch.config !== undefined ? patch.config || {} : existing.config,
   };
 
   if (!next.name) throw new Error('name is required');
@@ -330,7 +335,9 @@ async function getProviderLatencyAverages(options: {
 
 function ruleApplies(rule: RoutingRule, ctx: { tier: string; purpose?: string }) {
   const cfg: any = rule.config || {};
-  const tiers = Array.isArray(cfg?.tiers) ? cfg.tiers.map((t: any) => String(t).toUpperCase()) : null;
+  const tiers = Array.isArray(cfg?.tiers)
+    ? cfg.tiers.map((t: any) => String(t).toUpperCase())
+    : null;
   const purposes = Array.isArray(cfg?.purposes) ? cfg.purposes.map((p: any) => String(p)) : null;
   if (tiers && tiers.length && !tiers.includes(String(ctx.tier || '').toUpperCase())) return false;
   if (purposes && purposes.length) {
@@ -383,13 +390,17 @@ async function applyRulesToCandidates<T extends Candidate>(params: {
   // Optional latency data for latency rules.
   const needsLatency = active.some((r) => r.type === 'latency');
   const latencyAvg = needsLatency
-    ? await getProviderLatencyAverages({ organizationId: orgId, windowMinutes: 30 }).catch(() => new Map())
+    ? await getProviderLatencyAverages({ organizationId: orgId, windowMinutes: 30 }).catch(
+        () => new Map()
+      )
     : new Map<string, number>();
 
   for (const rule of active) {
     const cfg: any = rule.config || {};
     if (rule.type === 'health') {
-      const hasHealthy = out.some((c) => String((c as any).health_status || '').toLowerCase() === 'healthy');
+      const hasHealthy = out.some(
+        (c) => String((c as any).health_status || '').toLowerCase() === 'healthy'
+      );
       if (hasHealthy) {
         const filtered = out.filter(
           (c) => String((c as any).health_status || '').toLowerCase() === 'healthy'
@@ -450,7 +461,9 @@ async function applyRulesToCandidates<T extends Candidate>(params: {
     }
 
     if (rule.type === 'geographic') {
-      const region = String(cfg?.region || '').trim().toUpperCase();
+      const region = String(cfg?.region || '')
+        .trim()
+        .toUpperCase();
       if (region) {
         const filtered = out.filter((c) => {
           const raw = (c as any)?.execution_regions;
@@ -471,15 +484,17 @@ async function applyRulesToCandidates<T extends Candidate>(params: {
     }
 
     if (rule.type === 'load_balance') {
-      const kindRaw = String(cfg?.strategy || '').trim().toLowerCase();
+      const kindRaw = String(cfg?.strategy || '')
+        .trim()
+        .toLowerCase();
       const kind =
-        kindRaw === 'weighted_random' || kindRaw === 'weighted'
-          ? 'weighted_random'
-          : 'round_robin';
+        kindRaw === 'weighted_random' || kindRaw === 'weighted' ? 'weighted_random' : 'round_robin';
       if (kind === 'weighted_random') {
         const weightsRaw = cfg?.weights;
         const weights =
-          weightsRaw && typeof weightsRaw === 'object' ? (weightsRaw as Record<string, number>) : undefined;
+          weightsRaw && typeof weightsRaw === 'object'
+            ? (weightsRaw as Record<string, number>)
+            : undefined;
         selectionStrategy = { kind: 'weighted_random', weights };
         appliedRuleIds.push(rule.id);
       }
@@ -502,7 +517,10 @@ async function applyRulesToCandidates<T extends Candidate>(params: {
   return { candidates: out, selectionStrategy, appliedRuleIds };
 }
 
-function pickWeightedRandom<T extends Candidate>(candidates: T[], weights?: Record<string, number>): T {
+function pickWeightedRandom<T extends Candidate>(
+  candidates: T[],
+  weights?: Record<string, number>
+): T {
   const w = weights || {};
   const items = candidates.map((c) => {
     const key = String((c as any)?.id || (c as any)?.provider || '').trim();
@@ -529,4 +547,3 @@ export const routingRulesService = {
   applyRulesToCandidates,
   pickWeightedRandom,
 };
-

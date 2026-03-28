@@ -3,8 +3,17 @@ import { z } from 'zod';
 export const AdvisorCitationSchema = z.object({
   id: z.string(),
   artifactType: z.enum([
-    'assessment', 'initiative', 'report', 'roadmap', 'task', 'decision',
-    'idea', 'tool_session', 'notebook', 'external', 'knowledge_base',
+    'assessment',
+    'initiative',
+    'report',
+    'roadmap',
+    'task',
+    'decision',
+    'idea',
+    'tool_session',
+    'notebook',
+    'external',
+    'knowledge_base',
   ]),
   artifactId: z.string(),
   fragmentId: z.string().optional(),
@@ -18,19 +27,31 @@ export const AdvisorCitationSchema = z.object({
 export const ProposedActionSchema = z.object({
   id: z.string(),
   actionType: z.enum([
-    'create_task', 'update_task', 'create_decision', 'update_decision',
-    'create_initiative', 'update_initiative', 'create_raid_item',
-    'send_notification', 'schedule_meeting', 'generate_report',
-    'update_status', 'assign_user', 'set_field', 'custom',
+    'create_task',
+    'update_task',
+    'create_decision',
+    'update_decision',
+    'create_initiative',
+    'update_initiative',
+    'create_raid_item',
+    'send_notification',
+    'schedule_meeting',
+    'generate_report',
+    'update_status',
+    'assign_user',
+    'set_field',
+    'custom',
   ]),
   label: z.string(),
   description: z.string().optional(),
   params: z.record(z.string(), z.unknown()),
   preview: z.string().optional(),
-  diff: z.object({
-    before: z.record(z.string(), z.unknown()).optional(),
-    after: z.record(z.string(), z.unknown()),
-  }).optional(),
+  diff: z
+    .object({
+      before: z.record(z.string(), z.unknown()).optional(),
+      after: z.record(z.string(), z.unknown()),
+    })
+    .optional(),
   requiresApproval: z.boolean().default(false),
   estimatedImpact: z.enum(['low', 'medium', 'high']).optional(),
 });
@@ -46,8 +67,18 @@ export const AdvisorQuestionSchema = z.object({
 export const AdvisorResponseSchema = z.object({
   id: z.string(),
   intent: z.enum([
-    'answer', 'analyze', 'recommend', 'create', 'update', 'explain',
-    'compare', 'summarize', 'diagnose', 'plan', 'clarify', 'unknown',
+    'answer',
+    'analyze',
+    'recommend',
+    'create',
+    'update',
+    'explain',
+    'compare',
+    'summarize',
+    'diagnose',
+    'plan',
+    'clarify',
+    'unknown',
   ]),
   answer: z.string(),
   citations: z.array(AdvisorCitationSchema).default([]),
@@ -56,13 +87,15 @@ export const AdvisorResponseSchema = z.object({
   confidence: z.number().min(0).max(1),
   safetyNotes: z.array(z.string()).default([]),
   reasoning: z.string().optional(),
-  metadata: z.object({
-    model: z.string().optional(),
-    tokensUsed: z.number().optional(),
-    latencyMs: z.number().optional(),
-    purpose: z.string().optional(),
-    contextArtifacts: z.array(z.string()).default([]),
-  }).optional(),
+  metadata: z
+    .object({
+      model: z.string().optional(),
+      tokensUsed: z.number().optional(),
+      latencyMs: z.number().optional(),
+      purpose: z.string().optional(),
+      contextArtifacts: z.array(z.string()).default([]),
+    })
+    .optional(),
 });
 
 export type AdvisorResponse = z.infer<typeof AdvisorResponseSchema>;
@@ -82,7 +115,7 @@ export function validateAdvisorResponse(data: unknown): {
 
 export function normalizeToAdvisorResponse(
   rawResponse: any,
-  options?: { intent?: string; purpose?: string },
+  options?: { intent?: string; purpose?: string }
 ): AdvisorResponse {
   return {
     id: rawResponse.id || crypto.randomUUID(),
@@ -133,10 +166,12 @@ export function normalizeToAdvisorResponse(
 export const AdvisorRespondRequestSchema = z.object({
   query: z.string().min(1),
   conversationId: z.string().optional(),
-  context: z.object({
-    artifactIds: z.array(z.string()).optional(),
-    purpose: z.string().optional(),
-  }).optional(),
+  context: z
+    .object({
+      artifactIds: z.array(z.string()).optional(),
+      purpose: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const AdvisorFeedbackRequestSchema = z.object({

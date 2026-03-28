@@ -1,28 +1,28 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  SetConnectorAuthStateParams,
-  RegisterProviderProfileParams,
-  UpdateObjectSyncStateParams,
   RecordConflictParams,
+  RegisterProviderProfileParams,
+  SetConnectorAuthStateParams,
+  UpdateObjectSyncStateParams,
 } from '../../../types/pmSyncTruth.js';
 import {
-  ConnectorAuthStateValues,
-  ProviderTierValues,
-  SyncStatusValues,
-  ConflictClassValues,
-  ConflictSeverityValues,
-  ConflictResolutionPathValues,
-  ConnectorAuthRecordSchema,
-  ProviderDepthProfileSchema,
-  BusinessObjectSyncStateSchema,
-  ConflictRecordSchema,
-  SetConnectorAuthStateParamsSchema,
-  RegisterProviderProfileParamsSchema,
-  UpdateObjectSyncStateParamsSchema,
-  RecordConflictParamsSchema,
   AUTH_STATE_TRANSITIONS,
+  BusinessObjectSyncStateSchema,
+  ConflictClassValues,
+  ConflictRecordSchema,
+  ConflictResolutionPathValues,
+  ConflictSeverityValues,
+  ConnectorAuthRecordSchema,
+  ConnectorAuthStateValues,
+  ProviderDepthProfileSchema,
+  ProviderTierValues,
+  RecordConflictParamsSchema,
+  RegisterProviderProfileParamsSchema,
+  SetConnectorAuthStateParamsSchema,
+  SyncStatusValues,
+  UpdateObjectSyncStateParamsSchema,
 } from '../../../types/pmSyncTruth.js';
 
 // ==========================================
@@ -49,19 +49,19 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  isValidAuthTransition,
-  setConnectorAuthState,
+  getConflictsByObject,
   getConnectorAuthState,
-  registerProviderProfile,
-  getProviderProfile,
-  updateObjectSyncState,
+  getConnectorHealth as getConnectorSyncHealthSummary,
   getObjectSyncState,
   getObjectSyncStatesByConnector,
-  recordConflict,
-  resolveConflict,
-  getConflictsByObject,
-  getConnectorHealth as getConnectorSyncHealthSummary,
+  getProviderProfile,
   getUnresolvedConflicts,
+  isValidAuthTransition,
+  recordConflict,
+  registerProviderProfile,
+  resolveConflict,
+  setConnectorAuthState,
+  updateObjectSyncState,
 } from '../pmSyncTruthService.js';
 
 // ==========================================
@@ -76,7 +76,9 @@ const PROVIDER_ID = 'jira';
 const OBJECT_ID = 'task-123';
 const SYNC_STATE_ID = '00000000-0000-4000-8000-000000000010';
 
-function makeAuthParams(overrides?: Partial<SetConnectorAuthStateParams>): SetConnectorAuthStateParams {
+function makeAuthParams(
+  overrides?: Partial<SetConnectorAuthStateParams>
+): SetConnectorAuthStateParams {
   return {
     connectorId: CONNECTOR_ID,
     organizationId: ORG_ID,
@@ -87,7 +89,9 @@ function makeAuthParams(overrides?: Partial<SetConnectorAuthStateParams>): SetCo
   };
 }
 
-function makeProviderParams(overrides?: Partial<RegisterProviderProfileParams>): RegisterProviderProfileParams {
+function makeProviderParams(
+  overrides?: Partial<RegisterProviderProfileParams>
+): RegisterProviderProfileParams {
   return {
     providerId: PROVIDER_ID,
     providerName: 'Jira',
@@ -103,7 +107,9 @@ function makeProviderParams(overrides?: Partial<RegisterProviderProfileParams>):
   };
 }
 
-function makeSyncStateParams(overrides?: Partial<UpdateObjectSyncStateParams>): UpdateObjectSyncStateParams {
+function makeSyncStateParams(
+  overrides?: Partial<UpdateObjectSyncStateParams>
+): UpdateObjectSyncStateParams {
   return {
     objectType: 'Task',
     objectId: OBJECT_ID,
@@ -283,7 +289,7 @@ describe('setConnectorAuthState', () => {
     mockDbGet.mockResolvedValueOnce(makeAuthRow({ auth_state: 'connecting' }));
 
     const result = await setConnectorAuthState(
-      makeAuthParams({ targetState: 'connected_pending_verification' }),
+      makeAuthParams({ targetState: 'connected_pending_verification' })
     );
 
     expect(result.authState).toBe('connected_pending_verification');
@@ -293,9 +299,9 @@ describe('setConnectorAuthState', () => {
   it('rejects invalid transition from existing state', async () => {
     mockDbGet.mockResolvedValueOnce(makeAuthRow({ auth_state: 'not_connected' }));
 
-    await expect(
-      setConnectorAuthState(makeAuthParams({ targetState: 'healthy' })),
-    ).rejects.toThrow('Invalid auth state transition');
+    await expect(setConnectorAuthState(makeAuthParams({ targetState: 'healthy' }))).rejects.toThrow(
+      'Invalid auth state transition'
+    );
   });
 
   it('rejects invalid params via Zod', async () => {
@@ -305,7 +311,7 @@ describe('setConnectorAuthState', () => {
         organizationId: 'not-uuid',
         targetState: 'invalid' as any,
         transitionedBy: USER_ID,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -367,7 +373,7 @@ describe('registerProviderProfile', () => {
     mockDbGet.mockResolvedValueOnce(makeProviderRow());
 
     const result = await registerProviderProfile(
-      makeProviderParams({ tier: 'B', providerName: 'Jira Updated' }),
+      makeProviderParams({ tier: 'B', providerName: 'Jira Updated' })
     );
 
     expect(result.tier).toBe('B');
@@ -381,14 +387,14 @@ describe('registerProviderProfile', () => {
   it('supports all four tiers (A, B, C, D)', () => {
     for (const tier of ProviderTierValues) {
       expect(() =>
-        RegisterProviderProfileParamsSchema.parse(makeProviderParams({ tier })),
+        RegisterProviderProfileParamsSchema.parse(makeProviderParams({ tier }))
       ).not.toThrow();
     }
   });
 
   it('rejects invalid tier via Zod', () => {
     expect(() =>
-      RegisterProviderProfileParamsSchema.parse(makeProviderParams({ tier: 'E' as any })),
+      RegisterProviderProfileParamsSchema.parse(makeProviderParams({ tier: 'E' as any }))
     ).toThrow(ZodError);
   });
 });
@@ -437,7 +443,7 @@ describe('updateObjectSyncState', () => {
     mockDbGet.mockResolvedValueOnce(makeSyncStateRow());
 
     const result = await updateObjectSyncState(
-      makeSyncStateParams({ syncStatus: 'error', errorClass: 'auth_failure' }),
+      makeSyncStateParams({ syncStatus: 'error', errorClass: 'auth_failure' })
     );
 
     expect(result.syncStatus).toBe('error');
@@ -448,9 +454,7 @@ describe('updateObjectSyncState', () => {
   it('sets staleSince when transitioning to stale', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    const result = await updateObjectSyncState(
-      makeSyncStateParams({ syncStatus: 'stale' }),
-    );
+    const result = await updateObjectSyncState(makeSyncStateParams({ syncStatus: 'stale' }));
 
     expect(result.syncStatus).toBe('stale');
     expect(result.staleSince).toBeDefined();
@@ -458,12 +462,10 @@ describe('updateObjectSyncState', () => {
 
   it('clears staleSince when transitioning away from stale', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeSyncStateRow({ sync_status: 'stale', stale_since: '2026-03-23T09:00:00.000Z' }),
+      makeSyncStateRow({ sync_status: 'stale', stale_since: '2026-03-23T09:00:00.000Z' })
     );
 
-    const result = await updateObjectSyncState(
-      makeSyncStateParams({ syncStatus: 'synced' }),
-    );
+    const result = await updateObjectSyncState(makeSyncStateParams({ syncStatus: 'synced' }));
 
     expect(result.syncStatus).toBe('synced');
     expect(result.staleSince).toBeNull();
@@ -472,17 +474,25 @@ describe('updateObjectSyncState', () => {
   it('supports all 7 sync status values', () => {
     for (const status of SyncStatusValues) {
       expect(() =>
-        UpdateObjectSyncStateParamsSchema.parse(makeSyncStateParams({ syncStatus: status })),
+        UpdateObjectSyncStateParamsSchema.parse(makeSyncStateParams({ syncStatus: status }))
       ).not.toThrow();
     }
   });
 
   it('supports all 7 error class values', () => {
-    for (const errorClass of ['auth_failure', 'permission_denied', 'provider_outage', 'mapping_failure', 'business_conflict', 'rate_limited', 'target_not_found'] as const) {
+    for (const errorClass of [
+      'auth_failure',
+      'permission_denied',
+      'provider_outage',
+      'mapping_failure',
+      'business_conflict',
+      'rate_limited',
+      'target_not_found',
+    ] as const) {
       expect(() =>
         UpdateObjectSyncStateParamsSchema.parse(
-          makeSyncStateParams({ syncStatus: 'error', errorClass }),
-        ),
+          makeSyncStateParams({ syncStatus: 'error', errorClass })
+        )
       ).not.toThrow();
     }
   });
@@ -490,8 +500,8 @@ describe('updateObjectSyncState', () => {
   it('rejects invalid objectType via Zod', () => {
     expect(() =>
       UpdateObjectSyncStateParamsSchema.parse(
-        makeSyncStateParams({ objectType: 'InvalidType' as any }),
-      ),
+        makeSyncStateParams({ objectType: 'InvalidType' as any })
+      )
     ).toThrow(ZodError);
   });
 });
@@ -560,7 +570,7 @@ describe('recordConflict', () => {
   it('supports all 7 conflict classes', () => {
     for (const conflictClass of ConflictClassValues) {
       expect(() =>
-        RecordConflictParamsSchema.parse(makeConflictParams({ conflictClass })),
+        RecordConflictParamsSchema.parse(makeConflictParams({ conflictClass }))
       ).not.toThrow();
     }
   });
@@ -568,7 +578,7 @@ describe('recordConflict', () => {
   it('supports all 3 severity levels', () => {
     for (const severity of ConflictSeverityValues) {
       expect(() =>
-        RecordConflictParamsSchema.parse(makeConflictParams({ severity })),
+        RecordConflictParamsSchema.parse(makeConflictParams({ severity }))
       ).not.toThrow();
     }
   });
@@ -576,16 +586,14 @@ describe('recordConflict', () => {
   it('rejects invalid conflict class via Zod', () => {
     expect(() =>
       RecordConflictParamsSchema.parse(
-        makeConflictParams({ conflictClass: 'invalid_class' as any }),
-      ),
+        makeConflictParams({ conflictClass: 'invalid_class' as any })
+      )
     ).toThrow(ZodError);
   });
 
   it('rejects invalid severity via Zod', () => {
     expect(() =>
-      RecordConflictParamsSchema.parse(
-        makeConflictParams({ severity: 'critical' as any }),
-      ),
+      RecordConflictParamsSchema.parse(makeConflictParams({ severity: 'critical' as any }))
     ).toThrow(ZodError);
   });
 });
@@ -597,7 +605,7 @@ describe('resolveConflict', () => {
     const result = await resolveConflict(
       '00000000-0000-4000-8000-cccccccccccc',
       'manual_review',
-      USER_ID,
+      USER_ID
     );
 
     expect(result.resolutionPath).toBe('manual_review');
@@ -612,31 +620,29 @@ describe('resolveConflict', () => {
 
     await resolveConflict('00000000-0000-4000-8000-cccccccccccc', 'dismiss', USER_ID, ORG_ID);
 
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('organization_id = ?'),
-      ['00000000-0000-4000-8000-cccccccccccc', ORG_ID],
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('organization_id = ?'), [
+      '00000000-0000-4000-8000-cccccccccccc',
+      ORG_ID,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('organization_id = ?'),
-      expect.arrayContaining(['dismiss', USER_ID, '00000000-0000-4000-8000-cccccccccccc', ORG_ID]),
+      expect.arrayContaining(['dismiss', USER_ID, '00000000-0000-4000-8000-cccccccccccc', ORG_ID])
     );
   });
 
   it('throws when conflict not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resolveConflict('nonexistent', 'dismiss', USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(resolveConflict('nonexistent', 'dismiss', USER_ID)).rejects.toThrow('not found');
   });
 
   it('throws when conflict already resolved', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeConflictRow({ resolved_at: '2026-03-23T12:00:00.000Z', resolved_by: 'someone' }),
+      makeConflictRow({ resolved_at: '2026-03-23T12:00:00.000Z', resolved_by: 'someone' })
     );
 
     await expect(
-      resolveConflict('00000000-0000-4000-8000-cccccccccccc', 'dismiss', USER_ID),
+      resolveConflict('00000000-0000-4000-8000-cccccccccccc', 'dismiss', USER_ID)
     ).rejects.toThrow('already resolved');
   });
 
@@ -768,7 +774,7 @@ describe('Zod schema validation', () => {
         transitionedAt: '2026-03-23T10:00:00.000Z',
         transitionedBy: USER_ID,
         reason: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -783,7 +789,7 @@ describe('Zod schema validation', () => {
         transitionedAt: '2026-03-23T10:00:00.000Z',
         transitionedBy: USER_ID,
         reason: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -801,7 +807,7 @@ describe('Zod schema validation', () => {
         errorClass: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -818,7 +824,7 @@ describe('Zod schema validation', () => {
         resolvedAt: null,
         resolvedBy: null,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 

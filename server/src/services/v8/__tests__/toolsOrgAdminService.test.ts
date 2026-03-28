@@ -1,30 +1,30 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RegisterToolParams,
-  CreateSessionGovernanceParams,
   CreateActionGovernanceParams,
-  RegisterAdminSurfaceParams,
   CreateBridgingContractParams,
+  CreateSessionGovernanceParams,
+  RegisterAdminSurfaceParams,
+  RegisterToolParams,
 } from '../../../types/toolsOrgAdminHardening.js';
 import {
-  SharedToolsRegistryEntrySchema,
-  ToolSessionGovernanceSchema,
-  ToolActionGovernanceSchema,
   AdminSurfaceOwnershipSchema,
-  ToolsV8BridgingContractSchema,
-  RegisterToolParamsSchema,
-  CreateSessionGovernanceParamsSchema,
-  CreateActionGovernanceParamsSchema,
-  RegisterAdminSurfaceParamsSchema,
-  CreateBridgingContractParamsSchema,
-  ToolFamilyValues,
+  BridgingStatusValues,
   CatalogVisibilityValues,
-  SessionModeValues,
+  CreateActionGovernanceParamsSchema,
+  CreateBridgingContractParamsSchema,
+  CreateSessionGovernanceParamsSchema,
   GateDecisionValues,
   OwnerLayerValues,
-  BridgingStatusValues,
+  RegisterAdminSurfaceParamsSchema,
+  RegisterToolParamsSchema,
+  SessionModeValues,
+  SharedToolsRegistryEntrySchema,
+  ToolActionGovernanceSchema,
+  ToolFamilyValues,
+  ToolSessionGovernanceSchema,
+  ToolsV8BridgingContractSchema,
 } from '../../../types/toolsOrgAdminHardening.js';
 
 // ==========================================
@@ -51,16 +51,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  registerTool,
+  createActionGovernance,
+  createBridgingContract,
+  createSessionGovernance,
+  getActionsBySession,
+  getAdminSurfaces,
+  getBridgingContract,
   getTool,
   getToolsByFamily,
-  createSessionGovernance,
-  createActionGovernance,
-  getActionsBySession,
   registerAdminSurface,
-  getAdminSurfaces,
-  createBridgingContract,
-  getBridgingContract,
+  registerTool,
 } from '../toolsOrgAdminService.js';
 
 // ==========================================
@@ -82,7 +82,9 @@ function makeRegisterParams(overrides?: Partial<RegisterToolParams>): RegisterTo
   };
 }
 
-function makeSessionParams(overrides?: Partial<CreateSessionGovernanceParams>): CreateSessionGovernanceParams {
+function makeSessionParams(
+  overrides?: Partial<CreateSessionGovernanceParams>
+): CreateSessionGovernanceParams {
   return {
     toolId: TOOL_ID,
     userId: USER_ID,
@@ -94,7 +96,9 @@ function makeSessionParams(overrides?: Partial<CreateSessionGovernanceParams>): 
   };
 }
 
-function makeActionParams(overrides?: Partial<CreateActionGovernanceParams>): CreateActionGovernanceParams {
+function makeActionParams(
+  overrides?: Partial<CreateActionGovernanceParams>
+): CreateActionGovernanceParams {
   return {
     sessionId: SESSION_ID,
     organizationId: ORG_ID,
@@ -104,7 +108,9 @@ function makeActionParams(overrides?: Partial<CreateActionGovernanceParams>): Cr
   };
 }
 
-function makeAdminSurfaceParams(overrides?: Partial<RegisterAdminSurfaceParams>): RegisterAdminSurfaceParams {
+function makeAdminSurfaceParams(
+  overrides?: Partial<RegisterAdminSurfaceParams>
+): RegisterAdminSurfaceParams {
   return {
     surfaceName: 'AI Governance Settings',
     organizationId: ORG_ID,
@@ -113,7 +119,9 @@ function makeAdminSurfaceParams(overrides?: Partial<RegisterAdminSurfaceParams>)
   };
 }
 
-function makeBridgingParams(overrides?: Partial<CreateBridgingContractParams>): CreateBridgingContractParams {
+function makeBridgingParams(
+  overrides?: Partial<CreateBridgingContractParams>
+): CreateBridgingContractParams {
   return {
     toolId: TOOL_ID,
     organizationId: ORG_ID,
@@ -373,7 +381,7 @@ describe('Input schemas — param validation', () => {
         organizationId: ORG_ID,
         toolName: '',
         toolFamily: 'assessment',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -431,9 +439,7 @@ describe('Shared Tools Registry — W7-5', () => {
     const result = await registerTool(makeRegisterParams());
 
     expect(result.toolId).toBeDefined();
-    expect(result.toolId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
+    expect(result.toolId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     expect(result.organizationId).toBe(ORG_ID);
     expect(result.toolName).toBe('Dynamic SWOT');
     expect(result.toolFamily).toBe('consulting_framework');
@@ -474,36 +480,30 @@ describe('Shared Tools Registry — W7-5', () => {
       makeRegisterParams({
         isClassicFrameworkTemplate: true,
         toolSubtype: 'porter_five_forces',
-      }),
+      })
     );
     expect(result.isClassicFrameworkTemplate).toBe(true);
     expect(result.toolSubtype).toBe('porter_five_forces');
   });
 
   it('registerTool stores knowledgeBankRef when provided', async () => {
-    const result = await registerTool(
-      makeRegisterParams({ knowledgeBankRef: 'kb:swot-pack-v2' }),
-    );
+    const result = await registerTool(makeRegisterParams({ knowledgeBankRef: 'kb:swot-pack-v2' }));
     expect(result.knowledgeBankRef).toBe('kb:swot-pack-v2');
   });
 
   it('registerTool supports published visibility', async () => {
-    const result = await registerTool(
-      makeRegisterParams({ catalogVisibility: 'published' }),
-    );
+    const result = await registerTool(makeRegisterParams({ catalogVisibility: 'published' }));
     expect(result.catalogVisibility).toBe('published');
   });
 
   it('registerTool supports internal_only visibility', async () => {
-    const result = await registerTool(
-      makeRegisterParams({ catalogVisibility: 'internal_only' }),
-    );
+    const result = await registerTool(makeRegisterParams({ catalogVisibility: 'internal_only' }));
     expect(result.catalogVisibility).toBe('internal_only');
   });
 
   it('registerTool rejects invalid family via Zod', async () => {
     await expect(
-      registerTool(makeRegisterParams({ toolFamily: 'invalid' as any })),
+      registerTool(makeRegisterParams({ toolFamily: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
@@ -588,9 +588,7 @@ describe('Session Governance — W7-6', () => {
   });
 
   it('createSessionGovernance respects aiEnabled=false', async () => {
-    const result = await createSessionGovernance(
-      makeSessionParams({ aiEnabled: false }),
-    );
+    const result = await createSessionGovernance(makeSessionParams({ aiEnabled: false }));
     expect(result.aiEnabled).toBe(false);
   });
 
@@ -603,19 +601,19 @@ describe('Session Governance — W7-6', () => {
 
   it('createSessionGovernance rejects invalid sessionMode via Zod', async () => {
     await expect(
-      createSessionGovernance(makeSessionParams({ sessionMode: 'invalid' as any })),
+      createSessionGovernance(makeSessionParams({ sessionMode: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('createSessionGovernance rejects empty permissionScope', async () => {
     await expect(
-      createSessionGovernance(makeSessionParams({ permissionScope: '' })),
+      createSessionGovernance(makeSessionParams({ permissionScope: '' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('createSessionGovernance rejects empty contextBoundary', async () => {
     await expect(
-      createSessionGovernance(makeSessionParams({ contextBoundary: '' })),
+      createSessionGovernance(makeSessionParams({ contextBoundary: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -626,9 +624,7 @@ describe('Session Governance — W7-6', () => {
 
 describe('Action Governance — W7-6', () => {
   it('createActionGovernance creates action with execute gate', async () => {
-    const result = await createActionGovernance(
-      makeActionParams({ gateDecision: 'execute' }),
-    );
+    const result = await createActionGovernance(makeActionParams({ gateDecision: 'execute' }));
     expect(result.actionId).toBeDefined();
     expect(result.gateDecision).toBe('execute');
     expect(result.sessionId).toBe(SESSION_ID);
@@ -636,22 +632,20 @@ describe('Action Governance — W7-6', () => {
   });
 
   it('createActionGovernance creates action with propose gate', async () => {
-    const result = await createActionGovernance(
-      makeActionParams({ gateDecision: 'propose' }),
-    );
+    const result = await createActionGovernance(makeActionParams({ gateDecision: 'propose' }));
     expect(result.gateDecision).toBe('propose');
   });
 
   it('createActionGovernance creates action with requires_approval gate', async () => {
     const result = await createActionGovernance(
-      makeActionParams({ gateDecision: 'requires_approval' }),
+      makeActionParams({ gateDecision: 'requires_approval' })
     );
     expect(result.gateDecision).toBe('requires_approval');
   });
 
   it('createActionGovernance creates action with blocked gate', async () => {
     const result = await createActionGovernance(
-      makeActionParams({ gateDecision: 'blocked', gateReason: 'policy_denied' }),
+      makeActionParams({ gateDecision: 'blocked', gateReason: 'policy_denied' })
     );
     expect(result.gateDecision).toBe('blocked');
     expect(result.gateReason).toBe('policy_denied');
@@ -659,7 +653,7 @@ describe('Action Governance — W7-6', () => {
 
   it('createActionGovernance stores actionType correctly', async () => {
     const result = await createActionGovernance(
-      makeActionParams({ actionType: 'ai_generate_output' }),
+      makeActionParams({ actionType: 'ai_generate_output' })
     );
     expect(result.actionType).toBe('ai_generate_output');
   });
@@ -671,15 +665,24 @@ describe('Action Governance — W7-6', () => {
 
   it('createActionGovernance rejects invalid gateDecision via Zod', async () => {
     await expect(
-      createActionGovernance(makeActionParams({ gateDecision: 'invalid' as any })),
+      createActionGovernance(makeActionParams({ gateDecision: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('getActionsBySession returns actions for a session', async () => {
     mockDbAll.mockResolvedValueOnce([
-      makeActionRow({ action_id: '00000000-0000-4000-8000-cc0000000001', gate_decision: 'execute' }),
-      makeActionRow({ action_id: '00000000-0000-4000-8000-cc0000000002', gate_decision: 'propose' }),
-      makeActionRow({ action_id: '00000000-0000-4000-8000-cc0000000003', gate_decision: 'blocked' }),
+      makeActionRow({
+        action_id: '00000000-0000-4000-8000-cc0000000001',
+        gate_decision: 'execute',
+      }),
+      makeActionRow({
+        action_id: '00000000-0000-4000-8000-cc0000000002',
+        gate_decision: 'propose',
+      }),
+      makeActionRow({
+        action_id: '00000000-0000-4000-8000-cc0000000003',
+        gate_decision: 'blocked',
+      }),
     ]);
 
     const results = await getActionsBySession(SESSION_ID, ORG_ID);
@@ -709,7 +712,7 @@ describe('Action Governance — W7-6', () => {
 describe('Admin Surface Ownership — W7-7', () => {
   it('registerAdminSurface creates organization_settings surface', async () => {
     const result = await registerAdminSurface(
-      makeAdminSurfaceParams({ ownerLayer: 'organization_settings' }),
+      makeAdminSurfaceParams({ ownerLayer: 'organization_settings' })
     );
     expect(result.surfaceId).toBeDefined();
     expect(result.ownerLayer).toBe('organization_settings');
@@ -722,7 +725,7 @@ describe('Admin Surface Ownership — W7-7', () => {
       makeAdminSurfaceParams({
         surfaceName: 'Platform Operator Dashboard',
         ownerLayer: 'superadmin',
-      }),
+      })
     );
     expect(result.ownerLayer).toBe('superadmin');
     expect(result.surfaceName).toBe('Platform Operator Dashboard');
@@ -734,7 +737,7 @@ describe('Admin Surface Ownership — W7-7', () => {
         surfaceName: 'Tools Knowledge Bank Admin',
         ownerLayer: 'module_embedded',
         moduleName: 'consulting_tools',
-      }),
+      })
     );
     expect(result.ownerLayer).toBe('module_embedded');
     expect(result.moduleName).toBe('consulting_tools');
@@ -742,28 +745,38 @@ describe('Admin Surface Ownership — W7-7', () => {
 
   it('registerAdminSurface stores horizontalLayerRef', async () => {
     const result = await registerAdminSurface(
-      makeAdminSurfaceParams({ horizontalLayerRef: 'ai_governance_layer' }),
+      makeAdminSurfaceParams({ horizontalLayerRef: 'ai_governance_layer' })
     );
     expect(result.horizontalLayerRef).toBe('ai_governance_layer');
   });
 
   it('registerAdminSurface rejects invalid ownerLayer via Zod', async () => {
     await expect(
-      registerAdminSurface(makeAdminSurfaceParams({ ownerLayer: 'invalid' as any })),
+      registerAdminSurface(makeAdminSurfaceParams({ ownerLayer: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('registerAdminSurface rejects empty surfaceName', async () => {
-    await expect(
-      registerAdminSurface(makeAdminSurfaceParams({ surfaceName: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(registerAdminSurface(makeAdminSurfaceParams({ surfaceName: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('getAdminSurfaces returns all surfaces for org', async () => {
     mockDbAll.mockResolvedValueOnce([
-      makeAdminSurfaceRow({ surface_id: '00000000-0000-4000-8000-dd0000000001', owner_layer: 'organization_settings' }),
-      makeAdminSurfaceRow({ surface_id: '00000000-0000-4000-8000-dd0000000002', owner_layer: 'superadmin' }),
-      makeAdminSurfaceRow({ surface_id: '00000000-0000-4000-8000-dd0000000003', owner_layer: 'module_embedded', module_name: 'tools' }),
+      makeAdminSurfaceRow({
+        surface_id: '00000000-0000-4000-8000-dd0000000001',
+        owner_layer: 'organization_settings',
+      }),
+      makeAdminSurfaceRow({
+        surface_id: '00000000-0000-4000-8000-dd0000000002',
+        owner_layer: 'superadmin',
+      }),
+      makeAdminSurfaceRow({
+        surface_id: '00000000-0000-4000-8000-dd0000000003',
+        owner_layer: 'module_embedded',
+        module_name: 'tools',
+      }),
     ]);
 
     const results = await getAdminSurfaces(ORG_ID);
@@ -794,35 +807,37 @@ describe('Bridging Contracts — W7-8', () => {
     expect(result.contractId).toBeDefined();
     expect(result.toolId).toBe(TOOL_ID);
     expect(result.v3ToolContractRef).toBe('CONSULTING_TOOLS_V3:dynamic_swot');
-    expect(result.v8PlatformRequirements).toEqual(['context_snapshot', 'governed_retrieval', 'prompt_os']);
+    expect(result.v8PlatformRequirements).toEqual([
+      'context_snapshot',
+      'governed_retrieval',
+      'prompt_os',
+    ]);
     expect(result.bridgingStatus).toBe('draft');
     expect(mockDbRun).toHaveBeenCalledTimes(1);
   });
 
   it('createBridgingContract creates contract with active status', async () => {
-    const result = await createBridgingContract(
-      makeBridgingParams({ bridgingStatus: 'active' }),
-    );
+    const result = await createBridgingContract(makeBridgingParams({ bridgingStatus: 'active' }));
     expect(result.bridgingStatus).toBe('active');
   });
 
   it('createBridgingContract creates contract with superseded status', async () => {
     const result = await createBridgingContract(
-      makeBridgingParams({ bridgingStatus: 'superseded' }),
+      makeBridgingParams({ bridgingStatus: 'superseded' })
     );
     expect(result.bridgingStatus).toBe('superseded');
   });
 
   it('createBridgingContract stores AI governance ref', async () => {
     const result = await createBridgingContract(
-      makeBridgingParams({ v8AIGovernanceRef: 'tool_governance:swot_ai_policy' }),
+      makeBridgingParams({ v8AIGovernanceRef: 'tool_governance:swot_ai_policy' })
     );
     expect(result.v8AIGovernanceRef).toBe('tool_governance:swot_ai_policy');
   });
 
   it('createBridgingContract stores session knowledge rules', async () => {
     const result = await createBridgingContract(
-      makeBridgingParams({ v8SessionKnowledgeRules: 'kb:swot-session-rules-v1' }),
+      makeBridgingParams({ v8SessionKnowledgeRules: 'kb:swot-session-rules-v1' })
     );
     expect(result.v8SessionKnowledgeRules).toBe('kb:swot-session-rules-v1');
   });
@@ -842,13 +857,13 @@ describe('Bridging Contracts — W7-8', () => {
 
   it('createBridgingContract rejects empty v8PlatformRequirements', async () => {
     await expect(
-      createBridgingContract(makeBridgingParams({ v8PlatformRequirements: [] })),
+      createBridgingContract(makeBridgingParams({ v8PlatformRequirements: [] }))
     ).rejects.toThrow(ZodError);
   });
 
   it('createBridgingContract rejects invalid bridgingStatus via Zod', async () => {
     await expect(
-      createBridgingContract(makeBridgingParams({ bridgingStatus: 'invalid' as any })),
+      createBridgingContract(makeBridgingParams({ bridgingStatus: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
@@ -878,9 +893,7 @@ describe('Bridging Contracts — W7-8', () => {
   });
 
   it('getBridgingContract handles malformed JSON in v8_platform_requirements', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeBridgingRow({ v8_platform_requirements: 'not-json' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeBridgingRow({ v8_platform_requirements: 'not-json' }));
 
     const result = await getBridgingContract(TOOL_ID, ORG_ID);
     expect(result).not.toBeNull();
@@ -900,28 +913,26 @@ describe('Organization isolation — cross-cutting', () => {
 
   it('createSessionGovernance binds to the provided organizationId', async () => {
     const result = await createSessionGovernance(
-      makeSessionParams({ organizationId: OTHER_ORG_ID }),
+      makeSessionParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });
 
   it('createActionGovernance binds to the provided organizationId', async () => {
-    const result = await createActionGovernance(
-      makeActionParams({ organizationId: OTHER_ORG_ID }),
-    );
+    const result = await createActionGovernance(makeActionParams({ organizationId: OTHER_ORG_ID }));
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });
 
   it('registerAdminSurface binds to the provided organizationId', async () => {
     const result = await registerAdminSurface(
-      makeAdminSurfaceParams({ organizationId: OTHER_ORG_ID }),
+      makeAdminSurfaceParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });
 
   it('createBridgingContract binds to the provided organizationId', async () => {
     const result = await createBridgingContract(
-      makeBridgingParams({ organizationId: OTHER_ORG_ID }),
+      makeBridgingParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });

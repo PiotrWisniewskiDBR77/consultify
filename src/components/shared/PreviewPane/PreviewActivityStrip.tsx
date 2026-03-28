@@ -56,9 +56,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
             <div className="absolute left-[-13px] top-1.5 w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-navy-900" />
             <div className="flex-1 min-w-0">
               <div className="text-xs text-slate-700 dark:text-slate-200 leading-snug truncate">
-                {event.userName ? (
-                  <span className="font-medium">{event.userName} </span>
-                ) : null}
+                {event.userName ? <span className="font-medium">{event.userName} </span> : null}
                 {event.description}
               </div>
               <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
@@ -75,8 +73,12 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
           className="mt-1 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
         >
           {expanded
-            ? (isPolish ? 'Pokaż mniej' : 'Show less')
-            : (isPolish ? `Pokaż więcej (${events.length - initialCount})` : `Show more (${events.length - initialCount})`)}
+            ? isPolish
+              ? 'Pokaż mniej'
+              : 'Show less'
+            : isPolish
+              ? `Pokaż więcej (${events.length - initialCount})`
+              : `Show more (${events.length - initialCount})`}
         </button>
       ) : null}
     </div>

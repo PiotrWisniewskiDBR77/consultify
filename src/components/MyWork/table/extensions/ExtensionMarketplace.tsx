@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface MarketplaceExtension {
   id: string;
@@ -242,9 +242,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
         )}
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-gray-900 truncate">{extension.name}</h3>
-          {extension.author && (
-            <p className="text-xs text-gray-500">by {extension.author}</p>
-          )}
+          {extension.author && <p className="text-xs text-gray-500">by {extension.author}</p>}
         </div>
         <span className="text-xs text-gray-400 flex-shrink-0">v{extension.version}</span>
       </div>
@@ -254,8 +252,12 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
       )}
 
       <div className="flex items-center gap-2 text-xs text-gray-400">
-        <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">{extension.category}</span>
-        <span>{extension.install_count} install{extension.install_count !== 1 ? 's' : ''}</span>
+        <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">
+          {extension.category}
+        </span>
+        <span>
+          {extension.install_count} install{extension.install_count !== 1 ? 's' : ''}
+        </span>
         <button
           onClick={() => setShowScopes(!showScopes)}
           className="ml-auto text-gray-400 hover:text-gray-600"

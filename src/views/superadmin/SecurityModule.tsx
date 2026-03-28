@@ -41,10 +41,10 @@ import AIBudgetsView from './AIBudgetsView';
 import { ComplianceCenterView } from './ComplianceCenterView';
 import CustomRolesBuilder from './CustomRolesBuilder';
 import AdminAuditLogsView from './iam/AdminAuditLogsView';
-import AuditEventsViewer from './iam/AuditEventsViewer';
 // Advanced IAM Module
 import AdminSessionsView from './iam/AdminSessionsView';
 import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
+import AuditEventsViewer from './iam/AuditEventsViewer';
 import DLPView from './iam/DLPView';
 import PermissionsMatrixView from './iam/PermissionsMatrixView';
 import SecurityIncidentsView from './iam/SecurityIncidentsView';

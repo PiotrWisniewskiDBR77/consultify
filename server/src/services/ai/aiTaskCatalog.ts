@@ -505,21 +505,41 @@ export const EXECUTIVE_USE_CASES: ExecutiveUseCaseDefinition[] = [
     key: 'chat',
     label: 'Chat',
     description: 'General chat, confirmations, tool help, and workflow assistance.',
-    purposes: ['chat_simple', 'chat_complex', 'chat_confirm', 'tool_recommendation', 'session_missing_items', 'session_summary'],
+    purposes: [
+      'chat_simple',
+      'chat_complex',
+      'chat_confirm',
+      'tool_recommendation',
+      'session_missing_items',
+      'session_summary',
+    ],
     businessOwner: 'AI Chat',
   },
   {
     key: 'document_understanding',
     label: 'Document Understanding',
     description: 'Chat over PDFs/files, extraction, comparison, and grounded answers.',
-    purposes: ['chat_with_pdf', 'chat_with_files', 'document_extract', 'document_compare', 'document_answer'],
+    purposes: [
+      'chat_with_pdf',
+      'chat_with_files',
+      'document_extract',
+      'document_compare',
+      'document_answer',
+    ],
     businessOwner: 'Document Chat',
   },
   {
     key: 'reports',
     label: 'Reports',
     description: 'Drafting, synthesis, evidence validation, and quality gates for reports.',
-    purposes: ['report_section_draft', 'report_executive_synthesis', 'report_evidence_validation', 'report_quality_gate', 'assessment_explain', 'results_report_draft'],
+    purposes: [
+      'report_section_draft',
+      'report_executive_synthesis',
+      'report_evidence_validation',
+      'report_quality_gate',
+      'assessment_explain',
+      'results_report_draft',
+    ],
     businessOwner: 'Reports',
   },
   {
@@ -533,7 +553,12 @@ export const EXECUTIVE_USE_CASES: ExecutiveUseCaseDefinition[] = [
     key: 'visuals',
     label: 'Visuals',
     description: 'Image generation layer for decks, diagrams, and slide assets.',
-    purposes: ['presentation_visual_generation', 'image_cover', 'image_diagram', 'image_slide_asset'],
+    purposes: [
+      'presentation_visual_generation',
+      'image_cover',
+      'image_diagram',
+      'image_slide_asset',
+    ],
     businessOwner: 'Presentations',
   },
 ];
@@ -589,7 +614,8 @@ export function inferChatTaskPurpose(params: {
   const capability = String(params.capability || '').trim();
   const text = String(params.message || '').toLowerCase();
   const attachments = Array.isArray(params.attachments) ? params.attachments : [];
-  const hasAttachmentIds = Array.isArray(params.attachmentDocIds) && params.attachmentDocIds.length > 0;
+  const hasAttachmentIds =
+    Array.isArray(params.attachmentDocIds) && params.attachmentDocIds.length > 0;
   const hasAttachments = attachments.length > 0 || hasAttachmentIds;
   const hasPdf = attachments.some((att) => {
     const mime = String(att?.mimeType || '').toLowerCase();
@@ -601,7 +627,11 @@ export function inferChatTaskPurpose(params: {
     if (/(compare|difference|diff|versus|vs\\b|porown|różnic|roznic)/i.test(text)) {
       return 'document_compare';
     }
-    if (/(extract|table|fields|invoice|summary|summarize|podsum|wyciągn|wyciagn|lista|list)/i.test(text)) {
+    if (
+      /(extract|table|fields|invoice|summary|summarize|podsum|wyciągn|wyciagn|lista|list)/i.test(
+        text
+      )
+    ) {
       return 'document_extract';
     }
     if (hasPdf) return 'chat_with_pdf';
@@ -609,7 +639,10 @@ export function inferChatTaskPurpose(params: {
   }
 
   if (capability === 'chat_confirm') return 'chat_confirm';
-  if (text.length > 900 || /(analy|strategy|report|presentation|roadmap|compare|research|synthes)/i.test(text)) {
+  if (
+    text.length > 900 ||
+    /(analy|strategy|report|presentation|roadmap|compare|research|synthes)/i.test(text)
+  ) {
     return 'chat_complex';
   }
 

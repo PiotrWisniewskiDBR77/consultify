@@ -396,7 +396,12 @@ function adaptSection(
     length = 'long';
   }
 
-  return { ...section, defaultLength: length, defaultLanguage: language, defaultRegister: effectiveRegister };
+  return {
+    ...section,
+    defaultLength: length,
+    defaultLanguage: language,
+    defaultRegister: effectiveRegister,
+  };
 }
 
 function buildVariantLabel(
@@ -417,10 +422,11 @@ function buildRationale(
   register?: CommunicationRegister,
   density?: ReportDensity
 ): string {
-  const lines: string[] = [
-    `Based on canonical ${reportType} template.`,
-  ];
-  if (goalV3) lines.push(`Goal "${goalV3}" emphasises ${goalV3 === 'decide' ? 'recommendations & options' : goalV3 === 'sell' ? 'executive summary & impact' : goalV3 === 'align' ? 'shared understanding & next steps' : 'clarity & data presentation'}.`);
+  const lines: string[] = [`Based on canonical ${reportType} template.`];
+  if (goalV3)
+    lines.push(
+      `Goal "${goalV3}" emphasises ${goalV3 === 'decide' ? 'recommendations & options' : goalV3 === 'sell' ? 'executive summary & impact' : goalV3 === 'align' ? 'shared understanding & next steps' : 'clarity & data presentation'}.`
+    );
   if (register) lines.push(`Register "${register}" shapes language level across sections.`);
   if (density) lines.push(`Density "${density}" adjusts section lengths accordingly.`);
   return lines.join(' ');

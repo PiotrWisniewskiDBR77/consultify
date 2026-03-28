@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -20,17 +20,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  getWBSByInitiative,
-  validateWBSCompleteness,
-  getCriticalPath,
-  getPendingDecisions,
-} from '../planningContinuityService.js';
-import {
-  getExecutionDashboard,
   detectBlockers,
+  getExecutionDashboard,
   getRebaselineHistory,
   rollupSignals,
 } from '../executionVisibilityService.js';
+import {
+  getCriticalPath,
+  getPendingDecisions,
+  getWBSByInitiative,
+  validateWBSCompleteness,
+} from '../planningContinuityService.js';
 
 const ORG_ID = '10000000-0000-4000-8000-000000000001';
 const INITIATIVE_ID = '20000000-0000-4000-8000-000000000010';
@@ -77,7 +77,7 @@ describe('Wave 11 — planning continuity', () => {
     expect(mockDbAll).toHaveBeenCalledWith(
       expect.stringContaining('v8_initiative_decompositions'),
       [INITIATIVE_ID, ORG_ID],
-      { fallback: true },
+      { fallback: true }
     );
     expect(tree).toHaveLength(1);
     expect(tree[0]!.decompositionId).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001');
@@ -197,7 +197,13 @@ describe('Wave 11 — planning continuity', () => {
       { decisionId: 'd1', order: 0, status: 'pending', decidedBy: null, decidedAt: null },
     ]);
     const decisionsDone = JSON.stringify([
-      { decisionId: 'd2', order: 0, status: 'approved', decidedBy: ORG_ID, decidedAt: '2026-03-23T12:00:00.000Z' },
+      {
+        decisionId: 'd2',
+        order: 0,
+        status: 'approved',
+        decidedBy: ORG_ID,
+        decidedAt: '2026-03-23T12:00:00.000Z',
+      },
     ]);
     mockDbAll.mockResolvedValueOnce([
       {
@@ -229,7 +235,7 @@ describe('Wave 11 — planning continuity', () => {
     expect(mockDbAll).toHaveBeenCalledWith(
       expect.stringContaining('v8_decision_chains'),
       [ORG_ID],
-      { fallback: true },
+      { fallback: true }
     );
     expect(pending).toHaveLength(1);
     expect(pending[0]!.chainId).toBe('50000000-0000-4000-8000-0000000000aa');
@@ -344,7 +350,7 @@ describe('Wave 11 — execution visibility', () => {
     expect(mockDbAll).toHaveBeenCalledWith(
       expect.stringContaining('ORDER BY created_at DESC'),
       [INITIATIVE_ID, ORG_ID],
-      { fallback: true },
+      { fallback: true }
     );
     expect(hist[0]!.proposalId).toBe('90000000-0000-4000-8000-0000000000e2');
     expect(hist[1]!.proposalId).toBe('90000000-0000-4000-8000-0000000000e1');
@@ -384,7 +390,11 @@ describe('Wave 11 — execution visibility', () => {
       },
     ]);
 
-    const rollup = await rollupSignals(ORG_ID, '2026-03-23T00:00:00.000Z', '2026-03-23T23:59:59.999Z');
+    const rollup = await rollupSignals(
+      ORG_ID,
+      '2026-03-23T00:00:00.000Z',
+      '2026-03-23T23:59:59.999Z'
+    );
 
     expect(rollup.total).toBe(3);
     expect(rollup.byType.get('overdue_tasks_count')).toBe(2);
@@ -395,7 +405,7 @@ describe('Wave 11 — execution visibility', () => {
     expect(mockDbAll).toHaveBeenCalledWith(
       expect.stringContaining('v8_execution_signals'),
       [ORG_ID, '2026-03-23T00:00:00.000Z', '2026-03-23T23:59:59.999Z'],
-      { fallback: true },
+      { fallback: true }
     );
   });
 });

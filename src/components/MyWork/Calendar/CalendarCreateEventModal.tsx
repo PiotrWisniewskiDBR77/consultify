@@ -231,9 +231,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
-          {helperText && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
-          )}
+          {helperText && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
         </div>
 
         <div

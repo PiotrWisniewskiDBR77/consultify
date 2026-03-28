@@ -14,13 +14,7 @@ export type CanvasOsPanelId =
   | 'share'
   | 'ai';
 
-export type ProcessFlowSemanticKit =
-  | 'classic'
-  | 'automation'
-  | 'vsm'
-  | 'bpmn'
-  | 'system'
-  | 'org';
+export type ProcessFlowSemanticKit = 'classic' | 'automation' | 'vsm' | 'bpmn' | 'system' | 'org';
 
 export type CanvasOsActionKind =
   | 'quick_action'
@@ -48,10 +42,7 @@ export interface CanvasOsRailItem {
   capability: CanvasOsCapability;
 }
 
-export const CANVAS_OS_CAPABILITY_LABELS: Record<
-  CanvasOsCapability,
-  { en: string; pl: string }
-> = {
+export const CANVAS_OS_CAPABILITY_LABELS: Record<CanvasOsCapability, { en: string; pl: string }> = {
   real: { en: 'Real', pl: 'Real' },
   partial: { en: 'Partial', pl: 'Partial' },
   scaffold: { en: 'Scaffold', pl: 'Scaffold' },
@@ -580,8 +571,10 @@ function getTemplateActions(tool: CanvasToolType): CanvasOsAction[] {
         icon: 'Workflow',
         labelEn: 'Process improvement starter',
         labelPl: 'Starter usprawnienia procesu',
-        descEn: 'Apply a real process-improvement starter with current state, bottlenecks, and KPI review.',
-        descPl: 'Zastosuj realny starter usprawnienia procesu ze stanem obecnym, bottleneckami i review KPI.',
+        descEn:
+          'Apply a real process-improvement starter with current state, bottlenecks, and KPI review.',
+        descPl:
+          'Zastosuj realny starter usprawnienia procesu ze stanem obecnym, bottleneckami i review KPI.',
         capability: 'real',
         kind: 'apply_template',
         templateId: 'pf-process-improvement',
@@ -614,7 +607,8 @@ function getTemplateActions(tool: CanvasToolType): CanvasOsAction[] {
         labelEn: 'Org flow starter',
         labelPl: 'Starter przepływu organizacyjnego',
         descEn: 'Apply a typed org-flow starter for roles, teams, and handoffs.',
-        descPl: 'Zastosuj typowany starter przepływu organizacyjnego dla ról, zespołów i handoffów.',
+        descPl:
+          'Zastosuj typowany starter przepływu organizacyjnego dla ról, zespołów i handoffów.',
         capability: 'real',
         kind: 'apply_template',
         templateId: 'pf-org-handoffs',

@@ -126,8 +126,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
   const [name, setName] = useState(initialData?.name ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
-  const [triggerType, setTriggerType] = useState<TriggerType>(initialData?.triggerType ?? 'record_created');
-  const [triggerConfig, setTriggerConfig] = useState<Record<string, unknown>>(initialData?.triggerConfig ?? {});
+  const [triggerType, setTriggerType] = useState<TriggerType>(
+    initialData?.triggerType ?? 'record_created'
+  );
+  const [triggerConfig, setTriggerConfig] = useState<Record<string, unknown>>(
+    initialData?.triggerConfig ?? {}
+  );
   const [actions, setActions] = useState<AutomationAction[]>(
     initialData?.actions ?? [{ id: nextActionId(), actionType: 'update_record', actionConfig: {} }]
   );
@@ -142,11 +146,21 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
   const handleSave = useCallback(() => {
     if (!canSave) return;
-    onSave({ name: name.trim(), description: description.trim(), triggerType, triggerConfig, actions, enabled });
+    onSave({
+      name: name.trim(),
+      description: description.trim(),
+      triggerType,
+      triggerConfig,
+      actions,
+      enabled,
+    });
   }, [canSave, name, description, triggerType, triggerConfig, actions, enabled, onSave]);
 
   const addAction = useCallback(() => {
-    setActions((prev) => [...prev, { id: nextActionId(), actionType: 'create_record', actionConfig: {} }]);
+    setActions((prev) => [
+      ...prev,
+      { id: nextActionId(), actionType: 'create_record', actionConfig: {} },
+    ]);
   }, []);
 
   const removeAction = useCallback((id: string) => {
@@ -164,14 +178,14 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
   }, []);
 
   const updateAction = useCallback((id: string, patch: Partial<AutomationAction>) => {
-    setActions((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, ...patch } : a))
-    );
+    setActions((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   }, []);
 
   const updateActionConfig = useCallback((id: string, key: string, value: unknown) => {
     setActions((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, actionConfig: { ...a.actionConfig, [key]: value } } : a))
+      prev.map((a) =>
+        a.id === id ? { ...a, actionConfig: { ...a.actionConfig, [key]: value } } : a
+      )
     );
   }, []);
 
@@ -236,12 +250,16 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
                 }`}
               >
-                <span className={`mt-0.5 ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'}`}>
+                <span
+                  className={`mt-0.5 ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'}`}
+                >
                   {opt.icon}
                 </span>
                 <div>
                   <p className="text-sm font-medium">{isPl ? opt.labelPl : opt.label}</p>
-                  <p className="text-xs text-gray-500">{isPl ? opt.descriptionPl : opt.description}</p>
+                  <p className="text-xs text-gray-500">
+                    {isPl ? opt.descriptionPl : opt.description}
+                  </p>
                 </div>
               </button>
             );
@@ -279,7 +297,10 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 <select
                   value={(triggerConfig.conditionFieldId as string) || ''}
                   onChange={(e) =>
-                    setTriggerConfig((prev) => ({ ...prev, conditionFieldId: e.target.value || undefined }))
+                    setTriggerConfig((prev) => ({
+                      ...prev,
+                      conditionFieldId: e.target.value || undefined,
+                    }))
                   }
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
                 >
@@ -335,7 +356,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 </span>
                 <select
                   value={action.actionType}
-                  onChange={(e) => updateAction(action.id, { actionType: e.target.value as ActionType, actionConfig: {} })}
+                  onChange={(e) =>
+                    updateAction(action.id, {
+                      actionType: e.target.value as ActionType,
+                      actionConfig: {},
+                    })
+                  }
                   className="flex-1 rounded border border-gray-200 bg-transparent px-2 py-1 text-sm dark:border-gray-600"
                 >
                   {ACTION_OPTIONS.map((opt) => (
@@ -385,7 +411,9 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 )}
                 {action.actionType === 'create_record' && fields.length > 0 && (
                   <p className="text-xs text-gray-400">
-                    {isPl ? 'Rekord zostanie utworzony z domyślnymi wartościami.' : 'Record will be created with default values.'}
+                    {isPl
+                      ? 'Rekord zostanie utworzony z domyślnymi wartościami.'
+                      : 'Record will be created with default values.'}
                   </p>
                 )}
                 {action.actionType === 'update_record' && fields.length > 0 && (
@@ -404,7 +432,9 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 )}
                 {action.actionType === 'send_email' && (
                   <p className="text-xs text-amber-500">
-                    {isPl ? 'Usługa email nie jest jeszcze skonfigurowana.' : 'Email service not yet configured.'}
+                    {isPl
+                      ? 'Usługa email nie jest jeszcze skonfigurowana.'
+                      : 'Email service not yet configured.'}
                   </p>
                 )}
               </div>

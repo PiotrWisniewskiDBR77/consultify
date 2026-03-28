@@ -362,7 +362,8 @@ export class LLMConfigService {
       })
       .sort((a, b) => {
         const defaultDelta =
-          Number(Boolean(b.is_default ?? b.isDefault)) - Number(Boolean(a.is_default ?? a.isDefault));
+          Number(Boolean(b.is_default ?? b.isDefault)) -
+          Number(Boolean(a.is_default ?? a.isDefault));
         if (defaultDelta !== 0) return defaultDelta;
         const priorityDelta = Number(b.priority || 0) - Number(a.priority || 0);
         if (priorityDelta !== 0) return priorityDelta;
@@ -931,7 +932,8 @@ export class LLMConfigService {
     // If DB is unavailable, fall back to env-only config.
     try {
       await this.initialize();
-      const dbProvider = (await this.getProviderById(providerId)) || (await this.getProviderFromDb(providerId));
+      const dbProvider =
+        (await this.getProviderById(providerId)) || (await this.getProviderFromDb(providerId));
       if (dbProvider) {
         const enriched = this.enrichProviderConfig(dbProvider);
         this.providerCache.set(this.getProviderCacheKey(dbProvider), enriched);

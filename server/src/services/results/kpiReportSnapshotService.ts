@@ -178,7 +178,8 @@ async function listKpisForOrg(orgId: string): Promise<KpiListItem[]> {
           : Number(latestValue) >= Number(targetValue);
 
     const linked = linkedByKpi[String(r.id)] || [];
-    const initiativeName = r.initiative_name || (linked.length === 1 ? linked[0]?.name : null) || null;
+    const initiativeName =
+      r.initiative_name || (linked.length === 1 ? linked[0]?.name : null) || null;
 
     return {
       id: r.id,
@@ -297,9 +298,12 @@ export function renderSnapshotMarkdown(snapshot: ResultsKpiReportSnapshot): Reco
       )} | ${formatValue(k.latestValue, k.unit)} | ${formatValue(k.targetValue, k.unit)} | ${status} | ${escapePipe(dev)} |`;
     })
     .join('\n');
-  const kpiOverview = ['## KPI Overview', '', kpiTableHeader, kpiTableRows || '| — | — | — | — | — | — | — |'].join(
-    '\n'
-  );
+  const kpiOverview = [
+    '## KPI Overview',
+    '',
+    kpiTableHeader,
+    kpiTableRows || '| — | — | — | — | — | — | — |',
+  ].join('\n');
 
   const cases = snapshot.deviationCases.length
     ? snapshot.deviationCases
@@ -358,14 +362,16 @@ export async function createKpiReportSnapshot(params: {
   createdBy: string;
   filters?: Record<string, unknown> | null;
   kpiIds?: string[] | null;
-}): Promise<{ snapshotId: string; snapshot: ResultsKpiReportSnapshot; markdown: Record<string, string> }> {
+}): Promise<{
+  snapshotId: string;
+  snapshot: ResultsKpiReportSnapshot;
+  markdown: Record<string, string>;
+}> {
   const periodStart = isoDate(params.periodStart);
   const periodEnd = params.periodEnd ? isoDate(params.periodEnd) : null;
   const now = new Date().toISOString();
 
-  const requestedKpiIds = (params.kpiIds || [])
-    .map((x) => String(x || '').trim())
-    .filter(Boolean);
+  const requestedKpiIds = (params.kpiIds || []).map((x) => String(x || '').trim()).filter(Boolean);
   const selectedSet = requestedKpiIds.length ? new Set(requestedKpiIds) : null;
 
   const allKpis = await listKpisForOrg(params.organizationId);
@@ -471,4 +477,3 @@ export async function getKpiReportSnapshot(params: {
     createdAt: row.created_at,
   };
 }
-

@@ -9,40 +9,39 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
+  AddSupportNoteParams,
+  ConnectorAuthState,
   ConnectorFleetHealthEntry,
   ConnectorPackage,
-  TenantConnectorInstallation,
-  SupportNote,
+  DriftState,
   EmergencyPause,
+  EmergencyPauseScope,
   FleetHealthSignal,
+  FleetHealthSignalType,
+  InitiateEmergencyPauseParams,
+  InstallPackageForTenantParams,
   OperatorDashboardView,
+  PackageCapability,
+  PackageLifecycleState,
   PausedConnectorRef,
+  ProviderTier,
   RecordFleetHealthParams,
   RegisterPackageParams,
-  InstallPackageForTenantParams,
-  AddSupportNoteParams,
-  InitiateEmergencyPauseParams,
-  PackageCapability,
-  FleetHealthSignalType,
-  ConnectorAuthState,
-  ProviderTier,
-  DriftState,
-  PackageLifecycleState,
+  SupportNote,
   SupportNoteAuthorRole,
-  EmergencyPauseScope,
+  TenantConnectorInstallation,
 } from '../../types/operatorAdminSurfaces.js';
 import {
-  RecordFleetHealthParamsSchema,
-  RegisterPackageParamsSchema,
-  InstallPackageForTenantParamsSchema,
   AddSupportNoteParamsSchema,
-  InitiateEmergencyPauseParamsSchema,
   FLEET_HEALTH_SIGNAL_THRESHOLDS,
   FleetHealthSignalTypeValues,
+  InitiateEmergencyPauseParamsSchema,
+  InstallPackageForTenantParamsSchema,
+  RecordFleetHealthParamsSchema,
+  RegisterPackageParamsSchema,
 } from '../../types/operatorAdminSurfaces.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-
 import { getActiveEscalations } from './pmSyncAuthService.js';
 
 // ==========================================
@@ -206,7 +205,7 @@ function rowToEmergencyPause(row: EmergencyPauseRow): EmergencyPause {
  * Uses upsert on (connector_id, organization_id).
  */
 export async function recordFleetHealth(
-  params: RecordFleetHealthParams,
+  params: RecordFleetHealthParams
 ): Promise<ConnectorFleetHealthEntry> {
   const validated = RecordFleetHealthParamsSchema.parse(params);
 
@@ -214,7 +213,7 @@ export async function recordFleetHealth(
     `SELECT * FROM v8_connector_fleet_health
      WHERE connector_id = ? AND organization_id = ?`,
     [validated.connectorId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -239,12 +238,10 @@ export async function recordFleetHealth(
         validated.conflictCount,
         now,
         existing.entry_id,
-      ],
+      ]
     );
 
-    logger.info(
-      `${LOG_PREFIX} Updated fleet health for connector ${validated.connectorId}`,
-    );
+    logger.info(`${LOG_PREFIX} Updated fleet health for connector ${validated.connectorId}`);
 
     return {
       entryId: existing.entry_id,
@@ -288,11 +285,11 @@ export async function recordFleetHealth(
       validated.conflictCount,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded fleet health ${entryId} for connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Recorded fleet health ${entryId} for connector ${validated.connectorId}`
   );
 
   return {
@@ -316,15 +313,13 @@ export async function recordFleetHealth(
 /**
  * Get all fleet health entries for an organization.
  */
-export async function getFleetHealth(
-  orgId: string,
-): Promise<ConnectorFleetHealthEntry[]> {
+export async function getFleetHealth(orgId: string): Promise<ConnectorFleetHealthEntry[]> {
   const rows = await dbAll<FleetHealthRow>(
     `SELECT * FROM v8_connector_fleet_health
      WHERE organization_id = ?
      ORDER BY updated_at DESC`,
     [orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToFleetHealth);
@@ -335,13 +330,13 @@ export async function getFleetHealth(
  */
 export async function getConnectorHealth(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ConnectorFleetHealthEntry | null> {
   const row = await dbGet<FleetHealthRow>(
     `SELECT * FROM v8_connector_fleet_health
      WHERE connector_id = ? AND organization_id = ?`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -355,9 +350,7 @@ export async function getConnectorHealth(
 /**
  * Register a new connector package (platform-managed asset).
  */
-export async function registerPackage(
-  params: RegisterPackageParams,
-): Promise<ConnectorPackage> {
+export async function registerPackage(params: RegisterPackageParams): Promise<ConnectorPackage> {
   const validated = RegisterPackageParamsSchema.parse(params);
 
   const packageId = uuidv4();
@@ -377,11 +370,11 @@ export async function registerPackage(
       validated.tenantInstallable ? 1 : 0,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Registered package ${packageId}: ${validated.providerKey}@${validated.packageVersion}`,
+    `${LOG_PREFIX} Registered package ${packageId}: ${validated.providerKey}@${validated.packageVersion}`
   );
 
   return {
@@ -399,13 +392,11 @@ export async function registerPackage(
 /**
  * Get a connector package by ID.
  */
-export async function getPackage(
-  packageId: string,
-): Promise<ConnectorPackage | null> {
+export async function getPackage(packageId: string): Promise<ConnectorPackage | null> {
   const row = await dbGet<PackageRow>(
     `SELECT * FROM v8_connector_packages WHERE package_id = ?`,
     [packageId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -421,14 +412,14 @@ export async function getPackage(
  * Validates that the package exists and is installable.
  */
 export async function installPackageForTenant(
-  params: InstallPackageForTenantParams,
+  params: InstallPackageForTenantParams
 ): Promise<TenantConnectorInstallation> {
   const validated = InstallPackageForTenantParamsSchema.parse(params);
 
   const pkg = await dbGet<PackageRow>(
     `SELECT * FROM v8_connector_packages WHERE package_id = ?`,
     [validated.packageId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!pkg) {
@@ -445,7 +436,7 @@ export async function installPackageForTenant(
 
   if (pkg.lifecycle_state === 'deprecated') {
     logger.warn(
-      `${LOG_PREFIX} Installing deprecated package ${validated.packageId} for org ${validated.organizationId}`,
+      `${LOG_PREFIX} Installing deprecated package ${validated.packageId} for org ${validated.organizationId}`
     );
   }
 
@@ -464,11 +455,11 @@ export async function installPackageForTenant(
       validated.enabledBy,
       validated.configurationScope,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Installed package ${validated.packageId} for org ${validated.organizationId}`,
+    `${LOG_PREFIX} Installed package ${validated.packageId} for org ${validated.organizationId}`
   );
 
   return {
@@ -485,14 +476,14 @@ export async function installPackageForTenant(
  * Get all connector installations for a tenant.
  */
 export async function getTenantInstallations(
-  orgId: string,
+  orgId: string
 ): Promise<TenantConnectorInstallation[]> {
   const rows = await dbAll<InstallationRow>(
     `SELECT * FROM v8_tenant_connector_installations
      WHERE organization_id = ?
      ORDER BY installed_at DESC`,
     [orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToInstallation);
@@ -505,9 +496,7 @@ export async function getTenantInstallations(
 /**
  * Add a durable, incident-scoped support note.
  */
-export async function addSupportNote(
-  params: AddSupportNoteParams,
-): Promise<SupportNote> {
+export async function addSupportNote(params: AddSupportNoteParams): Promise<SupportNote> {
   const validated = AddSupportNoteParamsSchema.parse(params);
 
   const noteId = uuidv4();
@@ -527,12 +516,10 @@ export async function addSupportNote(
       validated.authorRole,
       validated.content,
       now,
-    ],
+    ]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Added support note ${noteId} for incident ${validated.incidentRef}`,
-  );
+  logger.info(`${LOG_PREFIX} Added support note ${noteId} for incident ${validated.incidentRef}`);
 
   return {
     noteId,
@@ -549,16 +536,13 @@ export async function addSupportNote(
 /**
  * Get all support notes for a connector within an org.
  */
-export async function getSupportNotes(
-  connectorId: string,
-  orgId: string,
-): Promise<SupportNote[]> {
+export async function getSupportNotes(connectorId: string, orgId: string): Promise<SupportNote[]> {
   const rows = await dbAll<SupportNoteRow>(
     `SELECT * FROM v8_support_notes
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSupportNote);
@@ -573,7 +557,7 @@ export async function getSupportNotes(
  * Requires explicit confirmation via blast radius.
  */
 export async function initiateEmergencyPause(
-  params: InitiateEmergencyPauseParams,
+  params: InitiateEmergencyPauseParams
 ): Promise<EmergencyPause> {
   const validated = InitiateEmergencyPauseParamsSchema.parse(params);
 
@@ -601,11 +585,11 @@ export async function initiateEmergencyPause(
       now,
       null,
       null,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Emergency pause ${pauseId} initiated for org ${validated.organizationId} (scope: ${validated.pauseScope})`,
+    `${LOG_PREFIX} Emergency pause ${pauseId} initiated for org ${validated.organizationId} (scope: ${validated.pauseScope})`
   );
 
   return {
@@ -627,11 +611,11 @@ export async function initiateEmergencyPause(
  */
 export async function resumeFromEmergencyPause(
   pauseId: string,
-  resumedBy: string,
+  resumedBy: string
 ): Promise<EmergencyPause> {
   const row = await dbGet<EmergencyPauseRow>(
     `SELECT * FROM v8_emergency_pauses WHERE pause_id = ?`,
-    [pauseId],
+    [pauseId]
   );
 
   if (!row) {
@@ -648,7 +632,7 @@ export async function resumeFromEmergencyPause(
     `UPDATE v8_emergency_pauses
      SET resumed_at = ?, resumed_by = ?
      WHERE pause_id = ?`,
-    [now, resumedBy, pauseId],
+    [now, resumedBy, pauseId]
   );
 
   logger.info(`${LOG_PREFIX} Emergency pause ${pauseId} resumed by ${resumedBy}`);
@@ -663,15 +647,13 @@ export async function resumeFromEmergencyPause(
 /**
  * Get all active (non-resumed) emergency pauses for an org.
  */
-export async function getActiveEmergencyPauses(
-  orgId: string,
-): Promise<EmergencyPause[]> {
+export async function getActiveEmergencyPauses(orgId: string): Promise<EmergencyPause[]> {
   const rows = await dbAll<EmergencyPauseRow>(
     `SELECT * FROM v8_emergency_pauses
      WHERE organization_id = ? AND resumed_at IS NULL
      ORDER BY paused_at DESC`,
     [orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToEmergencyPause);
@@ -685,20 +667,18 @@ export async function getActiveEmergencyPauses(
  * Evaluate fleet health signals against canonical thresholds.
  * Returns all signal evaluations with breach status.
  */
-export async function checkFleetHealthSignals(
-  orgId: string,
-): Promise<FleetHealthSignal[]> {
+export async function checkFleetHealthSignals(orgId: string): Promise<FleetHealthSignal[]> {
   const healthRows = await dbAll<FleetHealthRow>(
     `SELECT * FROM v8_connector_fleet_health
      WHERE organization_id = ?`,
     [orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const entries = (healthRows || []).map(rowToFleetHealth);
 
   const degradedAuthCount = entries.filter(
-    (e) => e.authState === 'degraded_reauth_needed' || e.authState === 'degraded_scope_limited',
+    (e) => e.authState === 'degraded_reauth_needed' || e.authState === 'degraded_scope_limited'
   ).length;
 
   const totalEntries = entries.length;
@@ -761,7 +741,7 @@ export async function getOperatorDashboard(organizationId: string): Promise<Oper
      ORDER BY created_at DESC
      LIMIT ?`,
     [organizationId, RECENT_NOTES_DEFAULT_LIMIT],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {
@@ -821,7 +801,7 @@ export async function getPausedConnectors(organizationId: string): Promise<Pause
  */
 export async function getRecentIncidents(
   organizationId: string,
-  days?: number,
+  days?: number
 ): Promise<SupportNote[]> {
   const windowDays = days === undefined ? 7 : Math.min(Math.max(days, 1), 365);
   const cutoff = new Date(Date.now() - windowDays * 86_400_000).toISOString();
@@ -833,7 +813,7 @@ export async function getRecentIncidents(
      AND created_at >= ?
      ORDER BY created_at DESC`,
     [organizationId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSupportNote);

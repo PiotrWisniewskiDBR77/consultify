@@ -18,8 +18,14 @@ export interface MindmapInspectorProps {
 const BRANCH_STYLES = ['curved', 'straight', 'step'] as const;
 const FONT_SIZES = [10, 11, 12, 14, 16] as const;
 const NODE_COLOR_PALETTE = [
-  '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b',
-  '#ef4444', '#ec4899', '#6366f1', '#64748b',
+  '#8b5cf6',
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#ec4899',
+  '#6366f1',
+  '#64748b',
 ];
 
 const STRUCTURES = [
@@ -38,18 +44,47 @@ const LAYOUT_MODES = [
 ] as const;
 
 const THEMES = [
-  { id: 'default', labelEn: 'Default', labelPl: 'Domyślny', colors: ['#3b82f6', '#60a5fa', '#475569', '#e2e8f0'] },
-  { id: 'ocean', labelEn: 'Ocean', labelPl: 'Ocean', colors: ['#0d9488', '#22d3ee', '#155e75', '#cffafe'] },
-  { id: 'forest', labelEn: 'Forest', labelPl: 'Las', colors: ['#16a34a', '#34d399', '#166534', '#d1fae5'] },
-  { id: 'sunset', labelEn: 'Sunset', labelPl: 'Zachód', colors: ['#ea580c', '#fbbf24', '#9a3412', '#fef3c7'] },
-  { id: 'midnight', labelEn: 'Midnight', labelPl: 'Północ', colors: ['#6366f1', '#a78bfa', '#312e81', '#e0e7ff'] },
-  { id: 'minimal', labelEn: 'Minimal', labelPl: 'Minimalistyczny', colors: ['#6b7280', '#9ca3af', '#374151', '#f3f4f6'] },
+  {
+    id: 'default',
+    labelEn: 'Default',
+    labelPl: 'Domyślny',
+    colors: ['#3b82f6', '#60a5fa', '#475569', '#e2e8f0'],
+  },
+  {
+    id: 'ocean',
+    labelEn: 'Ocean',
+    labelPl: 'Ocean',
+    colors: ['#0d9488', '#22d3ee', '#155e75', '#cffafe'],
+  },
+  {
+    id: 'forest',
+    labelEn: 'Forest',
+    labelPl: 'Las',
+    colors: ['#16a34a', '#34d399', '#166534', '#d1fae5'],
+  },
+  {
+    id: 'sunset',
+    labelEn: 'Sunset',
+    labelPl: 'Zachód',
+    colors: ['#ea580c', '#fbbf24', '#9a3412', '#fef3c7'],
+  },
+  {
+    id: 'midnight',
+    labelEn: 'Midnight',
+    labelPl: 'Północ',
+    colors: ['#6366f1', '#a78bfa', '#312e81', '#e0e7ff'],
+  },
+  {
+    id: 'minimal',
+    labelEn: 'Minimal',
+    labelPl: 'Minimalistyczny',
+    colors: ['#6b7280', '#9ca3af', '#374151', '#f3f4f6'],
+  },
 ] as const;
 
 const TAB_BTN =
   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors';
-const TAB_ACTIVE =
-  'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm';
+const TAB_ACTIVE = 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm';
 const TAB_INACTIVE =
   'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]';
 
@@ -79,7 +114,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
     (patch: Record<string, any>) => {
       if (selectedNodeId) onUpdateNode(selectedNodeId, patch);
     },
-    [selectedNodeId, onUpdateNode],
+    [selectedNodeId, onUpdateNode]
   );
 
   const nodeStyle = selectedNodeData?.style || {};
@@ -88,11 +123,11 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
     <div className="space-y-3">
       {/* Tab bar */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-50 dark:bg-white/[0.02]">
-        {([
+        {[
           { id: 'style' as const, icon: Brush, labelEn: 'Style', labelPl: 'Styl' },
           { id: 'layout' as const, icon: Layout, labelEn: 'Layout', labelPl: 'Układ' },
           { id: 'theme' as const, icon: Palette, labelEn: 'Theme', labelPl: 'Motyw' },
-        ]).map((t) => (
+        ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -109,17 +144,13 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
         <div className="space-y-3">
           {!selectedNodeId ? (
             <div className="text-[11px] text-slate-400 dark:text-slate-500 italic py-4 text-center">
-              {isPl
-                ? 'Zaznacz węzeł, aby edytować styl'
-                : 'Select a node to edit its style'}
+              {isPl ? 'Zaznacz węzeł, aby edytować styl' : 'Select a node to edit its style'}
             </div>
           ) : (
             <>
               {/* Branch style */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Linia gałęzi' : 'Branch style'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Linia gałęzi' : 'Branch style'}</span>
                 <div className="flex gap-1">
                   {BRANCH_STYLES.map((s) => (
                     <button
@@ -135,9 +166,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Node width */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Szerokość' : 'Node width'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Szerokość' : 'Node width'}</span>
                 <input
                   type="range"
                   min={120}
@@ -156,9 +185,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Font size */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Rozmiar czcionki' : 'Font size'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Rozmiar czcionki' : 'Font size'}</span>
                 <div className="flex gap-1">
                   {FONT_SIZES.map((fs) => (
                     <button
@@ -174,9 +201,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Font weight */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Pogrubienie' : 'Bold'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Pogrubienie' : 'Bold'}</span>
                 <button
                   onClick={() => patchNode({ style: { ...nodeStyle, bold: !nodeStyle.bold } })}
                   className={nodeStyle.bold ? PILL_ACTIVE : PILL_BTN}
@@ -187,9 +212,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Text color */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Kolor tekstu' : 'Text color'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Kolor tekstu' : 'Text color'}</span>
                 <div className="flex gap-1.5">
                   {NODE_COLOR_PALETTE.map((c) => (
                     <button
@@ -208,9 +231,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Background opacity */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>
-                  {isPl ? 'Krycie tła' : 'Bg opacity'}
-                </span>
+                <span className={CTRL_LABEL}>{isPl ? 'Krycie tła' : 'Bg opacity'}</span>
                 <input
                   type="range"
                   min={0}

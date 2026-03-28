@@ -1,9 +1,9 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetReferralAnalytics = vi.fn();
 const mockGetReferralTools = vi.fn();
@@ -321,7 +321,9 @@ describe('V8 partner read bridge', () => {
 
   it('GET /api/v8/partner/attributions returns customer attributions with partner meta', async () => {
     const app = createApp();
-    const res = await request(app).get('/api/v8/partner/attributions?status=ACTIVE&limit=10&offset=5');
+    const res = await request(app).get(
+      '/api/v8/partner/attributions?status=ACTIVE&limit=10&offset=5'
+    );
 
     expect(res.status).toBe(200);
     expect(mockGetPartnerAttributions).toHaveBeenCalledWith('partner-org-resolved', {
@@ -425,7 +427,7 @@ describe('V8 partner read bridge', () => {
       'USER',
       expect.any(String),
       '',
-      'tenant-org-v8',
+      'tenant-org-v8'
     );
     expect(res.body.data).toEqual({ success: true, message: 'Terms accepted' });
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
@@ -487,7 +489,9 @@ describe('V8 partner read bridge', () => {
 
   it('GET /api/v8/partner/payouts returns payout history with partner meta', async () => {
     const app = createApp();
-    const res = await request(app).get('/api/v8/partner/payouts?status=COMPLETED&limit=10&offset=5');
+    const res = await request(app).get(
+      '/api/v8/partner/payouts?status=COMPLETED&limit=10&offset=5'
+    );
 
     expect(res.status).toBe(200);
     expect(mockGetPayouts).toHaveBeenCalledWith('partner-org-resolved', {
@@ -582,7 +586,7 @@ describe('V8 partner read bridge', () => {
         '+49 30 12345',
         'https://test.example.com',
         'partner-org-resolved',
-      ],
+      ]
     );
     expect(res.body.data).toEqual({
       success: true,
@@ -593,9 +597,11 @@ describe('V8 partner read bridge', () => {
 
   it('PUT /api/v8/partner/organization/specializations updates specializations with partnerOrgId', async () => {
     const app = createApp();
-    const res = await request(app).put('/api/v8/partner/organization/specializations').send({
-      specializations: ['DRD', 'SIRI', 'DRD'],
-    });
+    const res = await request(app)
+      .put('/api/v8/partner/organization/specializations')
+      .send({
+        specializations: ['DRD', 'SIRI', 'DRD'],
+      });
 
     expect(res.status).toBe(200);
     expect(mockDbTransaction).toHaveBeenCalledWith([
@@ -625,9 +631,11 @@ describe('V8 partner read bridge', () => {
 
   it('PUT /api/v8/partner/organization/regions updates regions with partnerOrgId', async () => {
     const app = createApp();
-    const res = await request(app).put('/api/v8/partner/organization/regions').send({
-      regions: ['DACH', 'CEE', 'DACH'],
-    });
+    const res = await request(app)
+      .put('/api/v8/partner/organization/regions')
+      .send({
+        regions: ['DACH', 'CEE', 'DACH'],
+      });
 
     expect(res.status).toBe(200);
     expect(mockDbTransaction).toHaveBeenCalledWith([
@@ -667,7 +675,7 @@ describe('V8 partner read bridge', () => {
       `UPDATE partner_organizations
        SET public_listing_enabled = ?, updated_at = NOW()
        WHERE id = ?`,
-      [true, 'partner-org-resolved'],
+      [true, 'partner-org-resolved']
     );
     expect(res.body.data).toEqual({ success: true, publicListingEnabled: true });
     expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
@@ -685,17 +693,19 @@ describe('V8 partner read bridge', () => {
 
   it('PUT /api/v8/partner/payout-settings updates settings with partnerOrgId', async () => {
     const app = createApp();
-    const res = await request(app).put('/api/v8/partner/payout-settings').send({
-      minimumThreshold: 250,
-      payoutMethod: 'PAYPAL',
-      autoPayoutEnabled: true,
-      payoutAccount: {
-        accountHolderName: 'Partner Co',
-        iban: 'DE123',
-        bicSwift: 'COBADEFF',
-        bankName: 'Commerzbank',
-      },
-    });
+    const res = await request(app)
+      .put('/api/v8/partner/payout-settings')
+      .send({
+        minimumThreshold: 250,
+        payoutMethod: 'PAYPAL',
+        autoPayoutEnabled: true,
+        payoutAccount: {
+          accountHolderName: 'Partner Co',
+          iban: 'DE123',
+          bicSwift: 'COBADEFF',
+          bankName: 'Commerzbank',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(mockUpdatePartnerPayoutSettings).toHaveBeenCalledWith('partner-org-resolved', {

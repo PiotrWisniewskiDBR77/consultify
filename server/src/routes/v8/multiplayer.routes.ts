@@ -11,23 +11,23 @@
  * @module routes/v8/multiplayer.routes
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { getActiveLocks } from '../../services/v8/concurrentEditingService.js';
 import {
   getPresenceBySurface,
   getResourceTypeMapping,
   getWorkspacePresence,
   resolveRoomBinding,
 } from '../../services/v8/multiplayerHardeningService.js';
-import { getActiveLocks } from '../../services/v8/concurrentEditingService.js';
 import {
-  SurfaceValues,
-  WorkspaceToolValues,
   type Surface,
+  SurfaceValues,
   type WorkspaceTool,
+  WorkspaceToolValues,
 } from '../../types/multiplayerHardening.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -74,7 +74,9 @@ router.get(
   '/resource-mappings/:resourceType',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const resourceType = parseWorkspaceTool(firstParam((req.params as { resourceType?: string }).resourceType));
+    const resourceType = parseWorkspaceTool(
+      firstParam((req.params as { resourceType?: string }).resourceType)
+    );
     if (!resourceType) {
       return res.status(400).json({
         error: 'Invalid or missing resourceType',
@@ -87,7 +89,7 @@ router.get(
       data: { mapping, resourceType },
       meta: multiplayerMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -118,14 +120,14 @@ router.get(
       resourceType,
       resourceId,
       organizationId,
-      parentResourceId || undefined,
+      parentResourceId || undefined
     );
 
     return res.json({
       data: { binding, resourceType, resourceId, parentResourceId: parentResourceId || null },
       meta: multiplayerMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -148,7 +150,7 @@ router.get(
       data: { roomId, presence, count: presence.length },
       meta: multiplayerMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -179,7 +181,7 @@ router.get(
       data: { roomId, surface, presence, count: presence.length },
       meta: multiplayerMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -202,7 +204,7 @@ router.get(
       data: { roomId, locks, count: locks.length },
       meta: multiplayerMeta(),
     });
-  }),
+  })
 );
 
 export default router;

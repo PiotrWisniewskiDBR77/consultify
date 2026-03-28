@@ -33,13 +33,7 @@ export type PurposeFamily = (typeof PurposeFamilyValues)[number];
 export const GateTypeValues = ['hard', 'soft'] as const;
 export type GateType = (typeof GateTypeValues)[number];
 
-export const BundleStatusValues = [
-  'draft',
-  'staging',
-  'canary',
-  'active',
-  'rolled_back',
-] as const;
+export const BundleStatusValues = ['draft', 'staging', 'canary', 'active', 'rolled_back'] as const;
 export type BundleStatus = (typeof BundleStatusValues)[number];
 
 /** W2-10: eval depth tiering by change type */
@@ -315,19 +309,19 @@ export const DEFAULT_EVAL_THRESHOLDS: Record<PurposeFamily, EvalThresholds> = {
   governed_proposal: {
     qualityMin: 0.85,
     latencyP95MaxMs: 5000,
-    costMaxPerInteraction: 0.10,
+    costMaxPerInteraction: 0.1,
     trustDegradationMaxPct: 3,
     failureRateMaxPct: 2,
   },
   retrieval_grounded: {
-    qualityMin: 0.80,
+    qualityMin: 0.8,
     latencyP95MaxMs: 4000,
     costMaxPerInteraction: 0.08,
     trustDegradationMaxPct: 5,
     failureRateMaxPct: 3,
   },
   artifact_generation: {
-    qualityMin: 0.80,
+    qualityMin: 0.8,
     latencyP95MaxMs: 10000,
     costMaxPerInteraction: 0.15,
     trustDegradationMaxPct: 5,
@@ -336,7 +330,7 @@ export const DEFAULT_EVAL_THRESHOLDS: Record<PurposeFamily, EvalThresholds> = {
   background_automation: {
     qualityMin: 0.85,
     latencyP95MaxMs: 30000,
-    costMaxPerInteraction: 0.20,
+    costMaxPerInteraction: 0.2,
     trustDegradationMaxPct: 2,
     failureRateMaxPct: 1,
   },

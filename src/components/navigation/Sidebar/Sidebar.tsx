@@ -17,10 +17,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView, UserRole } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
-import {
-  isAdminOwnerOrSuperAdminRole,
-  isSuperAdminRole,
-} from '../../../utils/roleGuards';
+import { isAdminOwnerOrSuperAdminRole, isSuperAdminRole } from '../../../utils/roleGuards';
 import { OnboardingChecklist } from '../../Onboarding/OnboardingChecklist';
 import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
@@ -397,10 +394,8 @@ export const Sidebar: React.FC = () => {
           t={t as any}
           showPartnerPortal={!isSuperAdminRole(currentUser?.role)}
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
-            renderNavItem(organizationMenuItem)}
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
-            renderNavItem(adminMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>

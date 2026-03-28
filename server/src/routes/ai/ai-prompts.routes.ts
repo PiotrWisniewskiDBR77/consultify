@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
-import canonicalAIPromptsRoutes from '../ai-prompts.routes.js';
 import logger from '../../utils/Logger.js';
+import canonicalAIPromptsRoutes from '../ai-prompts.routes.js';
 
 const router = Router();
 

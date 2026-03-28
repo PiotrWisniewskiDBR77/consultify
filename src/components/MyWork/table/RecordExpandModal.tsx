@@ -11,17 +11,7 @@
  * - Link to audit trail
  * - Close via X, Escape, click outside
  */
-import {
-  Calculator,
-  Clock,
-  Edit3,
-  Eye,
-  FileText,
-  Image,
-  Link2,
-  Loader2,
-  X,
-} from 'lucide-react';
+import { Calculator, Clock, Edit3, Eye, FileText, Image, Link2, Loader2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -78,11 +68,7 @@ const FieldValueDisplay: React.FC<{
   }
 
   if (fieldType === 'checkbox') {
-    return (
-      <span className="text-xs">
-        {Boolean(value) ? '✓' : '✗'}
-      </span>
-    );
+    return <span className="text-xs">{value ? '✓' : '✗'}</span>;
   }
 
   if (fieldType === 'date' || fieldType === 'createdTime' || fieldType === 'lastModifiedTime') {
@@ -150,14 +136,18 @@ const FieldValueDisplay: React.FC<{
 
   if (fieldType === 'number' || fieldType === 'currency' || fieldType === 'percent') {
     const num = Number(value);
-    if (!Number.isFinite(num)) return <span className="text-xs text-slate-700 dark:text-zinc-200">{String(value)}</span>;
-    const prefix = fieldType === 'currency'
-      ? ((fieldOptions as { currencySymbol?: string })?.currencySymbol ?? '$')
-      : '';
+    if (!Number.isFinite(num))
+      return <span className="text-xs text-slate-700 dark:text-zinc-200">{String(value)}</span>;
+    const prefix =
+      fieldType === 'currency'
+        ? ((fieldOptions as { currencySymbol?: string })?.currencySymbol ?? '$')
+        : '';
     const suffix = fieldType === 'percent' ? '%' : '';
     return (
       <span className="text-xs tabular-nums text-slate-700 dark:text-zinc-200">
-        {prefix}{num.toLocaleString()}{suffix}
+        {prefix}
+        {num.toLocaleString()}
+        {suffix}
       </span>
     );
   }
@@ -216,11 +206,7 @@ const NestedLinkedChips: React.FC<{
   fieldOptions: Record<string, unknown>;
   onOpenLinkedRecord?: (recordId: string, tableId: string) => void;
 }> = React.memo(({ value, fieldOptions, onOpenLinkedRecord }) => {
-  const items: string[] = Array.isArray(value)
-    ? value.map(String)
-    : value
-      ? [String(value)]
-      : [];
+  const items: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
   const linkedTableId = (fieldOptions as { linkedTableId?: string })?.linkedTableId ?? '';
 
   if (items.length === 0) {
@@ -310,7 +296,11 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
             name: String(f.name ?? ''),
             fieldType: (f.fieldType ?? f.field_type ?? 'singleLineText') as FieldType,
             options: (f.options ?? {}) as Record<string, unknown>,
-            isComputed: Boolean(f.isComputed ?? f.is_computed ?? COMPUTED_TYPES.has(String(f.fieldType ?? f.field_type ?? ''))),
+            isComputed: Boolean(
+              f.isComputed ??
+              f.is_computed ??
+              COMPUTED_TYPES.has(String(f.fieldType ?? f.field_type ?? ''))
+            ),
             order: Number(f.field_order ?? f.order ?? 999),
           }));
           mapped.sort((a, b) => a.order - b.order);
@@ -332,11 +322,8 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
 
     const primaryField = useMemo(() => fields[0], [fields]);
     const primaryValue = useMemo(
-      () =>
-        primaryField
-          ? String(recordData[primaryField.id] ?? recordId)
-          : recordId,
-      [primaryField, recordData, recordId],
+      () => (primaryField ? String(recordData[primaryField.id] ?? recordId) : recordId),
+      [primaryField, recordData, recordId]
     );
 
     const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
@@ -405,7 +392,9 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                       ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400'
                       : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
                   }`}
-                  title={editMode ? (isPl ? 'Anuluj edycję' : 'Cancel edit') : (isPl ? 'Edytuj' : 'Edit')}
+                  title={
+                    editMode ? (isPl ? 'Anuluj edycję' : 'Cancel edit') : isPl ? 'Edytuj' : 'Edit'
+                  }
                 >
                   {editMode ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
                 </button>
@@ -518,7 +507,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
         </div>
       </div>
     );
-  },
+  }
 );
 
 RecordExpandModal.displayName = 'RecordExpandModal';

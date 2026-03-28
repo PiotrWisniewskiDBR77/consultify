@@ -4,18 +4,18 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewMetaCard,
-  PreviewDetailsSection,
-  PreviewAIHintStrip,
-  PreviewRelations,
-  PreviewActionBar,
-  type MetaPill,
-  type RelationItem,
   type ActionRow,
   type ExtraCopyFormat,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Api } from '@/services/api';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getToolCategoryLabel } from './ToolSessionPreview';
 

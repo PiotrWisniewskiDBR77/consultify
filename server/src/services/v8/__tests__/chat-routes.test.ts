@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // SERVICE MOCKS
@@ -102,7 +102,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     }
     next();
   },
-  requireRole: (..._roles: string[]) => (_req: any, _res: any, next: () => void) => next(),
+  requireRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
@@ -182,8 +185,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetSnapshotsByConversation.mockResolvedValue([MOCK_SNAPSHOT]);
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots?conversationId=conv-1');
+      const res = await request(app).get('/api/v8/chat/snapshots?conversationId=conv-1');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
@@ -196,8 +198,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetSnapshotsByRun.mockResolvedValue([MOCK_SNAPSHOT]);
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots?runId=run-1');
+      const res = await request(app).get('/api/v8/chat/snapshots?runId=run-1');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
@@ -207,8 +208,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
     it('returns 400 when no query param provided', async () => {
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots');
+      const res = await request(app).get('/api/v8/chat/snapshots');
 
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('MISSING_QUERY_PARAM');
@@ -218,8 +218,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetSnapshotsByConversation.mockResolvedValue([]);
       const app = createApp();
 
-      await request(app)
-        .get('/api/v8/chat/snapshots?conversationId=conv-1');
+      await request(app).get('/api/v8/chat/snapshots?conversationId=conv-1');
 
       expect(mockGetSnapshotsByConversation).toHaveBeenCalledWith('conv-1', 'org-123');
     });
@@ -230,8 +229,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetSnapshot.mockResolvedValue(MOCK_SNAPSHOT);
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots/snap-1');
+      const res = await request(app).get('/api/v8/chat/snapshots/snap-1');
 
       expect(res.status).toBe(200);
       expect(res.body.data.snapshotId).toBe('snap-1');
@@ -242,8 +240,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetSnapshot.mockResolvedValue(null);
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots/nonexistent');
+      const res = await request(app).get('/api/v8/chat/snapshots/nonexistent');
 
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('SNAPSHOT_NOT_FOUND');
@@ -255,17 +252,15 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureSnapshot.mockResolvedValue(MOCK_SNAPSHOT);
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/snapshots')
-        .send({
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-          initiatorUserId: 'user-1',
-          consumerClass: 'chat',
-          sourceContextRefs: [],
-        });
+      const res = await request(app).post('/api/v8/chat/snapshots').send({
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+        initiatorUserId: 'user-1',
+        consumerClass: 'chat',
+        sourceContextRefs: [],
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.snapshotId).toBe('snap-1');
@@ -276,34 +271,38 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureSnapshot.mockResolvedValue(MOCK_SNAPSHOT);
       const app = createApp();
 
-      await request(app)
-        .post('/api/v8/chat/snapshots')
-        .send({
-          organizationId: 'attacker-org',
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-          initiatorUserId: 'user-1',
-          consumerClass: 'chat',
-          sourceContextRefs: [],
-        });
+      await request(app).post('/api/v8/chat/snapshots').send({
+        organizationId: 'attacker-org',
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+        initiatorUserId: 'user-1',
+        consumerClass: 'chat',
+        sourceContextRefs: [],
+      });
 
       expect(mockCaptureSnapshot).toHaveBeenCalledWith(
-        expect.objectContaining({ organizationId: 'org-123' }),
+        expect.objectContaining({ organizationId: 'org-123' })
       );
     });
 
     it('returns 400 on validation error', async () => {
       const { ZodError } = await import('zod');
       mockCaptureSnapshot.mockRejectedValue(
-        new ZodError([{ code: 'invalid_type', expected: 'string', received: 'undefined', path: ['workspaceId'], message: 'Required' }]),
+        new ZodError([
+          {
+            code: 'invalid_type',
+            expected: 'string',
+            received: 'undefined',
+            path: ['workspaceId'],
+            message: 'Required',
+          },
+        ])
       );
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/snapshots')
-        .send({});
+      const res = await request(app).post('/api/v8/chat/snapshots').send({});
 
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');
@@ -319,8 +318,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockGetHandoffsByConversation.mockResolvedValue([MOCK_HANDOFF]);
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/handoffs?conversationId=conv-1');
+      const res = await request(app).get('/api/v8/chat/handoffs?conversationId=conv-1');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
@@ -331,8 +329,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
     it('returns 400 when conversationId is missing', async () => {
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/handoffs');
+      const res = await request(app).get('/api/v8/chat/handoffs');
 
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('MISSING_QUERY_PARAM');
@@ -344,13 +341,11 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockInitiateHandoff.mockResolvedValue(MOCK_HANDOFF);
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/handoffs')
-        .send({
-          conversationId: 'conv-1',
-          contextSnapshotId: 'snap-1',
-          goal: 'Create a report',
-        });
+      const res = await request(app).post('/api/v8/chat/handoffs').send({
+        conversationId: 'conv-1',
+        contextSnapshotId: 'snap-1',
+        goal: 'Create a report',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.handoffId).toBe('handoff-1');
@@ -358,23 +353,21 @@ describe('Chat Routes (/api/v8/chat)', () => {
         expect.objectContaining({
           organizationId: 'org-123',
           userId: 'user-1',
-        }),
+        })
       );
     });
 
     it('returns 404 when snapshot not found', async () => {
       mockInitiateHandoff.mockRejectedValue(
-        new Error('ContextSnapshot snap-missing not found in organization org-123'),
+        new Error('ContextSnapshot snap-missing not found in organization org-123')
       );
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/handoffs')
-        .send({
-          conversationId: 'conv-1',
-          contextSnapshotId: 'snap-missing',
-          goal: 'Create a report',
-        });
+      const res = await request(app).post('/api/v8/chat/handoffs').send({
+        conversationId: 'conv-1',
+        contextSnapshotId: 'snap-missing',
+        goal: 'Create a report',
+      });
 
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('RESOURCE_NOT_FOUND');
@@ -390,15 +383,13 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureForChat.mockResolvedValue(MOCK_SNAPSHOT);
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/chat')
-        .send({
-          conversationId: 'conv-1',
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/chat').send({
+        conversationId: 'conv-1',
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.snapshotId).toBe('snap-1');
@@ -406,7 +397,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
         expect.objectContaining({
           organizationId: 'org-123',
           initiatorUserId: 'user-1',
-        }),
+        })
       );
     });
   });
@@ -416,16 +407,14 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureForExecution.mockResolvedValue({ ...MOCK_SNAPSHOT, consumerClass: 'execution' });
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/execution')
-        .send({
-          chatSnapshotId: 'snap-1',
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-          executionRunId: 'run-1',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/execution').send({
+        chatSnapshotId: 'snap-1',
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+        executionRunId: 'run-1',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.consumerClass).toBe('execution');
@@ -437,13 +426,11 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureForRetrieval.mockResolvedValue({ ...MOCK_SNAPSHOT, consumerClass: 'retrieval' });
       const app = createApp();
 
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/retrieval')
-        .send({
-          activeSnapshotId: 'snap-1',
-          workspaceId: 'ws-1',
-          effectiveScopeRef: 'retrieval',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/retrieval').send({
+        activeSnapshotId: 'snap-1',
+        workspaceId: 'ws-1',
+        effectiveScopeRef: 'retrieval',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.consumerClass).toBe('retrieval');
@@ -459,8 +446,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockUser = null;
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots?conversationId=conv-1');
+      const res = await request(app).get('/api/v8/chat/snapshots?conversationId=conv-1');
 
       expect(res.status).toBe(401);
     });
@@ -476,8 +462,7 @@ describe('Chat Routes (/api/v8/chat)', () => {
       };
       const app = createApp();
 
-      const res = await request(app)
-        .get('/api/v8/chat/snapshots?conversationId=conv-1');
+      const res = await request(app).get('/api/v8/chat/snapshots?conversationId=conv-1');
 
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('V8_MISSING_ORG_CONTEXT');

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -179,13 +179,7 @@ describe('MutationExecutor', () => {
 
     const outcome = await executor.executeOperations(ops, 'base-1', 'user-1');
     expect(outcome.allSucceeded).toBe(true);
-    expect(mockCreateField).toHaveBeenCalledWith(
-      'real-tbl-id',
-      'Email',
-      'email',
-      {},
-      'user-1',
-    );
+    expect(mockCreateField).toHaveBeenCalledWith('real-tbl-id', 'Email', 'email', {}, 'user-1');
   });
 
   it('rollback of create_table calls deleteTable', async () => {

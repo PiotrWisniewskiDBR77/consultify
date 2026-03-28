@@ -192,9 +192,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         ? 'users'
                         : currentView === AppView.SUPERADMIN_COMMUNICATION
                           ? 'communication'
-                        : currentView === AppView.SUPERADMIN_FEEDBACK
-                          ? 'feedback'
-                          : 'bulk-ops'
+                          : currentView === AppView.SUPERADMIN_FEEDBACK
+                            ? 'feedback'
+                            : 'bulk-ops'
                   }
                 />
               );

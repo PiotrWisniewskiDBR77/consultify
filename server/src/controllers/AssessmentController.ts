@@ -15,8 +15,8 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
 import AssessmentEvidenceService from '../services/AssessmentEvidenceService.js';
+import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
 import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
 import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1800,7 +1800,11 @@ export class AssessmentController {
       } else if (assessmentType === 'DRD' && answers.drd?.areas) {
         for (const [areaId, areaData] of Object.entries(answers.drd.areas)) {
           const area = areaData as { achievedLevel?: number; targetLevel?: number; name?: string };
-          if (area && typeof area.achievedLevel === 'number' && typeof area.targetLevel === 'number') {
+          if (
+            area &&
+            typeof area.achievedLevel === 'number' &&
+            typeof area.targetLevel === 'number'
+          ) {
             addGap(areaId, area.name || `Area ${areaId}`, area.achievedLevel, area.targetLevel);
           }
         }
@@ -1808,7 +1812,12 @@ export class AssessmentController {
 
       if (gaps.length === 0 && scoreSummary?.byAxis) {
         for (const [axisId, axisData] of Object.entries(scoreSummary.byAxis)) {
-          const axis = axisData as { current?: number; target?: number; actual?: number; name?: string };
+          const axis = axisData as {
+            current?: number;
+            target?: number;
+            actual?: number;
+            name?: string;
+          };
           const current = axis.current ?? axis.actual ?? 0;
           const target = axis.target ?? 0;
           if (typeof current === 'number' && typeof target === 'number') {
@@ -1818,7 +1827,12 @@ export class AssessmentController {
       }
       if (gaps.length === 0 && scoreSummary?.byDimension) {
         for (const [dimId, dimData] of Object.entries(scoreSummary.byDimension)) {
-          const dim = dimData as { current?: number; target?: number; actual?: number; name?: string };
+          const dim = dimData as {
+            current?: number;
+            target?: number;
+            actual?: number;
+            name?: string;
+          };
           const current = dim.current ?? dim.actual ?? 0;
           const target = dim.target ?? 0;
           if (typeof current === 'number' && typeof target === 'number') {
@@ -1855,9 +1869,7 @@ export class AssessmentController {
         });
 
       // --- Compute executive summary ---
-      const overallScore = Number(
-        scoreSummary?.overall?.actual || scoreSummary?.overallScore || 0
-      );
+      const overallScore = Number(scoreSummary?.overall?.actual || scoreSummary?.overallScore || 0);
       const highGaps = gaps.filter((g) => g.priority === 'high');
       const topAreas = highGaps
         .slice(0, 3)

@@ -35,11 +35,7 @@ export const ToolRiskClassValues = [
 ] as const;
 export type ToolRiskClass = (typeof ToolRiskClassValues)[number];
 
-export const ClassificationStatusValues = [
-  'proposed',
-  'ratified',
-  'under_review',
-] as const;
+export const ClassificationStatusValues = ['proposed', 'ratified', 'under_review'] as const;
 export type ClassificationStatus = (typeof ClassificationStatusValues)[number];
 
 export const ToolCategoryValues = [
@@ -85,11 +81,7 @@ export const CredentialModeValues = [
 ] as const;
 export type CredentialMode = (typeof CredentialModeValues)[number];
 
-export const InvocationResultValues = [
-  'success',
-  'failed',
-  'not_executed',
-] as const;
+export const InvocationResultValues = ['success', 'failed', 'not_executed'] as const;
 export type InvocationResult = (typeof InvocationResultValues)[number];
 
 export const TraceApprovalStateValues = [

@@ -36,10 +36,10 @@ import remarkGfm from 'remark-gfm';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
+import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList } from './CitationList';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
-import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 
 // ============================================================================

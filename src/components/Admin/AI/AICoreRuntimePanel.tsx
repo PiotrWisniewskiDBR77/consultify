@@ -157,7 +157,8 @@ export const AICoreRuntimePanel: React.FC = () => {
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             {t('superadmin.aiCoreRuntime.subtitle', {
-              defaultValue: 'Read-only summary from GET /api/v8/ai-core/environment and GET /api/v8/ai-core/tools',
+              defaultValue:
+                'Read-only summary from GET /api/v8/ai-core/environment and GET /api/v8/ai-core/tools',
             })}
           </p>
         </div>
@@ -218,13 +219,17 @@ export const AICoreRuntimePanel: React.FC = () => {
               <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                 {t('superadmin.aiCoreRuntime.fields.toolCount', { defaultValue: 'Tools' })}
               </dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{tools.length}</dd>
+              <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                {tools.length}
+              </dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                 {t('superadmin.aiCoreRuntime.fields.layers', { defaultValue: 'Layers' })}
               </dt>
-              <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">{layerEntries.length}</dd>
+              <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+                {layerEntries.length}
+              </dd>
             </div>
           </dl>
 
@@ -245,7 +250,9 @@ export const AICoreRuntimePanel: React.FC = () => {
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('superadmin.aiCoreRuntime.noLayers', { defaultValue: 'No layer summary returned.' })}
+                  {t('superadmin.aiCoreRuntime.noLayers', {
+                    defaultValue: 'No layer summary returned.',
+                  })}
                 </div>
               )}
             </div>
@@ -258,7 +265,9 @@ export const AICoreRuntimePanel: React.FC = () => {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {t('superadmin.aiCoreRuntime.toolsTitle', { defaultValue: 'Governed tool catalog' })}
+                {t('superadmin.aiCoreRuntime.toolsTitle', {
+                  defaultValue: 'Governed tool catalog',
+                })}
               </h3>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {t('superadmin.aiCoreRuntime.toolsSubtitle', {
@@ -266,41 +275,43 @@ export const AICoreRuntimePanel: React.FC = () => {
                 })}
               </p>
             </div>
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{tools.length}</div>
+            <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {tools.length}
+            </div>
           </div>
 
           <div className="mt-4 space-y-2">
-            {tools.length > 0 ? (
-              tools.map((tool) => {
-                const isSelected = selectedToolId === tool.toolId;
-                return (
-                  <button
-                    type="button"
-                    key={tool.toolId || tool.name}
-                    onClick={() => tool.toolId && void loadToolPolicy(tool.toolId)}
-                    className={`w-full rounded-lg border px-3 py-2 text-left transition ${
-                      isSelected
-                        ? 'border-primary-400 bg-primary-50/70 dark:border-primary-500/60 dark:bg-primary-950/30'
-                        : 'border-slate-200 hover:border-primary-300 dark:border-white/10 dark:hover:border-primary-500/40'
-                    }`}
-                  >
-                    <div className="font-medium text-slate-900 dark:text-white">
-                      {tool.name || tool.toolId || 'Unknown tool'}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {tool.toolId || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
-                      {tool.category ? ` · ${tool.category}` : ''}
-                    </div>
-                  </button>
-                );
-              })
-            ) : (
-              !loading && (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('superadmin.aiCoreRuntime.noTools', { defaultValue: 'No governed tools returned.' })}
-                </div>
-              )
-            )}
+            {tools.length > 0
+              ? tools.map((tool) => {
+                  const isSelected = selectedToolId === tool.toolId;
+                  return (
+                    <button
+                      type="button"
+                      key={tool.toolId || tool.name}
+                      onClick={() => tool.toolId && void loadToolPolicy(tool.toolId)}
+                      className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                        isSelected
+                          ? 'border-primary-400 bg-primary-50/70 dark:border-primary-500/60 dark:bg-primary-950/30'
+                          : 'border-slate-200 hover:border-primary-300 dark:border-white/10 dark:hover:border-primary-500/40'
+                      }`}
+                    >
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {tool.name || tool.toolId || 'Unknown tool'}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {tool.toolId || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                        {tool.category ? ` · ${tool.category}` : ''}
+                      </div>
+                    </button>
+                  );
+                })
+              : !loading && (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('superadmin.aiCoreRuntime.noTools', {
+                      defaultValue: 'No governed tools returned.',
+                    })}
+                  </div>
+                )}
           </div>
         </div>
 
@@ -311,7 +322,8 @@ export const AICoreRuntimePanel: React.FC = () => {
             </h3>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               {t('superadmin.aiCoreRuntime.policySubtitle', {
-                defaultValue: 'Read-only effective policy for the selected tool under consumer class chat.',
+                defaultValue:
+                  'Read-only effective policy for the selected tool under consumer class chat.',
               })}
             </p>
           </div>
@@ -330,7 +342,9 @@ export const AICoreRuntimePanel: React.FC = () => {
 
           {policyLoading && (
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-              {t('superadmin.aiCoreRuntime.policyLoading', { defaultValue: 'Loading tool policy…' })}
+              {t('superadmin.aiCoreRuntime.policyLoading', {
+                defaultValue: 'Loading tool policy…',
+              })}
             </p>
           )}
 
@@ -341,15 +355,19 @@ export const AICoreRuntimePanel: React.FC = () => {
                   {t('superadmin.aiCoreRuntime.policyFields.state', { defaultValue: 'State' })}
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  {policy.effectivePolicy.state || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                  {policy.effectivePolicy.state ||
+                    t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
-                  {t('superadmin.aiCoreRuntime.policyFields.approvalClass', { defaultValue: 'Approval class' })}
+                  {t('superadmin.aiCoreRuntime.policyFields.approvalClass', {
+                    defaultValue: 'Approval class',
+                  })}
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  {policy.effectivePolicy.approvalClass || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                  {policy.effectivePolicy.approvalClass ||
+                    t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                 </dd>
               </div>
               <div>
@@ -388,18 +406,24 @@ export const AICoreRuntimePanel: React.FC = () => {
               </div>
               <div>
                 <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
-                  {t('superadmin.aiCoreRuntime.policyFields.policyRef', { defaultValue: 'Policy ref' })}
+                  {t('superadmin.aiCoreRuntime.policyFields.policyRef', {
+                    defaultValue: 'Policy ref',
+                  })}
                 </dt>
                 <dd className="mt-1 font-mono text-xs text-slate-900 dark:text-white break-all">
-                  {policy.effectivePolicy.policyRef || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                  {policy.effectivePolicy.policyRef ||
+                    t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                 </dd>
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
-                  {t('superadmin.aiCoreRuntime.policyFields.blockReason', { defaultValue: 'Block reason' })}
+                  {t('superadmin.aiCoreRuntime.policyFields.blockReason', {
+                    defaultValue: 'Block reason',
+                  })}
                 </dt>
                 <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
-                  {policy.effectivePolicy.blockReason || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                  {policy.effectivePolicy.blockReason ||
+                    t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                 </dd>
               </div>
             </dl>
@@ -491,7 +515,9 @@ export const AICoreRuntimePanel: React.FC = () => {
                       className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
                     >
                       <div className="text-sm font-medium text-slate-900 dark:text-white">
-                        {trace.toolName || trace.id || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                        {trace.toolName ||
+                          trace.id ||
+                          t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                       </div>
                       <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {[trace.stage, trace.status].filter(Boolean).join(' · ') ||
@@ -511,7 +537,9 @@ export const AICoreRuntimePanel: React.FC = () => {
 
             <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3">
               <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
-                {t('superadmin.aiCoreRuntime.provenanceTitle', { defaultValue: 'Provenance ledger' })}
+                {t('superadmin.aiCoreRuntime.provenanceTitle', {
+                  defaultValue: 'Provenance ledger',
+                })}
               </div>
               <div className="mt-3 space-y-2">
                 {(provenanceLedger?.lineage?.length || 0) > 0 ? (
@@ -521,7 +549,9 @@ export const AICoreRuntimePanel: React.FC = () => {
                       className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
                     >
                       <div className="text-sm font-medium text-slate-900 dark:text-white">
-                        {entry.label || entry.id || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                        {entry.label ||
+                          entry.id ||
+                          t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
                       </div>
                       <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {entry.kind || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}

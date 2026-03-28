@@ -22,7 +22,8 @@ const notConfigured = (res: Response) =>
   });
 
 const safeParseArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string');
+  if (Array.isArray(value))
+    return value.filter((entry): entry is string => typeof entry === 'string');
   if (typeof value !== 'string' || !value.trim()) return [];
   try {
     const parsed = JSON.parse(value);
@@ -55,7 +56,9 @@ router.get(
     }
 
     try {
-      const resolvedContext = await organizationContextService.buildResolvedContext(orgId).catch(() => null);
+      const resolvedContext = await organizationContextService
+        .buildResolvedContext(orgId)
+        .catch(() => null);
 
       // Get basic organization info
       const org = await dbGet<{
@@ -162,16 +165,18 @@ router.get(
             resolvedContext?.strategic.goals ||
             safeParseArray(profile?.strategic_priorities),
           competitive_position:
-            resolvedContext?.strategic.competitivePosition || (brandingSettings.competitive_position ?? ''),
-          growth_stage: resolvedContext?.strategic.growthStage || (brandingSettings.growth_stage ?? ''),
-          mission_statement: resolvedContext?.strategic.mission || (brandingSettings.mission_statement ?? ''),
-          vision_statement: resolvedContext?.strategic.vision || (brandingSettings.vision_statement ?? ''),
+            resolvedContext?.strategic.competitivePosition ||
+            (brandingSettings.competitive_position ?? ''),
+          growth_stage:
+            resolvedContext?.strategic.growthStage || (brandingSettings.growth_stage ?? ''),
+          mission_statement:
+            resolvedContext?.strategic.mission || (brandingSettings.mission_statement ?? ''),
+          vision_statement:
+            resolvedContext?.strategic.vision || (brandingSettings.vision_statement ?? ''),
           technology_stack:
             resolvedContext?.systems.stack || safeParseArray(brandingSettings.technology_stack),
           cloud_adoption_level:
-            resolvedContext?.systems.cloudAdoption ||
-            brandingSettings.cloud_adoption_level ||
-            '',
+            resolvedContext?.systems.cloudAdoption || brandingSettings.cloud_adoption_level || '',
           preferred_language:
             resolvedContext?.profile.defaultLanguage || profile?.preferred_language || 'en',
           currency: resolvedContext?.profile.currency || brandingSettings.currency || 'USD',
@@ -204,7 +209,8 @@ router.get(
           timeFormat: brandingSettings.timeFormat || '24h',
 
           // Custom domain
-          customDomain: resolvedContext?.profile.customDomain || brandingSettings.customDomain || '',
+          customDomain:
+            resolvedContext?.profile.customDomain || brandingSettings.customDomain || '',
           customDomainVerified: brandingSettings.customDomainVerified || false,
 
           // Social

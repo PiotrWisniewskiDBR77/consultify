@@ -2,9 +2,9 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  type DecisionPlaybook,
   PlaybookSchema,
   validateRequiredFields,
-  type DecisionPlaybook,
 } from '../services/decisionPlaybookService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -53,11 +53,11 @@ export class DecisionPlaybookController {
 
       const rows = await queryHelpers.queryAll<PlaybookRow>(
         `SELECT * FROM decision_playbooks WHERE organization_id = ? AND is_active = true ORDER BY created_at DESC`,
-        [orgId],
+        [orgId]
       );
 
       res.json((rows || []).map(rowToPlaybook));
-    },
+    }
   );
 
   static createPlaybook = asyncHandler(
@@ -76,7 +76,7 @@ export class DecisionPlaybookController {
         await queryHelpers.queryRun(
           `UPDATE decision_playbooks SET is_default = false, updated_at = CURRENT_TIMESTAMP
            WHERE organization_id = ? AND decision_type = ? AND is_default = true`,
-          [orgId, body.decisionType],
+          [orgId, body.decisionType]
         );
       }
 
@@ -95,11 +95,11 @@ export class DecisionPlaybookController {
           body.isDefault ? true : false,
           body.isActive !== false,
           userId,
-        ],
+        ]
       );
 
       res.status(201).json({ id, name: body.name, decisionType: body.decisionType });
-    },
+    }
   );
 
   static getPlaybook = asyncHandler(
@@ -113,7 +113,7 @@ export class DecisionPlaybookController {
       const { playbookId } = req.params;
       const row = await queryHelpers.queryOne<PlaybookRow>(
         `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
-        [playbookId, orgId],
+        [playbookId, orgId]
       );
 
       if (!row) {
@@ -122,7 +122,7 @@ export class DecisionPlaybookController {
       }
 
       res.json(rowToPlaybook(row));
-    },
+    }
   );
 
   static updatePlaybook = asyncHandler(
@@ -136,7 +136,7 @@ export class DecisionPlaybookController {
       const { playbookId } = req.params;
       const existing = await queryHelpers.queryOne<PlaybookRow>(
         `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
-        [playbookId, orgId],
+        [playbookId, orgId]
       );
 
       if (!existing) {
@@ -150,7 +150,7 @@ export class DecisionPlaybookController {
         await queryHelpers.queryRun(
           `UPDATE decision_playbooks SET is_default = false, updated_at = CURRENT_TIMESTAMP
            WHERE organization_id = ? AND decision_type = ? AND is_default = true AND id != ?`,
-          [orgId, body.decisionType, playbookId],
+          [orgId, body.decisionType, playbookId]
         );
       }
 
@@ -168,11 +168,11 @@ export class DecisionPlaybookController {
           body.isActive !== false,
           playbookId,
           orgId,
-        ],
+        ]
       );
 
       res.json({ id: playbookId, message: 'Playbook updated' });
-    },
+    }
   );
 
   static deletePlaybook = asyncHandler(
@@ -186,7 +186,7 @@ export class DecisionPlaybookController {
       const { playbookId } = req.params;
       const existing = await queryHelpers.queryOne<PlaybookRow>(
         `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
-        [playbookId, orgId],
+        [playbookId, orgId]
       );
 
       if (!existing) {
@@ -196,7 +196,7 @@ export class DecisionPlaybookController {
 
       const usageCount = await queryHelpers.queryOne<{ count: number }>(
         `SELECT COUNT(*) as count FROM decisions WHERE playbook_id = ? AND organization_id = ?`,
-        [playbookId, orgId],
+        [playbookId, orgId]
       );
 
       if (usageCount && usageCount.count > 0) {
@@ -209,11 +209,11 @@ export class DecisionPlaybookController {
 
       await queryHelpers.queryRun(
         `DELETE FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
-        [playbookId, orgId],
+        [playbookId, orgId]
       );
 
       res.json({ id: playbookId, message: 'Playbook deleted' });
-    },
+    }
   );
 
   static getRequiredFieldsStatus = asyncHandler(
@@ -240,7 +240,7 @@ export class DecisionPlaybookController {
         decision_rationale: string | null;
       }>(
         `SELECT id, organization_id, playbook_id, type, workflow_status, title, description, priority, impact, deadline, decision_maker_id, decision_rationale FROM decisions WHERE id = ? AND organization_id = ?`,
-        [id, orgId],
+        [id, orgId]
       );
 
       if (!decision) {
@@ -253,14 +253,14 @@ export class DecisionPlaybookController {
       if (decision.playbook_id) {
         playbookRow = await queryHelpers.queryOne<PlaybookRow>(
           `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
-          [decision.playbook_id, orgId],
+          [decision.playbook_id, orgId]
         );
       }
 
       if (!playbookRow) {
         playbookRow = await queryHelpers.queryOne<PlaybookRow>(
           `SELECT * FROM decision_playbooks WHERE organization_id = ? AND decision_type = ? AND is_default = true AND is_active = true LIMIT 1`,
-          [orgId, decision.type],
+          [orgId, decision.type]
         );
       }
 
@@ -288,7 +288,7 @@ export class DecisionPlaybookController {
         ...result,
         playbook: { id: playbook.id, name: playbook.name },
       });
-    },
+    }
   );
 }
 

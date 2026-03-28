@@ -125,15 +125,15 @@ export async function ensureMeetingTables(): Promise<void> {
     )
   `);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_meetings_org ON meetings(organization_id, start_at)`);
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_meetings_project ON meetings(project_id, start_at)`
-  );
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_meetings_project ON meetings(project_id, start_at)`);
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_meeting_follow_ups_meeting ON meeting_follow_ups(meeting_id)`
   );
 }
 
-async function getFollowUpsForMeetings(meetingIds: string[]): Promise<Record<string, MeetingFollowUp[]>> {
+async function getFollowUpsForMeetings(
+  meetingIds: string[]
+): Promise<Record<string, MeetingFollowUp[]>> {
   if (meetingIds.length === 0) return {};
   const placeholders = meetingIds.map(() => '?').join(', ');
   const rows = await dbAll<FollowUpRow>(
@@ -249,7 +249,10 @@ export async function addMeetingFollowUp(input: {
   owner?: string | null;
 }): Promise<MeetingRecord | null> {
   await ensureMeetingTables();
-  const meeting = await getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
+  const meeting = await getMeeting({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+  });
   if (!meeting) return null;
   await dbRun(
     `INSERT INTO meeting_follow_ups (id, meeting_id, title, owner, status, created_at, updated_at)
@@ -276,7 +279,10 @@ export async function addMeetingDecision(input: {
   decision: string;
 }): Promise<MeetingRecord | null> {
   await ensureMeetingTables();
-  const meeting = await getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
+  const meeting = await getMeeting({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+  });
   if (!meeting) return null;
   const decisions = [...meeting.decisions, input.decision.trim()].filter(Boolean);
   await dbRun(`UPDATE meetings SET decisions_json = ?, updated_at = ? WHERE id = ?`, [
@@ -294,7 +300,10 @@ export async function updateMeetingFollowUpStatus(input: {
   status: FollowUpStatus;
 }): Promise<MeetingRecord | null> {
   await ensureMeetingTables();
-  const meeting = await getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
+  const meeting = await getMeeting({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+  });
   if (!meeting) return null;
   await dbRun(
     `UPDATE meeting_follow_ups SET status = ?, updated_at = ?

@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -9,8 +9,8 @@ import {
   CreatePresetParamsSchema,
   CreateReleaseBundleParamsSchema,
   EvaluateGateParamsSchema,
-  SetCanaryConfigParamsSchema,
   PurposeFamilyValues,
+  SetCanaryConfigParamsSchema,
 } from '../../types/promptOsRuntime.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -22,7 +22,11 @@ function parseLimit(raw: unknown, fallback: number = 100): number {
   return Math.min(parsed, 500);
 }
 
-function handlePromptOsError(err: unknown, res: Response, fallbackMessage: string): Response | null {
+function handlePromptOsError(
+  err: unknown,
+  res: Response,
+  fallbackMessage: string
+): Response | null {
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: fallbackMessage,
@@ -90,7 +94,7 @@ router.get(
       },
       meta: { version: 'v8' },
     });
-  }),
+  })
 );
 
 router.get(
@@ -99,7 +103,7 @@ router.get(
     const { organizationId } = getV8Context(req);
     const data = await promptOsRuntimeService.listPresetsByOrganization(organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -114,7 +118,7 @@ router.get(
       });
     }
     return res.json({ data: preset, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -131,7 +135,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -141,7 +145,7 @@ router.get(
     const limit = parseLimit(req.query.limit, 100);
     const data = await promptOsRuntimeService.listBundlesByOrganization(organizationId, limit);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -151,7 +155,7 @@ router.get(
     const bundle = await requireBundleForOrg(req.params.bundleId, organizationId, res);
     if (!bundle) return;
     return res.json({ data: bundle, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -175,7 +179,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -193,7 +197,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.post(
@@ -219,7 +223,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -231,7 +235,7 @@ router.get(
 
     const data = await promptOsRuntimeService.getGatesByBundle(bundle.bundleId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -251,7 +255,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -269,7 +273,7 @@ router.get(
       });
     }
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -289,7 +293,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 export default router;

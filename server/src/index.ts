@@ -35,13 +35,13 @@ import {
   initializeConnectionPool,
   shutdownConnectionPool,
 } from './database/index.js';
-import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
+import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
+import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
-import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
@@ -245,15 +245,19 @@ const databaseInitPromise: Promise<void> =
           if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
             setTimeout(async () => {
               try {
-                const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+                const { runMigrations } =
+                  await import('./services/tablePlatform/migrationRunner.js');
                 const migResult = await runMigrations();
                 if (migResult.failed) {
                   logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
                 } else {
-                  logger.info(`[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`);
+                  logger.info(
+                    `[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`
+                  );
                 }
                 try {
-                  const { default: templateService } = await import('./services/tablePlatform/TemplateService.js');
+                  const { default: templateService } =
+                    await import('./services/tablePlatform/TemplateService.js');
                   if (templateService?.seedDefaultTemplates) {
                     await templateService.seedDefaultTemplates();
                   }
@@ -368,7 +372,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   // Scheduled Automations Executor (cron-based) - non-blocking
   (async () => {
     try {
-      const { scheduledAutomationExecutor } = await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
+      const { scheduledAutomationExecutor } =
+        await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
       scheduledAutomationExecutor.start(60_000);
       logger.info('[Server] ✅ Scheduled Automation Executor started (60s interval)');
     } catch (err: any) {

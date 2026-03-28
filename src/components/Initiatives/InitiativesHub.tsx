@@ -190,7 +190,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
   const activeDocument = useMemo(
-    () => (activeDocumentId ? openDocuments.find((document) => document.id === activeDocumentId) : null),
+    () =>
+      activeDocumentId ? openDocuments.find((document) => document.id === activeDocumentId) : null,
     [activeDocumentId, openDocuments]
   );
   const activeInitiativeDocumentId = useMemo(() => {
@@ -492,9 +493,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   // Single click row/card → selection + preview (V3 Table+Preview)
-  const handleInitiativeClick = useCallback((initiative: PortfolioInitiative) => {
-    handlePreviewSelection(initiative.id);
-  }, [handlePreviewSelection]);
+  const handleInitiativeClick = useCallback(
+    (initiative: PortfolioInitiative) => {
+      handlePreviewSelection(initiative.id);
+    },
+    [handlePreviewSelection]
+  );
 
   // Open initiative as dynamic document (DynamicTabs)
   const handleOpenFullScreen = useCallback(
@@ -1315,14 +1319,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    v8InitiativeSnapshot.wbsCompleteness.complete ? 'bg-emerald-400' : 'bg-amber-400'
+                    v8InitiativeSnapshot.wbsCompleteness.complete
+                      ? 'bg-emerald-400'
+                      : 'bg-amber-400'
                   }`}
                 />
                 <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
                 <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                   {v8InitiativeSnapshot.wbsCompleteness.complete
                     ? t('initiatives.v8.complete', 'complete')
-                    : t('initiatives.v8.gaps', { count: v8SnapshotGapCount, defaultValue: '{{count}} gaps' })}
+                    : t('initiatives.v8.gaps', {
+                        count: v8SnapshotGapCount,
+                        defaultValue: '{{count}} gaps',
+                      })}
                 </span>
               </div>
               <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">

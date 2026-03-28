@@ -18,8 +18,8 @@ import { z } from 'zod';
 
 import type { ScopeType } from './contextSnapshot.js';
 import { ScopeTypeValues } from './contextSnapshot.js';
-import type { RetrievalResult, BudgetHint } from './governedRetrieval.js';
-import { RetrievalResultSchema, BudgetHintSchema } from './governedRetrieval.js';
+import type { BudgetHint, RetrievalResult } from './governedRetrieval.js';
+import { BudgetHintSchema, RetrievalResultSchema } from './governedRetrieval.js';
 import type { TrustClass } from './trustAudit.js';
 import { TrustClassValues } from './trustAudit.js';
 
@@ -226,7 +226,12 @@ export const OrchestrateRetrievalParamsSchema = z.object({
   contextSnapshotId: z.string().uuid(),
   consumerClass: z.enum(['chat', 'execution']),
   query: z.string().min(1),
-  searchPreset: z.enum(['workspace_broad', 'project_focused', 'artifact_deep', 'cross_org_federated']),
+  searchPreset: z.enum([
+    'workspace_broad',
+    'project_focused',
+    'artifact_deep',
+    'cross_org_federated',
+  ]),
   budgetHint: BudgetHintSchema.nullable().optional(),
   workingMemoryContextRef: z.string().nullable().optional(),
 });

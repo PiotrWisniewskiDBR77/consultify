@@ -3,7 +3,7 @@ import { isAdminOrSuperAdminRole } from '@/utils/roleGuards';
 
 export function resolveLegacySyncSettingsEntry(
   pathname: string,
-  role: string | null | undefined,
+  role: string | null | undefined
 ): string | null {
   const normalized = pathname.replace(/\/+$/, '') || '/';
   if (normalized !== ROUTES.SETTINGS.INTEGRATIONS) {

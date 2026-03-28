@@ -68,8 +68,7 @@ export const ANSWER_MODALITY_RULES: AnswerModalityRule[] = [
     ],
     expectedAnswerShapeHint:
       '2-5 sentences explaining the reasoning, context, and any supporting examples.',
-    evidencePromptHint:
-      'Please share any documents, links, or data that support your answer.',
+    evidencePromptHint: 'Please share any documents, links, or data that support your answer.',
   },
   {
     answerType: 'short_text',
@@ -81,13 +80,7 @@ export const ANSWER_MODALITY_RULES: AnswerModalityRule[] = [
       allowUrl: false,
       allowContextNote: true,
     },
-    bestFor: [
-      'names',
-      'titles',
-      'brief facts',
-      'labels',
-      'one-word or one-phrase answers',
-    ],
+    bestFor: ['names', 'titles', 'brief facts', 'labels', 'one-word or one-phrase answers'],
     expectedAnswerShapeHint: 'A single word, name, or short phrase.',
   },
   {
@@ -172,13 +165,7 @@ export const ANSWER_MODALITY_RULES: AnswerModalityRule[] = [
       allowUrl: false,
       allowContextNote: true,
     },
-    bestFor: [
-      'metrics',
-      'counts',
-      'percentages',
-      'financial figures',
-      'headcount',
-    ],
+    bestFor: ['metrics', 'counts', 'percentages', 'financial figures', 'headcount'],
     expectedAnswerShapeHint: 'A numeric value, optionally with unit (e.g. "42%", "1.2M USD").',
     evidencePromptHint: 'Please cite the data source or report this number comes from.',
   },
@@ -192,12 +179,7 @@ export const ANSWER_MODALITY_RULES: AnswerModalityRule[] = [
       allowUrl: false,
       allowContextNote: true,
     },
-    bestFor: [
-      'timelines',
-      'deadlines',
-      'milestones',
-      'launch dates',
-    ],
+    bestFor: ['timelines', 'deadlines', 'milestones', 'launch dates'],
     expectedAnswerShapeHint: 'A date in YYYY-MM-DD format or a descriptive timeframe.',
   },
   {

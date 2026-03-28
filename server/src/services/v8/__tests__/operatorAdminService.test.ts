@@ -1,34 +1,34 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RecordFleetHealthParams,
-  RegisterPackageParams,
-  InstallPackageForTenantParams,
   AddSupportNoteParams,
   InitiateEmergencyPauseParams,
+  InstallPackageForTenantParams,
+  RecordFleetHealthParams,
+  RegisterPackageParams,
 } from '../../../types/operatorAdminSurfaces.js';
 import {
+  AddSupportNoteParamsSchema,
   ConnectorAuthStateValues,
-  ProviderTierValues,
-  DriftStateValues,
-  PackageLifecycleStateValues,
-  PackageCapabilityValues,
-  SupportNoteAuthorRoleValues,
-  EmergencyPauseScopeValues,
-  FleetHealthSignalTypeValues,
   ConnectorFleetHealthEntrySchema,
   ConnectorPackageSchema,
-  TenantConnectorInstallationSchema,
-  SupportNoteSchema,
+  DriftStateValues,
   EmergencyPauseSchema,
+  EmergencyPauseScopeValues,
+  FLEET_HEALTH_SIGNAL_THRESHOLDS,
   FleetHealthSignalSchema,
+  FleetHealthSignalTypeValues,
+  InitiateEmergencyPauseParamsSchema,
+  InstallPackageForTenantParamsSchema,
+  PackageCapabilityValues,
+  PackageLifecycleStateValues,
+  ProviderTierValues,
   RecordFleetHealthParamsSchema,
   RegisterPackageParamsSchema,
-  InstallPackageForTenantParamsSchema,
-  AddSupportNoteParamsSchema,
-  InitiateEmergencyPauseParamsSchema,
-  FLEET_HEALTH_SIGNAL_THRESHOLDS,
+  SupportNoteAuthorRoleValues,
+  SupportNoteSchema,
+  TenantConnectorInstallationSchema,
 } from '../../../types/operatorAdminSurfaces.js';
 
 // ==========================================
@@ -55,19 +55,19 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  recordFleetHealth,
-  getFleetHealth,
-  getConnectorHealth,
-  registerPackage,
-  getPackage,
-  installPackageForTenant,
-  getTenantInstallations,
   addSupportNote,
-  getSupportNotes,
-  initiateEmergencyPause,
-  resumeFromEmergencyPause,
-  getActiveEmergencyPauses,
   checkFleetHealthSignals,
+  getActiveEmergencyPauses,
+  getConnectorHealth,
+  getFleetHealth,
+  getPackage,
+  getSupportNotes,
+  getTenantInstallations,
+  initiateEmergencyPause,
+  installPackageForTenant,
+  recordFleetHealth,
+  registerPackage,
+  resumeFromEmergencyPause,
 } from '../operatorAdminService.js';
 
 // ==========================================
@@ -82,7 +82,9 @@ const USER_ID = 'user-admin-1';
 const PACKAGE_ID = '00000000-0000-4000-8000-000000000020';
 const INCIDENT_REF = 'INC-2026-001';
 
-function makeFleetHealthParams(overrides?: Partial<RecordFleetHealthParams>): RecordFleetHealthParams {
+function makeFleetHealthParams(
+  overrides?: Partial<RecordFleetHealthParams>
+): RecordFleetHealthParams {
   return {
     connectorId: CONNECTOR_ID,
     organizationId: ORG_ID,
@@ -144,7 +146,9 @@ function makePackageRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makeInstallParams(overrides?: Partial<InstallPackageForTenantParams>): InstallPackageForTenantParams {
+function makeInstallParams(
+  overrides?: Partial<InstallPackageForTenantParams>
+): InstallPackageForTenantParams {
   return {
     packageId: PACKAGE_ID,
     organizationId: ORG_ID,
@@ -192,7 +196,9 @@ function makeSupportNoteRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makePauseParams(overrides?: Partial<InitiateEmergencyPauseParams>): InitiateEmergencyPauseParams {
+function makePauseParams(
+  overrides?: Partial<InitiateEmergencyPauseParams>
+): InitiateEmergencyPauseParams {
   return {
     organizationId: ORG_ID,
     pauseScope: 'all_connectors',
@@ -255,7 +261,7 @@ describe('recordFleetHealth', () => {
     mockDbGet.mockResolvedValueOnce(makeFleetHealthRow());
 
     const result = await recordFleetHealth(
-      makeFleetHealthParams({ authState: 'degraded_reauth_needed', deadLetterCount: 3 }),
+      makeFleetHealthParams({ authState: 'degraded_reauth_needed', deadLetterCount: 3 })
     );
 
     expect(result.authState).toBe('degraded_reauth_needed');
@@ -267,12 +273,10 @@ describe('recordFleetHealth', () => {
 
   it('preserves existing lastSyncSuccess when not provided in update', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFleetHealthRow({ last_sync_success: '2026-03-23T09:00:00.000Z' }),
+      makeFleetHealthRow({ last_sync_success: '2026-03-23T09:00:00.000Z' })
     );
 
-    const result = await recordFleetHealth(
-      makeFleetHealthParams({ lastSyncSuccess: undefined }),
-    );
+    const result = await recordFleetHealth(makeFleetHealthParams({ lastSyncSuccess: undefined }));
 
     expect(result.lastSyncSuccess).toBe('2026-03-23T09:00:00.000Z');
   });
@@ -280,7 +284,7 @@ describe('recordFleetHealth', () => {
   it('supports all 8 auth states', () => {
     for (const authState of ConnectorAuthStateValues) {
       expect(() =>
-        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ authState })),
+        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ authState }))
       ).not.toThrow();
     }
   });
@@ -288,7 +292,7 @@ describe('recordFleetHealth', () => {
   it('supports all 4 provider tiers', () => {
     for (const providerTier of ProviderTierValues) {
       expect(() =>
-        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ providerTier })),
+        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ providerTier }))
       ).not.toThrow();
     }
   });
@@ -296,32 +300,32 @@ describe('recordFleetHealth', () => {
   it('supports all 5 drift states', () => {
     for (const driftState of DriftStateValues) {
       expect(() =>
-        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ driftState })),
+        RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ driftState }))
       ).not.toThrow();
     }
   });
 
   it('rejects negative deadLetterCount via Zod', () => {
     expect(() =>
-      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ deadLetterCount: -1 })),
+      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ deadLetterCount: -1 }))
     ).toThrow(ZodError);
   });
 
   it('rejects negative stalenessIndicator via Zod', () => {
     expect(() =>
-      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ stalenessIndicator: -1 })),
+      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ stalenessIndicator: -1 }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid auth state via Zod', () => {
     expect(() =>
-      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ authState: 'invalid' as any })),
+      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ authState: 'invalid' as any }))
     ).toThrow(ZodError);
   });
 
   it('rejects empty connectorId via Zod', () => {
     expect(() =>
-      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ connectorId: '' })),
+      RecordFleetHealthParamsSchema.parse(makeFleetHealthParams({ connectorId: '' }))
     ).toThrow(ZodError);
   });
 });
@@ -400,7 +404,7 @@ describe('registerPackage', () => {
   it('supports all 4 lifecycle states', () => {
     for (const lifecycleState of PackageLifecycleStateValues) {
       expect(() =>
-        RegisterPackageParamsSchema.parse(makePackageParams({ lifecycleState })),
+        RegisterPackageParamsSchema.parse(makePackageParams({ lifecycleState }))
       ).not.toThrow();
     }
   });
@@ -408,20 +412,20 @@ describe('registerPackage', () => {
   it('supports all 8 capability values', () => {
     for (const cap of PackageCapabilityValues) {
       expect(() =>
-        RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: [cap] })),
+        RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: [cap] }))
       ).not.toThrow();
     }
   });
 
   it('rejects empty capabilities array via Zod', () => {
     expect(() =>
-      RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: [] })),
+      RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: [] }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid capability via Zod', () => {
     expect(() =>
-      RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: ['invalid' as any] })),
+      RegisterPackageParamsSchema.parse(makePackageParams({ capabilities: ['invalid' as any] }))
     ).toThrow(ZodError);
   });
 
@@ -490,25 +494,21 @@ describe('installPackageForTenant', () => {
   it('throws when package not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      installPackageForTenant(makeInstallParams()),
-    ).rejects.toThrow('not found');
+    await expect(installPackageForTenant(makeInstallParams())).rejects.toThrow('not found');
   });
 
   it('throws when package is not tenant-installable', async () => {
     mockDbGet.mockResolvedValueOnce(makePackageRow({ tenant_installable: 0 }));
 
-    await expect(
-      installPackageForTenant(makeInstallParams()),
-    ).rejects.toThrow('not tenant-installable');
+    await expect(installPackageForTenant(makeInstallParams())).rejects.toThrow(
+      'not tenant-installable'
+    );
   });
 
   it('throws when package is retired', async () => {
     mockDbGet.mockResolvedValueOnce(makePackageRow({ lifecycle_state: 'retired' }));
 
-    await expect(
-      installPackageForTenant(makeInstallParams()),
-    ).rejects.toThrow('retired');
+    await expect(installPackageForTenant(makeInstallParams())).rejects.toThrow('retired');
   });
 
   it('allows installation of deprecated package with warning', async () => {
@@ -520,13 +520,13 @@ describe('installPackageForTenant', () => {
 
   it('rejects invalid packageId via Zod', () => {
     expect(() =>
-      InstallPackageForTenantParamsSchema.parse(makeInstallParams({ packageId: 'not-uuid' })),
+      InstallPackageForTenantParamsSchema.parse(makeInstallParams({ packageId: 'not-uuid' }))
     ).toThrow(ZodError);
   });
 
   it('rejects empty enabledBy via Zod', () => {
     expect(() =>
-      InstallPackageForTenantParamsSchema.parse(makeInstallParams({ enabledBy: '' })),
+      InstallPackageForTenantParamsSchema.parse(makeInstallParams({ enabledBy: '' }))
     ).toThrow(ZodError);
   });
 });
@@ -592,20 +592,20 @@ describe('addSupportNote', () => {
   });
 
   it('rejects empty content via Zod', () => {
-    expect(() =>
-      AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ content: '' })),
-    ).toThrow(ZodError);
+    expect(() => AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ content: '' }))).toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty incidentRef via Zod', () => {
     expect(() =>
-      AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ incidentRef: '' })),
+      AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ incidentRef: '' }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid authorRole via Zod', () => {
     expect(() =>
-      AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ authorRole: 'admin' as any })),
+      AddSupportNoteParamsSchema.parse(makeSupportNoteParams({ authorRole: 'admin' as any }))
     ).toThrow(ZodError);
   });
 });
@@ -668,7 +668,7 @@ describe('initiateEmergencyPause', () => {
 
   it('creates a provider_type scoped pause with providerKey', async () => {
     const result = await initiateEmergencyPause(
-      makePauseParams({ pauseScope: 'provider_type', providerKey: 'jira' }),
+      makePauseParams({ pauseScope: 'provider_type', providerKey: 'jira' })
     );
 
     expect(result.pauseScope).toBe('provider_type');
@@ -677,9 +677,7 @@ describe('initiateEmergencyPause', () => {
 
   it('throws when provider_type scope lacks providerKey', async () => {
     await expect(
-      initiateEmergencyPause(
-        makePauseParams({ pauseScope: 'provider_type', providerKey: null }),
-      ),
+      initiateEmergencyPause(makePauseParams({ pauseScope: 'provider_type', providerKey: null }))
     ).rejects.toThrow('providerKey is required');
   });
 
@@ -690,21 +688,21 @@ describe('initiateEmergencyPause', () => {
           makePauseParams({
             pauseScope,
             providerKey: pauseScope === 'provider_type' ? 'jira' : null,
-          }),
-        ),
+          })
+        )
       ).not.toThrow();
     }
   });
 
   it('rejects empty reason via Zod', () => {
-    expect(() =>
-      InitiateEmergencyPauseParamsSchema.parse(makePauseParams({ reason: '' })),
-    ).toThrow(ZodError);
+    expect(() => InitiateEmergencyPauseParamsSchema.parse(makePauseParams({ reason: '' }))).toThrow(
+      ZodError
+    );
   });
 
   it('rejects negative blastRadius via Zod', () => {
     expect(() =>
-      InitiateEmergencyPauseParamsSchema.parse(makePauseParams({ blastRadius: -1 })),
+      InitiateEmergencyPauseParamsSchema.parse(makePauseParams({ blastRadius: -1 }))
     ).toThrow(ZodError);
   });
 
@@ -718,10 +716,7 @@ describe('resumeFromEmergencyPause', () => {
   it('resumes an active pause', async () => {
     mockDbGet.mockResolvedValueOnce(makePauseRow());
 
-    const result = await resumeFromEmergencyPause(
-      '00000000-0000-4000-8000-ffffffffffff',
-      USER_ID,
-    );
+    const result = await resumeFromEmergencyPause('00000000-0000-4000-8000-ffffffffffff', USER_ID);
 
     expect(result.resumedAt).toBeDefined();
     expect(result.resumedBy).toBe(USER_ID);
@@ -732,28 +727,23 @@ describe('resumeFromEmergencyPause', () => {
   it('throws when pause not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resumeFromEmergencyPause('nonexistent', USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(resumeFromEmergencyPause('nonexistent', USER_ID)).rejects.toThrow('not found');
   });
 
   it('throws when pause already resumed', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makePauseRow({ resumed_at: '2026-03-23T12:00:00.000Z', resumed_by: 'someone' }),
+      makePauseRow({ resumed_at: '2026-03-23T12:00:00.000Z', resumed_by: 'someone' })
     );
 
     await expect(
-      resumeFromEmergencyPause('00000000-0000-4000-8000-ffffffffffff', USER_ID),
+      resumeFromEmergencyPause('00000000-0000-4000-8000-ffffffffffff', USER_ID)
     ).rejects.toThrow('already resumed');
   });
 
   it('preserves original pause data after resume', async () => {
     mockDbGet.mockResolvedValueOnce(makePauseRow());
 
-    const result = await resumeFromEmergencyPause(
-      '00000000-0000-4000-8000-ffffffffffff',
-      USER_ID,
-    );
+    const result = await resumeFromEmergencyPause('00000000-0000-4000-8000-ffffffffffff', USER_ID);
 
     expect(result.pauseScope).toBe('all_connectors');
     expect(result.reason).toContain('Critical provider outage');
@@ -832,9 +822,7 @@ describe('checkFleetHealthSignals', () => {
   });
 
   it('detects degraded_auth_count breach', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFleetHealthRow({ auth_state: 'degraded_reauth_needed' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFleetHealthRow({ auth_state: 'degraded_reauth_needed' })]);
 
     const signals = await checkFleetHealthSignals(ORG_ID);
 
@@ -845,9 +833,7 @@ describe('checkFleetHealthSignals', () => {
   });
 
   it('detects dead_letter_depth breach', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFleetHealthRow({ dead_letter_count: 5 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFleetHealthRow({ dead_letter_count: 5 })]);
 
     const signals = await checkFleetHealthSignals(ORG_ID);
 
@@ -858,9 +844,7 @@ describe('checkFleetHealthSignals', () => {
   });
 
   it('detects conflict_depth breach when > 10', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFleetHealthRow({ conflict_count: 11 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFleetHealthRow({ conflict_count: 11 })]);
 
     const signals = await checkFleetHealthSignals(ORG_ID);
 
@@ -870,9 +854,7 @@ describe('checkFleetHealthSignals', () => {
   });
 
   it('does not breach conflict_depth when exactly at threshold minus 1', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFleetHealthRow({ conflict_count: 9 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFleetHealthRow({ conflict_count: 9 })]);
 
     const signals = await checkFleetHealthSignals(ORG_ID);
 
@@ -888,7 +870,7 @@ describe('checkFleetHealthSignals', () => {
           entry_id: `entry-${i}`,
           connector_id: `conn-${i}`,
           staleness_indicator: i < 2 ? 5 : 0,
-        }),
+        })
       );
     }
     mockDbAll.mockResolvedValueOnce(rows);
@@ -924,8 +906,16 @@ describe('checkFleetHealthSignals', () => {
 
   it('counts both degraded_reauth_needed and degraded_scope_limited', async () => {
     mockDbAll.mockResolvedValueOnce([
-      makeFleetHealthRow({ entry_id: 'e1', connector_id: 'c1', auth_state: 'degraded_reauth_needed' }),
-      makeFleetHealthRow({ entry_id: 'e2', connector_id: 'c2', auth_state: 'degraded_scope_limited' }),
+      makeFleetHealthRow({
+        entry_id: 'e1',
+        connector_id: 'c1',
+        auth_state: 'degraded_reauth_needed',
+      }),
+      makeFleetHealthRow({
+        entry_id: 'e2',
+        connector_id: 'c2',
+        auth_state: 'degraded_scope_limited',
+      }),
       makeFleetHealthRow({ entry_id: 'e3', connector_id: 'c3', auth_state: 'healthy' }),
     ]);
 
@@ -1019,7 +1009,7 @@ describe('Zod schema validation', () => {
         conflictCount: 0,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1034,7 +1024,7 @@ describe('Zod schema validation', () => {
         tenantInstallable: true,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1047,7 +1037,7 @@ describe('Zod schema validation', () => {
         enabledBy: USER_ID,
         configurationScope: 'full',
         installedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1062,7 +1052,7 @@ describe('Zod schema validation', () => {
         authorRole: 'support',
         content: 'Test note',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1079,7 +1069,7 @@ describe('Zod schema validation', () => {
         pausedAt: '2026-03-23T10:00:00.000Z',
         resumedAt: null,
         resumedBy: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1090,7 +1080,7 @@ describe('Zod schema validation', () => {
         threshold: 1,
         currentValue: 0,
         breached: false,
-      }),
+      })
     ).not.toThrow();
   });
 

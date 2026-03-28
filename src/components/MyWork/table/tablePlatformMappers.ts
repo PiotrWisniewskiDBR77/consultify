@@ -5,6 +5,13 @@
 
 import type { FieldType, TablePlatformField, TablePlatformView } from '@/types/tablePlatform';
 import type {
+  FilterGroup as TPFilterGroup,
+  FilterRule as TPFilterRule,
+  SortRule as TPSortRule,
+} from '@/types/tablePlatform';
+import type { TablePlatformRecord } from '@/types/tablePlatform';
+
+import type {
   ColumnDef,
   ColumnType,
   FilterGroup,
@@ -13,8 +20,6 @@ import type {
   SortConfig,
   TableNode,
 } from './tableTypes';
-import type { FilterGroup as TPFilterGroup, FilterRule as TPFilterRule, SortRule as TPSortRule } from '@/types/tablePlatform';
-import type { TablePlatformRecord } from '@/types/tablePlatform';
 import { DEFAULT_COLUMN_WIDTH } from './tableTypes';
 
 // Legacy ColumnType -> new FieldType
@@ -53,7 +58,9 @@ FIELD_TYPE_TO_COLUMN_TYPE['percent'] ??= 'number';
 
 /** Convert TablePlatformField to legacy ColumnDef */
 export function fieldToColumn(field: TablePlatformField): ColumnDef {
-  const options = field.options as { options?: Array<{ id?: string; name?: string; color?: string }> } | undefined;
+  const options = field.options as
+    | { options?: Array<{ id?: string; name?: string; color?: string }> }
+    | undefined;
   const optList = options?.options ?? [];
   return {
     key: field.id,
@@ -142,11 +149,13 @@ const TP_OP_TO_LEGACY: Record<string, string> = {
 export function legacyFiltersToTP(filters: FilterGroup): TPFilterGroup {
   return {
     logic: filters.logic,
-    rules: filters.rules.map((r): TPFilterRule => ({
-      fieldId: r.column,
-      operator: LEGACY_OP_TO_TP[r.operator] ?? r.operator,
-      value: r.value,
-    })),
+    rules: filters.rules.map(
+      (r): TPFilterRule => ({
+        fieldId: r.column,
+        operator: LEGACY_OP_TO_TP[r.operator] ?? r.operator,
+        value: r.value,
+      })
+    ),
   };
 }
 
@@ -154,12 +163,14 @@ export function legacyFiltersToTP(filters: FilterGroup): TPFilterGroup {
 export function tpFiltersToLegacy(filters: TPFilterGroup): FilterGroup {
   return {
     logic: filters.logic,
-    rules: filters.rules.map((r): FilterRule => ({
-      id: `${r.fieldId}-${r.operator}`,
-      column: r.fieldId,
-      operator: (TP_OP_TO_LEGACY[r.operator] ?? r.operator) as FilterRule['operator'],
-      value: r.value as string | string[] | number,
-    })),
+    rules: filters.rules.map(
+      (r): FilterRule => ({
+        id: `${r.fieldId}-${r.operator}`,
+        column: r.fieldId,
+        operator: (TP_OP_TO_LEGACY[r.operator] ?? r.operator) as FilterRule['operator'],
+        value: r.value as string | string[] | number,
+      })
+    ),
   };
 }
 

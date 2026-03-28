@@ -30,7 +30,12 @@ function resolveCategory(sectionType: string, label: string): string {
     return SECTION_CATEGORY_MAP[sectionType];
   }
   const lower = label.toLowerCase();
-  if (lower.includes('revenue') || lower.includes('cost') || lower.includes('profit') || lower.includes('value')) {
+  if (
+    lower.includes('revenue') ||
+    lower.includes('cost') ||
+    lower.includes('profit') ||
+    lower.includes('value')
+  ) {
     return 'financial';
   }
   if (lower.includes('risk') || lower.includes('threat')) {
@@ -85,7 +90,10 @@ export function extractFacts(input: NarrativeEngineInput): FactSet[] {
   const keyPoints: string[] = context_pack?.key_points ?? [];
   const sources: any[] = context_pack?.sources ?? [];
 
-  const sourceMap = new Map<string, { artifact_id: string; artifact_type: string; artifact_name: string }>();
+  const sourceMap = new Map<
+    string,
+    { artifact_id: string; artifact_type: string; artifact_name: string }
+  >();
   for (const s of sources) {
     sourceMap.set(s.artifact_id, {
       artifact_id: s.artifact_id,

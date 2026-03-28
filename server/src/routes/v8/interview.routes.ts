@@ -5,8 +5,8 @@
  * @module routes/v8/interview.routes
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import {
   InterviewController,
@@ -14,13 +14,13 @@ import {
   loadInterviewSessionForOrganization,
   loadInterviewSessionsForOrganization,
 } from '../../controllers/InterviewController.js';
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getManagedAssignments,
   getMyAssignments,
   getOverdueAssignments,
 } from '../../services/InterviewAssignmentService.js';
-import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -48,7 +48,7 @@ router.get(
     const { organizationId } = getV8Context(req);
     const sessions = await loadInterviewSessionsForOrganization(organizationId, req.query.status);
     return res.json({ data: { sessions }, meta: interviewMeta() });
-  }),
+  })
 );
 
 /**
@@ -61,7 +61,7 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId);
     return res.json({ data: { sessions }, meta: interviewMeta() });
-  }),
+  })
 );
 
 /**
@@ -74,16 +74,20 @@ router.get(
     const { organizationId } = getV8Context(req);
     const id = firstParam((req.params as { id?: string }).id);
     if (!id) {
-      return res.status(400).json({ error: 'Session id is required', code: 'INTERVIEW_SESSION_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Session id is required', code: 'INTERVIEW_SESSION_ID_REQUIRED' });
     }
 
     const session = await loadInterviewSessionForOrganization(organizationId, id);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found', code: 'INTERVIEW_SESSION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Session not found', code: 'INTERVIEW_SESSION_NOT_FOUND' });
     }
 
     return res.json({ data: { session }, meta: interviewMeta() });
-  }),
+  })
 );
 
 /**
@@ -96,7 +100,7 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const assignments = await getMyAssignments(userId, organizationId);
     return res.json({ data: { assignments }, meta: interviewMeta() });
-  }),
+  })
 );
 
 /**
@@ -109,7 +113,7 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const assignments = await getManagedAssignments(userId, organizationId);
     return res.json({ data: { assignments }, meta: interviewMeta() });
-  }),
+  })
 );
 
 /**
@@ -122,7 +126,7 @@ router.get(
     const { organizationId } = getV8Context(req);
     const assignments = await getOverdueAssignments(organizationId);
     return res.json({ data: { assignments }, meta: interviewMeta() });
-  }),
+  })
 );
 
 router.post('/assignments/:id/start', InterviewController.startAssignment);

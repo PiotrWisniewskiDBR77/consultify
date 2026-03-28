@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { RadarSignalCard } from './radarTypes.js';
 
 const insightSchema = z.object({
@@ -54,13 +54,7 @@ type LocalizedCardCopy = Pick<RadarSignalCard, 'title' | 'summary' | 'insightSum
 const localizationCache = new Map<string, LocalizedCardCopy>();
 
 function getLocalizationCacheKey(card: RadarSignalCard): string {
-  return JSON.stringify([
-    'pl',
-    card.signalId,
-    card.title,
-    card.summary,
-    card.insightSummary,
-  ]);
+  return JSON.stringify(['pl', card.signalId, card.title, card.summary, card.insightSummary]);
 }
 
 class RadarInsightService {

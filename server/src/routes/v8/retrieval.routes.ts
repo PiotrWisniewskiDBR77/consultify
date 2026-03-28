@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -16,7 +16,11 @@ function parseLimit(raw: unknown, fallback: number = 50): number {
   return Math.min(parsed, 200);
 }
 
-function handleRetrievalError(err: unknown, res: Response, fallbackMessage: string): Response | null {
+function handleRetrievalError(
+  err: unknown,
+  res: Response,
+  fallbackMessage: string
+): Response | null {
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: fallbackMessage,
@@ -55,7 +59,7 @@ router.get(
 
     const data = await governedRetrievalService.getRequestsByOrg(organizationId, limit);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -74,7 +78,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -85,7 +89,7 @@ router.get(
     if (!requestRecord) return;
 
     return res.json({ data: requestRecord, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -105,7 +109,7 @@ router.post(
 
     const pipeline = await governedRetrievalService.runPipeline(
       requestRecord,
-      sources as CandidateSource[],
+      sources as CandidateSource[]
     );
 
     return res.json({
@@ -115,7 +119,7 @@ router.post(
       },
       meta: { version: 'v8' },
     });
-  }),
+  })
 );
 
 router.post(
@@ -137,7 +141,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -147,9 +151,12 @@ router.get(
     const requestRecord = await ensureRequestExists(req.params.requestId, organizationId, res);
     if (!requestRecord) return;
 
-    const data = await governedRetrievalService.getTracesByRequest(req.params.requestId, organizationId);
+    const data = await governedRetrievalService.getTracesByRequest(
+      req.params.requestId,
+      organizationId
+    );
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -159,10 +166,10 @@ router.get(
 
     const data = await governedRetrievalService.getTracesByConversation(
       req.params.conversationId,
-      organizationId,
+      organizationId
     );
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -170,9 +177,12 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
 
-    const data = await governedRetrievalService.getTracesBySnapshot(req.params.snapshotId, organizationId);
+    const data = await governedRetrievalService.getTracesBySnapshot(
+      req.params.snapshotId,
+      organizationId
+    );
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 export default router;

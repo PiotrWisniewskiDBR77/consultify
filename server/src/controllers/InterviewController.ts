@@ -16,9 +16,9 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
+import notificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
-import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -74,7 +74,11 @@ const normalizeTemplateAreaTags = (value: unknown): string[] => {
       : [];
 
   return raw
-    .map((item) => String(item || '').trim().toLowerCase())
+    .map((item) =>
+      String(item || '')
+        .trim()
+        .toLowerCase()
+    )
     .filter((item, index, array) => array.indexOf(item) === index)
     .filter((item) => INTERVIEW_TEMPLATE_AREA_TAGS.has(item))
     .slice(0, 6);
@@ -602,9 +606,24 @@ async function normalizeAnswerEvidence(
     evidenceType: string;
     titlePrefix: string;
   }[] = [
-    { field: 'answer_text', evidenceRole: 'answer_text', evidenceType: 'text', titlePrefix: 'Answer' },
-    { field: 'voice_transcript', evidenceRole: 'voice_transcript', evidenceType: 'transcript', titlePrefix: 'Voice transcript' },
-    { field: 'context_note', evidenceRole: 'context_note', evidenceType: 'note', titlePrefix: 'Context note' },
+    {
+      field: 'answer_text',
+      evidenceRole: 'answer_text',
+      evidenceType: 'text',
+      titlePrefix: 'Answer',
+    },
+    {
+      field: 'voice_transcript',
+      evidenceRole: 'voice_transcript',
+      evidenceType: 'transcript',
+      titlePrefix: 'Voice transcript',
+    },
+    {
+      field: 'context_note',
+      evidenceRole: 'context_note',
+      evidenceType: 'note',
+      titlePrefix: 'Context note',
+    },
   ];
 
   for (const mapping of roleMap) {
@@ -685,7 +704,9 @@ async function normalizeAnswerEvidence(
         );
       }
     } catch (e) {
-      logger.warn(`[InterviewController] Link graph edge (evidence→question) skipped: ${String((e as Error)?.message || e)}`);
+      logger.warn(
+        `[InterviewController] Link graph edge (evidence→question) skipped: ${String((e as Error)?.message || e)}`
+      );
     }
   }
 }
@@ -1111,7 +1132,15 @@ async function logInterviewInsightActivity(params: {
     await queryHelpers.queryRun(
       `INSERT INTO interview_insight_activity (id, organization_id, insight_id, type, description, user_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), organizationId, insightId, type, description, userId || null, new Date().toISOString()]
+      [
+        uuidv4(),
+        organizationId,
+        insightId,
+        type,
+        description,
+        userId || null,
+        new Date().toISOString(),
+      ]
     );
   } catch (e) {
     logger.warn('[InterviewController] Failed to log interview insight activity', e);
@@ -1123,7 +1152,7 @@ async function logInterviewInsightActivity(params: {
  */
 export async function loadInterviewSessionsForOrganization(
   organizationId: string,
-  status?: unknown,
+  status?: unknown
 ): Promise<NonNullable<ReturnType<typeof buildSessionResponse>>[]> {
   let query = `
       SELECT s.*
@@ -1153,7 +1182,7 @@ export async function loadInterviewSessionsForOrganization(
 
 export async function loadInterviewSessionForOrganization(
   organizationId: string,
-  sessionId: string,
+  sessionId: string
 ): Promise<NonNullable<ReturnType<typeof buildSessionResponse>> | null> {
   const row = await queryHelpers.queryOne(
     `SELECT s.*
@@ -1172,7 +1201,7 @@ export async function loadInterviewSessionForOrganization(
 
 export async function loadAcceptedInterviewSessionsForManager(
   organizationId: string,
-  userId: string,
+  userId: string
 ): Promise<
   Array<{
     id: string;
@@ -1236,7 +1265,10 @@ export const InterviewController = {
 
   getSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const sessions = await loadInterviewSessionsForOrganization(user.organizationId, req.query.status);
+    const sessions = await loadInterviewSessionsForOrganization(
+      user.organizationId,
+      req.query.status
+    );
     res.json(sessions);
   }),
 
@@ -2135,7 +2167,8 @@ export const InterviewController = {
     // Notify assignee(s) that interview was sent back (team-aware).
     try {
       const recipients = new Set<string>();
-      if ((assignment as any).assignee_user_id) recipients.add(String((assignment as any).assignee_user_id));
+      if ((assignment as any).assignee_user_id)
+        recipients.add(String((assignment as any).assignee_user_id));
       try {
         const memberRows = await queryHelpers.queryAll(
           `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
@@ -2248,7 +2281,8 @@ export const InterviewController = {
     // Notify assignee(s) that interview is approved (team-aware).
     try {
       const recipients = new Set<string>();
-      if ((assignment as any).assignee_user_id) recipients.add(String((assignment as any).assignee_user_id));
+      if ((assignment as any).assignee_user_id)
+        recipients.add(String((assignment as any).assignee_user_id));
       try {
         const memberRows = await queryHelpers.queryAll(
           `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
@@ -2935,10 +2969,8 @@ export const InterviewController = {
 
     const templates = (rows || [])
       .map(buildTemplateResponse)
-      .filter(
-        (
-          template
-        ): template is NonNullable<ReturnType<typeof buildTemplateResponse>> => Boolean(template)
+      .filter((template): template is NonNullable<ReturnType<typeof buildTemplateResponse>> =>
+        Boolean(template)
       );
 
     const filtered = templates.filter((template) => {
@@ -3688,7 +3720,8 @@ export const InterviewController = {
 
     const normalized = String(extractedText || '')
       .replace(/\r\n/g, '\n')
-      .replace(/\u0000/g, '')
+      .split('\0')
+      .join('')
       .trim();
 
     if (!normalized) {
@@ -3799,9 +3832,13 @@ ${JSON.stringify(answered || [], null, 2)}
        WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
       [questionId, user.organizationId, user.organizationId]
     );
-    if (!question) { res.status(404).json({ error: 'Question not found' }); return; }
+    if (!question) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
     if (String((question as any).session_owner_id) !== String(user.id)) {
-      res.status(403).json({ error: 'Forbidden' }); return;
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
 
     const lang = language === 'pl' ? 'Polish' : 'English';
@@ -3877,9 +3914,13 @@ ${answerText.trim()}
        WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
       [questionId, user.organizationId, user.organizationId]
     );
-    if (!question) { res.status(404).json({ error: 'Question not found' }); return; }
+    if (!question) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
     if (String((question as any).session_owner_id) !== String(user.id)) {
-      res.status(403).json({ error: 'Forbidden' }); return;
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
 
     const lang = language === 'pl' ? 'Polish' : 'English';
@@ -3935,7 +3976,10 @@ Answer type: ${(question as any).answer_type || 'open'}`;
        WHERE s.id = ? AND p.organization_id = ?`,
       [sessionId, user.organizationId]
     );
-    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+    if (!session) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
 
     const questions = await queryHelpers.queryAll(
       `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
@@ -3947,34 +3991,43 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     );
 
     if (!questions || questions.length === 0) {
-      res.json({ overallScore: 0, overallVerdict: 'empty', questionEvaluations: [], recommendations: [] });
+      res.json({
+        overallScore: 0,
+        overallVerdict: 'empty',
+        questionEvaluations: [],
+        recommendations: [],
+      });
       return;
     }
 
-    const lang = (language === 'pl') ? 'Polish' : 'English';
+    const lang = language === 'pl' ? 'Polish' : 'English';
 
     const EvalSchema = z.object({
-      questionEvaluations: z.array(z.object({
-        questionId: z.string(),
-        score: z.number().min(1).max(5),
-        verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
-        feedback: z.string(),
-      })),
+      questionEvaluations: z.array(
+        z.object({
+          questionId: z.string(),
+          score: z.number().min(1).max(5),
+          verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
+          feedback: z.string(),
+        })
+      ),
       overallScore: z.number().min(1).max(5),
       overallVerdict: z.enum(['ready_for_approval', 'needs_improvement', 'insufficient']),
       recommendations: z.array(z.string()),
     });
 
-    const questionsForPrompt = (questions as any[]).map((q, i) => {
-      const answered = q.status === 'answered' && q.answer_text?.trim();
-      return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
+    const questionsForPrompt = (questions as any[])
+      .map((q, i) => {
+        const answered = q.status === 'answered' && q.answer_text?.trim();
+        return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
 Question: ${q.question_text}
 ${q.expected_answer_shape ? `Expected format: ${q.expected_answer_shape}` : ''}
 ${q.description ? `Helper: ${q.description}` : ''}
 Status: ${q.status || 'not_started'}
 Answer: ${answered ? q.answer_text.trim() : '(no answer)'}
 ${q.context_note ? `Context note: ${q.context_note}` : ''}`;
-    }).join('\n\n');
+      })
+      .join('\n\n');
 
     const systemPrompt = `You are a quality reviewer for interview/survey answers. Evaluate each answer for:
 1. Completeness — does it address the full question?
@@ -4002,7 +4055,7 @@ Return valid JSON matching the schema.`;
 
     const userPrompt = `Session: ${(session as any).name || 'Interview session'}
 Total questions: ${questions.length}
-Answered: ${(questions as any[]).filter(q => q.status === 'answered').length}
+Answered: ${(questions as any[]).filter((q) => q.status === 'answered').length}
 
 ${questionsForPrompt}`;
 
@@ -4933,9 +4986,7 @@ ${JSON.stringify(questions || [], null, 2)}
     const searchLimit = Math.min(Math.max(Number(rawLimit) || 20, 1), 100);
     const searchTerm = `%${String(query).trim()}%`;
 
-    const conditions: string[] = [
-      's.organization_id = ?',
-    ];
+    const conditions: string[] = ['s.organization_id = ?'];
     const params: unknown[] = [user.organizationId];
 
     if (templateId) {
@@ -5015,7 +5066,9 @@ ${JSON.stringify(questions || [], null, 2)}
         ...(templateId ? [templateId] : []),
         ...(projectId ? [projectId] : []),
         ...(sessionId ? [sessionId] : []),
-        searchTerm, searchTerm, searchLimit,
+        searchTerm,
+        searchTerm,
+        searchLimit,
       ]
     );
 
@@ -5083,7 +5136,9 @@ ${JSON.stringify(questions || [], null, 2)}
   addLinkedItem: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { sessionId } = req.params;
-    const itemType = String(req.body?.type || '').trim().toLowerCase();
+    const itemType = String(req.body?.type || '')
+      .trim()
+      .toLowerCase();
     const itemId = String(req.body?.id || '').trim();
 
     if (!itemType || !itemId) {
@@ -5119,7 +5174,16 @@ ${JSON.stringify(questions || [], null, 2)}
       `INSERT INTO link_graph_edges
        (id, organization_id, source_type, source_id, target_type, target_id, relation, container_type, container_id, created_by, created_at)
        VALUES (?, ?, 'interview_session', ?, ?, ?, 'ref', 'interview_supporting_material', ?, ?, ?)`,
-      [edgeId, user.organizationId, sessionId, itemType, itemId, sessionId, user.id, new Date().toISOString()]
+      [
+        edgeId,
+        user.organizationId,
+        sessionId,
+        itemType,
+        itemId,
+        sessionId,
+        user.id,
+        new Date().toISOString(),
+      ]
     );
 
     res.status(201).json({
@@ -5194,7 +5258,8 @@ ${JSON.stringify(questions || [], null, 2)}
             resolved.profile.companySize,
             resolved.profile.location,
             resolved.profile.employeeCount,
-          ].filter(Boolean).length * 15 +
+          ].filter(Boolean).length *
+            15 +
             (resolved.operations.keyMetrics.length ? 20 : 0) +
             (resolved.stakeholders.length ? 20 : 0)
         ),
@@ -5329,8 +5394,7 @@ ${JSON.stringify(questions || [], null, 2)}
       keyMetrics: resolved.operations.keyMetrics || [],
       stakeholders: resolved.stakeholders || [],
       openGaps: resolved.operations.gaps || [],
-      lastInterviewId:
-        (compatibility as any)?.last_interview_id || null,
+      lastInterviewId: (compatibility as any)?.last_interview_id || null,
       completenessPercent: (compatibility as any)?.completeness_percent || completeness,
     });
   }),
@@ -5434,9 +5498,7 @@ ${JSON.stringify(questions || [], null, 2)}
       const asgStatus = String((assignment as any)?.status || '').toLowerCase();
       const allowed = asgStatus === 'approved' || asgStatus === 'completed';
       if (!allowed) {
-        res
-          .status(409)
-          .json({ error: 'Interview not approved - cannot generate summary yet' });
+        res.status(409).json({ error: 'Interview not approved - cannot generate summary yet' });
         return;
       }
     } else {
@@ -5703,7 +5765,9 @@ ${JSON.stringify(questions || [], null, 2)}
           }
         }
       } catch (e) {
-        logger.warn(`[InterviewController] Link graph edges for insight ${insight.id} skipped: ${String((e as Error)?.message || e)}`);
+        logger.warn(
+          `[InterviewController] Link graph edges for insight ${insight.id} skipped: ${String((e as Error)?.message || e)}`
+        );
       }
     })();
 
@@ -6223,7 +6287,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { id } = req.params;
 
-    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
     if (!row) {
       res.status(404).json({ error: 'Insight not found' });
       return;
@@ -6249,7 +6316,9 @@ ${JSON.stringify(questions || [], null, 2)}
         type: e.type,
         description: e.description,
         timestamp: e.created_at,
-        userName: `${String(e.first_name || '').trim()} ${String(e.last_name || '').trim()}`.trim() || undefined,
+        userName:
+          `${String(e.first_name || '').trim()} ${String(e.last_name || '').trim()}`.trim() ||
+          undefined,
       }))
     );
   }),
@@ -6258,7 +6327,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { id } = req.params;
 
-    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
     if (!row) {
       res.status(404).json({ error: 'Insight not found' });
       return;
@@ -6270,7 +6342,9 @@ ${JSON.stringify(questions || [], null, 2)}
 
     const { CommentService } = await import('../services/content/CommentService.js');
     const commentService = new CommentService();
-    const comments = await commentService.getContentComments(id, 'interview_insight', { includeResolved: true });
+    const comments = await commentService.getContentComments(id, 'interview_insight', {
+      includeResolved: true,
+    });
 
     const safeParsePriority = (positionRef?: string | null) => {
       if (!positionRef) return 'normal';
@@ -6300,7 +6374,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const { id } = req.params;
     const { content, priority } = req.body || {};
 
-    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
     if (!row) {
       res.status(404).json({ error: 'Insight not found' });
       return;
@@ -6339,7 +6416,9 @@ ${JSON.stringify(questions || [], null, 2)}
 
     res.status(201).json({
       id: created.id,
-      authorName: created.user ? `${created.user.firstName} ${created.user.lastName}`.trim() : undefined,
+      authorName: created.user
+        ? `${created.user.firstName} ${created.user.lastName}`.trim()
+        : undefined,
       content: created.commentText,
       createdAt: created.createdAt,
       priority: safePriority,
@@ -6350,7 +6429,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { id, commentId } = req.params as any;
 
-    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
     if (!row) {
       res.status(404).json({ error: 'Insight not found' });
       return;
@@ -6437,9 +6519,8 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
-    const { evaluateQuestionQuality, calculateQuestionScore } = await import(
-      '../services/interviewQuestionQualityRules.js'
-    );
+    const { evaluateQuestionQuality, calculateQuestionScore } =
+      await import('../services/interviewQuestionQualityRules.js');
 
     const results = questions.map((q: any) => {
       const warnings = evaluateQuestionQuality({

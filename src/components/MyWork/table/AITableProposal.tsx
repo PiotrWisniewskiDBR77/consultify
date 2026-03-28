@@ -93,17 +93,13 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
 
   const toggleAllViews = useCallback(() => {
     setAcceptedViews((prev) =>
-      prev.size === proposal.views.length
-        ? new Set()
-        : new Set(proposal.views.map((v) => v.id))
+      prev.size === proposal.views.length ? new Set() : new Set(proposal.views.map((v) => v.id))
     );
   }, [proposal.views]);
 
   const toggleAllRows = useCallback(() => {
     setAcceptedRows((prev) =>
-      prev.size === proposal.rows.length
-        ? new Set()
-        : new Set(proposal.rows.map((r) => r.id))
+      prev.size === proposal.rows.length ? new Set() : new Set(proposal.rows.map((r) => r.id))
     );
   }, [proposal.rows]);
 
@@ -131,7 +127,10 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
 
   const renderCheckbox = (checked: boolean, onClick: () => void) => (
     <button
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
           ? 'bg-violet-500 border-violet-500'
@@ -188,7 +187,11 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               onClick={() => toggleExpanded('columns')}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
             >
-              {expandedSections.has('columns') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {expandedSections.has('columns') ? (
+                <ChevronDown size={12} />
+              ) : (
+                <ChevronRight size={12} />
+              )}
               <span className="text-slate-500">{sectionIcons.columns}</span>
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Kolumny' : 'Columns'}
@@ -196,10 +199,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[9px] text-slate-400">
                 {acceptedColumns.size}/{proposal.columns.length}
               </span>
-              {renderCheckbox(
-                acceptedColumns.size === proposal.columns.length,
-                toggleAllColumns
-              )}
+              {renderCheckbox(acceptedColumns.size === proposal.columns.length, toggleAllColumns)}
             </button>
             {expandedSections.has('columns') && (
               <div className="ml-6 mt-1 space-y-0.5">
@@ -207,9 +207,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={col.key}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedColumns.has(col.key)
-                        ? 'bg-violet-500/5'
-                        : 'opacity-50'
+                      acceptedColumns.has(col.key) ? 'bg-violet-500/5' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedColumns.has(col.key), () => toggleColumn(col.key))}
@@ -233,7 +231,11 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               onClick={() => toggleExpanded('views')}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
             >
-              {expandedSections.has('views') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {expandedSections.has('views') ? (
+                <ChevronDown size={12} />
+              ) : (
+                <ChevronRight size={12} />
+              )}
               <span className="text-slate-500">{sectionIcons.views}</span>
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Widoki' : 'Views'}
@@ -241,10 +243,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[9px] text-slate-400">
                 {acceptedViews.size}/{proposal.views.length}
               </span>
-              {renderCheckbox(
-                acceptedViews.size === proposal.views.length,
-                toggleAllViews
-              )}
+              {renderCheckbox(acceptedViews.size === proposal.views.length, toggleAllViews)}
             </button>
             {expandedSections.has('views') && (
               <div className="ml-6 mt-1 space-y-0.5">
@@ -259,9 +258,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                     <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1">
                       {v.icon || '📋'} {v.name}
                     </span>
-                    {v.layout && (
-                      <span className="text-[8px] text-slate-400">{v.layout}</span>
-                    )}
+                    {v.layout && <span className="text-[8px] text-slate-400">{v.layout}</span>}
                   </div>
                 ))}
               </div>
@@ -276,7 +273,11 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               onClick={() => toggleExpanded('rows')}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
             >
-              {expandedSections.has('rows') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {expandedSections.has('rows') ? (
+                <ChevronDown size={12} />
+              ) : (
+                <ChevronRight size={12} />
+              )}
               <span className="text-slate-500">{sectionIcons.rows}</span>
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Wiersze startowe' : 'Starter rows'}
@@ -284,10 +285,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[9px] text-slate-400">
                 {acceptedRows.size}/{proposal.rows.length}
               </span>
-              {renderCheckbox(
-                acceptedRows.size === proposal.rows.length,
-                toggleAllRows
-              )}
+              {renderCheckbox(acceptedRows.size === proposal.rows.length, toggleAllRows)}
             </button>
             {expandedSections.has('rows') && (
               <div className="ml-6 mt-1 space-y-0.5">

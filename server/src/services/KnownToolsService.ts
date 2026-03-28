@@ -231,7 +231,11 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     descriptionPl:
       'Analiza 5 sił Portera prowadzona przez AI, która zamienia strukturę rynku w praktyczne wnioski, dźwignie strategiczne i dalsze outputy.',
     whatYouGetEn: ['Force scorecard', 'Applied conclusions', 'Initiative, report, and deck path'],
-    whatYouGetPl: ['Scorecard 5 sił', 'Wnioski praktyczne', 'Ścieżka do inicjatywy, raportu i decka'],
+    whatYouGetPl: [
+      'Scorecard 5 sił',
+      'Wnioski praktyczne',
+      'Ścieżka do inicjatywy, raportu i decka',
+    ],
     tags: ['strategy', 'porter', 'competition'],
     icon: 'TrendingUp',
     sortOrder: 102,
@@ -275,7 +279,11 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     descriptionPl:
       'Priorytetyzacja prowadzona przez AI, która zamienia rozmowę o portfolio w jawne trade-offy, top bety i traceable outputy.',
     whatYouGetEn: ['Priority matrix', 'Trade-off view', 'Initiative, report, and idea path'],
-    whatYouGetPl: ['Macierz priorytetów', 'Widok trade-offów', 'Ścieżka do inicjatywy, raportu i idei'],
+    whatYouGetPl: [
+      'Macierz priorytetów',
+      'Widok trade-offów',
+      'Ścieżka do inicjatywy, raportu i idei',
+    ],
     tags: ['strategy', 'prioritization', 'portfolio'],
     icon: 'ListTodo',
     sortOrder: 105,
@@ -314,8 +322,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'ambition-decomposer',
     displayName: 'Ambition Decomposer',
     libraryCategory: 'strategic',
-    descriptionEn:
-      'Translate vision into measurable dimensions, targets, and initiative clusters.',
+    descriptionEn: 'Translate vision into measurable dimensions, targets, and initiative clusters.',
     descriptionPl: 'Przełóż wizję na mierzalne wymiary, cele i klastry inicjatyw.',
     whatYouGetEn: ['Ambition tree', 'Targets & metrics', 'Initiative themes'],
     whatYouGetPl: ['Drzewo ambicji', 'Cele i metryki', 'Tematy inicjatyw'],
@@ -611,8 +618,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'pain-explorer',
     displayName: 'Pain Explorer',
     libraryCategory: 'digital',
-    descriptionEn:
-      'Turn chaotic pains into structured problems with hypotheses and evidence tags.',
+    descriptionEn: 'Turn chaotic pains into structured problems with hypotheses and evidence tags.',
     descriptionPl:
       'Zamień chaotyczne bóle w ustrukturyzowane problemy z hipotezami i tagami evidence.',
     whatYouGetEn: ['Structured problem list', 'Hypotheses', 'Evidence gaps'],
@@ -717,12 +723,16 @@ class KnownToolsService {
   }
 
   private isKnownToolActive(toolTypeRaw: string, rowIsActive?: number | null): boolean {
-    const toolType = String(toolTypeRaw || '').trim().toLowerCase();
+    const toolType = String(toolTypeRaw || '')
+      .trim()
+      .toLowerCase();
     if (!toolType) return false;
     return Boolean(rowIsActive) && ACTIVE_KNOWN_TOOL_TYPES.has(toolType);
   }
 
-  async getKnownToolAvailability(toolTypeOrName: string): Promise<{ exists: boolean; isActive: boolean }> {
+  async getKnownToolAvailability(
+    toolTypeOrName: string
+  ): Promise<{ exists: boolean; isActive: boolean }> {
     await this.ensureToolsSeedOnce();
     const db = await this.getDb();
     const q = new QueryAdapter(db);

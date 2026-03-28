@@ -1,26 +1,26 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RegisterToolParams,
-  SetConsumerPolicyParams,
-  RequestInvocationParams,
-  LogInvocationTraceParams,
   ClassifyToolParams,
+  LogInvocationTraceParams,
+  RegisterToolParams,
+  RequestInvocationParams,
+  SetConsumerPolicyParams,
 } from '../../../types/toolGovernance.js';
 import {
-  ToolCapabilitySchema,
+  APPROVAL_CLASS_STRICTNESS,
+  ClassifyToolParamsSchema,
   ConsumerToolPolicySchema,
+  LogInvocationTraceParamsSchema,
+  RegisterToolParamsSchema,
+  RequestInvocationParamsSchema,
+  RISK_CLASS_DEFAULT_APPROVAL,
+  SetConsumerPolicyParamsSchema,
+  SubagentDelegationTokenSchema,
+  ToolCapabilitySchema,
   ToolInvocationRequestSchema,
   ToolInvocationTraceSchema,
-  SubagentDelegationTokenSchema,
-  RegisterToolParamsSchema,
-  ClassifyToolParamsSchema,
-  SetConsumerPolicyParamsSchema,
-  RequestInvocationParamsSchema,
-  LogInvocationTraceParamsSchema,
-  RISK_CLASS_DEFAULT_APPROVAL,
-  APPROVAL_CLASS_STRICTNESS,
 } from '../../../types/toolGovernance.js';
 
 // ==========================================
@@ -47,14 +47,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  registerTool,
+  classifyTool,
+  getEffectivePolicy,
   getTool,
   getToolCatalog,
-  classifyTool,
-  setConsumerPolicy,
-  getEffectivePolicy,
-  requestInvocation,
   logInvocationTrace,
+  registerTool,
+  requestInvocation,
+  setConsumerPolicy,
 } from '../toolGovernanceService.js';
 
 // ==========================================
@@ -146,26 +146,24 @@ describe('registerTool', () => {
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      registerTool({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(registerTool({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      registerTool(makeRegisterParams({ organizationId: 'not-a-uuid' })),
+      registerTool(makeRegisterParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid category', async () => {
-    await expect(
-      registerTool(makeRegisterParams({ category: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(registerTool(makeRegisterParams({ category: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid mutationType', async () => {
     await expect(
-      registerTool(makeRegisterParams({ mutationType: 'invalid' as any })),
+      registerTool(makeRegisterParams({ mutationType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -271,7 +269,7 @@ describe('classifyTool', () => {
         organizationId: ORG_ID,
         riskClass: 'low_risk',
         classifiedBy: USER_ID,
-      }),
+      })
     ).rejects.toThrow(`Tool ${missingToolId} not found`);
   });
 
@@ -282,7 +280,7 @@ describe('classifyTool', () => {
         organizationId: ORG_ID,
         riskClass: 'invalid' as any,
         classifiedBy: USER_ID,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -340,7 +338,7 @@ describe('setConsumerPolicy', () => {
         consumerClass: 'invalid' as any,
         toolId: TOOL_ID,
         allowed: true,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -359,7 +357,7 @@ describe('getEffectivePolicy', () => {
   it('returns tool default when no consumer policies exist', async () => {
     // getTool → dbGet
     mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable', risk_class: 'no_risk' }),
+      makeFakeToolRow({ default_approval_mode: 'auto_executable', risk_class: 'no_risk' })
     );
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);
@@ -374,9 +372,7 @@ describe('getEffectivePolicy', () => {
     // getTool → dbGet
     mockDbGet.mockResolvedValueOnce(makeFakeToolRow());
     // org policies → dbAll
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow({ allowed: 0 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow({ allowed: 0 })]);
 
     const result = await getEffectivePolicy(TOOL_ID, 'chat', ORG_ID);
 
@@ -386,15 +382,11 @@ describe('getEffectivePolicy', () => {
 
   it('applies project-level policy that blocks the tool (D20: tighten only)', async () => {
     // getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // org policies → dbAll (empty)
     mockDbAll.mockResolvedValueOnce([]);
     // project policies → dbAll
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow({ project_id: PROJECT_ID, allowed: 0 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow({ project_id: PROJECT_ID, allowed: 0 })]);
 
     const result = await getEffectivePolicy(TOOL_ID, 'chat', ORG_ID, PROJECT_ID);
 
@@ -404,9 +396,7 @@ describe('getEffectivePolicy', () => {
 
   it('picks the most restrictive approval (D20)', async () => {
     // getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([
       makeFakePolicyRow({ approval_override: 'force_human_approval' }),
@@ -424,7 +414,7 @@ describe('getEffectivePolicy', () => {
       makeFakeToolRow({
         default_approval_mode: 'auto_executable',
         mutation_type: 'bounded_write',
-      }),
+      })
     );
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);
@@ -441,7 +431,7 @@ describe('getEffectivePolicy', () => {
       makeFakeToolRow({
         default_approval_mode: 'auto_executable',
         mutation_type: 'read_only',
-      }),
+      })
     );
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);
@@ -455,9 +445,7 @@ describe('getEffectivePolicy', () => {
   it('differentiates consumer classes: execution vs worker', async () => {
     // --- execution consumer ---
     // getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([
       makeFakePolicyRow({
@@ -473,9 +461,7 @@ describe('getEffectivePolicy', () => {
 
     // --- worker consumer ---
     // getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // org policies → dbAll
     mockDbAll.mockResolvedValueOnce([
       makeFakePolicyRow({
@@ -493,9 +479,7 @@ describe('getEffectivePolicy', () => {
 describe('requestInvocation', () => {
   it('creates an invocation request and evaluates policy', async () => {
     // getEffectivePolicy → getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // getEffectivePolicy → org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);
 
@@ -534,9 +518,7 @@ describe('requestInvocation', () => {
 
   it('defaults parameters to empty object', async () => {
     // getEffectivePolicy → getTool → dbGet
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // getEffectivePolicy → org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);
 
@@ -559,7 +541,7 @@ describe('requestInvocation', () => {
         consumerClass: 'chat',
         contextSnapshotId: SNAPSHOT_ID,
         initiatorUserId: USER_ID,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -624,7 +606,7 @@ describe('logInvocationTrace', () => {
         consumerPolicyRef: 'policy:default',
         approvalState: 'invalid' as any,
         invocationResult: 'success',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -654,10 +636,10 @@ describe('RISK_CLASS_DEFAULT_APPROVAL mapping', () => {
 describe('APPROVAL_CLASS_STRICTNESS ordering', () => {
   it('auto_executable < policy_approvable < requires_human_approval', () => {
     expect(APPROVAL_CLASS_STRICTNESS.auto_executable).toBeLessThan(
-      APPROVAL_CLASS_STRICTNESS.policy_approvable,
+      APPROVAL_CLASS_STRICTNESS.policy_approvable
     );
     expect(APPROVAL_CLASS_STRICTNESS.policy_approvable).toBeLessThan(
-      APPROVAL_CLASS_STRICTNESS.requires_human_approval,
+      APPROVAL_CLASS_STRICTNESS.requires_human_approval
     );
   });
 });
@@ -680,7 +662,7 @@ describe('Zod schema validation', () => {
         version: '1.0.0',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -701,7 +683,7 @@ describe('Zod schema validation', () => {
         version: '1.0.0',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -716,7 +698,7 @@ describe('Zod schema validation', () => {
         organizationId: ORG_ID,
         riskClass: 'low_risk',
         classifiedBy: USER_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -727,7 +709,7 @@ describe('Zod schema validation', () => {
         consumerClass: 'chat',
         toolId: TOOL_ID,
         allowed: true,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -739,7 +721,7 @@ describe('Zod schema validation', () => {
         consumerClass: 'chat',
         contextSnapshotId: SNAPSHOT_ID,
         initiatorUserId: USER_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -756,7 +738,7 @@ describe('Zod schema validation', () => {
         consumerPolicyRef: 'policy:default',
         approvalState: 'auto_executed',
         invocationResult: 'success',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -772,7 +754,7 @@ describe('Zod schema validation', () => {
         credentialMode: 'scoped_temporary_grant',
         expiresAt: '2026-03-24T10:00:00.000Z',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -788,7 +770,7 @@ describe('Zod schema validation', () => {
         credentialMode: 'full_access',
         expiresAt: '2026-03-24T10:00:00.000Z',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 });

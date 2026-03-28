@@ -31,7 +31,9 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
   const { t } = useTranslation();
   const [title, setTitle] = useState(initialTitle);
   const [creating, setCreating] = useState(false);
-  const [selectedStatementPackId, setSelectedStatementPackId] = useState(initialStatementPackId || '');
+  const [selectedStatementPackId, setSelectedStatementPackId] = useState(
+    initialStatementPackId || ''
+  );
 
   const selectedStatementPack = useMemo(
     () => availableStatements.find((statement) => statement.id === selectedStatementPackId) || null,
@@ -124,7 +126,9 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
               {t('finance.analysis.sourceStatements', 'Source statement pack')}
             </label>
             <span className="text-[11px] text-slate-400">
-              {selectedStatementPackId ? t('finance.analysis.selectedOne', 'selected') : '0 selected'}
+              {selectedStatementPackId
+                ? t('finance.analysis.selectedOne', 'selected')
+                : '0 selected'}
             </span>
           </div>
           <div className="max-h-48 overflow-y-auto space-y-2">

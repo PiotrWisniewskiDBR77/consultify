@@ -7,7 +7,6 @@
 import {
   BarChart3,
   Briefcase,
-  Bug,
   Calendar,
   Code2,
   FileText,
@@ -23,7 +22,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { listTemplates, useTemplate as applyTableTemplate } from '@/services/api/tablePlatform.api';
 
 interface TemplateGalleryProps {
   workspaceId: string;
@@ -63,9 +62,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
   const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await TablePlatformApi.listTemplates(
-        activeCategory !== 'all' ? activeCategory : undefined
-      );
+      const data = await listTemplates(activeCategory !== 'all' ? activeCategory : undefined);
       setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error(isPl ? 'Nie udało się załadować szablonów' : 'Failed to load templates');
@@ -93,11 +90,9 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
     async (templateId: string, templateName: string) => {
       try {
         setUsingId(templateId);
-        const base = await TablePlatformApi.useTemplate(templateId, workspaceId, templateName);
+        const base = await applyTableTemplate(templateId, workspaceId, templateName);
         toast.success(
-          isPl
-            ? `Szablon "${templateName}" zastosowany!`
-            : `Template "${templateName}" applied!`
+          isPl ? `Szablon "${templateName}" zastosowany!` : `Template "${templateName}" applied!`
         );
         onTemplateUsed?.(base);
         onClose();
@@ -138,10 +133,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
         {/* Search + Category tabs */}
         <div className="px-6 py-3 border-b border-slate-100 dark:border-navy-800 space-y-3">
           <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -175,9 +167,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <FileText size={32} className="mb-2 opacity-50" />
-              <p className="text-sm">
-                {isPl ? 'Brak szablonów' : 'No templates found'}
-              </p>
+              <p className="text-sm">{isPl ? 'Brak szablonów' : 'No templates found'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
@@ -190,10 +180,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                   >
                     {tpl.is_featured && (
                       <div className="absolute top-3 right-3">
-                        <Star
-                          size={14}
-                          className="text-amber-400 fill-amber-400"
-                        />
+                        <Star size={14} className="text-amber-400 fill-amber-400" />
                       </div>
                     )}
                     <div className="flex items-start gap-3 mb-3">
@@ -225,25 +212,21 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                         disabled={usingId === tpl.id}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
                       >
-                        {usingId === tpl.id ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : null}
+                        {usingId === tpl.id ? <Loader2 size={12} className="animate-spin" /> : null}
                         {isPl ? 'Użyj' : 'Use'}
                       </button>
                     </div>
                     {tpl.schema_snapshot?.tables && (
                       <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
                         <div className="flex flex-wrap gap-1">
-                          {(tpl.schema_snapshot.tables as any[]).map(
-                            (table: any, i: number) => (
-                              <span
-                                key={i}
-                                className="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400"
-                              >
-                                {table.name}
-                              </span>
-                            )
-                          )}
+                          {(tpl.schema_snapshot.tables as any[]).map((table: any, i: number) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400"
+                            >
+                              {table.name}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     )}

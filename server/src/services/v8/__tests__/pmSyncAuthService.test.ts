@@ -1,29 +1,29 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  StoreCredentialParams,
+  RecordAdminReBindParams,
   RecordRefreshResultParams,
   SetRefreshTimingPolicyParams,
-  RecordAdminReBindParams,
+  StoreCredentialParams,
 } from '../../../types/pmSyncAuthBaseline.js';
 import {
-  LastRefreshResultValues,
-  TransientFailureTypeValues,
+  AdminReBindRecordSchema,
+  AUTH_BREAK_FAILURE_TYPES,
   AuthBreakFailureTypeValues,
-  ProviderFamilyValues,
+  ConnectionCredentialRefSchema,
+  DEFAULT_ESCALATION_LADDER,
   EscalationLevelValues,
   FailureActionValues,
-  ConnectionCredentialRefSchema,
-  RefreshTimingPolicySchema,
-  AdminReBindRecordSchema,
-  StoreCredentialParamsSchema,
-  RecordRefreshResultParamsSchema,
-  SetRefreshTimingPolicyParamsSchema,
+  LastRefreshResultValues,
+  ProviderFamilyValues,
   RecordAdminReBindParamsSchema,
+  RecordRefreshResultParamsSchema,
+  RefreshTimingPolicySchema,
+  SetRefreshTimingPolicyParamsSchema,
+  StoreCredentialParamsSchema,
   TRANSIENT_FAILURE_TYPES,
-  AUTH_BREAK_FAILURE_TYPES,
-  DEFAULT_ESCALATION_LADDER,
+  TransientFailureTypeValues,
 } from '../../../types/pmSyncAuthBaseline.js';
 
 // ==========================================
@@ -50,20 +50,20 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  storeCredential,
-  getCredential,
-  recordRefreshResult,
-  recordAuthEscalation,
-  classifyFailure,
   checkEscalationLevel,
-  setRefreshTimingPolicy,
+  classifyFailure,
+  getActiveEscalations,
+  getCredential,
+  getCredentialHealth,
+  getReBindHistory,
   getRefreshTimingPolicy,
   recordAdminReBind,
-  getReBindHistory,
-  getActiveEscalations,
-  getCredentialHealth,
+  recordAuthEscalation,
+  recordRefreshResult,
   resolveAuthEscalation,
   resolveAuthEscalationsForConnector,
+  setRefreshTimingPolicy,
+  storeCredential,
 } from '../pmSyncAuthService.js';
 
 // ==========================================
@@ -79,7 +79,9 @@ const CRED_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 const CRED_ID_2 = '00000000-0000-4000-8000-bbbbbbbbbbbb';
 const POLICY_ID = '00000000-0000-4000-8000-cccccccccccc';
 
-function makeStoreCredentialParams(overrides?: Partial<StoreCredentialParams>): StoreCredentialParams {
+function makeStoreCredentialParams(
+  overrides?: Partial<StoreCredentialParams>
+): StoreCredentialParams {
   return {
     connectorId: CONNECTOR_ID,
     organizationId: ORG_ID,
@@ -195,7 +197,7 @@ describe('storeCredential', () => {
       makeStoreCredentialParams({
         providerAccountId: 'new-acct-789',
         scopesGranted: ['read:jira-work'],
-      }),
+      })
     );
 
     expect(result.credentialId).toBe(CRED_ID);
@@ -210,28 +212,26 @@ describe('storeCredential', () => {
   it('stores credential with null tokenExpiresAt', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    const result = await storeCredential(
-      makeStoreCredentialParams({ tokenExpiresAt: null }),
-    );
+    const result = await storeCredential(makeStoreCredentialParams({ tokenExpiresAt: null }));
 
     expect(result.tokenExpiresAt).toBeNull();
   });
 
   it('rejects empty scopesGranted via Zod', async () => {
-    await expect(
-      storeCredential(makeStoreCredentialParams({ scopesGranted: [] })),
-    ).rejects.toThrow(ZodError);
+    await expect(storeCredential(makeStoreCredentialParams({ scopesGranted: [] }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty connectorId via Zod', async () => {
-    await expect(
-      storeCredential(makeStoreCredentialParams({ connectorId: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(storeCredential(makeStoreCredentialParams({ connectorId: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      storeCredential(makeStoreCredentialParams({ organizationId: 'not-a-uuid' })),
+      storeCredential(makeStoreCredentialParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -256,9 +256,7 @@ describe('getCredential', () => {
   });
 
   it('handles malformed scopes JSON gracefully', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeCredentialRow({ scopes_granted: 'not-json' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeCredentialRow({ scopes_granted: 'not-json' }));
 
     const result = await getCredential(CONNECTOR_ID, ORG_ID);
     expect(result).not.toBeNull();
@@ -329,7 +327,7 @@ describe('recordRefreshResult', () => {
         connectorId: 'nonexistent',
         organizationId: ORG_ID,
         result: 'success',
-      }),
+      })
     ).rejects.toThrow('No credential found');
   });
 
@@ -339,7 +337,7 @@ describe('recordRefreshResult', () => {
         connectorId: CONNECTOR_ID,
         organizationId: ORG_ID,
         result: 'invalid_result' as any,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -427,9 +425,7 @@ describe('checkEscalationLevel', () => {
   });
 
   it('returns healthy when connector is in healthy state', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeAuthStateRow({ auth_state: 'healthy' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeAuthStateRow({ auth_state: 'healthy' }));
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
     expect(result).toBe('healthy');
@@ -440,7 +436,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_reauth_needed',
         transitioned_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -452,7 +448,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_reauth_needed',
         transitioned_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -464,7 +460,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_reauth_needed',
         transitioned_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -476,7 +472,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_reauth_needed',
         transitioned_at: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -488,7 +484,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_scope_limited',
         transitioned_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -496,18 +492,14 @@ describe('checkEscalationLevel', () => {
   });
 
   it('returns healthy for non-degraded states (connecting)', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeAuthStateRow({ auth_state: 'connecting' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeAuthStateRow({ auth_state: 'connecting' }));
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
     expect(result).toBe('healthy');
   });
 
   it('returns healthy for suspended state', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeAuthStateRow({ auth_state: 'suspended' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeAuthStateRow({ auth_state: 'suspended' }));
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
     expect(result).toBe('healthy');
@@ -518,7 +510,7 @@ describe('checkEscalationLevel', () => {
       makeAuthStateRow({
         auth_state: 'degraded_reauth_needed',
         transitioned_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      }),
+      })
     );
 
     const result = await checkEscalationLevel(CONNECTOR_ID, ORG_ID);
@@ -578,7 +570,7 @@ describe('setRefreshTimingPolicy', () => {
           typicalTokenLifetimeMinutes: 60,
           refreshWindowMinutes: 10,
           maxRetryAttempts: 3,
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -591,7 +583,7 @@ describe('setRefreshTimingPolicy', () => {
         typicalTokenLifetimeMinutes: 60,
         refreshWindowMinutes: 10,
         maxRetryAttempts: 3,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -603,7 +595,7 @@ describe('setRefreshTimingPolicy', () => {
         typicalTokenLifetimeMinutes: 60,
         refreshWindowMinutes: 0,
         maxRetryAttempts: 3,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -615,7 +607,7 @@ describe('setRefreshTimingPolicy', () => {
         typicalTokenLifetimeMinutes: 60,
         refreshWindowMinutes: 10,
         maxRetryAttempts: 0,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -707,7 +699,7 @@ describe('recordAdminReBind', () => {
         newCredentialRef: CRED_ID_2,
         actorId: ACTOR_ID,
         reason: '',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -720,7 +712,7 @@ describe('recordAdminReBind', () => {
         newCredentialRef: CRED_ID_2,
         actorId: '',
         reason: 'Some reason',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -733,7 +725,7 @@ describe('recordAdminReBind', () => {
         newCredentialRef: CRED_ID_2,
         actorId: ACTOR_ID,
         reason: 'Some reason',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -812,7 +804,7 @@ describe('credential and auth escalation health', () => {
     expect(result.resolvedAt).toBeNull();
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO v8_auth_escalations'),
-      expect.arrayContaining([ORG_ID, CONNECTOR_ID, 'credential_expired']),
+      expect.arrayContaining([ORG_ID, CONNECTOR_ID, 'credential_expired'])
     );
   });
 
@@ -831,7 +823,7 @@ describe('credential and auth escalation health', () => {
     const result = await resolveAuthEscalation(
       '00000000-0000-4000-8000-eeeeeeeeeeee',
       ACTOR_ID,
-      ORG_ID,
+      ORG_ID
     );
 
     expect(result.resolvedBy).toBe(ACTOR_ID);
@@ -847,18 +839,20 @@ describe('credential and auth escalation health', () => {
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('organization_id = ?'),
       ['00000000-0000-4000-8000-eeeeeeeeeeee', ORG_ID],
-      { fallback: true },
+      { fallback: true }
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('organization_id = ?'),
-      expect.arrayContaining([ACTOR_ID, '00000000-0000-4000-8000-eeeeeeeeeeee', ORG_ID]),
+      expect.arrayContaining([ACTOR_ID, '00000000-0000-4000-8000-eeeeeeeeeeee', ORG_ID])
     );
   });
 
   it('resolveAuthEscalation throws when escalation does not exist', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(resolveAuthEscalation('missing-escalation', ACTOR_ID, ORG_ID)).rejects.toThrow('not found');
+    await expect(resolveAuthEscalation('missing-escalation', ACTOR_ID, ORG_ID)).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('resolveAuthEscalation throws when escalation is already resolved', async () => {
@@ -866,11 +860,11 @@ describe('credential and auth escalation health', () => {
       makeEscalationRow({
         resolved_at: '2026-03-23T13:00:00.000Z',
         resolved_by: ACTOR_ID,
-      }),
+      })
     );
 
     await expect(
-      resolveAuthEscalation('00000000-0000-4000-8000-eeeeeeeeeeee', ACTOR_ID, ORG_ID),
+      resolveAuthEscalation('00000000-0000-4000-8000-eeeeeeeeeeee', ACTOR_ID, ORG_ID)
     ).rejects.toThrow('already resolved');
   });
 
@@ -889,8 +883,10 @@ describe('credential and auth escalation health', () => {
     expect(result).toHaveLength(2);
     expect(result[0]?.resolvedBy).toBe(ACTOR_ID);
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL'),
-      expect.arrayContaining([ACTOR_ID, CONNECTOR_ID, ORG_ID]),
+      expect.stringContaining(
+        'WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL'
+      ),
+      expect.arrayContaining([ACTOR_ID, CONNECTOR_ID, ORG_ID])
     );
   });
 
@@ -974,7 +970,7 @@ describe('Zod schema validation', () => {
         lastRefreshResult: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -989,7 +985,7 @@ describe('Zod schema validation', () => {
         maxRetryAttempts: 3,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1004,7 +1000,7 @@ describe('Zod schema validation', () => {
         actorId: ACTOR_ID,
         reason: 'User left org',
         auditTimestamp: '2026-03-23T12:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 

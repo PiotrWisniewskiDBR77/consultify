@@ -156,7 +156,12 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
         : {}),
       ...(type === 'ai_generated' ? { aiPrompt: aiPrompt || 'Analyze this row' } : {}),
       ...(type === 'relation' && relationTarget ? { relationTarget } : {}),
-      ...(type === 'rollup' ? { rollupSource: rollupSource || undefined, rollupFunction: (rollupFunction as ColumnDef['rollupFunction']) || 'count' } : {}),
+      ...(type === 'rollup'
+        ? {
+            rollupSource: rollupSource || undefined,
+            rollupFunction: (rollupFunction as ColumnDef['rollupFunction']) || 'count',
+          }
+        : {}),
     };
 
     onAdd(col);
@@ -294,14 +299,18 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   </p>
                 </div>
               )}
-              {formulaValidation && !formulaValidation.valid && formulaValidation.error?.toLowerCase().includes('cycle') && (
-                <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
-                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
-                  <span className="text-[10px] text-amber-700 dark:text-amber-300">
-                    {isPl ? 'Formuła tworzy cykl zależności!' : 'Formula creates a dependency cycle!'}
-                  </span>
-                </div>
-              )}
+              {formulaValidation &&
+                !formulaValidation.valid &&
+                formulaValidation.error?.toLowerCase().includes('cycle') && (
+                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+                    <span className="text-[10px] text-amber-700 dark:text-amber-300">
+                      {isPl
+                        ? 'Formuła tworzy cykl zależności!'
+                        : 'Formula creates a dependency cycle!'}
+                    </span>
+                  </div>
+                )}
             </div>
           )}
 

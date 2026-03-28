@@ -24,11 +24,15 @@ import type {
 // ── Register-specific style instructions ────────────────────────
 
 const REGISTER_INSTRUCTIONS: Record<string, string> = {
-  formal: 'Use formal, professional language. Avoid contractions and colloquialisms. Write in third person.',
-  semi_formal: 'Use semi-formal business language. Mild contractions are acceptable. Write clearly and concisely.',
+  formal:
+    'Use formal, professional language. Avoid contractions and colloquialisms. Write in third person.',
+  semi_formal:
+    'Use semi-formal business language. Mild contractions are acceptable. Write clearly and concisely.',
   informal: 'Use accessible, conversational language. First person plural ("we") is acceptable.',
-  executive: 'Use crisp, executive-level language. Lead with conclusions. Minimize jargon. Be direct.',
-  technical: 'Use precise technical language. Include specific numbers, units, and methodology references.',
+  executive:
+    'Use crisp, executive-level language. Lead with conclusions. Minimize jargon. Be direct.',
+  technical:
+    'Use precise technical language. Include specific numbers, units, and methodology references.',
 };
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
@@ -40,7 +44,8 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
 
 function buildSystemPrompt(input: NarrativeEngineInput): string {
   const { report_config } = input;
-  const registerGuide = REGISTER_INSTRUCTIONS[report_config.communication_register] ?? REGISTER_INSTRUCTIONS.formal;
+  const registerGuide =
+    REGISTER_INSTRUCTIONS[report_config.communication_register] ?? REGISTER_INSTRUCTIONS.formal;
   const langGuide = LANGUAGE_INSTRUCTIONS[report_config.language] ?? LANGUAGE_INSTRUCTIONS.en;
 
   return [
@@ -79,10 +84,7 @@ function formatObservationsForPrompt(observations: Observation[]): string {
   if (observations.length === 0) return 'No observations identified.';
 
   return observations
-    .map(
-      (o) =>
-        `- [${o.observation_id}] (${o.type}, severity: ${o.severity}) ${o.narrative_hint}`
-    )
+    .map((o) => `- [${o.observation_id}] (${o.type}, severity: ${o.severity}) ${o.narrative_hint}`)
     .join('\n');
 }
 
@@ -174,7 +176,9 @@ function buildFallbackContent(
   if (obsSegments.length > 0) {
     lines.push('### Key Observations', '');
     for (const seg of obsSegments) {
-      const relObs = observations.filter((o) => seg.related_observations.includes(o.observation_id));
+      const relObs = observations.filter((o) =>
+        seg.related_observations.includes(o.observation_id)
+      );
       for (const o of relObs) {
         const relFacts = facts.filter((f) => o.related_facts.includes(f.fact_id));
         const citations = relFacts.map((f) => `[Fact: ${f.label}]`).join(', ');

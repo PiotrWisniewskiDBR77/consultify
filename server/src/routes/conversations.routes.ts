@@ -683,16 +683,14 @@ router.post(
          FROM conversation_messages
          WHERE id = ? AND conversation_id = ?`,
         [messageId, conversationId]
-      )) as
-        | {
-            id: string;
-            conversation_id: string;
-            role: 'user' | 'ai';
-            content: string;
-            metadata?: string | null;
-            author_user_id?: string | null;
-          }
-        | null;
+      )) as {
+        id: string;
+        conversation_id: string;
+        role: 'user' | 'ai';
+        content: string;
+        metadata?: string | null;
+        author_user_id?: string | null;
+      } | null;
 
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
@@ -714,13 +712,15 @@ router.post(
         parsedMetadata =
           typeof message.metadata === 'string'
             ? JSON.parse(message.metadata || '{}')
-            : ((message.metadata as Record<string, unknown>) || {});
+            : (message.metadata as Record<string, unknown>) || {};
       } catch {
         parsedMetadata = {};
       }
 
       const actorUserId =
-        message.role === 'user' ? String(message.author_user_id || req.userId || '') || null : req.userId;
+        message.role === 'user'
+          ? String(message.author_user_id || req.userId || '') || null
+          : req.userId;
 
       const result = await organizationContextService.recordChatMessage({
         organizationId: req.organizationId!,

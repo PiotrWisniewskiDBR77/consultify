@@ -5,7 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import { parseFormula, type FormulaAST } from './formulaEngine.js';
+import { type FormulaAST, parseFormula } from './formulaEngine.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,11 +86,7 @@ const TEXT_FIELD_TYPES = new Set([
   'long_text',
 ]);
 
-const NUMBER_FIELD_TYPES = new Set([
-  'number',
-  'currency',
-  'percent',
-]);
+const NUMBER_FIELD_TYPES = new Set(['number', 'currency', 'percent']);
 
 const SELECT_FIELD_TYPES = new Set(['singleSelect', 'single_select']);
 const MULTI_SELECT_TYPES = new Set(['multiSelect', 'multi_select']);
@@ -153,7 +149,7 @@ function buildSingleFilterClause(
   const dataKey = `r.data->>$${startIdx}`;
   const dataJson = `r.data->$${startIdx}`;
   params.push(rule.fieldId);
-  let nextIdx = startIdx + 1;
+  const nextIdx = startIdx + 1;
 
   // Text types
   if (TEXT_FIELD_TYPES.has(fieldType)) {
@@ -164,7 +160,10 @@ function buildSingleFilterClause(
       case 'doesnotcontain':
       case 'does_not_contain':
         params.push(`%${String(rule.value ?? '')}%`);
-        return { sql: `(${dataKey} IS NULL OR ${dataKey} NOT ILIKE $${nextIdx})`, nextIdx: nextIdx + 1 };
+        return {
+          sql: `(${dataKey} IS NULL OR ${dataKey} NOT ILIKE $${nextIdx})`,
+          nextIdx: nextIdx + 1,
+        };
       case 'equals':
         params.push(rule.value);
         return { sql: `${dataKey} = $${nextIdx}`, nextIdx: nextIdx + 1 };
@@ -249,7 +248,10 @@ function buildSingleFilterClause(
         if (vals.length === 0) return { sql: 'TRUE', nextIdx };
         const placeholders = vals.map((_, i) => `$${nextIdx + i}`).join(', ');
         params.push(...vals);
-        return { sql: `(${dataKey} IS NULL OR ${dataKey} NOT IN (${placeholders}))`, nextIdx: nextIdx + vals.length };
+        return {
+          sql: `(${dataKey} IS NULL OR ${dataKey} NOT IN (${placeholders}))`,
+          nextIdx: nextIdx + vals.length,
+        };
       }
       case 'isempty':
       case 'is_empty':
@@ -288,7 +290,10 @@ function buildSingleFilterClause(
         return { sql: `(${dataKey} IS NULL OR ${dataKey} = '[]' OR ${dataKey} = '')`, nextIdx };
       case 'isnotempty':
       case 'is_not_empty':
-        return { sql: `${dataKey} IS NOT NULL AND ${dataKey} != '[]' AND ${dataKey} != ''`, nextIdx };
+        return {
+          sql: `${dataKey} IS NOT NULL AND ${dataKey} != '[]' AND ${dataKey} != ''`,
+          nextIdx,
+        };
       default:
         return { sql: 'TRUE', nextIdx };
     }
@@ -303,19 +308,31 @@ function buildSingleFilterClause(
       case 'isbefore':
       case 'is_before':
         params.push(rule.value);
-        return { sql: `(${dataKey})::timestamptz < ($${nextIdx}::text)::timestamptz`, nextIdx: nextIdx + 1 };
+        return {
+          sql: `(${dataKey})::timestamptz < ($${nextIdx}::text)::timestamptz`,
+          nextIdx: nextIdx + 1,
+        };
       case 'isafter':
       case 'is_after':
         params.push(rule.value);
-        return { sql: `(${dataKey})::timestamptz > ($${nextIdx}::text)::timestamptz`, nextIdx: nextIdx + 1 };
+        return {
+          sql: `(${dataKey})::timestamptz > ($${nextIdx}::text)::timestamptz`,
+          nextIdx: nextIdx + 1,
+        };
       case 'isonorbefore':
       case 'is_on_or_before':
         params.push(rule.value);
-        return { sql: `(${dataKey})::timestamptz <= ($${nextIdx}::text)::timestamptz`, nextIdx: nextIdx + 1 };
+        return {
+          sql: `(${dataKey})::timestamptz <= ($${nextIdx}::text)::timestamptz`,
+          nextIdx: nextIdx + 1,
+        };
       case 'isonorafter':
       case 'is_on_or_after':
         params.push(rule.value);
-        return { sql: `(${dataKey})::timestamptz >= ($${nextIdx}::text)::timestamptz`, nextIdx: nextIdx + 1 };
+        return {
+          sql: `(${dataKey})::timestamptz >= ($${nextIdx}::text)::timestamptz`,
+          nextIdx: nextIdx + 1,
+        };
       case 'iswithin':
       case 'is_within': {
         const interval = parseIsWithinInterval(String(rule.value ?? ''));
@@ -338,7 +355,12 @@ function buildSingleFilterClause(
     if (op === 'is') {
       const v = rule.value;
       const isTrue = v === true || v === 'true' || v === 1 || v === '1';
-      return { sql: isTrue ? `(${dataKey} = 'true' OR ${dataKey} = true)` : `(${dataKey} IS NULL OR ${dataKey} = 'false' OR ${dataKey} = false OR ${dataKey} = '')`, nextIdx };
+      return {
+        sql: isTrue
+          ? `(${dataKey} = 'true' OR ${dataKey} = true)`
+          : `(${dataKey} IS NULL OR ${dataKey} = 'false' OR ${dataKey} = false OR ${dataKey} = '')`,
+        nextIdx,
+      };
     }
     return { sql: 'TRUE', nextIdx };
   }
@@ -433,7 +455,8 @@ export function buildSortClause(
     params.push(s.fieldId);
     const dir = (s.direction || 'asc').toUpperCase();
     const defaultNulls = dir === 'ASC' ? 'NULLS LAST' : 'NULLS FIRST';
-    const nulls = s.nulls === 'first' ? 'NULLS FIRST' : s.nulls === 'last' ? 'NULLS LAST' : defaultNulls;
+    const nulls =
+      s.nulls === 'first' ? 'NULLS FIRST' : s.nulls === 'last' ? 'NULLS LAST' : defaultNulls;
     parts.push(`(r.data->>$${idx}) ${dir} ${nulls}`);
     idx++;
   }
@@ -495,10 +518,9 @@ async function loadFieldTypes(tableId: string): Promise<Map<string, string>> {
 
 async function loadFieldNameToId(tableId: string): Promise<Map<string, string>> {
   const db = getDatabase();
-  const result = await (db as any).query(
-    'SELECT id, name FROM tp_fields WHERE table_id = $1',
-    [tableId]
-  );
+  const result = await (db as any).query('SELECT id, name FROM tp_fields WHERE table_id = $1', [
+    tableId,
+  ]);
   const map = new Map<string, string>();
   for (const row of result.rows || []) {
     if (row.name) map.set(row.name, row.id);
@@ -560,7 +582,7 @@ function astToSql(
   fieldNameToId: Map<string, string>,
   fieldTypes: Map<string, string>
 ): { sql: string; nextIdx: number } {
-  let idx = startIdx;
+  const idx = startIdx;
 
   switch (node.type) {
     case 'literal': {
@@ -582,19 +604,49 @@ function astToSql(
       const children = node.children ?? [];
 
       if (op === 'NOT') {
-        const { sql: childSql, nextIdx } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
+        const { sql: childSql, nextIdx } = astToSql(
+          children[0],
+          params,
+          idx,
+          fieldNameToId,
+          fieldTypes
+        );
         return { sql: `NOT (${childSql})`, nextIdx };
       }
 
       if (op === 'AND' || op === 'OR') {
-        const { sql: leftSql, nextIdx: afterLeft } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
-        const { sql: rightSql, nextIdx: afterRight } = astToSql(children[1], params, afterLeft, fieldNameToId, fieldTypes);
+        const { sql: leftSql, nextIdx: afterLeft } = astToSql(
+          children[0],
+          params,
+          idx,
+          fieldNameToId,
+          fieldTypes
+        );
+        const { sql: rightSql, nextIdx: afterRight } = astToSql(
+          children[1],
+          params,
+          afterLeft,
+          fieldNameToId,
+          fieldTypes
+        );
         return { sql: `(${leftSql} ${op} ${rightSql})`, nextIdx: afterRight };
       }
 
       // Comparison / arithmetic operators
-      const { sql: leftSql, nextIdx: afterLeft } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
-      const { sql: rightSql, nextIdx: afterRight } = astToSql(children[1], params, afterLeft, fieldNameToId, fieldTypes);
+      const { sql: leftSql, nextIdx: afterLeft } = astToSql(
+        children[0],
+        params,
+        idx,
+        fieldNameToId,
+        fieldTypes
+      );
+      const { sql: rightSql, nextIdx: afterRight } = astToSql(
+        children[1],
+        params,
+        afterLeft,
+        fieldNameToId,
+        fieldTypes
+      );
 
       const sqlOp = op === '=' ? '=' : op === '!=' ? '!=' : op;
       return { sql: `(${leftSql} ${sqlOp} ${rightSql})`, nextIdx: afterRight };
@@ -678,10 +730,16 @@ async function buildGroupQuery(
         if (fnUpper === 'COUNT') {
           aggColumns.push(`COUNT(*) AS "agg_${safeKey}_count"`);
         } else if (['SUM', 'AVG', 'MIN', 'MAX'].includes(fnUpper)) {
-          aggColumns.push(`${fnUpper}((r.data->>$${aggParamIdx})::numeric) AS "agg_${safeKey}_${fn}"`);
+          aggColumns.push(
+            `${fnUpper}((r.data->>$${aggParamIdx})::numeric) AS "agg_${safeKey}_${fn}"`
+          );
         }
       }
-      aggFieldParamIndices.push({ fieldId: agg.fieldId, paramIdx: aggParamIdx, functions: agg.functions.map(f => f.toLowerCase()) });
+      aggFieldParamIndices.push({
+        fieldId: agg.fieldId,
+        paramIdx: aggParamIdx,
+        functions: agg.functions.map((f) => f.toLowerCase()),
+      });
     }
   }
 
@@ -700,7 +758,8 @@ async function buildGroupQuery(
   const limit = Math.min(pageSize, MAX_PAGE_SIZE);
 
   for (const row of countResult.rows || []) {
-    const groupValue = row.group_value !== undefined && row.group_value !== '' ? row.group_value : null;
+    const groupValue =
+      row.group_value !== undefined && row.group_value !== '' ? row.group_value : null;
     const count = parseInt(String(row.cnt ?? 0), 10);
 
     // Extract aggregate values from the row
@@ -736,7 +795,9 @@ async function buildGroupQuery(
         ? fields
             .map((f, i) => {
               const safe = sanitizeFieldKey(f);
-              return safe ? `r.data->>$${fieldParamStart + i} AS "${safe.replace(/"/g, '""')}"` : null;
+              return safe
+                ? `r.data->>$${fieldParamStart + i} AS "${safe.replace(/"/g, '""')}"`
+                : null;
             })
             .filter(Boolean)
             .join(', ') + ', r.id, r.table_id, r.data, r.created_at, r.updated_at, r.created_by'
@@ -821,7 +882,7 @@ const viewQueryEngine = {
 
     if (options.search?.trim()) {
       const searchFieldIds = options.searchFieldIds?.length
-        ? options.searchFieldIds.filter(id => isValidFieldKey(id))
+        ? options.searchFieldIds.filter((id) => isValidFieldKey(id))
         : Array.from(fieldTypes.entries())
             .filter(([, t]) => TEXT_FIELD_TYPES.has(t))
             .map(([id]) => id);
@@ -833,12 +894,13 @@ const viewQueryEngine = {
     if (options.userRole) {
       try {
         const { default: rowPolicyService } = await import('./RowPolicyService.js');
-        const { sql: policySql, nextIdx: afterPolicy } = await rowPolicyService.buildRowFilterClause(
-          options.tableId,
-          options.userRole,
-          params,
-          paramIdx
-        );
+        const { sql: policySql, nextIdx: afterPolicy } =
+          await rowPolicyService.buildRowFilterClause(
+            options.tableId,
+            options.userRole,
+            params,
+            paramIdx
+          );
         if (policySql !== 'TRUE') {
           conditions.push(`(${policySql})`);
         }
@@ -894,7 +956,11 @@ const viewQueryEngine = {
         const page = Math.max(1, options.page!);
         const offset = (page - 1) * pageSize;
 
-        const { sql: sortSql, nextIdx: afterSortIdx } = buildSortClause(sorts || [], finalParams, paramIdx);
+        const { sql: sortSql, nextIdx: afterSortIdx } = buildSortClause(
+          sorts || [],
+          finalParams,
+          paramIdx
+        );
         paramIdx = afterSortIdx;
 
         let selectClause: string;
@@ -947,7 +1013,11 @@ const viewQueryEngine = {
         }
       }
 
-      const { sql: sortSql, nextIdx: afterSortIdx } = buildSortClause(sorts || [], finalParams, paramIdx);
+      const { sql: sortSql, nextIdx: afterSortIdx } = buildSortClause(
+        sorts || [],
+        finalParams,
+        paramIdx
+      );
       paramIdx = afterSortIdx;
 
       let selectClause: string;

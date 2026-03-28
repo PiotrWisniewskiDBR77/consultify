@@ -1,23 +1,38 @@
 import { z } from 'zod';
 
 export const FieldTypeEnum = z.enum([
-  'text', 'textarea', 'number', 'date', 'select', 'multiselect',
-  'boolean', 'user', 'url', 'email', 'currency',
+  'text',
+  'textarea',
+  'number',
+  'date',
+  'select',
+  'multiselect',
+  'boolean',
+  'user',
+  'url',
+  'email',
+  'currency',
 ]);
 
 export const CustomFieldDefinitionSchema = z.object({
-  fieldKey: z.string().min(1).max(64).regex(/^[a-z][a-z0-9_]*$/),
+  fieldKey: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z][a-z0-9_]*$/),
   label: z.string().min(1).max(128),
   fieldType: FieldTypeEnum,
   required: z.boolean().default(false),
   entityType: z.enum(['task', 'decision', 'initiative']).default('task'),
   options: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
   defaultValue: z.unknown().optional(),
-  validation: z.object({
-    min: z.number().optional(),
-    max: z.number().optional(),
-    pattern: z.string().optional(),
-  }).optional(),
+  validation: z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+      pattern: z.string().optional(),
+    })
+    .optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.number().default(0),
 });
@@ -29,11 +44,13 @@ export const UpdateCustomFieldSchema = z.object({
   required: z.boolean().optional(),
   options: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
   defaultValue: z.unknown().optional(),
-  validation: z.object({
-    min: z.number().optional(),
-    max: z.number().optional(),
-    pattern: z.string().optional(),
-  }).optional(),
+  validation: z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+      pattern: z.string().optional(),
+    })
+    .optional(),
   isActive: z.boolean().optional(),
   sortOrder: z.number().optional(),
 });
@@ -46,7 +63,7 @@ export function validateCustomFieldValues(
 ): { valid: boolean; errors: Array<{ field: string; message: string }> } {
   const errors: Array<{ field: string; message: string }> = [];
 
-  for (const def of definitions.filter(d => d.isActive)) {
+  for (const def of definitions.filter((d) => d.isActive)) {
     const value = values[def.fieldKey];
 
     if (def.required && (value === undefined || value === null || value === '')) {
@@ -63,23 +80,32 @@ export function validateCustomFieldValues(
           errors.push({ field: def.fieldKey, message: `${def.label} must be a number` });
         } else {
           if (def.validation?.min !== undefined && value < def.validation.min)
-            errors.push({ field: def.fieldKey, message: `${def.label} must be >= ${def.validation.min}` });
+            errors.push({
+              field: def.fieldKey,
+              message: `${def.label} must be >= ${def.validation.min}`,
+            });
           if (def.validation?.max !== undefined && value > def.validation.max)
-            errors.push({ field: def.fieldKey, message: `${def.label} must be <= ${def.validation.max}` });
+            errors.push({
+              field: def.fieldKey,
+              message: `${def.label} must be <= ${def.validation.max}`,
+            });
         }
         break;
       case 'select':
-        if (def.options && !def.options.some(o => o.value === value))
+        if (def.options && !def.options.some((o) => o.value === value))
           errors.push({ field: def.fieldKey, message: `Invalid option for ${def.label}` });
         break;
       case 'multiselect':
         if (!Array.isArray(value)) {
           errors.push({ field: def.fieldKey, message: `${def.label} must be an array` });
         } else if (def.options) {
-          const validValues = new Set(def.options.map(o => o.value));
+          const validValues = new Set(def.options.map((o) => o.value));
           for (const v of value) {
             if (!validValues.has(v as string))
-              errors.push({ field: def.fieldKey, message: `Invalid option "${v}" for ${def.label}` });
+              errors.push({
+                field: def.fieldKey,
+                message: `Invalid option "${v}" for ${def.label}`,
+              });
           }
         }
         break;
@@ -93,7 +119,9 @@ export function validateCustomFieldValues(
         break;
       case 'url':
         if (typeof value === 'string') {
-          try { new URL(value); } catch {
+          try {
+            new URL(value);
+          } catch {
             errors.push({ field: def.fieldKey, message: `${def.label} must be a valid URL` });
           }
         }

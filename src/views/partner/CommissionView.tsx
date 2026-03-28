@@ -46,7 +46,7 @@ function mapStatementStatus(status?: string): CommissionStatement['status'] {
 
 function buildLiveStatements(
   payouts: V8PartnerPayoutHistoryItem[],
-  transactions: V8PartnerCommissionTransaction[],
+  transactions: V8PartnerCommissionTransaction[]
 ): CommissionStatement[] {
   const payoutStatements: CommissionStatement[] = payouts.map((payout) => ({
     id: `payout:${payout.id}`,
@@ -72,7 +72,8 @@ function buildLiveStatements(
   for (const tx of transactions) {
     if (tx.payoutId) continue;
 
-    const period = typeof tx.transactionDate === 'string' ? tx.transactionDate.slice(0, 7) : 'Unscheduled';
+    const period =
+      typeof tx.transactionDate === 'string' ? tx.transactionDate.slice(0, 7) : 'Unscheduled';
     const status = mapStatementStatus(tx.status);
     const key = `${status}:${period}`;
     const bucket = unsettledBuckets.get(key);
@@ -98,7 +99,7 @@ function buildLiveStatements(
       totalAmount: bucket.totalAmount,
       status: bucket.status,
       deals: [],
-    }),
+    })
   );
 
   return [...payoutStatements, ...unsettledStatements];
@@ -188,7 +189,7 @@ export const CommissionView: React.FC = () => {
         approvedCount: 0,
         pendingAmount: 0,
         pendingCount: 0,
-      },
+      }
     );
   }, [statements]);
 
@@ -217,7 +218,8 @@ export const CommissionView: React.FC = () => {
                 ${statementSummary.paidAmount.toLocaleString()}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {statementSummary.paidCount} settled statement{statementSummary.paidCount === 1 ? '' : 's'}
+                {statementSummary.paidCount} settled statement
+                {statementSummary.paidCount === 1 ? '' : 's'}
               </div>
             </div>
 

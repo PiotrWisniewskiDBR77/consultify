@@ -34,12 +34,8 @@ const AGGREGATIONS: Array<{ value: Aggregation; label: string }> = [
 
 const NUMERIC_TYPES = new Set(['number', 'currency', 'rating', 'progress']);
 
-export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
-  config,
-  fields,
-  onChange,
-}) => {
-  const numericFields = fields.filter(f => NUMERIC_TYPES.has(f.type));
+export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fields, onChange }) => {
+  const numericFields = fields.filter((f) => NUMERIC_TYPES.has(f.type));
 
   const update = <K extends keyof ChartConfig>(key: K, value: ChartConfig[K]) => {
     onChange({ ...config, [key]: value });
@@ -52,7 +48,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
         <input
           type="text"
           value={config.title || ''}
-          onChange={e => update('title', e.target.value || undefined)}
+          onChange={(e) => update('title', e.target.value || undefined)}
           placeholder="Chart title..."
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         />
@@ -61,7 +57,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
       <div>
         <label className="text-xs font-medium text-gray-500">Chart Type</label>
         <div className="grid grid-cols-4 gap-1 mt-1">
-          {CHART_TYPES.map(ct => (
+          {CHART_TYPES.map((ct) => (
             <button
               key={ct.value}
               onClick={() => update('chartType', ct.value)}
@@ -81,12 +77,14 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
         <label className="text-xs font-medium text-gray-500">X-Axis Field</label>
         <select
           value={config.xFieldId}
-          onChange={e => update('xFieldId', e.target.value)}
+          onChange={(e) => update('xFieldId', e.target.value)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
           <option value="">Select field...</option>
-          {fields.map(f => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+          {fields.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>
@@ -97,12 +95,14 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
         </label>
         <select
           value={config.yFieldId || ''}
-          onChange={e => update('yFieldId', e.target.value || undefined)}
+          onChange={(e) => update('yFieldId', e.target.value || undefined)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
           <option value="">None (count only)</option>
-          {numericFields.map(f => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+          {numericFields.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </div>
@@ -111,11 +111,13 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({
         <label className="text-xs font-medium text-gray-500">Aggregation</label>
         <select
           value={config.aggregation}
-          onChange={e => update('aggregation', e.target.value as Aggregation)}
+          onChange={(e) => update('aggregation', e.target.value as Aggregation)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
-          {AGGREGATIONS.map(a => (
-            <option key={a.value} value={a.value}>{a.label}</option>
+          {AGGREGATIONS.map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.label}
+            </option>
           ))}
         </select>
       </div>

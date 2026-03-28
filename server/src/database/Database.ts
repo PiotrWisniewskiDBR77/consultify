@@ -424,10 +424,14 @@ function createMockDatabase(): MockDatabase {
 
       if (!equalityMatches.length && s.includes('organization_id = ?')) {
         const orgId = params?.[0];
-        rows = rows.filter((r) => r.organization_id != null && String(r.organization_id) === String(orgId));
+        rows = rows.filter(
+          (r) => r.organization_id != null && String(r.organization_id) === String(orgId)
+        );
       }
       if (s.includes('is_active = true') || s.includes('is_active = 1')) {
-        rows = rows.filter((r) => r.is_active === true || r.is_active === 1 || String(r.is_active) === 'true');
+        rows = rows.filter(
+          (r) => r.is_active === true || r.is_active === 1 || String(r.is_active) === 'true'
+        );
       }
     }
 
@@ -448,7 +452,10 @@ function createMockDatabase(): MockDatabase {
     const aliasSpecs = Array.from(
       selectPart.matchAll(/\b([a-zA-Z0-9_.]+)\s+as\s+"?([a-zA-Z0-9_]+)"?/gi)
     ).map((match) => ({
-      source: String(match[1] || '').split('.').pop() || '',
+      source:
+        String(match[1] || '')
+          .split('.')
+          .pop() || '',
       alias: String(match[2] || ''),
     }));
 

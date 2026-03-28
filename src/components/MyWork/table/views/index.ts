@@ -1,14 +1,10 @@
-export { KanbanView } from './KanbanView';
-export type { KanbanViewProps } from './KanbanView';
-
-export { CalendarView } from './CalendarView';
 export type { CalendarViewProps } from './CalendarView';
-
+export { CalendarView } from './CalendarView';
+export type { CardSize, GalleryViewProps } from './GalleryView';
 export { GalleryView } from './GalleryView';
-export type { GalleryViewProps, CardSize } from './GalleryView';
-
+export type { KanbanViewProps } from './KanbanView';
+export { KanbanView } from './KanbanView';
+export type { PlatformViewType, ViewConfigPanelProps, ViewConfigState } from './ViewConfigPanel';
 export { ViewConfigPanel } from './ViewConfigPanel';
-export type { ViewConfigPanelProps, ViewConfigState, PlatformViewType } from './ViewConfigPanel';
-
-export { ViewRouter } from './ViewRouter';
 export type { ViewRouterProps } from './ViewRouter';
+export { ViewRouter } from './ViewRouter';

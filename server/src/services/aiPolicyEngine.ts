@@ -236,11 +236,7 @@ const AIPolicyEngine = {
       // This is still overridden by Regulatory Mode and by missing web-search credentials
       // (handled in webSearchGovernance).
       internetEnabled:
-        orgPolicy.internet_enabled === 0
-          ? false
-          : orgPolicy.internet_enabled === 1
-            ? true
-            : true,
+        orgPolicy.internet_enabled === 0 ? false : orgPolicy.internet_enabled === 1 ? true : true,
       auditRequired: orgPolicy.audit_required !== 0,
       defaultRole: orgPolicy.default_ai_role || 'ADVISOR',
       activeRoles: JSON.parse(

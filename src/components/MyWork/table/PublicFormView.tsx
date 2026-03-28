@@ -3,13 +3,7 @@
  * Fetches form config by slug, renders fields, validates, and submits.
  */
 
-import {
-  AlertCircle,
-  Check,
-  CheckSquare,
-  Loader2,
-  Square,
-} from 'lucide-react';
+import { AlertCircle, Check, CheckSquare, Loader2, Square } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import * as tablePlatformApi from '@/services/api/tablePlatform.api';
@@ -77,9 +71,9 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
         setForm(data);
 
         const initial: Record<string, unknown> = {};
-        const config = (typeof data.config === 'string'
-          ? JSON.parse(data.config)
-          : data.config) as FormConfig;
+        const config = (
+          typeof data.config === 'string' ? JSON.parse(data.config) : data.config
+        ) as FormConfig;
         for (const fc of config.fields) {
           if (fc.defaultValue !== undefined && !fc.hidden) {
             initial[fc.fieldId] = fc.defaultValue;
@@ -101,20 +95,12 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
   const config = useMemo(() => {
     if (!form) return null;
-    return (typeof form.config === 'string'
-      ? JSON.parse(form.config)
-      : form.config) as FormConfig;
+    return (typeof form.config === 'string' ? JSON.parse(form.config) : form.config) as FormConfig;
   }, [form]);
 
-  const fieldMap = useMemo(
-    () => new Map((form?.fields ?? []).map((f) => [f.id, f])),
-    [form]
-  );
+  const fieldMap = useMemo(() => new Map((form?.fields ?? []).map((f) => [f.id, f])), [form]);
 
-  const visibleFields = useMemo(
-    () => (config?.fields ?? []).filter((fc) => !fc.hidden),
-    [config]
-  );
+  const visibleFields = useMemo(() => (config?.fields ?? []).filter((fc) => !fc.hidden), [config]);
 
   const setValue = useCallback((fieldId: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
@@ -241,13 +227,9 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-800">
           {/* Header */}
-          <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
-            {form.name}
-          </h1>
+          <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">{form.name}</h1>
           {form.description && (
-            <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">
-              {form.description}
-            </p>
+            <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">{form.description}</p>
           )}
 
           {/* Error banner */}
@@ -314,9 +296,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         {config.required && <span className="ml-1 text-red-500">*</span>}
       </label>
       {config.helpText && (
-        <p className="mb-1.5 text-xs text-gray-400 dark:text-gray-500">
-          {config.helpText}
-        </p>
+        <p className="mb-1.5 text-xs text-gray-400 dark:text-gray-500">{config.helpText}</p>
       )}
       <FieldInput
         fieldType={field.field_type}
@@ -325,9 +305,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         onChange={onChange}
         hasError={!!error}
       />
-      {error && (
-        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
-      )}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
@@ -342,9 +320,7 @@ interface FieldInputProps {
 
 function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInputProps) {
   const baseClass = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-navy-900 dark:text-white ${
-    hasError
-      ? 'border-red-300 dark:border-red-700'
-      : 'border-gray-200 dark:border-navy-600'
+    hasError ? 'border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-navy-600'
   }`;
 
   switch (fieldType) {
@@ -414,7 +390,9 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
 
     case 'singleSelect':
     case 'single_select': {
-      const opts = (options as any)?.options as Array<{ value?: string; name?: string; id?: string }> | undefined;
+      const opts = (options as any)?.options as
+        | Array<{ value?: string; name?: string; id?: string }>
+        | undefined;
       return (
         <select
           value={String(value ?? '')}
@@ -436,7 +414,9 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
 
     case 'multiSelect':
     case 'multi_select': {
-      const opts = (options as any)?.options as Array<{ value?: string; name?: string; id?: string }> | undefined;
+      const opts = (options as any)?.options as
+        | Array<{ value?: string; name?: string; id?: string }>
+        | undefined;
       const selected = Array.isArray(value) ? (value as string[]) : [];
 
       return (
@@ -453,16 +433,12 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => {
-                    const next = isChecked
-                      ? selected.filter((v) => v !== val)
-                      : [...selected, val];
+                    const next = isChecked ? selected.filter((v) => v !== val) : [...selected, val];
                     onChange(next.length > 0 ? next : undefined);
                   }}
                   className="h-4 w-4 rounded border-gray-300"
                 />
-                <span className="text-gray-700 dark:text-gray-300">
-                  {o.name ?? val}
-                </span>
+                <span className="text-gray-700 dark:text-gray-300">{o.name ?? val}</span>
               </label>
             );
           })}

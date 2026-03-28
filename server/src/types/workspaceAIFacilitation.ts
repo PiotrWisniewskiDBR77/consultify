@@ -185,7 +185,7 @@ export const CreateDecisionParamsSchema = z.object({
       z.object({
         optionId: z.string().min(1),
         label: z.string().min(1),
-      }),
+      })
     )
     .min(2),
 });

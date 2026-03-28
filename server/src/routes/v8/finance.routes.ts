@@ -5,14 +5,28 @@
  * @module routes/v8/finance.routes
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
+import { listBudgets } from '../../services/budgetingService.js';
+import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
+import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
+import {
+  getFinanceTraceId,
+  logFinanceError,
+  logFinanceEvent,
+} from '../../services/financeDiagnosticsService.js';
+import {
+  assessCoverage,
+  classifyMappingTier,
+  isLikelySubtotalOrAggregate,
+  isNonFinancialByPolicy,
+} from '../../services/financeMappingPolicy.js';
+import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
 import {
   approveAnalysis,
   createAnalysis,
@@ -21,9 +35,31 @@ import {
   listAnalyses,
   runFullAnalysis,
 } from '../../services/financialAnalysisService.js';
-import { listBudgets } from '../../services/budgetingService.js';
-import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
-import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
+import {
+  addEvent,
+  approveModel,
+  computeModel,
+  createModel,
+  deleteEvent,
+  getModel,
+  getOutputs,
+  getValidations,
+  listEvents,
+  listModels,
+  persistComputeResult,
+  updateModel,
+} from '../../services/financialModelingService.js';
+import {
+  getStatementPackDetail,
+  listStatementPacks,
+  recomputeStatementPackForOrganization,
+  syncStatementToPack,
+} from '../../services/financialStatementPackService.js';
+import {
+  getStatementDetail,
+  listStatements,
+} from '../../services/financialStatementReadService.js';
+import type { DetectionResult } from '../../services/financialStatementService.js';
 import {
   autoMapLines,
   classifyStatementDocument,
@@ -42,23 +78,18 @@ import {
   persistStatementValidationLedger,
   recordStatementQualityRun,
   recordStatementSourceArtifact,
-  resolveStatementColumnSelection,
   resolveDuplicateSuggestedMappings,
+  resolveStatementColumnSelection,
   saveStatementValues,
   snapshotCanonicalStatementVersion,
   startStatementIngestRun,
-  updateStatementMetadata,
-  updateStatementStatus,
   updateStatementIngestRun,
+  updateStatementMetadata,
   updateStatementReadinessState,
+  updateStatementStatus,
   validateStatement,
 } from '../../services/financialStatementService.js';
-import type { DetectionResult } from '../../services/financialStatementService.js';
-import {
-  getFinanceTraceId,
-  logFinanceError,
-  logFinanceEvent,
-} from '../../services/financeDiagnosticsService.js';
+import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -66,41 +97,13 @@ import {
   mapUnmappedLinesWithLLM,
 } from '../../services/llmFinancialMappingService.js';
 import {
-  assessCoverage,
-  classifyMappingTier,
-  isLikelySubtotalOrAggregate,
-  isNonFinancialByPolicy,
-} from '../../services/financeMappingPolicy.js';
-import {
   analyzeAndExtractFullDocument,
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
 import PDFParserService from '../../services/pdfParserService.js';
-import {
-  addEvent,
-  approveModel,
-  computeModel,
-  createModel,
-  deleteEvent,
-  getModel,
-  getOutputs,
-  getValidations,
-  listEvents,
-  listModels,
-  persistComputeResult,
-  updateModel,
-} from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
-import {
-  getStatementPackDetail,
-  listStatementPacks,
-  recomputeStatementPackForOrganization,
-  syncStatementToPack,
-} from '../../services/financialStatementPackService.js';
-import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
-import { getStatementDetail, listStatements } from '../../services/financialStatementReadService.js';
-import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
+import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -245,7 +248,7 @@ router.get(
       data: { dashboard },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -257,7 +260,7 @@ router.get(
       data: { models, count: models.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -309,7 +312,7 @@ router.post(
       }
       throw e;
     }
-  }),
+  })
 );
 
 router.get(
@@ -365,7 +368,7 @@ router.get(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -390,7 +393,7 @@ router.get(
       data: { validations, summary },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -428,7 +431,7 @@ router.get(
       data: { raw: outputs, grouped },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -459,7 +462,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -486,7 +489,7 @@ router.post(
       data: { success: true, status: 'approved' },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.put(
@@ -504,7 +507,7 @@ router.put(
       data: { success: true },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -551,7 +554,7 @@ router.post(
       data: { success: true, id },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.delete(
@@ -564,7 +567,7 @@ router.delete(
        FROM financial_model_events e
        INNER JOIN financial_models m ON m.id = e.model_id
        WHERE e.id = ? AND m.organization_id = ?`,
-      [eventId, organizationId],
+      [eventId, organizationId]
     );
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
@@ -575,7 +578,7 @@ router.delete(
       data: { success: true, deleted: eventId },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.delete(
@@ -600,7 +603,7 @@ router.delete(
       data: { success: true, deleted: modelId },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -612,7 +615,7 @@ router.get(
       data: { valuations, count: valuations.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -624,7 +627,7 @@ router.get(
       data: { budgets, count: budgets.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -632,13 +635,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const readiness =
-      typeof req.query.readiness === 'string' ? String(req.query.readiness).trim().toLowerCase() : '';
+      typeof req.query.readiness === 'string'
+        ? String(req.query.readiness).trim().toLowerCase()
+        : '';
     const statementPacks = await listStatementPacks(organizationId, readiness);
     return res.json({
       data: { statementPacks, count: statementPacks.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -654,7 +659,7 @@ router.get(
       data: { pack },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -662,13 +667,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const readiness =
-      typeof req.query.readiness === 'string' ? String(req.query.readiness).trim().toLowerCase() : '';
+      typeof req.query.readiness === 'string'
+        ? String(req.query.readiness).trim().toLowerCase()
+        : '';
     const statements = await listStatements(organizationId, readiness);
     return res.json({
       data: { statements, count: statements.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -701,9 +708,7 @@ router.post(
       });
     }
 
-    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod)
-      ? parseMethod
-      : 'manual';
+    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
 
     logFinanceEvent('statement.smartUpload.started', {
       traceId,
@@ -744,9 +749,13 @@ router.post(
         createdBy: userId,
       });
       const statementPackId = await syncStatementToPack(statementId);
-      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [`${text.substring(0, 100000)}`, statementId], {
-        fallback: false,
-      });
+      await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId],
+        {
+          fallback: false,
+        }
+      );
 
       return res.status(201).json({
         data: {
@@ -761,7 +770,11 @@ router.post(
       });
     }
 
-    const createdStatements: Array<{ statementId: string; statementType: string; lineCount: number }> = [];
+    const createdStatements: Array<{
+      statementId: string;
+      statementType: string;
+      lineCount: number;
+    }> = [];
     let packId: string | null = null;
 
     for (const section of analysis.sections) {
@@ -783,9 +796,13 @@ router.post(
         createdBy: userId,
       });
 
-      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [`${text.substring(0, 100000)}`, statementId], {
-        fallback: false,
-      });
+      await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId],
+        {
+          fallback: false,
+        }
+      );
 
       const thisPackId = await syncStatementToPack(statementId);
       if (!packId && thisPackId) packId = thisPackId;
@@ -807,7 +824,9 @@ router.post(
         extractionStrategy: 'llm_full_document',
         templateFamily: null,
         rawTextLength: text.length,
-        summary: { analysis: { entityName: analysis.entityName, sectionType: section.statementType } },
+        summary: {
+          analysis: { entityName: analysis.entityName, sectionType: section.statementType },
+        },
         createdBy: userId,
       });
 
@@ -841,7 +860,9 @@ router.post(
         value: line.value,
         confidence: line.confidence,
         sourceRow: line.sourceRow,
-        mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as 'auto' | 'unmapped',
+        mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
+          | 'auto'
+          | 'unmapped',
         isNonFinancial: !!(line as any).isNonFinancial,
       }));
 
@@ -940,7 +961,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -956,7 +977,7 @@ router.get(
       data: { statement },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -981,7 +1002,7 @@ router.get(
       data: analytics,
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -998,7 +1019,7 @@ router.get(
     } catch (error: any) {
       return res.status(404).json({ error: error?.message || 'Statement not found' });
     }
-  }),
+  })
 );
 
 router.get(
@@ -1034,7 +1055,7 @@ router.get(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1047,7 +1068,10 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
+      string,
+      any
+    > | null;
     if (!statement) {
       return res.status(404).json({ error: 'Statement not found' });
     }
@@ -1089,8 +1113,8 @@ router.post(
       periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
       currency: String(req.body?.currency || '').trim() || autoDetection.currency,
       scaling:
-        ((String(req.body?.scaling || '').trim() || autoDetection.scaling) as DetectionResult['scaling']) ||
-        'thousands',
+        ((String(req.body?.scaling || '').trim() ||
+          autoDetection.scaling) as DetectionResult['scaling']) || 'thousands',
       confidence:
         manualSelectionApplied &&
         ((autoDetection.containedStatementTypes || []).length > 1 ||
@@ -1120,12 +1144,15 @@ router.post(
         templateFamily: documentProfile.templateFamily,
       });
     } catch (error) {
-      logger.warn('[V8 Finance] Detect metadata persistence failed; continuing with request-local selection', {
-        statementId,
-        requestedStatementType: req.body?.statementType,
-        effectiveStatementType: detection.statementType,
-        error: String((error as Error)?.message || error || 'unknown'),
-      });
+      logger.warn(
+        '[V8 Finance] Detect metadata persistence failed; continuing with request-local selection',
+        {
+          statementId,
+          requestedStatementType: req.body?.statementType,
+          effectiveStatementType: detection.statementType,
+          error: String((error as Error)?.message || error || 'unknown'),
+        }
+      );
     }
 
     const statementPackId = await syncStatementToPack(statementId);
@@ -1180,7 +1207,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1193,7 +1220,10 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
+      string,
+      any
+    > | null;
     if (!statement) {
       return res.status(404).json({ error: 'Statement not found' });
     }
@@ -1226,9 +1256,13 @@ router.post(
       normalizeStatementTypeInput(statement.statement_type) ||
       'P&L';
     const effectivePeriodLabel =
-      String(req.body?.periodLabel || '').trim() || String(statement.period_label || '').trim() || undefined;
+      String(req.body?.periodLabel || '').trim() ||
+      String(statement.period_label || '').trim() ||
+      undefined;
     const effectiveCurrency =
-      String(req.body?.currency || '').trim() || String(statement.currency || '').trim() || undefined;
+      String(req.body?.currency || '').trim() ||
+      String(statement.currency || '').trim() ||
+      undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
     const minimumAiLines =
@@ -1255,7 +1289,8 @@ router.post(
             })
           : null;
     const aiExtraction =
-      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+      anthropicExtraction &&
+      anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? anthropicExtraction
         : openAiExtraction;
     const extractedSections = locateStatementSections(text, effectiveStatementType);
@@ -1276,11 +1311,13 @@ router.post(
       ...extractionRaw,
       lines: extractionRaw.lines.map((line) => ({
         ...line,
-        selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
+        selectedPeriodLabel:
+          line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
       })),
     };
     const strategy =
-      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+      anthropicExtraction &&
+      anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
           ? 'anthropic_text_fallback'
           : 'anthropic_text_primary'
@@ -1315,7 +1352,7 @@ router.post(
       sections: extractedSections,
     });
     const sectionIdsByKey = Object.fromEntries(
-      persistedSections.map((section) => [section.sectionKey, section.sectionId]),
+      persistedSections.map((section) => [section.sectionKey, section.sectionId])
     );
     const candidateRows = await persistStatementCandidateRows({
       statementId,
@@ -1349,7 +1386,8 @@ router.post(
       extractionStrategy: strategy,
       templateFamily: documentProfile.templateFamily,
       rawTextLength: text.length,
-      reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+      reasonCodes:
+        extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
       summary: {
         sections: persistedSections.length,
         candidateRows: candidateRows.length,
@@ -1367,7 +1405,8 @@ router.post(
           extraction.lines.length > 0
             ? 'Extraction produced candidate financial lines.'
             : 'Extraction did not produce usable financial lines.',
-        reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+        reasonCodes:
+          extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
         payload: {
           rawTableCount: extraction.rawTableCount,
           warnings: extraction.warnings,
@@ -1392,7 +1431,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1405,7 +1444,10 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
+      string,
+      any
+    > | null;
     if (!statement) {
       return res.status(404).json({ error: 'Statement not found' });
     }
@@ -1438,7 +1480,7 @@ router.post(
     });
 
     const unmappedCount = heuristicMapped.filter(
-      (line) => !line.suggestedCanonicalId && !line.isNonFinancial && line.originalLabel,
+      (line) => !line.suggestedCanonicalId && !line.isNonFinancial && line.originalLabel
     ).length;
 
     let llmMappingResult = null;
@@ -1450,7 +1492,10 @@ router.post(
           traceId,
         });
         if (llmMappingResult.proposals.length > 0) {
-          const { applied, skipped } = applyLlmProposals(heuristicMapped, llmMappingResult.proposals);
+          const { applied, skipped } = applyLlmProposals(
+            heuristicMapped,
+            llmMappingResult.proposals
+          );
           logFinanceEvent('statement.mapping.llm_applied', {
             traceId,
             statementId,
@@ -1467,7 +1512,9 @@ router.post(
 
     const mapped = resolveDuplicateSuggestedMappings(heuristicMapped);
 
-    const conflictCount = mapped.filter((line) => line.mappingReason === 'duplicate_candidate_conflict').length;
+    const conflictCount = mapped.filter(
+      (line) => line.mappingReason === 'duplicate_candidate_conflict'
+    ).length;
     let llmSecondPassResult = null;
     if (conflictCount > 0) {
       try {
@@ -1477,7 +1524,10 @@ router.post(
           traceId,
         });
         if (llmSecondPassResult.proposals.length > 0) {
-          const { applied, skipped } = applySecondPassProposals(mapped, llmSecondPassResult.proposals);
+          const { applied, skipped } = applySecondPassProposals(
+            mapped,
+            llmSecondPassResult.proposals
+          );
           logFinanceEvent('statement.mapping.llm_second_pass_applied', {
             traceId,
             statementId,
@@ -1488,7 +1538,10 @@ router.post(
           });
         }
       } catch (llm2Err) {
-        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, { traceId, statementId });
+        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, {
+          traceId,
+          statementId,
+        });
       }
     }
 
@@ -1505,7 +1558,9 @@ router.post(
       ingestRunId,
       rows: mapped,
       candidateRowIdsBySourceRow: Object.fromEntries(
-        candidateRows.filter((row) => row.sourceRow != null).map((row) => [Number(row.sourceRow), row.candidateRowId]),
+        candidateRows
+          .filter((row) => row.sourceRow != null)
+          .map((row) => [Number(row.sourceRow), row.candidateRowId])
       ),
     });
 
@@ -1531,7 +1586,7 @@ router.post(
         total: mapped.length,
         suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
         heuristicMapped: mapped.filter(
-          (line) => line.suggestedCanonicalId && !line.mappingReason?.startsWith('llm_mapping'),
+          (line) => line.suggestedCanonicalId && !line.mappingReason?.startsWith('llm_mapping')
         ).length,
         llmMapped: mapped.filter((line) => line.mappingReason?.startsWith('llm_mapping')).length,
         llmProvider: llmMappingResult?.provider || null,
@@ -1564,7 +1619,11 @@ router.post(
         line.isNonFinancial = true;
         line.classificationReason = 'policy_non_financial';
       }
-      if (!line.isNonFinancial && !line.suggestedCanonicalId && isLikelySubtotalOrAggregate(line.originalLabel)) {
+      if (
+        !line.isNonFinancial &&
+        !line.suggestedCanonicalId &&
+        isLikelySubtotalOrAggregate(line.originalLabel)
+      ) {
         line.isNonFinancial = true;
         line.classificationReason = 'policy_subtotal_aggregate';
       }
@@ -1576,7 +1635,7 @@ router.post(
         mappingReason: line.mappingReason,
         isNonFinancial: line.isNonFinancial,
         originalLabel: line.originalLabel,
-      }),
+      })
     );
     for (let index = 0; index < mapped.length; index += 1) {
       (mapped[index] as any).mappingTier = tierResults[index].tier;
@@ -1592,7 +1651,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1605,7 +1664,10 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
+      string,
+      any
+    > | null;
     if (!statement) {
       return res.status(404).json({ error: 'Statement not found' });
     }
@@ -1701,7 +1763,7 @@ router.post(
       },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.put(
@@ -1713,7 +1775,10 @@ router.put(
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
+      string,
+      any
+    > | null;
     if (!statement) {
       return res.status(404).json({ error: 'Statement not found' });
     }
@@ -1734,7 +1799,7 @@ router.put(
       data: result,
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1748,13 +1813,13 @@ router.get(
        FROM financial_statement_lines
        WHERE is_system = TRUE OR organization_id = ?
        ORDER BY statement_type, sort_order`,
-      [organizationId],
+      [organizationId]
     );
     return res.json({
       data: { canonicalLines, count: canonicalLines.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1769,7 +1834,7 @@ router.get(
       data: { analyses, count: analyses.length },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1785,7 +1850,7 @@ router.post(
       data: { analysis },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1803,7 +1868,7 @@ router.get(
       data: { ratios },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1833,7 +1898,7 @@ router.get(
       data: { proposals },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1858,7 +1923,7 @@ router.post(
       `SELECT id, organization_id, project_id, title
        FROM financial_analyses
        WHERE id = ? AND organization_id = ?`,
-      [analysisId, organizationId],
+      [analysisId, organizationId]
     );
     if (!analysis) {
       return res.status(404).json({ error: 'Not found' });
@@ -1869,7 +1934,7 @@ router.post(
       `SELECT id, insight_type, title, description
        FROM financial_analysis_insights
        WHERE analysis_id = ? AND id IN (${placeholders})`,
-      [analysisId, ...acceptedProposalIds],
+      [analysisId, ...acceptedProposalIds]
     );
 
     const now = new Date().toISOString();
@@ -1897,7 +1962,7 @@ router.post(
           analysisId,
           now,
           now,
-        ],
+        ]
       );
 
       created.push(initiativeId);
@@ -1907,7 +1972,7 @@ router.post(
       data: { success: true, initiativeIds: created },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1920,7 +1985,7 @@ router.post(
       data: { success: true, result },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1937,7 +2002,7 @@ router.post(
       data: { success: true },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 router.delete(
@@ -1947,7 +2012,7 @@ router.delete(
     const analysisId = String(req.params.analysisId || '');
     const row = await dbGet<any>(
       `SELECT id, status FROM financial_analyses WHERE id = ? AND organization_id = ?`,
-      [analysisId, organizationId],
+      [analysisId, organizationId]
     );
     if (!row) {
       return res.status(404).json({ error: 'Analysis not found' });
@@ -1964,7 +2029,7 @@ router.delete(
       data: { success: true, deleted: analysisId },
       meta: financeMeta(),
     });
-  }),
+  })
 );
 
 export default router;

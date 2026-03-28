@@ -353,7 +353,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   });
 
   const effectiveOrgId = organizationId || currentUser.organizationId;
-  const canRebuildContext = ['admin', 'administrator', 'owner', 'superadmin', 'super_admin'].includes(
+  const canRebuildContext = [
+    'admin',
+    'administrator',
+    'owner',
+    'superadmin',
+    'super_admin',
+  ].includes(
     String(currentUser?.role || '')
       .trim()
       .toLowerCase()
@@ -550,10 +556,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </button>
       </div>
 
-      <OrganizationContextOverview
-        organizationId={effectiveOrgId}
-        canRebuild={canRebuildContext}
-      />
+      <OrganizationContextOverview organizationId={effectiveOrgId} canRebuild={canRebuildContext} />
 
       {/* Sections */}
       <div className="space-y-4">

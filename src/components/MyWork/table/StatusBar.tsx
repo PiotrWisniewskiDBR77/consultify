@@ -47,7 +47,9 @@ function computeAggregate(mode: AggregateMode, values: unknown[]): string {
     case 'sum':
       return (Math.round(nums.reduce((a, b) => a + b, 0) * 100) / 100).toLocaleString();
     case 'avg':
-      return (Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100).toLocaleString();
+      return (
+        Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100
+      ).toLocaleString();
     case 'min':
       return String(Math.min(...nums));
     case 'max':

@@ -280,7 +280,9 @@ export class ExecutionController {
           eventType: 'gate_pending',
           title: `Gate pending${initiativeId ? ' for initiative' : ''}`,
           body: errors.join(' ') || 'Execution gate requires follow-up before status can advance.',
-          deepLink: initiativeId ? `/initiatives/${initiativeId}` : `/execution?projectId=${projectId}`,
+          deepLink: initiativeId
+            ? `/initiatives/${initiativeId}`
+            : `/execution?projectId=${projectId}`,
           severity: 'high',
         }).catch((err: any) =>
           logger.warn('[ExecutionController] Gate communication sync failed:', err?.message)
@@ -336,8 +338,7 @@ export class ExecutionController {
           AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)
           AND UPPER(type) = 'RISK' AND UPPER(COALESCE(status, 'OPEN')) IN ('OPEN', 'IN_PROGRESS')
       `;
-      const raidRisks =
-        (await queryHelpers.queryAll(risksSql, [orgId, projectId, orgId])) || [];
+      const raidRisks = (await queryHelpers.queryAll(risksSql, [orgId, projectId, orgId])) || [];
 
       // Calculate metrics
       const totalInitiatives = initiatives.filter((i: any) =>
@@ -415,7 +416,11 @@ export class ExecutionController {
 
         const risksForIni = (raidRisks as any[]).filter((r) => r.initiative_id === initiativeId);
 
-        if (String(ini.status).toUpperCase() === 'BLOCKED' || blockedTasksForIni.length > 0 || overdueDecForIni.length > 0) {
+        if (
+          String(ini.status).toUpperCase() === 'BLOCKED' ||
+          blockedTasksForIni.length > 0 ||
+          overdueDecForIni.length > 0
+        ) {
           health = 'RED';
           if (String(ini.status).toUpperCase() === 'BLOCKED') {
             whyRed.signals.push({ type: 'status', message: 'Initiative is BLOCKED' });
@@ -433,12 +438,16 @@ export class ExecutionController {
               severity: r.severity,
             })
           );
-          blockedTasksForIni.slice(0, 5).forEach((t: any) =>
-            whyRed.tasks.push({ id: t.id, title: t.title || t.id, status: 'BLOCKED' })
-          );
-          overdueTasksForIni.slice(0, 5).forEach((t: any) =>
-            whyRed.tasks.push({ id: t.id, title: t.title || t.id, status: 'OVERDUE' })
-          );
+          blockedTasksForIni
+            .slice(0, 5)
+            .forEach((t: any) =>
+              whyRed.tasks.push({ id: t.id, title: t.title || t.id, status: 'BLOCKED' })
+            );
+          overdueTasksForIni
+            .slice(0, 5)
+            .forEach((t: any) =>
+              whyRed.tasks.push({ id: t.id, title: t.title || t.id, status: 'OVERDUE' })
+            );
           overdueDecForIni.slice(0, 5).forEach((d: any) =>
             whyRed.decisions.push({
               id: d.id,
@@ -771,7 +780,11 @@ export class ExecutionController {
           return (await queryHelpers.queryAll(sql, params)) || [];
         } catch (error: any) {
           const msg = String(error?.message || '').toLowerCase();
-          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+          if (
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation')
+          ) {
             return [];
           }
           throw error;
@@ -934,8 +947,16 @@ export class ExecutionController {
         };
         const rankDiff = severityRank(a) - severityRank(b);
         if (rankDiff !== 0) return rankDiff;
-        const aTs = a.dueDate ? new Date(a.dueDate).getTime() : a.periodStart ? new Date(a.periodStart).getTime() : Number.POSITIVE_INFINITY;
-        const bTs = b.dueDate ? new Date(b.dueDate).getTime() : b.periodStart ? new Date(b.periodStart).getTime() : Number.POSITIVE_INFINITY;
+        const aTs = a.dueDate
+          ? new Date(a.dueDate).getTime()
+          : a.periodStart
+            ? new Date(a.periodStart).getTime()
+            : Number.POSITIVE_INFINITY;
+        const bTs = b.dueDate
+          ? new Date(b.dueDate).getTime()
+          : b.periodStart
+            ? new Date(b.periodStart).getTime()
+            : Number.POSITIVE_INFINITY;
         return aTs - bTs;
       });
 

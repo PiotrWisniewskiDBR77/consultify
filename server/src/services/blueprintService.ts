@@ -6,8 +6,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import * as queryHelpers from '../utils/queryHelpers.js';
+
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 export interface WbsItem {
   id: string;
@@ -129,20 +130,33 @@ export async function addWbsItem(
         estimated_hours, deliverables, acceptance_criteria, assigned_role, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, templateId, data.parentId || null,
-      data.title, data.itemType || 'work_package', level,
-      data.sortOrder ?? 0, data.estimatedHours ?? null,
-      data.deliverables || null, data.acceptanceCriteria || null,
-      data.assignedRole || null, now,
+      id,
+      templateId,
+      data.parentId || null,
+      data.title,
+      data.itemType || 'work_package',
+      level,
+      data.sortOrder ?? 0,
+      data.estimatedHours ?? null,
+      data.deliverables || null,
+      data.acceptanceCriteria || null,
+      data.assignedRole || null,
+      now,
     ]
   );
 
   return {
-    id, templateId, parentId: data.parentId,
-    title: data.title, itemType: data.itemType || 'work_package',
-    level, sortOrder: data.sortOrder ?? 0,
-    estimatedHours: data.estimatedHours, deliverables: data.deliverables,
-    acceptanceCriteria: data.acceptanceCriteria, assignedRole: data.assignedRole,
+    id,
+    templateId,
+    parentId: data.parentId,
+    title: data.title,
+    itemType: data.itemType || 'work_package',
+    level,
+    sortOrder: data.sortOrder ?? 0,
+    estimatedHours: data.estimatedHours,
+    deliverables: data.deliverables,
+    acceptanceCriteria: data.acceptanceCriteria,
+    assignedRole: data.assignedRole,
     createdAt: now,
   };
 }
@@ -171,15 +185,42 @@ export async function updateWbsItem(
   const fields: string[] = [];
   const params: unknown[] = [];
 
-  if (data.title !== undefined) { fields.push('title = ?'); params.push(data.title); }
-  if (data.parentId !== undefined) { fields.push('parent_id = ?'); params.push(data.parentId); }
-  if (data.itemType !== undefined) { fields.push('item_type = ?'); params.push(data.itemType); }
-  if (data.level !== undefined) { fields.push('level = ?'); params.push(data.level); }
-  if (data.sortOrder !== undefined) { fields.push('sort_order = ?'); params.push(data.sortOrder); }
-  if (data.estimatedHours !== undefined) { fields.push('estimated_hours = ?'); params.push(data.estimatedHours); }
-  if (data.deliverables !== undefined) { fields.push('deliverables = ?'); params.push(data.deliverables); }
-  if (data.acceptanceCriteria !== undefined) { fields.push('acceptance_criteria = ?'); params.push(data.acceptanceCriteria); }
-  if (data.assignedRole !== undefined) { fields.push('assigned_role = ?'); params.push(data.assignedRole); }
+  if (data.title !== undefined) {
+    fields.push('title = ?');
+    params.push(data.title);
+  }
+  if (data.parentId !== undefined) {
+    fields.push('parent_id = ?');
+    params.push(data.parentId);
+  }
+  if (data.itemType !== undefined) {
+    fields.push('item_type = ?');
+    params.push(data.itemType);
+  }
+  if (data.level !== undefined) {
+    fields.push('level = ?');
+    params.push(data.level);
+  }
+  if (data.sortOrder !== undefined) {
+    fields.push('sort_order = ?');
+    params.push(data.sortOrder);
+  }
+  if (data.estimatedHours !== undefined) {
+    fields.push('estimated_hours = ?');
+    params.push(data.estimatedHours);
+  }
+  if (data.deliverables !== undefined) {
+    fields.push('deliverables = ?');
+    params.push(data.deliverables);
+  }
+  if (data.acceptanceCriteria !== undefined) {
+    fields.push('acceptance_criteria = ?');
+    params.push(data.acceptanceCriteria);
+  }
+  if (data.assignedRole !== undefined) {
+    fields.push('assigned_role = ?');
+    params.push(data.assignedRole);
+  }
 
   if (fields.length === 0) return rowToWbsItem(existing);
 
@@ -263,9 +304,15 @@ export async function applyWbs(
             parent_task_id, created_by, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, 'TODO', 'medium', ?, ?, ?, ?)`,
         [
-          taskId, orgId, initiativeId,
-          item.title, item.deliverables || null,
-          parentTaskId, userId, now, now,
+          taskId,
+          orgId,
+          initiativeId,
+          item.title,
+          item.deliverables || null,
+          parentTaskId,
+          userId,
+          now,
+          now,
         ]
       );
       tasksCreated++;
@@ -291,7 +338,9 @@ export async function applyMilestoneDependencies(
   if (template?.milestone_dependencies_json) {
     try {
       milestones = JSON.parse(template.milestone_dependencies_json);
-    } catch { milestones = []; }
+    } catch {
+      milestones = [];
+    }
   }
 
   const now = new Date().toISOString();
@@ -309,7 +358,9 @@ export async function applyMilestoneDependencies(
            (id, initiative_id, organization_id, name, description, status, is_gate, order_index, created_at)
          VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
         [
-          msId, initiativeId, orgId,
+          msId,
+          initiativeId,
+          orgId,
           ms.name || `Milestone ${i + 1}`,
           ms.description || '',
           ms.isGate ? 1 : 0,
@@ -362,7 +413,9 @@ export async function applyRoleTemplates(
   if (template?.role_templates_json) {
     try {
       roles = JSON.parse(template.role_templates_json);
-    } catch { roles = []; }
+    } catch {
+      roles = [];
+    }
   }
 
   const now = new Date().toISOString();
@@ -375,12 +428,19 @@ export async function applyRoleTemplates(
            (id, initiative_id, organization_id, name, role, type, skills, allocation_pct, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, 'human', ?, ?, ?, ?)`,
         [
-          uuidv4(), initiativeId, orgId,
+          uuidv4(),
+          initiativeId,
+          orgId,
           role.name || role.role || 'Team Member',
           role.role || 'member',
-          role.skills ? (typeof role.skills === 'string' ? role.skills : JSON.stringify(role.skills)) : null,
+          role.skills
+            ? typeof role.skills === 'string'
+              ? role.skills
+              : JSON.stringify(role.skills)
+            : null,
           role.allocationPct ?? 100,
-          now, now,
+          now,
+          now,
         ]
       );
       rolesCreated++;
@@ -405,7 +465,9 @@ export async function applyDoDPerLevel(
   if (template?.dod_per_level_json) {
     try {
       dod = JSON.parse(template.dod_per_level_json);
-    } catch { dod = {}; }
+    } catch {
+      dod = {};
+    }
   }
 
   const levels = Object.keys(dod);
@@ -432,7 +494,15 @@ export async function validateBlueprint(templateId: string): Promise<BlueprintVa
     [templateId]
   );
   if (!template) {
-    return { valid: false, hasWbs: false, hasMilestones: false, hasRoles: false, hasDod: false, wbsItemCount: 0, issues: ['Template not found'] };
+    return {
+      valid: false,
+      hasWbs: false,
+      hasMilestones: false,
+      hasRoles: false,
+      hasDod: false,
+      wbsItemCount: 0,
+      issues: ['Template not found'],
+    };
   }
 
   const wbsCount = await queryHelpers.queryOne<any>(
@@ -447,13 +517,17 @@ export async function validateBlueprint(templateId: string): Promise<BlueprintVa
     try {
       const ms = JSON.parse(template.milestone_dependencies_json);
       hasMilestones = Array.isArray(ms) && ms.length > 0;
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }
   if (!hasMilestones && template.suggested_milestones) {
     try {
       const ms = JSON.parse(template.suggested_milestones);
       hasMilestones = Array.isArray(ms) && ms.length > 0;
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }
 
   let hasRoles = false;
@@ -461,7 +535,9 @@ export async function validateBlueprint(templateId: string): Promise<BlueprintVa
     try {
       const r = JSON.parse(template.role_templates_json);
       hasRoles = Array.isArray(r) && r.length > 0;
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }
 
   let hasDod = false;
@@ -469,7 +545,9 @@ export async function validateBlueprint(templateId: string): Promise<BlueprintVa
     try {
       const d = JSON.parse(template.dod_per_level_json);
       hasDod = Object.keys(d).length > 0;
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }
 
   const issues: string[] = [];
@@ -480,7 +558,10 @@ export async function validateBlueprint(templateId: string): Promise<BlueprintVa
 
   return {
     valid: issues.length === 0,
-    hasWbs, hasMilestones, hasRoles, hasDod,
+    hasWbs,
+    hasMilestones,
+    hasRoles,
+    hasDod,
     wbsItemCount,
     issues,
   };
@@ -531,7 +612,16 @@ export async function cloneBlueprint(
     await queryHelpers.queryRun(
       `INSERT INTO initiative_templates (id, organization_id, name, category, description, is_public, created_at, updated_at, created_by)
        VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-      [newId, orgId, `${source.name || 'Blueprint'} (Clone)`, source.category || null, source.description || null, now, now, userId]
+      [
+        newId,
+        orgId,
+        `${source.name || 'Blueprint'} (Clone)`,
+        source.category || null,
+        source.description || null,
+        now,
+        now,
+        userId,
+      ]
     );
   }
 
@@ -553,10 +643,18 @@ export async function cloneBlueprint(
           estimated_hours, deliverables, acceptance_criteria, assigned_role, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        newItemId, newId, newParentId,
-        item.title, item.item_type, item.level, item.sort_order,
-        item.estimated_hours, item.deliverables,
-        item.acceptance_criteria, item.assigned_role, now,
+        newItemId,
+        newId,
+        newParentId,
+        item.title,
+        item.item_type,
+        item.level,
+        item.sort_order,
+        item.estimated_hours,
+        item.deliverables,
+        item.acceptance_criteria,
+        item.assigned_role,
+        now,
       ]
     );
   }

@@ -14,23 +14,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type {
   AddSyncedSourceRefParams,
+  EntrypointClass,
+  EvidenceClass,
+  InitiativeEntrypoint,
+  MaterializationMode,
+  PromotionValidation,
   RecordMaterializationParams,
   SourceMaterializationRecord,
   SyncedSourceRef,
-  PromotionValidation,
-  ValidatePromotionParams,
   SyncStatus,
-  MaterializationMode,
-  EvidenceClass,
-  EntrypointClass,
-  InitiativeEntrypoint,
+  ValidatePromotionParams,
 } from '../../types/sourceTruthPreservation.js';
 import {
-  RecordMaterializationParamsSchema,
   AddSyncedSourceRefParamsSchema,
-  ValidatePromotionParamsSchema,
   ENTRYPOINT_CLASS_MAP,
   InitiativeEntrypointValues,
+  RecordMaterializationParamsSchema,
+  ValidatePromotionParamsSchema,
 } from '../../types/sourceTruthPreservation.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -110,7 +110,7 @@ function rowToSyncedRef(row: SyncedRefRow): SyncedSourceRef {
  * The entrypoint class is derived automatically from the entrypoint.
  */
 export async function recordSourceMaterialization(
-  params: RecordMaterializationParams,
+  params: RecordMaterializationParams
 ): Promise<SourceMaterializationRecord> {
   const validated = RecordMaterializationParamsSchema.parse(params);
 
@@ -153,12 +153,12 @@ export async function recordSourceMaterialization(
       record.evidenceClass,
       record.promotedBy,
       record.promotedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Recorded materialization ${recordId} for initiative ${record.initiativeId} ` +
-    `(entrypoint=${record.entrypoint}, class=${record.entrypointClass})`,
+      `(entrypoint=${record.entrypoint}, class=${record.entrypointClass})`
   );
   return record;
 }
@@ -168,14 +168,14 @@ export async function recordSourceMaterialization(
  */
 export async function getSourcesByInitiative(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SourceMaterializationRecord[]> {
   const rows = await dbAll<MaterializationRow>(
     `SELECT * FROM v8_source_materialization_records
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY promoted_at ASC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToMaterializationRecord);
@@ -186,13 +186,13 @@ export async function getSourcesByInitiative(
  */
 export async function getMaterializationRecord(
   recordId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SourceMaterializationRecord | null> {
   const row = await dbGet<MaterializationRow>(
     `SELECT * FROM v8_source_materialization_records
      WHERE record_id = ? AND organization_id = ?`,
     [recordId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -211,14 +211,17 @@ export function validatePromotion(params: ValidatePromotionParams): PromotionVal
 
   const reasons: string[] = [];
   const isAllowed = validated.hasPermission;
-  const evidenceSufficient = validated.evidenceClass === 'strong' || validated.evidenceClass === 'moderate';
+  const evidenceSufficient =
+    validated.evidenceClass === 'strong' || validated.evidenceClass === 'moderate';
 
   if (!isAllowed) {
     reasons.push('Actor does not have initiative-creation permission');
   }
 
   if (!evidenceSufficient) {
-    reasons.push(`Evidence class '${validated.evidenceClass}' is below threshold (requires strong or moderate)`);
+    reasons.push(
+      `Evidence class '${validated.evidenceClass}' is below threshold (requires strong or moderate)`
+    );
   }
 
   const requiresReview =
@@ -251,7 +254,7 @@ export function validatePromotion(params: ValidatePromotionParams): PromotionVal
  * not only at Idea workspace level.
  */
 export async function addSyncedSourceRef(
-  params: AddSyncedSourceRefParams,
+  params: AddSyncedSourceRefParams
 ): Promise<SyncedSourceRef> {
   const validated = AddSyncedSourceRefParamsSchema.parse(params);
 
@@ -282,12 +285,12 @@ export async function addSyncedSourceRef(
       ref.externalSystem,
       ref.syncStatus,
       ref.lastSyncedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Added synced source ref ${refId} for initiative ${ref.initiativeId} ` +
-    `(system=${ref.externalSystem})`,
+      `(system=${ref.externalSystem})`
   );
   return ref;
 }
@@ -297,14 +300,14 @@ export async function addSyncedSourceRef(
  */
 export async function getSyncedSourceRefs(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SyncedSourceRef[]> {
   const rows = await dbAll<SyncedRefRow>(
     `SELECT * FROM v8_synced_source_refs
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSyncedRef);
@@ -317,13 +320,13 @@ export async function updateSyncStatus(
   refId: string,
   organizationId: string,
   syncStatus: SyncStatus,
-  lastSyncedAt?: string | null,
+  lastSyncedAt?: string | null
 ): Promise<SyncedSourceRef | null> {
   const existing = await dbGet<SyncedRefRow>(
     `SELECT * FROM v8_synced_source_refs
      WHERE ref_id = ? AND organization_id = ?`,
     [refId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!existing) {
@@ -337,7 +340,7 @@ export async function updateSyncStatus(
     `UPDATE v8_synced_source_refs
      SET sync_status = ?, last_synced_at = ?
      WHERE ref_id = ? AND organization_id = ?`,
-    [syncStatus, syncedAt, refId, organizationId],
+    [syncStatus, syncedAt, refId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Updated sync status for ref ${refId} to ${syncStatus}`);
@@ -437,7 +440,7 @@ function emptyBySourceType(): Record<InitiativeEntrypoint, number> {
       acc[ep] = 0;
       return acc;
     },
-    {} as Record<InitiativeEntrypoint, number>,
+    {} as Record<InitiativeEntrypoint, number>
   );
 }
 
@@ -447,7 +450,7 @@ function emptyBySourceType(): Record<InitiativeEntrypoint, number> {
 export async function getEntrypointsByOrg(
   organizationId: string,
   sourceType?: InitiativeEntrypoint,
-  limit?: number,
+  limit?: number
 ): Promise<InitiativeEntrypointRecord[]> {
   const rawLimit = limit ?? DEFAULT_ENTRYPOINT_LIST_LIMIT;
   const safeLimit = Math.min(Math.max(rawLimit, 1), MAX_ENTRYPOINT_LIST_LIMIT);
@@ -463,7 +466,7 @@ export async function getEntrypointsByOrg(
          ORDER BY created_at DESC
          LIMIT ?`,
         [organizationId, sourceType, safeLimit],
-        { fallback: true },
+        { fallback: true }
       )
     : await dbAll<InitiativeEntrypointRow>(
         `SELECT * FROM v8_initiative_entrypoints
@@ -471,7 +474,7 @@ export async function getEntrypointsByOrg(
          ORDER BY created_at DESC
          LIMIT ?`,
         [organizationId, safeLimit],
-        { fallback: true },
+        { fallback: true }
       );
 
   return (rows || []).map(rowToInitiativeEntrypoint);
@@ -482,14 +485,14 @@ export async function getEntrypointsByOrg(
  */
 export async function getEntrypointsBySource(
   sourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<InitiativeEntrypointRecord[]> {
   const rows = await dbAll<InitiativeEntrypointRow>(
     `SELECT * FROM v8_initiative_entrypoints
      WHERE source_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [sourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToInitiativeEntrypoint);
@@ -501,7 +504,7 @@ export async function getEntrypointsBySource(
  */
 export async function validateMaterializationChain(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<MaterializationChainValidationResult> {
   const gaps: string[] = [];
   const chain: SourceTruthChainLink[] = [];
@@ -524,7 +527,7 @@ export async function validateMaterializationChain(
        ON e.entrypoint_id = m.entrypoint_id AND e.organization_id = m.organization_id
      WHERE m.initiative_id = ? AND m.organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const rows = joinRows || [];
@@ -538,7 +541,7 @@ export async function validateMaterializationChain(
     `SELECT * FROM v8_source_materialization_records
      WHERE initiative_id = ? AND organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const promotionRecords = smrs || [];
 
@@ -549,12 +552,12 @@ export async function validateMaterializationChain(
     }
 
     const smr = promotionRecords.find(
-      (r) => r.source_artifact_id === row.source_id && r.entrypoint === row.source_type,
+      (r) => r.source_artifact_id === row.source_id && r.entrypoint === row.source_type
     );
 
     if (!smr) {
       gaps.push(
-        `No v8_source_materialization_records row for source ${row.source_id} (entrypoint=${row.source_type})`,
+        `No v8_source_materialization_records row for source ${row.source_id} (entrypoint=${row.source_type})`
       );
       continue;
     }
@@ -588,7 +591,9 @@ export async function validateMaterializationChain(
 /**
  * Entrypoints that have not yet been promoted to an initiative (no v8_initiative_materializations row).
  */
-export async function getOrphanedEntrypoints(organizationId: string): Promise<InitiativeEntrypointRecord[]> {
+export async function getOrphanedEntrypoints(
+  organizationId: string
+): Promise<InitiativeEntrypointRecord[]> {
   const rows = await dbAll<InitiativeEntrypointRow>(
     `SELECT e.*
      FROM v8_initiative_entrypoints e
@@ -596,7 +601,7 @@ export async function getOrphanedEntrypoints(organizationId: string): Promise<In
      WHERE e.organization_id = ? AND m.materialization_id IS NULL
      ORDER BY e.created_at ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToInitiativeEntrypoint);
@@ -607,7 +612,7 @@ export async function getOrphanedEntrypoints(organizationId: string): Promise<In
  */
 export async function refreshSyncedSources(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RefreshSyncedSourcesResult> {
   const refs = await getSyncedSourceRefs(initiativeId, organizationId);
   const markedStale: string[] = [];
@@ -616,7 +621,7 @@ export async function refreshSyncedSources(
     `SELECT source_artifact_id, entrypoint FROM v8_source_materialization_records
      WHERE initiative_id = ? AND organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const promotions = smrs || [];
 
@@ -631,7 +636,7 @@ export async function refreshSyncedSources(
        ON e.entrypoint_id = m.entrypoint_id AND e.organization_id = m.organization_id
      WHERE m.initiative_id = ? AND m.organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const lifecycle = lifecycleRows || [];
 
@@ -653,7 +658,7 @@ export async function refreshSyncedSources(
       if (updated) {
         markedStale.push(ref.refId);
         logger.info(
-          `${LOG_PREFIX} refreshSyncedSources marked ref ${ref.refId} stale for initiative ${initiativeId}`,
+          `${LOG_PREFIX} refreshSyncedSources marked ref ${ref.refId} stale for initiative ${initiativeId}`
         );
       }
     }
@@ -666,12 +671,12 @@ export async function refreshSyncedSources(
  * Aggregate counts for the transformation pipeline in one org.
  */
 export async function getTransformationPipeline(
-  organizationId: string,
+  organizationId: string
 ): Promise<TransformationPipelineSummary> {
   const totalRow = await dbGet<{ c: number }>(
     `SELECT COUNT(*) AS c FROM v8_initiative_entrypoints WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const totalEntrypoints = Number(totalRow?.c ?? 0);
 
@@ -681,7 +686,7 @@ export async function getTransformationPipeline(
      INNER JOIN v8_initiative_materializations m ON m.entrypoint_id = e.entrypoint_id
      WHERE e.organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   const materializedCount = Number(matRow?.c ?? 0);
 
@@ -691,7 +696,7 @@ export async function getTransformationPipeline(
      WHERE organization_id = ?
      GROUP BY source_type`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const bySourceType = emptyBySourceType();

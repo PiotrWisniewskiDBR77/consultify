@@ -10,42 +10,42 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  ConcurrencyStrategy,
-  ConflictResolution,
-  LockRecord,
-  NotificationTrigger,
-  NotificationRecord,
-  GovernanceSensitiveField,
-  RegisterConcurrencyStrategyParams,
-  RecordConflictParams,
-  ResolveConflictParams,
   AcquireLockParams,
-  RegisterNotificationTriggerParams,
-  CreateNotificationParams,
-  MarkFieldGovernanceSensitiveParams,
-  LockReleaseReason,
-  NotificationState,
   CollaborationMode,
-  MergeStrategy,
-  LockStrategy,
-  OfflinePolicy,
   CommentAnchorStrategy,
+  ConcurrencyStrategy,
   ConflictClass,
-  ResolutionStrategy,
-  ResolutionStatus,
-  LockType,
-  NotificationPriority,
-  NotificationChannel,
+  ConflictResolution,
+  CreateNotificationParams,
   GovernanceConflictPolicy,
+  GovernanceSensitiveField,
+  LockRecord,
+  LockReleaseReason,
+  LockStrategy,
+  LockType,
+  MarkFieldGovernanceSensitiveParams,
+  MergeStrategy,
+  NotificationChannel,
+  NotificationPriority,
+  NotificationRecord,
+  NotificationState,
+  NotificationTrigger,
+  OfflinePolicy,
+  RecordConflictParams,
+  RegisterConcurrencyStrategyParams,
+  RegisterNotificationTriggerParams,
+  ResolutionStatus,
+  ResolutionStrategy,
+  ResolveConflictParams,
 } from '../../types/concurrentEditingNotification.js';
 import {
-  RegisterConcurrencyStrategyParamsSchema,
-  RecordConflictParamsSchema,
-  ResolveConflictParamsSchema,
   AcquireLockParamsSchema,
-  RegisterNotificationTriggerParamsSchema,
   CreateNotificationParamsSchema,
   MarkFieldGovernanceSensitiveParamsSchema,
+  RecordConflictParamsSchema,
+  RegisterConcurrencyStrategyParamsSchema,
+  RegisterNotificationTriggerParamsSchema,
+  ResolveConflictParamsSchema,
 } from '../../types/concurrentEditingNotification.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -257,7 +257,7 @@ function rowToGovernanceField(row: GovernanceFieldRow): GovernanceSensitiveField
  * Upserts: if a strategy already exists for (org, resourceType), it is updated.
  */
 export async function registerConcurrencyStrategy(
-  params: RegisterConcurrencyStrategyParams,
+  params: RegisterConcurrencyStrategyParams
 ): Promise<ConcurrencyStrategy> {
   const validated = RegisterConcurrencyStrategyParamsSchema.parse(params);
 
@@ -265,7 +265,7 @@ export async function registerConcurrencyStrategy(
     `SELECT * FROM v8_concurrency_strategies
      WHERE organization_id = ? AND resource_type = ?`,
     [validated.organizationId, validated.resourceType],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -284,10 +284,12 @@ export async function registerConcurrencyStrategy(
         validated.commentAnchorStrategy,
         now,
         existing.strategy_id,
-      ],
+      ]
     );
 
-    logger.info(`${LOG_PREFIX} Updated concurrency strategy for ${validated.resourceType} in org ${validated.organizationId}`);
+    logger.info(
+      `${LOG_PREFIX} Updated concurrency strategy for ${validated.resourceType} in org ${validated.organizationId}`
+    );
 
     return rowToStrategy({
       ...existing,
@@ -332,10 +334,12 @@ export async function registerConcurrencyStrategy(
       strategy.commentAnchorStrategy,
       strategy.createdAt,
       strategy.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered concurrency strategy ${strategyId} for ${validated.resourceType} in org ${validated.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Registered concurrency strategy ${strategyId} for ${validated.resourceType} in org ${validated.organizationId}`
+  );
   return strategy;
 }
 
@@ -344,13 +348,13 @@ export async function registerConcurrencyStrategy(
  */
 export async function getConcurrencyStrategy(
   resourceType: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ConcurrencyStrategy | null> {
   const row = await dbGet<StrategyRow>(
     `SELECT * FROM v8_concurrency_strategies
      WHERE resource_type = ? AND organization_id = ?`,
     [resourceType, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -365,9 +369,7 @@ export async function getConcurrencyStrategy(
  * Record a detected conflict. Initial status is `pending_user_action`
  * unless the resolution strategy is auto-resolving.
  */
-export async function recordConflict(
-  params: RecordConflictParams,
-): Promise<ConflictResolution> {
+export async function recordConflict(params: RecordConflictParams): Promise<ConflictResolution> {
   const validated = RecordConflictParamsSchema.parse(params);
 
   const conflictId = uuidv4();
@@ -416,10 +418,12 @@ export async function recordConflict(
       conflict.resolvedAt,
       conflict.createdAt,
       JSON.stringify(conflict.metadata),
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Recorded conflict ${conflictId} (${validated.conflictClass}) on ${validated.resourceType}:${validated.resourceId}`);
+  logger.info(
+    `${LOG_PREFIX} Recorded conflict ${conflictId} (${validated.conflictClass}) on ${validated.resourceType}:${validated.resourceId}`
+  );
   return conflict;
 }
 
@@ -429,7 +433,7 @@ export async function recordConflict(
 export async function resolveConflict(
   conflictId: string,
   organizationId: string,
-  resolution: ResolveConflictParams,
+  resolution: ResolveConflictParams
 ): Promise<ConflictResolution> {
   const validated = ResolveConflictParamsSchema.parse(resolution);
 
@@ -437,7 +441,7 @@ export async function resolveConflict(
     `SELECT * FROM v8_conflict_resolutions
      WHERE conflict_id = ? AND organization_id = ?`,
     [conflictId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -446,7 +450,10 @@ export async function resolveConflict(
 
   const existing = rowToConflict(row);
 
-  if (existing.resolutionStatus === 'auto_resolved' || existing.resolutionStatus === 'user_resolved') {
+  if (
+    existing.resolutionStatus === 'auto_resolved' ||
+    existing.resolutionStatus === 'user_resolved'
+  ) {
     throw new Error(`Conflict ${conflictId} is already resolved (${existing.resolutionStatus})`);
   }
 
@@ -456,16 +463,12 @@ export async function resolveConflict(
     `UPDATE v8_conflict_resolutions
      SET resolution_strategy = ?, resolution_status = ?, resolved_at = ?
      WHERE conflict_id = ? AND organization_id = ?`,
-    [
-      validated.resolutionStrategy,
-      validated.resolutionStatus,
-      now,
-      conflictId,
-      organizationId,
-    ],
+    [validated.resolutionStrategy, validated.resolutionStatus, now, conflictId, organizationId]
   );
 
-  logger.info(`${LOG_PREFIX} Resolved conflict ${conflictId} with ${validated.resolutionStrategy} → ${validated.resolutionStatus}`);
+  logger.info(
+    `${LOG_PREFIX} Resolved conflict ${conflictId} with ${validated.resolutionStrategy} → ${validated.resolutionStatus}`
+  );
 
   return {
     ...existing,
@@ -483,9 +486,7 @@ export async function resolveConflict(
  * Acquire a lock on a scope within a room.
  * Denies if an active (non-released, non-expired) lock already exists on the same scope.
  */
-export async function acquireLock(
-  params: AcquireLockParams,
-): Promise<LockRecord> {
+export async function acquireLock(params: AcquireLockParams): Promise<LockRecord> {
   const validated = AcquireLockParamsSchema.parse(params);
 
   const now = new Date().toISOString();
@@ -494,7 +495,7 @@ export async function acquireLock(
     `SELECT * FROM v8_lock_records
      WHERE organization_id = ? AND lock_scope = ? AND released_at IS NULL`,
     [validated.organizationId, validated.lockScope],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (existingLock) {
@@ -505,7 +506,7 @@ export async function acquireLock(
     if (nowMs < expiredAt) {
       throw new Error(
         `Lock denied: scope "${validated.lockScope}" is held by ${existingLock.holder_id} ` +
-        `(lock ${existingLock.lock_id}). Release or wait for TTL expiry.`,
+          `(lock ${existingLock.lock_id}). Release or wait for TTL expiry.`
       );
     }
 
@@ -513,10 +514,12 @@ export async function acquireLock(
       `UPDATE v8_lock_records
        SET released_at = ?, release_reason = 'timeout'
        WHERE lock_id = ?`,
-      [now, existingLock.lock_id],
+      [now, existingLock.lock_id]
     );
 
-    logger.info(`${LOG_PREFIX} Auto-expired lock ${existingLock.lock_id} on scope "${validated.lockScope}"`);
+    logger.info(
+      `${LOG_PREFIX} Auto-expired lock ${existingLock.lock_id} on scope "${validated.lockScope}"`
+    );
   }
 
   const lockId = uuidv4();
@@ -552,10 +555,12 @@ export async function acquireLock(
       lock.acquiredAt,
       lock.releasedAt,
       lock.releaseReason,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Acquired lock ${lockId} (${validated.lockType}) on scope "${validated.lockScope}" for ${validated.holderId}`);
+  logger.info(
+    `${LOG_PREFIX} Acquired lock ${lockId} (${validated.lockType}) on scope "${validated.lockScope}" for ${validated.holderId}`
+  );
   return lock;
 }
 
@@ -565,13 +570,13 @@ export async function acquireLock(
 export async function releaseLock(
   lockId: string,
   organizationId: string,
-  reason: LockReleaseReason,
+  reason: LockReleaseReason
 ): Promise<LockRecord> {
   const row = await dbGet<LockRow>(
     `SELECT * FROM v8_lock_records
      WHERE lock_id = ? AND organization_id = ?`,
     [lockId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -588,7 +593,7 @@ export async function releaseLock(
     `UPDATE v8_lock_records
      SET released_at = ?, release_reason = ?
      WHERE lock_id = ? AND organization_id = ?`,
-    [now, reason, lockId, organizationId],
+    [now, reason, lockId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Released lock ${lockId} (reason: ${reason})`);
@@ -605,14 +610,14 @@ export async function releaseLock(
  */
 export async function getActiveLocks(
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<LockRecord[]> {
   const rows = await dbAll<LockRow>(
     `SELECT * FROM v8_lock_records
      WHERE organization_id = ? AND room_id = ? AND released_at IS NULL
      ORDER BY acquired_at ASC`,
     [organizationId, roomId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToLock);
@@ -622,9 +627,7 @@ export async function getActiveLocks(
  * Clean expired locks: release any lock whose TTL has elapsed.
  * Returns the count of cleaned locks.
  */
-export async function cleanExpiredLocks(
-  organizationId: string,
-): Promise<number> {
+export async function cleanExpiredLocks(organizationId: string): Promise<number> {
   const now = new Date().toISOString();
   const nowMs = Date.now();
 
@@ -632,7 +635,7 @@ export async function cleanExpiredLocks(
     `SELECT * FROM v8_lock_records
      WHERE organization_id = ? AND released_at IS NULL`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const locks = activeLocks || [];
@@ -647,7 +650,7 @@ export async function cleanExpiredLocks(
         `UPDATE v8_lock_records
          SET released_at = ?, release_reason = 'timeout'
          WHERE lock_id = ?`,
-        [now, lock.lock_id],
+        [now, lock.lock_id]
       );
       cleaned++;
     }
@@ -668,7 +671,7 @@ export async function cleanExpiredLocks(
  * Register an event-to-notification mapping.
  */
 export async function registerNotificationTrigger(
-  params: RegisterNotificationTriggerParams,
+  params: RegisterNotificationTriggerParams
 ): Promise<NotificationTrigger> {
   const validated = RegisterNotificationTriggerParamsSchema.parse(params);
 
@@ -702,10 +705,12 @@ export async function registerNotificationTrigger(
       JSON.stringify(trigger.channels),
       1,
       trigger.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered notification trigger ${triggerId} for event ${validated.eventType}`);
+  logger.info(
+    `${LOG_PREFIX} Registered notification trigger ${triggerId} for event ${validated.eventType}`
+  );
   return trigger;
 }
 
@@ -717,7 +722,7 @@ export async function registerNotificationTrigger(
  * Create a notification record for a recipient.
  */
 export async function createNotification(
-  params: CreateNotificationParams,
+  params: CreateNotificationParams
 ): Promise<NotificationRecord> {
   const validated = CreateNotificationParamsSchema.parse(params);
 
@@ -757,10 +762,12 @@ export async function createNotification(
       notification.body,
       notification.createdAt,
       notification.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created notification ${notificationId} for ${validated.recipientId} (${validated.channel})`);
+  logger.info(
+    `${LOG_PREFIX} Created notification ${notificationId} for ${validated.recipientId} (${validated.channel})`
+  );
   return notification;
 }
 
@@ -771,7 +778,7 @@ export async function createNotification(
 export async function getNotifications(
   recipientId: string,
   organizationId: string,
-  options?: { state?: NotificationState; limit?: number },
+  options?: { state?: NotificationState; limit?: number }
 ): Promise<NotificationRecord[]> {
   const { state, limit = 100 } = options ?? {};
 
@@ -802,13 +809,13 @@ export async function getNotifications(
 export async function updateNotificationState(
   notificationId: string,
   organizationId: string,
-  state: NotificationState,
+  state: NotificationState
 ): Promise<NotificationRecord> {
   const row = await dbGet<NotificationRow>(
     `SELECT * FROM v8_notification_records
      WHERE notification_id = ? AND organization_id = ?`,
     [notificationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -821,7 +828,7 @@ export async function updateNotificationState(
     `UPDATE v8_notification_records
      SET state = ?, updated_at = ?
      WHERE notification_id = ? AND organization_id = ?`,
-    [state, now, notificationId, organizationId],
+    [state, now, notificationId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Updated notification ${notificationId} state to ${state}`);
@@ -842,7 +849,7 @@ export async function updateNotificationState(
  * Upserts: if the field is already registered, updates the policy.
  */
 export async function markFieldGovernanceSensitive(
-  params: MarkFieldGovernanceSensitiveParams,
+  params: MarkFieldGovernanceSensitiveParams
 ): Promise<GovernanceSensitiveField> {
   const validated = MarkFieldGovernanceSensitiveParamsSchema.parse(params);
 
@@ -850,7 +857,7 @@ export async function markFieldGovernanceSensitive(
     `SELECT * FROM v8_governance_sensitive_fields
      WHERE organization_id = ? AND table_id = ? AND field_name = ?`,
     [validated.organizationId, validated.tableId, validated.fieldName],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -860,15 +867,12 @@ export async function markFieldGovernanceSensitive(
       `UPDATE v8_governance_sensitive_fields
        SET is_governance_sensitive = ?, conflict_policy = ?, updated_at = ?
        WHERE field_id = ?`,
-      [
-        validated.isGovernanceSensitive ? 1 : 0,
-        validated.conflictPolicy,
-        now,
-        existing.field_id,
-      ],
+      [validated.isGovernanceSensitive ? 1 : 0, validated.conflictPolicy, now, existing.field_id]
     );
 
-    logger.info(`${LOG_PREFIX} Updated governance field ${existing.field_id} (${validated.fieldName}) in table ${validated.tableId}`);
+    logger.info(
+      `${LOG_PREFIX} Updated governance field ${existing.field_id} (${validated.fieldName}) in table ${validated.tableId}`
+    );
 
     return rowToGovernanceField({
       ...existing,
@@ -905,10 +909,12 @@ export async function markFieldGovernanceSensitive(
       field.conflictPolicy,
       field.createdAt,
       field.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Marked field ${fieldId} (${validated.fieldName}) as governance-sensitive in table ${validated.tableId}`);
+  logger.info(
+    `${LOG_PREFIX} Marked field ${fieldId} (${validated.fieldName}) as governance-sensitive in table ${validated.tableId}`
+  );
   return field;
 }
 
@@ -919,14 +925,14 @@ export async function markFieldGovernanceSensitive(
 export async function isFieldGovernanceSensitive(
   tableId: string,
   fieldName: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<boolean> {
   const row = await dbGet<GovernanceFieldRow>(
     `SELECT * FROM v8_governance_sensitive_fields
      WHERE organization_id = ? AND table_id = ? AND field_name = ?
        AND is_governance_sensitive = 1`,
     [organizationId, tableId, fieldName],
-    { fallback: true },
+    { fallback: true }
   );
 
   return row !== null && row !== undefined;

@@ -24,12 +24,7 @@ export const IngestionReadinessStateValues = [
 ] as const;
 export type IngestionReadinessState = (typeof IngestionReadinessStateValues)[number];
 
-export const LinkageTypeValues = [
-  'budget',
-  'forecast',
-  'actual',
-  'variance',
-] as const;
+export const LinkageTypeValues = ['budget', 'forecast', 'actual', 'variance'] as const;
 export type LinkageType = (typeof LinkageTypeValues)[number];
 
 export const LinkageStatusValues = [
@@ -42,19 +37,10 @@ export const LinkageStatusValues = [
 ] as const;
 export type LinkageStatus = (typeof LinkageStatusValues)[number];
 
-export const PromotionGateResultValues = [
-  'approved',
-  'rejected',
-  'review_required',
-] as const;
+export const PromotionGateResultValues = ['approved', 'rejected', 'review_required'] as const;
 export type PromotionGateResult = (typeof PromotionGateResultValues)[number];
 
-export const MaterialityLevelValues = [
-  'low',
-  'medium',
-  'high',
-  'critical',
-] as const;
+export const MaterialityLevelValues = ['low', 'medium', 'high', 'critical'] as const;
 export type MaterialityLevel = (typeof MaterialityLevelValues)[number];
 
 // ==========================================
@@ -297,7 +283,10 @@ export const RecordSourceRefreshParamsSchema = z.object({
  * Valid ingestion readiness state transitions.
  * Key = current state, Value = set of allowed target states.
  */
-export const INGESTION_STATE_TRANSITIONS: Record<IngestionReadinessState, readonly IngestionReadinessState[]> = {
+export const INGESTION_STATE_TRANSITIONS: Record<
+  IngestionReadinessState,
+  readonly IngestionReadinessState[]
+> = {
   uploaded: ['recognized', 'review_required', 'failed', 'rejected'],
   recognized: ['confidence_assessed', 'review_required', 'failed', 'rejected'],
   confidence_assessed: ['ready', 'review_required', 'failed', 'rejected'],
@@ -351,7 +340,7 @@ export function computeOverallGateResult(
   permissionResult: PromotionGateResult,
   qualityResult: PromotionGateResult,
   provenancePreserved: boolean,
-  staleStateChecked: boolean,
+  staleStateChecked: boolean
 ): PromotionGateResult {
   if (permissionResult === 'rejected' || qualityResult === 'rejected') {
     return 'rejected';
@@ -382,7 +371,7 @@ export function evaluateEscalationThreshold(
   deltaMagnitude: number,
   deltaDuration: number,
   materialityLevel: MaterialityLevel,
-  thresholds = DEFAULT_ESCALATION_THRESHOLDS,
+  thresholds = DEFAULT_ESCALATION_THRESHOLDS
 ): { thresholdBreached: boolean; escalatedToCFO: boolean } {
   const magnitudeBreached = deltaMagnitude >= thresholds.deltaMagnitude;
   const durationBreached = deltaDuration >= thresholds.deltaDuration;

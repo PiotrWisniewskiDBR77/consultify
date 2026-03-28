@@ -1,40 +1,40 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  CreateKPIParams,
-  RecordDeviationParams,
-  RecordROIRealizationParams,
   CreateExecutiveReviewPackParams,
+  CreateKPIParams,
+  DeviationHighlight,
   InitiateReconciliationParams,
   KPISummary,
-  DeviationHighlight,
+  RecordDeviationParams,
+  RecordROIRealizationParams,
   ROISnapshot,
 } from '../../../types/resultsROIContinuity.js';
 import {
-  KPIModeValues,
-  KPIStatusValues,
-  MetricTypeValues,
-  MeasurementCadenceValues,
-  DeviationTypeValues,
-  DeviationSeverityValues,
-  ReviewPackStatusValues,
-  ReconciliationStatusValues,
-  ReconciliationInitiatorValues,
-  KPIDefinitionSchema,
-  DeviationRecordSchema,
-  ROIRealizationEntrySchema,
-  ExecutiveReviewPackSchema,
-  KPIFinanceReconciliationSchema,
-  KPISummarySchema,
-  DeviationHighlightSchema,
-  ROISnapshotSchema,
-  CreateKPIParamsSchema,
-  RecordDeviationParamsSchema,
-  RecordROIRealizationParamsSchema,
   CreateExecutiveReviewPackParamsSchema,
+  CreateKPIParamsSchema,
+  DeviationHighlightSchema,
+  DeviationRecordSchema,
+  DeviationSeverityValues,
+  DeviationTypeValues,
+  ExecutiveReviewPackSchema,
   InitiateReconciliationParamsSchema,
   KPI_STATUS_TRANSITIONS,
+  KPIDefinitionSchema,
+  KPIFinanceReconciliationSchema,
+  KPIModeValues,
+  KPIStatusValues,
+  KPISummarySchema,
+  MeasurementCadenceValues,
+  MetricTypeValues,
+  ReconciliationInitiatorValues,
+  ReconciliationStatusValues,
+  RecordDeviationParamsSchema,
+  RecordROIRealizationParamsSchema,
+  ReviewPackStatusValues,
+  ROIRealizationEntrySchema,
+  ROISnapshotSchema,
 } from '../../../types/resultsROIContinuity.js';
 
 // ==========================================
@@ -61,17 +61,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createKPI,
-  getKPI,
-  updateKPIStatus,
-  recordDeviation,
-  getDeviationsByKPI,
-  recordROIRealization,
-  getROIByInitiative,
   createExecutiveReviewPack,
+  createKPI,
+  getDeviationsByKPI,
   getExecutiveReviewPack,
+  getKPI,
+  getROIByInitiative,
   initiateReconciliation,
+  recordDeviation,
+  recordROIRealization,
   resolveReconciliation,
+  updateKPIStatus,
 } from '../resultsROIService.js';
 
 // ==========================================
@@ -128,7 +128,9 @@ function makeDeviationParams(overrides?: Partial<RecordDeviationParams>): Record
   };
 }
 
-function makeROIParams(overrides?: Partial<RecordROIRealizationParams>): RecordROIRealizationParams {
+function makeROIParams(
+  overrides?: Partial<RecordROIRealizationParams>
+): RecordROIRealizationParams {
   return {
     organizationId: ORG_ID,
     kpiId: KPI_ID,
@@ -172,7 +174,7 @@ function makeROISnapshot(overrides?: Partial<ROISnapshot>): ROISnapshot {
 }
 
 function makeReviewPackParams(
-  overrides?: Partial<CreateExecutiveReviewPackParams>,
+  overrides?: Partial<CreateExecutiveReviewPackParams>
 ): CreateExecutiveReviewPackParams {
   return {
     organizationId: ORG_ID,
@@ -185,7 +187,7 @@ function makeReviewPackParams(
 }
 
 function makeReconciliationParams(
-  overrides?: Partial<InitiateReconciliationParams>,
+  overrides?: Partial<InitiateReconciliationParams>
 ): InitiateReconciliationParams {
   return {
     organizationId: ORG_ID,
@@ -341,27 +343,25 @@ describe('createKPI', () => {
   });
 
   it('rejects invalid organizationId via Zod', async () => {
-    await expect(
-      createKPI(makeCreateKPIParams({ organizationId: 'not-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createKPI(makeCreateKPIParams({ organizationId: 'not-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty name via Zod', async () => {
-    await expect(
-      createKPI(makeCreateKPIParams({ name: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createKPI(makeCreateKPIParams({ name: '' }))).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid mode via Zod', async () => {
-    await expect(
-      createKPI(makeCreateKPIParams({ mode: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(createKPI(makeCreateKPIParams({ mode: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid metricType via Zod', async () => {
-    await expect(
-      createKPI(makeCreateKPIParams({ metricType: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(createKPI(makeCreateKPIParams({ metricType: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -476,28 +476,26 @@ describe('updateKPIStatus', () => {
   it('rejects invalid transition design → active', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeKPIRow({ status: 'design' }));
     await expect(updateKPIStatus(KPI_ID, ORG_ID, 'active')).rejects.toThrow(
-      'Invalid status transition',
+      'Invalid status transition'
     );
   });
 
   it('rejects transition from terminal state benefits_realization', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeKPIRow({ status: 'benefits_realization' }));
     await expect(updateKPIStatus(KPI_ID, ORG_ID, 'review')).rejects.toThrow(
-      'none (terminal state)',
+      'none (terminal state)'
     );
   });
 
   it('throws when KPI not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(updateKPIStatus('nonexistent', ORG_ID, 'baseline')).rejects.toThrow(
-      'not found',
-    );
+    await expect(updateKPIStatus('nonexistent', ORG_ID, 'baseline')).rejects.toThrow('not found');
   });
 
   it('throws for invalid status value', async () => {
-    await expect(
-      updateKPIStatus(KPI_ID, ORG_ID, 'invalid_status' as any),
-    ).rejects.toThrow('Invalid KPI status');
+    await expect(updateKPIStatus(KPI_ID, ORG_ID, 'invalid_status' as any)).rejects.toThrow(
+      'Invalid KPI status'
+    );
   });
 });
 
@@ -526,7 +524,7 @@ describe('recordDeviation', () => {
 
   it('records a deviation with escalation', async () => {
     const result = await recordDeviation(
-      makeDeviationParams({ escalatedTo: 'VP Operations', severity: 'critical' }),
+      makeDeviationParams({ escalatedTo: 'VP Operations', severity: 'critical' })
     );
     expect(result.escalatedTo).toBe('VP Operations');
     expect(result.severity).toBe('critical');
@@ -550,14 +548,14 @@ describe('recordDeviation', () => {
 
   it('rejects invalid deviationType via Zod', async () => {
     await expect(
-      recordDeviation(makeDeviationParams({ deviationType: 'invalid' as any })),
+      recordDeviation(makeDeviationParams({ deviationType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty actionRequired via Zod', async () => {
-    await expect(
-      recordDeviation(makeDeviationParams({ actionRequired: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordDeviation(makeDeviationParams({ actionRequired: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -609,9 +607,7 @@ describe('recordROIRealization', () => {
   });
 
   it('records a standalone ROI entry without initiative (Decision W6-6)', async () => {
-    const result = await recordROIRealization(
-      makeROIParams({ initiativeId: null }),
-    );
+    const result = await recordROIRealization(makeROIParams({ initiativeId: null }));
     expect(result.initiativeId).toBeNull();
   });
 
@@ -620,22 +616,20 @@ describe('recordROIRealization', () => {
       makeROIParams({
         provenanceRef: 'PROV-2026-001',
         verifiedBy: 'CFO Office',
-      }),
+      })
     );
     expect(result.provenanceRef).toBe('PROV-2026-001');
     expect(result.verifiedBy).toBe('CFO Office');
   });
 
   it('rejects invalid organizationId via Zod', async () => {
-    await expect(
-      recordROIRealization(makeROIParams({ organizationId: 'bad' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordROIRealization(makeROIParams({ organizationId: 'bad' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty period via Zod', async () => {
-    await expect(
-      recordROIRealization(makeROIParams({ period: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordROIRealization(makeROIParams({ period: '' }))).rejects.toThrow(ZodError);
   });
 });
 
@@ -698,7 +692,7 @@ describe('createExecutiveReviewPack', () => {
         kpiSummaries: [],
         deviationHighlights: [],
         roiSnapshot: { totalRealized: 0, entriesCount: 0, period: '2026-Q1' },
-      }),
+      })
     );
     expect(result.kpiSummaries).toEqual([]);
     expect(result.deviationHighlights).toEqual([]);
@@ -712,20 +706,20 @@ describe('createExecutiveReviewPack', () => {
       makeKPISummary({ kpiId: '00000000-0000-4000-8000-333333333333', name: 'KPI C' }),
     ];
     const result = await createExecutiveReviewPack(
-      makeReviewPackParams({ kpiSummaries: summaries }),
+      makeReviewPackParams({ kpiSummaries: summaries })
     );
     expect(result.kpiSummaries).toHaveLength(3);
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      createExecutiveReviewPack(makeReviewPackParams({ organizationId: 'bad' })),
+      createExecutiveReviewPack(makeReviewPackParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty reviewPeriod via Zod', async () => {
     await expect(
-      createExecutiveReviewPack(makeReviewPackParams({ reviewPeriod: '' })),
+      createExecutiveReviewPack(makeReviewPackParams({ reviewPeriod: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -765,7 +759,7 @@ describe('getExecutiveReviewPack', () => {
         kpi_summaries: 'not-json',
         deviation_highlights: 'not-json',
         roi_snapshot: 'not-json',
-      }),
+      })
     );
 
     const result = await getExecutiveReviewPack(PACK_ID, ORG_ID);
@@ -798,7 +792,7 @@ describe('initiateReconciliation', () => {
 
   it('initiates reconciliation from Finance side', async () => {
     const result = await initiateReconciliation(
-      makeReconciliationParams({ initiatedBy: 'finance' }),
+      makeReconciliationParams({ initiatedBy: 'finance' })
     );
     expect(result.initiatedBy).toBe('finance');
     expect(result.reconciliationStatus).toBe('pending');
@@ -811,13 +805,13 @@ describe('initiateReconciliation', () => {
 
   it('rejects invalid initiatedBy via Zod', async () => {
     await expect(
-      initiateReconciliation(makeReconciliationParams({ initiatedBy: 'invalid' as any })),
+      initiateReconciliation(makeReconciliationParams({ initiatedBy: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty financeRef via Zod', async () => {
     await expect(
-      initiateReconciliation(makeReconciliationParams({ financeRef: '' })),
+      initiateReconciliation(makeReconciliationParams({ financeRef: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -848,15 +842,15 @@ describe('resolveReconciliation', () => {
 
   it('throws when reconciliation not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(
-      resolveReconciliation('nonexistent', ORG_ID, 'reconciled'),
-    ).rejects.toThrow('not found');
+    await expect(resolveReconciliation('nonexistent', ORG_ID, 'reconciled')).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('throws for invalid status value', async () => {
-    await expect(
-      resolveReconciliation(RECON_ID, ORG_ID, 'invalid_status' as any),
-    ).rejects.toThrow('Invalid reconciliation status');
+    await expect(resolveReconciliation(RECON_ID, ORG_ID, 'invalid_status' as any)).rejects.toThrow(
+      'Invalid reconciliation status'
+    );
   });
 });
 
@@ -872,9 +866,7 @@ describe('standalone mode (Decision W6-6)', () => {
   });
 
   it('records ROI for standalone KPI without initiative', async () => {
-    const result = await recordROIRealization(
-      makeROIParams({ initiativeId: null }),
-    );
+    const result = await recordROIRealization(makeROIParams({ initiativeId: null }));
     expect(result.initiativeId).toBeNull();
     expect(result.realizedValue).toBe(150000);
   });
@@ -887,7 +879,7 @@ describe('standalone mode (Decision W6-6)', () => {
 
   it('standalone KPI follows same lifecycle as initiative-linked', async () => {
     mockDbGet.mockResolvedValueOnce(
-      makeFakeKPIRow({ mode: 'standalone', initiative_id: null, status: 'design' }),
+      makeFakeKPIRow({ mode: 'standalone', initiative_id: null, status: 'design' })
     );
     const result = await updateKPIStatus(KPI_ID, ORG_ID, 'baseline');
     expect(result.status).toBe('baseline');
@@ -1060,7 +1052,7 @@ describe('Zod schema validation', () => {
         status: 'invalid_status',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -1075,7 +1067,7 @@ describe('Zod schema validation', () => {
         initiatedBy: 'results',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -1092,14 +1084,12 @@ describe('Zod schema validation', () => {
   });
 
   it('validates CreateExecutiveReviewPackParams', () => {
-    expect(() =>
-      CreateExecutiveReviewPackParamsSchema.parse(makeReviewPackParams()),
-    ).not.toThrow();
+    expect(() => CreateExecutiveReviewPackParamsSchema.parse(makeReviewPackParams())).not.toThrow();
   });
 
   it('validates InitiateReconciliationParams', () => {
     expect(() =>
-      InitiateReconciliationParamsSchema.parse(makeReconciliationParams()),
+      InitiateReconciliationParamsSchema.parse(makeReconciliationParams())
     ).not.toThrow();
   });
 });

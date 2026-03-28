@@ -1,7 +1,14 @@
 import { Check, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { SWOTData, SWOTItem, SWOTSignal, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  ProposalCardType,
+  SWOTData,
+  SWOTItem,
+  SWOTSignal,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -12,6 +19,9 @@ type BuildPhaseProps = {
   isPolish: boolean;
   onGenerateSuggestions?: () => void;
   isGeneratingAI?: boolean;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
 const QUADRANT_META: Record<
@@ -204,7 +214,9 @@ function QuadrantCard({
                   className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
                 >
                   <option value="">
-                    {isPolish ? 'Akceptuj jako nowy lub wybierz punkt do podmiany' : 'Accept as new or select point to replace'}
+                    {isPolish
+                      ? 'Akceptuj jako nowy lub wybierz punkt do podmiany'
+                      : 'Accept as new or select point to replace'}
                   </option>
                   {items.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -249,53 +261,62 @@ export function SWOTBuildPhase({
   const swotData = session.inputData as SWOTData;
   const signals = swotData.signals || [];
   const items = swotData.items || [];
-  const [replaceTargetByProposalId, setReplaceTargetByProposalId] = useState<Record<string, string>>(
-    {}
-  );
+  const [replaceTargetByProposalId, setReplaceTargetByProposalId] = useState<
+    Record<string, string>
+  >({});
 
   const groupedItems = useMemo(
     () =>
-      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>((acc, quadrant) => {
-        acc[quadrant] = items.filter(
-          (item) =>
-            item.quadrant === quadrant &&
-            item.status !== 'proposed' &&
-            item.proposalStatus !== 'ai-proposed' &&
-            item.proposalStatus !== 'rethinking'
-        );
-        return acc;
-      }, {} as Record<QuadrantId, SWOTItem[]>),
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>(
+        (acc, quadrant) => {
+          acc[quadrant] = items.filter(
+            (item) =>
+              item.quadrant === quadrant &&
+              item.status !== 'proposed' &&
+              item.proposalStatus !== 'ai-proposed' &&
+              item.proposalStatus !== 'rethinking'
+          );
+          return acc;
+        },
+        {} as Record<QuadrantId, SWOTItem[]>
+      ),
     [items]
   );
 
   const groupedProposals = useMemo(
     () =>
-      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>((acc, quadrant) => {
-        acc[quadrant] = items.filter(
-          (item) =>
-            item.quadrant === quadrant &&
-            (item.status === 'proposed' ||
-              item.proposalStatus === 'ai-proposed' ||
-              item.proposalStatus === 'rethinking')
-        );
-        return acc;
-      }, {} as Record<QuadrantId, SWOTItem[]>),
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>(
+        (acc, quadrant) => {
+          acc[quadrant] = items.filter(
+            (item) =>
+              item.quadrant === quadrant &&
+              (item.status === 'proposed' ||
+                item.proposalStatus === 'ai-proposed' ||
+                item.proposalStatus === 'rethinking')
+          );
+          return acc;
+        },
+        {} as Record<QuadrantId, SWOTItem[]>
+      ),
     [items]
   );
 
   const groupedAcceptedSignals = useMemo(
     () =>
-      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTSignal[]>>((acc, quadrant) => {
-        acc[quadrant] = signals.filter((signal) => {
-          const signalQuadrant = getSignalQuadrant(signal);
-          return (
-            signalQuadrant === quadrant &&
-            signal.tags?.includes('input-proposal') &&
-            signal.state === 'accepted'
-          );
-        });
-        return acc;
-      }, {} as Record<QuadrantId, SWOTSignal[]>),
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTSignal[]>>(
+        (acc, quadrant) => {
+          acc[quadrant] = signals.filter((signal) => {
+            const signalQuadrant = getSignalQuadrant(signal);
+            return (
+              signalQuadrant === quadrant &&
+              signal.tags?.includes('input-proposal') &&
+              signal.state === 'accepted'
+            );
+          });
+          return acc;
+        },
+        {} as Record<QuadrantId, SWOTSignal[]>
+      ),
     [signals]
   );
 

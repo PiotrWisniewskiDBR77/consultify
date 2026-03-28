@@ -4,17 +4,7 @@
  * Shows field-level diffs with old→new highlighting, user avatars,
  * relative timestamps, action badges, and pagination.
  */
-import {
-  Calendar,
-  ChevronDown,
-  Clock,
-  Filter,
-  Loader2,
-  Plus,
-  Trash2,
-  User,
-  X,
-} from 'lucide-react';
+import { Calendar, ChevronDown, Clock, Filter, Loader2, Plus, Trash2, User, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

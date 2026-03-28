@@ -3,7 +3,6 @@
  * Enhanced with intent badge, confidence indicator, impact summary,
  * expandable operations, warnings, and approve/reject/refine/undo actions.
  */
-import React, { useCallback, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -16,12 +15,13 @@ import {
   Eye,
   Layers,
   Loader2,
+  type LucideIcon,
   RotateCcw,
   Table2,
   Trash2,
   X,
-  type LucideIcon,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
@@ -29,21 +29,84 @@ import { useTranslation } from 'react-i18next';
 // ---------------------------------------------------------------------------
 
 const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color: string }> = {
-  create_base: { en: 'Create base', pl: 'Utwórz bazę', icon: Database, color: 'text-emerald-600 dark:text-emerald-400' },
-  add_base: { en: 'Create base', pl: 'Utwórz bazę', icon: Database, color: 'text-emerald-600 dark:text-emerald-400' },
-  create_table: { en: 'Create table', pl: 'Utwórz tabelę', icon: Table2, color: 'text-violet-600 dark:text-violet-400' },
-  add_table: { en: 'Create table', pl: 'Utwórz tabelę', icon: Table2, color: 'text-violet-600 dark:text-violet-400' },
-  create_field: { en: 'Add field', pl: 'Dodaj pole', icon: Columns3, color: 'text-sky-600 dark:text-sky-400' },
-  add_field: { en: 'Add field', pl: 'Dodaj pole', icon: Columns3, color: 'text-sky-600 dark:text-sky-400' },
-  update_field: { en: 'Update field', pl: 'Aktualizuj pole', icon: Edit3, color: 'text-amber-600 dark:text-amber-400' },
-  delete_field: { en: 'Delete field', pl: 'Usuń pole', icon: Trash2, color: 'text-red-600 dark:text-red-400' },
-  create_view: { en: 'Create view', pl: 'Utwórz widok', icon: Eye, color: 'text-indigo-600 dark:text-indigo-400' },
-  add_view: { en: 'Create view', pl: 'Utwórz widok', icon: Eye, color: 'text-indigo-600 dark:text-indigo-400' },
-  create_record: { en: 'Add record', pl: 'Dodaj rekord', icon: Layers, color: 'text-teal-600 dark:text-teal-400' },
-  add_record: { en: 'Add record', pl: 'Dodaj rekord', icon: Layers, color: 'text-teal-600 dark:text-teal-400' },
+  create_base: {
+    en: 'Create base',
+    pl: 'Utwórz bazę',
+    icon: Database,
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
+  add_base: {
+    en: 'Create base',
+    pl: 'Utwórz bazę',
+    icon: Database,
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
+  create_table: {
+    en: 'Create table',
+    pl: 'Utwórz tabelę',
+    icon: Table2,
+    color: 'text-violet-600 dark:text-violet-400',
+  },
+  add_table: {
+    en: 'Create table',
+    pl: 'Utwórz tabelę',
+    icon: Table2,
+    color: 'text-violet-600 dark:text-violet-400',
+  },
+  create_field: {
+    en: 'Add field',
+    pl: 'Dodaj pole',
+    icon: Columns3,
+    color: 'text-sky-600 dark:text-sky-400',
+  },
+  add_field: {
+    en: 'Add field',
+    pl: 'Dodaj pole',
+    icon: Columns3,
+    color: 'text-sky-600 dark:text-sky-400',
+  },
+  update_field: {
+    en: 'Update field',
+    pl: 'Aktualizuj pole',
+    icon: Edit3,
+    color: 'text-amber-600 dark:text-amber-400',
+  },
+  delete_field: {
+    en: 'Delete field',
+    pl: 'Usuń pole',
+    icon: Trash2,
+    color: 'text-red-600 dark:text-red-400',
+  },
+  create_view: {
+    en: 'Create view',
+    pl: 'Utwórz widok',
+    icon: Eye,
+    color: 'text-indigo-600 dark:text-indigo-400',
+  },
+  add_view: {
+    en: 'Create view',
+    pl: 'Utwórz widok',
+    icon: Eye,
+    color: 'text-indigo-600 dark:text-indigo-400',
+  },
+  create_record: {
+    en: 'Add record',
+    pl: 'Dodaj rekord',
+    icon: Layers,
+    color: 'text-teal-600 dark:text-teal-400',
+  },
+  add_record: {
+    en: 'Add record',
+    pl: 'Dodaj rekord',
+    icon: Layers,
+    color: 'text-teal-600 dark:text-teal-400',
+  },
 };
 
-function getOpMeta(opType: string, isPl: boolean): { label: string; icon: LucideIcon; color: string } {
+function getOpMeta(
+  opType: string,
+  isPl: boolean
+): { label: string; icon: LucideIcon; color: string } {
   const entry = OP_META[opType] ?? {
     en: opType.replace(/_/g, ' '),
     pl: opType.replace(/_/g, ' '),
@@ -116,7 +179,14 @@ function formatOperationDescription(op: SchemaProposalOperation, isPl: boolean):
   const { target, payload } = op;
   const parts: string[] = [];
 
-  const name = payload?.name ?? payload?.fieldName ?? payload?.tableName ?? target?.tableName ?? target?.fieldName ?? target?.baseName ?? target?.viewName;
+  const name =
+    payload?.name ??
+    payload?.fieldName ??
+    payload?.tableName ??
+    target?.tableName ??
+    target?.fieldName ??
+    target?.baseName ??
+    target?.viewName;
   if (name) parts.push(`'${name}'`);
 
   const type = payload?.type ?? payload?.fieldType;
@@ -144,8 +214,24 @@ function computeImpactSummary(operations: SchemaProposalOperation[], isPl: boole
 
   const parts: string[] = [];
   const labels = isPl
-    ? { create_base: 'baz', create_table: 'tabel', create_field: 'pól', create_view: 'widoków', update_field: 'aktualizacji pól', delete_field: 'usunięć pól', create_record: 'rekordów' }
-    : { create_base: 'bases', create_table: 'tables', create_field: 'fields', create_view: 'views', update_field: 'field updates', delete_field: 'field deletions', create_record: 'records' };
+    ? {
+        create_base: 'baz',
+        create_table: 'tabel',
+        create_field: 'pól',
+        create_view: 'widoków',
+        update_field: 'aktualizacji pól',
+        delete_field: 'usunięć pól',
+        create_record: 'rekordów',
+      }
+    : {
+        create_base: 'bases',
+        create_table: 'tables',
+        create_field: 'fields',
+        create_view: 'views',
+        update_field: 'field updates',
+        delete_field: 'field deletions',
+        create_record: 'records',
+      };
 
   for (const [key, count] of Object.entries(counts)) {
     const label = labels[key as keyof typeof labels] ?? key.replace(/_/g, ' ');
@@ -195,9 +281,7 @@ const OperationItem: React.FC<{
         <button
           onClick={onToggleSelect}
           className={`flex-shrink-0 w-4 h-4 rounded border transition-colors ${
-            selected
-              ? 'border-violet-500 bg-violet-500'
-              : 'border-slate-300 dark:border-zinc-600'
+            selected ? 'border-violet-500 bg-violet-500' : 'border-slate-300 dark:border-zinc-600'
           } flex items-center justify-center`}
         >
           {selected && <Check size={10} className="text-white" />}
@@ -210,11 +294,10 @@ const OperationItem: React.FC<{
         </button>
         <Icon size={14} className={`flex-shrink-0 ${color}`} />
         <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 truncate">
-          {label}{description ? `: ${description}` : ''}
+          {label}
+          {description ? `: ${description}` : ''}
         </span>
-        {warning && (
-          <AlertTriangle size={12} className="text-amber-500 flex-shrink-0 ml-auto" />
-        )}
+        {warning && <AlertTriangle size={12} className="text-amber-500 flex-shrink-0 ml-auto" />}
       </div>
       <div
         className={`overflow-hidden transition-all duration-200 ${
@@ -280,8 +363,8 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
-  const [selectedOps, setSelectedOps] = useState<Set<string>>(() =>
-    new Set(proposal.operations.map((o) => o.id))
+  const [selectedOps, setSelectedOps] = useState<Set<string>>(
+    () => new Set(proposal.operations.map((o) => o.id))
   );
   const [opsExpanded, setOpsExpanded] = useState<Set<string>>(new Set());
   const [allOpsVisible, setAllOpsVisible] = useState(true);
@@ -351,7 +434,9 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   // Intent badge
   const intentEntry = INTENT_LABELS[proposal.intent];
   const intentLabel = intentEntry
-    ? (isPl ? intentEntry.pl : intentEntry.en)
+    ? isPl
+      ? intentEntry.pl
+      : intentEntry.en
     : proposal.intent.replace(/_/g, ' ');
 
   // Impact summary
@@ -469,7 +554,10 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
       {globalWarnings.length > 0 && (
         <div className="px-4 py-3 border-t border-slate-200/60 dark:border-zinc-700/60">
           <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-400/30 dark:border-amber-500/30 p-3">
-            <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle
+              size={14}
+              className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+            />
             <div className="text-xs text-amber-800 dark:text-amber-200 space-y-1">
               {globalWarnings.map((w, i) => (
                 <p key={i}>{w.message}</p>
@@ -490,7 +578,8 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               {isPl ? 'Zatwierdź' : 'Approve'}
-              {selectedOps.size < proposal.operations.length && ` (${selectedOps.size}/${proposal.operations.length})`}
+              {selectedOps.size < proposal.operations.length &&
+                ` (${selectedOps.size}/${proposal.operations.length})`}
             </button>
             <button
               onClick={handleReject}

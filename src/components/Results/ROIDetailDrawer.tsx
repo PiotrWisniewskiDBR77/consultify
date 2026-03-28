@@ -9,7 +9,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
+import {
+  shouldFallbackToLegacyResults,
+  V8ResultsApi,
+  type V8ResultsRoiInitiativeDetail,
+} from '@/services/api/v8/results';
 
 import { ROIAssumptionEditor, ROIAssumptionsData } from './ROIAssumptionEditor';
 
@@ -42,6 +46,30 @@ interface RealizedEntry {
   created_at?: string;
 }
 
+function normalizeVarianceData(
+  variance: V8ResultsRoiInitiativeDetail['variance'] | VarianceData | null | undefined
+): VarianceData | null {
+  if (!variance) return null;
+
+  return {
+    hasAssumptions: variance.hasAssumptions,
+    projected: variance.projected
+      ? {
+          totalBenefit: variance.projected.totalBenefit,
+          revenueDelta: variance.projected.revenueDelta ?? undefined,
+          costDelta: variance.projected.costDelta ?? undefined,
+        }
+      : undefined,
+    realized: variance.realized
+      ? {
+          totalBenefit: variance.realized.totalBenefit,
+          dataPoints: variance.realized.dataPoints,
+        }
+      : undefined,
+    variance: variance.variance ?? undefined,
+  };
+}
+
 export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   initiativeId,
   initiativeName,
@@ -64,7 +92,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
     try {
       try {
         const detail = await V8ResultsApi.getRoiInitiativeDetail(initiativeId);
-        setVarianceData(detail.variance);
+        setVarianceData(normalizeVarianceData(detail.variance));
         setAssumptions(
           detail.assumptions
             ? {
@@ -74,11 +102,12 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                 opexAnnual: detail.assumptions.opexAnnual ?? undefined,
                 horizonMonths: detail.assumptions.horizonMonths ?? undefined,
                 effectStartDate: detail.assumptions.effectStartDate ?? undefined,
-                confidence: (detail.assumptions.confidence as ROIAssumptionsData['confidence']) ?? undefined,
+                confidence:
+                  (detail.assumptions.confidence as ROIAssumptionsData['confidence']) ?? undefined,
                 assumptionsOwner: detail.assumptions.assumptionsOwner ?? undefined,
                 assumptionsText: detail.assumptions.assumptionsText ?? undefined,
               }
-            : null,
+            : null
         );
         setRealized(
           (detail.realized || []).map((entry) => ({
@@ -90,7 +119,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
             variance_notes: entry.varianceNotes ?? undefined,
             recorded_by: entry.recordedBy ?? undefined,
             created_at: entry.createdAt ?? undefined,
-          })),
+          }))
         );
       } catch (error) {
         if (!shouldFallbackToLegacyResults(error)) {
@@ -103,7 +132,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
         ]);
 
         const varPayload = (varRes as any)?.data ?? varRes;
-        setVarianceData(varPayload);
+        setVarianceData(normalizeVarianceData(varPayload));
 
         const assPayload = (assRes as any)?.data ?? assRes;
         if (assPayload) {

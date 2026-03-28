@@ -19,10 +19,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
-import {
-  findOrCreateConversation,
-  logVoiceEvent,
-} from '../virtualWorkerConversationLogger.js';
+import { findOrCreateConversation, logVoiceEvent } from '../virtualWorkerConversationLogger.js';
 
 describe('virtualWorkerConversationLogger channel continuity', () => {
   beforeEach(() => {

@@ -103,7 +103,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
 
   const groupCol = useMemo(
     () => columns.find((c) => c.key === groupByFieldId),
-    [columns, groupByFieldId],
+    [columns, groupByFieldId]
   );
 
   const displayColumns = useMemo(() => {
@@ -111,10 +111,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     return columns
       .filter(
         (c) =>
-          visible.has(c.key) &&
-          c.key !== groupByFieldId &&
-          c.key !== 'label' &&
-          c.key !== 'type',
+          visible.has(c.key) && c.key !== groupByFieldId && c.key !== 'label' && c.key !== 'type'
       )
       .slice(0, 3);
   }, [columns, groupByFieldId, visibleFieldIds]);
@@ -148,7 +145,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       setDragRecordId(null);
       setDropTarget(null);
     },
-    [dragRecordId, groupByFieldId, isPl, onRecordUpdate],
+    [dragRecordId, groupByFieldId, isPl, onRecordUpdate]
   );
 
   const colors = groupCol?.optionColors || {};
@@ -156,7 +153,9 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   return (
     <div className="w-full h-full flex gap-3 p-4 overflow-x-auto">
       {Object.entries(lanes).map(([laneKey, laneRecords]) => {
-        const bgColor = colors[laneKey] || SELECT_COLORS[Object.keys(lanes).indexOf(laneKey) % SELECT_COLORS.length];
+        const bgColor =
+          colors[laneKey] ||
+          SELECT_COLORS[Object.keys(lanes).indexOf(laneKey) % SELECT_COLORS.length];
         const isDropping = dropTarget === laneKey;
 
         return (
@@ -213,7 +212,8 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               <button
                 onClick={() => {
                   const uncategorizedKey = isPl ? 'Bez kategorii' : 'Uncategorized';
-                  const defaultVal = laneKey === uncategorizedKey ? undefined : { [groupByFieldId]: laneKey };
+                  const defaultVal =
+                    laneKey === uncategorizedKey ? undefined : { [groupByFieldId]: laneKey };
                   onAddRecord(defaultVal);
                 }}
                 className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"

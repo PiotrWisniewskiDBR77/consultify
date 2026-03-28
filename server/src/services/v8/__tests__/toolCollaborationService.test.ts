@@ -1,29 +1,29 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RegisterAdapterParams,
-  RecordReadinessAuditParams,
-  SetAIProposalVisibilityParams,
-  ToolName,
   CollaborationMode,
   LockType,
+  RecordReadinessAuditParams,
+  RegisterAdapterParams,
+  SetAIProposalVisibilityParams,
+  ToolName,
 } from '../../../types/toolCollaborationAdapter.js';
 import {
-  ToolCollaborationAdapterSchema,
-  ToolReadinessAuditSchema,
   AIProposalVisibilitySchema,
-  RegisterAdapterParamsSchema,
-  RecordReadinessAuditParamsSchema,
-  SetAIProposalVisibilityParamsSchema,
-  VALID_PROPOSAL_TRANSITIONS,
-  TERMINAL_PROPOSAL_STATES,
-  CollaborationReadinessLevelValues,
+  AIProposalVisibilityStateValues,
   CollaborationModeValues,
+  CollaborationReadinessLevelValues,
   LockTypeValues,
   OfflinePolicyValues,
+  RecordReadinessAuditParamsSchema,
+  RegisterAdapterParamsSchema,
+  SetAIProposalVisibilityParamsSchema,
+  TERMINAL_PROPOSAL_STATES,
+  ToolCollaborationAdapterSchema,
   ToolNameValues,
-  AIProposalVisibilityStateValues,
+  ToolReadinessAuditSchema,
+  VALID_PROPOSAL_TRANSITIONS,
 } from '../../../types/toolCollaborationAdapter.js';
 
 // ==========================================
@@ -50,13 +50,13 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  registerAdapter,
   getAdapter,
-  getAllAdapters,
-  recordReadinessAudit,
-  getReadinessAudit,
-  setAIProposalVisibility,
   getAIProposalVisibility,
+  getAllAdapters,
+  getReadinessAudit,
+  recordReadinessAudit,
+  registerAdapter,
+  setAIProposalVisibility,
 } from '../toolCollaborationService.js';
 
 // ==========================================
@@ -78,7 +78,10 @@ function makeAdapterParams(overrides?: Partial<RegisterAdapterParams>): Register
     readinessLevel: 'partial',
     roomGranularity: 'workspace',
     presenceTypes: ['viewer', 'editor', 'facilitator'],
-    cursorStateSchema: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } } },
+    cursorStateSchema: {
+      type: 'object',
+      properties: { x: { type: 'number' }, y: { type: 'number' } },
+    },
     supportedLockTypes: ['advisory_object'],
     versioningPolicy: {
       autoSnapshotCadence: '5m',
@@ -93,14 +96,31 @@ function makeAdapterParams(overrides?: Partial<RegisterAdapterParams>): Register
   };
 }
 
-function makeAuditParams(overrides?: Partial<RecordReadinessAuditParams>): RecordReadinessAuditParams {
+function makeAuditParams(
+  overrides?: Partial<RecordReadinessAuditParams>
+): RecordReadinessAuditParams {
   return {
     toolName: 'whiteboard',
     organizationId: ORG_ID,
     primitiveChecks: [
-      { primitive: 'room_binding', currentState: 'partial', targetState: 'platform_integrated', gap: 'Normalize V4 sessions' },
-      { primitive: 'presence', currentState: 'partial', targetState: 'complete', gap: 'Add typed presence' },
-      { primitive: 'cursor_sharing', currentState: 'missing', targetState: 'complete', gap: 'Implement cursor broadcast' },
+      {
+        primitive: 'room_binding',
+        currentState: 'partial',
+        targetState: 'platform_integrated',
+        gap: 'Normalize V4 sessions',
+      },
+      {
+        primitive: 'presence',
+        currentState: 'partial',
+        targetState: 'complete',
+        gap: 'Add typed presence',
+      },
+      {
+        primitive: 'cursor_sharing',
+        currentState: 'missing',
+        targetState: 'complete',
+        gap: 'Implement cursor broadcast',
+      },
     ],
     overallReadiness: 'partial',
     auditedBy: USER_ID,
@@ -108,7 +128,9 @@ function makeAuditParams(overrides?: Partial<RecordReadinessAuditParams>): Recor
   };
 }
 
-function makeProposalParams(overrides?: Partial<SetAIProposalVisibilityParams>): SetAIProposalVisibilityParams {
+function makeProposalParams(
+  overrides?: Partial<SetAIProposalVisibilityParams>
+): SetAIProposalVisibilityParams {
   return {
     organizationId: ORG_ID,
     toolName: 'whiteboard',
@@ -152,7 +174,12 @@ function makeFakeAuditRow(overrides?: Partial<Record<string, unknown>>) {
     tool_name: 'whiteboard',
     organization_id: ORG_ID,
     primitive_checks: JSON.stringify([
-      { primitive: 'room_binding', currentState: 'partial', targetState: 'platform_integrated', gap: 'Normalize' },
+      {
+        primitive: 'room_binding',
+        currentState: 'partial',
+        targetState: 'platform_integrated',
+        gap: 'Normalize',
+      },
     ]),
     overall_readiness: 'partial',
     audited_at: '2026-03-23T10:00:00.000Z',
@@ -439,9 +466,24 @@ describe('recordReadinessAudit', () => {
       toolName: 'table',
       overallReadiness: 'scaffold',
       primitiveChecks: [
-        { primitive: 'room_binding', currentState: 'missing', targetState: 'platform_integrated', gap: 'No room seam' },
-        { primitive: 'presence', currentState: 'missing', targetState: 'complete', gap: 'No presence layer' },
-        { primitive: 'locking', currentState: 'missing', targetState: 'complete', gap: 'Cell/row locking needed' },
+        {
+          primitive: 'room_binding',
+          currentState: 'missing',
+          targetState: 'platform_integrated',
+          gap: 'No room seam',
+        },
+        {
+          primitive: 'presence',
+          currentState: 'missing',
+          targetState: 'complete',
+          gap: 'No presence layer',
+        },
+        {
+          primitive: 'locking',
+          currentState: 'missing',
+          targetState: 'complete',
+          gap: 'Cell/row locking needed',
+        },
       ],
     });
 
@@ -457,8 +499,18 @@ describe('recordReadinessAudit', () => {
       toolName: 'notebook',
       overallReadiness: 'scaffold',
       primitiveChecks: [
-        { primitive: 'versioning', currentState: 'missing', targetState: 'platform_integrated', gap: 'Operational versioning required per W4-3' },
-        { primitive: 'locking', currentState: 'missing', targetState: 'partial', gap: 'Block-locking per W4-4' },
+        {
+          primitive: 'versioning',
+          currentState: 'missing',
+          targetState: 'platform_integrated',
+          gap: 'Operational versioning required per W4-3',
+        },
+        {
+          primitive: 'locking',
+          currentState: 'missing',
+          targetState: 'partial',
+          gap: 'Block-locking per W4-4',
+        },
       ],
     });
 
@@ -630,7 +682,7 @@ describe('setAIProposalVisibility', () => {
         resourceId: 'ws-001',
         authorId: USER_ID,
         visibility: 'team_review',
-      }),
+      })
     ).rejects.toThrow('Invalid proposal visibility transition');
   });
 
@@ -645,7 +697,7 @@ describe('setAIProposalVisibility', () => {
         resourceId: 'ws-001',
         authorId: USER_ID,
         visibility: 'accepted',
-      }),
+      })
     ).rejects.toThrow('Invalid proposal visibility transition');
   });
 
@@ -660,7 +712,7 @@ describe('setAIProposalVisibility', () => {
         resourceId: 'ws-001',
         authorId: USER_ID,
         visibility: 'shared_proposal',
-      }),
+      })
     ).rejects.toThrow('terminal state');
   });
 
@@ -675,7 +727,7 @@ describe('setAIProposalVisibility', () => {
         resourceId: 'ws-001',
         authorId: USER_ID,
         visibility: 'personal_draft',
-      }),
+      })
     ).rejects.toThrow('terminal state');
   });
 
@@ -700,7 +752,14 @@ describe('setAIProposalVisibility', () => {
   });
 
   it('creates proposal for each tool type', async () => {
-    const tools: ToolName[] = ['idea_workspace', 'whiteboard', 'mind_map', 'process_flow', 'table', 'notebook'];
+    const tools: ToolName[] = [
+      'idea_workspace',
+      'whiteboard',
+      'mind_map',
+      'process_flow',
+      'table',
+      'notebook',
+    ];
 
     for (const tool of tools) {
       vi.clearAllMocks();
@@ -708,7 +767,7 @@ describe('setAIProposalVisibility', () => {
       mockDbGet.mockResolvedValue(null);
 
       const result = await setAIProposalVisibility(
-        makeProposalParams({ toolName: tool, resourceId: `res-${tool}` }),
+        makeProposalParams({ toolName: tool, resourceId: `res-${tool}` })
       );
 
       expect(result.toolName).toBe(tool);
@@ -865,7 +924,12 @@ describe('Zod schema validation', () => {
       toolName: 'table',
       organizationId: ORG_ID,
       primitiveChecks: [
-        { primitive: 'room_binding', currentState: 'missing', targetState: 'complete', gap: 'Build from scratch' },
+        {
+          primitive: 'room_binding',
+          currentState: 'missing',
+          targetState: 'complete',
+          gap: 'Build from scratch',
+        },
       ],
       overallReadiness: 'scaffold',
       auditedAt: '2026-03-23T10:00:00.000Z',

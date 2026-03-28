@@ -41,20 +41,17 @@ export type TemplateFamilyName = (typeof TemplateFamilyNameValues)[number];
 export const GovernanceLevelValues = ['standard', 'strict'] as const;
 export type GovernanceLevel = (typeof GovernanceLevelValues)[number];
 
-export const CadenceValues = [
-  'daily',
-  'weekly',
-  'biweekly',
-  'monthly',
-  'quarterly',
-] as const;
+export const CadenceValues = ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly'] as const;
 export type Cadence = (typeof CadenceValues)[number];
 
 // ==========================================
 // STATE MACHINE
 // ==========================================
 
-export const DELIVERY_VALID_TRANSITIONS: Record<OutputDeliveryState, readonly OutputDeliveryState[]> = {
+export const DELIVERY_VALID_TRANSITIONS: Record<
+  OutputDeliveryState,
+  readonly OutputDeliveryState[]
+> = {
   draft: ['generated', 'archived'],
   generated: ['editing', 'in_review', 'archived'],
   editing: ['in_review', 'generated', 'archived'],

@@ -80,7 +80,9 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const status = String(req.body?.status || '').trim().toLowerCase();
+    const status = String(req.body?.status || '')
+      .trim()
+      .toLowerCase();
     if (!['scheduled', 'completed'].includes(status)) {
       return res.status(400).json({ error: 'status must be scheduled or completed' });
     }
@@ -134,7 +136,9 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const status = String(req.body?.status || '').trim().toLowerCase();
+    const status = String(req.body?.status || '')
+      .trim()
+      .toLowerCase();
     if (!['open', 'done'].includes(status)) {
       return res.status(400).json({ error: 'status must be open or done' });
     }

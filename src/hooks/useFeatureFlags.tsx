@@ -133,7 +133,8 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
   {
     id: 'tablePlatformMetadataFirst',
     name: 'Table Platform: Metadata-First Backend',
-    description: 'Routes table persistence to the new metadata-first Records API instead of workspace graph',
+    description:
+      'Routes table persistence to the new metadata-first Records API instead of workspace graph',
     defaultValue: false,
     category: 'beta',
     allowLocalOverride: false,
@@ -141,7 +142,8 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
   {
     id: 'tablePlatformRecordsApi',
     name: 'Table Platform: Records API',
-    description: 'Enables the new /api/v1/bases and /api/v1/tables endpoints for the table platform',
+    description:
+      'Enables the new /api/v1/bases and /api/v1/tables endpoints for the table platform',
     defaultValue: true,
     category: 'beta',
     allowLocalOverride: true,
@@ -155,9 +157,7 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
 const STORAGE_KEY = 'consultify_feature_flags';
 const CLEARED_FLAG_OVERRIDES = new Set(['tablePlatformMetadataFirst']);
 
-function sanitizeStoredOverrides(
-  overrides: Record<string, boolean>
-): Record<string, boolean> {
+function sanitizeStoredOverrides(overrides: Record<string, boolean>): Record<string, boolean> {
   if (!overrides || typeof overrides !== 'object') return {};
   const next = { ...overrides };
   for (const flagId of CLEARED_FLAG_OVERRIDES) {

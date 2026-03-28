@@ -58,7 +58,11 @@ export function withCanonicalAliases(values: Record<string, number>): Record<str
   return next;
 }
 
-export function accumulateCanonicalValue(target: Map<string, number>, code: string | null | undefined, value: number): void {
+export function accumulateCanonicalValue(
+  target: Map<string, number>,
+  code: string | null | undefined,
+  value: number
+): void {
   const canonical = normalizeCanonicalLineCode(code);
   if (!canonical) return;
   target.set(canonical, Number(target.get(canonical) || 0) + Number(value || 0));

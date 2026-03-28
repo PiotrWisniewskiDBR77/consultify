@@ -10,7 +10,7 @@
  *   F06: Degraded platform detection
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -56,8 +56,7 @@ const mockGetSessionsByWorkspace = vi.fn();
 const mockGetLinkedRooms = vi.fn();
 
 vi.mock('../../../aiOperatingEnvironmentService.js', () => ({
-  getOperatingEnvironmentStatus: (...args: unknown[]) =>
-    mockGetOperatingEnvironmentStatus(...args),
+  getOperatingEnvironmentStatus: (...args: unknown[]) => mockGetOperatingEnvironmentStatus(...args),
 }));
 
 vi.mock('../../../collaborationRoomService.js', () => ({
@@ -66,19 +65,16 @@ vi.mock('../../../collaborationRoomService.js', () => ({
 }));
 
 vi.mock('../../../workspaceCollaborationService.js', () => ({
-  getSessionsByWorkspace: (...args: unknown[]) =>
-    mockGetSessionsByWorkspace(...args),
+  getSessionsByWorkspace: (...args: unknown[]) => mockGetSessionsByWorkspace(...args),
   getLinkedRooms: (...args: unknown[]) => mockGetLinkedRooms(...args),
 }));
 
 vi.mock('../../../workspaceGovernanceService.js', () => ({
-  getGovernanceDashboard: (...args: unknown[]) =>
-    mockGetGovernanceDashboard(...args),
+  getGovernanceDashboard: (...args: unknown[]) => mockGetGovernanceDashboard(...args),
 }));
 
 vi.mock('../../../sourceTruthService.js', () => ({
-  getTransformationPipeline: (...args: unknown[]) =>
-    mockGetTransformationPipeline(...args),
+  getTransformationPipeline: (...args: unknown[]) => mockGetTransformationPipeline(...args),
 }));
 
 vi.mock('../../../executionVisibilityService.js', () => ({
@@ -86,28 +82,23 @@ vi.mock('../../../executionVisibilityService.js', () => ({
 }));
 
 vi.mock('../../../operatorAdminService.js', () => ({
-  getOperatorDashboard: (...args: unknown[]) =>
-    mockGetOperatorDashboard(...args),
+  getOperatorDashboard: (...args: unknown[]) => mockGetOperatorDashboard(...args),
 }));
 
 vi.mock('../../../reportsPresModelService.js', () => ({
-  getDeliveryPipeline: (...args: unknown[]) =>
-    mockGetDeliveryPipeline(...args),
+  getDeliveryPipeline: (...args: unknown[]) => mockGetDeliveryPipeline(...args),
 }));
 
 vi.mock('../../../financeIntegrationService.js', () => ({
-  getFinanceDashboard: (...args: unknown[]) =>
-    mockGetFinanceDashboard(...args),
+  getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
 }));
 
 vi.mock('../../../resultsROIService.js', () => ({
-  getResultsDashboard: (...args: unknown[]) =>
-    mockGetResultsDashboard(...args),
+  getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
 }));
 
 vi.mock('../../../contextSnapshotService.js', () => ({
-  getSnapshotsByConversation: (...args: unknown[]) =>
-    mockGetSnapshotsByConversation(...args),
+  getSnapshotsByConversation: (...args: unknown[]) => mockGetSnapshotsByConversation(...args),
 }));
 
 vi.mock('../../../executionSpineService.js', () => ({
@@ -119,11 +110,11 @@ vi.mock('../../../workspaceCrossModuleService.js', () => ({
 }));
 
 import {
-  getPlatformHealth,
-  getCrossDomainIntegrity,
   getClosureCertification,
-  getPlatformMetrics,
+  getCrossDomainIntegrity,
   getDomainReadiness,
+  getPlatformHealth,
+  getPlatformMetrics,
 } from '../../../platformHealthService.js';
 
 // ==========================================
@@ -284,9 +275,7 @@ describe('F02 — Cross-domain integrity', () => {
     const integrity = await getCrossDomainIntegrity(ORG_ID);
 
     expect(integrity.intact).toBe(false);
-    const brokenCheck = integrity.checks.find(
-      (c) => c.check === 'runs_reference_valid_snapshots',
-    );
+    const brokenCheck = integrity.checks.find((c) => c.check === 'runs_reference_valid_snapshots');
     expect(brokenCheck?.passed).toBe(false);
     expect(brokenCheck?.details).toContain('0/1');
   });
@@ -308,7 +297,7 @@ describe('F03 — Closure certification', () => {
 
     // Validate UUID format of certificationId
     expect(cert.certificationId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
     );
 
     expect(cert.platformHealth.overall).not.toBe('critical');
@@ -316,9 +305,7 @@ describe('F03 — Closure certification', () => {
   });
 
   it('refuses certification when platform health is critical', async () => {
-    mockGetOperatingEnvironmentStatus.mockRejectedValue(
-      new Error('AI Core completely down'),
-    );
+    mockGetOperatingEnvironmentStatus.mockRejectedValue(new Error('AI Core completely down'));
 
     const cert = await getClosureCertification(ORG_ID);
 
@@ -459,9 +446,7 @@ describe('F06 — Degraded platform detection', () => {
   });
 
   it('correctly detects critical state when AI core is down', async () => {
-    mockGetOperatingEnvironmentStatus.mockRejectedValue(
-      new Error('Complete AI failure'),
-    );
+    mockGetOperatingEnvironmentStatus.mockRejectedValue(new Error('Complete AI failure'));
 
     const health = await getPlatformHealth(ORG_ID);
 
@@ -470,9 +455,7 @@ describe('F06 — Degraded platform detection', () => {
   });
 
   it('correctly detects degraded outputs when finance is down', async () => {
-    mockGetFinanceDashboard.mockRejectedValue(
-      new Error('Finance service unavailable'),
-    );
+    mockGetFinanceDashboard.mockRejectedValue(new Error('Finance service unavailable'));
 
     const health = await getPlatformHealth(ORG_ID);
 

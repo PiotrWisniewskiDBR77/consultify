@@ -69,7 +69,13 @@ const ROLE_TEMPLATES = [
     description: 'Can edit content and manage projects',
     color: '#22c55e',
     icon: 'edit',
-    permissions: ['read:projects', 'write:projects', 'read:reports', 'write:reports', 'read:dashboard'],
+    permissions: [
+      'read:projects',
+      'write:projects',
+      'read:reports',
+      'write:reports',
+      'read:dashboard',
+    ],
   },
   {
     name: 'project_manager',
@@ -77,7 +83,15 @@ const ROLE_TEMPLATES = [
     description: 'Full project management with team oversight',
     color: '#8b5cf6',
     icon: 'briefcase',
-    permissions: ['read:projects', 'write:projects', 'delete:projects', 'read:reports', 'write:reports', 'read:dashboard', 'manage:team'],
+    permissions: [
+      'read:projects',
+      'write:projects',
+      'delete:projects',
+      'read:reports',
+      'write:reports',
+      'read:dashboard',
+      'manage:team',
+    ],
   },
   {
     name: 'admin',
@@ -85,7 +99,17 @@ const ROLE_TEMPLATES = [
     description: 'Full administrative access',
     color: '#ef4444',
     icon: 'shield',
-    permissions: ['read:projects', 'write:projects', 'delete:projects', 'read:reports', 'write:reports', 'read:dashboard', 'manage:team', 'manage:settings', 'manage:users'],
+    permissions: [
+      'read:projects',
+      'write:projects',
+      'delete:projects',
+      'read:reports',
+      'write:reports',
+      'read:dashboard',
+      'manage:team',
+      'manage:settings',
+      'manage:users',
+    ],
   },
 ];
 
@@ -139,7 +163,16 @@ router.post(
     await dbRun(
       `INSERT INTO custom_roles (id, name, display_name, description, color, icon, base_role, priority)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, displayName, description || null, color || '#6366f1', icon || 'shield', baseRole || null, priority || 50]
+      [
+        id,
+        name,
+        displayName,
+        description || null,
+        color || '#6366f1',
+        icon || 'shield',
+        baseRole || null,
+        priority || 50,
+      ]
     );
     logger.info(`[RBAC] Role created: ${name}`);
     res.json({ data: { id, name, displayName, description, color, icon, isActive: true } });
@@ -174,7 +207,9 @@ router.post(
       return res.status(404).json({ error: 'Template not found' });
     }
     await ensureRbacTables();
-    const existing = await dbGet<any>(`SELECT id FROM custom_roles WHERE name = ?`, [template.name]);
+    const existing = await dbGet<any>(`SELECT id FROM custom_roles WHERE name = ?`, [
+      template.name,
+    ]);
     if (existing) {
       return res.status(409).json({ error: 'Role with this name already exists' });
     }
@@ -273,10 +308,10 @@ router.delete(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureRbacTables();
-    await dbRun(
-      `DELETE FROM role_permission_assignments WHERE role_id = ? AND permission_id = ?`,
-      [req.params.roleId, req.params.permissionId]
-    );
+    await dbRun(`DELETE FROM role_permission_assignments WHERE role_id = ? AND permission_id = ?`, [
+      req.params.roleId,
+      req.params.permissionId,
+    ]);
     res.json({ success: true });
   })
 );

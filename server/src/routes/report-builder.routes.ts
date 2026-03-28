@@ -34,7 +34,10 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { exportReportToNotion } from '../services/ai/integrationHubService.js';
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
+import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
+import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import notificationService from '../services/notificationService.js';
+import { computeRagForReport } from '../services/ragLogicService.js';
 import {
   applyAgentAction,
   getAgentMessages,
@@ -42,18 +45,12 @@ import {
 } from '../services/reportAgentService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
-import ReportGenerationService from '../services/reportGenerationService.js';
-import { computeRagForReport } from '../services/ragLogicService.js';
 import {
   getCanonicalTemplate,
   proposeOutline,
 } from '../services/reportCanonicalTemplatesService.js';
+import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
-import {
-  getOrCreateBrandVoice,
-  updateBrandVoice,
-} from '../services/brandVoiceProfileService.js';
-import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1266,12 +1263,18 @@ router.post(
         organizationId,
       });
 
-      const reportType = String((req.body?.reportType || req.body?.report_type || 'OTHER') as string)
+      const reportType = String(
+        (req.body?.reportType || req.body?.report_type || 'OTHER') as string
+      )
         .toUpperCase()
         .trim();
       const title = String((req.body?.title || '') as string).trim();
-      const consultantName = String((req.body?.consultantName || req.body?.consultant_name || '') as string).trim();
-      const reportDate = String((req.body?.reportDate || req.body?.report_date || '') as string).trim();
+      const consultantName = String(
+        (req.body?.consultantName || req.body?.consultant_name || '') as string
+      ).trim();
+      const reportDate = String(
+        (req.body?.reportDate || req.body?.report_date || '') as string
+      ).trim();
       const projectId = req.body?.projectId ? String(req.body.projectId) : null;
       const tagsRaw = String((req.body?.tags || '') as string).trim();
       const tags = tagsRaw
@@ -1455,7 +1458,9 @@ router.post('/knowledge-map', async (req: Request, res: Response, next: NextFunc
   } catch (err: any) {
     logger.error('[ReportBuilder] Error building knowledge map:', err);
     const msg = err?.message || 'Failed to build knowledge map';
-    res.status(msg.includes('not found') || msg.includes('No file') ? 404 : 500).json({ error: msg });
+    res
+      .status(msg.includes('not found') || msg.includes('No file') ? 404 : 500)
+      .json({ error: msg });
   }
 });
 
@@ -1693,7 +1698,8 @@ router.post('/:id/session/open', async (req: Request, res: Response, next: NextF
       organizationId,
       userId,
       reportId: id,
-      navigationState: navigationState && typeof navigationState === 'object' ? navigationState : null,
+      navigationState:
+        navigationState && typeof navigationState === 'object' ? navigationState : null,
     });
 
     res.json({ session });
@@ -4667,7 +4673,11 @@ router.post(
       const { id } = req.params;
       const { organizationId } = getAuthContext(req);
 
-      const report = await dbGet<{ report_type_v3: string; period_from: string; period_to: string }>(
+      const report = await dbGet<{
+        report_type_v3: string;
+        period_from: string;
+        period_to: string;
+      }>(
         `SELECT report_type_v3, period_from, period_to
          FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
         [id, organizationId]
@@ -4688,7 +4698,8 @@ router.post(
       }
 
       const { evaluateR1EscalationTrigger } = await import('../services/ragLogicService.js');
-      const periodFrom = report.period_from || new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const periodFrom =
+        report.period_from || new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
       const periodTo = report.period_to || new Date().toISOString();
 
       const trigger = await evaluateR1EscalationTrigger(organizationId, periodFrom, periodTo);
@@ -4852,10 +4863,9 @@ router.post('/schedule', async (req: Request, res: Response, next: NextFunction)
         timezone: timezone || 'UTC',
         deliveryMethods: deliveryMethods || [],
         deliveryConfig: {
-          email:
-            deliveryMethods?.includes('email')
-              ? { recipients: [], subject: scheduleName }
-              : undefined,
+          email: deliveryMethods?.includes('email')
+            ? { recipients: [], subject: scheduleName }
+            : undefined,
         },
       },
       organizationId,

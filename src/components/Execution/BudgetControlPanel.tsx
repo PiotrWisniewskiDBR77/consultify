@@ -24,6 +24,7 @@ import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
 } from '@/services/api/v8/execution-control';
+
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -128,7 +129,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           );
           setInitSummary(data.summary);
         } catch (error: any) {
-          toast.error(error?.message || t('execution.toast.budgetLoadFailed', 'Failed to load budget'));
+          toast.error(
+            error?.message || t('execution.toast.budgetLoadFailed', 'Failed to load budget')
+          );
         }
       } else {
         const [portfolioData, signalsData] = await Promise.all([

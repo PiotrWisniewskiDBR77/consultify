@@ -14,32 +14,32 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { CollaborationRoom, RoomPresence, RoomState } from '../../types/collaborationRoom.js';
 import type {
-  ResourceTypeMapping,
-  SurfacePresence,
-  FacilitationSession,
-  FacilitationPhaseEntry,
-  FacilitationSessionState,
   FacilitationPauseReason,
+  FacilitationPhaseEntry,
+  FacilitationSession,
+  FacilitationSessionState,
   PlatformSeamRecord,
-  ToolEventRegistration,
   RegisterResourceTypeMappingParams,
-  UpdateSurfacePresenceParams,
-  StartFacilitationParams,
   RegisterSeamParams,
   RegisterToolEventParams,
-  WorkspaceTool,
+  ResourceTypeMapping,
+  StartFacilitationParams,
   Surface,
+  SurfacePresence,
+  ToolEventRegistration,
+  UpdateSurfacePresenceParams,
+  WorkspaceTool,
 } from '../../types/multiplayerHardening.js';
-import type { RoomPresence, CollaborationRoom, RoomState } from '../../types/collaborationRoom.js';
 import {
   RegisterResourceTypeMappingParamsSchema,
-  UpdateSurfacePresenceParamsSchema,
-  StartFacilitationParamsSchema,
   RegisterSeamParamsSchema,
   RegisterToolEventParamsSchema,
-  VALID_FACILITATION_TRANSITIONS,
+  StartFacilitationParamsSchema,
   TERMINAL_FACILITATION_STATES,
+  UpdateSurfacePresenceParamsSchema,
+  VALID_FACILITATION_TRANSITIONS,
 } from '../../types/multiplayerHardening.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -60,7 +60,10 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
-function isValidFacilitationTransition(from: FacilitationSessionState, to: FacilitationSessionState): boolean {
+function isValidFacilitationTransition(
+  from: FacilitationSessionState,
+  to: FacilitationSessionState
+): boolean {
   const allowed = VALID_FACILITATION_TRANSITIONS[from];
   return allowed.includes(to);
 }
@@ -205,7 +208,7 @@ function rowToToolEventRegistration(row: ToolEventRow): ToolEventRegistration {
  * Register how a workspace tool maps to collaboration rooms.
  */
 export async function registerResourceTypeMapping(
-  params: RegisterResourceTypeMappingParams,
+  params: RegisterResourceTypeMappingParams
 ): Promise<ResourceTypeMapping> {
   const validated = RegisterResourceTypeMappingParamsSchema.parse(params);
 
@@ -235,10 +238,12 @@ export async function registerResourceTypeMapping(
       mapping.surfaceAware ? 1 : 0,
       mapping.organizationId,
       mapping.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered resource type mapping: ${mapping.resourceType} (${mapping.roomGranularity}) in org ${mapping.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Registered resource type mapping: ${mapping.resourceType} (${mapping.roomGranularity}) in org ${mapping.organizationId}`
+  );
   return mapping;
 }
 
@@ -250,13 +255,13 @@ export async function resolveRoomBinding(
   resourceType: WorkspaceTool,
   resourceId: string,
   organizationId: string,
-  parentResourceId?: string,
+  parentResourceId?: string
 ): Promise<{ roomResourceType: string; roomResourceId: string }> {
   const mapping = await dbGet<ResourceTypeMappingRow>(
     `SELECT * FROM v8_resource_type_mappings
      WHERE resource_type = ? AND organization_id = ?`,
     [resourceType, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!mapping) {
@@ -278,13 +283,13 @@ export async function resolveRoomBinding(
  */
 export async function getResourceTypeMapping(
   resourceType: WorkspaceTool,
-  organizationId: string,
+  organizationId: string
 ): Promise<ResourceTypeMapping | null> {
   const row = await dbGet<ResourceTypeMappingRow>(
     `SELECT * FROM v8_resource_type_mappings
      WHERE resource_type = ? AND organization_id = ?`,
     [resourceType, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -300,7 +305,7 @@ export async function getResourceTypeMapping(
  * Upserts by (room_id, user_id) — one presence per user per room.
  */
 export async function updateSurfacePresence(
-  params: UpdateSurfacePresenceParams,
+  params: UpdateSurfacePresenceParams
 ): Promise<SurfacePresence> {
   const validated = UpdateSurfacePresenceParamsSchema.parse(params);
 
@@ -311,7 +316,7 @@ export async function updateSurfacePresence(
     `SELECT * FROM v8_surface_presence
      WHERE room_id = ? AND user_id = ?`,
     [validated.roomId, validated.userId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (existing) {
@@ -328,7 +333,7 @@ export async function updateSurfacePresence(
         validated.organizationId,
         validated.roomId,
         validated.userId,
-      ],
+      ]
     );
 
     return {
@@ -359,10 +364,12 @@ export async function updateSurfacePresence(
       cursorStateJson,
       now,
       validated.organizationId,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Surface presence: user ${validated.userId} on ${validated.activeSurface} in room ${validated.roomId}`);
+  logger.info(
+    `${LOG_PREFIX} Surface presence: user ${validated.userId} on ${validated.activeSurface} in room ${validated.roomId}`
+  );
 
   return {
     surfacePresenceId,
@@ -381,14 +388,14 @@ export async function updateSurfacePresence(
  */
 export async function getWorkspacePresence(
   roomId: string,
-  orgId: string,
+  orgId: string
 ): Promise<SurfacePresence[]> {
   const rows = await dbAll<SurfacePresenceRow>(
     `SELECT * FROM v8_surface_presence
      WHERE room_id = ? AND organization_id = ?
      ORDER BY last_heartbeat DESC`,
     [roomId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSurfacePresence);
@@ -400,14 +407,14 @@ export async function getWorkspacePresence(
 export async function getPresenceBySurface(
   roomId: string,
   surface: Surface,
-  orgId: string,
+  orgId: string
 ): Promise<SurfacePresence[]> {
   const rows = await dbAll<SurfacePresenceRow>(
     `SELECT * FROM v8_surface_presence
      WHERE room_id = ? AND active_surface = ? AND organization_id = ?
      ORDER BY last_heartbeat DESC`,
     [roomId, surface, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSurfacePresence);
@@ -421,7 +428,7 @@ export async function getPresenceBySurface(
  * Start a new facilitation session on a room.
  */
 export async function startFacilitationSession(
-  params: StartFacilitationParams,
+  params: StartFacilitationParams
 ): Promise<FacilitationSession> {
   const validated = StartFacilitationParamsSchema.parse(params);
 
@@ -464,7 +471,7 @@ export async function startFacilitationSession(
       session.endedAt,
       session.pauseReason,
       session.organizationId,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Facilitation session ${sessionId} started in room ${session.roomId}`);
@@ -476,13 +483,13 @@ export async function startFacilitationSession(
  */
 export async function getFacilitationSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<FacilitationSession | null> {
   const row = await dbGet<FacilitationSessionRow>(
     `SELECT * FROM v8_facilitation_sessions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -496,17 +503,19 @@ export async function getFacilitationSession(
 export async function pauseFacilitationSession(
   sessionId: string,
   reason: FacilitationPauseReason,
-  organizationId: string,
+  organizationId: string
 ): Promise<FacilitationSession> {
   const session = await getFacilitationSession(sessionId, organizationId);
   if (!session) {
-    throw new Error(`Facilitation session ${sessionId} not found in organization ${organizationId}`);
+    throw new Error(
+      `Facilitation session ${sessionId} not found in organization ${organizationId}`
+    );
   }
 
   if (!isValidFacilitationTransition(session.sessionState, 'paused_degraded')) {
     throw new Error(
       `Invalid facilitation state transition: ${session.sessionState} → paused_degraded. ` +
-      `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`,
+        `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`
     );
   }
 
@@ -516,7 +525,7 @@ export async function pauseFacilitationSession(
     `UPDATE v8_facilitation_sessions
      SET session_state = 'paused_degraded', paused_at = ?, pause_reason = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [now, reason, sessionId, organizationId],
+    [now, reason, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Facilitation session ${sessionId} paused: ${reason}`);
@@ -534,17 +543,19 @@ export async function pauseFacilitationSession(
  */
 export async function resumeFacilitationSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<FacilitationSession> {
   const session = await getFacilitationSession(sessionId, organizationId);
   if (!session) {
-    throw new Error(`Facilitation session ${sessionId} not found in organization ${organizationId}`);
+    throw new Error(
+      `Facilitation session ${sessionId} not found in organization ${organizationId}`
+    );
   }
 
   if (!isValidFacilitationTransition(session.sessionState, 'active')) {
     throw new Error(
       `Invalid facilitation state transition: ${session.sessionState} → active. ` +
-      `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`,
+        `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`
     );
   }
 
@@ -552,7 +563,7 @@ export async function resumeFacilitationSession(
     `UPDATE v8_facilitation_sessions
      SET session_state = 'active', paused_at = NULL, pause_reason = NULL
      WHERE session_id = ? AND organization_id = ?`,
-    [sessionId, organizationId],
+    [sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Facilitation session ${sessionId} resumed`);
@@ -570,17 +581,19 @@ export async function resumeFacilitationSession(
  */
 export async function endFacilitationSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<FacilitationSession> {
   const session = await getFacilitationSession(sessionId, organizationId);
   if (!session) {
-    throw new Error(`Facilitation session ${sessionId} not found in organization ${organizationId}`);
+    throw new Error(
+      `Facilitation session ${sessionId} not found in organization ${organizationId}`
+    );
   }
 
   if (!isValidFacilitationTransition(session.sessionState, 'ended')) {
     throw new Error(
       `Invalid facilitation state transition: ${session.sessionState} → ended. ` +
-      `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`,
+        `Allowed from ${session.sessionState}: [${VALID_FACILITATION_TRANSITIONS[session.sessionState].join(', ')}]`
     );
   }
 
@@ -598,7 +611,7 @@ export async function endFacilitationSession(
     `UPDATE v8_facilitation_sessions
      SET session_state = 'ended', ended_at = ?, phase_history = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [now, JSON.stringify(updatedPhaseHistory), sessionId, organizationId],
+    [now, JSON.stringify(updatedPhaseHistory), sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Facilitation session ${sessionId} ended`);
@@ -618,9 +631,7 @@ export async function endFacilitationSession(
 /**
  * Register a platform seam for tracking migration progress.
  */
-export async function registerSeam(
-  params: RegisterSeamParams,
-): Promise<PlatformSeamRecord> {
+export async function registerSeam(params: RegisterSeamParams): Promise<PlatformSeamRecord> {
   const validated = RegisterSeamParamsSchema.parse(params);
 
   const seamId = uuidv4();
@@ -651,10 +662,12 @@ export async function registerSeam(
       record.organizationId,
       record.createdAt,
       record.migratedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered seam: ${record.toolName}/${record.seamType} (${record.currentState})`);
+  logger.info(
+    `${LOG_PREFIX} Registered seam: ${record.toolName}/${record.seamType} (${record.currentState})`
+  );
   return record;
 }
 
@@ -663,13 +676,13 @@ export async function registerSeam(
  */
 export async function migrateSeam(
   seamId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<PlatformSeamRecord> {
   const row = await dbGet<PlatformSeamRow>(
     `SELECT * FROM v8_platform_seam_registry
      WHERE seam_id = ? AND organization_id = ?`,
     [seamId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -686,7 +699,7 @@ export async function migrateSeam(
     `UPDATE v8_platform_seam_registry
      SET current_state = 'platform_migrated', migrated_at = ?
      WHERE seam_id = ? AND organization_id = ?`,
-    [now, seamId, organizationId],
+    [now, seamId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Seam ${seamId} migrated to platform`);
@@ -703,7 +716,7 @@ export async function migrateSeam(
  */
 export async function getSeamsByOrg(
   organizationId: string,
-  toolName?: WorkspaceTool,
+  toolName?: WorkspaceTool
 ): Promise<PlatformSeamRecord[]> {
   if (toolName) {
     const rows = await dbAll<PlatformSeamRow>(
@@ -711,7 +724,7 @@ export async function getSeamsByOrg(
        WHERE organization_id = ? AND tool_name = ?
        ORDER BY created_at ASC`,
       [organizationId, toolName],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToSeamRecord);
   }
@@ -721,7 +734,7 @@ export async function getSeamsByOrg(
      WHERE organization_id = ?
      ORDER BY created_at ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToSeamRecord);
 }
@@ -734,7 +747,7 @@ export async function getSeamsByOrg(
  * Register a tool-specific event type in the platform event registry.
  */
 export async function registerToolEvent(
-  params: RegisterToolEventParams,
+  params: RegisterToolEventParams
 ): Promise<ToolEventRegistration> {
   const validated = RegisterToolEventParamsSchema.parse(params);
 
@@ -766,10 +779,12 @@ export async function registerToolEvent(
       registration.registered ? 1 : 0,
       registration.organizationId,
       registration.createdAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Registered tool event: ${registration.eventType} for ${registration.toolName}`);
+  logger.info(
+    `${LOG_PREFIX} Registered tool event: ${registration.eventType} for ${registration.toolName}`
+  );
   return registration;
 }
 
@@ -778,14 +793,14 @@ export async function registerToolEvent(
  */
 export async function getToolEvents(
   toolName: WorkspaceTool,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolEventRegistration[]> {
   const rows = await dbAll<ToolEventRow>(
     `SELECT * FROM v8_tool_event_registry
      WHERE tool_name = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [toolName, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToToolEventRegistration);
@@ -846,7 +861,7 @@ export interface CrossCanvasPresenceEntry {
  */
 export async function getCrossCanvasPresence(
   workspaceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CrossCanvasPresenceEntry[]> {
   const roomRows = await dbAll<RoomRow>(
     `SELECT * FROM v8_collaboration_rooms
@@ -854,7 +869,7 @@ export async function getCrossCanvasPresence(
        AND (resource_id = ? OR metadata LIKE ?)
      ORDER BY created_at DESC`,
     [organizationId, workspaceId, `%"workspaceId":"${workspaceId}"%`],
-    { fallback: true },
+    { fallback: true }
   );
 
   const rooms = roomRows || [];
@@ -868,7 +883,7 @@ export async function getCrossCanvasPresence(
        WHERE room_id = ? AND is_stale = 0
        ORDER BY connected_at ASC`,
       [room.room_id],
-      { fallback: true },
+      { fallback: true }
     );
 
     const presenceEntries = (presenceRows || []).map(rowToPresenceEntry);
@@ -881,7 +896,9 @@ export async function getCrossCanvasPresence(
     });
   }
 
-  logger.info(`${LOG_PREFIX} Cross-canvas presence for workspace ${workspaceId}: ${result.length} rooms`);
+  logger.info(
+    `${LOG_PREFIX} Cross-canvas presence for workspace ${workspaceId}: ${result.length} rooms`
+  );
   return result;
 }
 
@@ -898,7 +915,7 @@ export interface ToolRoomStatus {
 export async function getToolRoomStatus(
   toolType: WorkspaceTool,
   resourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolRoomStatus> {
   const roomRow = await dbGet<RoomRow>(
     `SELECT * FROM v8_collaboration_rooms
@@ -907,7 +924,7 @@ export async function getToolRoomStatus(
      ORDER BY created_at DESC
      LIMIT 1`,
     [toolType, resourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!roomRow) {
@@ -928,13 +945,13 @@ export async function getToolRoomStatus(
   const activeRows = await dbAll<PresenceRow>(
     `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 0`,
     [room.roomId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const staleRows = await dbAll<PresenceRow>(
     `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 1`,
     [room.roomId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {

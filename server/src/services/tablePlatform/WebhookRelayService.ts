@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -59,16 +60,15 @@ class WebhookRelayService {
 
   async getRelay(relayId: string): Promise<WebhookRelay | null> {
     const db = getDatabase();
-    const result = await db.query(
-      `SELECT * FROM tp_webhook_relays WHERE id = $1`,
-      [relayId]
-    );
+    const result = await db.query(`SELECT * FROM tp_webhook_relays WHERE id = $1`, [relayId]);
     return (result.rows[0] as WebhookRelay) ?? null;
   }
 
   async updateRelay(
     relayId: string,
-    updates: Partial<Pick<WebhookRelay, 'name' | 'target_url' | 'secret' | 'event_types' | 'is_active'>>
+    updates: Partial<
+      Pick<WebhookRelay, 'name' | 'target_url' | 'secret' | 'event_types' | 'is_active'>
+    >
   ): Promise<WebhookRelay | null> {
     const db = getDatabase();
     const sets: string[] = [];
@@ -111,7 +111,9 @@ class WebhookRelayService {
     await db.query('DELETE FROM tp_webhook_relays WHERE id = $1', [relayId]);
   }
 
-  async testRelay(relayId: string): Promise<{ success: boolean; statusCode?: number; error?: string }> {
+  async testRelay(
+    relayId: string
+  ): Promise<{ success: boolean; statusCode?: number; error?: string }> {
     const relay = await this.getRelay(relayId);
     if (!relay) return { success: false, error: 'Relay not found' };
 
@@ -160,7 +162,10 @@ class WebhookRelayService {
       );
       relays = result.rows as WebhookRelay[];
     } catch (err) {
-      logger.error('[WebhookRelay] Failed to query relays', { baseId, error: (err as Error).message });
+      logger.error('[WebhookRelay] Failed to query relays', {
+        baseId,
+        error: (err as Error).message,
+      });
       return;
     }
 
@@ -168,7 +173,10 @@ class WebhookRelayService {
 
     for (const relay of relays) {
       this.fireRelay(relay, eventType, baseId, payload).catch((err) => {
-        logger.warn('[WebhookRelay] dispatch failed', { relayId: relay.id, error: (err as Error).message });
+        logger.warn('[WebhookRelay] dispatch failed', {
+          relayId: relay.id,
+          error: (err as Error).message,
+        });
       });
     }
   }

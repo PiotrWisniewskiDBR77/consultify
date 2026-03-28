@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ContextSnapshot, V8ArtifactRef } from '../../../types/contextSnapshot.js';
 
@@ -29,8 +29,8 @@ import {
   captureForChat,
   captureForExecution,
   captureForRetrieval,
-  validateConsumerClass,
   getInheritanceChain,
+  validateConsumerClass,
 } from '../contextConsumerBindingService.js';
 
 // ==========================================
@@ -212,7 +212,12 @@ describe('captureForRetrieval', () => {
 
   it('passes sourceContextRefs when provided', async () => {
     const sourceRefs = [
-      { sourceId: 'src-1', scopeType: 'session' as const, sourceKind: 'working_memory', freshnessAt: null },
+      {
+        sourceId: 'src-1',
+        scopeType: 'session' as const,
+        sourceKind: 'working_memory',
+        freshnessAt: null,
+      },
     ];
 
     const result = await captureForRetrieval({
@@ -231,9 +236,7 @@ describe('captureForRetrieval', () => {
 
 describe('validateConsumerClass', () => {
   it('returns valid when consumer class matches', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ consumer_class: 'chat' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeSnapshotRow({ consumer_class: 'chat' }));
 
     const result = await validateConsumerClass(SNAPSHOT_A, 'chat', ORG_ID);
 
@@ -243,9 +246,7 @@ describe('validateConsumerClass', () => {
   });
 
   it('returns invalid when consumer class does not match', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ consumer_class: 'execution' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeSnapshotRow({ consumer_class: 'execution' }));
 
     const result = await validateConsumerClass(SNAPSHOT_A, 'chat', ORG_ID);
 
@@ -273,21 +274,21 @@ describe('getInheritanceChain', () => {
           snapshot_id: SNAPSHOT_C,
           consumer_class: 'retrieval',
           parent_snapshot_id: SNAPSHOT_B,
-        }),
+        })
       )
       .mockResolvedValueOnce(
         makeFakeSnapshotRow({
           snapshot_id: SNAPSHOT_B,
           consumer_class: 'execution',
           parent_snapshot_id: SNAPSHOT_A,
-        }),
+        })
       )
       .mockResolvedValueOnce(
         makeFakeSnapshotRow({
           snapshot_id: SNAPSHOT_A,
           consumer_class: 'chat',
           parent_snapshot_id: null,
-        }),
+        })
       );
 
     const chain = await getInheritanceChain(SNAPSHOT_C, ORG_ID);
@@ -307,7 +308,7 @@ describe('getInheritanceChain', () => {
         snapshot_id: SNAPSHOT_A,
         consumer_class: 'chat',
         parent_snapshot_id: null,
-      }),
+      })
     );
 
     const chain = await getInheritanceChain(SNAPSHOT_A, ORG_ID);
@@ -324,14 +325,13 @@ describe('getInheritanceChain', () => {
   });
 
   it('handles circular references gracefully via visited set', async () => {
-    mockDbGet
-      .mockResolvedValueOnce(
-        makeFakeSnapshotRow({
-          snapshot_id: SNAPSHOT_A,
-          consumer_class: 'chat',
-          parent_snapshot_id: SNAPSHOT_A,
-        }),
-      );
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeSnapshotRow({
+        snapshot_id: SNAPSHOT_A,
+        consumer_class: 'chat',
+        parent_snapshot_id: SNAPSHOT_A,
+      })
+    );
 
     const chain = await getInheritanceChain(SNAPSHOT_A, ORG_ID);
 

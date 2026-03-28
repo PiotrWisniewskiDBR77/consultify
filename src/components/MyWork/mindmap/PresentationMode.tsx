@@ -2,7 +2,18 @@
  * PresentationMode — Branch-by-branch presentation with zoom animation.
  * Full-screen overlay that steps through branches.
  */
-import { ArrowLeft, ArrowRight, ChevronRight, ChevronUp, Clock, GitBranch, Lightbulb, Play, StickyNote, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  GitBranch,
+  Lightbulb,
+  Play,
+  StickyNote,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -277,12 +288,19 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                       <ChevronUp size={12} className="ml-auto" />
                     </button>
                     <div className="px-4 pb-3 space-y-2">
-                      {b.nodes.filter((n) => n.notes).map((n) => (
-                        <div key={n.id} className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                          <span className="font-semibold text-slate-600 dark:text-slate-300">{n.label}:</span>{' '}
-                          {n.notes}
-                        </div>
-                      ))}
+                      {b.nodes
+                        .filter((n) => n.notes)
+                        .map((n) => (
+                          <div
+                            key={n.id}
+                            className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed"
+                          >
+                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                              {n.label}:
+                            </span>{' '}
+                            {n.notes}
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}

@@ -24,7 +24,11 @@ const MIND_MAP_TEMPLATES = [
 
 const PROCESS_TEMPLATES = [
   { id: 'pf-blank', labelPl: 'Pusty proces', labelEn: 'Blank process' },
-  { id: 'pf-process-improvement', labelPl: 'Warsztat usprawnienia procesu', labelEn: 'Process improvement workshop' },
+  {
+    id: 'pf-process-improvement',
+    labelPl: 'Warsztat usprawnienia procesu',
+    labelEn: 'Process improvement workshop',
+  },
   { id: 'pf-basic', labelPl: 'Podstawowy proces', labelEn: 'Basic process' },
   { id: 'pf-approval', labelPl: 'Proces akceptacji', labelEn: 'Approval workflow' },
   { id: 'pf-pdca', labelPl: 'Cykl PDCA', labelEn: 'PDCA cycle' },

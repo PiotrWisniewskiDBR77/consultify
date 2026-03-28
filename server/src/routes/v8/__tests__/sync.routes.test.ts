@@ -5,7 +5,10 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_SYNC_RUNTIME_MUTATION_CONTRACT, V8_SYNC_RUNTIME_READ_CONTRACT } from '../sync.routes.js';
+import {
+  V8_SYNC_RUNTIME_MUTATION_CONTRACT,
+  V8_SYNC_RUNTIME_READ_CONTRACT,
+} from '../sync.routes.js';
 
 const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
@@ -46,7 +49,8 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredential: (...args: unknown[]) => mockGetCredential(...args),
   recordAuthEscalation: (...args: unknown[]) => mockRecordAuthEscalation(...args),
   recordRefreshResult: (...args: unknown[]) => mockRecordRefreshResult(...args),
-  resolveAuthEscalationsForConnector: (...args: unknown[]) => mockResolveAuthEscalationsForConnector(...args),
+  resolveAuthEscalationsForConnector: (...args: unknown[]) =>
+    mockResolveAuthEscalationsForConnector(...args),
   storeCredential: (...args: unknown[]) => mockStoreCredential(...args),
 }));
 
@@ -353,7 +357,9 @@ describe('V8 sync read-only routes', () => {
 
   it('GET /api/v8/sync/connectors returns governed catalog envelope', async () => {
     const app = createApp();
-    const res = await request(app).get('/api/v8/sync/connectors').query({ category: 'project_management' });
+    const res = await request(app)
+      .get('/api/v8/sync/connectors')
+      .query({ category: 'project_management' });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
@@ -384,11 +390,11 @@ describe('V8 sync read-only routes', () => {
     ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integrations'),
-      expect.arrayContaining([ORG, 'jira', 'Jira', 'project_management', 'pending', 'oauth2']),
+      expect.arrayContaining([ORG, 'jira', 'Jira', 'project_management', 'pending', 'oauth2'])
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integration_audit_log'),
-      expect.arrayContaining([ORG, expect.any(String), 'connect_initiated', UID, UID]),
+      expect.arrayContaining([ORG, expect.any(String), 'connect_initiated', UID, UID])
     );
   });
 
@@ -424,19 +430,18 @@ describe('V8 sync read-only routes', () => {
     ]);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
     expect(res.body.data?.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
-    expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
-    expect(res.body.data?.externalAuth?.state).toBeTruthy();
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE integrations'),
-      [
-        '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123","client_id":"jira-client-id","client_secret":"jira-client-secret"}',
-        'int-pending-1',
-        ORG,
-      ],
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain(
+      '/api/sync-hub/external-auth/callback?state='
     );
+    expect(res.body.data?.externalAuth?.state).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining('UPDATE integrations'), [
+      '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123","client_id":"jira-client-id","client_secret":"jira-client-secret"}',
+      'int-pending-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integration_audit_log'),
-      expect.arrayContaining([ORG, 'int-pending-1', 'configuration_updated', UID, UID]),
+      expect.arrayContaining([ORG, 'int-pending-1', 'configuration_updated', UID, UID])
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
@@ -458,21 +463,23 @@ describe('V8 sync read-only routes', () => {
     ]);
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/sync/integrations/int-gmail-1/configure').send({
-      config: {
-        domain: 'acme.com',
-      },
-    });
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-gmail-1/configure')
+      .send({
+        config: {
+          domain: 'acme.com',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.integration?.configuredFields).toEqual(['domain']);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
     expect(res.body.data?.externalAuth?.authUrl).toContain(
-      'https://accounts.google.com/o/oauth2/v2/auth?',
+      'https://accounts.google.com/o/oauth2/v2/auth?'
     );
     expect(res.body.data?.externalAuth?.authUrl).toContain('access_type=offline');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain(
-      '/api/sync-hub/external-auth/callback?state=',
+      '/api/sync-hub/external-auth/callback?state='
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'gmail',
@@ -494,19 +501,23 @@ describe('V8 sync read-only routes', () => {
     ]);
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/sync/integrations/int-asana-1/configure').send({
-      config: {
-        workspace_gid: 'workspace-123',
-      },
-    });
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-asana-1/configure')
+      .send({
+        config: {
+          workspace_gid: 'workspace-123',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.integration?.configuredFields).toEqual(['workspace_gid']);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
-    expect(res.body.data?.externalAuth?.authUrl).toContain('https://app.asana.com/-/oauth_authorize?');
+    expect(res.body.data?.externalAuth?.authUrl).toContain(
+      'https://app.asana.com/-/oauth_authorize?'
+    );
     expect(res.body.data?.externalAuth?.authUrl).toContain('client_id=test-asana-client-id');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain(
-      '/api/sync-hub/external-auth/callback?state=',
+      '/api/sync-hub/external-auth/callback?state='
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'asana',
@@ -528,21 +539,23 @@ describe('V8 sync read-only routes', () => {
     ]);
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/sync/integrations/int-teams-1/configure').send({
-      config: {
-        tenant_id: 'tenant-123',
-      },
-    });
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-teams-1/configure')
+      .send({
+        config: {
+          tenant_id: 'tenant-123',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.integration?.configuredFields).toEqual(['tenant_id']);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
     expect(res.body.data?.externalAuth?.authUrl).toContain(
-      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?',
+      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?'
     );
     expect(res.body.data?.externalAuth?.authUrl).toContain('response_mode=query');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain(
-      '/api/sync-hub/external-auth/callback?state=',
+      '/api/sync-hub/external-auth/callback?state='
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'teams',
@@ -564,11 +577,13 @@ describe('V8 sync read-only routes', () => {
     ]);
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/sync/integrations/int-slack-1/configure').send({
-      config: {
-        workspace_id: 'workspace-123',
-      },
-    });
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-slack-1/configure')
+      .send({
+        config: {
+          workspace_id: 'workspace-123',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.integration?.configuredFields).toEqual(['workspace_id']);
@@ -576,7 +591,7 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.data?.externalAuth?.authUrl).toContain('https://slack.com/oauth/v2/authorize?');
     expect(res.body.data?.externalAuth?.authUrl).toContain('client_id=test-slack-client-id');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain(
-      '/api/sync-hub/external-auth/callback?state=',
+      '/api/sync-hub/external-auth/callback?state='
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'slack',
@@ -647,7 +662,10 @@ describe('V8 sync read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining('is_paused = TRUE'), ['int-1', ORG]);
+    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining('is_paused = TRUE'), [
+      'int-1',
+      ORG,
+    ]);
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/reauth starts a governed reauth flow', async () => {
@@ -666,7 +684,9 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(res.body.data?.onboardingStatus).toBe('pending_external_auth');
     expect(res.body.data?.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
-    expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain(
+      '/api/sync-hub/external-auth/callback?state='
+    );
     expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
@@ -715,12 +735,14 @@ describe('V8 sync read-only routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/sync/integrations/int-1/credential').send({
-      providerAccountId: 'acct-123',
-      workspaceOrTenantId: 'tenant-456',
-      scopesGranted: ['read:jira-work'],
-      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
-    });
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-1/credential')
+      .send({
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
@@ -735,7 +757,7 @@ describe('V8 sync read-only routes', () => {
     });
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integration_audit_log'),
-      expect.arrayContaining([ORG, 'int-1', 'credential_materialized', UID, UID]),
+      expect.arrayContaining([ORG, 'int-1', 'credential_materialized', UID, UID])
     );
   });
 
@@ -860,14 +882,16 @@ describe('V8 sync read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('is_paused = FALSE'),
-      ['int-1', ORG],
-    );
+    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining('is_paused = FALSE'), [
+      'int-1',
+      ORG,
+    ]);
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync triggers a governed sync run', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
 
     const app = createApp();
     const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
@@ -882,7 +906,9 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync blocks expired governed credentials before sync starts', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
     mockGetCredential.mockResolvedValue({
       credentialId: 'cred-1',
       connectorId: 'jira',
@@ -942,7 +968,9 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync blocks refresh-window credentials before fake runtime sync', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
     mockGetCredential.mockResolvedValue({
       credentialId: 'cred-1',
       connectorId: 'jira',
@@ -985,13 +1013,11 @@ describe('V8 sync read-only routes', () => {
     mockDbAll.mockResolvedValueOnce([{ id: 'int-1', connector_id: 'jira', status: 'connected' }]);
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/sync/integrations/int-1/refresh-secret')
-      .send({
-        clientId: 'client-1',
-        clientSecret: 'secret-1',
-        refreshToken: 'refresh-1',
-      });
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/refresh-secret').send({
+      clientId: 'client-1',
+      clientSecret: 'secret-1',
+      refreshToken: 'refresh-1',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
@@ -1007,7 +1033,9 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync executes real governed refresh before continuing runtime sync', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
     mockGetCredential.mockResolvedValue({
       credentialId: 'cred-1',
       connectorId: 'jira',
@@ -1062,7 +1090,9 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync turns refresh auth break into governed reauth truth', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
     mockGetCredential.mockResolvedValue({
       credentialId: 'cred-1',
       connectorId: 'jira',
@@ -1119,7 +1149,9 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync preserves rate-limit guardrails', async () => {
-    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
     mockCheckRateLimit.mockResolvedValueOnce({
       allowed: false,
       warnings: ['backoff'],
@@ -1221,7 +1253,9 @@ describe('V8 sync read-only routes', () => {
 
   it('GET /api/v8/sync/connectors/:id/health delegates to pmSyncTruthService', async () => {
     const app = createApp();
-    const res = await request(app).get(`/api/v8/sync/connectors/${encodeURIComponent(CONNECTOR)}/health`);
+    const res = await request(app).get(
+      `/api/v8/sync/connectors/${encodeURIComponent(CONNECTOR)}/health`
+    );
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);

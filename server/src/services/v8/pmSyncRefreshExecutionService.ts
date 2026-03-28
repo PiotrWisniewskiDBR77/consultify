@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
-import { decrypt, encrypt } from '../encryption/EncryptionService.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { decrypt, encrypt } from '../encryption/EncryptionService.js';
 
 const LOG_PREFIX = '[V8:PMSyncRefreshExecution]';
 const SECRET_TABLE = 'integration_secrets';
@@ -49,7 +49,10 @@ function normalizeFailureCode(payload: RefreshErrorPayload, fallback: string): s
     .toLowerCase();
 }
 
-function classifyRefreshFailure(payload: RefreshErrorPayload, fallback: string): RefreshExecutionResult['status'] {
+function classifyRefreshFailure(
+  payload: RefreshErrorPayload,
+  fallback: string
+): RefreshExecutionResult['status'] {
   const code = normalizeFailureCode(payload, fallback);
 
   if (
@@ -91,7 +94,7 @@ async function hasRefreshSecretStorage(): Promise<boolean> {
 }
 
 export async function storeRefreshExecutionSecret(
-  params: RefreshExecutionSecret,
+  params: RefreshExecutionSecret
 ): Promise<Omit<RefreshExecutionSecret, 'clientSecret' | 'refreshToken'>> {
   const validated = RefreshExecutionSecretSchema.parse(params);
   if (!(await hasRefreshSecretStorage())) {
@@ -105,7 +108,7 @@ export async function storeRefreshExecutionSecret(
       clientSecret: validated.clientSecret,
       refreshToken: validated.refreshToken,
       tokenEndpoint: validated.tokenEndpoint,
-    }),
+    })
   );
 
   const existing = await dbGet<{ id: string }>(
@@ -115,7 +118,7 @@ export async function storeRefreshExecutionSecret(
      ORDER BY COALESCE(rotated_at, created_at) DESC
      LIMIT 1`,
     [validated.organizationId, validated.connectorId, SECRET_KEY],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -135,7 +138,13 @@ export async function storeRefreshExecutionSecret(
     await dbRun(`UPDATE ${SECRET_TABLE} SET ${updates.join(', ')} WHERE id = ?`, paramsList);
   } else {
     const columnNames = ['id', 'organization_id', 'connector_id', 'secret_key', 'encrypted_value'];
-    const values: unknown[] = [uuidv4(), validated.organizationId, validated.connectorId, SECRET_KEY, encryptedValue];
+    const values: unknown[] = [
+      uuidv4(),
+      validated.organizationId,
+      validated.connectorId,
+      SECRET_KEY,
+      encryptedValue,
+    ];
 
     if (cols.has('created_at')) {
       columnNames.push('created_at');
@@ -153,12 +162,12 @@ export async function storeRefreshExecutionSecret(
     await dbRun(
       `INSERT INTO ${SECRET_TABLE} (${columnNames.join(', ')})
        VALUES (${columnNames.map(() => '?').join(', ')})`,
-      values,
+      values
     );
   }
 
   logger.info(
-    `${LOG_PREFIX} Stored governed refresh secret for connector ${validated.connectorId} in org ${validated.organizationId}`,
+    `${LOG_PREFIX} Stored governed refresh secret for connector ${validated.connectorId} in org ${validated.organizationId}`
   );
 
   return {
@@ -171,7 +180,7 @@ export async function storeRefreshExecutionSecret(
 
 export async function getRefreshExecutionSecret(
   connectorId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RefreshExecutionSecret | null> {
   if (!(await hasRefreshSecretStorage())) {
     return null;
@@ -184,7 +193,7 @@ export async function getRefreshExecutionSecret(
      ORDER BY COALESCE(rotated_at, created_at) DESC
      LIMIT 1`,
     [organizationId, connectorId, SECRET_KEY],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row?.encrypted_value) {
@@ -192,7 +201,10 @@ export async function getRefreshExecutionSecret(
   }
 
   const decrypted = decrypt(row.encrypted_value);
-  const parsed = JSON.parse(decrypted) as Omit<RefreshExecutionSecret, 'connectorId' | 'organizationId'>;
+  const parsed = JSON.parse(decrypted) as Omit<
+    RefreshExecutionSecret,
+    'connectorId' | 'organizationId'
+  >;
 
   return RefreshExecutionSecretSchema.parse({
     connectorId,
@@ -206,7 +218,7 @@ export async function getRefreshExecutionSecret(
 
 export async function executeRefreshExecution(
   connectorId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RefreshExecutionResult> {
   const secret = await getRefreshExecutionSecret(connectorId, organizationId);
   if (!secret) {

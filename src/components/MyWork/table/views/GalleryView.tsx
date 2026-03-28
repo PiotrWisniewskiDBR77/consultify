@@ -98,9 +98,7 @@ const GalleryCard = React.memo<{
             if (col.type === 'select' || col.type === 'status') {
               const bgColor =
                 col.optionColors?.[String(val)] ||
-                SELECT_COLORS[
-                  (col.options || []).indexOf(String(val)) % SELECT_COLORS.length
-                ] ||
+                SELECT_COLORS[(col.options || []).indexOf(String(val)) % SELECT_COLORS.length] ||
                 '#e0e7ff';
               return (
                 <span
@@ -139,7 +137,9 @@ const GalleryCard = React.memo<{
 
             if (col.type === 'checkbox') {
               return val ? (
-                <span key={col.key} className="text-[8px] text-emerald-500 font-bold">✓</span>
+                <span key={col.key} className="text-[8px] text-emerald-500 font-bold">
+                  ✓
+                </span>
               ) : null;
             }
 
@@ -185,10 +185,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
     return columns
       .filter(
         (c) =>
-          visible.has(c.key) &&
-          c.key !== 'label' &&
-          c.key !== 'type' &&
-          c.key !== coverImageFieldId,
+          visible.has(c.key) && c.key !== 'label' && c.key !== 'type' && c.key !== coverImageFieldId
       )
       .slice(0, 5);
   }, [columns, coverImageFieldId, visibleFieldIds]);

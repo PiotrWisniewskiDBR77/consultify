@@ -3,7 +3,6 @@
  * Enhanced with multi-line input, quick action chips, proposal history,
  * schema context summary, and full approve/reject/refine/undo flow.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -18,20 +17,18 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useSchemaProposal, type ProposalHistoryEntry } from './useSchemaProposal';
 import {
-  SchemaProposalCard,
-  type SchemaProposalCardProposal,
-} from './SchemaProposalCard';
-import { SchemaDiffPreview, type DiffChange, type DiffTable } from './SchemaDiffPreview';
-import { RefineDialog, type RefinementHistoryEntry } from './RefineDialog';
-import {
-  ExecutionProgress,
   type ExecutionOperation,
+  ExecutionProgress,
   type OperationStatus,
 } from './ExecutionProgress';
+import { RefineDialog, type RefinementHistoryEntry } from './RefineDialog';
+import { type DiffChange, type DiffTable, SchemaDiffPreview } from './SchemaDiffPreview';
+import { SchemaProposalCard, type SchemaProposalCardProposal } from './SchemaProposalCard';
+import { type ProposalHistoryEntry, useSchemaProposal } from './useSchemaProposal';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -101,12 +98,13 @@ function extractDiffChanges(proposal: SchemaProposalCardProposal): DiffChange[] 
     switch (op.operationType) {
       case 'create_table':
       case 'add_table': {
-        const fields = (op.payload?.fields as Array<Record<string, unknown>> | undefined)?.map((f) => ({
-          name: String(f.name ?? f.fieldName ?? ''),
-          type: String(f.type ?? f.fieldType ?? 'text'),
-          required: Boolean(f.required),
-          options: f.options as Record<string, unknown> | undefined,
-        })) ?? [];
+        const fields =
+          (op.payload?.fields as Array<Record<string, unknown>> | undefined)?.map((f) => ({
+            name: String(f.name ?? f.fieldName ?? ''),
+            type: String(f.type ?? f.fieldType ?? 'text'),
+            required: Boolean(f.required),
+            options: f.options as Record<string, unknown> | undefined,
+          })) ?? [];
         return {
           type: 'add_table' as const,
           tableName: String(op.payload?.name ?? tableName),
@@ -182,7 +180,8 @@ function buildExecutionOps(
   _isPl: boolean
 ): ExecutionOperation[] {
   return proposal.operations.map((op) => {
-    const name = op.payload?.name ?? op.target?.tableName ?? op.target?.fieldName ?? op.operationType;
+    const name =
+      op.payload?.name ?? op.target?.tableName ?? op.target?.fieldName ?? op.operationType;
     return {
       id: op.id,
       operationType: op.operationType,
@@ -222,8 +221,8 @@ const SchemaContextSummary: React.FC<{
     <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/40 dark:border-zinc-700/40 bg-slate-50/30 dark:bg-zinc-800/20">
       <Database size={12} className="text-slate-400 dark:text-zinc-500" />
       <span className="text-[10px] text-slate-400 dark:text-zinc-500">
-        {isPl ? 'Aktualny schemat' : 'Current schema'}:
-        {' '}{schema.length} {isPl ? 'tabel' : 'tables'}, {totalFields} {isPl ? 'pól' : 'fields'}
+        {isPl ? 'Aktualny schemat' : 'Current schema'}: {schema.length} {isPl ? 'tabel' : 'tables'},{' '}
+        {totalFields} {isPl ? 'pól' : 'fields'}
       </span>
       <div className="flex items-center gap-1 ml-auto">
         {schema.slice(0, 3).map((t) => (
@@ -235,9 +234,7 @@ const SchemaContextSummary: React.FC<{
           </span>
         ))}
         {schema.length > 3 && (
-          <span className="text-[9px] text-slate-400 dark:text-zinc-500">
-            +{schema.length - 3}
-          </span>
+          <span className="text-[9px] text-slate-400 dark:text-zinc-500">+{schema.length - 3}</span>
         )}
       </div>
     </div>
@@ -260,9 +257,15 @@ const ProposalHistoryList: React.FC<{
       >
         <History size={12} />
         {isPl ? 'Historia propozycji' : 'Proposal history'} ({history.length})
-        {expanded ? <ChevronDown size={10} className="ml-auto" /> : <ChevronRight size={10} className="ml-auto" />}
+        {expanded ? (
+          <ChevronDown size={10} className="ml-auto" />
+        ) : (
+          <ChevronRight size={10} className="ml-auto" />
+        )}
       </button>
-      <div className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+      >
         <div className="px-4 pb-3 space-y-1 max-h-32 overflow-y-auto">
           {history.map((entry) => (
             <div
@@ -271,12 +274,17 @@ const ProposalHistoryList: React.FC<{
             >
               <Clock size={10} className="flex-shrink-0" />
               <span className="truncate flex-1">{entry.summary || entry.intent}</span>
-              <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                entry.status === 'executed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                : entry.status === 'rejected' ? 'bg-red-500/15 text-red-600 dark:text-red-400'
-                : entry.status === 'refined' ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
-                : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
-              }`}>
+              <span
+                className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                  entry.status === 'executed'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    : entry.status === 'rejected'
+                      ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                      : entry.status === 'refined'
+                        ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
+                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
+                }`}
+              >
                 {entry.status}
               </span>
             </div>
@@ -326,7 +334,9 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   const [refinementHistory, setRefinementHistory] = useState<RefinementHistoryEntry[]>([]);
   const [executionOps, setExecutionOps] = useState<ExecutionOperation[] | null>(null);
   const [executed, setExecuted] = useState(false);
-  const [conversation, setConversation] = useState<Array<{ id: string; role: 'user' | 'ai'; content: string; timestamp: Date }>>([]);
+  const [conversation, setConversation] = useState<
+    Array<{ id: string; role: 'user' | 'ai'; content: string; timestamp: Date }>
+  >([]);
   const initialMsgSentRef = useRef(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -380,24 +390,43 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   }, []);
 
   // Handlers
-  const handleSubmit = useCallback(async (overrideMsg?: string) => {
-    const msg = (overrideMsg ?? inputValue).trim();
-    if (!msg || loading) return;
+  const handleSubmit = useCallback(
+    async (overrideMsg?: string) => {
+      const msg = (overrideMsg ?? inputValue).trim();
+      if (!msg || loading) return;
 
-    setConversation((prev) => [
-      ...prev,
-      { id: `user-${Date.now()}`, role: 'user', content: msg, timestamp: new Date() },
-    ]);
-    setInputValue('');
-    setExecutionOps(null);
-    setExecuted(false);
+      setConversation((prev) => [
+        ...prev,
+        { id: `user-${Date.now()}`, role: 'user', content: msg, timestamp: new Date() },
+      ]);
+      setInputValue('');
+      setExecutionOps(null);
+      setExecuted(false);
 
-    if (proposal) {
-      await refineProposal(msg);
-    } else {
-      await generateProposal(workspaceId, msg, existingSchema, i18n.language || undefined, companyContext);
-    }
-  }, [workspaceId, inputValue, existingSchema, i18n.language, loading, generateProposal, refineProposal, proposal, companyContext]);
+      if (proposal) {
+        await refineProposal(msg);
+      } else {
+        await generateProposal(
+          workspaceId,
+          msg,
+          existingSchema,
+          i18n.language || undefined,
+          companyContext
+        );
+      }
+    },
+    [
+      workspaceId,
+      inputValue,
+      existingSchema,
+      i18n.language,
+      loading,
+      generateProposal,
+      refineProposal,
+      proposal,
+      companyContext,
+    ]
+  );
 
   const handleQuickAction = useCallback((text: string) => {
     setInputValue(text);
@@ -413,27 +442,36 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       setExecutionOps(
         ops.map((o) => ({
           ...o,
-          status: selectedIds.has(o.id) ? 'running' as OperationStatus : 'pending' as OperationStatus,
+          status: selectedIds.has(o.id)
+            ? ('running' as OperationStatus)
+            : ('pending' as OperationStatus),
         }))
       );
 
       try {
         const result = await executeProposal(approvedOperationIds);
-        setExecutionOps((prev) =>
-          prev?.map((o) => ({
-            ...o,
-            status: selectedIds.has(o.id) ? 'success' as OperationStatus : o.status,
-          })) ?? null
+        setExecutionOps(
+          (prev) =>
+            prev?.map((o) => ({
+              ...o,
+              status: selectedIds.has(o.id) ? ('success' as OperationStatus) : o.status,
+            })) ?? null
         );
         setExecuted(true);
         onExecuted?.(result);
       } catch {
-        setExecutionOps((prev) =>
-          prev?.map((o) => ({
-            ...o,
-            status: o.status === 'running' ? 'failed' as OperationStatus : o.status,
-            error: o.status === 'running' ? (isPl ? 'Operacja nie powiodła się' : 'Operation failed') : undefined,
-          })) ?? null
+        setExecutionOps(
+          (prev) =>
+            prev?.map((o) => ({
+              ...o,
+              status: o.status === 'running' ? ('failed' as OperationStatus) : o.status,
+              error:
+                o.status === 'running'
+                  ? isPl
+                    ? 'Operacja nie powiodła się'
+                    : 'Operation failed'
+                  : undefined,
+            })) ?? null
         );
       }
     },
@@ -498,7 +536,9 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   // Render: Panel content
   // -------------------------------------------------------------------------
   const panelContent = (
-    <div className={`flex flex-col ${mode === 'slideOver' || mode === 'splitScreen' ? 'h-full' : 'max-h-[80vh]'}`}>
+    <div
+      className={`flex flex-col ${mode === 'slideOver' || mode === 'splitScreen' ? 'h-full' : 'max-h-[80vh]'}`}
+    >
       {/* Panel header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-zinc-700 bg-gradient-to-r from-violet-50 to-transparent dark:from-violet-950/20 flex-shrink-0">
         <Sparkles size={16} className="text-violet-500" />
@@ -534,13 +574,16 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-[280px]">
               {isPl
                 ? 'Powiedz mi czego potrzebujesz, a zaproponuję strukturę tabeli z przykładowymi danymi.'
-                : 'Tell me what you need and I\'ll propose a table structure with sample data.'}
+                : "Tell me what you need and I'll propose a table structure with sample data."}
             </p>
           </div>
         )}
 
         {conversation.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-3`}>
+          <div
+            key={msg.id}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-3`}
+          >
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                 msg.role === 'user'
@@ -638,8 +681,12 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               }}
               placeholder={
                 proposal
-                  ? (isPl ? 'Doprecyzuj... np. "Dodaj kolumnę priorytet"' : 'Refine... e.g. "Add a priority column"')
-                  : (isPl ? 'Opisz czego potrzebujesz...' : 'Describe what you need...')
+                  ? isPl
+                    ? 'Doprecyzuj... np. "Dodaj kolumnę priorytet"'
+                    : 'Refine... e.g. "Add a priority column"'
+                  : isPl
+                    ? 'Opisz czego potrzebujesz...'
+                    : 'Describe what you need...'
               }
               disabled={loading}
               rows={1}

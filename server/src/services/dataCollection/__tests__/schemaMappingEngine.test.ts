@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ExternalSchema, FieldMapping } from '../connectorFramework.js';
 import {
   autoMap,
   inferFieldType,
+  type TargetField,
   transformValue,
   validateMapping,
-  type TargetField,
 } from '../schemaMappingEngine.js';
 
-import type { ExternalSchema, FieldMapping } from '../connectorFramework.js';
-
-function makeTargetFields(fields: Array<{ id: string; name: string; field_type: string }>): TargetField[] {
+function makeTargetFields(
+  fields: Array<{ id: string; name: string; field_type: string }>
+): TargetField[] {
   return fields.map((f) => ({ id: f.id, name: f.name, field_type: f.field_type }));
 }
 
@@ -186,9 +187,7 @@ describe('schemaMappingEngine — validateMapping', () => {
   });
 
   it('fails for missing sourceField', () => {
-    const mapping: FieldMapping[] = [
-      { sourceField: '', targetFieldId: 'f1' },
-    ];
+    const mapping: FieldMapping[] = [{ sourceField: '', targetFieldId: 'f1' }];
     const result = validateMapping(mapping, targetFields);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('missing sourceField'))).toBe(true);

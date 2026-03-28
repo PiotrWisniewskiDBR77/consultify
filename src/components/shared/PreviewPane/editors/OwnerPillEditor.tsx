@@ -27,9 +27,7 @@ export const OwnerPillEditor: React.FC<OwnerPillEditorProps> = ({
 
   const filtered = useMemo(
     () =>
-      query
-        ? options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
-        : options,
+      query ? options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase())) : options,
     [options, query]
   );
 
@@ -54,7 +52,10 @@ export const OwnerPillEditor: React.FC<OwnerPillEditorProps> = ({
           filtered.map((opt) => (
             <button
               key={opt.id}
-              onClick={() => { onChange(opt.id); onClose(); }}
+              onClick={() => {
+                onChange(opt.id);
+                onClose();
+              }}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
             >
               {opt.avatar ? (

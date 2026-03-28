@@ -4,10 +4,10 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
-import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { FullVideoModal } from '@/components/Landing/FullVideoModal';
 import { LANDING_FILMS, LandingFilm } from '@/config/landingFilms';
 import { ROUTES } from '@/routes/routeConfig';

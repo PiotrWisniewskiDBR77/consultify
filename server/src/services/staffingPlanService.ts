@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 export interface StaffingPlan {
@@ -39,7 +40,12 @@ export interface StaffingGap {
   fteRequired: number;
   fteAllocated: number;
   gap: number;
-  suggestedUsers: Array<{ userId: string; name: string; matchScore: number; availableCapacity: number }>;
+  suggestedUsers: Array<{
+    userId: string;
+    name: string;
+    matchScore: number;
+    availableCapacity: number;
+  }>;
 }
 
 function parseSkills(raw: string | null | undefined): string[] {
@@ -48,7 +54,10 @@ function parseSkills(raw: string | null | undefined): string[] {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed.map(String);
   } catch {
-    return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+    return raw
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
   }
   return [];
 }
@@ -96,7 +105,10 @@ export async function listPlans(initiativeId: string, orgId: string): Promise<St
   return rows.map(mapPlanRow);
 }
 
-export async function getPlan(planId: string, orgId: string): Promise<{ plan: StaffingPlan; roles: StaffingPlanRole[] } | null> {
+export async function getPlan(
+  planId: string,
+  orgId: string
+): Promise<{ plan: StaffingPlan; roles: StaffingPlanRole[] } | null> {
   const row = await queryHelpers.queryOne(
     `SELECT * FROM staffing_plans WHERE id = ? AND organization_id = ?`,
     [planId, orgId]
@@ -114,7 +126,13 @@ export async function getPlan(planId: string, orgId: string): Promise<{ plan: St
 export async function createPlan(
   initiativeId: string,
   orgId: string,
-  data: { name: string; status?: string; plannedStart?: string; plannedEnd?: string; notes?: string },
+  data: {
+    name: string;
+    status?: string;
+    plannedStart?: string;
+    plannedEnd?: string;
+    notes?: string;
+  },
   userId?: string
 ): Promise<StaffingPlan> {
   const id = uuidv4();
@@ -124,19 +142,24 @@ export async function createPlan(
     `INSERT INTO staffing_plans (id, initiative_id, organization_id, name, status, planned_start, planned_end, notes, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, initiativeId, orgId,
+      id,
+      initiativeId,
+      orgId,
       data.name,
       data.status || 'draft',
       data.plannedStart || null,
       data.plannedEnd || null,
       data.notes || null,
       userId || null,
-      now, now,
+      now,
+      now,
     ]
   );
 
   return {
-    id, initiativeId, organizationId: orgId,
+    id,
+    initiativeId,
+    organizationId: orgId,
     name: data.name,
     status: data.status || 'draft',
     plannedStart: data.plannedStart || null,
@@ -145,14 +168,21 @@ export async function createPlan(
     totalFteAllocated: 0,
     notes: data.notes || null,
     createdBy: userId || null,
-    createdAt: now, updatedAt: now,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 
 export async function updatePlan(
   planId: string,
   orgId: string,
-  data: Partial<{ name: string; status: string; plannedStart: string; plannedEnd: string; notes: string }>
+  data: Partial<{
+    name: string;
+    status: string;
+    plannedStart: string;
+    plannedEnd: string;
+    notes: string;
+  }>
 ): Promise<boolean> {
   const now = new Date().toISOString();
   const result = await queryHelpers.queryRun(
@@ -165,10 +195,14 @@ export async function updatePlan(
        updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
-      data.name ?? null, data.status ?? null,
-      data.plannedStart ?? null, data.plannedEnd ?? null,
-      data.notes ?? null, now,
-      planId, orgId,
+      data.name ?? null,
+      data.status ?? null,
+      data.plannedStart ?? null,
+      data.plannedEnd ?? null,
+      data.notes ?? null,
+      now,
+      planId,
+      orgId,
     ]
   );
   return (result as any)?.changes > 0;
@@ -202,7 +236,8 @@ export async function addRole(
     `INSERT INTO staffing_plan_roles (id, staffing_plan_id, role_name, required_skills, fte_required, assigned_user_id, start_date, end_date, priority, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, planId,
+      id,
+      planId,
       data.roleName,
       skillsJson,
       data.fteRequired ?? 1.0,
@@ -218,7 +253,8 @@ export async function addRole(
   await recalcPlanFte(planId);
 
   return {
-    id, staffingPlanId: planId,
+    id,
+    staffingPlanId: planId,
     roleName: data.roleName,
     requiredSkills: data.requiredSkills || [],
     fteRequired: data.fteRequired ?? 1.0,
@@ -249,15 +285,18 @@ export async function updateRole(
 ): Promise<boolean> {
   const skillsJson = data.requiredSkills !== undefined ? JSON.stringify(data.requiredSkills) : null;
 
-  const status = data.status ?? (data.assignedUserId !== undefined
-    ? (data.assignedUserId ? 'filled' : 'open')
-    : null);
+  const status =
+    data.status ??
+    (data.assignedUserId !== undefined ? (data.assignedUserId ? 'filled' : 'open') : null);
 
-  const fteAllocated = data.fteAllocated !== undefined
-    ? data.fteAllocated
-    : (data.assignedUserId !== undefined
-      ? (data.assignedUserId ? undefined : 0)
-      : undefined);
+  const fteAllocated =
+    data.fteAllocated !== undefined
+      ? data.fteAllocated
+      : data.assignedUserId !== undefined
+        ? data.assignedUserId
+          ? undefined
+          : 0
+        : undefined;
 
   await queryHelpers.queryRun(
     `UPDATE staffing_plan_roles SET
@@ -277,12 +316,13 @@ export async function updateRole(
       data.fteRequired ?? null,
       fteAllocated ?? null,
       data.assignedUserId !== undefined ? 1 : 0,
-      data.assignedUserId !== undefined ? (data.assignedUserId || null) : null,
+      data.assignedUserId !== undefined ? data.assignedUserId || null : null,
       data.startDate ?? null,
       data.endDate ?? null,
       data.priority ?? null,
       status,
-      roleId, planId,
+      roleId,
+      planId,
     ]
   );
 
@@ -353,7 +393,7 @@ export async function computeStaffingGaps(planId: string, orgId: string): Promis
          GROUP BY us.user_id, u.first_name, u.last_name, u.email, us.proficiency_level
          ORDER BY matched_skills DESC
          LIMIT 10`,
-        [orgId, ...requiredSkills.map(s => s.toLowerCase()), planId]
+        [orgId, ...requiredSkills.map((s) => s.toLowerCase()), planId]
       );
 
       for (const mu of matchingUsers) {
@@ -427,9 +467,11 @@ export async function syncInitiativeCapacity(initiativeId: string, orgId: string
      WHERE id = ? AND organization_id = ?`,
     [
       Math.round(allocatedFte * 100) / 100,
-      requiredFte, requiredFte,
+      requiredFte,
+      requiredFte,
       new Date().toISOString(),
-      initiativeId, orgId,
+      initiativeId,
+      orgId,
     ]
   );
 }

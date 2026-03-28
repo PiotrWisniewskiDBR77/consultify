@@ -11,10 +11,16 @@ import logger from '../../utils/Logger.js';
 // ---------------------------------------------------------------------------
 
 const TYPE_RULES: Array<{ pattern: RegExp; type: string }> = [
-  { pattern: /\b(amount|price|cost|budget|revenue|PLN|EUR|USD|kwota|cena|koszt)\b/i, type: 'currency' },
+  {
+    pattern: /\b(amount|price|cost|budget|revenue|PLN|EUR|USD|kwota|cena|koszt)\b/i,
+    type: 'currency',
+  },
   { pattern: /\b(date|deadline|termin|when|data|due)\b/i, type: 'date' },
   { pattern: /\b(yes\/?no|true\/?false|checkbox|tak\/?nie|boolean)\b/i, type: 'checkbox' },
-  { pattern: /\b(status|stage|phase|priority|category|etap|faza|priorytet|kategoria)\b/i, type: 'singleSelect' },
+  {
+    pattern: /\b(status|stage|phase|priority|category|etap|faza|priorytet|kategoria)\b/i,
+    type: 'singleSelect',
+  },
   { pattern: /\b(list\s+of|multiple|tags|many|multi|wiele|tagi)\b/i, type: 'multiSelect' },
   { pattern: /\b(email|e-mail)\b/i, type: 'email' },
   { pattern: /\b(phone|telefon|tel|mobile|komórka)\b/i, type: 'phone' },
@@ -53,17 +59,11 @@ interface BaseRow {
   name: string;
 }
 
-export async function groundSchema(
-  baseId: string,
-  tableId?: string
-): Promise<string> {
+export async function groundSchema(baseId: string, tableId?: string): Promise<string> {
   const db = getDatabase();
 
   try {
-    const baseResult = await db.query(
-      'SELECT id, name FROM tp_bases WHERE id = $1',
-      [baseId]
-    );
+    const baseResult = await db.query('SELECT id, name FROM tp_bases WHERE id = $1', [baseId]);
     const base = baseResult.rows[0] as BaseRow | undefined;
     if (!base) {
       return `Base not found (id: ${baseId}). User is creating from scratch.`;
@@ -79,9 +79,7 @@ export async function groundSchema(
       return `Base: "${base.name}" (id: ${base.id})\nTables: (none)`;
     }
 
-    const tablesToGround = tableId
-      ? tables.filter((t) => t.id === tableId)
-      : tables;
+    const tablesToGround = tableId ? tables.filter((t) => t.id === tableId) : tables;
 
     const lines: string[] = [`Base: "${base.name}" (id: ${base.id})`, 'Tables:'];
 
@@ -96,9 +94,7 @@ export async function groundSchema(
 
       for (const field of fields) {
         let typeLabel = field.field_type;
-        const opts = typeof field.options === 'string'
-          ? safeParse(field.options)
-          : field.options;
+        const opts = typeof field.options === 'string' ? safeParse(field.options) : field.options;
 
         if (opts && (field.field_type === 'single_select' || field.field_type === 'singleSelect')) {
           const choices = extractSelectOptions(opts);
@@ -108,8 +104,9 @@ export async function groundSchema(
         }
 
         if (opts && (field.field_type === 'linked_record' || field.field_type === 'linkedRecord')) {
-          const linked = (opts as Record<string, unknown>).linkedTableId
-            ?? (opts as Record<string, unknown>).linked_table_id;
+          const linked =
+            (opts as Record<string, unknown>).linkedTableId ??
+            (opts as Record<string, unknown>).linked_table_id;
           if (linked) {
             const linkedTable = tables.find((t) => t.id === linked);
             typeLabel += ` → ${linkedTable?.name ?? String(linked)}`;

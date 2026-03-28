@@ -3,7 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
+import {
+  shouldFallbackToLegacyResults,
+  V8ResultsApi,
+  type V8ResultsCreateKpiMappingPayload,
+  type V8ResultsCreateKpiPayload,
+} from '@/services/api/v8/results';
 
 interface KPICreateModalProps {
   onClose: () => void;
@@ -62,7 +67,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
       setSaving(true);
 
       const kpiDirection = direction === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
-      const payload = {
+      const payload: V8ResultsCreateKpiPayload = {
         name: name.trim(),
         description: description.trim() || undefined,
         unit: unit.trim() || undefined,
@@ -96,9 +101,9 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           null;
 
         if (initiativeIds.length > 0 && kpiId) {
-          const mappingPayloads = initiativeIds.map((id) => ({
+          const mappingPayloads: V8ResultsCreateKpiMappingPayload[] = initiativeIds.map((id) => ({
             initiativeId: id,
-            kpiId,
+            kpiId: String(kpiId),
             impactWeight: 1.0,
             impactDirection: direction === 'decrease' ? 'decrease' : 'increase',
             confidence: 'medium',

@@ -73,7 +73,12 @@ interface TimelineSlot {
   isToday: boolean;
 }
 
-function buildSlots(rangeStart: Date, rangeEnd: Date, zoom: TimelineZoom, isPl: boolean): TimelineSlot[] {
+function buildSlots(
+  rangeStart: Date,
+  rangeEnd: Date,
+  zoom: TimelineZoom,
+  isPl: boolean
+): TimelineSlot[] {
   const slots: TimelineSlot[] = [];
   const today = toDateStr(new Date());
 
@@ -105,7 +110,8 @@ function buildSlots(rangeStart: Date, rangeEnd: Date, zoom: TimelineZoom, isPl: 
       slots.push({
         date: new Date(cur),
         label: cur.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'long', year: 'numeric' }),
-        isToday: cur.getFullYear() === nowDate.getFullYear() && cur.getMonth() === nowDate.getMonth(),
+        isToday:
+          cur.getFullYear() === nowDate.getFullYear() && cur.getMonth() === nowDate.getMonth(),
       });
       cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
     }
@@ -118,7 +124,11 @@ function slotOffset(date: Date, rangeStart: Date, zoom: TimelineZoom): number {
   if (zoom === 'day') return daysBetween(rangeStart, date);
   if (zoom === 'week') return daysBetween(getWeekStart(rangeStart), date) / 7;
   const mStart = getMonthStart(rangeStart);
-  return (date.getFullYear() - mStart.getFullYear()) * 12 + (date.getMonth() - mStart.getMonth()) + (date.getDate() - 1) / 30;
+  return (
+    (date.getFullYear() - mStart.getFullYear()) * 12 +
+    (date.getMonth() - mStart.getMonth()) +
+    (date.getDate() - 1) / 30
+  );
 }
 
 function slotSpan(start: Date, end: Date, zoom: TimelineZoom): number {
@@ -139,11 +149,17 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<TimelineZoom>(config.zoom || 'week');
-  const [dragState, setDragState] = useState<{ recordId: string; edge: 'start' | 'end' | 'move'; startX: number; origStart: string; origEnd: string } | null>(null);
+  const [dragState, setDragState] = useState<{
+    recordId: string;
+    edge: 'start' | 'end' | 'move';
+    startX: number;
+    origStart: string;
+    origEnd: string;
+  } | null>(null);
 
   const colorCol = useMemo(
     () => (config.colorFieldId ? columns.find((c) => c.key === config.colorFieldId) : null),
-    [columns, config.colorFieldId],
+    [columns, config.colorFieldId]
   );
 
   const getBarColor = useCallback(
@@ -157,7 +173,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         '#8b5cf6'
       );
     },
-    [colorCol],
+    [colorCol]
   );
 
   const timelineRecords = useMemo(() => {
@@ -187,7 +203,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return { rangeStart: addDays(min, -pad), rangeEnd: addDays(max, pad) };
   }, [timelineRecords, zoom]);
 
-  const slots = useMemo(() => buildSlots(rangeStart, rangeEnd, zoom, isPl), [rangeStart, rangeEnd, zoom, isPl]);
+  const slots = useMemo(
+    () => buildSlots(rangeStart, rangeEnd, zoom, isPl),
+    [rangeStart, rangeEnd, zoom, isPl]
+  );
   const colWidth = COL_WIDTHS[zoom];
   const totalWidth = slots.length * colWidth;
 
@@ -197,12 +216,18 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   }, [rangeStart, zoom, colWidth]);
 
   const handleMouseDown = useCallback(
-    (recordId: string, edge: 'start' | 'end' | 'move', e: React.MouseEvent, origStart: string, origEnd: string) => {
+    (
+      recordId: string,
+      edge: 'start' | 'end' | 'move',
+      e: React.MouseEvent,
+      origStart: string,
+      origEnd: string
+    ) => {
       e.preventDefault();
       e.stopPropagation();
       setDragState({ recordId, edge, startX: e.clientX, origStart, origEnd });
     },
-    [],
+    []
   );
 
   const handleMouseUp = useCallback(() => {
@@ -236,7 +261,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         });
       }
     },
-    [dragState, onRecordUpdate, colWidth, zoom, config.startDateFieldId, config.endDateFieldId],
+    [dragState, onRecordUpdate, colWidth, zoom, config.startDateFieldId, config.endDateFieldId]
   );
 
   const cycleZoom = useCallback((dir: 'in' | 'out') => {
@@ -287,7 +312,17 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             <ZoomIn size={14} className="text-slate-500" />
           </button>
           <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 min-w-[50px] text-center capitalize">
-            {zoom === 'day' ? (isPl ? 'Dzień' : 'Day') : zoom === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+            {zoom === 'day'
+              ? isPl
+                ? 'Dzień'
+                : 'Day'
+              : zoom === 'week'
+                ? isPl
+                  ? 'Tydzień'
+                  : 'Week'
+                : isPl
+                  ? 'Miesiąc'
+                  : 'Month'}
           </span>
           <button
             onClick={() => cycleZoom('out')}
@@ -351,7 +386,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           </div>
 
           {/* Grid lines + bars */}
-          <div className="relative" style={{ width: totalWidth, minHeight: timelineRecords.length * ROW_HEIGHT }}>
+          <div
+            className="relative"
+            style={{ width: totalWidth, minHeight: timelineRecords.length * ROW_HEIGHT }}
+          >
             {/* Vertical grid lines */}
             {slots.map((_, i) => (
               <div

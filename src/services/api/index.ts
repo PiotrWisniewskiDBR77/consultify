@@ -22,7 +22,7 @@ export { OrganizationApi } from './organizations.api';
 export { PMOApi } from './pmo.api';
 export { ProjectApi } from './projects.api';
 export { SettingsApi } from './settings.api';
+export * from './tablePlatform.api';
 export { TaskApi } from './tasks.api';
 export { TeamApi } from './teams.api';
 export { UserApi } from './users.api';
-export * from './tablePlatform.api';

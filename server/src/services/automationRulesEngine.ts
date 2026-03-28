@@ -7,16 +7,16 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBus, type IEvent } from './event/EventBus.js';
+import logger from '../utils/Logger.js';
+import auditEventsService from './AuditEventsService.js';
 import {
+  type ActionResult,
+  type AutomationRule,
   evaluateConditions,
   executeActions,
   getActiveRulesForOrg,
-  type AutomationRule,
-  type ActionResult,
 } from './automationRulesService.js';
-import auditEventsService from './AuditEventsService.js';
-import logger from '../utils/Logger.js';
+import { EventBus, type IEvent } from './event/EventBus.js';
 
 // ============================================
 // EVENT → TRIGGER TYPE MAPPING
@@ -70,7 +70,10 @@ async function handleAutomationEvent(event: IEvent): Promise<void> {
   }
 }
 
-function buildContext(eventName: string, payload: Record<string, unknown>): Record<string, unknown> {
+function buildContext(
+  eventName: string,
+  payload: Record<string, unknown>
+): Record<string, unknown> {
   const ctx: Record<string, unknown> = { ...payload, _eventName: eventName };
 
   if (eventName === 'task.updated') {
@@ -88,7 +91,7 @@ async function logRuleExecution(
   eventName: string,
   context: Record<string, unknown>,
   results: ActionResult[],
-  orgId: string,
+  orgId: string
 ): Promise<void> {
   try {
     await auditEventsService.log({
@@ -99,7 +102,11 @@ async function logRuleExecution(
       resourceId: rule.id,
       before: { eventName, context: { taskId: context.taskId, status: context.status } },
       after: { results },
-      metadata: { ruleName: rule.name, triggerType: rule.triggerType, actionsCount: results.length },
+      metadata: {
+        ruleName: rule.name,
+        triggerType: rule.triggerType,
+        actionsCount: results.length,
+      },
       organizationId: orgId,
     });
   } catch (err: any) {

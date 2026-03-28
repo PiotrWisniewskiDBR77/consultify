@@ -4,8 +4,8 @@
  */
 import { AtSign, Loader2, MessageSquare, Send, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -94,7 +94,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, ideaId, nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

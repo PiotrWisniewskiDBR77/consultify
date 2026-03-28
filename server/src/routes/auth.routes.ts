@@ -551,9 +551,10 @@ router.post(
       });
     }
 
-    const { default: setUserDemoPreference } = await import(
-      '../middleware/demoGuard.middleware.js'
-    ).then((m) => ({ default: m.setUserDemoPreference }));
+    const { default: setUserDemoPreference } =
+      await import('../middleware/demoGuard.middleware.js').then((m) => ({
+        default: m.setUserDemoPreference,
+      }));
 
     const userId = uuidv4();
     const hashedPassword = bcrypt.hashSync(password, 8);
@@ -572,16 +573,7 @@ router.post(
     const userResult = await dbRun(
       `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        demoOrgId,
-        email,
-        hashedPassword,
-        firstName || '',
-        '',
-        'ADMIN',
-        'active',
-      ],
+      [userId, demoOrgId, email, hashedPassword, firstName || '', '', 'ADMIN', 'active'],
       { fallback: false }
     );
 
@@ -593,7 +585,10 @@ router.post(
     try {
       await setUserDemoPreference(userId, true, { setStartedAt: true });
     } catch (prefErr: any) {
-      logger.warn('[Auth] Demo preference storage failed (non-blocking):', prefErr?.message || prefErr);
+      logger.warn(
+        '[Auth] Demo preference storage failed (non-blocking):',
+        prefErr?.message || prefErr
+      );
       // Continue — user is created; preference is for analytics only
     }
 
@@ -632,10 +627,9 @@ router.post(
       metadata: { entryPoint: 'demo_signup', hasContact: true },
     });
 
-    const org = await dbGet<{ name: string }>(
-      'SELECT name FROM organizations WHERE id = ?',
-      [demoOrgId]
-    );
+    const org = await dbGet<{ name: string }>('SELECT name FROM organizations WHERE id = ?', [
+      demoOrgId,
+    ]);
 
     const safeUser = {
       id: user.id,
@@ -1419,7 +1413,10 @@ router.post(
 
     // Always return success to prevent email enumeration
     if (!user) {
-      return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+      return res.json({
+        success: true,
+        message: 'If the email exists, a reset link has been sent.',
+      });
     }
 
     const token = crypto.randomBytes(32).toString('hex');

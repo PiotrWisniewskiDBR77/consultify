@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -106,7 +106,9 @@ describe('ExportService', () => {
     });
 
     it('formats date with dateFormat option', () => {
-      expect(formatFieldValue('2025-01-15', { type: 'date', options: { dateFormat: 'DD/MM/YYYY' } })).toBe('2025-01-15');
+      expect(
+        formatFieldValue('2025-01-15', { type: 'date', options: { dateFormat: 'DD/MM/YYYY' } })
+      ).toBe('2025-01-15');
     });
 
     it('formats linkedRecord array with displayName', () => {
@@ -155,17 +157,17 @@ describe('ExportService', () => {
       mockQuery.mockResolvedValueOnce({ rows: fields });
 
       mockExecuteQuery.mockResolvedValueOnce({
-        records: [
-          { data: { f1: 'Alice', f2: 'Active' } },
-          { data: { f1: 'Bob', f2: 'Done' } },
-        ],
+        records: [{ data: { f1: 'Alice', f2: 'Active' } }, { data: { f1: 'Bob', f2: 'Done' } }],
         cursor: undefined,
         hasMore: false,
       });
 
       const chunks: string[] = [];
       const writer = {
-        write: (chunk: string) => { chunks.push(chunk); return true; },
+        write: (chunk: string) => {
+          chunks.push(chunk);
+          return true;
+        },
         end: vi.fn(),
       };
 
@@ -198,9 +200,7 @@ describe('ExportService', () => {
 
   describe('buildXlsxBuffer', () => {
     it('returns a buffer (mocked xlsx)', async () => {
-      const fields = [
-        { id: 'f1', name: 'Name', type: 'single_line_text', options: null },
-      ];
+      const fields = [{ id: 'f1', name: 'Name', type: 'single_line_text', options: null }];
       mockQuery.mockResolvedValueOnce({ rows: fields });
 
       mockExecuteQuery.mockResolvedValueOnce({

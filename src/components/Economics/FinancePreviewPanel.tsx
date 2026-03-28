@@ -1,16 +1,24 @@
-import { BarChart3, Calculator, Clock, FileText, MoreVertical, Target, TrendingUp } from 'lucide-react';
+import {
+  BarChart3,
+  Calculator,
+  Clock,
+  FileText,
+  MoreVertical,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
@@ -18,13 +26,13 @@ import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/f
 
 import {
   type FinanceAnalysisRow,
+  type FinanceKind,
   type FinanceModelRow,
   type FinanceRow,
   type FinanceStatementRow,
   type FinanceValuationRow,
   formatAge,
   getTypeCode,
-  type FinanceKind,
   type PreviewDataState,
 } from './financeTypes';
 
@@ -256,7 +264,10 @@ export function useFinancePreview({
         const sRow = row as FinanceStatementRow;
         metaPills.push(
           { label: t('finance.columns.type', 'Type'), value: isPl ? 'Pack' : 'Pack' },
-          { label: t('finance.columns.period', 'Period'), value: sRow.periodLabel || sRow.periodEnd },
+          {
+            label: t('finance.columns.period', 'Period'),
+            value: sRow.periodLabel || sRow.periodEnd,
+          },
           { label: t('common.currency', 'Currency'), value: sRow.currency },
           { label: t('finance.columns.scaling', 'Scaling'), value: sRow.scaling }
         );
@@ -345,10 +356,10 @@ export function useFinancePreview({
                 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                 : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
         },
-        ...metaPills.map((mp) => ({
+        ...(metaPills.map((mp) => ({
           label: mp.value,
           className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
-        })) as MetaPill[],
+        })) as MetaPill[]),
       ];
 
       let detailsText = '';
@@ -470,7 +481,8 @@ export function useFinancePreview({
                     {Array.isArray(statementPreviewDetail.missingStatementTypes) &&
                       statementPreviewDetail.missingStatementTypes.length > 0 && (
                         <div className="text-xs text-amber-600 dark:text-amber-400">
-                          {isPl ? 'Braki:' : 'Missing:'} {statementPreviewDetail.missingStatementTypes.join(', ')}
+                          {isPl ? 'Braki:' : 'Missing:'}{' '}
+                          {statementPreviewDetail.missingStatementTypes.join(', ')}
                         </div>
                       )}
                     {Array.isArray(statementPreviewDetail.packValidations) &&
@@ -909,9 +921,9 @@ export function useFinancePreview({
                   ? isPl
                     ? 'Import odrzucony'
                     : 'Rejected import'
-                : isPl
-                  ? 'Recovery queue'
-                  : 'Recovery queue'
+                  : isPl
+                    ? 'Recovery queue'
+                    : 'Recovery queue'
             }`,
           }
         );
@@ -1028,10 +1040,7 @@ export function useFinancePreview({
                 const detail = await Api.get(`/api/economics/budgets/${rawId}`);
                 const scens = (detail as any)?.scenarios || [];
                 for (const sc of scens)
-                  await Api.post(
-                    `/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`,
-                    {}
-                  );
+                  await Api.post(`/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`, {});
                 await loadBudgetPreviewScenarios(rawId);
                 toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
               } catch (e: any) {
@@ -1121,14 +1130,11 @@ export function useFinancePreview({
           label: t('finance.actions.exportPptx', 'Eksportuj PPTX'),
           onClick: async () => {
             try {
-              const result = await Api.post(
-                `/api/economics/valuations/${row.id}/export/pptx`,
-                {
-                  language: isPl ? 'pl' : 'en',
-                  theme: 'corporate',
-                  confidentiality: 'confidential',
-                }
-              );
+              const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
+                language: isPl ? 'pl' : 'en',
+                theme: 'corporate',
+                confidentiality: 'confidential',
+              });
               toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
               const downloadUrl = (result as any)?.downloadUrl;
               if (downloadUrl) window.open(downloadUrl, '_blank');
@@ -1145,9 +1151,7 @@ export function useFinancePreview({
 
       if (
         row.kind !== 'statements' &&
-        (row.kind !== 'prediction' ||
-        (row as FinanceModelRow).predictionType === 'model'
-        )
+        (row.kind !== 'prediction' || (row as FinanceModelRow).predictionType === 'model')
       ) {
         actionButtons.push({
           label: t('finance.actions.export', 'Eksportuj'),
@@ -1169,9 +1173,7 @@ export function useFinancePreview({
             <PreviewAIHintStrip
               hints={aiHints}
               onRunHint={(hint) =>
-                window.location.assign(
-                  `/chat?context=finance&prompt=${encodeURIComponent(hint)}`
-                )
+                window.location.assign(`/chat?context=finance&prompt=${encodeURIComponent(hint)}`)
               }
             />
           </div>

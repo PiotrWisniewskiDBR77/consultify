@@ -4,16 +4,7 @@
  * Provides a full CRUD panel for snapshot management with confirmation
  * dialogs for destructive operations.
  */
-import {
-  Archive,
-  Camera,
-  Clock,
-  Database,
-  Loader2,
-  RotateCcw,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Archive, Camera, Clock, Database, Loader2, RotateCcw, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -107,11 +98,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export const SnapshotManager: React.FC<SnapshotManagerProps> = ({
-  open,
-  onClose,
-  baseId,
-}) => {
+export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose, baseId }) => {
   const { i18n } = useTranslation();
   const isPl = !!i18n.language?.startsWith('pl');
 
@@ -199,7 +186,10 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
+      onClick={onClose}
+    >
       <div
         className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 w-[420px] max-h-[70vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -268,9 +258,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({
           ) : snapshots.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 px-4 text-center">
               <Archive size={24} className="mb-2 opacity-40" />
-              <span className="text-xs">
-                {isPl ? 'Brak migawek' : 'No snapshots yet'}
-              </span>
+              <span className="text-xs">{isPl ? 'Brak migawek' : 'No snapshots yet'}</span>
               <span className="text-[10px] mt-1">
                 {isPl
                   ? 'Utwórz migawkę, aby zachować aktualny stan danych'

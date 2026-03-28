@@ -38,7 +38,9 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
 
         {payload.hottestDecision ? (
           <button
-            onClick={() => onAction({ type: 'open', target: 'decision', id: payload.hottestDecision!.id })}
+            onClick={() =>
+              onAction({ type: 'open', target: 'decision', id: payload.hottestDecision!.id })
+            }
             className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.08]"
           >
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
@@ -48,8 +50,12 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
             <div className="mt-2 text-lg font-semibold leading-snug text-white">
               {payload.hottestDecision.title}
             </div>
-            <div className="mt-2 text-sm text-slate-300/75">{payload.hottestDecision.ownerLabel}</div>
-            <div className="mt-1 text-xs text-amber-100/80">{payload.hottestDecision.deadlineLabel}</div>
+            <div className="mt-2 text-sm text-slate-300/75">
+              {payload.hottestDecision.ownerLabel}
+            </div>
+            <div className="mt-1 text-xs text-amber-100/80">
+              {payload.hottestDecision.deadlineLabel}
+            </div>
           </button>
         ) : null}
 

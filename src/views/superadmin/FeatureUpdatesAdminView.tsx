@@ -116,7 +116,9 @@ function buildEditorState(item?: ManagedFeatureUpdate | null): EditorState {
     expiresAt: toDateTimeLocal(item.expiresAt),
     requiresAck: item.requiresAck,
     actionLabel:
-      typeof item.actionPayload?.label === 'string' ? String(item.actionPayload.label) : 'Try it now',
+      typeof item.actionPayload?.label === 'string'
+        ? String(item.actionPayload.label)
+        : 'Try it now',
   };
 }
 
@@ -429,7 +431,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Body (Markdown)</div>
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              Body (Markdown)
+            </div>
             <textarea
               value={editor.bodyMd}
               onChange={(e) => setEditor((prev) => ({ ...prev, bodyMd: e.target.value }))}
@@ -477,7 +481,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Importance</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Importance
+              </div>
               <select
                 value={editor.importance}
                 onChange={(e) =>
@@ -495,7 +501,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Change type</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Change type
+              </div>
               <select
                 value={editor.changeType}
                 onChange={(e) =>
@@ -581,7 +589,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Module id</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Module id
+              </div>
               <input
                 value={editor.moduleId}
                 onChange={(e) => setEditor((prev) => ({ ...prev, moduleId: e.target.value }))}
@@ -591,7 +601,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Target view</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Target view
+              </div>
               <input
                 value={editor.targetView}
                 onChange={(e) => setEditor((prev) => ({ ...prev, targetView: e.target.value }))}
@@ -603,7 +615,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Effective from</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Effective from
+              </div>
               <input
                 type="datetime-local"
                 value={editor.effectiveFrom}
@@ -613,7 +627,9 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">Expires at</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Expires at
+              </div>
               <input
                 type="datetime-local"
                 value={editor.expiresAt}
@@ -624,9 +640,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              CTA label
-            </div>
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">CTA label</div>
             <input
               value={editor.actionLabel}
               onChange={(e) => setEditor((prev) => ({ ...prev, actionLabel: e.target.value }))}

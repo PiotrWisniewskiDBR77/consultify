@@ -251,16 +251,46 @@ const ADMA_T1T7_MAPPING_V1: Array<{
   name: string;
   weights: Record<string, number>;
 }> = [
-  { id: 'T1', name: 'Advanced Manufacturing Technologies', weights: { production_tech: 0.7, digital_investments: 0.3 } },
-  { id: 'T2', name: 'Digital Factory', weights: { production_it: 0.45, data_collection: 0.35, data_analytics: 0.2 } },
-  { id: 'T3', name: 'ECO Factory', weights: { data_collection: 0.4, data_analytics: 0.35, production_tech: 0.25 } },
-  { id: 'T4', name: 'End-to-end Customer Focused Engineering', weights: { product_data: 0.55, product_features: 0.3, digital_strategy: 0.15 } },
-  { id: 'T5', name: 'Human Centred Organisation', weights: { digital_culture: 0.7, digital_strategy: 0.3 } },
-  { id: 'T6', name: 'Smart Manufacturing', weights: { data_analytics: 0.45, production_it: 0.3, production_tech: 0.25 } },
-  { id: 'T7', name: 'Value Chain Oriented Open Factory', weights: { supply_visibility: 0.5, supply_integration: 0.35, digital_strategy: 0.15 } },
+  {
+    id: 'T1',
+    name: 'Advanced Manufacturing Technologies',
+    weights: { production_tech: 0.7, digital_investments: 0.3 },
+  },
+  {
+    id: 'T2',
+    name: 'Digital Factory',
+    weights: { production_it: 0.45, data_collection: 0.35, data_analytics: 0.2 },
+  },
+  {
+    id: 'T3',
+    name: 'ECO Factory',
+    weights: { data_collection: 0.4, data_analytics: 0.35, production_tech: 0.25 },
+  },
+  {
+    id: 'T4',
+    name: 'End-to-end Customer Focused Engineering',
+    weights: { product_data: 0.55, product_features: 0.3, digital_strategy: 0.15 },
+  },
+  {
+    id: 'T5',
+    name: 'Human Centred Organisation',
+    weights: { digital_culture: 0.7, digital_strategy: 0.3 },
+  },
+  {
+    id: 'T6',
+    name: 'Smart Manufacturing',
+    weights: { data_analytics: 0.45, production_it: 0.3, production_tech: 0.25 },
+  },
+  {
+    id: 'T7',
+    name: 'Value Chain Oriented Open Factory',
+    weights: { supply_visibility: 0.5, supply_integration: 0.35, digital_strategy: 0.15 },
+  },
 ];
 
-function buildDimensionIndex(data: AssessmentDeckData): Record<string, { current: number; target: number }> {
+function buildDimensionIndex(
+  data: AssessmentDeckData
+): Record<string, { current: number; target: number }> {
   const out: Record<string, { current: number; target: number }> = {};
   for (const c of data.categories || []) {
     for (const d of c.dimensions || []) {
@@ -297,15 +327,28 @@ function computeAdmaT1T7(data: AssessmentDeckData, fofBenchmark = 4.0) {
   });
 }
 
-function addAdmaT1T7Slide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addAdmaT1T7Slide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   slide.background = { color: BRAND.background };
   headerBar(slide, fwColor);
-  sectionTitle(slide, lang === 'pl' ? 'Transformacje (T1–T7) + benchmark FoF' : 'Transformations (T1–T7) + FoF benchmark');
+  sectionTitle(
+    slide,
+    lang === 'pl'
+      ? 'Transformacje (T1–T7) + benchmark FoF'
+      : 'Transformations (T1–T7) + FoF benchmark'
+  );
 
   const rows = computeAdmaT1T7(data, 4.0);
   const lines = [
-    lang === 'pl' ? 'Obszar | Firma | Cel | FoF | Luka do FoF' : 'Area | Company | Target | FoF | Gap to FoF',
+    lang === 'pl'
+      ? 'Obszar | Firma | Cel | FoF | Luka do FoF'
+      : 'Area | Company | Target | FoF | Gap to FoF',
     ...rows.map((r) => {
       const c = r.current === null ? '—' : r.current.toFixed(1);
       const t = r.target === null ? '—' : r.target.toFixed(1);
@@ -318,7 +361,13 @@ function addAdmaT1T7Slide(pptx: any, data: AssessmentDeckData, fwColor: string, 
   slideNumber(slide, num);
 }
 
-function addSiriPrioritisationSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addSiriPrioritisationSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const matrix = data.prioritisationMatrix || {};
   const entries = Object.entries(matrix)
     .map(([k, v]) => ({ id: k, score: Number(v || 0) }))

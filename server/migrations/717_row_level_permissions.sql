@@ -11,4 +11,4 @@ CREATE TABLE IF NOT EXISTS tp_row_policies (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_tp_row_policies_table ON tp_row_policies(table_id);
+CREATE INDEX IF NOT EXISTS idx_tp_row_policies_table ON tp_row_policies(table_id);

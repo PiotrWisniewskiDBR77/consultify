@@ -2,7 +2,6 @@
  * ExecutionProgress — shows real-time execution progress for Chat-to-Schema proposals.
  * Displays operation list with status indicators, progress bar, error details, and undo button.
  */
-import React, { useMemo } from 'react';
 import {
   AlertCircle,
   Check,
@@ -13,11 +12,12 @@ import {
   Eye,
   Layers,
   Loader2,
+  type LucideIcon,
   RotateCcw,
   Table2,
   Trash2,
-  type LucideIcon,
 } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
@@ -125,9 +125,15 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
-      ? isPl ? 'Zakończono z błędami' : 'Completed with errors'
-      : isPl ? 'Zakończono pomyślnie' : 'Completed successfully'
-    : isPl ? 'Wykonywanie…' : 'Executing…';
+      ? isPl
+        ? 'Zakończono z błędami'
+        : 'Completed with errors'
+      : isPl
+        ? 'Zakończono pomyślnie'
+        : 'Completed successfully'
+    : isPl
+      ? 'Wykonywanie…'
+      : 'Executing…';
 
   return (
     <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
@@ -179,27 +185,42 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
               <div className="flex flex-col items-center flex-shrink-0">
                 {getStatusIndicator(op.status)}
                 {idx < operations.length - 1 && (
-                  <div className={`w-0.5 h-3 mt-0.5 rounded-full transition-colors ${
-                    isDone ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-slate-200 dark:bg-zinc-700'
-                  }`} />
+                  <div
+                    className={`w-0.5 h-3 mt-0.5 rounded-full transition-colors ${
+                      isDone
+                        ? 'bg-emerald-300 dark:bg-emerald-700'
+                        : 'bg-slate-200 dark:bg-zinc-700'
+                    }`}
+                  />
                 )}
               </div>
 
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <Icon size={12} className={`flex-shrink-0 ${
-                    isDone ? 'text-emerald-600 dark:text-emerald-400'
-                    : isFailed ? 'text-red-600 dark:text-red-400'
-                    : isActive ? 'text-violet-600 dark:text-violet-400'
-                    : 'text-slate-400 dark:text-zinc-500'
-                  }`} />
-                  <span className={`text-xs font-medium truncate ${
-                    isDone ? 'text-emerald-700 dark:text-emerald-300'
-                    : isFailed ? 'text-red-700 dark:text-red-300'
-                    : isActive ? 'text-slate-700 dark:text-zinc-200'
-                    : 'text-slate-500 dark:text-zinc-400'
-                  }`}>
+                  <Icon
+                    size={12}
+                    className={`flex-shrink-0 ${
+                      isDone
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : isFailed
+                          ? 'text-red-600 dark:text-red-400'
+                          : isActive
+                            ? 'text-violet-600 dark:text-violet-400'
+                            : 'text-slate-400 dark:text-zinc-500'
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-medium truncate ${
+                      isDone
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : isFailed
+                          ? 'text-red-700 dark:text-red-300'
+                          : isActive
+                            ? 'text-slate-700 dark:text-zinc-200'
+                            : 'text-slate-500 dark:text-zinc-400'
+                    }`}
+                  >
                     {op.description}
                   </span>
                 </div>

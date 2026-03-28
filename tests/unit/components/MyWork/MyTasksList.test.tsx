@@ -7,7 +7,7 @@ import { Api } from '@/services/api';
 // Mock dependencies
 vi.mock('@/services/api', () => ({
   Api: {
-    getTasks: vi.fn(),
+    getPersonalTasks: vi.fn(),
     updateTask: vi.fn(),
     deleteTask: vi.fn(),
   },
@@ -58,7 +58,7 @@ describe('MyTasksList', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (Api.getTasks as any).mockResolvedValue(mockTasks);
+    (Api.getPersonalTasks as any).mockResolvedValue(mockTasks);
   });
 
   it('renders and fetches tasks, grouping them correctly', async () => {
@@ -72,7 +72,7 @@ describe('MyTasksList', () => {
     );
 
     await waitFor(() => {
-      expect(Api.getTasks).toHaveBeenCalled();
+      expect(Api.getPersonalTasks).toHaveBeenCalled();
       expect(screen.getByText('Today Task')).toBeTruthy();
       expect(screen.getByText('Overdue Task')).toBeTruthy();
       expect(screen.getByText('Tomorrow Task')).toBeTruthy();
@@ -103,7 +103,7 @@ describe('MyTasksList', () => {
 
     // Wait for tasks to load
     await waitFor(() => {
-      expect(Api.getTasks).toHaveBeenCalled();
+      expect(Api.getPersonalTasks).toHaveBeenCalled();
     });
 
     // The component should show today's tasks and filter out overdue when activeTimeGroup is 'today'
@@ -169,7 +169,7 @@ describe('MyTasksList', () => {
   });
 
   it('shows empty state when no tasks are returned', async () => {
-    (Api.getTasks as any).mockResolvedValue([]);
+    (Api.getPersonalTasks as any).mockResolvedValue([]);
     render(
       <MyTasksList
         activeTimeGroup="all"

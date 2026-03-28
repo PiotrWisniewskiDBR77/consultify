@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -246,6 +247,15 @@ class SecurityService {
    */
   async getUserSessions(userId: string, currentSessionId?: string): Promise<UserSession[]> {
     const db = await this.getDb();
+    const sessionColumns = await getTableColumns('user_sessions');
+    const activityColumn = sessionColumns.has('last_activity_at')
+      ? 'last_activity_at'
+      : sessionColumns.has('last_active_at')
+        ? 'last_active_at'
+        : 'created_at';
+    const activeExpr = sessionColumns.has('is_active')
+      ? `COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')`
+      : 'TRUE';
 
     const rows = await db.all<{
       id: string;
@@ -264,8 +274,8 @@ class SecurityService {
       `SELECT *
        FROM user_sessions
        WHERE user_id = ?
-         AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')
-       ORDER BY last_activity_at DESC`,
+         AND ${activeExpr}
+       ORDER BY ${activityColumn} DESC`,
       [userId]
     );
 
@@ -279,9 +289,9 @@ class SecurityService {
       ipAddress: r.ip_address,
       geoCountry: r.geo_country,
       geoCity: r.geo_city,
-      isActive: r.is_active === true || r.is_active === 1,
+      isActive: sessionColumns.has('is_active') ? r.is_active === true || r.is_active === 1 : true,
       createdAt: r.created_at,
-      lastActivityAt: r.last_activity_at,
+      lastActivityAt: r.last_activity_at || (r as any).last_active_at || r.created_at,
       isCurrent: r.id === currentSessionId,
     }));
   }

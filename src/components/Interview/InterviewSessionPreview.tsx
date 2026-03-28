@@ -2,14 +2,14 @@ import { Calendar, ChevronRight, Copy, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import {
+  type ActionRow,
+  type DetailsAction,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type DetailsAction,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 
@@ -52,12 +52,8 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   onCopyStats,
   onCopyId,
 }) => {
-  const started = session.startedAt
-    ? new Date(session.startedAt).toLocaleDateString()
-    : '—';
-  const last = session.lastActivityAt
-    ? new Date(session.lastActivityAt).toLocaleDateString()
-    : '—';
+  const started = session.startedAt ? new Date(session.startedAt).toLocaleDateString() : '—';
+  const last = session.lastActivityAt ? new Date(session.lastActivityAt).toLocaleDateString() : '—';
 
   const pills: MetaPill[] = [
     {
@@ -93,13 +89,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   const customActions: DetailsAction[] = [
     {
       id: 'toggle',
-      label: detailsExpanded
-        ? isPolish
-          ? 'Zwiń'
-          : 'Collapse'
-        : isPolish
-          ? 'Rozwiń'
-          : 'Expand',
+      label: detailsExpanded ? (isPolish ? 'Zwiń' : 'Collapse') : isPolish ? 'Rozwiń' : 'Expand',
       onClick: onToggleDetailsExpanded,
     },
     {

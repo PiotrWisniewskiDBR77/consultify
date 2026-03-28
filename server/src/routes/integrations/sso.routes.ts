@@ -74,12 +74,14 @@ const ensureAuthStatesTable = async () => {
 
 // ── Helpers ──
 
-async function loadOIDCConfig(organizationId: string): Promise<OIDCConfig & { configId: string } | null> {
+async function loadOIDCConfig(
+  organizationId: string
+): Promise<(OIDCConfig & { configId: string }) | null> {
   const row = await dbGet<any>(
     `SELECT * FROM sso_configurations
      WHERE organization_id = ? AND protocol = 'oidc' AND is_enabled = 1
      LIMIT 1`,
-    [organizationId],
+    [organizationId]
   );
   if (!row) return null;
 
@@ -98,19 +100,21 @@ async function loadOIDCConfig(organizationId: string): Promise<OIDCConfig & { co
   };
 }
 
-async function loadSAMLConfig(organizationId: string): Promise<SAMLConfig & { configId: string } | null> {
+async function loadSAMLConfig(
+  organizationId: string
+): Promise<(SAMLConfig & { configId: string }) | null> {
   const row = await dbGet<any>(
     `SELECT * FROM sso_configurations
      WHERE organization_id = ? AND protocol = 'saml' AND is_enabled = 1
      LIMIT 1`,
-    [organizationId],
+    [organizationId]
   );
   if (!row) {
     const legacy = await dbGet<any>(
       `SELECT * FROM sso_configs
        WHERE organization_id = ? AND provider = 'saml' AND status = 'active'
        LIMIT 1`,
-      [organizationId],
+      [organizationId]
     );
     if (!legacy) return null;
     return {
@@ -127,7 +131,9 @@ async function loadSAMLConfig(organizationId: string): Promise<SAMLConfig & { co
   let mappings: Record<string, string> = {};
   try {
     mappings = JSON.parse(row.attribute_mappings || '{}');
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return {
     configId: row.id,
@@ -135,12 +141,16 @@ async function loadSAMLConfig(organizationId: string): Promise<SAMLConfig & { co
     ssoUrl: row.saml_sso_url,
     certificate: row.saml_certificate || '',
     sloUrl: row.saml_slo_url || undefined,
-    nameIdFormat: row.saml_name_id_format || 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+    nameIdFormat:
+      row.saml_name_id_format || 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
     attributeMappings: mappings,
   };
 }
 
-async function resolveOrganizationId(domain?: string, organizationId?: string): Promise<string | null> {
+async function resolveOrganizationId(
+  domain?: string,
+  organizationId?: string
+): Promise<string | null> {
   if (organizationId) return organizationId;
   if (!domain) return null;
   await ensureSsoTable();
@@ -148,7 +158,7 @@ async function resolveOrganizationId(domain?: string, organizationId?: string): 
     `SELECT organization_id FROM sso_configs
      WHERE provider = 'domain' AND status = 'active' AND domain = ?
      LIMIT 1`,
-    [domain],
+    [domain]
   );
   return row?.organization_id || null;
 }
@@ -158,11 +168,11 @@ async function findOrCreateUser(
   firstName: string,
   lastName: string,
   organizationId: string,
-  ssoProvider: string,
+  ssoProvider: string
 ): Promise<{ id: string; email: string; role: string; organization_id: string }> {
-  let user = await dbGet<any>(
+  const user = await dbGet<any>(
     'SELECT id, email, role, organization_id FROM users WHERE email = ?',
-    [email.toLowerCase()],
+    [email.toLowerCase()]
   );
 
   if (user) return user;
@@ -171,7 +181,16 @@ async function findOrCreateUser(
   await dbRun(
     `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [userId, organizationId, email.toLowerCase(), `sso-${ssoProvider}-no-password`, 'USER', 'active', firstName, lastName],
+    [
+      userId,
+      organizationId,
+      email.toLowerCase(),
+      `sso-${ssoProvider}-no-password`,
+      'USER',
+      'active',
+      firstName,
+      lastName,
+    ]
   );
 
   return { id: userId, email: email.toLowerCase(), role: 'USER', organization_id: organizationId };
@@ -192,12 +211,12 @@ function issueTokens(user: { id: string; email: string; role: string; organizati
       jti,
     },
     config.JWT_SECRET,
-    { expiresIn: config.JWT_EXPIRES_IN },
+    { expiresIn: config.JWT_EXPIRES_IN }
   );
   const refreshToken = jwt.sign(
     { id: user.id, type: 'refresh', jti: uuidv4() },
     config.JWT_SECRET,
-    { expiresIn: config.REFRESH_TOKEN_EXPIRES_IN },
+    { expiresIn: config.REFRESH_TOKEN_EXPIRES_IN }
   );
   return { accessToken, refreshToken, jti };
 }
@@ -208,13 +227,21 @@ async function createSsoSession(
   tokenHash: string,
   provider: string,
   req: Request,
-  ssoSessionId?: string,
+  ssoSessionId?: string
 ): Promise<string> {
   const sessionId = uuidv4();
   await dbRun(
     `INSERT INTO user_sessions (id, user_id, organization_id, session_token_hash, auth_method, sso_provider, ip_address, user_agent, is_active, created_at, last_activity_at, expires_at)
      VALUES (?, ?, ?, ?, 'sso', ?, ?, ?, 1, datetime('now'), datetime('now'), datetime('now', '+8 hours'))`,
-    [sessionId, userId, organizationId, tokenHash, provider, req.ip || '', req.get('user-agent') || ''],
+    [
+      sessionId,
+      userId,
+      organizationId,
+      tokenHash,
+      provider,
+      req.ip || '',
+      req.get('user-agent') || '',
+    ]
   );
   return sessionId;
 }
@@ -241,11 +268,11 @@ router.get(
          AND m.status = 'active'
          AND m.domain = ?
        LIMIT 1`,
-      [domain],
+      [domain]
     );
     if (!cfgRow) return res.json({ ssoEnabled: false });
     res.json({ ssoEnabled: true, provider: cfgRow.provider, ssoUrl: cfgRow.sso_url });
-  }),
+  })
 );
 
 // ── OIDC Flow ──
@@ -253,12 +280,16 @@ router.get(
 router.get(
   '/oidc/authorize',
   asyncHandler(async (req: Request, res: Response) => {
-    const { domain, organizationId: orgIdParam } = req.query as { domain?: string; organizationId?: string };
+    const { domain, organizationId: orgIdParam } = req.query as {
+      domain?: string;
+      organizationId?: string;
+    };
     const orgId = await resolveOrganizationId(domain as string, orgIdParam);
     if (!orgId) return res.status(400).json({ error: 'Cannot resolve organization' });
 
     const oidcCfg = await loadOIDCConfig(orgId);
-    if (!oidcCfg) return res.status(404).json({ error: 'No active OIDC configuration for this organization' });
+    if (!oidcCfg)
+      return res.status(404).json({ error: 'No active OIDC configuration for this organization' });
 
     const state = generateState();
     const nonce = generateNonce();
@@ -267,13 +298,13 @@ router.get(
     await dbRun(
       `INSERT INTO sso_auth_states (id, organization_id, state, nonce, provider_type, redirect_url)
        VALUES (?, ?, ?, ?, 'oidc', ?)`,
-      [uuidv4(), orgId, state, nonce, (req.query.redirect_url as string) || ''],
+      [uuidv4(), orgId, state, nonce, (req.query.redirect_url as string) || '']
     );
 
     const authUrl = buildOIDCAuthUrl(oidcCfg, state, nonce);
     logger.info(`[SSO] OIDC authorize initiated for org ${orgId}`);
     res.json({ authUrl, state });
-  }),
+  })
 );
 
 router.post(
@@ -286,7 +317,7 @@ router.post(
     await ensureAuthStatesTable();
     const authState = await dbGet<any>(
       `SELECT * FROM sso_auth_states WHERE state = ? AND expires_at > datetime('now')`,
-      [state],
+      [state]
     );
     if (!authState) {
       return res.status(400).json({ error: 'Invalid or expired state' });
@@ -314,13 +345,29 @@ router.post(
     const firstName = String(userInfo.given_name || userInfo.name || 'SSO');
     const lastName = String(userInfo.family_name || 'User');
 
-    const user = await findOrCreateUser(email, firstName, lastName, authState.organization_id, 'oidc');
+    const user = await findOrCreateUser(
+      email,
+      firstName,
+      lastName,
+      authState.organization_id,
+      'oidc'
+    );
     const { accessToken, refreshToken, jti } = issueTokens(user);
 
     const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
-    const sessionId = await createSsoSession(user.id, authState.organization_id, tokenHash, 'oidc', req);
+    const sessionId = await createSsoSession(
+      user.id,
+      authState.organization_id,
+      tokenHash,
+      'oidc',
+      req
+    );
 
-    try { setAuthCookies(res, accessToken, refreshToken); } catch { /* ignore */ }
+    try {
+      setAuthCookies(res, accessToken, refreshToken);
+    } catch {
+      /* ignore */
+    }
 
     logger.info(`[SSO] OIDC login successful for ${email} (org: ${authState.organization_id})`);
     res.json({
@@ -328,10 +375,15 @@ router.post(
       token: accessToken,
       refreshToken,
       sessionId,
-      user: { id: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organization_id,
+      },
       redirectUrl: authState.redirect_url || undefined,
     });
-  }),
+  })
 );
 
 // ── SAML Flow ──
@@ -339,12 +391,16 @@ router.post(
 router.get(
   '/saml/login',
   asyncHandler(async (req: Request, res: Response) => {
-    const { domain, organizationId: orgIdParam } = req.query as { domain?: string; organizationId?: string };
+    const { domain, organizationId: orgIdParam } = req.query as {
+      domain?: string;
+      organizationId?: string;
+    };
     const orgId = await resolveOrganizationId(domain as string, orgIdParam);
     if (!orgId) return res.status(400).json({ error: 'Cannot resolve organization' });
 
     const samlCfg = await loadSAMLConfig(orgId);
-    if (!samlCfg) return res.status(404).json({ error: 'No active SAML configuration for this organization' });
+    if (!samlCfg)
+      return res.status(404).json({ error: 'No active SAML configuration for this organization' });
 
     const requestId = `_${uuidv4()}`;
     const frontendUrl = config.FRONTEND_URL || 'http://localhost:3000';
@@ -358,13 +414,13 @@ router.get(
     await dbRun(
       `INSERT INTO sso_auth_states (id, organization_id, state, nonce, provider_type, redirect_url)
        VALUES (?, ?, ?, ?, 'saml', ?)`,
-      [uuidv4(), orgId, state, requestId, (req.query.redirect_url as string) || ''],
+      [uuidv4(), orgId, state, requestId, (req.query.redirect_url as string) || '']
     );
 
     const redirectUrl = `${samlCfg.ssoUrl}?SAMLRequest=${encodeURIComponent(encodedRequest)}&RelayState=${encodeURIComponent(state)}`;
     logger.info(`[SSO] SAML login initiated for org ${orgId}`);
     res.json({ redirectUrl, state });
-  }),
+  })
 );
 
 router.post(
@@ -379,7 +435,7 @@ router.post(
       await ensureAuthStatesTable();
       const authState = await dbGet<any>(
         `SELECT * FROM sso_auth_states WHERE state = ? AND expires_at > datetime('now')`,
-        [RelayState],
+        [RelayState]
       );
       if (authState) {
         orgId = authState.organization_id;
@@ -396,7 +452,8 @@ router.post(
         orgId = await resolveOrganizationId(emailDomain);
       }
     }
-    if (!orgId) return res.status(400).json({ error: 'Cannot determine organization from SAML response' });
+    if (!orgId)
+      return res.status(400).json({ error: 'Cannot determine organization from SAML response' });
 
     const samlCfg = await loadSAMLConfig(orgId);
     const mappings = samlCfg?.attributeMappings || {};
@@ -422,7 +479,11 @@ router.post(
     const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
     const sessionId = await createSsoSession(user.id, orgId, tokenHash, 'saml', req);
 
-    try { setAuthCookies(res, accessToken, refreshToken); } catch { /* ignore */ }
+    try {
+      setAuthCookies(res, accessToken, refreshToken);
+    } catch {
+      /* ignore */
+    }
 
     logger.info(`[SSO] SAML login successful for ${email} (org: ${orgId})`);
     res.json({
@@ -430,9 +491,14 @@ router.post(
       token: accessToken,
       refreshToken,
       sessionId,
-      user: { id: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organization_id,
+      },
     });
-  }),
+  })
 );
 
 // ── Logout propagation ──
@@ -447,14 +513,14 @@ router.post(
     await dbRun(
       `UPDATE user_sessions SET is_active = 0, revoked_at = datetime('now'), revoke_reason = 'user_logout'
        WHERE user_id = ? AND is_active = 1`,
-      [userId],
+      [userId]
     );
 
     const jti = `revoke-all-${userId}-${Date.now()}`;
     await dbRun(
       `INSERT OR IGNORE INTO revoked_tokens (jti, user_id, reason, expires_at)
        VALUES (?, ?, 'revoke-all', datetime('now', '+24 hours'))`,
-      [jti, userId],
+      [jti, userId]
     );
 
     let endSessionUrl: string | undefined;
@@ -472,7 +538,7 @@ router.post(
 
     logger.info(`[SSO] Logout propagated for user ${userId}`);
     res.json({ success: true, endSessionUrl });
-  }),
+  })
 );
 
 // ══════════════════════════════════════════
@@ -491,7 +557,7 @@ router.get(
        LEFT JOIN organizations o ON o.id = s.organization_id
        ORDER BY s.created_at DESC`,
       [],
-      { fallback: true },
+      { fallback: true }
     );
     const configs = (rows || []).map((r: any) => ({
       id: r.id,
@@ -510,7 +576,7 @@ router.get(
       totalLogins: 0,
     }));
     res.json({ configs });
-  }),
+  })
 );
 
 router.post(
@@ -525,7 +591,9 @@ router.post(
     await ensureSsoTable();
     const id = uuidv4();
     const domainsStr = Array.isArray(allowedDomains) ? allowedDomains.join(',') : '';
-    const domainsJson = Array.isArray(allowedDomains) ? JSON.stringify(allowedDomains) : JSON.stringify([]);
+    const domainsJson = Array.isArray(allowedDomains)
+      ? JSON.stringify(allowedDomains)
+      : JSON.stringify([]);
     const now = new Date().toISOString();
     await dbRun(
       `INSERT INTO sso_configs (
@@ -536,14 +604,20 @@ router.post(
       )
       VALUES (?, ?, 'google', 'active', ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, organizationId, clientId, clientSecret || '',
+        id,
+        organizationId,
+        clientId,
+        clientSecret || '',
         (Array.isArray(allowedDomains) ? allowedDomains[0] : '') || '',
-        domainsJson, domainsStr, now, now,
-      ],
+        domainsJson,
+        domainsStr,
+        now,
+        now,
+      ]
     );
     logger.info(`[SSO] Google SSO config created for org ${organizationId}`);
     res.json({ success: true, id });
-  }),
+  })
 );
 
 router.put(
@@ -554,13 +628,13 @@ router.put(
     const { id } = req.params;
     const { isActive } = req.body;
     await ensureSsoTable();
-    await dbRun(
-      `UPDATE sso_configs SET status = ?, updated_at = datetime('now') WHERE id = ?`,
-      [isActive ? 'active' : 'inactive', id],
-    );
+    await dbRun(`UPDATE sso_configs SET status = ?, updated_at = datetime('now') WHERE id = ?`, [
+      isActive ? 'active' : 'inactive',
+      id,
+    ]);
     logger.info(`[SSO] Config ${id} toggled to ${isActive ? 'active' : 'inactive'}`);
     res.json({ success: true });
-  }),
+  })
 );
 
 router.delete(
@@ -573,7 +647,7 @@ router.delete(
     await dbRun(`DELETE FROM sso_configs WHERE id = ?`, [id]);
     logger.info(`[SSO] Config ${id} deleted`);
     res.json({ success: true });
-  }),
+  })
 );
 
 router.post(
@@ -596,11 +670,22 @@ router.post(
         created_at, updated_at
       )
       VALUES (?, ?, 'saml', 'active', ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, organizationId, entityId, ssoUrl, certificate || '', '', JSON.stringify([]), '', now, now],
+      [
+        id,
+        organizationId,
+        entityId,
+        ssoUrl,
+        certificate || '',
+        '',
+        JSON.stringify([]),
+        '',
+        now,
+        now,
+      ]
     );
     logger.info(`[SSO] SAML config created for org ${organizationId}`);
     res.json({ success: true, id });
-  }),
+  })
 );
 
 router.post(
@@ -614,12 +699,13 @@ router.post(
     if (!ssoUrl) errors.push('SSO URL is required');
     if (ssoUrl && !ssoUrl.startsWith('https://')) errors.push('SSO URL must use HTTPS');
     if (!certificate) errors.push('X.509 certificate is required');
-    if (certificate && !certificate.includes('BEGIN CERTIFICATE')) errors.push('Invalid certificate format');
+    if (certificate && !certificate.includes('BEGIN CERTIFICATE'))
+      errors.push('Invalid certificate format');
     if (errors.length > 0) {
       return res.json({ valid: false, errors });
     }
     res.json({ valid: true, errors: [] });
-  }),
+  })
 );
 
 router.post(
@@ -645,11 +731,11 @@ router.post(
         created_at, updated_at
       )
       VALUES (?, ?, 'domain', 'active', ?, ?, ?, ?, ?)`,
-      [id, organizationId, domain, JSON.stringify([domain]), domain, now, now],
+      [id, organizationId, domain, JSON.stringify([domain]), domain, now, now]
     );
     logger.info(`[SSO] Domain mapping created: ${domain} → org ${organizationId}`);
     res.json({ success: true, id });
-  }),
+  })
 );
 
 router.get(
@@ -665,7 +751,7 @@ router.get(
        WHERE s.provider = 'domain'
        ORDER BY s.created_at DESC`,
       [],
-      { fallback: true },
+      { fallback: true }
     );
     const mappings = (rows || []).map((r: any) => ({
       id: r.id,
@@ -684,7 +770,7 @@ router.get(
       updatedAt: r.updated_at,
     }));
     res.json({ mappings });
-  }),
+  })
 );
 
 export default router;

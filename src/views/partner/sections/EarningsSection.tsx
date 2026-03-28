@@ -32,11 +32,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
-  type V8PartnerCommissionTransaction,
-  type V8PartnerPayoutAccount,
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
+  type V8PartnerCommissionTransaction,
   type V8PartnerEarningsSummary,
+  type V8PartnerPayoutAccount,
   type V8PartnerPayoutHistoryItem,
   type V8PartnerPayoutSettings,
 } from '@/services/api/v8';
@@ -169,7 +169,9 @@ const normalizePayoutSettings = (payload: any): PayoutSettings => {
 
   return {
     minimumThreshold: Number(data?.minimumThreshold ?? 100),
-    payoutMethod: String(data?.payoutMethod ?? 'BANK_TRANSFER').toUpperCase() as PayoutSettings['payoutMethod'],
+    payoutMethod: String(
+      data?.payoutMethod ?? 'BANK_TRANSFER'
+    ).toUpperCase() as PayoutSettings['payoutMethod'],
     autoPayoutEnabled: Boolean(data?.autoPayoutEnabled),
     payoutAccount: {
       accountHolderName: String(payoutAccount?.accountHolderName ?? ''),
@@ -195,27 +197,26 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(defaultPayoutSettings);
   const [savingPayoutSettings, setSavingPayoutSettings] = useState(false);
 
-  const getCommissionTransactionsWithFallback = useCallback(
-    async (): Promise<CommissionTransaction[]> => {
-      try {
-        const response = await V8PartnerApi.getCommissionTransactions();
-        return Array.isArray(response?.transactions)
-          ? response.transactions.map((tx: V8PartnerCommissionTransaction) =>
-              normalizeCommissionTransaction(tx)
-            )
-          : [];
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        const response = await Api.get('/api/partners/commission-transactions');
-        return response?.success && Array.isArray(response?.data)
-          ? response.data.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
-          : [];
+  const getCommissionTransactionsWithFallback = useCallback(async (): Promise<
+    CommissionTransaction[]
+  > => {
+    try {
+      const response = await V8PartnerApi.getCommissionTransactions();
+      return Array.isArray(response?.transactions)
+        ? response.transactions.map((tx: V8PartnerCommissionTransaction) =>
+            normalizeCommissionTransaction(tx)
+          )
+        : [];
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        throw error;
       }
-    },
-    []
-  );
+      const response = await Api.get('/api/partners/commission-transactions');
+      return response?.success && Array.isArray(response?.data)
+        ? response.data.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
+        : [];
+    }
+  }, []);
 
   const getPayoutsWithFallback = useCallback(async (): Promise<Payout[]> => {
     try {
@@ -247,21 +248,18 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     }
   }, []);
 
-  const savePayoutSettingsWithFallback = useCallback(
-    async (settings: PayoutSettings) => {
-      try {
-        const response = await V8PartnerApi.updatePayoutSettings(settings);
-        return normalizePayoutSettings(response?.settings);
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        const response = await Api.put('/api/partners/payout-settings', settings);
-        return normalizePayoutSettings(response?.data ?? response);
+  const savePayoutSettingsWithFallback = useCallback(async (settings: PayoutSettings) => {
+    try {
+      const response = await V8PartnerApi.updatePayoutSettings(settings);
+      return normalizePayoutSettings(response?.settings);
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        throw error;
       }
-    },
-    []
-  );
+      const response = await Api.put('/api/partners/payout-settings', settings);
+      return normalizePayoutSettings(response?.data ?? response);
+    }
+  }, []);
 
   // Fetch earnings data from API
   const fetchEarnings = useCallback(async () => {
@@ -626,7 +624,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
             >
               <FileText className="w-4 h-4" />
-              {t('partner.earnings.submitTicketUnavailable', 'Commission inquiry routing unavailable')}
+              {t(
+                'partner.earnings.submitTicketUnavailable',
+                'Commission inquiry routing unavailable'
+              )}
             </button>
           </div>
         </div>
@@ -993,7 +994,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'BANK_TRANSFER' }))}
+            onClick={() =>
+              setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'BANK_TRANSFER' }))
+            }
             className={cn(
               'p-4 rounded-xl border-2 text-left',
               payoutSettings.payoutMethod === 'BANK_TRANSFER'

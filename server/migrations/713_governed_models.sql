@@ -49,10 +49,10 @@ CREATE TABLE IF NOT EXISTS tp_model_sources (
   UNIQUE(model_id, table_id)
 );
 
-CREATE INDEX idx_tp_kpi_model ON tp_kpi_definitions(model_id);
-CREATE INDEX idx_tp_dim_model ON tp_dimensions(model_id);
-CREATE INDEX idx_tp_model_sources_model ON tp_model_sources(model_id);
-CREATE INDEX idx_tp_governed_models_base ON tp_governed_models(base_id);
+CREATE INDEX IF NOT EXISTS idx_tp_kpi_model ON tp_kpi_definitions(model_id);
+CREATE INDEX IF NOT EXISTS idx_tp_dim_model ON tp_dimensions(model_id);
+CREATE INDEX IF NOT EXISTS idx_tp_model_sources_model ON tp_model_sources(model_id);
+CREATE INDEX IF NOT EXISTS idx_tp_governed_models_base ON tp_governed_models(base_id);
 
 -- Add trust_flag to existing provenance table
 ALTER TABLE tp_record_provenance ADD COLUMN IF NOT EXISTS trusted BOOLEAN DEFAULT false;

@@ -13,21 +13,21 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  TrustClass,
-  ProvenanceLedgerEntry,
-  SupportTrace,
-  DegradedCondition,
-  HealthSignal,
-  RoutingExplanation,
-  EvidenceRef,
-  CitationBinding,
-  TrustSummary,
   AssignTrustClassParams,
+  AudienceLevel,
+  CitationBinding,
   CreateProvenanceLedgerEntryParams,
   CreateSupportTraceParams,
+  DegradedCondition,
+  EvidenceRef,
+  HealthSignal,
+  ProvenanceLedgerEntry,
   RecordDegradedConditionParams,
   RecordHealthSignalParams,
-  AudienceLevel,
+  RoutingExplanation,
+  SupportTrace,
+  TrustClass,
+  TrustSummary,
 } from '../../types/trustAudit.js';
 import {
   AssignTrustClassParamsSchema,
@@ -206,7 +206,7 @@ export async function assignTrustClass(params: AssignTrustClassParams): Promise<
   }
 
   const hasStrongVerified = validated.evidenceRefs.some(
-    (ref) => ref.bindingStrength === 'strong' && ref.verificationState === 'verified',
+    (ref) => ref.bindingStrength === 'strong' && ref.verificationState === 'verified'
   );
 
   if (hasStrongVerified && validated.evidenceRefs.length === 1) {
@@ -214,7 +214,7 @@ export async function assignTrustClass(params: AssignTrustClassParams): Promise<
   }
 
   const allModerateOrBetter = validated.evidenceRefs.every(
-    (ref) => ref.bindingStrength === 'strong' || ref.bindingStrength === 'moderate',
+    (ref) => ref.bindingStrength === 'strong' || ref.bindingStrength === 'moderate'
   );
 
   if (validated.evidenceRefs.length >= 2 && allModerateOrBetter) {
@@ -224,12 +224,9 @@ export async function assignTrustClass(params: AssignTrustClassParams): Promise<
     return 'synthesis';
   }
 
-  if (
-    validated.modelDeclaredClass === 'grounded_fact' &&
-    !hasStrongVerified
-  ) {
+  if (validated.modelDeclaredClass === 'grounded_fact' && !hasStrongVerified) {
     logger.info(
-      `${LOG_PREFIX} Model declared grounded_fact but evidence insufficient — downgrading`,
+      `${LOG_PREFIX} Model declared grounded_fact but evidence insufficient — downgrading`
     );
     return validated.evidenceRefs.length >= 2 ? 'synthesis' : 'uncertain_inference';
   }
@@ -241,7 +238,7 @@ export async function assignTrustClass(params: AssignTrustClassParams): Promise<
  * Create a provenance ledger entry (Decision 24: full ledger for important outputs).
  */
 export async function createProvenanceLedgerEntry(
-  params: CreateProvenanceLedgerEntryParams,
+  params: CreateProvenanceLedgerEntryParams
 ): Promise<ProvenanceLedgerEntry> {
   const validated = CreateProvenanceLedgerEntryParamsSchema.parse(params);
 
@@ -285,7 +282,7 @@ export async function createProvenanceLedgerEntry(
       JSON.stringify(entry.trustSummary),
       entry.createdAt,
       entry.createdBy,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created provenance entry ${entryId} for output ${entry.outputId}`);
@@ -297,14 +294,14 @@ export async function createProvenanceLedgerEntry(
  */
 export async function getProvenanceByOutput(
   outputId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProvenanceLedgerEntry[]> {
   const rows = await dbAll<ProvenanceRow>(
     `SELECT * FROM v8_provenance_ledger
      WHERE output_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [outputId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToProvenance);
@@ -313,9 +310,7 @@ export async function getProvenanceByOutput(
 /**
  * Create a unified support trace.
  */
-export async function createSupportTrace(
-  params: CreateSupportTraceParams,
-): Promise<SupportTrace> {
+export async function createSupportTrace(params: CreateSupportTraceParams): Promise<SupportTrace> {
   const validated = CreateSupportTraceParamsSchema.parse(params);
 
   const traceId = uuidv4();
@@ -351,7 +346,7 @@ export async function createSupportTrace(
       trace.routingExplanation ? JSON.stringify(trace.routingExplanation) : null,
       JSON.stringify(trace.degradedConditions),
       trace.createdAt,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created support trace ${traceId} for org ${trace.organizationId}`);
@@ -363,13 +358,13 @@ export async function createSupportTrace(
  */
 export async function getSupportTrace(
   traceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SupportTrace | null> {
   const row = await dbGet<SupportTraceRow>(
     `SELECT * FROM v8_support_traces
      WHERE trace_id = ? AND organization_id = ?`,
     [traceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -381,14 +376,14 @@ export async function getSupportTrace(
  */
 export async function getSupportTracesByRun(
   executionRunId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SupportTrace[]> {
   const rows = await dbAll<SupportTraceRow>(
     `SELECT * FROM v8_support_traces
      WHERE execution_run_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [executionRunId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSupportTrace);
@@ -403,7 +398,7 @@ export async function getSupportTracesByRun(
 export async function getRoutingExplanation(
   traceId: string,
   organizationId: string,
-  audienceLevel: AudienceLevel,
+  audienceLevel: AudienceLevel
 ): Promise<string | null> {
   const trace = await getSupportTrace(traceId, organizationId);
   if (!trace || !trace.routingExplanation) return null;
@@ -425,8 +420,7 @@ export async function getRoutingExplanation(
     `Purpose: ${routing.purpose}.`;
 
   if (routing.fallbackOccurred) {
-    explanation +=
-      ` Fallback from ${routing.fallbackFrom ?? 'unknown'}: ${routing.fallbackReason ?? 'unspecified'}.`;
+    explanation += ` Fallback from ${routing.fallbackFrom ?? 'unknown'}: ${routing.fallbackReason ?? 'unspecified'}.`;
   }
 
   if (routing.costTier) {
@@ -444,7 +438,7 @@ export async function getRoutingExplanation(
  * Record a degraded condition (Decision 26: voice_transcript_partial is explicit).
  */
 export async function recordDegradedCondition(
-  params: RecordDegradedConditionParams,
+  params: RecordDegradedConditionParams
 ): Promise<DegradedCondition> {
   const validated = RecordDegradedConditionParamsSchema.parse(params);
 
@@ -476,11 +470,11 @@ export async function recordDegradedCondition(
       condition.operatorDetail,
       condition.supportTraceId,
       condition.createdAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded degraded condition ${conditionId}: ${condition.conditionType}`,
+    `${LOG_PREFIX} Recorded degraded condition ${conditionId}: ${condition.conditionType}`
   );
   return condition;
 }
@@ -491,7 +485,7 @@ export async function recordDegradedCondition(
 export async function getDegradedConditions(
   organizationId: string,
   fromDate?: string,
-  toDate?: string,
+  toDate?: string
 ): Promise<DegradedCondition[]> {
   let sql = `SELECT * FROM v8_degraded_conditions WHERE organization_id = ?`;
   const params: unknown[] = [organizationId];
@@ -517,7 +511,7 @@ export async function getDegradedConditions(
 export async function getHealthSignals(
   organizationId: string,
   fromDate?: string,
-  toDate?: string,
+  toDate?: string
 ): Promise<HealthSignal[]> {
   let sql = `SELECT * FROM v8_health_signals WHERE organization_id = ?`;
   const params: unknown[] = [organizationId];
@@ -540,9 +534,7 @@ export async function getHealthSignals(
 /**
  * Record a health signal for observability baseline.
  */
-export async function recordHealthSignal(
-  params: RecordHealthSignalParams,
-): Promise<HealthSignal> {
+export async function recordHealthSignal(params: RecordHealthSignalParams): Promise<HealthSignal> {
   const validated = RecordHealthSignalParamsSchema.parse(params);
 
   const signalId = uuidv4();
@@ -575,11 +567,11 @@ export async function recordHealthSignal(
       signal.threshold,
       JSON.stringify(signal.metadata),
       signal.timestamp,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded health signal ${signalId}: ${signal.signalType} = ${signal.status}`,
+    `${LOG_PREFIX} Recorded health signal ${signalId}: ${signal.signalType} = ${signal.status}`
   );
   return signal;
 }
@@ -600,7 +592,7 @@ export interface ProvenanceLedgerResult {
  */
 export async function buildProvenanceLedger(
   outputId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProvenanceLedgerResult> {
   const entries = await getProvenanceByOutput(outputId, organizationId);
 
@@ -619,7 +611,7 @@ export async function buildProvenanceLedger(
   }
 
   logger.info(
-    `${LOG_PREFIX} Built provenance ledger for output ${outputId}: ${entries.length} entries`,
+    `${LOG_PREFIX} Built provenance ledger for output ${outputId}: ${entries.length} entries`
   );
 
   return { entries, explanation, supportTrace };
@@ -635,7 +627,7 @@ export async function buildProvenanceLedger(
  */
 export async function assessTrustClass(
   outputId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<TrustClass> {
   const entries = await getProvenanceByOutput(outputId, organizationId);
 
@@ -661,7 +653,7 @@ export async function assessTrustClass(
   }
 
   const allStrongVerified = allEvidenceRefs.every(
-    (ref) => ref.bindingStrength === 'strong' && ref.verificationState === 'verified',
+    (ref) => ref.bindingStrength === 'strong' && ref.verificationState === 'verified'
   );
   if (allStrongVerified) {
     return 'grounded_fact';
@@ -677,7 +669,7 @@ export async function getProvenanceByOrg(
   organizationId: string,
   fromDate: string,
   toDate: string,
-  limit?: number,
+  limit?: number
 ): Promise<ProvenanceLedgerEntry[]> {
   let sql = `SELECT * FROM v8_provenance_ledger
      WHERE organization_id = ? AND created_at >= ? AND created_at <= ?
@@ -709,7 +701,7 @@ export interface UserExplanationResult {
  */
 export async function buildUserExplanation(
   outputId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<UserExplanationResult> {
   const ledger = await buildProvenanceLedger(outputId, organizationId);
   const trustClass = await assessTrustClass(outputId, organizationId);
@@ -762,7 +754,7 @@ export interface OperatorExplanationResult {
  */
 export async function buildOperatorExplanation(
   outputId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OperatorExplanationResult> {
   const ledger = await buildProvenanceLedger(outputId, organizationId);
   const trustClass = await assessTrustClass(outputId, organizationId);
@@ -815,7 +807,9 @@ export interface ResolvedDegradedCondition extends DegradedCondition {
   resolutionNote: string | null;
 }
 
-function rowToResolvedDegradedCondition(row: DegradedConditionRowExtended): ResolvedDegradedCondition {
+function rowToResolvedDegradedCondition(
+  row: DegradedConditionRowExtended
+): ResolvedDegradedCondition {
   return {
     ...rowToDegradedCondition(row),
     resolvedAt: row.resolved_at,
@@ -828,14 +822,14 @@ function rowToResolvedDegradedCondition(row: DegradedConditionRowExtended): Reso
  * Get all unresolved degraded conditions for an organization (where resolved_at IS NULL).
  */
 export async function getActiveDegradedConditions(
-  organizationId: string,
+  organizationId: string
 ): Promise<ResolvedDegradedCondition[]> {
   const rows = await dbAll<DegradedConditionRowExtended>(
     `SELECT * FROM v8_degraded_conditions
      WHERE organization_id = ? AND resolved_at IS NULL
      ORDER BY created_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToResolvedDegradedCondition);
@@ -847,7 +841,7 @@ export async function getActiveDegradedConditions(
 export async function resolveDegradedCondition(
   conditionId: string,
   resolvedBy: string,
-  resolution: string,
+  resolution: string
 ): Promise<ResolvedDegradedCondition | null> {
   const now = new Date().toISOString();
 
@@ -855,13 +849,13 @@ export async function resolveDegradedCondition(
     `UPDATE v8_degraded_conditions
      SET resolved_at = ?, resolved_by = ?, resolution_note = ?
      WHERE condition_id = ?`,
-    [now, resolvedBy, resolution, conditionId],
+    [now, resolvedBy, resolution, conditionId]
   );
 
   const row = await dbGet<DegradedConditionRowExtended>(
     `SELECT * FROM v8_degraded_conditions WHERE condition_id = ?`,
     [conditionId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -874,7 +868,7 @@ export async function resolveDegradedCondition(
  * Get the latest health signal for each signal type — the health dashboard.
  */
 export async function getHealthDashboard(
-  organizationId: string,
+  organizationId: string
 ): Promise<Map<string, HealthSignal>> {
   const rows = await dbAll<HealthSignalRow>(
     `SELECT h1.* FROM v8_health_signals h1
@@ -886,7 +880,7 @@ export async function getHealthDashboard(
      ) h2 ON h1.signal_type = h2.signal_type AND h1.timestamp = h2.max_ts
      WHERE h1.organization_id = ?`,
     [organizationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const dashboard = new Map<string, HealthSignal>();

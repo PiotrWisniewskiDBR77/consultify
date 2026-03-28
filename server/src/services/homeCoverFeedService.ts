@@ -43,7 +43,8 @@ const TIPS_APP: HomeCoverTip[] = [
     id: 'app-tip-close-decision-loop',
     titleEn: 'Close one decision loop',
     titlePl: 'Domknij jedną pętlę decyzji',
-    bodyEn: 'Pick the hottest decision and produce a one‑page decision note before you ask for approval.',
+    bodyEn:
+      'Pick the hottest decision and produce a one‑page decision note before you ask for approval.',
     bodyPl: 'Wybierz najgorętszą decyzję i przygotuj one‑pager, zanim poprosisz o approval.',
     tags: ['governance', 'decision'],
   },
@@ -102,7 +103,10 @@ function stripCdata(s: string): string {
 }
 
 function stripHtml(s: string): string {
-  return s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return s
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function decodeEntities(s: string): string {
@@ -137,7 +141,8 @@ async function fetchText(url: string, timeoutMs: number): Promise<string> {
       headers: {
         // Many feeds block empty UA; keep it simple and honest.
         'User-Agent': 'ConsultifyHome/1.0 (+https://consultify.local)',
-        Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+        Accept:
+          'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
       },
       signal: controller.signal,
     });
@@ -161,7 +166,10 @@ function parseFeedXml(xml: string, source: string, perFeedLimit: number): HomeCo
     const title = extractTag(b, 'title') || '';
     const url = isAtom ? extractAtomLink(b) : extractTag(b, 'link');
     const publishedAt =
-      extractTag(b, 'pubDate') || extractTag(b, 'published') || extractTag(b, 'updated') || undefined;
+      extractTag(b, 'pubDate') ||
+      extractTag(b, 'published') ||
+      extractTag(b, 'updated') ||
+      undefined;
     const rawSummary =
       extractTag(b, 'description') || extractTag(b, 'summary') || extractTag(b, 'content') || '';
     const summary = rawSummary ? stripHtml(rawSummary).slice(0, 220) : undefined;
@@ -219,4 +227,3 @@ export async function getAiNews(now = new Date(), limit = 6): Promise<HomeCoverN
   FEED_CACHE.set('all', { at: now.getTime(), value: final });
   return final;
 }
-

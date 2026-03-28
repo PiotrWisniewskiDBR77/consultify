@@ -24,9 +24,9 @@ function isRunningInsideRailway(env: NodeJS.ProcessEnv): boolean {
 function allowLocalDatabaseForTests(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.NODE_ENV === 'test' ||
-      normalize(env.VITEST) ||
-      normalize(env.VITEST_POOL_ID) ||
-      normalize(env.JEST_WORKER_ID)
+    normalize(env.VITEST) ||
+    normalize(env.VITEST_POOL_ID) ||
+    normalize(env.JEST_WORKER_ID)
   );
 }
 
@@ -106,7 +106,9 @@ export function resolveReachableDatabaseUrl(options: ResolveOptions = {}): {
   };
 }
 
-export function assertNoPrivateRailwayDbHostOutsideRailway(env: NodeJS.ProcessEnv = process.env): void {
+export function assertNoPrivateRailwayDbHostOutsideRailway(
+  env: NodeJS.ProcessEnv = process.env
+): void {
   const dbHost = normalize(env.DB_HOST);
   if (!dbHost) return;
   if (isRunningInsideRailway(env)) return;

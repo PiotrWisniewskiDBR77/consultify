@@ -3,7 +3,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
+import {
+  shouldFallbackToLegacyResults,
+  V8ResultsApi,
+  type V8ResultsCreateKpiMappingPayload,
+  type V8ResultsUpdateKpiPayload,
+} from '@/services/api/v8/results';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 interface KPITimeSeriesDrawerProps {
@@ -128,13 +133,17 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       let drawerOpenCase: any = null;
       if (catalogRes.status === 'fulfilled') {
         catalogKpis = Array.isArray(catalogRes.value?.kpis) ? catalogRes.value.kpis : [];
-        catalogMappings = Array.isArray(catalogRes.value?.mappings) ? catalogRes.value.mappings : [];
+        catalogMappings = Array.isArray(catalogRes.value?.mappings)
+          ? catalogRes.value.mappings
+          : [];
       } else if (!shouldFallbackToLegacyResults(catalogRes.reason)) {
         throw catalogRes.reason;
       }
 
       if (drawerRes.status === 'fulfilled') {
-        drawerMeasurements = Array.isArray(drawerRes.value?.measurements) ? drawerRes.value.measurements : [];
+        drawerMeasurements = Array.isArray(drawerRes.value?.measurements)
+          ? drawerRes.value.measurements
+          : [];
         drawerOpenCase = drawerRes.value?.openCase ?? null;
       } else if (!shouldFallbackToLegacyResults(drawerRes.reason)) {
         throw drawerRes.reason;
@@ -284,7 +293,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     try {
       const kpiDirection =
         settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
-      const payload = {
+      const payload: V8ResultsUpdateKpiPayload = {
         name: settingsName.trim(),
         description: settingsDescription.trim() || undefined,
         unit: settingsUnit.trim() || undefined,
@@ -375,9 +384,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       if (!initiativeId) return;
       setMappingBusy(true);
       try {
-        const payload = {
+        const payload: V8ResultsCreateKpiMappingPayload = {
           initiativeId,
-          kpiId,
+          kpiId: String(kpiId),
           impactWeight: 1.0,
           impactDirection: settingsDirection === 'decrease' ? 'decrease' : 'increase',
           confidence: 'medium',
@@ -719,9 +728,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     </button>
                     <button
                       type="button"
-                      disabled={
-                        caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())
-                      }
+                      disabled={caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())}
                       onClick={() => void handleClose()}
                       className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
                     >

@@ -1,34 +1,34 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  SetCanonicalObjectStateParams,
   ClassifyHomeBlockParams,
   RecordInboxMaterializationParams,
   SetCalendarPhaseParams,
-  UpdateSurfaceProjectionParams,
+  SetCanonicalObjectStateParams,
   SurfaceProjection,
+  UpdateSurfaceProjectionParams,
 } from '../../../types/myWorkRoofPackage.js';
 import {
-  CanonicalObjectStateSchema,
-  HomeBlockMaturitySchema,
-  InboxMaterializationSchema,
+  CalendarPhaseNameValues,
   CalendarPhaseSchema,
-  SurfaceProjectionSchema,
-  SetCanonicalObjectStateParamsSchema,
+  CalendarPhaseStatusValues,
+  CanonicalObjectStateSchema,
+  CanonicalObjectTypeValues,
   ClassifyHomeBlockParamsSchema,
+  classifyLatencyBand,
+  HomeBlockMaturitySchema,
+  HomeBlockNameValues,
+  InboxMaterializationSchema,
+  LATENCY_BAND_THRESHOLDS,
+  LatencyBandValues,
+  MaturityLevelValues,
+  MyWorkSurfaceValues,
   RecordInboxMaterializationParamsSchema,
   SetCalendarPhaseParamsSchema,
+  SetCanonicalObjectStateParamsSchema,
+  SurfaceProjectionSchema,
   UpdateSurfaceProjectionParamsSchema,
-  MyWorkSurfaceValues,
-  CanonicalObjectTypeValues,
-  MaturityLevelValues,
-  LatencyBandValues,
-  CalendarPhaseNameValues,
-  CalendarPhaseStatusValues,
-  HomeBlockNameValues,
-  LATENCY_BAND_THRESHOLDS,
-  classifyLatencyBand,
 } from '../../../types/myWorkRoofPackage.js';
 
 // ==========================================
@@ -55,16 +55,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  setCanonicalObjectState,
-  getCanonicalObjectState,
-  getSurfaceProjection,
-  updateSurfaceProjection,
   classifyHomeBlock,
-  getHomeBlockMaturity,
-  recordInboxMaterialization,
-  getInboxMaterializationStats,
-  setCalendarPhase,
   getCalendarPhases,
+  getCanonicalObjectState,
+  getHomeBlockMaturity,
+  getInboxMaterializationStats,
+  getSurfaceProjection,
+  recordInboxMaterialization,
+  setCalendarPhase,
+  setCanonicalObjectState,
+  updateSurfaceProjection,
 } from '../myWorkRoofService.js';
 
 // ==========================================
@@ -78,7 +78,7 @@ const OTHER_USER_ID = '00000000-0000-4000-8000-000000000020';
 const OBJECT_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 
 function makeSetStateParams(
-  overrides?: Partial<SetCanonicalObjectStateParams>,
+  overrides?: Partial<SetCanonicalObjectStateParams>
 ): SetCanonicalObjectStateParams {
   return {
     objectId: OBJECT_ID,
@@ -90,7 +90,7 @@ function makeSetStateParams(
 }
 
 function makeClassifyBlockParams(
-  overrides?: Partial<ClassifyHomeBlockParams>,
+  overrides?: Partial<ClassifyHomeBlockParams>
 ): ClassifyHomeBlockParams {
   return {
     blockName: 'aiPulseCore',
@@ -102,7 +102,7 @@ function makeClassifyBlockParams(
 }
 
 function makeMaterializationParams(
-  overrides?: Partial<RecordInboxMaterializationParams>,
+  overrides?: Partial<RecordInboxMaterializationParams>
 ): RecordInboxMaterializationParams {
   return {
     eventSourceRef: 'notification:pending_review:evt-001',
@@ -115,7 +115,7 @@ function makeMaterializationParams(
 }
 
 function makeCalendarPhaseParams(
-  overrides?: Partial<SetCalendarPhaseParams>,
+  overrides?: Partial<SetCalendarPhaseParams>
 ): SetCalendarPhaseParams {
   return {
     phaseName: 'phase_a_internal',
@@ -251,7 +251,7 @@ describe('MyWork Roof Package — Type System', () => {
       SetCanonicalObjectStateParamsSchema.parse({
         ...makeSetStateParams(),
         objectType: 'invalid_type',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -260,7 +260,7 @@ describe('MyWork Roof Package — Type System', () => {
       ClassifyHomeBlockParamsSchema.parse({
         ...makeClassifyBlockParams(),
         blockName: 'nonexistent_block',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -269,7 +269,7 @@ describe('MyWork Roof Package — Type System', () => {
       RecordInboxMaterializationParamsSchema.parse({
         ...makeMaterializationParams(),
         latencyMs: -100,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -278,7 +278,7 @@ describe('MyWork Roof Package — Type System', () => {
       SetCalendarPhaseParamsSchema.parse({
         ...makeCalendarPhaseParams(),
         phaseName: 'phase_c_unknown',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -328,7 +328,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
     };
 
     const result = await setCanonicalObjectState(
-      makeSetStateParams({ surfaceProjections: projections }),
+      makeSetStateParams({ surfaceProjections: projections })
     );
 
     expect(result.surfaceProjections).toEqual(projections);
@@ -344,13 +344,13 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
 
   it('T18: setCanonicalObjectState rejects missing canonicalState', async () => {
     await expect(
-      setCanonicalObjectState(makeSetStateParams({ canonicalState: '' })),
+      setCanonicalObjectState(makeSetStateParams({ canonicalState: '' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('T19: setCanonicalObjectState accepts non-UUID tenant organizationId', async () => {
     const result = await setCanonicalObjectState(
-      makeSetStateParams({ organizationId: 'tenant-dbr77' }),
+      makeSetStateParams({ organizationId: 'tenant-dbr77' })
     );
 
     expect(result.organizationId).toBe('tenant-dbr77');
@@ -383,7 +383,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
       },
     };
     mockDbGet.mockResolvedValueOnce(
-      makeFakeStateRow({ surface_projections: JSON.stringify(projections) }),
+      makeFakeStateRow({ surface_projections: JSON.stringify(projections) })
     );
 
     const result = await getCanonicalObjectState(OBJECT_ID, ORG_ID);
@@ -400,7 +400,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
       },
     };
     mockDbGet.mockResolvedValueOnce(
-      makeFakeStateRow({ surface_projections: JSON.stringify(projections) }),
+      makeFakeStateRow({ surface_projections: JSON.stringify(projections) })
     );
 
     const result = await getSurfaceProjection(OBJECT_ID, 'calendar', ORG_ID);
@@ -432,7 +432,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
       },
     };
     mockDbGet.mockResolvedValueOnce(
-      makeFakeStateRow({ surface_projections: JSON.stringify(existing) }),
+      makeFakeStateRow({ surface_projections: JSON.stringify(existing) })
     );
 
     const result = await updateSurfaceProjection({
@@ -471,7 +471,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
       },
     };
     mockDbGet.mockResolvedValueOnce(
-      makeFakeStateRow({ surface_projections: JSON.stringify(existing) }),
+      makeFakeStateRow({ surface_projections: JSON.stringify(existing) })
     );
 
     const result = await updateSurfaceProjection({
@@ -512,7 +512,7 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
       makeSetStateParams({
         canonicalState: 'blocked',
         surfaceProjections: projections,
-      }),
+      })
     );
 
     expect(result.canonicalState).toBe('blocked');
@@ -549,7 +549,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
       makeClassifyBlockParams({
         maturityLevel: 'backed_by_real_service',
         serviceRef: 'radarService',
-      }),
+      })
     );
     expect(result.maturityLevel).toBe('backed_by_real_service');
     expect(result.serviceRef).toBe('radarService');
@@ -561,7 +561,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
         blockName: 'sparkField',
         maturityLevel: 'placeholder_non_canonical',
         serviceRef: null,
-      }),
+      })
     );
     expect(result.maturityLevel).toBe('placeholder_non_canonical');
     expect(result.serviceRef).toBeNull();
@@ -573,7 +573,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
         blockName: 'executionCurrent',
         maturityLevel: 'partial_stitched',
         serviceRef: 'executionVisibilityService',
-      }),
+      })
     );
     expect(result.maturityLevel).toBe('partial_stitched');
   });
@@ -606,7 +606,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
     for (const blockName of HomeBlockNameValues) {
       mockDbRun.mockResolvedValueOnce({ success: true });
       const result = await classifyHomeBlock(
-        makeClassifyBlockParams({ blockName, maturityLevel: 'partial_stitched' }),
+        makeClassifyBlockParams({ blockName, maturityLevel: 'partial_stitched' })
       );
       expect(result.blockName).toBe(blockName);
     }
@@ -618,7 +618,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
       classifyHomeBlock({
         ...makeClassifyBlockParams(),
         maturityLevel: 'unknown_level' as any,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -629,9 +629,7 @@ describe('MyWork Roof — Home Block Maturity (Decision W7-2)', () => {
 
 describe('MyWork Roof — Inbox Materialization (Decision W7-3)', () => {
   it('T39: recordInboxMaterialization creates record with auto-classified band', async () => {
-    const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 1200 }),
-    );
+    const result = await recordInboxMaterialization(makeMaterializationParams({ latencyMs: 1200 }));
 
     expect(result.materializationId).toBeDefined();
     expect(result.latencyMs).toBe(1200);
@@ -641,51 +639,45 @@ describe('MyWork Roof — Inbox Materialization (Decision W7-3)', () => {
   });
 
   it('T40: near_realtime band for latency ≤ 5000ms', async () => {
-    const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 4999 }),
-    );
+    const result = await recordInboxMaterialization(makeMaterializationParams({ latencyMs: 4999 }));
     expect(result.latencyBand).toBe('near_realtime');
   });
 
   it('T41: operational band for latency 5001–60000ms', async () => {
     const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 30000 }),
+      makeMaterializationParams({ latencyMs: 30000 })
     );
     expect(result.latencyBand).toBe('operational');
   });
 
   it('T42: degraded band for latency > 60000ms', async () => {
     const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 120000 }),
+      makeMaterializationParams({ latencyMs: 120000 })
     );
     expect(result.latencyBand).toBe('degraded');
   });
 
   it('T43: boundary — exactly 5000ms is near_realtime', async () => {
-    const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 5000 }),
-    );
+    const result = await recordInboxMaterialization(makeMaterializationParams({ latencyMs: 5000 }));
     expect(result.latencyBand).toBe('near_realtime');
   });
 
   it('T44: boundary — exactly 60000ms is operational', async () => {
     const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 60000 }),
+      makeMaterializationParams({ latencyMs: 60000 })
     );
     expect(result.latencyBand).toBe('operational');
   });
 
   it('T45: boundary — 60001ms is degraded', async () => {
     const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 60001 }),
+      makeMaterializationParams({ latencyMs: 60001 })
     );
     expect(result.latencyBand).toBe('degraded');
   });
 
   it('T46: zero latency is near_realtime', async () => {
-    const result = await recordInboxMaterialization(
-      makeMaterializationParams({ latencyMs: 0 }),
-    );
+    const result = await recordInboxMaterialization(makeMaterializationParams({ latencyMs: 0 }));
     expect(result.latencyBand).toBe('near_realtime');
   });
 
@@ -729,13 +721,13 @@ describe('MyWork Roof — Inbox Materialization (Decision W7-3)', () => {
 
   it('T49: recordInboxMaterialization rejects negative latency', async () => {
     await expect(
-      recordInboxMaterialization(makeMaterializationParams({ latencyMs: -1 })),
+      recordInboxMaterialization(makeMaterializationParams({ latencyMs: -1 }))
     ).rejects.toThrow(ZodError);
   });
 
   it('T50: recordInboxMaterialization rejects empty eventSourceRef', async () => {
     await expect(
-      recordInboxMaterialization(makeMaterializationParams({ eventSourceRef: '' })),
+      recordInboxMaterialization(makeMaterializationParams({ eventSourceRef: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -761,7 +753,7 @@ describe('MyWork Roof — Calendar Phasing (Decision W7-4)', () => {
         phaseName: 'phase_b_external_sync',
         status: 'blocked',
         blockedBy: 'wave_5_connector_platform',
-      }),
+      })
     );
 
     expect(result.phaseName).toBe('phase_b_external_sync');
@@ -777,7 +769,7 @@ describe('MyWork Roof — Calendar Phasing (Decision W7-4)', () => {
 
   it('T54: phase A can be completed independently of phase B', async () => {
     const phaseA = await setCalendarPhase(
-      makeCalendarPhaseParams({ phaseName: 'phase_a_internal', status: 'completed' }),
+      makeCalendarPhaseParams({ phaseName: 'phase_a_internal', status: 'completed' })
     );
     expect(phaseA.status).toBe('completed');
 
@@ -786,7 +778,7 @@ describe('MyWork Roof — Calendar Phasing (Decision W7-4)', () => {
         phaseName: 'phase_b_external_sync',
         status: 'blocked',
         blockedBy: 'wave_5_connector_platform',
-      }),
+      })
     );
     expect(phaseB.status).toBe('blocked');
   });
@@ -818,7 +810,7 @@ describe('MyWork Roof — Calendar Phasing (Decision W7-4)', () => {
       setCalendarPhase({
         ...makeCalendarPhaseParams(),
         status: 'invalid_status' as any,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -872,7 +864,7 @@ describe('MyWork Roof — Org Isolation', () => {
 
   it('T63: setCanonicalObjectState stores org-scoped data', async () => {
     const result = await setCanonicalObjectState(
-      makeSetStateParams({ organizationId: OTHER_ORG_ID }),
+      makeSetStateParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
 
@@ -882,14 +874,14 @@ describe('MyWork Roof — Org Isolation', () => {
 
   it('T64: classifyHomeBlock stores org-scoped data', async () => {
     const result = await classifyHomeBlock(
-      makeClassifyBlockParams({ organizationId: OTHER_ORG_ID }),
+      makeClassifyBlockParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });
 
   it('T65: recordInboxMaterialization stores org-scoped data', async () => {
     const result = await recordInboxMaterialization(
-      makeMaterializationParams({ organizationId: OTHER_ORG_ID }),
+      makeMaterializationParams({ organizationId: OTHER_ORG_ID })
     );
     expect(result.organizationId).toBe(OTHER_ORG_ID);
   });

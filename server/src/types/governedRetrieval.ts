@@ -13,7 +13,11 @@
 import { z } from 'zod';
 
 import type { ConsumerClass, RetrievalScopeToken, ScopeType } from './contextSnapshot.js';
-import { ConsumerClassValues, RetrievalScopeTokenSchema, ScopeTypeValues } from './contextSnapshot.js';
+import {
+  ConsumerClassValues,
+  RetrievalScopeTokenSchema,
+  ScopeTypeValues,
+} from './contextSnapshot.js';
 
 // ==========================================
 // ENUMS / LITERALS
@@ -51,7 +55,13 @@ export const SensitivityLabelValues = ['public', 'internal', 'confidential'] as 
 export type SensitivityLabel = (typeof SensitivityLabelValues)[number];
 
 /** Freshness states (§2.3 of analysis packet). */
-export const FreshnessStateValues = ['fresh', 'stale', 'drifted', 'disconnected', 'archived'] as const;
+export const FreshnessStateValues = [
+  'fresh',
+  'stale',
+  'drifted',
+  'disconnected',
+  'archived',
+] as const;
 export type FreshnessState = (typeof FreshnessStateValues)[number];
 
 /** Trust class for retrieval results. */
@@ -74,7 +84,12 @@ export const PipelineStageValues = [
 export type PipelineStage = (typeof PipelineStageValues)[number];
 
 /** Retrieval request status. */
-export const RetrievalRequestStatusValues = ['pending', 'processing', 'completed', 'failed'] as const;
+export const RetrievalRequestStatusValues = [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+] as const;
 export type RetrievalRequestStatus = (typeof RetrievalRequestStatusValues)[number];
 
 // ==========================================
@@ -235,7 +250,7 @@ export const CreateRetrievalRequestParamsSchema = z
       message:
         'Interactive consumers (chat, execution, worker) require contextSnapshotId. ' +
         'Background consumers require either contextSnapshotId or retrievalScopeToken.',
-    },
+    }
   );
 
 export type CreateRetrievalRequestParams = z.input<typeof CreateRetrievalRequestParamsSchema>;

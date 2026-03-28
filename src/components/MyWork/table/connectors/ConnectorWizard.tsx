@@ -1,4 +1,3 @@
-import React, { useCallback, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,16 +13,14 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Modal } from '@/components/ui/primitives/Modal';
+
 import { ConnectorIcon, connectorMeta } from './ConnectorIcons';
-import type {
-  ConnectorConfig,
-  ConnectorType,
-  FieldMapping,
-} from './useConnectors';
+import type { ConnectorConfig, ConnectorType, FieldMapping } from './useConnectors';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -39,12 +36,9 @@ interface ConnectorWizardProps {
   /** Injected from useConnectors */
   testConnection: (
     config: Record<string, unknown>,
-    type: ConnectorType,
+    type: ConnectorType
   ) => Promise<{ ok: boolean; error?: string; fields?: string[] }>;
-  autoMap: (args: {
-    id: string;
-    sourceFields: string[];
-  }) => Promise<{ mappings: FieldMapping[] }>;
+  autoMap: (args: { id: string; sourceFields: string[] }) => Promise<{ mappings: FieldMapping[] }>;
   create: (payload: any) => Promise<any>;
   isCreating?: boolean;
 }
@@ -72,7 +66,14 @@ const TRANSFORMS = [
   { value: 'date_format', labelEn: 'Date format', labelPl: 'Format daty' },
 ] as const;
 
-const CONNECTOR_TYPES: ConnectorType[] = ['csv', 'google_sheets', 'airtable', 'postgresql', 'jira', 'webhook'];
+const CONNECTOR_TYPES: ConnectorType[] = [
+  'csv',
+  'google_sheets',
+  'airtable',
+  'postgresql',
+  'jira',
+  'webhook',
+];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -170,16 +171,14 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       case 2: {
         if (!name.trim()) return false;
         if (connectorType === 'csv') return !!config.fileData;
-        if (connectorType === 'google_sheets')
-          return !!(config.spreadsheetId && config.apiKey);
+        if (connectorType === 'google_sheets') return !!(config.spreadsheetId && config.apiKey);
         if (connectorType === 'airtable')
           return !!(config.baseId && config.apiToken && config.tableName);
         if (connectorType === 'postgresql')
           return !!(config.host && config.database && config.user);
         if (connectorType === 'jira')
           return !!(config.domain && config.email && config.jiraApiToken);
-        if (connectorType === 'webhook')
-          return true;
+        if (connectorType === 'webhook') return true;
         return false;
       }
       case 3:
@@ -208,7 +207,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               sourceField: f,
               targetField: null,
               inferredType: undefined,
-            })),
+            }))
           );
         }
         toast.success(isPl ? 'Połączenie OK' : 'Connection successful');
@@ -239,20 +238,17 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     }
   }, [sourceFields, autoMap, isPl]);
 
-  const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1] ?? '';
-        setConfig((prev) => ({ ...prev, fileData: base64, fileName: file.name }));
-      };
-      reader.readAsDataURL(file);
-    },
-    [],
-  );
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1] ?? '';
+      setConfig((prev) => ({ ...prev, fileData: base64, fileName: file.name }));
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   const handleCreate = useCallback(async () => {
     if (!connectorType) return;
@@ -273,8 +269,18 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       toast.error(isPl ? 'Nie udało się utworzyć konektora' : 'Failed to create connector');
     }
   }, [
-    connectorType, name, tableId, configPayload, mappings,
-    scheduleEnabled, interval, runNow, create, onCreated, onClose, isPl,
+    connectorType,
+    name,
+    tableId,
+    configPayload,
+    mappings,
+    scheduleEnabled,
+    interval,
+    runNow,
+    create,
+    onCreated,
+    onClose,
+    isPl,
   ]);
 
   const nextStep = () => setStep((s) => Math.min(s + 1, 5) as WizardStep);
@@ -489,7 +495,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             </div>
           </div>
           <div>
-            <label className={labelCls}>{isPl ? 'Tabela lub zapytanie SQL' : 'Table or SQL query'}</label>
+            <label className={labelCls}>
+              {isPl ? 'Tabela lub zapytanie SQL' : 'Table or SQL query'}
+            </label>
             <input
               className={inputCls}
               value={config.tableOrQuery ?? ''}
@@ -533,7 +541,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             </div>
           </div>
           <div>
-            <label className={labelCls}>{isPl ? 'Projekt (opcjonalnie)' : 'Project (optional)'}</label>
+            <label className={labelCls}>
+              {isPl ? 'Projekt (opcjonalnie)' : 'Project (optional)'}
+            </label>
             <input
               className={inputCls}
               value={config.project ?? ''}
@@ -555,13 +565,17 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
 
       {connectorType === 'webhook' && (
         <div>
-          <label className={labelCls}>{isPl ? 'Sekret webhooka (opcjonalnie)' : 'Webhook secret (optional)'}</label>
+          <label className={labelCls}>
+            {isPl ? 'Sekret webhooka (opcjonalnie)' : 'Webhook secret (optional)'}
+          </label>
           <input
             className={inputCls}
             type="password"
             value={config.webhookSecret ?? ''}
             onChange={(e) => setConfig((p) => ({ ...p, webhookSecret: e.target.value }))}
-            placeholder={isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'}
+            placeholder={
+              isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'
+            }
           />
           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
             {isPl
@@ -591,9 +605,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             {sourceFields.length > 0 && ` (${sourceFields.length} ${isPl ? 'pól' : 'fields'})`}
           </span>
         )}
-        {testStatus === 'failed' && (
-          <span className="text-xs text-red-500">{testError}</span>
-        )}
+        {testStatus === 'failed' && <span className="text-xs text-red-500">{testError}</span>}
       </div>
     </div>
   );
@@ -617,11 +629,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           disabled={isAutoMapping}
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors disabled:opacity-50"
         >
-          {isAutoMapping ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Sparkles size={12} />
-          )}
+          {isAutoMapping ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {isPl ? 'Auto-mapowanie' : 'Auto-map'}
         </button>
       </div>
@@ -737,9 +745,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={() => setScheduleEnabled((v) => !v)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            scheduleEnabled
-              ? 'bg-primary-500'
-              : 'bg-slate-200 dark:bg-navy-700'
+            scheduleEnabled ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-700'
           }`}
         >
           <span
@@ -796,7 +802,13 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
           label={isPl ? 'Typ' : 'Type'}
-          value={connectorType ? (isPl ? connectorMeta[connectorType].labelPl : connectorMeta[connectorType].labelEn) : '—'}
+          value={
+            connectorType
+              ? isPl
+                ? connectorMeta[connectorType].labelPl
+                : connectorMeta[connectorType].labelEn
+              : '—'
+          }
           icon={connectorType ? <ConnectorIcon type={connectorType} size={16} /> : undefined}
         />
         <SummaryCard label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
@@ -808,7 +820,8 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           label={isPl ? 'Harmonogram' : 'Schedule'}
           value={
             scheduleEnabled
-              ? INTERVALS.find((i) => i.value === interval)?.[isPl ? 'labelPl' : 'labelEn'] ?? interval
+              ? (INTERVALS.find((i) => i.value === interval)?.[isPl ? 'labelPl' : 'labelEn'] ??
+                interval)
               : isPl
                 ? 'Wyłączony'
                 : 'Disabled'
@@ -841,11 +854,16 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
   /* ---- Step renderer ---- */
   const renderCurrentStep = () => {
     switch (step) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      case 3: return renderStep3();
-      case 4: return renderStep4();
-      case 5: return renderStep5();
+      case 1:
+        return renderStep1();
+      case 2:
+        return renderStep2();
+      case 3:
+        return renderStep3();
+      case 4:
+        return renderStep4();
+      case 5:
+        return renderStep5();
     }
   };
 
@@ -922,11 +940,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           disabled={isCreating}
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors disabled:opacity-40"
         >
-          {isCreating ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Plus size={14} />
-          )}
+          {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
           {isPl ? 'Utwórz konektor' : 'Create connector'}
         </button>
       )}
@@ -938,7 +952,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       open={open}
       onClose={onClose}
       title={isPl ? 'Nowy konektor danych' : 'New Data Connector'}
-      description={isPl ? 'Importuj dane z zewnętrznego źródła' : 'Import data from an external source'}
+      description={
+        isPl ? 'Importuj dane z zewnętrznego źródła' : 'Import data from an external source'
+      }
       size="xl"
       footer={footer}
     >

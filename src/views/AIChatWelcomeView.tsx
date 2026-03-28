@@ -94,9 +94,7 @@ const prefersReducedMotion = (): boolean => {
 
 const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value.trim(),
-  );
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
@@ -314,7 +312,9 @@ export const AIChatWelcomeView: React.FC = () => {
   const latestUserGoalHint = useMemo(() => {
     const latestUserMessage = [...activeChatMessages]
       .reverse()
-      .find((message) => message.role === 'user' && String(message.content || '').trim().length > 0);
+      .find(
+        (message) => message.role === 'user' && String(message.content || '').trim().length > 0
+      );
     return String(latestUserMessage?.content || '').trim();
   }, [activeChatMessages]);
 

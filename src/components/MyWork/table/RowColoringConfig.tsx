@@ -32,12 +32,27 @@ const OPERATOR_LABELS: Record<RowColorOperator, { en: string; pl: string }> = {
 };
 
 const PRESET_COLORS = [
-  '#fee2e2', '#fef3c7', '#d1fae5', '#dbeafe', '#ede9fe',
-  '#fce7f3', '#ccfbf1', '#e0e7ff', '#fef9c3', '#f3e8ff',
-  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
+  '#fee2e2',
+  '#fef3c7',
+  '#d1fae5',
+  '#dbeafe',
+  '#ede9fe',
+  '#fce7f3',
+  '#ccfbf1',
+  '#e0e7ff',
+  '#fef9c3',
+  '#f3e8ff',
+  '#ef4444',
+  '#f59e0b',
+  '#10b981',
+  '#3b82f6',
+  '#8b5cf6',
 ];
 
-export function getRowColor(record: { data?: Record<string, any> }, rules: RowColorRule[]): string | undefined {
+export function getRowColor(
+  record: { data?: Record<string, any> },
+  rules: RowColorRule[]
+): string | undefined {
   for (const rule of rules) {
     const val = record.data?.[rule.fieldId];
     switch (rule.operator) {
@@ -48,10 +63,12 @@ export function getRowColor(record: { data?: Record<string, any> }, rules: RowCo
         if (typeof val === 'string' && val.includes(rule.value || '')) return rule.color;
         break;
       case 'is_empty':
-        if (val == null || val === '' || (Array.isArray(val) && val.length === 0)) return rule.color;
+        if (val == null || val === '' || (Array.isArray(val) && val.length === 0))
+          return rule.color;
         break;
       case 'is_not_empty':
-        if (val != null && val !== '' && !(Array.isArray(val) && val.length === 0)) return rule.color;
+        if (val != null && val !== '' && !(Array.isArray(val) && val.length === 0))
+          return rule.color;
         break;
     }
   }
@@ -75,20 +92,26 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
     const firstField = fields[0]?.key || '';
     onChange([
       ...rules,
-      { id: nextRuleId(), fieldId: firstField, operator: 'equals', value: '', color: PRESET_COLORS[rules.length % PRESET_COLORS.length] },
+      {
+        id: nextRuleId(),
+        fieldId: firstField,
+        operator: 'equals',
+        value: '',
+        color: PRESET_COLORS[rules.length % PRESET_COLORS.length],
+      },
     ]);
   }, [fields, onChange, rules]);
 
   const removeRule = useCallback(
     (id: string) => onChange(rules.filter((r) => r.id !== id)),
-    [onChange, rules],
+    [onChange, rules]
   );
 
   const updateRule = useCallback(
     (id: string, patch: Partial<RowColorRule>) => {
       onChange(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
     },
-    [onChange, rules],
+    [onChange, rules]
   );
 
   return (
@@ -131,14 +154,18 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                 className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
               >
                 {fields.map((f) => (
-                  <option key={f.key} value={f.key}>{f.header}</option>
+                  <option key={f.key} value={f.key}>
+                    {f.header}
+                  </option>
                 ))}
               </select>
 
               {/* Operator select */}
               <select
                 value={rule.operator}
-                onChange={(e) => updateRule(rule.id, { operator: e.target.value as RowColorOperator })}
+                onChange={(e) =>
+                  updateRule(rule.id, { operator: e.target.value as RowColorOperator })
+                }
                 className="w-28 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
               >
                 {(Object.keys(OPERATOR_LABELS) as RowColorOperator[]).map((op) => (

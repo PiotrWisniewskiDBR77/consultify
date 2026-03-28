@@ -8,8 +8,8 @@ import {
   computeModel,
   getModel,
   getOutputs,
-  persistComputeResult,
   type PeriodOutput,
+  persistComputeResult,
 } from './financialModelingService.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
@@ -81,7 +81,9 @@ function normalizeStatus(raw: any): ValuationStatus {
 }
 
 function normalizeAnalysisStatus(raw: any): 'DRAFT' | 'REVIEW' | 'APPROVED' {
-  const s = String(raw || '').trim().toUpperCase();
+  const s = String(raw || '')
+    .trim()
+    .toUpperCase();
   if (s === 'APPROVED' || s === 'COMPLETED') return 'APPROVED';
   if (s === 'REVIEW' || s === 'IN_PROGRESS') return 'REVIEW';
   return 'DRAFT';
@@ -101,7 +103,11 @@ async function assertValuationSourceEligible(
       [sourceId, orgId]
     );
     if (!budget) throw new Error('Source budget not found');
-    if (String(budget.status || '').trim().toUpperCase() !== 'APPROVED') {
+    if (
+      String(budget.status || '')
+        .trim()
+        .toUpperCase() !== 'APPROVED'
+    ) {
       throw new Error('Budget must be approved before it can seed a valuation');
     }
     return;
@@ -137,7 +143,8 @@ export async function getOrgDefaultWacc(orgId: string): Promise<number> {
       [orgId]
     );
     if (row?.setting_value) {
-      const parsed = typeof row.setting_value === 'string' ? JSON.parse(row.setting_value) : row.setting_value;
+      const parsed =
+        typeof row.setting_value === 'string' ? JSON.parse(row.setting_value) : row.setting_value;
       if (parsed?.defaultWacc != null) return Number(parsed.defaultWacc);
     }
   } catch {
@@ -153,13 +160,20 @@ export async function getOrgFinanceSettings(orgId: string): Promise<Record<strin
       [orgId]
     );
     if (row?.setting_value) {
-      return typeof row.setting_value === 'string' ? JSON.parse(row.setting_value) : row.setting_value;
+      return typeof row.setting_value === 'string'
+        ? JSON.parse(row.setting_value)
+        : row.setting_value;
     }
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
   return { defaultWacc: 12, defaultCurrency: 'PLN', defaultHorizonYears: 5 };
 }
 
-export async function setOrgFinanceSettings(orgId: string, settings: Record<string, any>): Promise<void> {
+export async function setOrgFinanceSettings(
+  orgId: string,
+  settings: Record<string, any>
+): Promise<void> {
   await dbRun(
     `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
      VALUES (?, 'finance', ?, datetime('now'))`,
@@ -167,7 +181,10 @@ export async function setOrgFinanceSettings(orgId: string, settings: Record<stri
   );
 }
 
-export function defaultAssumptions(horizonYears: number = 5, orgWacc?: number): ValuationAssumptions {
+export function defaultAssumptions(
+  horizonYears: number = 5,
+  orgWacc?: number
+): ValuationAssumptions {
   const wacc = orgWacc ?? 12;
   return {
     horizonYears,
@@ -403,7 +420,11 @@ async function loadForecastFromBudget(
     [budgetId, orgId]
   );
   if (!budget) throw new Error('Source budget not found');
-  if (String(budget.status || '').trim().toUpperCase() !== 'APPROVED') {
+  if (
+    String(budget.status || '')
+      .trim()
+      .toUpperCase() !== 'APPROVED'
+  ) {
     throw new Error('Budget must be approved before valuation can use it');
   }
 
@@ -595,13 +616,13 @@ async function loadForecastFromFinancialAnalysis(
     const revenue = getLineValue(statementData.pl, ['REVENUE'], period);
     const ebitda =
       getLineValue(statementData.pl, ['EBITDA'], period) ||
-      (revenue -
+      revenue -
         Math.abs(getLineValue(statementData.pl, ['COGS'], period)) -
-        Math.abs(getLineValue(statementData.pl, ['OPEX'], period)));
+        Math.abs(getLineValue(statementData.pl, ['OPEX'], period));
     const operatingCf =
       getLineValue(statementData.cf, ['OPERATING_CF', 'OPERATING_CASH_FLOW'], period) ||
-      (getLineValue(statementData.pl, ['NET_INCOME'], period) +
-        Math.abs(getLineValue(statementData.pl, ['DEPRECIATION'], period)));
+      getLineValue(statementData.pl, ['NET_INCOME'], period) +
+        Math.abs(getLineValue(statementData.pl, ['DEPRECIATION'], period));
     const capex =
       Math.abs(getLineValue(statementData.cf, ['CAPEX_CF', 'CAPEX', 'CFI'], period)) || 0;
     return {
@@ -995,26 +1016,29 @@ function buildDriverDecomposition(
 
   if (waccPct > 0) {
     const deltaWacc = -1;
-    const approxImpact = ev > 0 ? (ev * Math.abs(deltaWacc) * 0.08) : 0;
+    const approxImpact = ev > 0 ? ev * Math.abs(deltaWacc) * 0.08 : 0;
     drivers.push({
       driver: 'WACC (Discount Rate)',
       currentValue: `${waccPct.toFixed(1)}%`,
       change: `${deltaWacc}pp`,
       evImpactDirection: '↑',
-      evImpactMagnitude: approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
+      evImpactMagnitude:
+        approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
       lever: 'De-risk execution, improve reporting discipline, strengthen governance',
     });
   }
 
   if (growthPct > 0) {
     const deltaGrowth = +0.5;
-    const approxImpact = ev > 0 && terminalShare != null ? (ev * terminalShare * deltaGrowth * 0.15) : 0;
+    const approxImpact =
+      ev > 0 && terminalShare != null ? ev * terminalShare * deltaGrowth * 0.15 : 0;
     drivers.push({
       driver: 'Terminal Growth Rate',
       currentValue: `${growthPct.toFixed(1)}%`,
       change: `+${deltaGrowth}pp`,
       evImpactDirection: '↑',
-      evImpactMagnitude: approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
+      evImpactMagnitude:
+        approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
       lever: 'Credible growth narrative backed by pipeline and market data',
     });
   }
@@ -1046,16 +1070,18 @@ function buildDriverDecomposition(
       currentValue: td.base != null ? String(td.base) : 'Current',
       change: td.high != null && td.low != null ? `${td.low} → ${td.high}` : 'Varied',
       evImpactDirection: '↕',
-      evImpactMagnitude: td.evHigh != null && td.evLow != null
-        ? `${Math.round(td.evLow).toLocaleString()} – ${Math.round(td.evHigh).toLocaleString()}`
-        : 'Significant',
+      evImpactMagnitude:
+        td.evHigh != null && td.evLow != null
+          ? `${Math.round(td.evLow).toLocaleString()} – ${Math.round(td.evHigh).toLocaleString()}`
+          : 'Significant',
       lever: `Sensitivity driver from tornado analysis`,
     });
   }
 
-  const summary = drivers.length > 0
-    ? `${drivers.length} key value drivers identified. WACC and growth rate are the primary levers; margin improvement and working capital efficiency provide additional upside.`
-    : 'No driver decomposition available.';
+  const summary =
+    drivers.length > 0
+      ? `${drivers.length} key value drivers identified. WACC and growth rate are the primary levers; margin improvement and working capital efficiency provide additional upside.`
+      : 'No driver decomposition available.';
 
   return { drivers, summary };
 }
@@ -1098,7 +1124,13 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
   const growthPct = Number(assumptions.terminalGrowthPercent || 3);
   const ev = Number(dcf.enterpriseValue ?? 0);
 
-  const driverDecomposition = buildDriverDecomposition(waccPct, growthPct, ev, terminalShare, tornado);
+  const driverDecomposition = buildDriverDecomposition(
+    waccPct,
+    growthPct,
+    ev,
+    terminalShare,
+    tornado
+  );
 
   const mkId = () => `rec-${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
@@ -1332,7 +1364,8 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
       isInvestmentAdvice: false,
       isLegalAdvice: false,
       isTaxAdvice: false,
-      regulatoryDisclaimer: 'This output is generated for informational and analytical purposes only. It does not represent regulated financial, legal, or tax advice. The platform operator is not a licensed financial advisor, broker, or legal counsel.',
+      regulatoryDisclaimer:
+        'This output is generated for informational and analytical purposes only. It does not represent regulated financial, legal, or tax advice. The platform operator is not a licensed financial advisor, broker, or legal counsel.',
     },
   };
 

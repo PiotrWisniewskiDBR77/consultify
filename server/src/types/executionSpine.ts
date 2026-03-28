@@ -77,11 +77,7 @@ export const MutationOperationValues = [
 ] as const;
 export type MutationOperation = (typeof MutationOperationValues)[number];
 
-export const ReversibilityValues = [
-  'reversible',
-  'partially_reversible',
-  'irreversible',
-] as const;
+export const ReversibilityValues = ['reversible', 'partially_reversible', 'irreversible'] as const;
 export type Reversibility = (typeof ReversibilityValues)[number];
 
 // ==========================================

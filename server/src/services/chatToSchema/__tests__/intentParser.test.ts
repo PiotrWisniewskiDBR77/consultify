@@ -4,7 +4,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { parseIntent, type ParsedIntent } from '../intentParser.js';
+import { type ParsedIntent, parseIntent } from '../intentParser.js';
 
 describe('IntentParser', () => {
   it('"Create a new table for leads" → create_table, confidence ≥ 0.9', () => {

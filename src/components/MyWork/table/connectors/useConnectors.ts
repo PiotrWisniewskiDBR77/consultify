@@ -1,13 +1,20 @@
-import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
+
 import { Api } from '@/services/api';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-export type ConnectorType = 'csv' | 'google_sheets' | 'airtable' | 'postgresql' | 'jira' | 'webhook';
+export type ConnectorType =
+  | 'csv'
+  | 'google_sheets'
+  | 'airtable'
+  | 'postgresql'
+  | 'jira'
+  | 'webhook';
 
 export interface FieldMapping {
   sourceField: string;
@@ -163,10 +170,11 @@ export function useConnectors(workspaceId: string) {
     },
   });
 
-  const autoMapMutation = useMutation<AutoMapResult, Error, { id: string; sourceFields: string[] }>({
-    mutationFn: ({ id, sourceFields }) =>
-      Api.post(`${base}/${id}/auto-map`, { sourceFields }),
-  });
+  const autoMapMutation = useMutation<AutoMapResult, Error, { id: string; sourceFields: string[] }>(
+    {
+      mutationFn: ({ id, sourceFields }) => Api.post(`${base}/${id}/auto-map`, { sourceFields }),
+    }
+  );
 
   const scheduleMutation = useMutation({
     mutationFn: ({ id, interval }: { id: string; interval: string }) =>
@@ -193,11 +201,14 @@ export function useConnectors(workspaceId: string) {
       queryFn: () => Api.get(`${base}/${connectorId}/runs`) as Promise<ConnectorRun[]>,
       enabled: !!connectorId,
     }),
-    [workspaceId, base],
+    [workspaceId, base]
   );
 
   const testConnection = useCallback(
-    async (config: Record<string, unknown>, type: ConnectorType): Promise<{ ok: boolean; error?: string; fields?: string[] }> => {
+    async (
+      config: Record<string, unknown>,
+      type: ConnectorType
+    ): Promise<{ ok: boolean; error?: string; fields?: string[] }> => {
       try {
         const res = await Api.post(`${base}/test-config`, { type, config });
         return res as { ok: boolean; error?: string; fields?: string[] };
@@ -205,7 +216,7 @@ export function useConnectors(workspaceId: string) {
         return { ok: false, error: err?.message ?? 'Connection failed' };
       }
     },
-    [base],
+    [base]
   );
 
   return useMemo(
@@ -239,11 +250,18 @@ export function useConnectors(workspaceId: string) {
       refetch: listQuery.refetch,
     }),
     [
-      listQuery, scheduledQuery,
-      createMutation, updateMutation, deleteMutation,
-      testMutation, runMutation, autoMapMutation,
-      scheduleMutation, unscheduleMutation,
-      testConnection, useRunHistory,
-    ],
+      listQuery,
+      scheduledQuery,
+      createMutation,
+      updateMutation,
+      deleteMutation,
+      testMutation,
+      runMutation,
+      autoMapMutation,
+      scheduleMutation,
+      unscheduleMutation,
+      testConnection,
+      useRunHistory,
+    ]
   );
 }

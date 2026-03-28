@@ -21,7 +21,10 @@ export const ForgotPasswordView: React.FC = () => {
       setStatus('sent');
     } catch (err: any) {
       setStatus('error');
-      setErrorMsg(err?.message || t('auth.forgotPassword.errorGeneric', 'Something went wrong. Please try again.'));
+      setErrorMsg(
+        err?.message ||
+          t('auth.forgotPassword.errorGeneric', 'Something went wrong. Please try again.')
+      );
     }
   };
 
@@ -31,15 +34,28 @@ export const ForgotPasswordView: React.FC = () => {
         <div className="w-full max-w-md space-y-6 text-center">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-              <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              <svg
+                className="h-6 w-6 text-green-600 dark:text-green-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('auth.forgotPassword.checkEmail', 'Check your email')}
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              {t('auth.forgotPassword.sentMessage', 'If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.')}
+              {t(
+                'auth.forgotPassword.sentMessage',
+                'If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.'
+              )}
             </p>
             <button
               onClick={() => navigate('/login')}
@@ -61,12 +77,18 @@ export const ForgotPasswordView: React.FC = () => {
             {t('auth.forgotPassword.title', 'Reset your password')}
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {t('auth.forgotPassword.subtitle', 'Enter your email address and we\'ll send you a link to reset your password.')}
+            {t(
+              'auth.forgotPassword.subtitle',
+              "Enter your email address and we'll send you a link to reset your password."
+            )}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
                 {t('auth.email', 'Email')}
               </label>
               <input

@@ -45,6 +45,7 @@ import {
   Layers,
   Lightbulb,
   Loader2,
+  type LucideIcon,
   MessageSquare,
   Minus,
   MoreVertical,
@@ -54,7 +55,6 @@ import {
   Sparkles,
   Square,
   Star,
-  type LucideIcon,
   X,
   Zap,
 } from 'lucide-react';
@@ -62,19 +62,18 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
-  PreviewActionBar,
-  PreviewDetailsSection,
-  PreviewMetaCard,
-  PreviewRelations,
   actionPillClass,
   type ActionRow,
   type ExtraCopyFormat,
   type MetaPill,
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
@@ -86,11 +85,12 @@ import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import {
-  V8MyWorkApi,
   type V8CanonicalInboxItem,
   type V8CanonicalInboxStats,
+  V8MyWorkApi,
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -274,7 +274,9 @@ const CANONICAL_SECTION_SET = new Set<InboxSection>([
   'other',
 ]);
 
-function mapInboxStatusToV8(status: InboxStatusTab): 'pending' | 'resolved' | 'snoozed' | undefined {
+function mapInboxStatusToV8(
+  status: InboxStatusTab
+): 'pending' | 'resolved' | 'snoozed' | undefined {
   switch (status) {
     case 'done':
       return 'resolved';
@@ -311,9 +313,7 @@ function mapCanonicalItemType(itemType: V8CanonicalInboxItem['itemType']): Inbox
   }
 }
 
-function mapCanonicalItemStatus(
-  status: V8CanonicalInboxItem['status']
-): InboxItem['itemStatus'] {
+function mapCanonicalItemStatus(status: V8CanonicalInboxItem['status']): InboxItem['itemStatus'] {
   switch (status) {
     case 'resolved':
       return 'done';
@@ -350,18 +350,15 @@ function buildCanonicalReason(section: InboxSection): string {
 function mapCanonicalItem(item: V8CanonicalInboxItem): InboxItem {
   const section = mapCanonicalSection(item.section);
   const sourceType =
-    item.sourceEntityType === 'ai'
-      ? 'ai'
-      : item.sourceEntityType === 'user'
-        ? 'user'
-        : 'system';
+    item.sourceEntityType === 'ai' ? 'ai' : item.sourceEntityType === 'user' ? 'user' : 'system';
   const itemStatus = mapCanonicalItemStatus(item.status);
   const dueAt = item.slaDeadline ? new Date(item.slaDeadline).toISOString() : undefined;
 
   return {
     id: item.id,
     type: mapCanonicalItemType(item.itemType),
-    itemType: item.itemType === 'mention' || item.itemType === 'escalation' ? 'signal' : item.itemType,
+    itemType:
+      item.itemType === 'mention' || item.itemType === 'escalation' ? 'signal' : item.itemType,
     section,
     title: item.title,
     description: item.description,
@@ -369,7 +366,8 @@ function mapCanonicalItem(item: V8CanonicalInboxItem): InboxItem {
     receivedAt: new Date(item.createdAt).toISOString(),
     dueDate: dueAt,
     urgency: item.priority,
-    severity: item.priority === 'critical' ? 'CRITICAL' : item.priority === 'high' ? 'WARNING' : 'INFO',
+    severity:
+      item.priority === 'critical' ? 'CRITICAL' : item.priority === 'high' ? 'WARNING' : 'INFO',
     sla: dueAt
       ? {
           dueAt,
@@ -379,8 +377,7 @@ function mapCanonicalItem(item: V8CanonicalInboxItem): InboxItem {
         }
       : undefined,
     linkedTaskId: item.sourceEntityType === 'task' ? item.sourceEntityId : undefined,
-    linkedDecisionId:
-      item.sourceEntityType === 'decision' ? item.sourceEntityId : undefined,
+    linkedDecisionId: item.sourceEntityType === 'decision' ? item.sourceEntityId : undefined,
     triaged: item.status !== 'pending',
     itemStatus,
     reason: buildCanonicalReason(section),
@@ -405,14 +402,22 @@ function buildInboxResponseFromCanonical(
   return {
     summary: {
       total: stats?.total ?? mappedItems.length,
-      critical: stats?.byPriority?.critical ?? mappedItems.filter((item) => item.urgency === 'critical').length,
+      critical:
+        stats?.byPriority?.critical ??
+        mappedItems.filter((item) => item.urgency === 'critical').length,
       newToday: mappedItems.filter((item) => new Date(item.receivedAt) >= todayStart).length,
       actionRequired:
         stats != null ? actionableCount : mappedItems.filter((item) => item.isActionable).length,
       counts: {
-        open: stats?.byStatus?.pending ?? mappedItems.filter((item) => item.itemStatus === 'open').length,
-        done: stats?.byStatus?.resolved ?? mappedItems.filter((item) => item.itemStatus === 'done').length,
-        saved: stats?.byStatus?.snoozed ?? mappedItems.filter((item) => item.itemStatus === 'saved').length,
+        open:
+          stats?.byStatus?.pending ??
+          mappedItems.filter((item) => item.itemStatus === 'open').length,
+        done:
+          stats?.byStatus?.resolved ??
+          mappedItems.filter((item) => item.itemStatus === 'done').length,
+        saved:
+          stats?.byStatus?.snoozed ??
+          mappedItems.filter((item) => item.itemStatus === 'saved').length,
         dismissed: 0,
       },
     },
@@ -1067,15 +1072,17 @@ const PreviewPane: React.FC<{
   );
 
   const metaPills: MetaPill[] = [
-    { label: isPolish ? kindCfg.labelPl : kindCfg.labelEn, className: kindCfg.pill, icon: KindIcon },
+    {
+      label: isPolish ? kindCfg.labelPl : kindCfg.labelEn,
+      className: kindCfg.pill,
+      icon: KindIcon,
+    },
     { label: u.label, className: u.pill, icon: UIcon },
   ];
 
   const metaTrailing = (
     <div className="flex flex-wrap items-center justify-end gap-1.5">
-      <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>
-        {receivedText}
-      </span>
+      <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
       {item.sla && sla.label !== '-' ? (
         <>
           <span className="text-slate-300 dark:text-navy-600">·</span>
@@ -1621,9 +1628,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             if (!Api.shouldFallbackToLegacyMyWorkInbox(error)) {
               throw error;
             }
-            return (Api.inboxGetTable({ status, limit: 200 }).catch(
-              () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
-            ) as Promise<InboxResponse>);
+            return Api.inboxGetTable({ status, limit: 200 }).catch(() =>
+              Api.get(`/my-work/inbox?limit=200&status=${status}`)
+            ) as Promise<InboxResponse>;
           }
         })(),
         (async () => {
@@ -1934,6 +1941,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     async (action: TriageAction) => {
       const selectedItems = filteredItems.filter((i) => selectedIds.has(i.id));
       if (selectedItems.length === 0) return;
+      if (action === 'snooze') return;
       try {
         const itemKeys = selectedItems.map((i) => i._key);
         const aiItems = selectedItems

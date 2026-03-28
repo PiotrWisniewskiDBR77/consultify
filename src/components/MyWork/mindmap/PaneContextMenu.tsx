@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { MENU_CONTAINER_CLASS, menuItemClass, type MenuItemBase } from './contextMenuTypes';
+import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
 export interface PaneContextMenuProps {
   x: number;
@@ -63,7 +63,7 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       onAction(action);
       onClose();
     },
-    [onAction, onClose],
+    [onAction, onClose]
   );
 
   const items: MenuItemBase[] = [
@@ -172,11 +172,7 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   const clampedY = Math.min(y, window.innerHeight - items.length * 34 - 20);
 
   return (
-    <div
-      ref={ref}
-      className={MENU_CONTAINER_CLASS}
-      style={{ left: clampedX, top: clampedY }}
-    >
+    <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
       {items.map((item) => {
         const Icon = item.icon;
         return (

@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -39,7 +39,9 @@ router.post(
 
     const parsed = entityStateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid entity state', details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: 'Invalid entity state', details: parsed.error.flatten() });
     }
 
     const result = generateContextualHints(parsed.data);

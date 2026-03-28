@@ -6,8 +6,8 @@
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import statusReportService from '../services/statusReportService.js';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import statusReportService from '../services/statusReportService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -30,7 +30,9 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
-    const reports = await statusReportService.listReports(paramStr(initiativeId), orgId, { limit: 1 });
+    const reports = await statusReportService.listReports(paramStr(initiativeId), orgId, {
+      limit: 1,
+    });
     const latest = reports[0];
     if (!latest) return res.json({ report: null });
     const full = await statusReportService.getReport(latest.id, orgId);
@@ -66,9 +68,15 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
     const { periodType = 'WEEKLY', periodDate } = req.body || {};
-    const result = await statusReportService.generateReport(orgId, paramStr(initiativeId), periodType, userId, {
-      periodDate,
-    });
+    const result = await statusReportService.generateReport(
+      orgId,
+      paramStr(initiativeId),
+      periodType,
+      userId,
+      {
+        periodDate,
+      }
+    );
     res.status(201).json(result);
   })
 );
@@ -110,7 +118,10 @@ router.post(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { id: reportId } = req.params;
-    const report = await statusReportService.getReport(paramStr(reportId), req.user!.organizationId!);
+    const report = await statusReportService.getReport(
+      paramStr(reportId),
+      req.user!.organizationId!
+    );
     if (!report) return res.status(404).json({ error: 'Report not found' });
     await statusReportService.approveReport(paramStr(reportId), userId);
     res.json({ success: true });

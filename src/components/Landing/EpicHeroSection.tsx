@@ -222,9 +222,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="font-black tracking-tight leading-[1.0] text-white"
               style={{ fontSize: 'clamp(40px, 5.5vw, 88px)' }}
             >
-              <span className="block">
-                {t('landing.profitHero.h1.line1', 'Consultify is the')}
-              </span>
+              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify is the')}</span>
               <span className="block text-white/75 mt-1">
                 {t('landing.profitHero.h1.line2', 'Spotify for')}
               </span>
@@ -320,7 +318,6 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 <Play size={14} className="text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Open Demo Now')}</span>
               </button>
-
             </motion.div>
 
             {/* Social proof micro-line */}

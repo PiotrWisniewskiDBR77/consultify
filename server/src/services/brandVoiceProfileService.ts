@@ -50,7 +50,10 @@ interface ContentViolation {
 // DEFAULTS
 // ==========================================
 
-const DEFAULT_PROFILE: Omit<BrandVoiceProfile, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'> = {
+const DEFAULT_PROFILE: Omit<
+  BrandVoiceProfile,
+  'id' | 'organizationId' | 'createdAt' | 'updatedAt'
+> = {
   registerPreferences: {
     default: 'professional',
     overrides: {},
@@ -89,8 +92,14 @@ function rowToProfile(row: any): BrandVoiceProfile {
   return {
     id: row.id,
     organizationId: row.organization_id,
-    registerPreferences: safeParseJSON(row.register_preferences, DEFAULT_PROFILE.registerPreferences),
-    vocabularyPreferences: safeParseJSON(row.vocabulary_preferences, DEFAULT_PROFILE.vocabularyPreferences),
+    registerPreferences: safeParseJSON(
+      row.register_preferences,
+      DEFAULT_PROFILE.registerPreferences
+    ),
+    vocabularyPreferences: safeParseJSON(
+      row.vocabulary_preferences,
+      DEFAULT_PROFILE.vocabularyPreferences
+    ),
     hedgingRules: safeParseJSON(row.hedging_rules, DEFAULT_PROFILE.hedgingRules),
     complianceMode: Boolean(row.compliance_mode),
     complianceRules: safeParseJSON(row.compliance_rules, DEFAULT_PROFILE.complianceRules),

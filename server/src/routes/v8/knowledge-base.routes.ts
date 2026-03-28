@@ -5,8 +5,8 @@
  * @module routes/v8/knowledge-base.routes
  */
 
-import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -45,7 +45,7 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     const categories = await KnowledgeBaseService.getCategories(language, false);
     return res.json({ data: { categories }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -59,7 +59,7 @@ publicKnowledgeBaseRoutes.get(
     const limit = parseBoundedLimit(firstParam(req.query.limit), 3, 20);
     const articles = await KnowledgeBaseService.getPublicPreview(language, limit);
     return res.json({ data: { articles }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -73,7 +73,7 @@ publicKnowledgeBaseRoutes.get(
     const limit = parseBoundedLimit(firstParam(req.query.limit), 4, 20);
     const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit);
     return res.json({ data: { articles }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -87,7 +87,10 @@ publicKnowledgeBaseRoutes.get(
     const categorySlug = firstParam(req.query.category);
     const search = firstParam(req.query.search);
     const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
-    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    const offset = Math.max(
+      0,
+      Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
+    );
 
     const result = await KnowledgeBaseService.getArticles({
       language,
@@ -99,7 +102,7 @@ publicKnowledgeBaseRoutes.get(
     });
 
     return res.json({ data: result, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -118,9 +121,11 @@ publicKnowledgeBaseRoutes.get(
     }
 
     const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
-    const publicArticles = articles.filter((article: { is_public?: boolean }) => article.is_public !== false);
+    const publicArticles = articles.filter(
+      (article: { is_public?: boolean }) => article.is_public !== false
+    );
     return res.json({ data: { articles: publicArticles }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -142,7 +147,7 @@ publicKnowledgeBaseRoutes.get(
     }
 
     return res.json({ data: { article }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -154,7 +159,9 @@ publicKnowledgeBaseRoutes.post(
   asyncHandler(async (req: Request, res: Response) => {
     const articleId = firstParam((req.params as { id?: string }).id);
     const source =
-      typeof req.body?.source === 'string' && req.body.source.trim() ? req.body.source.trim() : 'public_docs';
+      typeof req.body?.source === 'string' && req.body.source.trim()
+        ? req.body.source.trim()
+        : 'public_docs';
     const sessionId =
       typeof req.body?.sessionId === 'string' && req.body.sessionId.trim()
         ? req.body.sessionId.trim()
@@ -166,7 +173,7 @@ publicKnowledgeBaseRoutes.post(
 
     await KnowledgeBaseService.trackView(articleId, undefined, sessionId, source);
     return res.json({ data: { success: true }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -182,7 +189,7 @@ router.get(
 
     const categories = await KnowledgeBaseService.getCategories(language, includePrivate);
     return res.json({ data: { categories }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -197,7 +204,10 @@ router.get(
     const categorySlug = firstParam(req.query.category);
     const search = firstParam(req.query.search);
     const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
-    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    const offset = Math.max(
+      0,
+      Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
+    );
     const publicOnly = firstParam(req.query.public) === 'true';
     const moduleId = firstParam(req.query.module);
 
@@ -212,7 +222,7 @@ router.get(
     });
 
     return res.json({ data: result, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -233,7 +243,7 @@ router.get(
 
     const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
     return res.json({ data: { articles }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -256,7 +266,7 @@ router.get(
     }
 
     return res.json({ data: { article }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -269,12 +279,15 @@ router.post(
     getV8Context(req);
     const articleId = firstParam((req.params as { id?: string }).id);
     const source =
-      typeof req.body?.source === 'string' && req.body.source.trim() ? req.body.source.trim() : 'in_app';
+      typeof req.body?.source === 'string' && req.body.source.trim()
+        ? req.body.source.trim()
+        : 'in_app';
     const sessionId =
       typeof req.body?.sessionId === 'string' && req.body.sessionId.trim()
         ? req.body.sessionId.trim()
         : undefined;
-    const userId = typeof req.userId === 'string' && req.userId.trim() ? req.userId.trim() : undefined;
+    const userId =
+      typeof req.userId === 'string' && req.userId.trim() ? req.userId.trim() : undefined;
 
     if (!articleId) {
       return res.status(400).json({ error: 'id is required', code: 'KB_ARTICLE_ID_REQUIRED' });
@@ -282,7 +295,7 @@ router.post(
 
     await KnowledgeBaseService.trackView(articleId, userId, sessionId, source);
     return res.json({ data: { success: true }, meta: kbMeta() });
-  }),
+  })
 );
 
 /**
@@ -303,7 +316,7 @@ router.get(
 
     const articles = await KnowledgeBaseService.getContextualArticles(moduleId, language, limit);
     return res.json({ data: { articles }, meta: kbMeta() });
-  }),
+  })
 );
 
 export default router;

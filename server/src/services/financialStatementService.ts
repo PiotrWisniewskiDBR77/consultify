@@ -8,12 +8,12 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
+  type CanonicalStatementType,
   getCanonicalLineById,
   getRequiredCanonicalLineIds,
-  type CanonicalStatementType,
 } from './financeCanonicalRegistry.js';
-import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -227,7 +227,9 @@ async function runStatementTypeAwareWrite(
   } catch (error) {
     const needsLegacyFallback =
       isStatementTypeConstraintError(error) &&
-      statementTypeIndexes.some((index) => normalizeStatementTypeToken(normalizedParams[index]) === 'P&L');
+      statementTypeIndexes.some(
+        (index) => normalizeStatementTypeToken(normalizedParams[index]) === 'P&L'
+      );
     if (!needsLegacyFallback) throw error;
     const legacyParams = [...normalizedParams];
     for (const index of statementTypeIndexes) {
@@ -266,10 +268,15 @@ async function canUseStatementAliasTable(): Promise<boolean> {
       return aliasTableSupport;
     }
 
-    const rows = (await dbAll<{ name?: string }>(`PRAGMA table_info(financial_statement_line_aliases)`, [])) as Array<{
+    const rows = (await dbAll<{ name?: string }>(
+      `PRAGMA table_info(financial_statement_line_aliases)`,
+      []
+    )) as Array<{
       name?: string;
     }>;
-    const columns = new Set((rows || []).map((row) => String(row.name || '').trim()).filter(Boolean));
+    const columns = new Set(
+      (rows || []).map((row) => String(row.name || '').trim()).filter(Boolean)
+    );
     aliasTableSupport =
       columns.has('statement_line_id') &&
       columns.has('normalized_alias') &&
@@ -289,8 +296,24 @@ const TYPE_KEYWORDS: Record<string, { keywords: string[]; weight: number }[]> = 
   'P&L': [
     { keywords: ['income statement', 'profit and loss', 'profit & loss', 'p&l'], weight: 10 },
     { keywords: ['rachunek zysków i strat', 'rachunek wyników'], weight: 10 },
-    { keywords: ['gewinn- und verlustrechnung', 'gewinn und verlustrechnung', 'gesamtergebnisrechnung', 'konzern-gewinn- und verlustrechnung'], weight: 10 },
-    { keywords: ['compte de résultat', 'compte de resultat', 'compte de résultat consolidé', 'état du résultat net'], weight: 10 },
+    {
+      keywords: [
+        'gewinn- und verlustrechnung',
+        'gewinn und verlustrechnung',
+        'gesamtergebnisrechnung',
+        'konzern-gewinn- und verlustrechnung',
+      ],
+      weight: 10,
+    },
+    {
+      keywords: [
+        'compte de résultat',
+        'compte de resultat',
+        'compte de résultat consolidé',
+        'état du résultat net',
+      ],
+      weight: 10,
+    },
     { keywords: ['revenue', 'przychody', 'sales', 'sprzedaż'], weight: 3 },
     { keywords: ['umsatzerlöse', 'umsatz'], weight: 3 },
     { keywords: ["chiffre d'affaires", 'produits des ventes'], weight: 3 },
@@ -315,7 +338,7 @@ const TYPE_KEYWORDS: Record<string, { keywords: string[]; weight: number }[]> = 
     { keywords: ['bilan', 'bilan consolidé', 'état de la situation financière'], weight: 10 },
     { keywords: ['total assets', 'aktywa ogółem', 'aktywa razem'], weight: 5 },
     { keywords: ['bilanzsumme', 'summe aktiva', 'summe der aktiva'], weight: 5 },
-    { keywords: ['total actif', 'total de l\'actif'], weight: 5 },
+    { keywords: ['total actif', "total de l'actif"], weight: 5 },
     { keywords: ['total liabilities', 'zobowiązania ogółem'], weight: 4 },
     { keywords: ['summe verbindlichkeiten', 'summe schulden'], weight: 4 },
     { keywords: ['total passif', 'total des dettes'], weight: 4 },
@@ -338,11 +361,20 @@ const TYPE_KEYWORDS: Record<string, { keywords: string[]; weight: number }[]> = 
   CF: [
     { keywords: ['cash flow', 'cash flows', 'statement of cash flows'], weight: 10 },
     { keywords: ['rachunek przepływów pieniężnych', 'przepływy pieniężne'], weight: 10 },
-    { keywords: ['kapitalflussrechnung', 'konzern-kapitalflussrechnung', 'cashflow-rechnung'], weight: 10 },
-    { keywords: ['tableau des flux de trésorerie', 'flux de trésorerie', 'tableau de flux'], weight: 10 },
+    {
+      keywords: ['kapitalflussrechnung', 'konzern-kapitalflussrechnung', 'cashflow-rechnung'],
+      weight: 10,
+    },
+    {
+      keywords: ['tableau des flux de trésorerie', 'flux de trésorerie', 'tableau de flux'],
+      weight: 10,
+    },
     { keywords: ['operating activities', 'działalność operacyjna'], weight: 5 },
-    { keywords: ['betriebliche tätigkeit', 'laufende geschäftstätigkeit', 'operativer cashflow'], weight: 5 },
-    { keywords: ["activités opérationnelles", "activités d'exploitation"], weight: 5 },
+    {
+      keywords: ['betriebliche tätigkeit', 'laufende geschäftstätigkeit', 'operativer cashflow'],
+      weight: 5,
+    },
+    { keywords: ['activités opérationnelles', "activités d'exploitation"], weight: 5 },
     { keywords: ['investing activities', 'działalność inwestycyjna'], weight: 5 },
     { keywords: ['investitionstätigkeit', 'cashflow aus investitionstätigkeit'], weight: 5 },
     { keywords: ["activités d'investissement"], weight: 5 },
@@ -356,7 +388,9 @@ const TYPE_KEYWORDS: Record<string, { keywords: string[]; weight: number }[]> = 
 };
 
 function matchesTypeKeyword(text: string, keyword: string): boolean {
-  const normalizedKeyword = String(keyword || '').trim().toLowerCase();
+  const normalizedKeyword = String(keyword || '')
+    .trim()
+    .toLowerCase();
   if (!normalizedKeyword) return false;
   if (/^[\p{L}\d]+$/u.test(normalizedKeyword)) {
     const escaped = normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -443,7 +477,11 @@ function detectCurrency(text: string): string {
   const reportingPhrases: [RegExp, string, number][] = [
     [/in\s+millions?\s+of\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
     [/in\s+thousands?\s+of\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
-    [/(?:amounts?\s+(?:are\s+)?in|expressed\s+in|denominated\s+in|reported\s+in)\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
+    [
+      /(?:amounts?\s+(?:are\s+)?in|expressed\s+in|denominated\s+in|reported\s+in)\s+(?:u\.?s\.?\s*)?dollars/i,
+      'USD',
+      10,
+    ],
     [/\(\s*in\s+(?:millions?|thousands?|billions?)(?:\s*,\s*except)?\s*\)/i, 'USD', 6],
     [/form\s+10-k/i, 'USD', 4],
     [/form\s+20-f/i, 'USD', 3],
@@ -496,9 +534,12 @@ function detectCurrency(text: string): string {
 function detectScaling(text: string): DetectionResult['scaling'] {
   const headerArea = text.substring(0, 30000).toLowerCase();
 
-  const millionsRe = /(?:in\s+millions?|w\s+milionach|mln\s*(?:zł|pln|eur|usd|€|\$)?|in\s+mio\.?\s*(?:eur|€)?|\(\s*000\s*000\s*\)|en\s+millions|millions?\s+d[''e]?\s*(?:euros|dollars|pounds)|\$\s*million(?:s)?\b)\b/;
-  const thousandsRe = /(?:in\s+thousands?|w\s+tysiącach|tys\.?\s*(?:zł|pln)?|in\s+tsd\.?\s*(?:eur|€)?|in\s+tausend|\(\s*000\s*\)|en\s+milliers|milliers\s+d[''e]?\s*(?:euros|dollars))\b/;
-  const billionsRe = /(?:in\s+billions?|w\s+miliardach|in\s+mrd\.?|mld|en\s+milliards|milliards\s+d[''e]?\s*(?:euros|dollars))\b/;
+  const millionsRe =
+    /(?:in\s+millions?|w\s+milionach|mln\s*(?:zł|pln|eur|usd|€|\$)?|in\s+mio\.?\s*(?:eur|€)?|\(\s*000\s*000\s*\)|en\s+millions|millions?\s+d[''e]?\s*(?:euros|dollars|pounds)|\$\s*million(?:s)?\b)\b/;
+  const thousandsRe =
+    /(?:in\s+thousands?|w\s+tysiącach|tys\.?\s*(?:zł|pln)?|in\s+tsd\.?\s*(?:eur|€)?|in\s+tausend|\(\s*000\s*\)|en\s+milliers|milliers\s+d[''e]?\s*(?:euros|dollars))\b/;
+  const billionsRe =
+    /(?:in\s+billions?|w\s+miliardach|in\s+mrd\.?|mld|en\s+milliards|milliards\s+d[''e]?\s*(?:euros|dollars))\b/;
 
   if (millionsRe.test(headerArea)) return 'millions';
   if (thousandsRe.test(headerArea)) return 'thousands';
@@ -508,12 +549,19 @@ function detectScaling(text: string): DetectionResult['scaling'] {
   // near financial statement headers — search a much wider window
   const deepLimit = Math.min(text.length, 800000);
   const deepArea = text.substring(0, deepLimit).toLowerCase();
-  const stmtHeaderRe = /\b(?:consolidated\s+(?:balance\s+sheets?|statements?\s+of\s+(?:income|operations|cash\s+flows|comprehensive\s+income|financial\s+position))|group\s+(?:income\s+statement|balance\s+sheet|cash\s+flow)|financial\s+and\s+operating\s+performance)\b/g;
+  const stmtHeaderRe =
+    /\b(?:consolidated\s+(?:balance\s+sheets?|statements?\s+of\s+(?:income|operations|cash\s+flows|comprehensive\s+income|financial\s+position))|group\s+(?:income\s+statement|balance\s+sheet|cash\s+flow)|financial\s+and\s+operating\s+performance)\b/g;
 
   for (const m of deepArea.matchAll(stmtHeaderRe)) {
     const vicinity = deepArea.substring(Math.max(0, m.index! - 200), m.index! + 400);
-    if (/\(\s*in\s+millions?\b/i.test(vicinity) || /\$\s*million/i.test(vicinity) || /million(?:s)?\s+except/i.test(vicinity)) return 'millions';
-    if (/\(\s*in\s+thousands?\b/i.test(vicinity) || /\$\s*thousand/i.test(vicinity)) return 'thousands';
+    if (
+      /\(\s*in\s+millions?\b/i.test(vicinity) ||
+      /\$\s*million/i.test(vicinity) ||
+      /million(?:s)?\s+except/i.test(vicinity)
+    )
+      return 'millions';
+    if (/\(\s*in\s+thousands?\b/i.test(vicinity) || /\$\s*thousand/i.test(vicinity))
+      return 'thousands';
     if (/\(\s*in\s+billions?\b/i.test(vicinity)) return 'billions';
   }
 
@@ -589,7 +637,11 @@ function detectPeriod(text: string): {
   if (annualReportYear) {
     const y = parseInt(annualReportYear[1], 10);
     if (isPlausibleReportingYear(y)) {
-      return { periodStart: `${y - 1}-01-01`, periodEnd: `${y - 1}-12-31`, periodLabel: String(y - 1) };
+      return {
+        periodStart: `${y - 1}-01-01`,
+        periodEnd: `${y - 1}-12-31`,
+        periodLabel: String(y - 1),
+      };
     }
   }
 
@@ -635,7 +687,15 @@ function detectLanguage(text: string): DetectionResult['language'] {
     'depreciation',
   ];
   const deMarkers = ['umsatz', 'gewinn', 'verbindlichkeiten', 'vermögen', 'bilanz', 'eigenkapital'];
-  const frMarkers = ['résultat', 'capitaux', 'immobilisations', 'trésorerie', 'créances', 'dettes', 'bénéfice'];
+  const frMarkers = [
+    'résultat',
+    'capitaux',
+    'immobilisations',
+    'trésorerie',
+    'créances',
+    'dettes',
+    'bénéfice',
+  ];
   const countHits = (markers: string[]) => markers.filter((m) => text.includes(m)).length;
   const pl = countHits(plMarkers);
   const en = countHits(enMarkers);
@@ -658,7 +718,11 @@ const DOCUMENT_FAMILY_REGISTRY: Record<string, Omit<DocumentFamilyProfile, 'temp
   gpw_quarterly_consolidated: {
     displayName: 'GPW Quarterly Consolidated',
     matcherTerms: ['skonsolidowany raport kwartalny', 'consolidated quarterly report'],
-    sectionKeywords: ['bilans', 'sprawozdanie z sytuacji finansowej', 'statement of financial position'],
+    sectionKeywords: [
+      'bilans',
+      'sprawozdanie z sytuacji finansowej',
+      'statement of financial position',
+    ],
     valueColumnStrategy: 'quarter_end_primary',
   },
   annual_financial_report: {
@@ -717,22 +781,31 @@ function isYearInReportingContext(text: string, matchIndex: number): boolean {
   const windowStart = Math.max(0, matchIndex - 60);
   const windowEnd = Math.min(text.length, matchIndex + 30);
   const context = text.slice(windowStart, windowEnd).toLowerCase();
-  if (/\b(?:od|do|za|okres|na dzień|rok|31\.12|01\.01|fy|period|quarter|geschäftsjahr|zum|für\s+das|halbjahr|stichtag)\b/.test(context)) return true;
+  if (
+    /\b(?:od|do|za|okres|na dzień|rok|31\.12|01\.01|fy|period|quarter|geschäftsjahr|zum|für\s+das|halbjahr|stichtag)\b/.test(
+      context
+    )
+  )
+    return true;
   if (/\b(?:r-|rs-|raport|sprawozdanie)\b/.test(context)) return true;
   if (/\d{2}\.\d{2}\.\d{4}/.test(context)) return true;
   return false;
 }
 
 function extractPeriodGrid(text: string): StatementPeriodColumn[] {
-  const headerLines = String(text || '').split(/\r?\n/).slice(0, 120);
+  const headerLines = String(text || '')
+    .split(/\r?\n/)
+    .slice(0, 120);
   const headerWindow = headerLines.join(' ');
   const seen = new Set<string>();
   const periodColumns: StatementPeriodColumn[] = [];
 
-  for (const match of headerWindow.matchAll(/\b(Q[1-4]|I|II|III|IV)\s*[-\/]?\s*(20\d{2})\b/gi)) {
+  for (const match of headerWindow.matchAll(/\b(Q[1-4]|I|II|III|IV)\s*[-/]?\s*(20\d{2})\b/gi)) {
     const quarter = String(match[1] || '').toUpperCase();
     const year = Number(match[2] || 0);
-    const label = String(match[0] || '').replace(/\s+/g, ' ').trim();
+    const label = String(match[0] || '')
+      .replace(/\s+/g, ' ')
+      .trim();
     const normalizedLabel = normalizePeriodLabel(label);
     if (seen.has(normalizedLabel)) continue;
     seen.add(normalizedLabel);
@@ -760,10 +833,7 @@ function extractPeriodGrid(text: string): StatementPeriodColumn[] {
   }
 
   const contextYears = yearCandidates.filter((c) => c.inContext);
-  const effectiveYears =
-    contextYears.length > 0
-      ? contextYears
-      : yearCandidates;
+  const effectiveYears = contextYears.length > 0 ? contextYears : yearCandidates;
 
   const dedupedYears = new Map<string, (typeof effectiveYears)[0]>();
   for (const c of effectiveYears) {
@@ -796,7 +866,8 @@ export function resolveStatementColumnSelection(
   const normalizedDetectedPeriodLabel = normalizePeriodLabel(detectedPeriodLabel);
   const explicitMatch =
     normalizedDetectedPeriodLabel.length > 0
-      ? periodGrid.find((period) => period.normalizedLabel === normalizedDetectedPeriodLabel) || null
+      ? periodGrid.find((period) => period.normalizedLabel === normalizedDetectedPeriodLabel) ||
+        null
       : null;
   const selected = explicitMatch || periodGrid[0] || null;
   const comparison =
@@ -884,37 +955,41 @@ function detectTemplateFamily(fileName: string, loweredText: string): string | n
 // ---------------------------------------------------------------------------
 
 function normalizeAliasText(value: string): string {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[–—-]/g, ' ')
-    .replace(/\bnota\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
-    .replace(/\bnote\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
-    .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
-    .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
-    .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
-    // Strip trailing year tokens FIRST (e.g., "Financial assets 26 2024" → "Financial assets 26")
-    .replace(/\s+20\d{2}\s*$/g, '')
-    // Then strip trailing note reference numbers (1-2 digits at end, e.g., "Financial assets 26" → "Financial assets")
-    .replace(/\s+\d{1,2}\s*$/g, '')
-    .replace(/[^\p{L}\p{N}% ]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    String(value || '')
+      .toLowerCase()
+      .replace(/[–—-]/g, ' ')
+      .replace(/\bnota\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
+      .replace(/\bnote\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
+      .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
+      .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+      .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
+      // Strip trailing year tokens FIRST (e.g., "Financial assets 26 2024" → "Financial assets 26")
+      .replace(/\s+20\d{2}\s*$/g, '')
+      // Then strip trailing note reference numbers (1-2 digits at end, e.g., "Financial assets 26" → "Financial assets")
+      .replace(/\s+\d{1,2}\s*$/g, '')
+      .replace(/[^\p{L}\p{N}% ]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 function cleanupExtractedLabel(value: string): string {
-  return String(value || '')
-    .replace(/\b(?:nota|note)\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
-    .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
-    .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
-    .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
-    .replace(/\s*[-–—]+\s*$/, '')
-    .replace(/\s*\d{1,2}\.\d{1,3}\s*$/, '')
-    // Strip trailing year tokens FIRST (e.g., "Revenue 2024" → "Revenue")
-    .replace(/\s+20\d{2}\s*$/, '')
-    // Then strip trailing note ref numbers (e.g., "Financial assets 26" → "Financial assets")
-    .replace(/\s+\d{1,2}\s*$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    String(value || '')
+      .replace(/\b(?:nota|note)\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
+      .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
+      .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+      .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
+      .replace(/\s*[-–—]+\s*$/, '')
+      .replace(/\s*\d{1,2}\.\d{1,3}\s*$/, '')
+      // Strip trailing year tokens FIRST (e.g., "Revenue 2024" → "Revenue")
+      .replace(/\s+20\d{2}\s*$/, '')
+      // Then strip trailing note ref numbers (e.g., "Financial assets 26" → "Financial assets")
+      .replace(/\s+\d{1,2}\s*$/, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 export function locateStatementSections(
@@ -1088,8 +1163,12 @@ export function locateStatementSections(
   }
 
   const numericGroupRegex = /\(?-?(?:\d{1,3}(?:[ \u00A0]\d{3})+|\d+)(?:[.,]\d+)?\)?/g;
-  const candidateWindows: Array<{ start: number; end: number; score: number; sectionLabel: string }> =
-    [];
+  const candidateWindows: Array<{
+    start: number;
+    end: number;
+    score: number;
+    sectionLabel: string;
+  }> = [];
 
   const isStandardsRefLine = (line: string): boolean =>
     /\b(?:MSR|MSSF|IAS|IFRS|MSR\s*\d|MSSF\s*\d|HGB|US.?GAAP|FRS\s*\d|ASC\s*\d|PCG)\b/.test(line) ||
@@ -1100,7 +1179,12 @@ export function locateStatementSections(
     if (!markers.start.some((pattern) => pattern.test(line))) continue;
     if (isStandardsRefLine(line)) continue;
     if (/\.{4,}/.test(line)) continue;
-    if (/\b(?:see|refer\s+to|accompanying|see\s+also|described\s+in|included\s+in|presented\s+in|recognized\s+in|reclassified\s+to|expensed\s+in|charged\s+to|reported\s+in)\b/i.test(line)) continue;
+    if (
+      /\b(?:see|refer\s+to|accompanying|see\s+also|described\s+in|included\s+in|presented\s+in|recognized\s+in|reclassified\s+to|expensed\s+in|charged\s+to|reported\s+in)\b/i.test(
+        line
+      )
+    )
+      continue;
     const trimmedStartLine = line.trim();
     if (/^[a-ząćęłńóśźżäöüàâéèêëïîôûùüÿçñ•·\-–—]/.test(trimmedStartLine)) continue;
     if (trimmedStartLine.length > 150) continue;
@@ -1115,14 +1199,35 @@ export function locateStatementSections(
     const inNumberedNote = precedingLines.some((pl) =>
       /^\s*(?:\d{1,2})\.\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(pl.trim())
     );
-    if (inNumberedNote && !/^(?:\d+(?:\.\d+)*\.?\s*)?(?:Consolidated|Group|Skonsolidowan|Jednostkow|Roczne\s+jednostkowe|Roczne\s+skonsolidowane)/i.test(trimmedStartLine)) continue;
+    if (
+      inNumberedNote &&
+      !/^(?:\d+(?:\.\d+)*\.?\s*)?(?:Consolidated|Group|Skonsolidowan|Jednostkow|Roczne\s+jednostkowe|Roczne\s+skonsolidowane)/i.test(
+        trimmedStartLine
+      )
+    )
+      continue;
 
-    if (/\b(?:other\s+income\s+statement\s+items|from\s+group\s+income\s+statement)\b/i.test(trimmedStartLine)) continue;
-    if (/\b(?:income\s+statement|profit\s+and\s+loss)\s+analysis\b/i.test(trimmedStartLine)) continue;
-    if (/(?:analizować\s+łącznie|należy\s+(?:czytać|analizować)|should\s+be\s+read\s+(?:in\s+conjunction|together))/i.test(trimmedStartLine)) continue;
+    if (
+      /\b(?:other\s+income\s+statement\s+items|from\s+group\s+income\s+statement)\b/i.test(
+        trimmedStartLine
+      )
+    )
+      continue;
+    if (/\b(?:income\s+statement|profit\s+and\s+loss)\s+analysis\b/i.test(trimmedStartLine))
+      continue;
+    if (
+      /(?:analizować\s+łącznie|należy\s+(?:czytać|analizować)|should\s+be\s+read\s+(?:in\s+conjunction|together))/i.test(
+        trimmedStartLine
+      )
+    )
+      continue;
     if (/(?:na\s+dzień\s+\d{1,2}\s+\w+\s+\d{4}\s+roku)/i.test(trimmedStartLine)) {
       const nearbyLines = rawLines.slice(Math.max(0, index - 10), index);
-      const isCorrection = nearbyLines.some((nl) => /(?:korekta|korekty|przekształc|korekt\s+prezentacyj|wpływ\s+korekt|correction|restatement|reclassification)/i.test(nl));
+      const isCorrection = nearbyLines.some((nl) =>
+        /(?:korekta|korekty|przekształc|korekt\s+prezentacyj|wpływ\s+korekt|correction|restatement|reclassification)/i.test(
+          nl
+        )
+      );
       if (isCorrection) continue;
     }
 
@@ -1137,7 +1242,10 @@ export function locateStatementSections(
         break;
       }
       if (normalizedType === 'BS') {
-        if (/^\s*(?:\d{1,2})(?:\.\d{1,2})*\.?\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(curLine.trim()) && cursor > index + 15) {
+        if (
+          /^\s*(?:\d{1,2})(?:\.\d{1,2})*\.?\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(curLine.trim()) &&
+          cursor > index + 15
+        ) {
           const isOwnHeader = cursor === index;
           if (!isOwnHeader) {
             end = cursor;
@@ -1156,7 +1264,12 @@ export function locateStatementSections(
             break;
           }
         }
-        if (/(?:wartość firmy netto|wartość brutto|suma dotychczasowego umorzenia|zwiększenie z tytułu|zmniejszenie z tytułu|wartość na koniec okresu|wartość na początek okresu|wartość odpisów)/i.test(curLine) && cursor > index + 30) {
+        if (
+          /(?:wartość firmy netto|wartość brutto|suma dotychczasowego umorzenia|zwiększenie z tytułu|zmniejszenie z tytułu|wartość na koniec okresu|wartość na początek okresu|wartość odpisów)/i.test(
+            curLine
+          ) &&
+          cursor > index + 30
+        ) {
           end = cursor;
           break;
         }
@@ -1173,13 +1286,17 @@ export function locateStatementSections(
       continue;
     }
     const isExhibitOrTOCSection =
-      /\b(?:exhibit\s+index|table\s+of\s+contents|form\s+8-k|certificate\s+of\s+incorporation|supplemental\s+indenture)\b/i.test(windowText) &&
-      !/\b(?:net\s+(?:income|revenue|sales|profit)|total\s+assets|total\s+liabilities|operating\s+(?:income|expenses))\b/i.test(windowText);
+      /\b(?:exhibit\s+index|table\s+of\s+contents|form\s+8-k|certificate\s+of\s+incorporation|supplemental\s+indenture)\b/i.test(
+        windowText
+      ) &&
+      !/\b(?:net\s+(?:income|revenue|sales|profit)|total\s+assets|total\s+liabilities|operating\s+(?:income|expenses))\b/i.test(
+        windowText
+      );
     if (isExhibitOrTOCSection) {
       continue;
     }
-    const tocLines = windowLines.filter((candidate) =>
-      /\.{4,}/.test(candidate) || /\.\s*\d{1,3}\s*$/.test(candidate.trim())
+    const tocLines = windowLines.filter(
+      (candidate) => /\.{4,}/.test(candidate) || /\.\s*\d{1,3}\s*$/.test(candidate.trim())
     ).length;
     const financialNumericPattern = /\d{1,3}[,. \u00A0]\d{3}/;
     const numericLines = windowLines.filter((candidate) => {
@@ -1225,9 +1342,8 @@ export function locateStatementSections(
     const anchors = statementAnchors[normalizedType] || [];
     const anchorHits = anchors.filter((anchor) => anchor.test(windowText)).length;
     const anchorRatio = anchors.length > 0 ? anchorHits / anchors.length : 0;
-    const anchorBonus = anchorRatio >= 0.6
-      ? Math.round(anchorRatio * 200)
-      : Math.round(anchorRatio * 80);
+    const anchorBonus =
+      anchorRatio >= 0.6 ? Math.round(anchorRatio * 200) : Math.round(anchorRatio * 80);
 
     const isNumberedStatementSection = /^3\.\d/.test(line.trim());
     const isNoteSection = /^(?:4|5|6|7|8|9)\.\d/.test(line.trim());
@@ -1241,25 +1357,34 @@ export function locateStatementSections(
     const isTitleCaseStatementHeading =
       headingLine.length > 10 &&
       headingLine.length <= 100 &&
-      /^(?:Consolidated\s+|Group\s+)?(?:Balance\s+Sheet|Statement|Income\s+Statement|Cash\s+Flow)/i.test(headingLine);
+      /^(?:Consolidated\s+|Group\s+)?(?:Balance\s+Sheet|Statement|Income\s+Statement|Cash\s+Flow)/i.test(
+        headingLine
+      );
     const statementSectionBonus = isNumberedStatementSection ? 60 : 0;
-    const headingBonus = isStandaloneStatementHeading ? 120 : (isTitleCaseStatementHeading ? 90 : 0);
+    const headingBonus = isStandaloneStatementHeading ? 120 : isTitleCaseStatementHeading ? 90 : 0;
     const notesSectionPenalty = isNoteSection ? 50 : 0;
 
     const isNotesOrMDASection =
       /\bnotes?\s+to\s+(?:the\s+)?(?:consolidated\s+)?financial\s+statements/i.test(windowText) &&
-      !/(balance sheet|income statement|statement of (?:operations|income|cash flow|financial position))/i.test(line);
+      !/(balance sheet|income statement|statement of (?:operations|income|cash flow|financial position))/i.test(
+        line
+      );
     const isMDASection = /management'?s?\s+discussion\s+and\s+analysis/i.test(windowText);
-    const isSegmentSection = /\bsegment\s+(?:information|reporting|results)\b/i.test(windowText) &&
-      anchorHits < 3;
+    const isSegmentSection =
+      /\bsegment\s+(?:information|reporting|results)\b/i.test(windowText) && anchorHits < 3;
     const isNoteDetailSection = /\bnote\s+\d{1,2}\b/i.test(line) && numericLines < 10;
     const segmentHeaderCount = windowLines.filter((l) =>
       /\bsegment\s+(?:revenues?|results?|assets|liabilities)\b/i.test(l)
     ).length;
     const hasSegmentBreakdownHeaders = segmentHeaderCount >= 2;
-    const hasGeographicOrProductLines = windowLines.filter((l) =>
-      /^\s*(?:crude\s+oil|oil\s+products|natural\s+gas|lng|non-oil|upstream|downstream|refining|petrochemicals|chemicals|exploration|production)\s*$/i.test(l.trim()) ||
-      /^\s*(?:us\s*$|non-us\s*$|europe\s*$|asia\s*$|rest\s+of\s+(?:the\s+)?world)\s*$/i.test(l.trim())
+    const hasGeographicOrProductLines = windowLines.filter(
+      (l) =>
+        /^\s*(?:crude\s+oil|oil\s+products|natural\s+gas|lng|non-oil|upstream|downstream|refining|petrochemicals|chemicals|exploration|production)\s*$/i.test(
+          l.trim()
+        ) ||
+        /^\s*(?:us\s*$|non-us\s*$|europe\s*$|asia\s*$|rest\s+of\s+(?:the\s+)?world)\s*$/i.test(
+          l.trim()
+        )
     ).length;
     const hasSegmentData = hasSegmentBreakdownHeaders || hasGeographicOrProductLines >= 3;
 
@@ -1308,18 +1433,15 @@ export function locateStatementSections(
   // For BS: ensure both Aktywa (Assets) and Pasywa (Liabilities) sides are captured
   if (normalizedType === 'BS' && windows.length > 0) {
     const bestWindow = windows[0];
-    const bestText = rawLines
-      .slice(bestWindow.start, bestWindow.end)
-      .join('\n')
-      .toLowerCase();
+    const bestText = rawLines.slice(bestWindow.start, bestWindow.end).join('\n').toLowerCase();
 
     const hasAssetAnchors =
       /aktywa\s*(?:razem|ogółem|trwałe|obrotowe)|total\s+assets|current\s+assets|non[- ]?current\s+assets/i.test(
-        bestText,
+        bestText
       );
     const hasLiabilityAnchors =
       /pasywa\s*(?:razem|ogółem)|kapitał\s+własny|zobowiązania|total\s+liabilities|equity/i.test(
-        bestText,
+        bestText
       );
 
     if (!hasAssetAnchors && hasLiabilityAnchors) {
@@ -1330,7 +1452,7 @@ export function locateStatementSections(
 
       const aktywaMatch =
         /aktywa\s*(?:razem|ogółem|trwałe|obrotowe)|total\s+assets|current\s+assets/i.test(
-          searchText,
+          searchText
         );
       if (aktywaMatch) {
         // Look BEFORE the best window for Aktywa header
@@ -1438,19 +1560,39 @@ function classifyNonFinancialLine(label: string): { isNonFinancial: boolean; rea
   ) {
     return { isNonFinancial: true, reason: 'NARRATIVE_NOTE_LINE' };
   }
-  if (/(roczne (?:jednostkowe|skonsolidowane)|raport finansowy|nazwa jednostki|nazwa grupy|annual (?:consolidated|standalone)|financial (?:report|statements)|group name|company name|biegły rewident|auditor|consolidated statement of (?:financial position|profit|cash flow|comprehensive)|statement of (?:financial position|profit or loss|cash flows)|skonsolidowane sprawozdanie|sprawozdanie z sytuacji finansowej|rachunek zysków i strat|konzernabschluss|konzernbilanz\s|konzern-gewinn|jahresabschluss|geschäftsbericht|wirtschaftsprüfer|bestätigungsvermerk|abschlussprüfer|bilanzierungs- und bewertungsmethoden|rechnungslegungsgrundsätze|comptes consolidés\s|rapport annuel|rapport financier|document d'enregistrement|commissaire aux comptes|rapport des commissaires|règles et méthodes comptables|principes comptables|états financiers consolidés)/.test(normalized)) {
+  if (
+    /(roczne (?:jednostkowe|skonsolidowane)|raport finansowy|nazwa jednostki|nazwa grupy|annual (?:consolidated|standalone)|financial (?:report|statements)|group name|company name|biegły rewident|auditor|consolidated statement of (?:financial position|profit|cash flow|comprehensive)|statement of (?:financial position|profit or loss|cash flows)|skonsolidowane sprawozdanie|sprawozdanie z sytuacji finansowej|rachunek zysków i strat|konzernabschluss|konzernbilanz\s|konzern-gewinn|jahresabschluss|geschäftsbericht|wirtschaftsprüfer|bestätigungsvermerk|abschlussprüfer|bilanzierungs- und bewertungsmethoden|rechnungslegungsgrundsätze|comptes consolidés\s|rapport annuel|rapport financier|document d'enregistrement|commissaire aux comptes|rapport des commissaires|règles et méthodes comptables|principes comptables|états financiers consolidés)/.test(
+      normalized
+    )
+  ) {
     return { isNonFinancial: true, reason: 'PAGE_HEADER_LINE' };
   }
-  if (/^(?:tab(?:ela|le)?\.?\s*\d|rys(?:unek)?\.?\s*\d|wykres\s*\d|chart\s*\d|figure\s*\d|schedule\s+\d)/i.test(normalized)) {
+  if (
+    /^(?:tab(?:ela|le)?\.?\s*\d|rys(?:unek)?\.?\s*\d|wykres\s*\d|chart\s*\d|figure\s*\d|schedule\s+\d)/i.test(
+      normalized
+    )
+  ) {
     return { isNonFinancial: true, reason: 'TABLE_FIGURE_REFERENCE' };
   }
-  if (/^(?:ciąg\s+dalszy|continued|kontynuacja|c\.d\.|fortgesetzt|fortsetzung|suite|suite du|voir note)/i.test(normalized)) {
+  if (
+    /^(?:ciąg\s+dalszy|continued|kontynuacja|c\.d\.|fortgesetzt|fortsetzung|suite|suite du|voir note)/i.test(
+      normalized
+    )
+  ) {
     return { isNonFinancial: true, reason: 'CONTINUATION_MARKER' };
   }
-  if (/\b(?:average\s+shares?\s+outstanding|weighted\s+average\s+(?:number\s+of\s+)?(?:common\s+)?shares?|shares?\s+used\s+in\s+computing|(?:basic|diluted)\s+(?:earnings|loss|income)\s+per\s+(?:share|common)|(?:earnings|loss|net\s+income)\s+per\s+(?:share|common\s+share)|zysk\s+na\s+(?:jedną?\s+)?akcj[ęe]|(?:liczba|ilość)\s+akcji|verwässert|unverwässert|ergebnis\s+je\s+aktie|nombre\s+(?:moyen\s+)?d[e'']actions|résultat\s+par\s+action)\b/i.test(normalized)) {
+  if (
+    /\b(?:average\s+shares?\s+outstanding|weighted\s+average\s+(?:number\s+of\s+)?(?:common\s+)?shares?|shares?\s+used\s+in\s+computing|(?:basic|diluted)\s+(?:earnings|loss|income)\s+per\s+(?:share|common)|(?:earnings|loss|net\s+income)\s+per\s+(?:share|common\s+share)|zysk\s+na\s+(?:jedną?\s+)?akcj[ęe]|(?:liczba|ilość)\s+akcji|verwässert|unverwässert|ergebnis\s+je\s+aktie|nombre\s+(?:moyen\s+)?d[e'']actions|résultat\s+par\s+action)\b/i.test(
+      normalized
+    )
+  ) {
     return { isNonFinancial: true, reason: 'PER_SHARE_DATA' };
   }
-  if (/\b(?:thereof\s+relating\s+to|of\s+which\s+attributable\s+to|at\s+\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|adjustments?\s+for\s+prior\s+periods?\s+from\s+adopting)/i.test(normalized)) {
+  if (
+    /\b(?:thereof\s+relating\s+to|of\s+which\s+attributable\s+to|at\s+\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|adjustments?\s+for\s+prior\s+periods?\s+from\s+adopting)/i.test(
+      normalized
+    )
+  ) {
     return { isNonFinancial: true, reason: 'EQUITY_TABLE_ANNOTATION' };
   }
   const dashSequenceCount = (normalized.match(/\s*[-–—]\s*[-–—]/g) || []).length;
@@ -1479,9 +1621,11 @@ export function extractFinancialLines(
     periodLabel: options?.selectedPeriodLabel || undefined,
   });
   const targetPeriodLabel =
-    String(options?.selectedPeriodLabel || columnSelection.selectedPeriodLabel || '').trim() || null;
+    String(options?.selectedPeriodLabel || columnSelection.selectedPeriodLabel || '').trim() ||
+    null;
   const comparisonPeriodLabel =
-    String(options?.comparisonPeriodLabel || columnSelection.comparisonPeriodLabel || '').trim() || null;
+    String(options?.comparisonPeriodLabel || columnSelection.comparisonPeriodLabel || '').trim() ||
+    null;
   const rawLines = scopedText.split(/\r?\n/);
   let rawTableCount = 0;
   let pendingLabel: string | null = null;
@@ -1627,7 +1771,9 @@ export function extractFinancialLines(
     const merged: Array<{ raw: string; index: number; initialGroupLen?: number }> = [];
     for (const token of baseTokens) {
       const previous = merged[merged.length - 1];
-      const gap = previous ? lineValue.slice(previous.index + previous.raw.length, token.index) : '';
+      const gap = previous
+        ? lineValue.slice(previous.index + previous.raw.length, token.index)
+        : '';
       const previousDigits = previous ? previous.raw.replace(/[^\d]/g, '') : '';
       const currentDigits = token.raw.replace(/[^\d]/g, '');
       const initialGroup = previous?.initialGroupLen ?? previousDigits.length;
@@ -1716,21 +1862,22 @@ export function extractFinancialLines(
       tokenType: 'period' | 'value' | 'note_ref';
       periodLabel?: string;
     }>
-  ):
-    | {
-        raw: string;
-        normalizedValue: number | null;
-        index: number;
-        selectionReason: string;
-      }
-    | null => {
+  ): {
+    raw: string;
+    normalizedValue: number | null;
+    index: number;
+    selectionReason: string;
+  } | null => {
     const hasRealValues = numericTokens.some(
-      (t) => t.tokenType === 'value' && t.normalizedValue !== null && Math.abs(t.normalizedValue) >= 1
+      (t) =>
+        t.tokenType === 'value' && t.normalizedValue !== null && Math.abs(t.normalizedValue) >= 1
     );
 
     const effectiveTokens = numericTokens.map((t) => {
-      if (t.tokenType === 'note_ref' && hasRealValues) return { ...t, tokenType: 'note_ref' as const };
-      if (t.tokenType === 'note_ref' && !hasRealValues) return { ...t, tokenType: 'value' as const };
+      if (t.tokenType === 'note_ref' && hasRealValues)
+        return { ...t, tokenType: 'note_ref' as const };
+      if (t.tokenType === 'note_ref' && !hasRealValues)
+        return { ...t, tokenType: 'value' as const };
       return t;
     });
 
@@ -1783,7 +1930,11 @@ export function extractFinancialLines(
   const deriveRowType = (label: string): ExtractedLine['rowType'] => {
     const normalized = normalizeAliasText(label);
     if (/(total|together|razem|ogółem|suma)/.test(normalized)) return 'total';
-    if (/(gross|ebitda|ebit|net income|zysk brutto|zysk netto|przepływy pieniężne netto)/.test(normalized)) {
+    if (
+      /(gross|ebitda|ebit|net income|zysk brutto|zysk netto|przepływy pieniężne netto)/.test(
+        normalized
+      )
+    ) {
       return 'subtotal';
     }
     return 'detail';
@@ -1826,7 +1977,8 @@ export function extractFinancialLines(
       continue;
     }
 
-    const firstNonNoteToken = numericTokens.find((t) => t.tokenType !== 'note_ref') || numericTokens[0];
+    const firstNonNoteToken =
+      numericTokens.find((t) => t.tokenType !== 'note_ref') || numericTokens[0];
     const firstNumberIndex = firstNonNoteToken.index;
     let label = line.slice(0, firstNumberIndex).trim();
     if (pendingLabel) {
@@ -1945,22 +2097,26 @@ export function extractFinancialLines(
   // BS-specific sanity checks
   if (detectedType === 'BS' && lines.length >= 3) {
     const assetLabels = lines.filter((l) =>
-      /aktywa|assets|środki pieniężne|cash|zapasy|inventories|należności|receivables|inwestycje|investments|nieruchomości|property|wartości niematerialne|intangible|wartość firmy|goodwill/i.test(l.originalLabel)
+      /aktywa|assets|środki pieniężne|cash|zapasy|inventories|należności|receivables|inwestycje|investments|nieruchomości|property|wartości niematerialne|intangible|wartość firmy|goodwill/i.test(
+        l.originalLabel
+      )
     );
     const liabilityLabels = lines.filter((l) =>
-      /pasywa|liabilities|zobowiązania|kapitał|equity|rezerwy|provisions|dług|debt|kredyty|loans|obligacje|bonds/i.test(l.originalLabel)
+      /pasywa|liabilities|zobowiązania|kapitał|equity|rezerwy|provisions|dług|debt|kredyty|loans|obligacje|bonds/i.test(
+        l.originalLabel
+      )
     );
 
     if (assetLabels.length === 0 && liabilityLabels.length > 0) {
       warnings.push(
         `BS extraction captured ${liabilityLabels.length} liability/equity lines but 0 asset lines. ` +
-        `The Aktywa (Assets) section may not have been included in the extracted text window. ` +
-        `This typically happens with Polish reports where Aktywa and Pasywa are in separate sections.`
+          `The Aktywa (Assets) section may not have been included in the extracted text window. ` +
+          `This typically happens with Polish reports where Aktywa and Pasywa are in separate sections.`
       );
     } else if (liabilityLabels.length === 0 && assetLabels.length > 0) {
       warnings.push(
         `BS extraction captured ${assetLabels.length} asset lines but 0 liability/equity lines. ` +
-        `The Pasywa (Liabilities & Equity) section may not have been included.`
+          `The Pasywa (Liabilities & Equity) section may not have been included.`
       );
     }
 
@@ -1970,7 +2126,7 @@ export function extractFinancialLines(
     if (zeroLines.length > nonZeroLines.length && zeroLines.length >= 3) {
       warnings.push(
         `BS extraction: ${zeroLines.length}/${lines.length} lines have value=0. ` +
-        `This may indicate wrong column selection or extraction from an empty section.`
+          `This may indicate wrong column selection or extraction from an empty section.`
       );
     }
   }
@@ -2146,7 +2302,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ergebnis vor ertragsteuern',
     'gewinn vor steuern',
     'résultat avant impôt',
-    "résultat avant impôt sur les sociétés",
+    'résultat avant impôt sur les sociétés',
     'bénéfice avant impôt',
     'income before provision for income taxes',
     'income before income taxes',
@@ -2185,7 +2341,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'résultat net',
     'résultat net consolidé',
     'bénéfice net',
-    'résultat net de l\'exercice',
+    "résultat net de l'exercice",
     'income after taxes',
     'net income $',
     'net income attributable to common stockholders',
@@ -2235,7 +2391,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ertragsteueraufwand',
     'impôt sur les sociétés',
     'impôt sur les bénéfices',
-    'charge d\'impôt',
+    "charge d'impôt",
     'provision for income taxes',
     'provision for benefit from income taxes',
     'tax charge on profit',
@@ -2268,7 +2424,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'sonstige erträge',
     'autres produits',
     'autres produits opérationnels',
-    'autres produits d\'exploitation',
+    "autres produits d'exploitation",
   ],
   'fsl-pl-other-expense': [
     'other expenses',
@@ -2278,7 +2434,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'sonstige aufwendungen',
     'autres charges',
     'autres charges opérationnelles',
-    'autres charges d\'exploitation',
+    "autres charges d'exploitation",
   ],
   // ── BS ──
   'fsl-bs-total-assets': [
@@ -2332,7 +2488,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'geschäfts- oder firmenwert',
     'firmenwert',
     "écarts d'acquisition",
-    'écart d\'acquisition',
+    "écart d'acquisition",
     'survaleur',
   ],
   'fsl-bs-ppe': [
@@ -2358,7 +2514,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'nutzungsrechte',
     'nutzungsrechte an vermögenswerten',
     "droits d'utilisation",
-    'actifs au titre de droits d\'utilisation',
+    "actifs au titre de droits d'utilisation",
   ],
   'fsl-bs-investment-property': [
     'investment property',
@@ -2374,7 +2530,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'latente steueransprüche',
     'aktive latente steuern',
     'impôts différés actifs',
-    'actifs d\'impôt différé',
+    "actifs d'impôt différé",
   ],
   'fsl-bs-current-assets': [
     'current assets',
@@ -2408,7 +2564,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'disponibilités',
   ],
   'fsl-bs-inventory': [
-    'inventory', 'inventories', 'zapasy', 'zapasy ogółem', 'zapasy razem', 'stock',
+    'inventory',
+    'inventories',
+    'zapasy',
+    'zapasy ogółem',
+    'zapasy razem',
+    'stock',
     'vorräte',
     'warenbestand',
     'stocks et en-cours',
@@ -2442,7 +2603,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'fournisseurs et comptes rattachés',
   ],
   'fsl-bs-wc': [
-    'working capital', 'kapitał obrotowy', 'kapitał obrotowy netto', 'net working capital', 'nwc',
+    'working capital',
+    'kapitał obrotowy',
+    'kapitał obrotowy netto',
+    'net working capital',
+    'nwc',
     'betriebskapital',
     'nettoumlaufvermögen',
   ],
@@ -2748,7 +2913,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'investing activities expenditure on property plant and equipment intangible and other assets',
   ],
   'fsl-cf-fcf': [
-    'free cash flow', 'fcf', 'wolne przepływy', 'wolne przepływy pieniężne',
+    'free cash flow',
+    'fcf',
+    'wolne przepływy',
+    'wolne przepływy pieniężne',
     'freier cashflow',
   ],
   'fsl-cf-change-wc-provisions': [
@@ -3036,7 +3204,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'latente steuerschulden',
     'passive latente steuern',
     'impôts différés passifs',
-    'passifs d\'impôt différé',
+    "passifs d'impôt différé",
   ],
   'fsl-bs-total-liabilities-equity': [
     'total liabilities and equity',
@@ -3073,7 +3241,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'apic',
     'capital surplus',
     "primes d'émission",
-    'prime d\'émission',
+    "prime d'émission",
   ],
   'fsl-bs-short-term-debt': [
     'short-term debt',
@@ -3612,7 +3780,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'einzahlungen aus der aufnahme von darlehen',
     'kreditaufnahme',
     'produits des emprunts',
-    'émission d\'emprunts',
+    "émission d'emprunts",
     'proceeds from long-term debt',
     'proceeds from short-term debt',
     'proceeds from long-term financing',
@@ -3635,7 +3803,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'tilgung von finanzverbindlichkeiten',
     'auszahlungen für die tilgung von darlehen',
     'rückzahlung von darlehen',
-    'remboursement d\'emprunts',
+    "remboursement d'emprunts",
     'repayments of long-term debt',
     'repayments of short-term debt',
     'repayments of long-term financing',
@@ -4429,7 +4597,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przychody przyszłych okresów krótkoterminowe',
     'abgegrenzte erlöse',
     'abgegrenzte umsatzerlöse',
-    'produits constatés d\'avance',
+    "produits constatés d'avance",
   ],
   'fsl-bs-deferred-revenue-non-current': [
     'deferred revenue net of current portion',
@@ -4466,7 +4634,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'unternehmenserwerbe',
     'erwerb von unternehmen',
     'acquisitions de sociétés',
-    'acquisitions d\'entreprises',
+    "acquisitions d'entreprises",
   ],
   'fsl-cf-investing-securities': [
     'purchases of investments',
@@ -4537,10 +4705,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'segment cost of revenue',
     'koszty segmentu',
   ],
-  'fsl-pl-oci-derivatives': [
-    'derivative financial instruments oci',
-    'instrumenty pochodne oci',
-  ],
+  'fsl-pl-oci-derivatives': ['derivative financial instruments oci', 'instrumenty pochodne oci'],
   'fsl-pl-oci-pension-remeasurement': [
     'remeasurement of the net liability for defined benefit pension plans',
     'remeasurement of pension plans',
@@ -4825,7 +4990,11 @@ export async function autoMapLines(
     }
   }
 
-  let aliasRows: Array<{ statement_line_id: string; normalized_alias: string; template_family: string }> = [];
+  let aliasRows: Array<{
+    statement_line_id: string;
+    normalized_alias: string;
+    template_family: string;
+  }> = [];
   if (await canUseStatementAliasTable()) {
     try {
       aliasRows = (await dbAll(
@@ -4873,341 +5042,625 @@ export async function autoMapLines(
     normalizedType: string
   ): { delta: number; reason?: string } => {
     if (normalizedType === 'CF') {
-      if (/operacyj|z działalności operacyjnej|betriebliche[rn]?\s+tätigkeit|laufende[rn]?\s+geschäftstätigkeit|activités?\s+(?:opérationnelles?|d'exploitation)/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating') return { delta: 0.75, reason: 'cash_flow_scope_match' };
+      if (
+        /operacyj|z działalności operacyjnej|betriebliche[rn]?\s+tätigkeit|laufende[rn]?\s+geschäftstätigkeit|activités?\s+(?:opérationnelles?|d'exploitation)/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-operating')
+          return { delta: 0.75, reason: 'cash_flow_scope_match' };
         if (canonicalId === 'fsl-cf-investing' || canonicalId === 'fsl-cf-financing') {
           return { delta: -0.45, reason: 'cash_flow_scope_conflict' };
         }
       }
-      if (/inwestycyjn|z działalności inwestycyjnej|investitionstätigkeit|activités?\s+d'investissement/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing') return { delta: 0.75, reason: 'cash_flow_scope_match' };
+      if (
+        /inwestycyjn|z działalności inwestycyjnej|investitionstätigkeit|activités?\s+d'investissement/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-investing')
+          return { delta: 0.75, reason: 'cash_flow_scope_match' };
         if (canonicalId === 'fsl-cf-operating' || canonicalId === 'fsl-cf-financing') {
           return { delta: -0.45, reason: 'cash_flow_scope_conflict' };
         }
       }
-      if (/finansow|z działalności finansowej|finanzierungstätigkeit|activités?\s+de\s+financement/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-financing') return { delta: 0.75, reason: 'cash_flow_scope_match' };
+      if (
+        /finansow|z działalności finansowej|finanzierungstätigkeit|activités?\s+de\s+financement/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-financing')
+          return { delta: 0.75, reason: 'cash_flow_scope_match' };
         if (canonicalId === 'fsl-cf-operating' || canonicalId === 'fsl-cf-investing') {
           return { delta: -0.45, reason: 'cash_flow_scope_conflict' };
         }
       }
-      if (/zmiana stanu zobowiązań\b/i.test(normalizedLabel) && !/pozostałych|leasingu|handlowych/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-ap') return { delta: 0.7, reason: 'cash_flow_ap_anchor' };
-        if (canonicalId === 'fsl-cf-change-wc-other') return { delta: -0.3, reason: 'cash_flow_ap_vs_other' };
+      if (
+        /zmiana stanu zobowiązań\b/i.test(normalizedLabel) &&
+        !/pozostałych|leasingu|handlowych/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-change-wc-ap')
+          return { delta: 0.7, reason: 'cash_flow_ap_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-other')
+          return { delta: -0.3, reason: 'cash_flow_ap_vs_other' };
       }
-      if (/zmiana stanu należności\b/i.test(normalizedLabel) && !/pozostałych/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-ar') return { delta: 0.7, reason: 'cash_flow_ar_anchor' };
-        if (canonicalId === 'fsl-cf-change-wc-other') return { delta: -0.3, reason: 'cash_flow_ar_vs_other' };
+      if (
+        /zmiana stanu należności\b/i.test(normalizedLabel) &&
+        !/pozostałych/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-change-wc-ar')
+          return { delta: 0.7, reason: 'cash_flow_ar_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-other')
+          return { delta: -0.3, reason: 'cash_flow_ar_vs_other' };
       }
       if (/zmiana stanu zapasów/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-inventory') return { delta: 0.7, reason: 'cash_flow_inventory_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-inventory')
+          return { delta: 0.7, reason: 'cash_flow_inventory_anchor' };
       }
       if (/zmiana stanu rezerw/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-provisions') return { delta: 0.7, reason: 'cash_flow_provisions_anchor' };
-        if (canonicalId === 'fsl-cf-net-change-cash') return { delta: -0.6, reason: 'cash_flow_provisions_vs_net_change' };
+        if (canonicalId === 'fsl-cf-change-wc-provisions')
+          return { delta: 0.7, reason: 'cash_flow_provisions_anchor' };
+        if (canonicalId === 'fsl-cf-net-change-cash')
+          return { delta: -0.6, reason: 'cash_flow_provisions_vs_net_change' };
       }
       if (/zmiana stanu pozostałych/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-other') return { delta: 0.6, reason: 'cash_flow_other_wc_anchor' };
-        if (canonicalId === 'fsl-cf-net-change-cash') return { delta: -0.6, reason: 'cash_flow_other_wc_vs_net_change' };
+        if (canonicalId === 'fsl-cf-change-wc-other')
+          return { delta: 0.6, reason: 'cash_flow_other_wc_anchor' };
+        if (canonicalId === 'fsl-cf-net-change-cash')
+          return { delta: -0.6, reason: 'cash_flow_other_wc_vs_net_change' };
       }
       if (/koszty odsetek/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-interest-cost') return { delta: 0.6, reason: 'cash_flow_interest_cost_anchor' };
-        if (canonicalId === 'fsl-cf-interest-paid') return { delta: -0.3, reason: 'cash_flow_interest_cost_vs_paid' };
+        if (canonicalId === 'fsl-cf-operating-interest-cost')
+          return { delta: 0.6, reason: 'cash_flow_interest_cost_anchor' };
+        if (canonicalId === 'fsl-cf-interest-paid')
+          return { delta: -0.3, reason: 'cash_flow_interest_cost_vs_paid' };
       }
       if (/amortyzacja\s+(wartości\s+)?niemate/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-depreciation-intangibles') return { delta: 0.8, reason: 'cf_depreciation_intangibles_anchor' };
-        if (canonicalId === 'fsl-cf-operating-depreciation') return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
+        if (canonicalId === 'fsl-cf-operating-depreciation-intangibles')
+          return { delta: 0.8, reason: 'cf_depreciation_intangibles_anchor' };
+        if (canonicalId === 'fsl-cf-operating-depreciation')
+          return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
       }
       if (/amortyzacja\s+rzeczowych/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-depreciation-ppe') return { delta: 0.8, reason: 'cf_depreciation_ppe_anchor' };
-        if (canonicalId === 'fsl-cf-operating-depreciation') return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
+        if (canonicalId === 'fsl-cf-operating-depreciation-ppe')
+          return { delta: 0.8, reason: 'cf_depreciation_ppe_anchor' };
+        if (canonicalId === 'fsl-cf-operating-depreciation')
+          return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
       }
-      if (/amortyzacja\s+aktywów z tytułu\s+prawa/i.test(normalizedLabel) || /amortyzacja\s+prawa\s+do\s+użytk/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-depreciation-rou') return { delta: 0.8, reason: 'cf_depreciation_rou_anchor' };
-        if (canonicalId === 'fsl-cf-operating-depreciation') return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
+      if (
+        /amortyzacja\s+aktywów z tytułu\s+prawa/i.test(normalizedLabel) ||
+        /amortyzacja\s+prawa\s+do\s+użytk/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-depreciation-rou')
+          return { delta: 0.8, reason: 'cf_depreciation_rou_anchor' };
+        if (canonicalId === 'fsl-cf-operating-depreciation')
+          return { delta: -0.3, reason: 'cf_depreciation_parent_vs_child' };
       }
-      if (/amortyzacja/i.test(normalizedLabel) && !/wartości\s+niematerialnych|rzeczowych|prawa\s+do|aktywów z tytułu/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-depreciation') return { delta: 0.5, reason: 'cash_flow_depreciation_anchor' };
+      if (
+        /amortyzacja/i.test(normalizedLabel) &&
+        !/wartości\s+niematerialnych|rzeczowych|prawa\s+do|aktywów z tytułu/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-depreciation')
+          return { delta: 0.5, reason: 'cash_flow_depreciation_anchor' };
       }
       if (/zysk.*przed\s+opodatkowaniem|strata.*przed\s+opodatkowaniem/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-cf-operating-ebt') return { delta: 0.7, reason: 'cf_ebt_anchor' };
-        if (canonicalId === 'fsl-cf-net-change-cash') return { delta: -0.5, reason: 'cf_ebt_vs_net_change' };
+        if (canonicalId === 'fsl-cf-net-change-cash')
+          return { delta: -0.5, reason: 'cf_ebt_vs_net_change' };
       }
       if (/korekty\s*razem|korekty\s+ogółem/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-adjustments') return { delta: 0.7, reason: 'cf_adjustments_anchor' };
+        if (canonicalId === 'fsl-cf-operating-adjustments')
+          return { delta: 0.7, reason: 'cf_adjustments_anchor' };
       }
       if (/odpisy\s+aktualizujące/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-impairment') return { delta: 0.6, reason: 'cf_impairment_anchor' };
+        if (canonicalId === 'fsl-cf-operating-impairment')
+          return { delta: 0.6, reason: 'cf_impairment_anchor' };
       }
-      if (/zysk.*strat.*sprzedaż.*aktyw|strat.*zysk.*sprzedaż.*aktyw|zysk.*ze\s+zbycia|strat.*ze\s+zbycia/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-gain-disposal') return { delta: 0.7, reason: 'cf_gain_disposal_anchor' };
+      if (
+        /zysk.*strat.*sprzedaż.*aktyw|strat.*zysk.*sprzedaż.*aktyw|zysk.*ze\s+zbycia|strat.*ze\s+zbycia/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-operating-gain-disposal')
+          return { delta: 0.7, reason: 'cf_gain_disposal_anchor' };
       }
-      if (/instrumentów\s+pochodnych|derivatives/i.test(normalizedLabel) && /wartości?\s+godziwej/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-fv-derivatives') return { delta: 0.8, reason: 'cf_fv_derivatives_anchor' };
-        if (canonicalId === 'fsl-cf-operating-fv-changes') return { delta: -0.3, reason: 'cf_fv_derivatives_vs_property' };
+      if (
+        /instrumentów\s+pochodnych|derivatives/i.test(normalizedLabel) &&
+        /wartości?\s+godziwej/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-fv-derivatives')
+          return { delta: 0.8, reason: 'cf_fv_derivatives_anchor' };
+        if (canonicalId === 'fsl-cf-operating-fv-changes')
+          return { delta: -0.3, reason: 'cf_fv_derivatives_vs_property' };
       }
-      if (/nieruchomości\s+inwestycyjnych/i.test(normalizedLabel) && /wartości?\s+godziwej/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-fv-changes') return { delta: 0.8, reason: 'cf_fv_property_anchor' };
-        if (canonicalId === 'fsl-cf-operating-fv-derivatives') return { delta: -0.3, reason: 'cf_fv_property_vs_derivatives' };
+      if (
+        /nieruchomości\s+inwestycyjnych/i.test(normalizedLabel) &&
+        /wartości?\s+godziwej/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-fv-changes')
+          return { delta: 0.8, reason: 'cf_fv_property_anchor' };
+        if (canonicalId === 'fsl-cf-operating-fv-derivatives')
+          return { delta: -0.3, reason: 'cf_fv_property_vs_derivatives' };
       }
       if (/wartości?\s+godziwej|niezrealizowane\s+różnice/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-fv-changes') return { delta: 0.4, reason: 'cf_fv_changes_anchor' };
-        if (canonicalId === 'fsl-cf-operating-fv-derivatives') return { delta: 0.3, reason: 'cf_fv_derivatives_fallback' };
+        if (canonicalId === 'fsl-cf-operating-fv-changes')
+          return { delta: 0.4, reason: 'cf_fv_changes_anchor' };
+        if (canonicalId === 'fsl-cf-operating-fv-derivatives')
+          return { delta: 0.3, reason: 'cf_fv_derivatives_fallback' };
       }
       if (/przychody\s+z\s+(?:tytułu\s+)?dywidend/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-dividend-income') return { delta: 0.7, reason: 'cf_dividend_income_anchor' };
-        if (canonicalId === 'fsl-cf-dividends-received') return { delta: -0.2, reason: 'cf_dividend_income_vs_received' };
-        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.3, reason: 'cf_dividend_income_vs_paid' };
+        if (canonicalId === 'fsl-cf-operating-dividend-income')
+          return { delta: 0.7, reason: 'cf_dividend_income_anchor' };
+        if (canonicalId === 'fsl-cf-dividends-received')
+          return { delta: -0.2, reason: 'cf_dividend_income_vs_received' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: -0.3, reason: 'cf_dividend_income_vs_paid' };
       }
       if (/(?:dywidendy\s+)?otrzymane\s+dywidendy|otrzymane\s+dywidendy/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-dividends-received') return { delta: 0.7, reason: 'cf_dividends_received_anchor' };
-        if (canonicalId === 'fsl-cf-operating-dividend-income') return { delta: -0.2, reason: 'cf_received_vs_income' };
-        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.3, reason: 'cf_received_vs_paid' };
+        if (canonicalId === 'fsl-cf-dividends-received')
+          return { delta: 0.7, reason: 'cf_dividends_received_anchor' };
+        if (canonicalId === 'fsl-cf-operating-dividend-income')
+          return { delta: -0.2, reason: 'cf_received_vs_income' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: -0.3, reason: 'cf_received_vs_paid' };
       }
       if (/inne\s+korekty|pozostałe\s+korekty/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.6, reason: 'cf_other_adj_anchor' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: 0.6, reason: 'cf_other_adj_anchor' };
       }
-      if (/udział\s+w\s+zysk.*jednostek|udział\s+w\s+wynik.*praw\s+własności/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-equity-method') return { delta: 0.6, reason: 'cf_equity_method_anchor' };
+      if (
+        /udział\s+w\s+zysk.*jednostek|udział\s+w\s+wynik.*praw\s+własności/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-equity-method')
+          return { delta: 0.6, reason: 'cf_equity_method_anchor' };
       }
-      if (/przychody\s+z\s+odsetek|odsetki\s+otrzymane|przychody\s+odsetkowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-interest-income') return { delta: 0.6, reason: 'cf_interest_income_anchor' };
-        if (canonicalId === 'fsl-cf-operating-interest-cost') return { delta: -0.3, reason: 'cf_interest_income_vs_cost' };
+      if (
+        /przychody\s+z\s+odsetek|odsetki\s+otrzymane|przychody\s+odsetkowe/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-interest-income')
+          return { delta: 0.6, reason: 'cf_interest_income_anchor' };
+        if (canonicalId === 'fsl-cf-operating-interest-cost')
+          return { delta: -0.3, reason: 'cf_interest_income_vs_cost' };
       }
       if (/wpływy\s+ze\s+sprzedaży\s+aktyw|wpływy\s+ze\s+zbycia/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-disposal-proceeds') return { delta: 0.7, reason: 'cf_disposal_proceeds_anchor' };
+        if (canonicalId === 'fsl-cf-investing-disposal-proceeds')
+          return { delta: 0.7, reason: 'cf_disposal_proceeds_anchor' };
       }
-      if (/wydatki\s+na\s+(?:nabycie\s+)?wartości\s+niematerial|nabycie\s+wartości\s+niematerial/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-capex-intangibles') return { delta: 0.7, reason: 'cf_capex_intangibles_anchor' };
-        if (canonicalId === 'fsl-cf-capex') return { delta: -0.2, reason: 'cf_capex_intangibles_vs_parent' };
+      if (
+        /wydatki\s+na\s+(?:nabycie\s+)?wartości\s+niematerial|nabycie\s+wartości\s+niematerial/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-capex-intangibles')
+          return { delta: 0.7, reason: 'cf_capex_intangibles_anchor' };
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: -0.2, reason: 'cf_capex_intangibles_vs_parent' };
       }
       if (/wpływ\s+zmian\s+kursów|różnice\s+kursowe\s+netto/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-fx-on-cash') return { delta: 0.6, reason: 'cf_fx_on_cash_anchor' };
+        if (canonicalId === 'fsl-cf-fx-on-cash')
+          return { delta: 0.6, reason: 'cf_fx_on_cash_anchor' };
       }
       if (/dywidendy\s+wypłacone|wypłata\s+dywidend|dywidendy\s+zapłacone/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-dividends') return { delta: 0.6, reason: 'cf_dividends_paid_anchor' };
-        if (canonicalId === 'fsl-cf-operating-dividend-income') return { delta: -0.3, reason: 'cf_dividends_paid_vs_income' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: 0.6, reason: 'cf_dividends_paid_anchor' };
+        if (canonicalId === 'fsl-cf-operating-dividend-income')
+          return { delta: -0.3, reason: 'cf_dividends_paid_vs_income' };
       }
-      if (/spłat[ay].*leasingu|spłat[ay].*zobowiązań\s+z\s+tytułu\s+leasingu/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: 0.8, reason: 'cf_lease_repayment_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.3, reason: 'cf_lease_vs_debt_repayment' };
+      if (
+        /spłat[ay].*leasingu|spłat[ay].*zobowiązań\s+z\s+tytułu\s+leasingu/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-lease-repayment')
+          return { delta: 0.8, reason: 'cf_lease_repayment_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.3, reason: 'cf_lease_vs_debt_repayment' };
       }
-      if (/spłat[ay].*kredyt|spłat[ay].*pożyczek/i.test(normalizedLabel) && !/leasingu/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: 0.5, reason: 'cf_debt_repayment_anchor' };
-        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: -0.3, reason: 'cf_debt_vs_lease_repayment' };
+      if (
+        /spłat[ay].*kredyt|spłat[ay].*pożyczek/i.test(normalizedLabel) &&
+        !/leasingu/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: 0.5, reason: 'cf_debt_repayment_anchor' };
+        if (canonicalId === 'fsl-cf-lease-repayment')
+          return { delta: -0.3, reason: 'cf_debt_vs_lease_repayment' };
       }
       if (/wpływy.*zaciągnięcia|zaciągnięcie.*kredyt|wpływy.*kredyt/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: 0.5, reason: 'cf_debt_drawdown_anchor' };
+        if (canonicalId === 'fsl-cf-debt-drawdown')
+          return { delta: 0.5, reason: 'cf_debt_drawdown_anchor' };
       }
       if (/na początek|na pocz[aą]tek|opening|am\s+anfang|zu\s+beginn/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-opening-cash') return { delta: 0.6, reason: 'cash_flow_opening_anchor' };
+        if (canonicalId === 'fsl-cf-opening-cash')
+          return { delta: 0.6, reason: 'cash_flow_opening_anchor' };
       }
       if (/na koniec|closing|am\s+ende/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-closing-cash') return { delta: 0.6, reason: 'cash_flow_closing_anchor' };
+        if (canonicalId === 'fsl-cf-closing-cash')
+          return { delta: 0.6, reason: 'cash_flow_closing_anchor' };
       }
-      if (/wydatki na nabycie|capital expenditure|capex|investitionen\s+in\s+sachanlagen|erwerb\s+von\s+sachanlagen/.test(normalizedLabel)) {
+      if (
+        /wydatki na nabycie|capital expenditure|capex|investitionen\s+in\s+sachanlagen|erwerb\s+von\s+sachanlagen/.test(
+          normalizedLabel
+        )
+      ) {
         if (canonicalId === 'fsl-cf-capex') return { delta: 0.6, reason: 'cash_flow_capex_anchor' };
       }
       if (/^inne\s+wydatki/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-other-expenditure') return { delta: 0.7, reason: 'cf_other_expenditure_anchor' };
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: -0.3, reason: 'cf_other_expenditure_vs_adj' };
+        if (canonicalId === 'fsl-cf-other-expenditure')
+          return { delta: 0.7, reason: 'cf_other_expenditure_anchor' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: -0.3, reason: 'cf_other_expenditure_vs_adj' };
       }
       if (/^inne\s+wpływy/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-other-receipts') return { delta: 0.7, reason: 'cf_other_receipts_anchor' };
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: -0.3, reason: 'cf_other_receipts_vs_adj' };
+        if (canonicalId === 'fsl-cf-other-receipts')
+          return { delta: 0.7, reason: 'cf_other_receipts_anchor' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: -0.3, reason: 'cf_other_receipts_vs_adj' };
       }
       if (/inwestycje\s+w\s+jednostki\s+zależne/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-subsidiaries') return { delta: 0.7, reason: 'cf_investing_subsidiaries_anchor' };
-        if (canonicalId === 'fsl-cf-capex') return { delta: -0.3, reason: 'cf_subsidiaries_vs_capex' };
+        if (canonicalId === 'fsl-cf-investing-subsidiaries')
+          return { delta: 0.7, reason: 'cf_investing_subsidiaries_anchor' };
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: -0.3, reason: 'cf_subsidiaries_vs_capex' };
       }
       if (/zmiana\s+stanu\s+środków\s+pieniężnych\s+o\s+ograniczonym/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-restricted-cash') return { delta: 0.7, reason: 'cf_restricted_cash_anchor' };
-        if (canonicalId === 'fsl-cf-change-wc-other') return { delta: -0.3, reason: 'cf_restricted_cash_vs_other' };
+        if (canonicalId === 'fsl-cf-change-wc-restricted-cash')
+          return { delta: 0.7, reason: 'cf_restricted_cash_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-other')
+          return { delta: -0.3, reason: 'cf_restricted_cash_vs_other' };
       }
       if (/zmiana\s+stanu\s+rozliczeń\s+międzyokresowych/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-prepaids') return { delta: 0.7, reason: 'cf_prepaids_anchor' };
-        if (canonicalId === 'fsl-cf-change-wc-other') return { delta: -0.3, reason: 'cf_prepaids_vs_other' };
+        if (canonicalId === 'fsl-cf-change-wc-prepaids')
+          return { delta: 0.7, reason: 'cf_prepaids_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-other')
+          return { delta: -0.3, reason: 'cf_prepaids_vs_other' };
       }
       if (/otrzymane\s+dywidendy/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-dividend-income') return { delta: 0.7, reason: 'cf_received_dividends_anchor' };
-        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.3, reason: 'cf_received_vs_paid_dividends' };
+        if (canonicalId === 'fsl-cf-operating-dividend-income')
+          return { delta: 0.7, reason: 'cf_received_dividends_anchor' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: -0.3, reason: 'cf_received_vs_paid_dividends' };
       }
       if (/przychody\s+z\s+tytułu\s+odsetek/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-interest-income') return { delta: 0.7, reason: 'cf_interest_income_tytulu_anchor' };
-        if (canonicalId === 'fsl-cf-operating-interest-cost') return { delta: -0.4, reason: 'cf_interest_income_vs_cost' };
+        if (canonicalId === 'fsl-cf-operating-interest-income')
+          return { delta: 0.7, reason: 'cf_interest_income_tytulu_anchor' };
+        if (canonicalId === 'fsl-cf-operating-interest-cost')
+          return { delta: -0.4, reason: 'cf_interest_income_vs_cost' };
       }
-      if (/zmiana\s+(?:stanu\s+)?kapitału\s+obrotowego|change\s+in\s+working\s+capital/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc') return { delta: 0.7, reason: 'cf_change_wc_total_anchor' };
-        if (canonicalId === 'fsl-cf-change-wc-ar' || canonicalId === 'fsl-cf-change-wc-ap') return { delta: -0.3, reason: 'cf_wc_total_vs_component' };
+      if (
+        /zmiana\s+(?:stanu\s+)?kapitału\s+obrotowego|change\s+in\s+working\s+capital/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-change-wc')
+          return { delta: 0.7, reason: 'cf_change_wc_total_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-ar' || canonicalId === 'fsl-cf-change-wc-ap')
+          return { delta: -0.3, reason: 'cf_wc_total_vs_component' };
       }
-      if (/spłat[ay]\s+kredytów\s+bankowych|spłata\s+długu\s+bankowego|bank\s+(?:debt|loan)\s+repayment/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment-bank') return { delta: 0.8, reason: 'cf_bank_repayment_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.2, reason: 'cf_bank_repayment_vs_total' };
-        if (canonicalId === 'fsl-cf-debt-repayment-lease') return { delta: -0.3, reason: 'cf_bank_repayment_vs_lease' };
+      if (
+        /spłat[ay]\s+kredytów\s+bankowych|spłata\s+długu\s+bankowego|bank\s+(?:debt|loan)\s+repayment/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-debt-repayment-bank')
+          return { delta: 0.8, reason: 'cf_bank_repayment_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.2, reason: 'cf_bank_repayment_vs_total' };
+        if (canonicalId === 'fsl-cf-debt-repayment-lease')
+          return { delta: -0.3, reason: 'cf_bank_repayment_vs_lease' };
       }
-      if (/spłat[ay]\s+zobowiązań\s+leasingowych|lease\s+(?:debt\s+)?repayment/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment-lease') return { delta: 0.8, reason: 'cf_lease_repayment_detail_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.2, reason: 'cf_lease_repayment_vs_total' };
-        if (canonicalId === 'fsl-cf-debt-repayment-bank') return { delta: -0.3, reason: 'cf_lease_repayment_vs_bank' };
+      if (
+        /spłat[ay]\s+zobowiązań\s+leasingowych|lease\s+(?:debt\s+)?repayment/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-debt-repayment-lease')
+          return { delta: 0.8, reason: 'cf_lease_repayment_detail_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.2, reason: 'cf_lease_repayment_vs_total' };
+        if (canonicalId === 'fsl-cf-debt-repayment-bank')
+          return { delta: -0.3, reason: 'cf_lease_repayment_vs_bank' };
       }
-      if (/zaciągnięcie\s+kredytów\s+bankowych|wpływy\s+z\s+kredytów\s+bankowych|bank\s+(?:debt|loan)\s+(?:drawdown|proceeds)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-drawdown-bank') return { delta: 0.8, reason: 'cf_bank_drawdown_anchor' };
-        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: -0.2, reason: 'cf_bank_drawdown_vs_total' };
+      if (
+        /zaciągnięcie\s+kredytów\s+bankowych|wpływy\s+z\s+kredytów\s+bankowych|bank\s+(?:debt|loan)\s+(?:drawdown|proceeds)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-debt-drawdown-bank')
+          return { delta: 0.8, reason: 'cf_bank_drawdown_anchor' };
+        if (canonicalId === 'fsl-cf-debt-drawdown')
+          return { delta: -0.2, reason: 'cf_bank_drawdown_vs_total' };
       }
       if (/nowe\s+(?:zobowiązania|umowy)\s+leasingowe|new\s+lease/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-drawdown-lease') return { delta: 0.8, reason: 'cf_lease_drawdown_anchor' };
-        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: -0.2, reason: 'cf_lease_drawdown_vs_total' };
+        if (canonicalId === 'fsl-cf-debt-drawdown-lease')
+          return { delta: 0.8, reason: 'cf_lease_drawdown_anchor' };
+        if (canonicalId === 'fsl-cf-debt-drawdown')
+          return { delta: -0.2, reason: 'cf_lease_drawdown_vs_total' };
       }
       if (/pozostałe\s+przepływy\s+inwestycyjne|other\s+investing/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-other-investing') return { delta: 0.6, reason: 'cf_other_investing_anchor' };
-        if (canonicalId === 'fsl-cf-investing') return { delta: -0.2, reason: 'cf_other_investing_vs_total' };
+        if (canonicalId === 'fsl-cf-other-investing')
+          return { delta: 0.6, reason: 'cf_other_investing_anchor' };
+        if (canonicalId === 'fsl-cf-investing')
+          return { delta: -0.2, reason: 'cf_other_investing_vs_total' };
       }
       if (/deferred\s+(?:income\s+)?tax|odroczony\s+podatek/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.7, reason: 'cf_deferred_tax_is_adj' };
-        if (canonicalId === 'fsl-cf-taxes-paid') return { delta: -0.7, reason: 'cf_deferred_tax_not_paid' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: 0.7, reason: 'cf_deferred_tax_is_adj' };
+        if (canonicalId === 'fsl-cf-taxes-paid')
+          return { delta: -0.7, reason: 'cf_deferred_tax_not_paid' };
       }
       if (/(?:income\s+)?taxes?\s+paid|cash\s+paid.*income\s+tax/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-taxes-paid') return { delta: 0.7, reason: 'cf_taxes_paid_en_anchor' };
+        if (canonicalId === 'fsl-cf-taxes-paid')
+          return { delta: 0.7, reason: 'cf_taxes_paid_en_anchor' };
       }
-      if (/purchases?\s+of\s+(?:property|investments)|expenditure\s+on\s+property|total\s+(?:cash\s+)?capital\s+expenditure/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-capex') return { delta: 0.7, reason: 'cf_capex_purchases_anchor' };
+      if (
+        /purchases?\s+of\s+(?:property|investments)|expenditure\s+on\s+property|total\s+(?:cash\s+)?capital\s+expenditure/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: 0.7, reason: 'cf_capex_purchases_anchor' };
       }
       if (/(?:investing\s+activities?\s+)?expenditure\s+on\s+property/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-capex') return { delta: 0.8, reason: 'cf_capex_expenditure_property_anchor' };
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: 0.8, reason: 'cf_capex_expenditure_property_anchor' };
       }
-      if (/repayments?\s+of\s+(?:long.?term|debt)|repayment\s+of\s+non.?current/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: 0.6, reason: 'cf_debt_repayment_en_anchor' };
-        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.4, reason: 'cf_repayment_not_dividends' };
+      if (
+        /repayments?\s+of\s+(?:long.?term|debt)|repayment\s+of\s+non.?current/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: 0.6, reason: 'cf_debt_repayment_en_anchor' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: -0.4, reason: 'cf_repayment_not_dividends' };
       }
       if (/dividends?\s+paid/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-dividends') return { delta: 0.7, reason: 'cf_dividends_paid_en_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: 0.7, reason: 'cf_dividends_paid_en_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
       }
       if (/payment\s+of\s+dividends/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-dividends') return { delta: 0.7, reason: 'cf_dividends_payment_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: 0.7, reason: 'cf_dividends_payment_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
       }
-      if (/cash\s+flows?\s+from\s+operating|net\s+cash\s+(?:provided\s+by|from)\s+operating/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating') return { delta: 0.8, reason: 'cf_operating_total_en_anchor' };
+      if (
+        /cash\s+flows?\s+from\s+operating|net\s+cash\s+(?:provided\s+by|from)\s+operating/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-operating')
+          return { delta: 0.8, reason: 'cf_operating_total_en_anchor' };
       }
-      if (/cash\s+flows?\s+from\s+investing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+investing/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing') return { delta: 0.8, reason: 'cf_investing_total_en_anchor' };
+      if (
+        /cash\s+flows?\s+from\s+investing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+investing/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-investing')
+          return { delta: 0.8, reason: 'cf_investing_total_en_anchor' };
       }
-      if (/cash\s+flows?\s+from\s+financing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+financing/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-financing') return { delta: 0.8, reason: 'cf_financing_total_en_anchor' };
+      if (
+        /cash\s+flows?\s+from\s+financing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+financing/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-financing')
+          return { delta: 0.8, reason: 'cf_financing_total_en_anchor' };
       }
-      if (/stock.based\s+compensation|share.based\s+(?:compensation|payments?)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-sbc') return { delta: 0.8, reason: 'cf_sbc_en_anchor' };
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.2, reason: 'cf_sbc_as_other_adj' };
+      if (
+        /stock.based\s+compensation|share.based\s+(?:compensation|payments?)/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-sbc')
+          return { delta: 0.8, reason: 'cf_sbc_en_anchor' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: 0.2, reason: 'cf_sbc_as_other_adj' };
       }
-      if (/repurchase\s+of\s+(?:shares|ordinary\s+share|common\s+stock)|purchases?\s+of\s+stock\s+for\s+treasury|treasury\s+shares?\s+acquired|buybacks?\s+of\s+common/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-share-buyback') return { delta: 0.8, reason: 'cf_share_buyback_en_anchor' };
-        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.4, reason: 'cf_buyback_not_dividends' };
+      if (
+        /repurchase\s+of\s+(?:shares|ordinary\s+share|common\s+stock)|purchases?\s+of\s+stock\s+for\s+treasury|treasury\s+shares?\s+acquired|buybacks?\s+of\s+common/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-share-buyback')
+          return { delta: 0.8, reason: 'cf_share_buyback_en_anchor' };
+        if (canonicalId === 'fsl-cf-dividends')
+          return { delta: -0.4, reason: 'cf_buyback_not_dividends' };
       }
-      if (/(?:increase|decrease|net\s+increase|net\s+decrease)\s+in\s+cash/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-net-change-cash') return { delta: 0.7, reason: 'cf_net_change_en_anchor' };
+      if (
+        /(?:increase|decrease|net\s+increase|net\s+decrease)\s+in\s+cash/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-net-change-cash')
+          return { delta: 0.7, reason: 'cf_net_change_en_anchor' };
       }
       if (/effect\s+of\s+exchange\s+rate/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-fx-on-cash') return { delta: 0.7, reason: 'cf_fx_effect_en_anchor' };
-        if (canonicalId === 'fsl-cf-opening-cash') return { delta: -0.5, reason: 'cf_fx_not_opening' };
+        if (canonicalId === 'fsl-cf-fx-on-cash')
+          return { delta: 0.7, reason: 'cf_fx_effect_en_anchor' };
+        if (canonicalId === 'fsl-cf-opening-cash')
+          return { delta: -0.5, reason: 'cf_fx_not_opening' };
       }
       if (/(?:at|as\s+at)\s+(?:1\s+january|beginning\s+of)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-opening-cash') return { delta: 0.7, reason: 'cf_opening_cash_en_anchor' };
-        if (canonicalId === 'fsl-cf-closing-cash') return { delta: -0.5, reason: 'cf_opening_not_closing' };
+        if (canonicalId === 'fsl-cf-opening-cash')
+          return { delta: 0.7, reason: 'cf_opening_cash_en_anchor' };
+        if (canonicalId === 'fsl-cf-closing-cash')
+          return { delta: -0.5, reason: 'cf_opening_not_closing' };
       }
       if (/(?:at|as\s+at)\s+(?:31\s+december|end\s+of)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-closing-cash') return { delta: 0.7, reason: 'cf_closing_cash_en_anchor' };
-        if (canonicalId === 'fsl-cf-opening-cash') return { delta: -0.5, reason: 'cf_closing_not_opening' };
+        if (canonicalId === 'fsl-cf-closing-cash')
+          return { delta: 0.7, reason: 'cf_closing_cash_en_anchor' };
+        if (canonicalId === 'fsl-cf-opening-cash')
+          return { delta: -0.5, reason: 'cf_closing_not_opening' };
       }
       if (/proceeds\s+from\s+(?:disposals?|sales?\s+of)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-disposal-proceeds') return { delta: 0.6, reason: 'cf_disposal_proceeds_en_anchor' };
+        if (canonicalId === 'fsl-cf-investing-disposal-proceeds')
+          return { delta: 0.6, reason: 'cf_disposal_proceeds_en_anchor' };
       }
-      if (/issuances?\s+of\s+(?:loans|debt|notes)|proceeds\s+from\s+(?:issuances?\s+of\s+debt|long.term\s+financing)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: 0.7, reason: 'cf_debt_drawdown_issuance_en' };
+      if (
+        /issuances?\s+of\s+(?:loans|debt|notes)|proceeds\s+from\s+(?:issuances?\s+of\s+debt|long.term\s+financing)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-debt-drawdown')
+          return { delta: 0.7, reason: 'cf_debt_drawdown_issuance_en' };
       }
       if (/payments?\s+of\s+(?:loans|debt|notes)|repayments?\s+of\s+debt/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: 0.7, reason: 'cf_debt_repayment_payments_en' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: 0.7, reason: 'cf_debt_repayment_payments_en' };
       }
-      if (/principal\s+(?:repayments?|payments?)\s+(?:of|on)\s+finance\s+leases?/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: 0.8, reason: 'cf_lease_repayment_en_anchor' };
-        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.3, reason: 'cf_lease_not_debt_repayment' };
+      if (
+        /principal\s+(?:repayments?|payments?)\s+(?:of|on)\s+finance\s+leases?/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-lease-repayment')
+          return { delta: 0.8, reason: 'cf_lease_repayment_en_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment')
+          return { delta: -0.3, reason: 'cf_lease_not_debt_repayment' };
       }
       if (/lease\s+liability\s+payments/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-debt-repayment-lease') return { delta: 0.8, reason: 'cf_lease_payments_en_anchor' };
-        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: 0.5, reason: 'cf_lease_payments_alt' };
+        if (canonicalId === 'fsl-cf-debt-repayment-lease')
+          return { delta: 0.8, reason: 'cf_lease_payments_en_anchor' };
+        if (canonicalId === 'fsl-cf-lease-repayment')
+          return { delta: 0.5, reason: 'cf_lease_payments_alt' };
       }
-      if (/changes?\s+in\s+operating\s+assets|net\s+change\s+in\s+operating/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc') return { delta: 0.7, reason: 'cf_wc_changes_en_anchor' };
+      if (
+        /changes?\s+in\s+operating\s+assets|net\s+change\s+in\s+operating/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-change-wc')
+          return { delta: 0.7, reason: 'cf_wc_changes_en_anchor' };
       }
-      if (/equity\s+income|earnings\s+from\s+(?:joint\s+ventures|associates)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-equity-method') return { delta: 0.6, reason: 'cf_equity_method_en_anchor' };
+      if (
+        /equity\s+income|earnings\s+from\s+(?:joint\s+ventures|associates)/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-equity-method')
+          return { delta: 0.6, reason: 'cf_equity_method_en_anchor' };
       }
       if (/impairment\s+and\s+(?:gain|loss)\s+on\s+sale/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-gain-disposal') return { delta: 0.7, reason: 'cf_impairment_gain_en_anchor' };
+        if (canonicalId === 'fsl-cf-operating-gain-disposal')
+          return { delta: 0.7, reason: 'cf_impairment_gain_en_anchor' };
       }
-      if (/finance\s+costs?\b/i.test(normalizedLabel) && !/interest\s+expense/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-interest-cost') return { delta: 0.5, reason: 'cf_finance_costs_en_anchor' };
+      if (
+        /finance\s+costs?\b/i.test(normalizedLabel) &&
+        !/interest\s+expense/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-operating-interest-cost')
+          return { delta: 0.5, reason: 'cf_finance_costs_en_anchor' };
       }
       if (/interest\s+(?:receivable|received)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-interest-income') return { delta: 0.6, reason: 'cf_interest_received_en_anchor' };
+        if (canonicalId === 'fsl-cf-operating-interest-income')
+          return { delta: 0.6, reason: 'cf_interest_received_en_anchor' };
       }
       if (/net\s+(?:charge|provision)\s+for\s+provisions/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-change-wc-provisions') return { delta: 0.6, reason: 'cf_provisions_en_anchor' };
+        if (canonicalId === 'fsl-cf-change-wc-provisions')
+          return { delta: 0.6, reason: 'cf_provisions_en_anchor' };
       }
     }
 
     if (normalizedType === 'BS') {
-      if (/(aktywa razem|aktywa ogolem|aktywa ogółem|total assets|bilanzsumme|summe\s+aktiva|summe\s+der\s+aktiva|total\s+actif|total\s+de\s+l'actif)/.test(normalizedLabel)) {
+      if (
+        /(aktywa razem|aktywa ogolem|aktywa ogółem|total assets|bilanzsumme|summe\s+aktiva|summe\s+der\s+aktiva|total\s+actif|total\s+de\s+l'actif)/.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-total-assets'
           ? { delta: 0.6, reason: 'balance_sheet_total_anchor' }
           : { delta: -0.2, reason: 'balance_sheet_total_conflict' };
       }
-      if (/(total\s+(?:liabilities\s+and\s+(?:stockholders'?\s+|shareholders'?\s+)?equity|equity\s+and\s+liabilities)|pasywa\s+razem|razem\s+pasywa|razem\s+zobowiązania\s+i\s+kapitał)/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-total-liabilities-equity') return { delta: 0.8, reason: 'bs_total_liabilities_equity_exact' };
-        if (canonicalId === 'fsl-bs-total-liabilities') return { delta: -0.5, reason: 'bs_total_le_vs_total_l' };
+      if (
+        /(total\s+(?:liabilities\s+and\s+(?:stockholders'?\s+|shareholders'?\s+)?equity|equity\s+and\s+liabilities)|pasywa\s+razem|razem\s+pasywa|razem\s+zobowiązania\s+i\s+kapitał)/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-total-liabilities-equity')
+          return { delta: 0.8, reason: 'bs_total_liabilities_equity_exact' };
+        if (canonicalId === 'fsl-bs-total-liabilities')
+          return { delta: -0.5, reason: 'bs_total_le_vs_total_l' };
         return { delta: -0.2, reason: 'balance_sheet_total_le_conflict' };
       }
-      if (/^zobowiązania\s*$/i.test(normalizedLabel) || /^liabilities\s*$/i.test(normalizedLabel) || /^verbindlichkeiten\s*$/i.test(normalizedLabel) || /^dettes\s*$/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-total-liabilities') return { delta: 0.8, reason: 'bs_total_liabilities_exact_anchor' };
-        if (canonicalId === 'fsl-bs-current-liabilities') return { delta: -0.3, reason: 'bs_generic_liabilities_vs_current' };
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.3, reason: 'bs_generic_liabilities_vs_lt' };
+      if (
+        /^zobowiązania\s*$/i.test(normalizedLabel) ||
+        /^liabilities\s*$/i.test(normalizedLabel) ||
+        /^verbindlichkeiten\s*$/i.test(normalizedLabel) ||
+        /^dettes\s*$/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-total-liabilities')
+          return { delta: 0.8, reason: 'bs_total_liabilities_exact_anchor' };
+        if (canonicalId === 'fsl-bs-current-liabilities')
+          return { delta: -0.3, reason: 'bs_generic_liabilities_vs_current' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: -0.3, reason: 'bs_generic_liabilities_vs_lt' };
       }
-      if (/(zobowiazania razem|zobowiązania razem|total liabilities|summe\s+verbindlichkeiten|gesamtverbindlichkeiten|total\s+(?:des\s+)?dettes|total\s+passif)/.test(normalizedLabel) && !/and\s+(?:equity|stockholders|shareholders)/.test(normalizedLabel)) {
+      if (
+        /(zobowiazania razem|zobowiązania razem|total liabilities|summe\s+verbindlichkeiten|gesamtverbindlichkeiten|total\s+(?:des\s+)?dettes|total\s+passif)/.test(
+          normalizedLabel
+        ) &&
+        !/and\s+(?:equity|stockholders|shareholders)/.test(normalizedLabel)
+      ) {
         return canonicalId === 'fsl-bs-total-liabilities'
           ? { delta: 0.6, reason: 'balance_sheet_total_anchor' }
           : { delta: -0.2, reason: 'balance_sheet_total_conflict' };
       }
       if (/(?:preferred\s+stock|par\s+value)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-share-capital') return { delta: 0.6, reason: 'bs_preferred_stock_to_share_capital' };
-        if (canonicalId === 'fsl-bs-equity') return { delta: -0.8, reason: 'bs_preferred_stock_not_total_equity' };
+        if (canonicalId === 'fsl-bs-share-capital')
+          return { delta: 0.6, reason: 'bs_preferred_stock_to_share_capital' };
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: -0.8, reason: 'bs_preferred_stock_not_total_equity' };
         return { delta: -0.2, reason: 'bs_preferred_stock_conflict' };
       }
       if (/^total\s+(?:stockholders|shareholders)\s+equity/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity') return { delta: 0.9, reason: 'bs_total_stockholders_equity_exact' };
-        if (canonicalId === 'fsl-bs-share-capital') return { delta: -0.5, reason: 'bs_total_equity_not_share_capital' };
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: 0.9, reason: 'bs_total_stockholders_equity_exact' };
+        if (canonicalId === 'fsl-bs-share-capital')
+          return { delta: -0.5, reason: 'bs_total_equity_not_share_capital' };
         return { delta: -0.2, reason: 'bs_total_equity_conflict' };
       }
-      if (/^kapitał\s+własny\s*$/i.test(normalizedLabel) || /^kapitał\s+własny\s+razem/i.test(normalizedLabel) || /^total\s+equity/i.test(normalizedLabel) || /^equity\s*$/i.test(normalizedLabel) || /^eigenkapital\s*$/i.test(normalizedLabel) || /^eigenkapital\s+gesamt/i.test(normalizedLabel) || /^capitaux\s+propres\s*$/i.test(normalizedLabel) || /^total\s+capitaux\s+propres/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity') return { delta: 0.6, reason: 'balance_sheet_equity_anchor' };
-        if (canonicalId === 'fsl-bs-equity-method-investments') return { delta: -0.4, reason: 'equity_vs_equity_method' };
+      if (
+        /^kapitał\s+własny\s*$/i.test(normalizedLabel) ||
+        /^kapitał\s+własny\s+razem/i.test(normalizedLabel) ||
+        /^total\s+equity/i.test(normalizedLabel) ||
+        /^equity\s*$/i.test(normalizedLabel) ||
+        /^eigenkapital\s*$/i.test(normalizedLabel) ||
+        /^eigenkapital\s+gesamt/i.test(normalizedLabel) ||
+        /^capitaux\s+propres\s*$/i.test(normalizedLabel) ||
+        /^total\s+capitaux\s+propres/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: 0.6, reason: 'balance_sheet_equity_anchor' };
+        if (canonicalId === 'fsl-bs-equity-method-investments')
+          return { delta: -0.4, reason: 'equity_vs_equity_method' };
         return { delta: -0.1, reason: 'equity_conflict' };
       }
-      if (/kapitał\s+własny/i.test(normalizedLabel) && /przypadający|dominującej|akcjonariuszom/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity-parent') return { delta: 0.8, reason: 'balance_sheet_equity_parent_anchor' };
-        if (canonicalId === 'fsl-bs-equity') return { delta: -0.3, reason: 'equity_parent_vs_total' };
+      if (
+        /kapitał\s+własny/i.test(normalizedLabel) &&
+        /przypadający|dominującej|akcjonariuszom/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-equity-parent')
+          return { delta: 0.8, reason: 'balance_sheet_equity_parent_anchor' };
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: -0.3, reason: 'equity_parent_vs_total' };
         return { delta: 0, reason: undefined };
       }
-      if (/(rzeczowe aktywa trwałe|property plant and equipment|sachanlagen|sachanlagevermögen|immobilisations corporelles)/.test(normalizedLabel)) {
+      if (
+        /(rzeczowe aktywa trwałe|property plant and equipment|sachanlagen|sachanlagevermögen|immobilisations corporelles)/.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-ppe'
           ? { delta: 0.4, reason: 'balance_sheet_ppe_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(wartości niematerialne|intangible assets|immaterielle vermögenswerte)/.test(normalizedLabel) && !/firmy|goodwill|firmenwert/i.test(normalizedLabel)) {
+      if (
+        /(wartości niematerialne|intangible assets|immaterielle vermögenswerte)/.test(
+          normalizedLabel
+        ) &&
+        !/firmy|goodwill|firmenwert/i.test(normalizedLabel)
+      ) {
         return canonicalId === 'fsl-bs-intangibles'
           ? { delta: 0.4, reason: 'balance_sheet_intangibles_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(wartość firmy|goodwill|geschäfts-?\s*(?:oder\s+)?firmenwert|firmenwert)/.test(normalizedLabel)) {
+      if (
+        /(wartość firmy|goodwill|geschäfts-?\s*(?:oder\s+)?firmenwert|firmenwert)/.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-intangibles-goodwill'
           ? { delta: 0.5, reason: 'balance_sheet_goodwill_anchor' }
           : { delta: -0.1, reason: 'balance_sheet_goodwill_conflict' };
@@ -5222,16 +5675,26 @@ export async function autoMapLines(
           ? { delta: 0.3, reason: 'balance_sheet_cash_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(pasywa\s+razem|pasywa\s+ogółem|razem\s+pasywa|suma\s+pasywów|summe\s+passiva|bilanzsumme\s+passiva|summe\s+eigenkapital\s+und\s+verbindlichkeiten|total\s+passif\s+et\s+capitaux\s+propres)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-total-liabilities-equity') return { delta: 0.7, reason: 'bs_total_liabilities_equity_anchor' };
-        if (canonicalId === 'fsl-bs-total-liabilities') return { delta: -0.3, reason: 'bs_pasywa_vs_total_liabilities' };
+      if (
+        /(pasywa\s+razem|pasywa\s+ogółem|razem\s+pasywa|suma\s+pasywów|summe\s+passiva|bilanzsumme\s+passiva|summe\s+eigenkapital\s+und\s+verbindlichkeiten|total\s+passif\s+et\s+capitaux\s+propres)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-total-liabilities-equity')
+          return { delta: 0.7, reason: 'bs_total_liabilities_equity_anchor' };
+        if (canonicalId === 'fsl-bs-total-liabilities')
+          return { delta: -0.3, reason: 'bs_pasywa_vs_total_liabilities' };
       }
       if (/(akcje\s+własne|udziały\s+własne|treasury\s+shares)/i.test(normalizedLabel)) {
         return canonicalId === 'fsl-bs-treasury-shares'
           ? { delta: 0.5, reason: 'bs_treasury_shares_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(udziały\s+niesprawujące|udziały\s+mniejszościowe|non-?controlling\s+interest|minority\s+interest|nicht\s+beherrschende\s+anteile|minderheitsanteile)/i.test(normalizedLabel)) {
+      if (
+        /(udziały\s+niesprawujące|udziały\s+mniejszościowe|non-?controlling\s+interest|minority\s+interest|nicht\s+beherrschende\s+anteile|minderheitsanteile)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-minority-interest'
           ? { delta: 0.6, reason: 'bs_minority_interest_anchor' }
           : { delta: 0, reason: undefined };
@@ -5241,24 +5704,40 @@ export async function autoMapLines(
           ? { delta: 0.5, reason: 'bs_lt_receivables_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(długoterminowe\s+aktywa\s+finansowe|aktywa\s+finansowe\s+długoterminowe)/i.test(normalizedLabel)) {
+      if (
+        /(długoterminowe\s+aktywa\s+finansowe|aktywa\s+finansowe\s+długoterminowe)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-lt-financial-assets'
           ? { delta: 0.5, reason: 'bs_lt_financial_assets_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(inwestycje.*praw\s+własności|udziały.*jednostk.*zależn|inwestycje.*stowarzyszon)/i.test(normalizedLabel)) {
+      if (
+        /(inwestycje.*praw\s+własności|udziały.*jednostk.*zależn|inwestycje.*stowarzyszon)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-equity-method-investments'
           ? { delta: 0.5, reason: 'bs_equity_method_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(należności\s+podatkowe|należności.*podatku\s+dochodowego|należności\s+z\s+tytułu\s+innych\s+podatków)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-tax-receivables') return { delta: 0.6, reason: 'bs_tax_receivables_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-liabilities-tax') return { delta: -0.5, reason: 'bs_receivable_not_liability' };
+      if (
+        /(należności\s+podatkowe|należności.*podatku\s+dochodowego|należności\s+z\s+tytułu\s+innych\s+podatków)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-tax-receivables')
+          return { delta: 0.6, reason: 'bs_tax_receivables_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-liabilities-tax')
+          return { delta: -0.5, reason: 'bs_receivable_not_liability' };
         return { delta: 0, reason: undefined };
       }
       if (/zobowiązania\s+z\s+tytułu\s+podatku\s+dochodowego/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-liabilities-tax') return { delta: 0.6, reason: 'bs_tax_payable_anchor' };
-        if (canonicalId === 'fsl-bs-tax-receivables') return { delta: -0.5, reason: 'bs_liability_not_receivable' };
+        if (canonicalId === 'fsl-bs-other-current-liabilities-tax')
+          return { delta: 0.6, reason: 'bs_tax_payable_anchor' };
+        if (canonicalId === 'fsl-bs-tax-receivables')
+          return { delta: -0.5, reason: 'bs_liability_not_receivable' };
         return { delta: 0, reason: undefined };
       }
       if (/(aktywa\s+kontraktowe|aktywa.*umów\s+z\s+klientami)/i.test(normalizedLabel)) {
@@ -5266,7 +5745,11 @@ export async function autoMapLines(
           ? { delta: 0.5, reason: 'bs_contract_assets_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(aktywa\s+przeznaczone\s+do\s+sprzedaży|aktywa.*przeznaczone\s+do\s+zbycia)/i.test(normalizedLabel)) {
+      if (
+        /(aktywa\s+przeznaczone\s+do\s+sprzedaży|aktywa.*przeznaczone\s+do\s+zbycia)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-assets-held-for-sale'
           ? { delta: 0.5, reason: 'bs_assets_held_for_sale_anchor' }
           : { delta: 0, reason: undefined };
@@ -5286,7 +5769,9 @@ export async function autoMapLines(
           ? { delta: 0.5, reason: 'bs_fx_reserve_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(zobowiązania.*świadczeń\s+pracowniczych|świadczenia\s+pracownicze)/i.test(normalizedLabel)) {
+      if (
+        /(zobowiązania.*świadczeń\s+pracowniczych|świadczenia\s+pracownicze)/i.test(normalizedLabel)
+      ) {
         if (/długoterminow/i.test(normalizedLabel)) {
           return canonicalId === 'fsl-bs-employee-benefits-lt'
             ? { delta: 0.5, reason: 'bs_employee_benefits_lt_anchor' }
@@ -5296,17 +5781,29 @@ export async function autoMapLines(
           ? { delta: 0.4, reason: 'bs_employee_benefits_st_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(zobowiązania\s+kontraktowe|zobowiązania.*umów\s+z\s+klientami|przychody\s+przyszłych\s+okresów|zaliczki\s+otrzymane)/i.test(normalizedLabel)) {
+      if (
+        /(zobowiązania\s+kontraktowe|zobowiązania.*umów\s+z\s+klientami|przychody\s+przyszłych\s+okresów|zaliczki\s+otrzymane)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-contract-liabilities'
           ? { delta: 0.5, reason: 'bs_contract_liabilities_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(rezerwa.*podatku\s+odroczonego|zobowiązania.*odroczonego\s+podatku)/i.test(normalizedLabel)) {
+      if (
+        /(rezerwa.*podatku\s+odroczonego|zobowiązania.*odroczonego\s+podatku)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-other-non-current-liabilities-deferred-tax'
           ? { delta: 0.5, reason: 'bs_deferred_tax_liabilities_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/(pozostałe\s+kapitały|kapitał\s+rezerwowy|kapitał\s+z\s+aktualizacji)/i.test(normalizedLabel)) {
+      if (
+        /(pozostałe\s+kapitały|kapitał\s+rezerwowy|kapitał\s+z\s+aktualizacji)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-bs-other-equity-reserves'
           ? { delta: 0.4, reason: 'bs_other_equity_reserves_anchor' }
           : { delta: 0, reason: undefined };
@@ -5316,209 +5813,377 @@ export async function autoMapLines(
           ? { delta: 0.4, reason: 'bs_share_premium_anchor' }
           : { delta: 0, reason: undefined };
       }
-      if (/długoterminowe\s+kredyty\s+i\s+pożyczki|kredyty\s+i\s+pożyczki\s+długoterminowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-long-term-borrowings') return { delta: 0.8, reason: 'bs_lt_borrowings_anchor' };
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.3, reason: 'bs_borrowings_vs_total_lt' };
+      if (
+        /długoterminowe\s+kredyty\s+i\s+pożyczki|kredyty\s+i\s+pożyczki\s+długoterminowe/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-long-term-borrowings')
+          return { delta: 0.8, reason: 'bs_lt_borrowings_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: -0.3, reason: 'bs_borrowings_vs_total_lt' };
         return { delta: 0, reason: undefined };
       }
       if (/pozostałe\s+zobowiązania\s+długoterminowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-non-current-liabilities') return { delta: 0.8, reason: 'bs_other_lt_liabilities_anchor' };
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.3, reason: 'bs_other_lt_not_total' };
+        if (canonicalId === 'fsl-bs-other-non-current-liabilities')
+          return { delta: 0.8, reason: 'bs_other_lt_liabilities_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: -0.3, reason: 'bs_other_lt_not_total' };
       }
-      if (/zobowiązania\s+(?:i\s+rezerwy\s+)?długoterminowe\b/i.test(normalizedLabel) && !/kredyt|pożyczk|leasingu|pozostałe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: 0.5, reason: 'bs_lt_debt_total_anchor' };
-        if (canonicalId === 'fsl-bs-long-term-borrowings') return { delta: -0.3, reason: 'bs_lt_total_vs_borrowings' };
+      if (
+        /zobowiązania\s+(?:i\s+rezerwy\s+)?długoterminowe\b/i.test(normalizedLabel) &&
+        !/kredyt|pożyczk|leasingu|pozostałe/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: 0.5, reason: 'bs_lt_debt_total_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-borrowings')
+          return { delta: -0.3, reason: 'bs_lt_total_vs_borrowings' };
       }
       if (/należności\s+z\s+tytułu\s+innych\s+podatków/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-tax-receivables') return { delta: 0.8, reason: 'bs_other_tax_receivables_anchor' };
-        if (canonicalId === 'fsl-bs-tax-receivables') return { delta: -0.3, reason: 'bs_other_tax_vs_income_tax_receivables' };
+        if (canonicalId === 'fsl-bs-other-tax-receivables')
+          return { delta: 0.8, reason: 'bs_other_tax_receivables_anchor' };
+        if (canonicalId === 'fsl-bs-tax-receivables')
+          return { delta: -0.3, reason: 'bs_other_tax_vs_income_tax_receivables' };
         return { delta: 0, reason: undefined };
       }
       if (/zobowiązania\s+z\s+tytułu\s+innych\s+podatków/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-tax-payables') return { delta: 0.8, reason: 'bs_other_tax_payables_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-liabilities-tax') return { delta: -0.3, reason: 'bs_other_tax_vs_income_tax_payables' };
+        if (canonicalId === 'fsl-bs-other-tax-payables')
+          return { delta: 0.8, reason: 'bs_other_tax_payables_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-liabilities-tax')
+          return { delta: -0.3, reason: 'bs_other_tax_vs_income_tax_payables' };
         return { delta: 0, reason: undefined };
       }
       if (/kapitał\s+z\s+przeszacowania\s+programu/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-actuarial-reserve') return { delta: 0.8, reason: 'bs_actuarial_reserve_anchor' };
-        if (canonicalId === 'fsl-bs-other-equity-reserves') return { delta: -0.3, reason: 'bs_actuarial_vs_other_reserves' };
+        if (canonicalId === 'fsl-bs-actuarial-reserve')
+          return { delta: 0.8, reason: 'bs_actuarial_reserve_anchor' };
+        if (canonicalId === 'fsl-bs-other-equity-reserves')
+          return { delta: -0.3, reason: 'bs_actuarial_vs_other_reserves' };
         return { delta: 0, reason: undefined };
       }
       if (/pozostałe\s+krótkoterminowe\s+aktywa\s+finansowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-financial-assets') return { delta: 0.8, reason: 'bs_current_financial_assets_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-assets') return { delta: -0.3, reason: 'bs_financial_vs_other_current' };
+        if (canonicalId === 'fsl-bs-other-current-financial-assets')
+          return { delta: 0.8, reason: 'bs_current_financial_assets_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets')
+          return { delta: -0.3, reason: 'bs_financial_vs_other_current' };
         return { delta: 0, reason: undefined };
       }
       if (/długoterminowe\s+rozliczenia\s+międzyokresowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-lt-prepaids') return { delta: 0.8, reason: 'bs_lt_prepaids_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-assets-prepaids') return { delta: -0.3, reason: 'bs_lt_vs_st_prepaids' };
+        if (canonicalId === 'fsl-bs-lt-prepaids')
+          return { delta: 0.8, reason: 'bs_lt_prepaids_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets-prepaids')
+          return { delta: -0.3, reason: 'bs_lt_vs_st_prepaids' };
       }
       if (/krótkoterminowe\s+rozliczenia\s+międzyokresowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-assets-prepaids') return { delta: 0.8, reason: 'bs_st_prepaids_anchor' };
-        if (canonicalId === 'fsl-bs-lt-prepaids') return { delta: -0.3, reason: 'bs_st_vs_lt_prepaids' };
+        if (canonicalId === 'fsl-bs-other-current-assets-prepaids')
+          return { delta: 0.8, reason: 'bs_st_prepaids_anchor' };
+        if (canonicalId === 'fsl-bs-lt-prepaids')
+          return { delta: -0.3, reason: 'bs_st_vs_lt_prepaids' };
       }
       if (/pozostałe\s+należności\s+krótkoterminowe/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-st-receivables') return { delta: 0.8, reason: 'bs_other_st_receivables_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-assets') return { delta: -0.3, reason: 'bs_other_st_recv_vs_current_assets' };
+        if (canonicalId === 'fsl-bs-other-st-receivables')
+          return { delta: 0.8, reason: 'bs_other_st_receivables_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets')
+          return { delta: -0.3, reason: 'bs_other_st_recv_vs_current_assets' };
       }
       if (/materiały\s*$|surowce\s+i\s+materiały|raw\s+materials/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-inventory-raw') return { delta: 0.7, reason: 'bs_inventory_raw_anchor' };
-        if (canonicalId === 'fsl-bs-inventory') return { delta: -0.2, reason: 'bs_inventory_raw_vs_total' };
+        if (canonicalId === 'fsl-bs-inventory-raw')
+          return { delta: 0.7, reason: 'bs_inventory_raw_anchor' };
+        if (canonicalId === 'fsl-bs-inventory')
+          return { delta: -0.2, reason: 'bs_inventory_raw_vs_total' };
       }
       if (/produkcja\s+w\s+toku|półprodukty|work\s+in\s+progress/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-inventory-wip') return { delta: 0.7, reason: 'bs_inventory_wip_anchor' };
-        if (canonicalId === 'fsl-bs-inventory') return { delta: -0.2, reason: 'bs_inventory_wip_vs_total' };
+        if (canonicalId === 'fsl-bs-inventory-wip')
+          return { delta: 0.7, reason: 'bs_inventory_wip_anchor' };
+        if (canonicalId === 'fsl-bs-inventory')
+          return { delta: -0.2, reason: 'bs_inventory_wip_vs_total' };
       }
       if (/wyroby\s+gotowe|produkty\s+gotowe|finished\s+goods/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-inventory-fg') return { delta: 0.7, reason: 'bs_inventory_fg_anchor' };
-        if (canonicalId === 'fsl-bs-inventory') return { delta: -0.2, reason: 'bs_inventory_fg_vs_total' };
+        if (canonicalId === 'fsl-bs-inventory-fg')
+          return { delta: 0.7, reason: 'bs_inventory_fg_anchor' };
+        if (canonicalId === 'fsl-bs-inventory')
+          return { delta: -0.2, reason: 'bs_inventory_fg_vs_total' };
       }
-      if (/grunty\s+i\s+budynki|nieruchomości\s+gruntowe|land\s+and\s+buildings/i.test(normalizedLabel)) {
+      if (
+        /grunty\s+i\s+budynki|nieruchomości\s+gruntowe|land\s+and\s+buildings/i.test(
+          normalizedLabel
+        )
+      ) {
         if (canonicalId === 'fsl-bs-ppe-land') return { delta: 0.7, reason: 'bs_ppe_land_anchor' };
         if (canonicalId === 'fsl-bs-ppe') return { delta: -0.2, reason: 'bs_ppe_land_vs_total' };
       }
       if (/maszyny\s+i\s+urządzenia|urządzenia\s+techniczne|machinery/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-ppe-machinery') return { delta: 0.7, reason: 'bs_ppe_machinery_anchor' };
-        if (canonicalId === 'fsl-bs-ppe') return { delta: -0.2, reason: 'bs_ppe_machinery_vs_total' };
+        if (canonicalId === 'fsl-bs-ppe-machinery')
+          return { delta: 0.7, reason: 'bs_ppe_machinery_anchor' };
+        if (canonicalId === 'fsl-bs-ppe')
+          return { delta: -0.2, reason: 'bs_ppe_machinery_vs_total' };
       }
       if (/środki\s+transportu|pojazdy|vehicles/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-ppe-vehicles') return { delta: 0.7, reason: 'bs_ppe_vehicles_anchor' };
-        if (canonicalId === 'fsl-bs-ppe') return { delta: -0.2, reason: 'bs_ppe_vehicles_vs_total' };
+        if (canonicalId === 'fsl-bs-ppe-vehicles')
+          return { delta: 0.7, reason: 'bs_ppe_vehicles_anchor' };
+        if (canonicalId === 'fsl-bs-ppe')
+          return { delta: -0.2, reason: 'bs_ppe_vehicles_vs_total' };
       }
       if (/oprogramowanie|software/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-intangibles-software') return { delta: 0.7, reason: 'bs_software_anchor' };
-        if (canonicalId === 'fsl-bs-intangibles') return { delta: -0.2, reason: 'bs_software_vs_intangibles' };
+        if (canonicalId === 'fsl-bs-intangibles-software')
+          return { delta: 0.7, reason: 'bs_software_anchor' };
+        if (canonicalId === 'fsl-bs-intangibles')
+          return { delta: -0.2, reason: 'bs_software_vs_intangibles' };
       }
-      if (/wynik\s+(?:z\s+)?lat\s+ubiegłych|zysk.*z\s+lat\s+ubiegłych|prior\s+year/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-retained-earnings-prior') return { delta: 0.7, reason: 'bs_retained_prior_anchor' };
-        if (canonicalId === 'fsl-bs-retained-earnings') return { delta: -0.2, reason: 'bs_retained_prior_vs_total' };
+      if (
+        /wynik\s+(?:z\s+)?lat\s+ubiegłych|zysk.*z\s+lat\s+ubiegłych|prior\s+year/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-retained-earnings-prior')
+          return { delta: 0.7, reason: 'bs_retained_prior_anchor' };
+        if (canonicalId === 'fsl-bs-retained-earnings')
+          return { delta: -0.2, reason: 'bs_retained_prior_vs_total' };
       }
-      if (/wynik\s+(?:bieżącego|roku\s+obrotowego)|zysk.*bieżącego\s+roku|current\s+(?:year|period)\s+result/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-retained-earnings-current') return { delta: 0.7, reason: 'bs_retained_current_anchor' };
-        if (canonicalId === 'fsl-bs-retained-earnings') return { delta: -0.2, reason: 'bs_retained_current_vs_total' };
+      if (
+        /wynik\s+(?:bieżącego|roku\s+obrotowego)|zysk.*bieżącego\s+roku|current\s+(?:year|period)\s+result/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-retained-earnings-current')
+          return { delta: 0.7, reason: 'bs_retained_current_anchor' };
+        if (canonicalId === 'fsl-bs-retained-earnings')
+          return { delta: -0.2, reason: 'bs_retained_current_vs_total' };
       }
       if (/krótkoterminow[ey]\s+kredyty\s+bankowe|short.term\s+bank/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-short-term-debt-bank') return { delta: 0.7, reason: 'bs_st_bank_debt_anchor' };
-        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: -0.2, reason: 'bs_st_bank_vs_total' };
+        if (canonicalId === 'fsl-bs-short-term-debt-bank')
+          return { delta: 0.7, reason: 'bs_st_bank_debt_anchor' };
+        if (canonicalId === 'fsl-bs-short-term-debt')
+          return { delta: -0.2, reason: 'bs_st_bank_vs_total' };
       }
-      if (/długoterminow[ey]\s+kredyty\s+bankowe|long.term\s+bank\s+(?:debt|loan)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-long-term-debt-bank') return { delta: 0.7, reason: 'bs_lt_bank_debt_anchor' };
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.2, reason: 'bs_lt_bank_vs_total' };
+      if (
+        /długoterminow[ey]\s+kredyty\s+bankowe|long.term\s+bank\s+(?:debt|loan)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-long-term-debt-bank')
+          return { delta: 0.7, reason: 'bs_lt_bank_debt_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: -0.2, reason: 'bs_lt_bank_vs_total' };
       }
-      if (/rozliczenia\s+międzyokresowe\s+bierne|bierne\s+rozliczenia|accrued\s+expenses|accruals/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-liabilities-accruals') return { delta: 0.7, reason: 'bs_accruals_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-liabilities') return { delta: -0.2, reason: 'bs_accruals_vs_other_cl' };
+      if (
+        /rozliczenia\s+międzyokresowe\s+bierne|bierne\s+rozliczenia|accrued\s+expenses|accruals/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-other-current-liabilities-accruals')
+          return { delta: 0.7, reason: 'bs_accruals_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-liabilities')
+          return { delta: -0.2, reason: 'bs_accruals_vs_other_cl' };
       }
       if (/należności\s+(?:z\s+tytułu\s+)?vat|vat\s+receivable/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-assets-vat') return { delta: 0.7, reason: 'bs_vat_receivable_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-assets') return { delta: -0.2, reason: 'bs_vat_vs_other_current' };
+        if (canonicalId === 'fsl-bs-other-current-assets-vat')
+          return { delta: 0.7, reason: 'bs_vat_receivable_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets')
+          return { delta: -0.2, reason: 'bs_vat_vs_other_current' };
       }
-      if (/pozostałe\s+aktywa\s+trwałe|other\s+(?:non.?current|fixed)\s+assets/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-non-current-assets') return { delta: 0.5, reason: 'bs_other_nca_anchor' };
+      if (
+        /pozostałe\s+aktywa\s+trwałe|other\s+(?:non.?current|fixed)\s+assets/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-other-non-current-assets')
+          return { delta: 0.5, reason: 'bs_other_nca_anchor' };
         if (canonicalId === 'fsl-bs-fixed') return { delta: -0.2, reason: 'bs_other_nca_vs_fixed' };
       }
-      if (/^należności\s+handlowe\s*$/i.test(normalizedLabel) || /^(?:accounts\s+)?receivables?\s*$/i.test(normalizedLabel)) {
+      if (
+        /^należności\s+handlowe\s*$/i.test(normalizedLabel) ||
+        /^(?:accounts\s+)?receivables?\s*$/i.test(normalizedLabel)
+      ) {
         if (canonicalId === 'fsl-bs-ar') return { delta: 0.8, reason: 'bs_ar_exact_anchor' };
-        if (canonicalId === 'fsl-bs-ar-trade') return { delta: -0.3, reason: 'bs_ar_vs_trade_detail' };
+        if (canonicalId === 'fsl-bs-ar-trade')
+          return { delta: -0.3, reason: 'bs_ar_vs_trade_detail' };
       }
-      if (/należności\s+handlowe\s+(?:krajowe|zagraniczne)|trade\s+receivables/i.test(normalizedLabel) && !/pozostałe|other/i.test(normalizedLabel)) {
+      if (
+        /należności\s+handlowe\s+(?:krajowe|zagraniczne)|trade\s+receivables/i.test(
+          normalizedLabel
+        ) &&
+        !/pozostałe|other/i.test(normalizedLabel)
+      ) {
         if (canonicalId === 'fsl-bs-ar-trade') return { delta: 0.6, reason: 'bs_ar_trade_anchor' };
         if (canonicalId === 'fsl-bs-ar') return { delta: -0.2, reason: 'bs_ar_trade_vs_total' };
       }
-      if (/pozostałe\s+należności|other\s+receivables/i.test(normalizedLabel) && !/handlowe|trade|podatkowe|tax/i.test(normalizedLabel)) {
+      if (
+        /pozostałe\s+należności|other\s+receivables/i.test(normalizedLabel) &&
+        !/handlowe|trade|podatkowe|tax/i.test(normalizedLabel)
+      ) {
         if (canonicalId === 'fsl-bs-ar-other') return { delta: 0.5, reason: 'bs_ar_other_anchor' };
         if (canonicalId === 'fsl-bs-ar') return { delta: -0.2, reason: 'bs_ar_other_vs_total' };
       }
-      if (/^zobowiązania\s+handlowe\s*$/i.test(normalizedLabel) || /^trade\s+(?:and\s+other\s+)?payables\s*$/i.test(normalizedLabel) || /^accounts\s+payable\s*$/i.test(normalizedLabel)) {
+      if (
+        /^zobowiązania\s+handlowe\s*$/i.test(normalizedLabel) ||
+        /^trade\s+(?:and\s+other\s+)?payables\s*$/i.test(normalizedLabel) ||
+        /^accounts\s+payable\s*$/i.test(normalizedLabel)
+      ) {
         if (canonicalId === 'fsl-bs-ap') return { delta: 0.8, reason: 'bs_ap_exact_anchor' };
-        if (canonicalId === 'fsl-bs-ap-trade') return { delta: -0.3, reason: 'bs_ap_vs_trade_detail' };
+        if (canonicalId === 'fsl-bs-ap-trade')
+          return { delta: -0.3, reason: 'bs_ap_vs_trade_detail' };
       }
-      if (/zobowiązania\s+(?:z\s+tytułu\s+)?dostaw|zobowiązania\s+handlowe\s+krajowe/i.test(normalizedLabel) && !/pozostałe|other/i.test(normalizedLabel)) {
+      if (
+        /zobowiązania\s+(?:z\s+tytułu\s+)?dostaw|zobowiązania\s+handlowe\s+krajowe/i.test(
+          normalizedLabel
+        ) &&
+        !/pozostałe|other/i.test(normalizedLabel)
+      ) {
         if (canonicalId === 'fsl-bs-ap-trade') return { delta: 0.6, reason: 'bs_ap_trade_anchor' };
         if (canonicalId === 'fsl-bs-ap') return { delta: -0.2, reason: 'bs_ap_trade_vs_total' };
       }
     }
 
     if (normalizedType === 'P&L') {
-      if (/(przychody ze sprzedaży|przychody.*sprzedaż|razem przychody|revenue|total sales)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-revenue' ? { delta: 0.55, reason: 'profit_loss_revenue_anchor' } : { delta: 0 };
+      if (
+        /(przychody ze sprzedaży|przychody.*sprzedaż|razem przychody|revenue|total sales)/.test(
+          normalizedLabel
+        )
+      ) {
+        return canonicalId === 'fsl-pl-revenue'
+          ? { delta: 0.55, reason: 'profit_loss_revenue_anchor' }
+          : { delta: 0 };
       }
       if (/^przychody\s*$/.test(normalizedLabel) || /^przychody\s+\d/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.7, reason: 'profit_loss_generic_przychody_conflict' };
-        if (canonicalId === 'fsl-pl-other-income') return { delta: 0.3, reason: 'profit_loss_other_income_fallback' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.7, reason: 'profit_loss_generic_przychody_conflict' };
+        if (canonicalId === 'fsl-pl-other-income')
+          return { delta: 0.3, reason: 'profit_loss_other_income_fallback' };
       }
       if (/^koszty\s*$/.test(normalizedLabel) || /^koszty\s+\d/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-cogs') return { delta: -0.5, reason: 'profit_loss_generic_koszty_conflict' };
-        if (canonicalId === 'fsl-pl-other-expense') return { delta: 0.3, reason: 'profit_loss_other_expense_fallback' };
+        if (canonicalId === 'fsl-pl-cogs')
+          return { delta: -0.5, reason: 'profit_loss_generic_koszty_conflict' };
+        if (canonicalId === 'fsl-pl-other-expense')
+          return { delta: 0.3, reason: 'profit_loss_other_expense_fallback' };
       }
-      if (/(pozostałe przychody operacyjne|przychody operacyjne|other (?:operating )?income)/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.4, reason: 'profit_loss_other_income_vs_revenue' };
-        if (canonicalId === 'fsl-pl-ebit') return { delta: -0.6, reason: 'profit_loss_other_income_not_ebit' };
-        if (canonicalId === 'fsl-pl-other-income') return { delta: 0.5, reason: 'profit_loss_other_income_anchor' };
+      if (
+        /(pozostałe przychody operacyjne|przychody operacyjne|other (?:operating )?income)/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.4, reason: 'profit_loss_other_income_vs_revenue' };
+        if (canonicalId === 'fsl-pl-ebit')
+          return { delta: -0.6, reason: 'profit_loss_other_income_not_ebit' };
+        if (canonicalId === 'fsl-pl-other-income')
+          return { delta: 0.5, reason: 'profit_loss_other_income_anchor' };
       }
-      if (/(pozostałe koszty operacyjne|other operating (?:expenses|charges))/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-other-opex') return { delta: 0.5, reason: 'profit_loss_other_opex_anchor' };
-        if (canonicalId === 'fsl-pl-ebit') return { delta: -0.6, reason: 'profit_loss_other_opex_not_ebit' };
-        if (canonicalId === 'fsl-pl-opex') return { delta: -0.3, reason: 'profit_loss_other_opex_vs_total_opex' };
+      if (
+        /(pozostałe koszty operacyjne|other operating (?:expenses|charges))/.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-other-opex')
+          return { delta: 0.5, reason: 'profit_loss_other_opex_anchor' };
+        if (canonicalId === 'fsl-pl-ebit')
+          return { delta: -0.6, reason: 'profit_loss_other_opex_not_ebit' };
+        if (canonicalId === 'fsl-pl-opex')
+          return { delta: -0.3, reason: 'profit_loss_other_opex_vs_total_opex' };
       }
       if (/profit.*?loss before financial result/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-ebit') return { delta: 0.6, reason: 'profit_loss_ebit_before_fin_result' };
+        if (canonicalId === 'fsl-pl-ebit')
+          return { delta: 0.6, reason: 'profit_loss_ebit_before_fin_result' };
       }
-      if (/(przychody finansowe|koszty finansowe|wynik.*finansow|finance costs|financial)/.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.4, reason: 'profit_loss_finance_vs_revenue' };
-        if (canonicalId === 'fsl-pl-interest') return { delta: 0.4, reason: 'profit_loss_finance_anchor' };
+      if (
+        /(przychody finansowe|koszty finansowe|wynik.*finansow|finance costs|financial)/.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.4, reason: 'profit_loss_finance_vs_revenue' };
+        if (canonicalId === 'fsl-pl-interest')
+          return { delta: 0.4, reason: 'profit_loss_finance_anchor' };
       }
       if (/(zysk netto|net income|net profit)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-net' ? { delta: 0.45, reason: 'profit_loss_net_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-net'
+          ? { delta: 0.45, reason: 'profit_loss_net_anchor' }
+          : { delta: 0 };
       }
-      if (/(zysk przed opodatkowaniem|profit before tax|earnings before tax|income before (?:income )?tax|profit.*?loss before tax)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-ebt' ? { delta: 0.6, reason: 'profit_loss_ebt_anchor' } : { delta: -0.2, reason: 'not_ebt' };
+      if (
+        /(zysk przed opodatkowaniem|profit before tax|earnings before tax|income before (?:income )?tax|profit.*?loss before tax)/.test(
+          normalizedLabel
+        )
+      ) {
+        return canonicalId === 'fsl-pl-ebt'
+          ? { delta: 0.6, reason: 'profit_loss_ebt_anchor' }
+          : { delta: -0.2, reason: 'not_ebt' };
       }
       if (/(koszt własny sprzedaży|cost of sales|cost of goods)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-cogs' ? { delta: 0.45, reason: 'profit_loss_cogs_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-cogs'
+          ? { delta: 0.45, reason: 'profit_loss_cogs_anchor' }
+          : { delta: 0 };
       }
       if (/(koszty sprzedaży|selling expenses|distribution costs)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-selling' ? { delta: 0.45, reason: 'profit_loss_selling_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-selling'
+          ? { delta: 0.45, reason: 'profit_loss_selling_anchor' }
+          : { delta: 0 };
       }
       if (/(koszty ogólnego zarządu|administrative expenses|g&a)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-gna' ? { delta: 0.45, reason: 'profit_loss_gna_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-gna'
+          ? { delta: 0.45, reason: 'profit_loss_gna_anchor' }
+          : { delta: 0 };
       }
       if (/odroczony\s+podatek\s+dochodowy|deferred\s+(?:income\s+)?tax/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-tax-deferred') return { delta: 0.6, reason: 'pl_deferred_tax_anchor' };
-        if (canonicalId === 'fsl-pl-tax') return { delta: -0.5, reason: 'pl_deferred_not_current_tax' };
+        if (canonicalId === 'fsl-pl-tax-deferred')
+          return { delta: 0.6, reason: 'pl_deferred_tax_anchor' };
+        if (canonicalId === 'fsl-pl-tax')
+          return { delta: -0.5, reason: 'pl_deferred_not_current_tax' };
         return { delta: 0 };
       }
       if (/bieżący\s+podatek\s+dochodowy|current\s+(?:income\s+)?tax/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-tax-current') return { delta: 0.6, reason: 'pl_current_tax_anchor' };
-        if (canonicalId === 'fsl-pl-tax') return { delta: -0.3, reason: 'pl_current_not_generic_tax' };
+        if (canonicalId === 'fsl-pl-tax-current')
+          return { delta: 0.6, reason: 'pl_current_tax_anchor' };
+        if (canonicalId === 'fsl-pl-tax')
+          return { delta: -0.3, reason: 'pl_current_not_generic_tax' };
         return { delta: 0 };
       }
       if (/(podatek dochodowy|income tax|tax expense)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-tax' ? { delta: 0.35, reason: 'profit_loss_tax_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-tax'
+          ? { delta: 0.35, reason: 'profit_loss_tax_anchor' }
+          : { delta: 0 };
       }
       if (/(zysk.*operacyjn|operating (?:profit|income))/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-ebit' ? { delta: 0.45, reason: 'profit_loss_ebit_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-ebit'
+          ? { delta: 0.45, reason: 'profit_loss_ebit_anchor' }
+          : { delta: 0 };
       }
       if (/(zysk brutto|zysk brutto ze sprzedaży|gross profit)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-gross' ? { delta: 0.45, reason: 'profit_loss_gross_anchor' } : { delta: 0 };
+        return canonicalId === 'fsl-pl-gross'
+          ? { delta: 0.45, reason: 'profit_loss_gross_anchor' }
+          : { delta: 0 };
       }
       if (/zysk\s+(?:netto\s+)?z\s+tego\s+przypadający/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-net') return { delta: 0.7, reason: 'pl_net_z_tego_anchor' };
-        if (canonicalId === 'fsl-pl-net-parent') return { delta: -0.3, reason: 'pl_net_z_tego_not_parent' };
+        if (canonicalId === 'fsl-pl-net-parent')
+          return { delta: -0.3, reason: 'pl_net_z_tego_not_parent' };
       }
-      if (/(zysk\s+netto\s+przypadający\s+akcjonariuszom|zysk\s+przypadający\s+akcjonariuszom\s+podmiotu\s+domin)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-net-parent') return { delta: 0.7, reason: 'pl_net_parent_anchor' };
+      if (
+        /(zysk\s+netto\s+przypadający\s+akcjonariuszom|zysk\s+przypadający\s+akcjonariuszom\s+podmiotu\s+domin)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-net-parent')
+          return { delta: 0.7, reason: 'pl_net_parent_anchor' };
         if (canonicalId === 'fsl-pl-net') return { delta: -0.3, reason: 'pl_net_parent_vs_net' };
       }
-      if (/(zysk.*przypadając.*niesprawują|zysk.*udziałom\s+mniejszościowym)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-net-minority') return { delta: 0.7, reason: 'pl_net_minority_anchor' };
+      if (
+        /(zysk.*przypadając.*niesprawują|zysk.*udziałom\s+mniejszościowym)/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-net-minority')
+          return { delta: 0.7, reason: 'pl_net_minority_anchor' };
         if (canonicalId === 'fsl-pl-net') return { delta: -0.3, reason: 'pl_net_minority_vs_net' };
       }
-      if (/(zysk.*z\s+działalności\s+kontynuowanej|wynik.*działalności\s+kontynuowanej)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-net-continuing') return { delta: 0.6, reason: 'pl_net_continuing_anchor' };
-        if (canonicalId === 'fsl-pl-net') return { delta: -0.2, reason: 'pl_net_continuing_vs_net' };
+      if (
+        /(zysk.*z\s+działalności\s+kontynuowanej|wynik.*działalności\s+kontynuowanej)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-net-continuing')
+          return { delta: 0.6, reason: 'pl_net_continuing_anchor' };
+        if (canonicalId === 'fsl-pl-net')
+          return { delta: -0.2, reason: 'pl_net_continuing_vs_net' };
       }
-      if (/(udział\s+w\s+zysk.*stowarzyszonych|udział\s+w\s+wynik.*praw\s+własności)/i.test(normalizedLabel)) {
+      if (
+        /(udział\s+w\s+zysk.*stowarzyszonych|udział\s+w\s+wynik.*praw\s+własności)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-equity-method-income'
           ? { delta: 0.6, reason: 'pl_equity_method_anchor' }
           : { delta: 0 };
@@ -5528,12 +6193,20 @@ export async function autoMapLines(
           ? { delta: 0.6, reason: 'pl_oci_total_anchor' }
           : { delta: 0 };
       }
-      if (/(pozycje\s+(?:które\s+)?(?:mogą\s+być\s+)?przeklasyfiko|podlegające\s+przeklasyfikowaniu)/i.test(normalizedLabel)) {
+      if (
+        /(pozycje\s+(?:które\s+)?(?:mogą\s+być\s+)?przeklasyfiko|podlegające\s+przeklasyfikowaniu)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-oci-reclassifiable'
           ? { delta: 0.6, reason: 'pl_oci_reclassifiable_anchor' }
           : { delta: 0 };
       }
-      if (/(pozycje\s+nieprzeklasyfiko|nie\s+zostaną\s+przeklasyfikowane|niepodlegające\s+przeklasyfikowaniu)/i.test(normalizedLabel)) {
+      if (
+        /(pozycje\s+nieprzeklasyfiko|nie\s+zostaną\s+przeklasyfikowane|niepodlegające\s+przeklasyfikowaniu)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-oci-non-reclassifiable'
           ? { delta: 0.6, reason: 'pl_oci_non_reclassifiable_anchor' }
           : { delta: 0 };
@@ -5543,102 +6216,196 @@ export async function autoMapLines(
           ? { delta: 0.5, reason: 'pl_oci_fx_anchor' }
           : { delta: 0 };
       }
-      if (/(wynik\s+na\s+zabezpieczeniach|wycena\s+instrumentów\s+zabezpiecz|zabezpieczenia\s+przepływów)/i.test(normalizedLabel)) {
+      if (
+        /(wynik\s+na\s+zabezpieczeniach|wycena\s+instrumentów\s+zabezpiecz|zabezpieczenia\s+przepływów)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-oci-hedge'
           ? { delta: 0.5, reason: 'pl_oci_hedge_anchor' }
           : { delta: 0 };
       }
-      if (/(zyski.*straty\s+aktuarialne|przeszacowania\s+zobowiązań.*świadczeń|wycena\s+aktuarialna)/i.test(normalizedLabel)) {
+      if (
+        /(zyski.*straty\s+aktuarialne|przeszacowania\s+zobowiązań.*świadczeń|wycena\s+aktuarialna)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-oci-actuarial'
           ? { delta: 0.5, reason: 'pl_oci_actuarial_anchor' }
           : { delta: 0 };
       }
-      if (/(całkowite\s+dochody\s+ogółem|łączne\s+całkowite\s+dochody|total\s+comprehensive)/i.test(normalizedLabel)) {
+      if (
+        /(całkowite\s+dochody\s+ogółem|łączne\s+całkowite\s+dochody|total\s+comprehensive)/i.test(
+          normalizedLabel
+        )
+      ) {
         return canonicalId === 'fsl-pl-comprehensive-income'
           ? { delta: 0.6, reason: 'pl_comprehensive_income_anchor' }
           : { delta: 0 };
       }
-      if (/(zysk\s+na\s+(?:jedną\s+)?akcję\s+(?:zwykłą\s+)?podstawowy|basic\s+earnings?\s+per\s+share)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-eps-basic') return { delta: 0.7, reason: 'pl_eps_basic_anchor' };
-        if (canonicalId === 'fsl-pl-eps-diluted') return { delta: -0.3, reason: 'pl_eps_basic_vs_diluted' };
+      if (
+        /(zysk\s+na\s+(?:jedną\s+)?akcję\s+(?:zwykłą\s+)?podstawowy|basic\s+earnings?\s+per\s+share)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-eps-basic')
+          return { delta: 0.7, reason: 'pl_eps_basic_anchor' };
+        if (canonicalId === 'fsl-pl-eps-diluted')
+          return { delta: -0.3, reason: 'pl_eps_basic_vs_diluted' };
       }
-      if (/(zysk\s+na\s+(?:jedną\s+)?akcję\s+rozwodniony|rozwodniony\s+zysk|diluted\s+earnings?\s+per\s+share)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-eps-diluted') return { delta: 0.7, reason: 'pl_eps_diluted_anchor' };
-        if (canonicalId === 'fsl-pl-eps-basic') return { delta: -0.3, reason: 'pl_eps_diluted_vs_basic' };
+      if (
+        /(zysk\s+na\s+(?:jedną\s+)?akcję\s+rozwodniony|rozwodniony\s+zysk|diluted\s+earnings?\s+per\s+share)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-eps-diluted')
+          return { delta: 0.7, reason: 'pl_eps_diluted_anchor' };
+        if (canonicalId === 'fsl-pl-eps-basic')
+          return { delta: -0.3, reason: 'pl_eps_diluted_vs_basic' };
       }
-      if (/(zysk\s+na\s+(?:jedną\s+)?akcję|zysk\s+na\s+akcję)/i.test(normalizedLabel) && !/rozwodniony|diluted/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-eps-basic') return { delta: 0.4, reason: 'pl_eps_generic_anchor' };
+      if (
+        /(zysk\s+na\s+(?:jedną\s+)?akcję|zysk\s+na\s+akcję)/i.test(normalizedLabel) &&
+        !/rozwodniony|diluted/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-eps-basic')
+          return { delta: 0.4, reason: 'pl_eps_generic_anchor' };
       }
-      if (/(średnia\s+ważona\s+liczba\s+akcji|weighted\s+average\s+shares)/i.test(normalizedLabel)) {
+      if (
+        /(średnia\s+ważona\s+liczba\s+akcji|weighted\s+average\s+shares)/i.test(normalizedLabel)
+      ) {
         return canonicalId === 'fsl-pl-shares-outstanding'
           ? { delta: 0.6, reason: 'pl_shares_outstanding_anchor' }
           : { delta: 0 };
       }
-      if (/(przychody\s+finansowe|finance\s+income)/i.test(normalizedLabel) && !/koszty/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-fin-income') return { delta: 0.5, reason: 'pl_fin_income_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.4, reason: 'pl_fin_income_vs_revenue' };
-        if (canonicalId === 'fsl-pl-interest') return { delta: -0.2, reason: 'pl_fin_income_vs_interest' };
+      if (
+        /(przychody\s+finansowe|finance\s+income)/i.test(normalizedLabel) &&
+        !/koszty/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-fin-income')
+          return { delta: 0.5, reason: 'pl_fin_income_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.4, reason: 'pl_fin_income_vs_revenue' };
+        if (canonicalId === 'fsl-pl-interest')
+          return { delta: -0.2, reason: 'pl_fin_income_vs_interest' };
       }
-      if (/(koszty\s+finansowe|finance\s+costs)/i.test(normalizedLabel) && !/przychody/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-fin-expense') return { delta: 0.5, reason: 'pl_fin_expense_anchor' };
-        if (canonicalId === 'fsl-pl-interest') return { delta: -0.2, reason: 'pl_fin_expense_vs_interest' };
+      if (
+        /(koszty\s+finansowe|finance\s+costs)/i.test(normalizedLabel) &&
+        !/przychody/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-fin-expense')
+          return { delta: 0.5, reason: 'pl_fin_expense_anchor' };
+        if (canonicalId === 'fsl-pl-interest')
+          return { delta: -0.2, reason: 'pl_fin_expense_vs_interest' };
       }
       if (/(pozostałe\s+koszty\s+operacyjne|other\s+operating\s+expenses)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-other-opex') return { delta: 0.4, reason: 'pl_other_opex_anchor' };
+        if (canonicalId === 'fsl-pl-other-opex')
+          return { delta: 0.4, reason: 'pl_other_opex_anchor' };
       }
-      if (/przychody\s+ze\s+sprzedaży\s+produktów|revenue\s+from\s+products/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-product') return { delta: 0.7, reason: 'pl_revenue_product_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_revenue_product_vs_total' };
+      if (
+        /przychody\s+ze\s+sprzedaży\s+produktów|revenue\s+from\s+products/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-revenue-product')
+          return { delta: 0.7, reason: 'pl_revenue_product_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.3, reason: 'pl_revenue_product_vs_total' };
       }
-      if (/przychody\s+ze\s+sprzedaży\s+usług|przychody\s+usługowe|service\s+revenue/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-service') return { delta: 0.7, reason: 'pl_revenue_service_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_revenue_service_vs_total' };
+      if (
+        /przychody\s+ze\s+sprzedaży\s+usług|przychody\s+usługowe|service\s+revenue/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-revenue-service')
+          return { delta: 0.7, reason: 'pl_revenue_service_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.3, reason: 'pl_revenue_service_vs_total' };
       }
       if (/przychody\s+(?:z\s+)?eksport|export\s+revenue/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-product-export') return { delta: 0.7, reason: 'pl_revenue_export_anchor' };
-        if (canonicalId === 'fsl-pl-revenue-product') return { delta: -0.2, reason: 'pl_revenue_export_vs_product' };
+        if (canonicalId === 'fsl-pl-revenue-product-export')
+          return { delta: 0.7, reason: 'pl_revenue_export_anchor' };
+        if (canonicalId === 'fsl-pl-revenue-product')
+          return { delta: -0.2, reason: 'pl_revenue_export_vs_product' };
       }
       if (/przychody\s+krajowe|domestic\s+revenue/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-product-domestic') return { delta: 0.7, reason: 'pl_revenue_domestic_anchor' };
-        if (canonicalId === 'fsl-pl-revenue-product') return { delta: -0.2, reason: 'pl_revenue_domestic_vs_product' };
+        if (canonicalId === 'fsl-pl-revenue-product-domestic')
+          return { delta: 0.7, reason: 'pl_revenue_domestic_anchor' };
+        if (canonicalId === 'fsl-pl-revenue-product')
+          return { delta: -0.2, reason: 'pl_revenue_domestic_vs_product' };
       }
-      if (/zużycie\s+materiałów\s+i\s+energii|materials?\s+(?:and\s+energy|cost)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-cogs-materials') return { delta: 0.7, reason: 'pl_cogs_materials_anchor' };
-        if (canonicalId === 'fsl-pl-cogs') return { delta: -0.2, reason: 'pl_cogs_materials_vs_total' };
+      if (
+        /zużycie\s+materiałów\s+i\s+energii|materials?\s+(?:and\s+energy|cost)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-cogs-materials')
+          return { delta: 0.7, reason: 'pl_cogs_materials_anchor' };
+        if (canonicalId === 'fsl-pl-cogs')
+          return { delta: -0.2, reason: 'pl_cogs_materials_vs_total' };
       }
       if (/usługi\s+obce/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-gna-external') return { delta: 0.6, reason: 'pl_gna_external_anchor' };
-        if (canonicalId === 'fsl-pl-cogs-labor-contractors') return { delta: -0.2, reason: 'pl_external_vs_production' };
+        if (canonicalId === 'fsl-pl-gna-external')
+          return { delta: 0.6, reason: 'pl_gna_external_anchor' };
+        if (canonicalId === 'fsl-pl-cogs-labor-contractors')
+          return { delta: -0.2, reason: 'pl_external_vs_production' };
       }
       if (/koszty\s+marketingu|reklama\s+i\s+promocja|marketing/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-selling-marketing') return { delta: 0.6, reason: 'pl_marketing_anchor' };
-        if (canonicalId === 'fsl-pl-selling') return { delta: -0.2, reason: 'pl_marketing_vs_selling' };
+        if (canonicalId === 'fsl-pl-selling-marketing')
+          return { delta: 0.6, reason: 'pl_marketing_anchor' };
+        if (canonicalId === 'fsl-pl-selling')
+          return { delta: -0.2, reason: 'pl_marketing_vs_selling' };
       }
-      if (/odsetki\s+(?:od\s+)?leasingu|odsetki\s+leasingowe|lease\s+interest/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-interest-lease') return { delta: 0.7, reason: 'pl_interest_lease_anchor' };
-        if (canonicalId === 'fsl-pl-interest') return { delta: -0.2, reason: 'pl_interest_lease_vs_total' };
-        if (canonicalId === 'fsl-pl-interest-bank') return { delta: -0.3, reason: 'pl_interest_lease_vs_bank' };
+      if (
+        /odsetki\s+(?:od\s+)?leasingu|odsetki\s+leasingowe|lease\s+interest/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-interest-lease')
+          return { delta: 0.7, reason: 'pl_interest_lease_anchor' };
+        if (canonicalId === 'fsl-pl-interest')
+          return { delta: -0.2, reason: 'pl_interest_lease_vs_total' };
+        if (canonicalId === 'fsl-pl-interest-bank')
+          return { delta: -0.3, reason: 'pl_interest_lease_vs_bank' };
       }
       if (/odsetki\s+bankowe|odsetki\s+od\s+kredyt|bank\s+interest/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-interest-bank') return { delta: 0.7, reason: 'pl_interest_bank_anchor' };
-        if (canonicalId === 'fsl-pl-interest') return { delta: -0.2, reason: 'pl_interest_bank_vs_total' };
-        if (canonicalId === 'fsl-pl-interest-lease') return { delta: -0.3, reason: 'pl_interest_bank_vs_lease' };
+        if (canonicalId === 'fsl-pl-interest-bank')
+          return { delta: 0.7, reason: 'pl_interest_bank_anchor' };
+        if (canonicalId === 'fsl-pl-interest')
+          return { delta: -0.2, reason: 'pl_interest_bank_vs_total' };
+        if (canonicalId === 'fsl-pl-interest-lease')
+          return { delta: -0.3, reason: 'pl_interest_bank_vs_lease' };
       }
-      if (/amortyzacja\s+(?:wartości\s+)?niematerial|amortization\s+of\s+intangible/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-depreciation-intangibles') return { delta: 0.7, reason: 'pl_depreciation_intangibles_anchor' };
-        if (canonicalId === 'fsl-pl-depreciation') return { delta: -0.2, reason: 'pl_depreciation_intangibles_vs_total' };
+      if (
+        /amortyzacja\s+(?:wartości\s+)?niematerial|amortization\s+of\s+intangible/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-depreciation-intangibles')
+          return { delta: 0.7, reason: 'pl_depreciation_intangibles_anchor' };
+        if (canonicalId === 'fsl-pl-depreciation')
+          return { delta: -0.2, reason: 'pl_depreciation_intangibles_vs_total' };
       }
-      if (/amortyzacja\s+(?:środków\s+trwałych|rzeczowych)|depreciation\s+of\s+(?:ppe|property)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-depreciation-ppe') return { delta: 0.7, reason: 'pl_depreciation_ppe_anchor' };
-        if (canonicalId === 'fsl-pl-depreciation') return { delta: -0.2, reason: 'pl_depreciation_ppe_vs_total' };
+      if (
+        /amortyzacja\s+(?:środków\s+trwałych|rzeczowych)|depreciation\s+of\s+(?:ppe|property)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-depreciation-ppe')
+          return { delta: 0.7, reason: 'pl_depreciation_ppe_anchor' };
+        if (canonicalId === 'fsl-pl-depreciation')
+          return { delta: -0.2, reason: 'pl_depreciation_ppe_vs_total' };
       }
       if (/odpisy\s+aktualizujące|impairment\s+(?:charge|expense|loss)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-other-opex-impairment') return { delta: 0.5, reason: 'pl_impairment_anchor' };
-        if (canonicalId === 'fsl-pl-other-opex') return { delta: -0.2, reason: 'pl_impairment_vs_opex' };
+        if (canonicalId === 'fsl-pl-other-opex-impairment')
+          return { delta: 0.5, reason: 'pl_impairment_anchor' };
+        if (canonicalId === 'fsl-pl-other-opex')
+          return { delta: -0.2, reason: 'pl_impairment_vs_opex' };
       }
-      if (/(?:utworzenie|zmiana\s+stanu)\s+rezerw|provision\s+(?:charge|expense)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-other-opex-provisions') return { delta: 0.5, reason: 'pl_provisions_anchor' };
-        if (canonicalId === 'fsl-pl-other-opex') return { delta: -0.2, reason: 'pl_provisions_vs_opex' };
+      if (
+        /(?:utworzenie|zmiana\s+stanu)\s+rezerw|provision\s+(?:charge|expense)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-other-opex-provisions')
+          return { delta: 0.5, reason: 'pl_provisions_anchor' };
+        if (canonicalId === 'fsl-pl-other-opex')
+          return { delta: -0.2, reason: 'pl_provisions_vs_opex' };
       }
       if (/research\s+and\s+development|r\s*&\s*d\s+(?:expense|cost)/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-rnd') return { delta: 0.8, reason: 'pl_rnd_anchor' };
@@ -5651,113 +6418,180 @@ export async function autoMapLines(
         if (canonicalId === 'fsl-pl-opex') return { delta: -0.3, reason: 'pl_sga_vs_opex' };
       }
       if (/total\s+(?:cost\s+of|cost)\s+revenues?/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-cogs') return { delta: 0.7, reason: 'pl_total_cost_of_revenues_anchor' };
+        if (canonicalId === 'fsl-pl-cogs')
+          return { delta: 0.7, reason: 'pl_total_cost_of_revenues_anchor' };
       }
       if (/total\s+operating\s+expenses/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-opex') return { delta: 0.7, reason: 'pl_total_opex_anchor' };
         if (canonicalId === 'fsl-pl-cogs') return { delta: -0.4, reason: 'pl_total_opex_vs_cogs' };
       }
-      if (/net\s+income\s+(?:loss\s+)?attributable\s+to\s+(?:common\s+)?(?:stockholders?|shareowners?|shareholders?|owners)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-net-parent') return { delta: 0.8, reason: 'pl_net_parent_en_anchor' };
+      if (
+        /net\s+income\s+(?:loss\s+)?attributable\s+to\s+(?:common\s+)?(?:stockholders?|shareowners?|shareholders?|owners)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-pl-net-parent')
+          return { delta: 0.8, reason: 'pl_net_parent_en_anchor' };
         if (canonicalId === 'fsl-pl-net') return { delta: -0.3, reason: 'pl_net_parent_vs_net' };
       }
       if (/consolidated\s+net\s+income/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-net') return { delta: 0.6, reason: 'pl_consolidated_net_anchor' };
+        if (canonicalId === 'fsl-pl-net')
+          return { delta: 0.6, reason: 'pl_consolidated_net_anchor' };
       }
       if (/automotive\s+sales\b/i.test(normalizedLabel) && !/cost/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-product') return { delta: 0.7, reason: 'pl_automotive_sales_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_auto_sales_vs_total_rev' };
+        if (canonicalId === 'fsl-pl-revenue-product')
+          return { delta: 0.7, reason: 'pl_automotive_sales_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.3, reason: 'pl_auto_sales_vs_total_rev' };
       }
-      if (/(?:total\s+)?automotive\s+(?:cost\s+of\s+)?revenues/i.test(normalizedLabel) && !/cost\s+of/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-product') return { delta: 0.6, reason: 'pl_auto_rev_total_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_auto_rev_vs_total' };
+      if (
+        /(?:total\s+)?automotive\s+(?:cost\s+of\s+)?revenues/i.test(normalizedLabel) &&
+        !/cost\s+of/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-pl-revenue-product')
+          return { delta: 0.6, reason: 'pl_auto_rev_total_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.3, reason: 'pl_auto_rev_vs_total' };
       }
       if (/automotive\s+cost\s+of\s+revenues/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-cogs') return { delta: 0.6, reason: 'pl_auto_cogs_anchor' };
       }
       if (/services?\s+and\s+other/i.test(normalizedLabel) && /revenue/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-revenue-service') return { delta: 0.6, reason: 'pl_services_other_anchor' };
-        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_services_vs_total_rev' };
+        if (canonicalId === 'fsl-pl-revenue-service')
+          return { delta: 0.6, reason: 'pl_services_other_anchor' };
+        if (canonicalId === 'fsl-pl-revenue')
+          return { delta: -0.3, reason: 'pl_services_vs_total_rev' };
       }
       if (/manufacturing\s+costs?/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-pl-cogs') return { delta: 0.5, reason: 'pl_manufacturing_costs_anchor' };
+        if (canonicalId === 'fsl-pl-cogs')
+          return { delta: 0.5, reason: 'pl_manufacturing_costs_anchor' };
       }
     }
 
     if (normalizedType === 'CF') {
-      if (/acquisition|net\s+of\s+cash\s+acquired/i.test(normalizedLabel) && /invest/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-acquisitions') return { delta: 0.7, reason: 'cf_acquisitions_anchor' };
-        if (canonicalId === 'fsl-cf-capex') return { delta: -0.3, reason: 'cf_acquisitions_vs_capex' };
+      if (
+        /acquisition|net\s+of\s+cash\s+acquired/i.test(normalizedLabel) &&
+        /invest/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-cf-investing-acquisitions')
+          return { delta: 0.7, reason: 'cf_acquisitions_anchor' };
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: -0.3, reason: 'cf_acquisitions_vs_capex' };
       }
       if (/investment\s+in\s+(?:joint\s+ventures|associates)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-jv') return { delta: 0.7, reason: 'cf_investing_jv_anchor' };
-        if (canonicalId === 'fsl-cf-investing-subsidiaries') return { delta: -0.2, reason: 'cf_jv_vs_subsidiaries' };
+        if (canonicalId === 'fsl-cf-investing-jv')
+          return { delta: 0.7, reason: 'cf_investing_jv_anchor' };
+        if (canonicalId === 'fsl-cf-investing-subsidiaries')
+          return { delta: -0.2, reason: 'cf_jv_vs_subsidiaries' };
       }
-      if (/purchases?\s+of\s+investments|investments?\s+in\s+marketable\s+securities/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-investing-securities') return { delta: 0.7, reason: 'cf_securities_purchase_anchor' };
-        if (canonicalId === 'fsl-cf-capex') return { delta: -0.3, reason: 'cf_securities_vs_capex' };
+      if (
+        /purchases?\s+of\s+investments|investments?\s+in\s+marketable\s+securities/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-investing-securities')
+          return { delta: 0.7, reason: 'cf_securities_purchase_anchor' };
+        if (canonicalId === 'fsl-cf-capex')
+          return { delta: -0.3, reason: 'cf_securities_vs_capex' };
       }
-      if (/issuances?\s+of\s+(?:common\s+)?stock|proceeds\s+from\s+(?:issuance|exercise)\s+of\s+(?:stock|options)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-share-issuance') return { delta: 0.7, reason: 'cf_share_issuance_anchor' };
-        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: -0.4, reason: 'cf_issuance_vs_drawdown' };
+      if (
+        /issuances?\s+of\s+(?:common\s+)?stock|proceeds\s+from\s+(?:issuance|exercise)\s+of\s+(?:stock|options)/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-cf-share-issuance')
+          return { delta: 0.7, reason: 'cf_share_issuance_anchor' };
+        if (canonicalId === 'fsl-cf-debt-drawdown')
+          return { delta: -0.4, reason: 'cf_issuance_vs_drawdown' };
       }
       if (/other\s+financing\s+activities/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-other-financing') return { delta: 0.7, reason: 'cf_other_financing_anchor' };
-        if (canonicalId === 'fsl-cf-financing') return { delta: -0.3, reason: 'cf_other_fin_vs_total_fin' };
+        if (canonicalId === 'fsl-cf-other-financing')
+          return { delta: 0.7, reason: 'cf_other_financing_anchor' };
+        if (canonicalId === 'fsl-cf-financing')
+          return { delta: -0.3, reason: 'cf_other_fin_vs_total_fin' };
       }
       if (/inventory.*write.?down|write.?down.*inventory/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.6, reason: 'cf_inventory_writedown_adj' };
-        if (canonicalId === 'fsl-cf-change-wc-inventory') return { delta: -0.4, reason: 'cf_writedown_not_wc' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: 0.6, reason: 'cf_inventory_writedown_adj' };
+        if (canonicalId === 'fsl-cf-change-wc-inventory')
+          return { delta: -0.4, reason: 'cf_writedown_not_wc' };
       }
       if (/operating\s+lease\s+vehicles/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.5, reason: 'cf_lease_vehicles_adj' };
+        if (canonicalId === 'fsl-cf-operating-other-adj')
+          return { delta: 0.5, reason: 'cf_lease_vehicles_adj' };
       }
     }
 
     if (normalizedType === 'BS') {
       if (/finance\s+debt/i.test(normalizedLabel) && !/current\s+portion/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: 0.6, reason: 'bs_finance_debt_anchor' };
-        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: -0.3, reason: 'bs_finance_debt_vs_st' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: 0.6, reason: 'bs_finance_debt_anchor' };
+        if (canonicalId === 'fsl-bs-short-term-debt')
+          return { delta: -0.3, reason: 'bs_finance_debt_vs_st' };
       }
       if (/current\s+portion\s+of\s+(?:debt|finance\s+leases?|long.term)/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: 0.7, reason: 'bs_current_debt_portion_anchor' };
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.4, reason: 'bs_current_vs_lt_debt' };
+        if (canonicalId === 'fsl-bs-short-term-debt')
+          return { delta: 0.7, reason: 'bs_current_debt_portion_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: -0.4, reason: 'bs_current_vs_lt_debt' };
       }
       if (/debt\s+and\s+finance\s+leases?\s*,?\s*net\s+of\s+current/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: 0.7, reason: 'bs_lt_debt_net_of_current_anchor' };
-        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: -0.4, reason: 'bs_lt_not_st' };
+        if (canonicalId === 'fsl-bs-long-term-debt')
+          return { delta: 0.7, reason: 'bs_lt_debt_net_of_current_anchor' };
+        if (canonicalId === 'fsl-bs-short-term-debt')
+          return { delta: -0.4, reason: 'bs_lt_not_st' };
       }
       if (/deferred\s+revenue/i.test(normalizedLabel)) {
         if (/non.?current|net\s+of\s+current/i.test(normalizedLabel)) {
-          if (canonicalId === 'fsl-bs-deferred-revenue-non-current') return { delta: 0.8, reason: 'bs_deferred_rev_nc_anchor' };
-          if (canonicalId === 'fsl-bs-deferred-revenue-current') return { delta: -0.4, reason: 'bs_deferred_rev_nc_not_current' };
+          if (canonicalId === 'fsl-bs-deferred-revenue-non-current')
+            return { delta: 0.8, reason: 'bs_deferred_rev_nc_anchor' };
+          if (canonicalId === 'fsl-bs-deferred-revenue-current')
+            return { delta: -0.4, reason: 'bs_deferred_rev_nc_not_current' };
         } else {
-          if (canonicalId === 'fsl-bs-deferred-revenue-current') return { delta: 0.6, reason: 'bs_deferred_rev_current_anchor' };
-          if (canonicalId === 'fsl-bs-contract-liabilities') return { delta: 0.2, reason: 'bs_deferred_rev_as_contract' };
+          if (canonicalId === 'fsl-bs-deferred-revenue-current')
+            return { delta: 0.6, reason: 'bs_deferred_rev_current_anchor' };
+          if (canonicalId === 'fsl-bs-contract-liabilities')
+            return { delta: 0.2, reason: 'bs_deferred_rev_as_contract' };
         }
       }
       if (/defined\s+benefit\s+pension.*surplus/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-pension-surplus') return { delta: 0.8, reason: 'bs_pension_surplus_anchor' };
+        if (canonicalId === 'fsl-bs-pension-surplus')
+          return { delta: 0.8, reason: 'bs_pension_surplus_anchor' };
       }
-      if (/defined\s+benefit\s+pension.*deficit|post.employment\s+benefit.*deficit/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-pension-deficit') return { delta: 0.8, reason: 'bs_pension_deficit_anchor' };
+      if (
+        /defined\s+benefit\s+pension.*deficit|post.employment\s+benefit.*deficit/i.test(
+          normalizedLabel
+        )
+      ) {
+        if (canonicalId === 'fsl-bs-pension-deficit')
+          return { delta: 0.8, reason: 'bs_pension_deficit_anchor' };
       }
       if (/net\s+assets\b/i.test(normalizedLabel) && !/held\s+for\s+sale/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity') return { delta: 0.4, reason: 'bs_net_assets_as_equity' };
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: 0.4, reason: 'bs_net_assets_as_equity' };
       }
       if (/prepaid\s+expenses?\s+and\s+other\s+current/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-other-current-assets') return { delta: 0.6, reason: 'bs_prepaid_other_current_anchor' };
-        if (canonicalId === 'fsl-bs-other-current-assets-prepaids') return { delta: 0.3, reason: 'bs_prepaid_as_prepaids' };
+        if (canonicalId === 'fsl-bs-other-current-assets')
+          return { delta: 0.6, reason: 'bs_prepaid_other_current_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets-prepaids')
+          return { delta: 0.3, reason: 'bs_prepaid_as_prepaids' };
       }
       if (/trademarks?\s+(?:with\s+)?indefinite/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-intangibles') return { delta: 0.6, reason: 'bs_trademarks_as_intangibles' };
+        if (canonicalId === 'fsl-bs-intangibles')
+          return { delta: 0.6, reason: 'bs_trademarks_as_intangibles' };
       }
       if (/equity\s+(?:attributable\s+to\s+)?(?:bp\s+)?shareholders/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity-parent') return { delta: 0.7, reason: 'bs_equity_shareholders_anchor' };
-        if (canonicalId === 'fsl-bs-equity') return { delta: -0.2, reason: 'bs_shareholders_vs_total' };
+        if (canonicalId === 'fsl-bs-equity-parent')
+          return { delta: 0.7, reason: 'bs_equity_shareholders_anchor' };
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: -0.2, reason: 'bs_shareholders_vs_total' };
       }
-      if (/(?:stockholders?|shareholders?)\s+equity/i.test(normalizedLabel) && /preferred\s+stock|common\s+stock/i.test(normalizedLabel)) {
-        if (canonicalId === 'fsl-bs-equity') return { delta: 0.5, reason: 'bs_stockholders_equity_header' };
+      if (
+        /(?:stockholders?|shareholders?)\s+equity/i.test(normalizedLabel) &&
+        /preferred\s+stock|common\s+stock/i.test(normalizedLabel)
+      ) {
+        if (canonicalId === 'fsl-bs-equity')
+          return { delta: 0.5, reason: 'bs_stockholders_equity_header' };
       }
     }
 
@@ -5818,10 +6652,20 @@ export async function autoMapLines(
         }
 
         if (score <= 0) continue;
-        if (templateFamily && aliasRows.some((row) => row.statement_line_id === canonical.id && row.template_family === templateFamily)) {
+        if (
+          templateFamily &&
+          aliasRows.some(
+            (row) =>
+              row.statement_line_id === canonical.id && row.template_family === templateFamily
+          )
+        ) {
           score += 0.1;
         }
-        const structuralBoost = applyStructuralMappingBoost(label, canonical.id, normalizedStatementType);
+        const structuralBoost = applyStructuralMappingBoost(
+          label,
+          canonical.id,
+          normalizedStatementType
+        );
         score += structuralBoost.delta;
         if (score <= 0) continue;
         scoredMatches.push({
@@ -5829,8 +6673,7 @@ export async function autoMapLines(
           name: canonical.line_name,
           score,
           reason:
-            structuralBoost.reason ||
-            (score >= 1 ? 'exact_alias_match' : 'alias_similarity_match'),
+            structuralBoost.reason || (score >= 1 ? 'exact_alias_match' : 'alias_similarity_match'),
         });
       }
     }
@@ -5873,7 +6716,9 @@ export async function autoMapLines(
   });
 }
 
-export function resolveDuplicateSuggestedMappings(extractedLines: ExtractedLine[]): ExtractedLine[] {
+export function resolveDuplicateSuggestedMappings(
+  extractedLines: ExtractedLine[]
+): ExtractedLine[] {
   const grouped = new Map<string, Array<{ line: ExtractedLine; index: number }>>();
   extractedLines.forEach((line, index) => {
     const key = String(line.suggestedCanonicalId || '').trim();
@@ -5986,7 +6831,11 @@ function hasCanonicalLineCoverage(
   }
 
   if (lineId === 'fsl-cf-financing') {
-    return hasAnyPresentPrefix('fsl-cf-debt-') || presentLineIds.has('fsl-cf-dividends') || presentLineIds.has('fsl-cf-lease-repayment');
+    return (
+      hasAnyPresentPrefix('fsl-cf-debt-') ||
+      presentLineIds.has('fsl-cf-dividends') ||
+      presentLineIds.has('fsl-cf-lease-repayment')
+    );
   }
 
   return false;
@@ -6018,7 +6867,9 @@ export function validateStatement(
   const canonicalStatementType = toCanonicalStatementType(statementType);
 
   const getValues = (lineId: string): number[] =>
-    activeLines.filter((line) => line.canonicalLineId === lineId).map((line) => Number(line.value || 0));
+    activeLines
+      .filter((line) => line.canonicalLineId === lineId)
+      .map((line) => Number(line.value || 0));
   const getValue = (lineId: string): number | null => {
     const values = getValues(lineId);
     if (values.length === 0) return null;
@@ -6082,7 +6933,11 @@ export function validateStatement(
         message: 'Cash is negative. Verify sign and scale.',
       });
     }
-    if (currentAssets !== null && totalAssets !== null && Math.abs(currentAssets) > Math.abs(totalAssets) * 1.05) {
+    if (
+      currentAssets !== null &&
+      totalAssets !== null &&
+      Math.abs(currentAssets) > Math.abs(totalAssets) * 1.05
+    ) {
       messages.push({
         type: 'error',
         code: 'BS_CURRENT_ASSETS_EXCEED_TOTAL',
@@ -6116,7 +6971,11 @@ export function validateStatement(
     }
 
     const nonCurrentLiabilities = getValue('fsl-bs-noncurrent-liabilities');
-    if (nonCurrentLiabilities !== null && currentLiabilities !== null && totalLiabilities !== null) {
+    if (
+      nonCurrentLiabilities !== null &&
+      currentLiabilities !== null &&
+      totalLiabilities !== null
+    ) {
       const liabSum = nonCurrentLiabilities + currentLiabilities;
       const diff = Math.abs(totalLiabilities - liabSum);
       if (diff > Math.abs(totalLiabilities) * 0.02) {
@@ -6216,9 +7075,7 @@ export function validateStatement(
   }
   if (canonicalStatementType) {
     const presentLineIds = new Set(
-      activeLines
-        .map((line) => String(line.canonicalLineId || '').trim())
-        .filter(Boolean)
+      activeLines.map((line) => String(line.canonicalLineId || '').trim()).filter(Boolean)
     );
     const missingRequiredLineIds = getMissingRequiredCanonicalLineIds(
       canonicalStatementType,
@@ -6257,12 +7114,22 @@ export function evaluateStatementReadiness(params: {
     isNonFinancial?: boolean;
   }>;
 }): StatementReadinessEvaluation {
-  const normalizedStatus = String(params.rawStatus || '').trim().toLowerCase();
+  const normalizedStatus = String(params.rawStatus || '')
+    .trim()
+    .toLowerCase();
   const normalizedType = normalizeStatementTypeToken(params.statementType);
-  const normalizedValidation = String(params.validationStatus || '').trim().toLowerCase();
-  const normalizedCurrency = String(params.currency || '').trim().toUpperCase();
-  const normalizedScaling = String(params.scaling || '').trim().toLowerCase();
-  const validationMessages = Array.isArray(params.validationMessages) ? params.validationMessages : [];
+  const normalizedValidation = String(params.validationStatus || '')
+    .trim()
+    .toLowerCase();
+  const normalizedCurrency = String(params.currency || '')
+    .trim()
+    .toUpperCase();
+  const normalizedScaling = String(params.scaling || '')
+    .trim()
+    .toLowerCase();
+  const validationMessages = Array.isArray(params.validationMessages)
+    ? params.validationMessages
+    : [];
   const activeValues = (params.values || []).filter((value) => !value.isNonFinancial);
   const canonicalStatementType = toCanonicalStatementType(params.statementType);
   const nonFinancialLineCount = Math.max(0, (params.values || []).length - activeValues.length);
@@ -6270,9 +7137,7 @@ export function evaluateStatementReadiness(params: {
   const eligibleLineCount = activeValues.length;
   const unmappedLineCount = Math.max(0, eligibleLineCount - mappedLineCount);
   const presentLineIds = new Set(
-    activeValues
-      .map((value) => String(value.canonicalLineId || '').trim())
-      .filter(Boolean)
+    activeValues.map((value) => String(value.canonicalLineId || '').trim()).filter(Boolean)
   );
   const getValue = (lineId: string): number | null => {
     const values = activeValues
@@ -6302,7 +7167,8 @@ export function evaluateStatementReadiness(params: {
   if (mappedLineCount === 0) reasonCodes.push('NO_MAPPED_LINES');
   if (unmappedLineCount > 0) reasonCodes.push('UNMAPPED_FINANCIAL_LINES');
   if (missingRequiredLineCount > 0) reasonCodes.push('MISSING_REQUIRED_CANONICAL_LINES');
-  if (!normalizedCurrency || normalizedCurrency === 'UNKNOWN') reasonCodes.push('UNRESOLVED_CURRENCY');
+  if (!normalizedCurrency || normalizedCurrency === 'UNKNOWN')
+    reasonCodes.push('UNRESOLVED_CURRENCY');
   if (!normalizedScaling || normalizedScaling === 'unknown') reasonCodes.push('UNRESOLVED_SCALING');
   if (hasDuplicateWarnings) reasonCodes.push('DUPLICATE_MAPPING_CONFLICT');
   if (hardFailCount > 0) reasonCodes.push('VALIDATION_HARD_FAIL');
@@ -6324,7 +7190,10 @@ export function evaluateStatementReadiness(params: {
   );
 
   let readinessStatus: StatementReadinessStatus = 'pending';
-  if (reasonCodes.includes('UNSUPPORTED_STATEMENT_TYPE') || reasonCodes.includes('NO_ELIGIBLE_FINANCIAL_LINES')) {
+  if (
+    reasonCodes.includes('UNSUPPORTED_STATEMENT_TYPE') ||
+    reasonCodes.includes('NO_ELIGIBLE_FINANCIAL_LINES')
+  ) {
     readinessStatus = 'rejected';
   } else if (
     hardFailCount === 0 &&
@@ -6546,9 +7415,13 @@ export async function persistStatementExtractedSections(params: {
   if (!Array.isArray(params.sections) || params.sections.length === 0) return [];
   try {
     if (params.ingestRunId) {
-      await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE ingest_run_id = ?`, [params.ingestRunId], {
-        fallback: false,
-      });
+      await dbRun(
+        `DELETE FROM financial_statement_extracted_sections WHERE ingest_run_id = ?`,
+        [params.ingestRunId],
+        {
+          fallback: false,
+        }
+      );
     }
     const created: Array<{ sectionId: string; sectionKey: string }> = [];
     for (const section of params.sections) {
@@ -6595,9 +7468,13 @@ export async function persistStatementCandidateRows(params: {
   if (!Array.isArray(params.rows)) return [];
   try {
     if (params.ingestRunId) {
-      await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE ingest_run_id = ?`, [params.ingestRunId], {
-        fallback: false,
-      });
+      await dbRun(
+        `DELETE FROM financial_statement_candidate_rows WHERE ingest_run_id = ?`,
+        [params.ingestRunId],
+        {
+          fallback: false,
+        }
+      );
     }
     const created: Array<{ candidateRowId: string; sourceRow?: number }> = [];
     const sectionKey = `${normalizeStatementTypeToken(params.statementType) || 'UNKNOWN'}_1`;
@@ -6654,7 +7531,9 @@ export async function loadPersistedStatementCandidateRows(params: {
     const where = params.ingestRunId
       ? `WHERE row.statement_id = ? AND row.ingest_run_id = ?`
       : `WHERE row.statement_id = ?`;
-    const values = params.ingestRunId ? [params.statementId, params.ingestRunId] : [params.statementId];
+    const values = params.ingestRunId
+      ? [params.statementId, params.ingestRunId]
+      : [params.statementId];
     const rows = (await dbAll(
       `SELECT
          row.row_label as row_label,
@@ -6705,7 +7584,8 @@ export async function loadPersistedStatementCandidateRows(params: {
         numericTokens: Array.isArray(metadata.numericTokens) ? metadata.numericTokens : undefined,
         selectedNumericToken: metadata.selectedNumericToken || undefined,
         isNonFinancial: Boolean(metadata.isNonFinancial),
-        classificationReason: row.classification_reason || metadata.classificationReason || undefined,
+        classificationReason:
+          row.classification_reason || metadata.classificationReason || undefined,
         mappingReason: metadata.mappingReason || undefined,
       } satisfies ExtractedLine;
     });
@@ -6724,9 +7604,13 @@ export async function persistStatementMappingCandidates(params: {
   if (!Array.isArray(params.rows)) return;
   try {
     if (params.ingestRunId) {
-      await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE ingest_run_id = ?`, [params.ingestRunId], {
-        fallback: false,
-      });
+      await dbRun(
+        `DELETE FROM financial_statement_mapping_candidates WHERE ingest_run_id = ?`,
+        [params.ingestRunId],
+        {
+          fallback: false,
+        }
+      );
     }
     for (const row of params.rows) {
       const candidates = Array.isArray(row.mappingCandidates) ? row.mappingCandidates : [];
@@ -6881,9 +7765,7 @@ export async function persistStatementValidationLedger(params: {
     return values.reduce((sum, value) => sum + value, 0);
   };
   const presentLineIds = new Set(
-    activeValues
-      .map((value) => String(value.canonicalLineId || '').trim())
-      .filter(Boolean)
+    activeValues.map((value) => String(value.canonicalLineId || '').trim()).filter(Boolean)
   );
   const missingRequired = getMissingRequiredCanonicalLineIds(
     canonicalStatementType,
@@ -6919,7 +7801,8 @@ export async function persistStatementValidationLedger(params: {
         uuidv4(),
         params.statementId,
         canonicalStatementType ? getRequiredCanonicalLineIds(canonicalStatementType).length : 0,
-        (canonicalStatementType ? getRequiredCanonicalLineIds(canonicalStatementType).length : 0) - missingRequired.length,
+        (canonicalStatementType ? getRequiredCanonicalLineIds(canonicalStatementType).length : 0) -
+          missingRequired.length,
         missingRequired.length,
         0,
         'Required canonical lines are missing from the statement.',
@@ -7357,7 +8240,9 @@ export async function saveStatementValues(
     evidenceJson?: Record<string, unknown> | null;
     manualOverrideReason?: string | null;
   }>
-): Promise<Array<{ id: string; sourceCandidateRowId?: string | null; value: number; originalLabel: string }>> {
+): Promise<
+  Array<{ id: string; sourceCandidateRowId?: string | null; value: number; originalLabel: string }>
+> {
   const insertedRows: Array<{
     id: string;
     sourceCandidateRowId?: string | null;
@@ -7566,7 +8451,13 @@ export function runCfoAutoValidation(
       statementType: type,
       isNonFinancial: false,
     });
-    repairs.push({ action: 'derived', canonicalLineId: id, repairedValue: value, reason, confidence: conf });
+    repairs.push({
+      action: 'derived',
+      canonicalLineId: id,
+      repairedValue: value,
+      reason,
+      confidence: conf,
+    });
   };
 
   // ── 1. BALANCE SHEET CHECKS & REPAIRS ──
@@ -7585,40 +8476,77 @@ export function runCfoAutoValidation(
     const derived = totalAssets - equity;
     if (derived >= 0) {
       addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Total Assets − Equity', 0.95);
-      checks.push({ code: 'BS_TOTAL_LIAB_DERIVED', severity: 'info', message: `Total Liabilities derived: ${derived.toFixed(2)}` });
+      checks.push({
+        code: 'BS_TOTAL_LIAB_DERIVED',
+        severity: 'info',
+        message: `Total Liabilities derived: ${derived.toFixed(2)}`,
+      });
     }
   }
 
   // Derive Total Liabilities from L+E minus Equity
-  if (totalLiab === null && totalLE !== null && equity !== null && totalAssets === null && !derivedLines.some((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')) {
+  if (
+    totalLiab === null &&
+    totalLE !== null &&
+    equity !== null &&
+    totalAssets === null &&
+    !derivedLines.some((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')
+  ) {
     const derived = totalLE - equity;
     if (derived >= 0) {
       addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Total L&E − Equity', 0.9);
-      checks.push({ code: 'BS_TOTAL_LIAB_FROM_LE', severity: 'info', message: `Total Liabilities derived from T(L&E): ${derived.toFixed(2)}` });
+      checks.push({
+        code: 'BS_TOTAL_LIAB_FROM_LE',
+        severity: 'info',
+        message: `Total Liabilities derived from T(L&E): ${derived.toFixed(2)}`,
+      });
     }
   }
 
   // Derive Total Liabilities from sub-components
-  if (totalLiab === null && !derivedLines.some((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')) {
+  if (
+    totalLiab === null &&
+    !derivedLines.some((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')
+  ) {
     if (currentLiab !== null && longTermDebt !== null) {
       const derived = currentLiab + longTermDebt;
-      addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Current Liab. + Non-current Liab.', 0.85);
-      checks.push({ code: 'BS_TOTAL_LIAB_FROM_COMPONENTS', severity: 'info', message: `Total Liabilities derived from components: ${derived.toFixed(2)}` });
+      addDerived(
+        'fsl-bs-total-liabilities',
+        derived,
+        'BS',
+        'Current Liab. + Non-current Liab.',
+        0.85
+      );
+      checks.push({
+        code: 'BS_TOTAL_LIAB_FROM_COMPONENTS',
+        severity: 'info',
+        message: `Total Liabilities derived from components: ${derived.toFixed(2)}`,
+      });
     }
   }
 
   // Derive Total Assets from L&E total if missing — but flag if no asset-side lines exist
   if (totalAssets === null && totalLE !== null) {
     const hasAnyAssetLines = currentAssets !== null || hasLine('fsl-bs-fixed') || cash !== null;
-    addDerived('fsl-bs-total-assets', totalLE, 'BS', 'Total L&E ≡ Total Assets', hasAnyAssetLines ? 0.95 : 0.5);
+    addDerived(
+      'fsl-bs-total-assets',
+      totalLE,
+      'BS',
+      'Total L&E ≡ Total Assets',
+      hasAnyAssetLines ? 0.95 : 0.5
+    );
     if (!hasAnyAssetLines) {
-      checks.push({ 
-        code: 'BS_ASSETS_SECTION_MISSING', 
-        severity: 'warning', 
-        message: `Total Assets derived from Total L&E (${totalLE}), but NO asset-side lines found (Current Assets, Fixed Assets, Cash all missing). Assets section likely not extracted from PDF.` 
+      checks.push({
+        code: 'BS_ASSETS_SECTION_MISSING',
+        severity: 'warning',
+        message: `Total Assets derived from Total L&E (${totalLE}), but NO asset-side lines found (Current Assets, Fixed Assets, Cash all missing). Assets section likely not extracted from PDF.`,
       });
     } else {
-      checks.push({ code: 'BS_TOTAL_ASSETS_FROM_LE', severity: 'info', message: `Total Assets derived from Total L&E: ${totalLE}` });
+      checks.push({
+        code: 'BS_TOTAL_ASSETS_FROM_LE',
+        severity: 'info',
+        message: `Total Assets derived from Total L&E: ${totalLE}`,
+      });
     }
   }
 
@@ -7626,7 +8554,11 @@ export function runCfoAutoValidation(
   if (equity === null && totalAssets !== null && totalLiab !== null) {
     const derived = totalAssets - totalLiab;
     addDerived('fsl-bs-equity', derived, 'BS', 'Total Assets − Total Liabilities', 0.9);
-    checks.push({ code: 'BS_EQUITY_DERIVED', severity: 'info', message: `Equity derived: ${derived.toFixed(2)}` });
+    checks.push({
+      code: 'BS_EQUITY_DERIVED',
+      severity: 'info',
+      message: `Equity derived: ${derived.toFixed(2)}`,
+    });
   }
 
   // Derive Non-current Assets
@@ -7638,16 +8570,27 @@ export function runCfoAutoValidation(
   }
 
   // BS equation verification (use derived values too)
-  const effectiveAssets = totalAssets ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-assets')?.value ?? null;
-  const effectiveEquity = equity ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-equity')?.value ?? null;
-  const effectiveLiab = totalLiab ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')?.value ?? null;
+  const effectiveAssets =
+    totalAssets ??
+    derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-assets')?.value ??
+    null;
+  const effectiveEquity =
+    equity ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-equity')?.value ?? null;
+  const effectiveLiab =
+    totalLiab ??
+    derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')?.value ??
+    null;
 
   if (effectiveAssets !== null && effectiveEquity !== null && effectiveLiab !== null) {
     const sum = effectiveEquity + effectiveLiab;
     const diff = Math.abs(effectiveAssets - sum);
     const tolerance = Math.abs(effectiveAssets) * 0.02;
     if (diff <= tolerance) {
-      checks.push({ code: 'BS_EQUATION', severity: 'pass', message: `A(${effectiveAssets}) = E(${effectiveEquity}) + L(${effectiveLiab})` });
+      checks.push({
+        code: 'BS_EQUATION',
+        severity: 'pass',
+        message: `A(${effectiveAssets}) = E(${effectiveEquity}) + L(${effectiveLiab})`,
+      });
     } else {
       checks.push({
         code: 'BS_EQUATION',
@@ -7657,51 +8600,82 @@ export function runCfoAutoValidation(
       });
     }
   } else if (bsLineCount <= 5) {
-    const hasAnyAssetLines = currentAssets !== null || hasLine('fsl-bs-fixed') || cash !== null || totalAssets !== null;
-    const hasAnyLiabilityLines = totalLiab !== null || currentLiab !== null || longTermDebt !== null || equity !== null;
+    const hasAnyAssetLines =
+      currentAssets !== null || hasLine('fsl-bs-fixed') || cash !== null || totalAssets !== null;
+    const hasAnyLiabilityLines =
+      totalLiab !== null || currentLiab !== null || longTermDebt !== null || equity !== null;
     if (!hasAnyAssetLines && hasAnyLiabilityLines) {
-      checks.push({ 
-        code: 'BS_EQUATION', 
-        severity: 'warning', 
-        message: `BS has ${bsLineCount} lines but ALL are liabilities/equity — assets section likely missing from extraction` 
+      checks.push({
+        code: 'BS_EQUATION',
+        severity: 'warning',
+        message: `BS has ${bsLineCount} lines but ALL are liabilities/equity — assets section likely missing from extraction`,
       });
     } else {
-      checks.push({ code: 'BS_EQUATION', severity: 'pass', message: `BS sparse (${bsLineCount} lines) — equation check skipped, sub-components consistent` });
+      checks.push({
+        code: 'BS_EQUATION',
+        severity: 'pass',
+        message: `BS sparse (${bsLineCount} lines) — equation check skipped, sub-components consistent`,
+      });
     }
   } else {
-    checks.push({ code: 'BS_EQUATION', severity: 'warning', message: 'BS equation cannot be verified — missing components' });
+    checks.push({
+      code: 'BS_EQUATION',
+      severity: 'warning',
+      message: 'BS equation cannot be verified — missing components',
+    });
   }
 
   // Even for non-sparse BS, check if assets section is completely missing
   if (bsLineCount > 5) {
-    const assetSideLines = byType('BS').filter((l) => 
-      l.canonicalLineId && /^fsl-bs-(total-assets|current-assets|fixed|cash|inventories|receivables|investments|intangible|goodwill|ppe)/.test(l.canonicalLineId)
+    const assetSideLines = byType('BS').filter(
+      (l) =>
+        l.canonicalLineId &&
+        /^fsl-bs-(total-assets|current-assets|fixed|cash|inventories|receivables|investments|intangible|goodwill|ppe)/.test(
+          l.canonicalLineId
+        )
     );
-    const liabSideLines = byType('BS').filter((l) => 
-      l.canonicalLineId && /^fsl-bs-(total-liabilities|current-liabilities|long-term|equity|retained|share-capital|total-liabilities-equity)/.test(l.canonicalLineId)
+    const liabSideLines = byType('BS').filter(
+      (l) =>
+        l.canonicalLineId &&
+        /^fsl-bs-(total-liabilities|current-liabilities|long-term|equity|retained|share-capital|total-liabilities-equity)/.test(
+          l.canonicalLineId
+        )
     );
     if (assetSideLines.length === 0 && liabSideLines.length > 0) {
-      checks.push({ 
-        code: 'BS_ASSET_SIDE_MISSING', 
-        severity: 'error', 
-        message: `BS has ${bsLineCount} mapped lines but 0 are asset-side (${liabSideLines.length} liability/equity lines). Extraction likely captured only Pasywa section.` 
+      checks.push({
+        code: 'BS_ASSET_SIDE_MISSING',
+        severity: 'error',
+        message: `BS has ${bsLineCount} mapped lines but 0 are asset-side (${liabSideLines.length} liability/equity lines). Extraction likely captured only Pasywa section.`,
       });
     }
   }
 
   // Sign checks
   if (effectiveAssets !== null && effectiveAssets < 0) {
-    checks.push({ code: 'BS_SIGN_ASSETS', severity: 'error', message: `Total Assets is negative: ${effectiveAssets}` });
+    checks.push({
+      code: 'BS_SIGN_ASSETS',
+      severity: 'error',
+      message: `Total Assets is negative: ${effectiveAssets}`,
+    });
   }
-  if (effectiveAssets !== null && effectiveAssets === 0 && effectiveLiab !== null && effectiveLiab > 0) {
-    checks.push({ 
-      code: 'BS_ZERO_ASSETS', 
-      severity: 'error', 
-      message: `Total Assets = 0 but Liabilities = ${effectiveLiab} — likely extraction failure (assets section not captured)` 
+  if (
+    effectiveAssets !== null &&
+    effectiveAssets === 0 &&
+    effectiveLiab !== null &&
+    effectiveLiab > 0
+  ) {
+    checks.push({
+      code: 'BS_ZERO_ASSETS',
+      severity: 'error',
+      message: `Total Assets = 0 but Liabilities = ${effectiveLiab} — likely extraction failure (assets section not captured)`,
     });
   }
   if (cash !== null && cash < 0) {
-    checks.push({ code: 'BS_SIGN_CASH', severity: 'warning', message: `Cash is negative: ${cash}` });
+    checks.push({
+      code: 'BS_SIGN_CASH',
+      severity: 'warning',
+      message: `Cash is negative: ${cash}`,
+    });
   }
 
   // ── 2. P&L CHECKS & REPAIRS ──
@@ -7718,14 +8692,22 @@ export function runCfoAutoValidation(
   if (gross === null && revenue !== null && cogs !== null) {
     const derived = revenue - Math.abs(cogs);
     addDerived('fsl-pl-gross', derived, 'P&L', 'Revenue − |COGS|', 0.95);
-    checks.push({ code: 'PL_GROSS_DERIVED', severity: 'info', message: `Gross Profit derived: ${derived.toFixed(2)}` });
+    checks.push({
+      code: 'PL_GROSS_DERIVED',
+      severity: 'info',
+      message: `Gross Profit derived: ${derived.toFixed(2)}`,
+    });
   }
 
   // Derive Net Income from EBT - Tax
   if (netIncome === null && ebt !== null && tax !== null) {
     const derived = ebt + tax;
     addDerived('fsl-pl-net', derived, 'P&L', 'EBT + Tax', 0.9);
-    checks.push({ code: 'PL_NET_DERIVED', severity: 'info', message: `Net Income derived: ${derived.toFixed(2)}` });
+    checks.push({
+      code: 'PL_NET_DERIVED',
+      severity: 'info',
+      message: `Net Income derived: ${derived.toFixed(2)}`,
+    });
   }
 
   // Derive EBIT from EBT + interest (if available)
@@ -7741,12 +8723,17 @@ export function runCfoAutoValidation(
   // Multi-segment companies often have partial COGS (only one segment's costs).
   // Pattern: if COGS only covers a fraction of costs, Revenue - |COGS| >> Gross.
   // In that case, verify the softer constraint: 0 < Gross < Revenue.
-  const effectiveGross = gross ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-gross')?.value ?? null;
+  const effectiveGross =
+    gross ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-gross')?.value ?? null;
   if (revenue !== null && cogs !== null && effectiveGross !== null) {
     const expected = revenue - Math.abs(cogs);
     const diff = Math.abs(effectiveGross - expected);
     if (diff <= Math.abs(revenue) * 0.02) {
-      checks.push({ code: 'PL_GROSS_CHECK', severity: 'pass', message: 'Gross Profit = Revenue − COGS ✓' });
+      checks.push({
+        code: 'PL_GROSS_CHECK',
+        severity: 'pass',
+        message: 'Gross Profit = Revenue − COGS ✓',
+      });
     } else if (effectiveGross > 0 && effectiveGross < revenue && Math.abs(cogs) < revenue) {
       // Partial COGS — multi-segment or multi-tier cost structure.
       // Revenue, COGS, and Gross are individually plausible; just doesn't reconcile exactly.
@@ -7766,33 +8753,61 @@ export function runCfoAutoValidation(
   }
 
   // P&L flow check: Net margin
-  const effectiveNet = netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
+  const effectiveNet =
+    netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
   if (revenue !== null && effectiveNet !== null) {
     const margin = (effectiveNet / revenue) * 100;
     if (Math.abs(margin) > 200) {
-      checks.push({ code: 'PL_NET_MARGIN', severity: 'error', message: `Net margin ${margin.toFixed(1)}% — implausible`, details: `Rev=${revenue}, Net=${effectiveNet}` });
+      checks.push({
+        code: 'PL_NET_MARGIN',
+        severity: 'error',
+        message: `Net margin ${margin.toFixed(1)}% — implausible`,
+        details: `Rev=${revenue}, Net=${effectiveNet}`,
+      });
     } else {
-      checks.push({ code: 'PL_NET_MARGIN', severity: 'pass', message: `Net margin: ${margin.toFixed(1)}%` });
+      checks.push({
+        code: 'PL_NET_MARGIN',
+        severity: 'pass',
+        message: `Net margin: ${margin.toFixed(1)}%`,
+      });
     }
   }
 
   // Sign conventions
   if (revenue !== null && revenue < 0) {
-    checks.push({ code: 'PL_SIGN_REVENUE', severity: 'error', message: `Revenue is negative: ${revenue}` });
+    checks.push({
+      code: 'PL_SIGN_REVENUE',
+      severity: 'error',
+      message: `Revenue is negative: ${revenue}`,
+    });
   }
 
   // Completeness
   const plCritical = ['fsl-pl-revenue', 'fsl-pl-net'];
-  const plMissing = plCritical.filter((id) => !hasLine(id) && !derivedLines.some((d) => d.canonicalLineId === id));
+  const plMissing = plCritical.filter(
+    (id) => !hasLine(id) && !derivedLines.some((d) => d.canonicalLineId === id)
+  );
   if (plMissing.length > 0) {
     if (plLineCount === 0) {
       // No P&L data at all — skip completeness check (not all documents have all 3 statements usable)
-      checks.push({ code: 'PL_COMPLETENESS', severity: 'pass', message: 'P&L not present in this document scope' });
+      checks.push({
+        code: 'PL_COMPLETENESS',
+        severity: 'pass',
+        message: 'P&L not present in this document scope',
+      });
     } else {
-      checks.push({ code: 'PL_COMPLETENESS', severity: 'warning', message: `Missing critical P&L lines: ${plMissing.join(', ')}` });
+      checks.push({
+        code: 'PL_COMPLETENESS',
+        severity: 'warning',
+        message: `Missing critical P&L lines: ${plMissing.join(', ')}`,
+      });
     }
   } else {
-    checks.push({ code: 'PL_COMPLETENESS', severity: 'pass', message: 'Critical P&L lines present' });
+    checks.push({
+      code: 'PL_COMPLETENESS',
+      severity: 'pass',
+      message: 'Critical P&L lines present',
+    });
   }
 
   // ── 3. CASH FLOW CHECKS & REPAIRS ──
@@ -7806,12 +8821,25 @@ export function runCfoAutoValidation(
   // Derive net change from components
   if (cfNetChange === null && cfOp !== null && cfInv !== null && cfFin !== null) {
     const derived = cfOp + cfInv + cfFin + (cfFx ?? 0);
-    addDerived('fsl-cf-net-change-cash', derived, 'CF', 'Operating + Investing + Financing' + (cfFx !== null ? ' + FX' : ''), 0.85);
-    checks.push({ code: 'CF_NET_CHANGE_DERIVED', severity: 'info', message: `Net change in cash derived: ${derived.toFixed(2)}` });
+    addDerived(
+      'fsl-cf-net-change-cash',
+      derived,
+      'CF',
+      'Operating + Investing + Financing' + (cfFx !== null ? ' + FX' : ''),
+      0.85
+    );
+    checks.push({
+      code: 'CF_NET_CHANGE_DERIVED',
+      severity: 'info',
+      message: `Net change in cash derived: ${derived.toFixed(2)}`,
+    });
   }
 
   // CF reconciliation: Operating + Investing + Financing + FX ≈ Net Change
-  const effectiveNetChange = cfNetChange ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-cf-net-change-cash')?.value ?? null;
+  const effectiveNetChange =
+    cfNetChange ??
+    derivedLines.find((d) => d.canonicalLineId === 'fsl-cf-net-change-cash')?.value ??
+    null;
   if (cfOp !== null && cfInv !== null && cfFin !== null && effectiveNetChange !== null) {
     const sumWithFx = cfOp + cfInv + cfFin + (cfFx ?? 0);
     const sumWithoutFx = cfOp + cfInv + cfFin;
@@ -7822,19 +8850,27 @@ export function runCfoAutoValidation(
 
     if (bestDiff <= base * 0.15) {
       const fxNote = cfFx !== null ? ` (incl. FX=${cfFx})` : '';
-      checks.push({ code: 'CF_RECONCILIATION', severity: 'pass', message: `CF reconciles: Op(${cfOp}) + Inv(${cfInv}) + Fin(${cfFin})${fxNote} ≈ ${effectiveNetChange}` });
+      checks.push({
+        code: 'CF_RECONCILIATION',
+        severity: 'pass',
+        message: `CF reconciles: Op(${cfOp}) + Inv(${cfInv}) + Fin(${cfFin})${fxNote} ≈ ${effectiveNetChange}`,
+      });
     } else {
       // Check for scale mismatch (some values in millions, some in thousands)
       const magnitudes = [cfOp, cfInv, cfFin, effectiveNetChange].map((v) => Math.abs(v));
       const maxMag = Math.max(...magnitudes);
       const minMag = Math.min(...magnitudes.filter((m) => m > 0));
       if (maxMag / minMag > 100) {
-        checks.push({ code: 'CF_RECONCILIATION', severity: 'pass', message: `CF reconciliation: scale mismatch detected (likely mixed units), structure OK` });
+        checks.push({
+          code: 'CF_RECONCILIATION',
+          severity: 'pass',
+          message: `CF reconciliation: scale mismatch detected (likely mixed units), structure OK`,
+        });
       } else {
         checks.push({
           code: 'CF_RECONCILIATION',
           severity: 'warning',
-          message: 'CF sections don\'t reconcile to net change',
+          message: "CF sections don't reconcile to net change",
           details: `Sum=${sumWithFx.toFixed(2)}, NetChange=${effectiveNetChange}, diff=${bestDiff.toFixed(2)}`,
         });
       }
@@ -7847,9 +8883,17 @@ export function runCfoAutoValidation(
   if (cfMissing.length > 0) {
     if (cfLineCount <= 4) {
       // Very sparse CF — likely an older/entity-level report with limited data
-      checks.push({ code: 'CF_COMPLETENESS', severity: 'pass', message: `CF sparse (${cfLineCount} lines) — limited section extraction, sub-items present` });
+      checks.push({
+        code: 'CF_COMPLETENESS',
+        severity: 'pass',
+        message: `CF sparse (${cfLineCount} lines) — limited section extraction, sub-items present`,
+      });
     } else {
-      checks.push({ code: 'CF_COMPLETENESS', severity: 'warning', message: `Missing CF sections: ${cfMissing.join(', ')}` });
+      checks.push({
+        code: 'CF_COMPLETENESS',
+        severity: 'warning',
+        message: `Missing CF sections: ${cfMissing.join(', ')}`,
+      });
     }
   } else {
     checks.push({ code: 'CF_COMPLETENESS', severity: 'pass', message: 'All CF sections present' });
@@ -7859,8 +8903,10 @@ export function runCfoAutoValidation(
 
   // Net Income in P&L should match CF starting point.
   // Many companies start CF with EBT (pre-tax profit) instead of net income — both are valid.
-  const cfNetIncomeStart = getValue('fsl-cf-operating-net-income', 'CF') ?? getValue('fsl-cf-operating-ebt', 'CF');
-  const plNet = netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
+  const cfNetIncomeStart =
+    getValue('fsl-cf-operating-net-income', 'CF') ?? getValue('fsl-cf-operating-ebt', 'CF');
+  const plNet =
+    netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
   const plEbt = ebt;
 
   if (plNet !== null && cfNetIncomeStart !== null) {
@@ -7869,16 +8915,28 @@ export function runCfoAutoValidation(
     const base = Math.max(Math.abs(plNet), 1);
 
     if (diffVsNet <= base * 0.05) {
-      checks.push({ code: 'CROSS_PL_CF_NET', severity: 'pass', message: `P&L Net Income matches CF start (${plNet} ≈ ${cfNetIncomeStart})` });
+      checks.push({
+        code: 'CROSS_PL_CF_NET',
+        severity: 'pass',
+        message: `P&L Net Income matches CF start (${plNet} ≈ ${cfNetIncomeStart})`,
+      });
     } else if (diffVsEbt <= Math.max(Math.abs(plEbt || 1), 1) * 0.05) {
       // CF starts with EBT — this is the indirect method starting from pre-tax profit
-      checks.push({ code: 'CROSS_PL_CF_NET', severity: 'pass', message: `CF uses pre-tax start: EBT(${plEbt}) ≈ CF start(${cfNetIncomeStart})` });
+      checks.push({
+        code: 'CROSS_PL_CF_NET',
+        severity: 'pass',
+        message: `CF uses pre-tax start: EBT(${plEbt}) ≈ CF start(${cfNetIncomeStart})`,
+      });
     } else {
       // Check for scale mismatch or misidentified CF starting line
       const ratio = Math.abs(cfNetIncomeStart) > 0 ? Math.abs(plNet / cfNetIncomeStart) : Infinity;
       if (ratio > 50 || ratio < 0.02) {
         // Likely a misidentified line or scale mismatch — not a real P&L vs CF discrepancy
-        checks.push({ code: 'CROSS_PL_CF_NET', severity: 'pass', message: `CF start line likely misidentified (scale mismatch), P&L flow verified independently` });
+        checks.push({
+          code: 'CROSS_PL_CF_NET',
+          severity: 'pass',
+          message: `CF start line likely misidentified (scale mismatch), P&L flow verified independently`,
+        });
       } else {
         checks.push({
           code: 'CROSS_PL_CF_NET',
@@ -7900,20 +8958,38 @@ export function runCfoAutoValidation(
         details: `Revenue=${revenue}, Assets=${effectiveAssets}`,
       });
     } else {
-      checks.push({ code: 'CROSS_ASSET_TURNOVER', severity: 'pass', message: `Asset turnover: ${assetTurnover.toFixed(2)}x` });
+      checks.push({
+        code: 'CROSS_ASSET_TURNOVER',
+        severity: 'pass',
+        message: `Asset turnover: ${assetTurnover.toFixed(2)}x`,
+      });
     }
   }
 
   // ── 5. PERIOD CONSISTENCY ──
 
   if (metadata.hasComparisonData) {
-    checks.push({ code: 'DUAL_PERIOD', severity: 'pass', message: 'Dual-period data confirmed by import pipeline' });
+    checks.push({
+      code: 'DUAL_PERIOD',
+      severity: 'pass',
+      message: 'Dual-period data confirmed by import pipeline',
+    });
   } else {
-    const withComparison = allLines.filter((l) => l.periodLabel && l.periodLabel !== metadata.period);
+    const withComparison = allLines.filter(
+      (l) => l.periodLabel && l.periodLabel !== metadata.period
+    );
     if (withComparison.length > 0) {
-      checks.push({ code: 'DUAL_PERIOD', severity: 'pass', message: `Dual-period data present (${withComparison.length} comparison values)` });
+      checks.push({
+        code: 'DUAL_PERIOD',
+        severity: 'pass',
+        message: `Dual-period data present (${withComparison.length} comparison values)`,
+      });
     } else {
-      checks.push({ code: 'DUAL_PERIOD', severity: 'warning', message: 'No comparison period data found' });
+      checks.push({
+        code: 'DUAL_PERIOD',
+        severity: 'warning',
+        message: 'No comparison period data found',
+      });
     }
   }
 
@@ -7932,7 +9008,11 @@ export function runCfoAutoValidation(
   score += repairs.length * 3;
 
   // Bonus for key data presence
-  if (hasLine('fsl-pl-revenue') && (hasLine('fsl-pl-net') || derivedLines.some((d) => d.canonicalLineId === 'fsl-pl-net'))) score += 10;
+  if (
+    hasLine('fsl-pl-revenue') &&
+    (hasLine('fsl-pl-net') || derivedLines.some((d) => d.canonicalLineId === 'fsl-pl-net'))
+  )
+    score += 10;
   if (effectiveAssets !== null && effectiveEquity !== null && effectiveLiab !== null) score += 10;
   if (cfOp !== null && cfInv !== null && cfFin !== null) score += 10;
 

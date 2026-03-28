@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { DateDependencyEngine, type DateDependencyConfig, type RecordDateData } from '../DateDependencyEngine.js';
+import { describe, expect, it } from 'vitest';
+
+import {
+  type DateDependencyConfig,
+  DateDependencyEngine,
+  type RecordDateData,
+} from '../DateDependencyEngine.js';
 
 const baseConfig: DateDependencyConfig = {
   tableId: 'tbl-1',
@@ -19,9 +24,17 @@ function makeRecord(
   duration: number | null = null,
   predecessorIds: string[] = [],
   depType: 'FS' | 'SS' | 'FF' | 'SF' = 'FS',
-  lag = 0,
+  lag = 0
 ): RecordDateData {
-  return { recordId: id, startDate: start, endDate: end, duration, predecessorIds, dependencyType: depType, lagDays: lag };
+  return {
+    recordId: id,
+    startDate: start,
+    endDate: end,
+    duration,
+    predecessorIds,
+    dependencyType: depType,
+    lagDays: lag,
+  };
 }
 
 describe('DateDependencyEngine', () => {

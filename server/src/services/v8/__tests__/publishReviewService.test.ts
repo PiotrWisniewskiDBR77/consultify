@@ -1,36 +1,36 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  CreatePublishRecordParams,
-  SubmitReviewGateParams,
-  CreateCoordinatedPublishParams,
-  RecallOutputParams,
   ApplyFinanceLockParams,
-  PublishRecord,
-  ReviewGate,
   CoordinatedPublish,
-  OutputRecall,
+  CreateCoordinatedPublishParams,
+  CreatePublishRecordParams,
   FinanceLockedState,
+  OutputRecall,
+  PublishRecord,
+  RecallOutputParams,
+  ReviewGate,
+  SubmitReviewGateParams,
 } from '../../../types/publishReviewSemantics.js';
 import {
-  PublishRecordSchema,
-  ReviewGateSchema,
-  CoordinatedPublishSchema,
-  OutputRecallSchema,
-  FinanceLockedStateSchema,
-  CreatePublishRecordParamsSchema,
-  SubmitReviewGateParamsSchema,
-  CreateCoordinatedPublishParamsSchema,
-  RecallOutputParamsSchema,
   ApplyFinanceLockParamsSchema,
-  TransitionPublishStateParamsSchema,
-  PublishLifecycleStateValues,
   ArtifactTypeValues,
-  ReviewTypeValues,
-  ReviewResultValues,
+  CoordinatedPublishSchema,
   CoordinationModeValues,
+  CreateCoordinatedPublishParamsSchema,
+  CreatePublishRecordParamsSchema,
+  FinanceLockedStateSchema,
   LockLevelValues,
+  OutputRecallSchema,
+  PublishLifecycleStateValues,
+  PublishRecordSchema,
+  RecallOutputParamsSchema,
+  ReviewGateSchema,
+  ReviewResultValues,
+  ReviewTypeValues,
+  SubmitReviewGateParamsSchema,
+  TransitionPublishStateParamsSchema,
   VALID_STATE_TRANSITIONS,
 } from '../../../types/publishReviewSemantics.js';
 
@@ -58,17 +58,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createPublishRecord,
-  transitionPublishState,
-  getPublishRecord,
-  submitReviewGate,
-  getReviewGates,
-  createCoordinatedPublish,
-  recallOutput,
-  getRecallHistory,
   applyFinanceLock,
-  removeFinanceLock,
+  createCoordinatedPublish,
+  createPublishRecord,
   getFinanceLocks,
+  getPublishRecord,
+  getRecallHistory,
+  getReviewGates,
+  recallOutput,
+  removeFinanceLock,
+  submitReviewGate,
+  transitionPublishState,
 } from '../publishReviewService.js';
 
 // ==========================================
@@ -84,7 +84,9 @@ const USER_ID_2 = '00000000-0000-4000-8000-000000000021';
 const RECORD_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 const LOCK_ID = '00000000-0000-4000-8000-dddddddddddd';
 
-function makePublishParams(overrides?: Partial<CreatePublishRecordParams>): CreatePublishRecordParams {
+function makePublishParams(
+  overrides?: Partial<CreatePublishRecordParams>
+): CreatePublishRecordParams {
   return {
     artifactId: ARTIFACT_ID,
     artifactType: 'report',
@@ -107,7 +109,9 @@ function makeReviewGateParams(overrides?: Partial<SubmitReviewGateParams>): Subm
   };
 }
 
-function makeCoordParams(overrides?: Partial<CreateCoordinatedPublishParams>): CreateCoordinatedPublishParams {
+function makeCoordParams(
+  overrides?: Partial<CreateCoordinatedPublishParams>
+): CreateCoordinatedPublishParams {
   return {
     primaryArtifactId: ARTIFACT_ID,
     pairedArtifactId: ARTIFACT_ID_2,
@@ -260,14 +264,12 @@ describe('createPublishRecord', () => {
 
   it('rejects invalid artifactType via Zod', async () => {
     await expect(
-      createPublishRecord(makePublishParams({ artifactType: 'invalid' as any })),
+      createPublishRecord(makePublishParams({ artifactType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createPublishRecord({ organizationId: ORG_A } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createPublishRecord({ organizationId: ORG_A } as any)).rejects.toThrow(ZodError);
   });
 });
 
@@ -419,7 +421,7 @@ describe('transitionPublishState', () => {
         organizationId: ORG_A,
         newState: 'published',
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow('Invalid state transition');
   });
 
@@ -432,7 +434,7 @@ describe('transitionPublishState', () => {
         organizationId: ORG_A,
         newState: 'private_draft',
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow('Invalid state transition');
   });
 
@@ -445,7 +447,7 @@ describe('transitionPublishState', () => {
         organizationId: ORG_A,
         newState: 'published',
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow('Invalid state transition');
   });
 
@@ -458,7 +460,7 @@ describe('transitionPublishState', () => {
         organizationId: ORG_A,
         newState: 'reviewable_share',
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow('not found');
   });
 
@@ -469,7 +471,7 @@ describe('transitionPublishState', () => {
         organizationId: ORG_A,
         newState: 'invalid_state' as any,
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -529,7 +531,9 @@ describe('submitReviewGate', () => {
   });
 
   it('creates a compliance_review gate', async () => {
-    const result = await submitReviewGate(makeReviewGateParams({ reviewType: 'compliance_review' }));
+    const result = await submitReviewGate(
+      makeReviewGateParams({ reviewType: 'compliance_review' })
+    );
     expect(result.reviewType).toBe('compliance_review');
   });
 
@@ -560,13 +564,13 @@ describe('submitReviewGate', () => {
 
   it('rejects invalid reviewType via Zod', async () => {
     await expect(
-      submitReviewGate(makeReviewGateParams({ reviewType: 'invalid' as any })),
+      submitReviewGate(makeReviewGateParams({ reviewType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid result via Zod', async () => {
     await expect(
-      submitReviewGate(makeReviewGateParams({ result: 'invalid' as any })),
+      submitReviewGate(makeReviewGateParams({ result: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -579,7 +583,11 @@ describe('getReviewGates', () => {
   it('returns review gates ordered by created_at', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeReviewGateRow({ created_at: '2026-03-23T10:00:00.000Z' }),
-      makeReviewGateRow({ gate_id: 'gate-2', created_at: '2026-03-23T11:00:00.000Z', review_type: 'manager_approval' }),
+      makeReviewGateRow({
+        gate_id: 'gate-2',
+        created_at: '2026-03-23T11:00:00.000Z',
+        review_type: 'manager_approval',
+      }),
     ]);
 
     const results = await getReviewGates(ARTIFACT_ID, ORG_A);
@@ -610,7 +618,9 @@ describe('getReviewGates', () => {
 
 describe('createCoordinatedPublish', () => {
   it('creates a coordinated publish in coordinated mode', async () => {
-    const result = await createCoordinatedPublish(makeCoordParams({ coordinationMode: 'coordinated' }));
+    const result = await createCoordinatedPublish(
+      makeCoordParams({ coordinationMode: 'coordinated' })
+    );
 
     expect(result.coordinationId).toBeDefined();
     expect(result.primaryArtifactId).toBe(ARTIFACT_ID);
@@ -625,20 +635,22 @@ describe('createCoordinatedPublish', () => {
   });
 
   it('creates a coordinated publish in independent mode', async () => {
-    const result = await createCoordinatedPublish(makeCoordParams({ coordinationMode: 'independent' }));
+    const result = await createCoordinatedPublish(
+      makeCoordParams({ coordinationMode: 'independent' })
+    );
     expect(result.coordinationMode).toBe('independent');
   });
 
   it('rejects invalid coordinationMode via Zod', async () => {
     await expect(
-      createCoordinatedPublish(makeCoordParams({ coordinationMode: 'invalid' as any })),
+      createCoordinatedPublish(makeCoordParams({ coordinationMode: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createCoordinatedPublish({ organizationId: ORG_A } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createCoordinatedPublish({ organizationId: ORG_A } as any)).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -674,21 +686,19 @@ describe('recallOutput', () => {
   });
 
   it('is auditable — records recalledBy and reason', async () => {
-    const result = await recallOutput(makeRecallParams({ recalledBy: USER_ID_2, reason: 'Compliance issue' }));
+    const result = await recallOutput(
+      makeRecallParams({ recalledBy: USER_ID_2, reason: 'Compliance issue' })
+    );
     expect(result.recalledBy).toBe(USER_ID_2);
     expect(result.reason).toBe('Compliance issue');
   });
 
   it('rejects empty reason via Zod', async () => {
-    await expect(
-      recallOutput(makeRecallParams({ reason: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recallOutput(makeRecallParams({ reason: '' }))).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      recallOutput({ artifactId: ARTIFACT_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(recallOutput({ artifactId: ARTIFACT_ID } as any)).rejects.toThrow(ZodError);
   });
 });
 
@@ -700,7 +710,11 @@ describe('getRecallHistory', () => {
   it('returns recall records ordered by recalled_at', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeRecallRow({ recalled_at: '2026-03-23T10:00:00.000Z' }),
-      makeRecallRow({ recall_id: 'recall-2', recalled_at: '2026-03-23T11:00:00.000Z', reason: 'Second recall' }),
+      makeRecallRow({
+        recall_id: 'recall-2',
+        recalled_at: '2026-03-23T11:00:00.000Z',
+        reason: 'Second recall',
+      }),
     ]);
 
     const results = await getRecallHistory(ARTIFACT_ID, ORG_A);
@@ -752,15 +766,13 @@ describe('applyFinanceLock', () => {
   });
 
   it('rejects invalid lockLevel via Zod', async () => {
-    await expect(
-      applyFinanceLock(makeLockParams({ lockLevel: 'invalid' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(applyFinanceLock(makeLockParams({ lockLevel: 'invalid' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty lockReason via Zod', async () => {
-    await expect(
-      applyFinanceLock(makeLockParams({ lockReason: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(applyFinanceLock(makeLockParams({ lockReason: '' }))).rejects.toThrow(ZodError);
   });
 });
 
@@ -786,17 +798,13 @@ describe('removeFinanceLock', () => {
   it('throws when lock not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      removeFinanceLock('nonexistent', ORG_A, USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(removeFinanceLock('nonexistent', ORG_A, USER_ID)).rejects.toThrow('not found');
   });
 
   it('throws when lock is already unlocked', async () => {
     mockDbGet.mockResolvedValueOnce(makeLockRow({ unlocked_at: '2026-03-23T12:00:00.000Z' }));
 
-    await expect(
-      removeFinanceLock(LOCK_ID, ORG_A, USER_ID),
-    ).rejects.toThrow('already unlocked');
+    await expect(removeFinanceLock(LOCK_ID, ORG_A, USER_ID)).rejects.toThrow('already unlocked');
   });
 });
 
@@ -808,7 +816,11 @@ describe('getFinanceLocks', () => {
   it('returns finance locks ordered by locked_at', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeLockRow({ locked_at: '2026-03-23T10:00:00.000Z' }),
-      makeLockRow({ lock_id: 'lock-2', locked_at: '2026-03-23T11:00:00.000Z', lock_level: 'finance_strict' }),
+      makeLockRow({
+        lock_id: 'lock-2',
+        locked_at: '2026-03-23T11:00:00.000Z',
+        lock_level: 'finance_strict',
+      }),
     ]);
 
     const results = await getFinanceLocks(ARTIFACT_ID, ORG_A);
@@ -883,7 +895,7 @@ describe('organization isolation', () => {
         organizationId: ORG_B,
         newState: 'reviewable_share',
         actor: USER_ID,
-      }),
+      })
     ).rejects.toThrow('not found');
 
     const params = mockDbGet.mock.calls[0][1] as string[];
@@ -893,9 +905,7 @@ describe('organization isolation', () => {
   it('removeFinanceLock scopes to correct org', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      removeFinanceLock(LOCK_ID, ORG_B, USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(removeFinanceLock(LOCK_ID, ORG_B, USER_ID)).rejects.toThrow('not found');
 
     const params = mockDbGet.mock.calls[0][1] as string[];
     expect(params[1]).toBe(ORG_B);
@@ -1039,7 +1049,7 @@ describe('Zod schema validation', () => {
         approvedAt: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -1054,7 +1064,7 @@ describe('Zod schema validation', () => {
         recalledAt: '2026-03-23T10:00:00.000Z',
         postRecallState: 'archived',
         lineagePreserved: true,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -1069,7 +1079,7 @@ describe('Zod schema validation', () => {
         recalledAt: '2026-03-23T10:00:00.000Z',
         postRecallState: 'recalled',
         lineagePreserved: false,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -1115,7 +1125,7 @@ describe('Zod schema validation', () => {
         organizationId: ORG_A,
         newState: 'reviewable_share',
         actor: USER_ID,
-      }),
+      })
     ).not.toThrow();
   });
 

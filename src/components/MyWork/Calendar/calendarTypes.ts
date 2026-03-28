@@ -1,4 +1,10 @@
-export type CalendarEventSource = 'task' | 'initiative' | 'decision' | 'google' | 'outlook' | 'consultify';
+export type CalendarEventSource =
+  | 'task'
+  | 'initiative'
+  | 'decision'
+  | 'google'
+  | 'outlook'
+  | 'consultify';
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';
 

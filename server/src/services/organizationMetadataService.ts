@@ -5,8 +5,8 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import organizationContextService from './organizationContext/OrganizationContextService.js';
 import _logger from '../utils/Logger.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 class OrganizationMetadataServiceClass {
   private db: IDatabase;

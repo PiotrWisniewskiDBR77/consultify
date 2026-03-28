@@ -8,8 +8,8 @@
  */
 
 import logger from '../../utils/Logger.js';
-import { MutationExecutor } from './mutationExecutor.js';
 import type { MutationResult } from './mutationExecutor.js';
+import { MutationExecutor } from './mutationExecutor.js';
 import type { SchemaOperation } from './proposalGenerator.js';
 
 // ---------------------------------------------------------------------------
@@ -87,7 +87,7 @@ export class UndoRedoStack {
       const outcome = await executor.executeOperations(
         entry.originalOperations,
         entry.baseId,
-        entry.userId,
+        entry.userId
       );
 
       const redoneEntry: UndoEntry = {

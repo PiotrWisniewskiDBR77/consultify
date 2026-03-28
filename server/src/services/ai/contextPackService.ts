@@ -77,7 +77,7 @@ export async function buildContextForIntent(
   orgId: string,
   intent: string,
   requiredContext: string[],
-  artifactIds?: string[],
+  artifactIds?: string[]
 ): Promise<VersionedContextPack> {
   const startMs = Date.now();
   const artifacts: ContextArtifact[] = [];
@@ -104,7 +104,7 @@ export async function buildContextForIntent(
 
   if (artifactIds && artifactIds.length > 0) {
     for (const id of artifactIds) {
-      const alreadyIncluded = artifacts.some(a => a.artifactId === id);
+      const alreadyIncluded = artifacts.some((a) => a.artifactId === id);
       if (!alreadyIncluded) {
         artifacts.push({
           artifactType: 'referenced',
@@ -134,7 +134,7 @@ export async function buildContextForIntent(
 
   aiLogger.info(
     'ContextPackService',
-    `Built context pack: ${artifacts.length} artifacts, ~${pack.metadata.tokenEstimate} tokens, ${Date.now() - startMs}ms`,
+    `Built context pack: ${artifacts.length} artifacts, ~${pack.metadata.tokenEstimate} tokens, ${Date.now() - startMs}ms`
   );
 
   return pack;
@@ -142,7 +142,7 @@ export async function buildContextForIntent(
 
 export async function saveContextSnapshot(
   pack: VersionedContextPack,
-  conversationId?: string,
+  conversationId?: string
 ): Promise<string> {
   await dbRun(
     `INSERT INTO ai_context_snapshots
@@ -158,7 +158,7 @@ export async function saveContextSnapshot(
       pack.metadata.tokenEstimate,
       pack.metadata.createdAt,
       pack.metadata.expiresAt,
-    ],
+    ]
   );
 
   aiLogger.info('ContextPackService', `Saved snapshot ${pack.id}`);
@@ -179,7 +179,7 @@ export async function getContextSnapshot(snapshotId: string): Promise<VersionedC
     `SELECT id, organization_id, version, intent, artifacts_json, token_estimate, created_at, expires_at
      FROM ai_context_snapshots WHERE id = ?`,
     [snapshotId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;

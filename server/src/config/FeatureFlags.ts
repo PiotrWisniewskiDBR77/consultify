@@ -54,7 +54,8 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // Table Platform: metadata-first backend
     // Opt-in only. Default must stay off until parity with legacy table graph is complete.
-    ENABLE_TABLE_PLATFORM_METADATA_FIRST: process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST === 'true',
+    ENABLE_TABLE_PLATFORM_METADATA_FIRST:
+      process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST === 'true',
 
     // Table Platform: Records API
     ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API === 'true',

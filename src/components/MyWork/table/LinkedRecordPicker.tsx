@@ -10,22 +10,8 @@
  * - Multi-select support
  * - Full keyboard navigation (arrows, enter, escape)
  */
-import {
-  ChevronRight,
-  ExternalLink,
-  Link2,
-  Loader2,
-  Plus,
-  Search,
-  X,
-} from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { ChevronRight, ExternalLink, Link2, Loader2, Plus, Search, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -102,10 +88,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
     const listRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const linkedIds = useMemo(
-      () => new Set(currentLinks.map((l) => l.id)),
-      [currentLinks],
-    );
+    const linkedIds = useMemo(() => new Set(currentLinks.map((l) => l.id)), [currentLinks]);
 
     // Load table fields metadata once
     useEffect(() => {
@@ -145,7 +128,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
             const res = await TablePlatformApi.searchRecords(
               linkedTableId,
               debouncedSearch.trim(),
-              { pageSize: 50 },
+              { pageSize: 50 }
             );
             records = ((res as Record<string, unknown>)?.records ?? []) as Array<
               Record<string, unknown>
@@ -210,9 +193,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
       return candidates.filter(
         (c) =>
           c.displayValue.toLowerCase().includes(q) ||
-          Object.values(c.secondaryFields ?? {}).some((v) =>
-            v.toLowerCase().includes(q),
-          ),
+          Object.values(c.secondaryFields ?? {}).some((v) => v.toLowerCase().includes(q))
       );
     }, [candidates, search]);
 
@@ -230,11 +211,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           e.preventDefault();
           if (highlightIdx >= 0 && highlightIdx < filteredCandidates.length) {
             handleToggle(filteredCandidates[highlightIdx].id);
-          } else if (
-            highlightIdx === filteredCandidates.length &&
-            onCreateNew &&
-            !locked
-          ) {
+          } else if (highlightIdx === filteredCandidates.length && onCreateNew && !locked) {
             onCreateNew();
           }
         } else if (e.key === 'Escape') {
@@ -242,7 +219,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           onClose();
         }
       },
-      [highlightIdx, filteredCandidates, totalItems, onCreateNew, locked, onClose],
+      [highlightIdx, filteredCandidates, totalItems, onCreateNew, locked, onClose]
     );
 
     // Scroll highlighted item into view
@@ -262,7 +239,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           return next;
         });
       },
-      [locked],
+      [locked]
     );
 
     const handleConfirm = useCallback(() => {
@@ -282,7 +259,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           return next;
         });
       },
-      [locked],
+      [locked]
     );
 
     // Expand chip popover
@@ -296,22 +273,19 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
         setExpandedChipId(recId);
         try {
           const rec = await TablePlatformApi.getRecord(recId);
-          setExpandData((rec as Record<string, unknown>)?.data as Record<string, unknown> ?? rec);
+          setExpandData(((rec as Record<string, unknown>)?.data as Record<string, unknown>) ?? rec);
         } catch {
           setExpandData(null);
         }
       },
-      [expandedChipId],
+      [expandedChipId]
     );
 
     // Close on click outside
     useEffect(() => {
       if (!open) return;
       const handler = (e: MouseEvent) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(e.target as Node)
-        ) {
+        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
           onClose();
         }
       };
@@ -366,9 +340,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                         className="flex items-center gap-1 truncate"
                         title={isPl ? 'Kliknij aby rozwinąć' : 'Click to expand'}
                       >
-                        <span className="max-w-[120px] truncate">
-                          {link.displayValue}
-                        </span>
+                        <span className="max-w-[120px] truncate">{link.displayValue}</span>
                         <ChevronRight className="h-3 w-3 opacity-40" />
                       </button>
                       {!locked && (
@@ -437,9 +409,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 placeholder={isPl ? 'Szukaj rekordów...' : 'Search records...'}
                 className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-zinc-200"
               />
-              {loading && (
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-              )}
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
             </div>
           </div>
 
@@ -457,9 +427,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
               filteredCandidates.map((c, idx) => {
                 const isSelected = selected.has(c.id);
                 const isHighlighted = idx === highlightIdx;
-                const secondaryEntries = Object.entries(
-                  c.secondaryFields ?? {},
-                ).slice(0, 2);
+                const secondaryEntries = Object.entries(c.secondaryFields ?? {}).slice(0, 2);
 
                 return (
                   <button
@@ -536,8 +504,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           {!locked && (
             <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-zinc-700">
               <span className="text-[10px] text-slate-400">
-                {selected.size}{' '}
-                {isPl ? 'zaznaczonych' : 'selected'}
+                {selected.size} {isPl ? 'zaznaczonych' : 'selected'}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -558,7 +525,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
         </div>
       </div>
     );
-  },
+  }
 );
 
 LinkedRecordPicker.displayName = 'LinkedRecordPicker';

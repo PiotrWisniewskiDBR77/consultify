@@ -11,8 +11,8 @@
  * Used by: SuperAdmin White-label Studio, Organization Settings
  */
 
-import { Response, Router } from 'express';
 import { resolveCname } from 'dns/promises';
+import { Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
@@ -531,7 +531,11 @@ router.post(
         .toLowerCase()
         .replace(/\.$/, '');
 
-      const normalizeTarget = (value: string) => String(value || '').trim().toLowerCase().replace(/\.$/, '');
+      const normalizeTarget = (value: string) =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/\.$/, '');
 
       let cnames: string[] = [];
       try {

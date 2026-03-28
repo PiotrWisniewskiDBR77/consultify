@@ -1,4 +1,4 @@
-import { Check, Copy, MessageCircle, MoreVertical, Send, Sparkles, Zap, X } from 'lucide-react';
+import { Check, Copy, MessageCircle, MoreVertical, Send, Sparkles, X, Zap } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -206,7 +206,12 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
           <input
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleChatSubmit(); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleChatSubmit();
+              }
+            }}
             placeholder={isPolish ? 'Zapytaj o to...' : 'Ask about this...'}
             disabled={chatLoading}
             className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400/40"

@@ -27,19 +27,14 @@ interface DetectParams {
 
 const PLACEHOLDER_RE = /^\[.*\]$|^\.{3}$|^$/;
 
-function isBranchNode(
-  nodeId: string,
-  edges: Array<{ source: string; target: string }>,
-): boolean {
+function isBranchNode(nodeId: string, edges: Array<{ source: string; target: string }>): boolean {
   return edges.some((e) => e.source === nodeId);
 }
 
 export function detectMindmapIntent(params: DetectParams): SidekickContext {
   const { nodes, edges, selectedNodeIds, isEditing, hasTemplate } = params;
 
-  const ideaNodes = nodes.filter(
-    (n) => n.type !== 'branchLabel' && n.type !== 'stickyNote',
-  );
+  const ideaNodes = nodes.filter((n) => n.type !== 'branchLabel' && n.type !== 'stickyNote');
   const nodeCount = ideaNodes.length;
 
   // 1. blank_canvas
@@ -83,7 +78,7 @@ export function detectMindmapIntent(params: DetectParams): SidekickContext {
   // 4. filling_template
   if (hasTemplate) {
     const emptyCount = ideaNodes.filter(
-      (n) => !n.data?.label || PLACEHOLDER_RE.test(String(n.data.label).trim()),
+      (n) => !n.data?.label || PLACEHOLDER_RE.test(String(n.data.label).trim())
     ).length;
     if (emptyCount >= 3 || emptyCount > nodeCount * 0.3) {
       return {

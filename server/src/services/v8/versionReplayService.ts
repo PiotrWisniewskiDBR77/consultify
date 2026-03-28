@@ -21,11 +21,7 @@ import type {
   VersionCompareResult,
   VersionSnapshot,
 } from '../../types/versionReplay.js';
-import type {
-  AuditAction,
-  RestoreStatus,
-  SnapshotTrigger,
-} from '../../types/versionReplay.js';
+import type { AuditAction, RestoreStatus, SnapshotTrigger } from '../../types/versionReplay.js';
 
 export interface AIStalenessResult {
   isStale: boolean;
@@ -189,14 +185,14 @@ function rowToAuditEntry(row: AuditRow): AuditEntry {
 async function getNextStateVersion(
   organizationId: string,
   resourceType: string,
-  resourceId: string,
+  resourceId: string
 ): Promise<number> {
   const row = await dbGet<MaxVersionRow>(
     `SELECT MAX(state_version) as max_version
      FROM v8_version_snapshots
      WHERE organization_id = ? AND resource_type = ? AND resource_id = ?`,
     [organizationId, resourceType, resourceId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (row?.max_version ?? -1) + 1;
@@ -211,7 +207,7 @@ async function getNextStateVersion(
  * Automatically assigns the next monotonic stateVersion.
  */
 export async function captureVersionSnapshot(
-  params: CaptureSnapshotParams,
+  params: CaptureSnapshotParams
 ): Promise<VersionSnapshot> {
   const validated = CaptureSnapshotParamsSchema.parse(params);
 
@@ -220,7 +216,7 @@ export async function captureVersionSnapshot(
   const stateVersion = await getNextStateVersion(
     validated.organizationId,
     validated.resourceType,
-    validated.resourceId,
+    validated.resourceId
   );
 
   const snapshot: VersionSnapshot = {
@@ -258,12 +254,12 @@ export async function captureVersionSnapshot(
       snapshot.capturedBy.actorDisplayName,
       snapshot.capturedAt,
       JSON.stringify(snapshot.metadata),
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Captured snapshot ${snapshotId} v${stateVersion} ` +
-    `for ${snapshot.resourceType}:${snapshot.resourceId} (trigger: ${snapshot.triggerType})`,
+      `for ${snapshot.resourceType}:${snapshot.resourceId} (trigger: ${snapshot.triggerType})`
   );
   return snapshot;
 }
@@ -274,7 +270,7 @@ export async function captureVersionSnapshot(
 export async function getVersionHistory(
   roomId: string,
   organizationId: string,
-  options?: GetVersionHistoryOptions,
+  options?: GetVersionHistoryOptions
 ): Promise<VersionSnapshot[]> {
   const { limit = 50, offset = 0, triggerType } = options ?? {};
 
@@ -304,13 +300,13 @@ export async function getVersionHistory(
  */
 export async function getVersionSnapshot(
   snapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<VersionSnapshot | null> {
   const row = await dbGet<SnapshotRow>(
     `SELECT * FROM v8_version_snapshots
      WHERE snapshot_id = ? AND organization_id = ?`,
     [snapshotId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -328,11 +324,13 @@ export async function getVersionSnapshot(
 export async function compareVersions(
   fromSnapshotId: string,
   toSnapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<VersionCompareResult> {
   const fromSnapshot = await getVersionSnapshot(fromSnapshotId, organizationId);
   if (!fromSnapshot) {
-    throw new Error(`Source snapshot ${fromSnapshotId} not found in organization ${organizationId}`);
+    throw new Error(
+      `Source snapshot ${fromSnapshotId} not found in organization ${organizationId}`
+    );
   }
 
   const toSnapshot = await getVersionSnapshot(toSnapshotId, organizationId);
@@ -340,12 +338,14 @@ export async function compareVersions(
     throw new Error(`Target snapshot ${toSnapshotId} not found in organization ${organizationId}`);
   }
 
-  if (fromSnapshot.resourceType !== toSnapshot.resourceType ||
-      fromSnapshot.resourceId !== toSnapshot.resourceId) {
+  if (
+    fromSnapshot.resourceType !== toSnapshot.resourceType ||
+    fromSnapshot.resourceId !== toSnapshot.resourceId
+  ) {
     throw new Error(
       'Cannot compare snapshots from different resources: ' +
-      `${fromSnapshot.resourceType}:${fromSnapshot.resourceId} vs ` +
-      `${toSnapshot.resourceType}:${toSnapshot.resourceId}`,
+        `${fromSnapshot.resourceType}:${fromSnapshot.resourceId} vs ` +
+        `${toSnapshot.resourceType}:${toSnapshot.resourceId}`
     );
   }
 
@@ -353,7 +353,7 @@ export async function compareVersions(
 
   logger.info(
     `${LOG_PREFIX} Compared v${fromSnapshot.stateVersion} → v${toSnapshot.stateVersion}: ` +
-    `${changes.length} change(s)`,
+      `${changes.length} change(s)`
   );
 
   return {
@@ -372,7 +372,7 @@ export async function compareVersions(
  */
 function computeStructuralDiff(
   fromData: Record<string, unknown>,
-  toData: Record<string, unknown>,
+  toData: Record<string, unknown>
 ): VersionCompareChange[] {
   const changes: VersionCompareChange[] = [];
   const allKeys = new Set([...Object.keys(fromData), ...Object.keys(toData)]);
@@ -386,7 +386,12 @@ function computeStructuralDiff(
     } else if (!inFrom && inTo) {
       changes.push({ path: key, changeType: 'added', before: undefined, after: toData[key] });
     } else if (JSON.stringify(fromData[key]) !== JSON.stringify(toData[key])) {
-      changes.push({ path: key, changeType: 'modified', before: fromData[key], after: toData[key] });
+      changes.push({
+        path: key,
+        changeType: 'modified',
+        before: fromData[key],
+        after: toData[key],
+      });
     }
   }
 
@@ -401,19 +406,17 @@ function computeStructuralDiff(
  * Create a restore request. Automatically captures a pre-restore safety snapshot
  * of the current state before the restore can be applied.
  */
-export async function requestRestore(
-  params: RequestRestoreParams,
-): Promise<RestoreRequest> {
+export async function requestRestore(params: RequestRestoreParams): Promise<RestoreRequest> {
   const validated = RequestRestoreParamsSchema.parse(params);
 
   const targetSnapshot = await getVersionSnapshot(
     validated.targetVersionSnapshotId,
-    validated.organizationId,
+    validated.organizationId
   );
   if (!targetSnapshot) {
     throw new Error(
       `Target snapshot ${validated.targetVersionSnapshotId} not found ` +
-      `in organization ${validated.organizationId}`,
+        `in organization ${validated.organizationId}`
     );
   }
 
@@ -466,7 +469,7 @@ export async function requestRestore(
       request.safetySnapshotId,
       request.requestedAt,
       request.resolvedAt,
-    ],
+    ]
   );
 
   await recordAuditEntry({
@@ -486,7 +489,7 @@ export async function requestRestore(
 
   logger.info(
     `${LOG_PREFIX} Restore requested: ${restoreId} targeting snapshot ` +
-    `${validated.targetVersionSnapshotId} (safety: ${safetySnapshot.snapshotId})`,
+      `${validated.targetVersionSnapshotId} (safety: ${safetySnapshot.snapshotId})`
   );
   return request;
 }
@@ -497,13 +500,13 @@ export async function requestRestore(
  */
 export async function applyRestore(
   restoreId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RestoreRequest> {
   const row = await dbGet<RestoreRow>(
     `SELECT * FROM v8_restore_requests
      WHERE restore_id = ? AND organization_id = ?`,
     [restoreId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -516,10 +519,7 @@ export async function applyRestore(
     throw new Error(`Restore request ${restoreId} is already ${request.status}, cannot apply`);
   }
 
-  const targetSnapshot = await getVersionSnapshot(
-    request.targetVersionSnapshotId,
-    organizationId,
-  );
+  const targetSnapshot = await getVersionSnapshot(request.targetVersionSnapshotId, organizationId);
   if (!targetSnapshot) {
     throw new Error(`Target snapshot ${request.targetVersionSnapshotId} no longer exists`);
   }
@@ -544,7 +544,7 @@ export async function applyRestore(
     `UPDATE v8_restore_requests
      SET status = 'applied', resolved_at = ?
      WHERE restore_id = ? AND organization_id = ?`,
-    [now, restoreId, organizationId],
+    [now, restoreId, organizationId]
   );
 
   await recordAuditEntry({
@@ -555,7 +555,7 @@ export async function applyRestore(
     actorAttribution: request.requestedBy,
     action: 'restore.applied',
     stateVersionBefore: request.safetySnapshotId
-      ? (await getVersionSnapshot(request.safetySnapshotId, organizationId))?.stateVersion ?? null
+      ? ((await getVersionSnapshot(request.safetySnapshotId, organizationId))?.stateVersion ?? null)
       : null,
     stateVersionAfter: restoredSnapshot.stateVersion,
     metadata: {
@@ -566,7 +566,7 @@ export async function applyRestore(
   });
 
   logger.info(
-    `${LOG_PREFIX} Restore applied: ${restoreId} → new v${restoredSnapshot.stateVersion}`,
+    `${LOG_PREFIX} Restore applied: ${restoreId} → new v${restoredSnapshot.stateVersion}`
   );
 
   return {
@@ -583,9 +583,7 @@ export async function applyRestore(
 /**
  * Record an actor-attributed audit entry.
  */
-export async function recordAuditEntry(
-  params: RecordAuditEntryParams,
-): Promise<AuditEntry> {
+export async function recordAuditEntry(params: RecordAuditEntryParams): Promise<AuditEntry> {
   const validated = RecordAuditEntryParamsSchema.parse(params);
 
   const entryId = uuidv4();
@@ -626,12 +624,12 @@ export async function recordAuditEntry(
       entry.stateVersionAfter,
       JSON.stringify(entry.metadata),
       entry.timestamp,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Audit: ${entry.action} by ${entry.actorAttribution.actorId} ` +
-    `on ${entry.resourceType}:${entry.resourceId}`,
+      `on ${entry.resourceType}:${entry.resourceId}`
   );
   return entry;
 }
@@ -642,7 +640,7 @@ export async function recordAuditEntry(
 export async function getAuditTrail(
   roomId: string,
   organizationId: string,
-  options?: GetAuditTrailOptions,
+  options?: GetAuditTrailOptions
 ): Promise<AuditEntry[]> {
   const { limit = 50, offset = 0, action, actorId } = options ?? {};
 
@@ -679,7 +677,7 @@ export async function getAuditTrail(
 export async function getSnapshotsByResource(
   resourceId: string,
   organizationId: string,
-  limit: number = 50,
+  limit: number = 50
 ): Promise<VersionSnapshot[]> {
   const rows = await dbAll<SnapshotRow>(
     `SELECT * FROM v8_version_snapshots
@@ -687,7 +685,7 @@ export async function getSnapshotsByResource(
      ORDER BY state_version DESC
      LIMIT ?`,
     [resourceId, organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSnapshot);
@@ -698,7 +696,7 @@ export async function getSnapshotsByResource(
  */
 export async function getLatestSnapshot(
   resourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<VersionSnapshot | null> {
   const row = await dbGet<SnapshotRow>(
     `SELECT * FROM v8_version_snapshots
@@ -706,7 +704,7 @@ export async function getLatestSnapshot(
      ORDER BY state_version DESC
      LIMIT 1`,
     [resourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -719,7 +717,7 @@ export async function getLatestSnapshot(
 export async function rollbackToSnapshot(
   snapshotId: string,
   organizationId: string,
-  requestedBy: ActorAttribution,
+  requestedBy: ActorAttribution
 ): Promise<RestoreRequest> {
   const targetSnapshot = await getVersionSnapshot(snapshotId, organizationId);
   if (!targetSnapshot) {
@@ -754,7 +752,7 @@ export async function rollbackToSnapshot(
   });
 
   logger.info(
-    `${LOG_PREFIX} Rollback to snapshot ${snapshotId} completed (restore: ${applied.restoreId})`,
+    `${LOG_PREFIX} Rollback to snapshot ${snapshotId} completed (restore: ${applied.restoreId})`
   );
 
   return applied;
@@ -768,7 +766,7 @@ const DEFAULT_AI_STALENESS_MS = 60 * 60 * 1000; // 1 hour
 export async function detectAIStaleness(
   resourceId: string,
   organizationId: string,
-  maxAgeMs: number = DEFAULT_AI_STALENESS_MS,
+  maxAgeMs: number = DEFAULT_AI_STALENESS_MS
 ): Promise<AIStalenessResult> {
   const row = await dbGet<SnapshotRow>(
     `SELECT * FROM v8_version_snapshots
@@ -776,7 +774,7 @@ export async function detectAIStaleness(
      ORDER BY captured_at DESC
      LIMIT 1`,
     [resourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -800,7 +798,7 @@ export async function getAuditSummary(
   resourceId: string,
   organizationId: string,
   fromDate: string,
-  toDate: string,
+  toDate: string
 ): Promise<Map<AuditAction, number>> {
   const rows = await dbAll<{ action: string; count: number }>(
     `SELECT action, COUNT(*) as count FROM v8_audit_entries
@@ -808,7 +806,7 @@ export async function getAuditSummary(
        AND timestamp >= ? AND timestamp <= ?
      GROUP BY action`,
     [resourceId, organizationId, fromDate, toDate],
-    { fallback: true },
+    { fallback: true }
   );
 
   const summary = new Map<AuditAction, number>();
@@ -821,15 +819,13 @@ export async function getAuditSummary(
 /**
  * Get all restore requests with status 'pending' for an org.
  */
-export async function getPendingRestores(
-  organizationId: string,
-): Promise<RestoreRequest[]> {
+export async function getPendingRestores(organizationId: string): Promise<RestoreRequest[]> {
   const rows = await dbAll<RestoreRow>(
     `SELECT * FROM v8_restore_requests
      WHERE organization_id = ? AND status = 'pending'
      ORDER BY requested_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRestore);
@@ -842,13 +838,13 @@ export async function rejectRestore(
   restoreId: string,
   organizationId: string,
   rejectedBy: ActorAttribution,
-  reason: string,
+  reason: string
 ): Promise<RestoreRequest> {
   const row = await dbGet<RestoreRow>(
     `SELECT * FROM v8_restore_requests
      WHERE restore_id = ? AND organization_id = ?`,
     [restoreId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -867,7 +863,7 @@ export async function rejectRestore(
     `UPDATE v8_restore_requests
      SET status = 'rejected', resolved_at = ?
      WHERE restore_id = ? AND organization_id = ?`,
-    [now, restoreId, organizationId],
+    [now, restoreId, organizationId]
   );
 
   await recordAuditEntry({
@@ -894,26 +890,26 @@ export async function rejectRestore(
  */
 export async function getResourceHistory(
   resourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ResourceTimelineEntry[]> {
   const [snapshots, audits, restores] = await Promise.all([
     dbAll<SnapshotRow>(
       `SELECT * FROM v8_version_snapshots
        WHERE resource_id = ? AND organization_id = ?`,
       [resourceId, organizationId],
-      { fallback: true },
+      { fallback: true }
     ),
     dbAll<AuditRow>(
       `SELECT * FROM v8_audit_entries
        WHERE resource_id = ? AND organization_id = ?`,
       [resourceId, organizationId],
-      { fallback: true },
+      { fallback: true }
     ),
     dbAll<RestoreRow>(
       `SELECT * FROM v8_restore_requests
        WHERE resource_id = ? AND organization_id = ?`,
       [resourceId, organizationId],
-      { fallback: true },
+      { fallback: true }
     ),
   ]);
 

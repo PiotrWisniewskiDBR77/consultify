@@ -24,6 +24,11 @@ import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import {
+  getFinanceTraceId,
+  logFinanceError,
+  logFinanceEvent,
+} from '../services/financeDiagnosticsService.js';
+import {
   addEvent,
   approveModel,
   computeModel,
@@ -38,11 +43,6 @@ import {
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
-import {
-  getFinanceTraceId,
-  logFinanceError,
-  logFinanceEvent,
-} from '../services/financeDiagnosticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { run as dbRun } from '../utils/DbPromise.js';
@@ -122,7 +122,11 @@ router.post(
         organizationId: orgId,
         userId,
         name,
-        seedType: sourceStatementPackId ? 'statement_pack' : sourceStatementId ? 'statement' : 'manual',
+        seedType: sourceStatementPackId
+          ? 'statement_pack'
+          : sourceStatementId
+            ? 'statement'
+            : 'manual',
         sourceStatementId: sourceStatementId || null,
         sourceStatementPackId: sourceStatementPackId || null,
       });

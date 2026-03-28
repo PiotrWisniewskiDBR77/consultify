@@ -4,16 +4,17 @@
  * Storage layout is S3-compatible for future migration.
  */
 
-import fs from 'fs/promises';
-import { createReadStream, existsSync } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { createReadStream, existsSync } from 'fs';
+import fs from 'fs/promises';
+import path from 'path';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
-import { ValidationError, NotFoundError } from './ErrorHandling.js';
+import { NotFoundError, ValidationError } from './ErrorHandling.js';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'attachments');
 const MAX_FILE_SIZE = parseInt(process.env.MAX_UPLOAD_SIZE_MB || '50', 10) * 1024 * 1024;
@@ -37,8 +38,20 @@ const ALLOWED_MIME_PATTERNS = [
 ];
 
 const BLOCKED_EXTENSIONS = new Set([
-  '.exe', '.bat', '.sh', '.cmd', '.com', '.msi', '.scr', '.pif',
-  '.vbs', '.vbe', '.wsf', '.wsh', '.ps1', '.psm1',
+  '.exe',
+  '.bat',
+  '.sh',
+  '.cmd',
+  '.com',
+  '.msi',
+  '.scr',
+  '.pif',
+  '.vbs',
+  '.vbe',
+  '.wsf',
+  '.wsh',
+  '.ps1',
+  '.psm1',
 ]);
 
 export interface AttachmentMeta {
@@ -215,7 +228,9 @@ const attachmentService = {
 
       logger.info('[AttachmentService] Thumbnails generated', { attachmentId });
     } catch {
-      logger.info('[AttachmentService] sharp unavailable, storing placeholder thumbnail paths', { attachmentId });
+      logger.info('[AttachmentService] sharp unavailable, storing placeholder thumbnail paths', {
+        attachmentId,
+      });
     }
 
     await db.query(
@@ -261,7 +276,16 @@ const attachmentService = {
       await db.query(
         `INSERT INTO tp_attachments (id, record_id, field_id, file_name, mime_type, size_bytes, storage_key, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [id, recordId, fieldId, file.originalname, file.mimetype, file.size, storageKey, userId ?? null]
+        [
+          id,
+          recordId,
+          fieldId,
+          file.originalname,
+          file.mimetype,
+          file.size,
+          storageKey,
+          userId ?? null,
+        ]
       );
 
       await this.appendAttachmentToRecord(recordId, fieldId, id);
@@ -281,7 +305,11 @@ const attachmentService = {
         download_url: this.generateDownloadUrl(id),
       } as AttachmentMeta;
     } catch (err) {
-      try { await fs.unlink(fullPath); } catch { /* best effort cleanup */ }
+      try {
+        await fs.unlink(fullPath);
+      } catch {
+        /* best effort cleanup */
+      }
       logger.error('[AttachmentService] Failed to register attachment in DB', {
         error: (err as Error).message,
       });
@@ -292,7 +320,9 @@ const attachmentService = {
   /**
    * Download a file: returns a readable stream + metadata.
    */
-  async downloadFile(attachmentId: string): Promise<{ stream: Readable; filename: string; mimetype: string; size: number }> {
+  async downloadFile(
+    attachmentId: string
+  ): Promise<{ stream: Readable; filename: string; mimetype: string; size: number }> {
     const attachment = await this.getAttachment(attachmentId);
     if (!attachment) {
       throw new NotFoundError('attachment', attachmentId);
@@ -300,7 +330,9 @@ const attachmentService = {
 
     const fullPath = path.join(UPLOAD_DIR, attachment.storage_key);
     if (!existsSync(fullPath)) {
-      logger.error('[AttachmentService] File missing from disk', { storageKey: attachment.storage_key });
+      logger.error('[AttachmentService] File missing from disk', {
+        storageKey: attachment.storage_key,
+      });
       throw new NotFoundError('attachment file', attachmentId);
     }
 
@@ -318,8 +350,8 @@ const attachmentService = {
    */
   async deleteFile(attachmentId: string, deletedBy?: string): Promise<boolean> {
     const db = getDatabase();
-    const before = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [attachmentId])).rows[0] as
-      { storage_key: string; record_id: string; field_id: string } | undefined;
+    const before = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [attachmentId]))
+      .rows[0] as { storage_key: string; record_id: string; field_id: string } | undefined;
     if (!before) return false;
 
     const fullPath = path.join(UPLOAD_DIR, before.storage_key);
@@ -336,7 +368,15 @@ const attachmentService = {
 
     await db.query('DELETE FROM tp_attachments WHERE id = $1', [attachmentId]);
     await this.removeAttachmentFromRecord(before.record_id, before.field_id, attachmentId);
-    await auditService.logEvent('delete', 'attachment', attachmentId, deletedBy, before, undefined, undefined);
+    await auditService.logEvent(
+      'delete',
+      'attachment',
+      attachmentId,
+      deletedBy,
+      before,
+      undefined,
+      undefined
+    );
     return true;
   },
 
@@ -361,7 +401,15 @@ const attachmentService = {
         [id, recordId, fieldId, fileName, mimeType, sizeBytes, storageKey, uploadedBy ?? null]
       );
       const row = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [id])).rows[0];
-      await auditService.logEvent('create', 'attachment', id, uploadedBy, undefined, row, undefined);
+      await auditService.logEvent(
+        'create',
+        'attachment',
+        id,
+        uploadedBy,
+        undefined,
+        row,
+        undefined
+      );
       return row ?? null;
     } catch (e) {
       logger.error('[AttachmentService] createAttachment failed', { error: (e as Error).message });
@@ -421,7 +469,9 @@ const attachmentService = {
         download_url: this.generateDownloadUrl(row.id),
       }));
     } catch (e) {
-      logger.error('[AttachmentService] listAttachmentsByTable failed', { error: (e as Error).message });
+      logger.error('[AttachmentService] listAttachmentsByTable failed', {
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -444,7 +494,9 @@ const attachmentService = {
         download_url: this.generateDownloadUrl(row.id),
       }));
     } catch (e) {
-      logger.error('[AttachmentService] getAttachmentsByIds failed', { error: (e as Error).message });
+      logger.error('[AttachmentService] getAttachmentsByIds failed', {
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -456,7 +508,11 @@ const attachmentService = {
   /**
    * Append an attachment ID to the record's data JSONB for the given field.
    */
-  async appendAttachmentToRecord(recordId: string, fieldId: string, attachmentId: string): Promise<void> {
+  async appendAttachmentToRecord(
+    recordId: string,
+    fieldId: string,
+    attachmentId: string
+  ): Promise<void> {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT data FROM tp_records WHERE id = $1', [recordId]);
@@ -468,16 +524,27 @@ const attachmentService = {
         current.push(attachmentId);
       }
       data[fieldId] = current;
-      await db.query('UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1', [recordId, JSON.stringify(data)]);
+      await db.query('UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1', [
+        recordId,
+        JSON.stringify(data),
+      ]);
     } catch (e) {
-      logger.warn('[AttachmentService] appendAttachmentToRecord failed', { recordId, fieldId, error: (e as Error).message });
+      logger.warn('[AttachmentService] appendAttachmentToRecord failed', {
+        recordId,
+        fieldId,
+        error: (e as Error).message,
+      });
     }
   },
 
   /**
    * Remove an attachment ID from the record's data JSONB for the given field.
    */
-  async removeAttachmentFromRecord(recordId: string, fieldId: string, attachmentId: string): Promise<void> {
+  async removeAttachmentFromRecord(
+    recordId: string,
+    fieldId: string,
+    attachmentId: string
+  ): Promise<void> {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT data FROM tp_records WHERE id = $1', [recordId]);
@@ -487,9 +554,16 @@ const attachmentService = {
       const current = Array.isArray(data[fieldId]) ? (data[fieldId] as string[]) : [];
       const filtered = current.filter((id) => id !== attachmentId);
       data[fieldId] = filtered;
-      await db.query('UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1', [recordId, JSON.stringify(data)]);
+      await db.query('UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1', [
+        recordId,
+        JSON.stringify(data),
+      ]);
     } catch (e) {
-      logger.warn('[AttachmentService] removeAttachmentFromRecord failed', { recordId, fieldId, error: (e as Error).message });
+      logger.warn('[AttachmentService] removeAttachmentFromRecord failed', {
+        recordId,
+        fieldId,
+        error: (e as Error).message,
+      });
     }
   },
 

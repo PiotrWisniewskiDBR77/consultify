@@ -1,9 +1,9 @@
 import type { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import type { AuthRequest } from './auth.middleware.js';
 import { isV8ShadowMode } from '../services/v8/featureFlagService.js';
 import Logger from '../utils/Logger.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 /**
  * Lightweight middleware that checks if shadow mode is active for the org
@@ -20,7 +20,7 @@ import Logger from '../utils/Logger.js';
 export async function v8ShadowModeCheck(
   req: AuthRequest,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   let orgId = req.organizationId;
 
@@ -44,8 +44,7 @@ export async function v8ShadowModeCheck(
   }
 
   try {
-    (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode =
-      await isV8ShadowMode(orgId);
+    (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = await isV8ShadowMode(orgId);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     Logger.warn(`[v8:shadow-check] Failed to check shadow mode for ${orgId}: ${msg}`);

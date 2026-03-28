@@ -24,7 +24,10 @@ export const StatusPillEditor: React.FC<StatusPillEditorProps> = ({
     {options.map((opt) => (
       <button
         key={opt.value}
-        onClick={() => { onChange(opt.value); onClose(); }}
+        onClick={() => {
+          onChange(opt.value);
+          onClose();
+        }}
         className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
       >
         {opt.dot ? <span className={`w-2 h-2 rounded-full ${opt.dot}`} /> : null}

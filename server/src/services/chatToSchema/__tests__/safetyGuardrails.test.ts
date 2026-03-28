@@ -1,17 +1,16 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import {
-  validateProposalLimits,
-  checkRateLimit,
-  validateSchemaOperations,
-  PROPOSAL_LIMITS,
-} from '../safetyGuardrails.js';
-
 import type { SchemaProposal } from '../proposalGenerator.js';
+import {
+  checkRateLimit,
+  PROPOSAL_LIMITS,
+  validateProposalLimits,
+  validateSchemaOperations,
+} from '../safetyGuardrails.js';
 
 function makeProposal(overrides: Partial<SchemaProposal> = {}): SchemaProposal {
   return {
@@ -26,7 +25,11 @@ function makeProposal(overrides: Partial<SchemaProposal> = {}): SchemaProposal {
   };
 }
 
-function makeOp(type: string, payload: Record<string, unknown> = {}, target: Record<string, string> = {}) {
+function makeOp(
+  type: string,
+  payload: Record<string, unknown> = {},
+  target: Record<string, string> = {}
+) {
   return {
     id: `op-${Math.random().toString(36).slice(2, 8)}`,
     operation_type: type,
@@ -152,7 +155,8 @@ describe('SafetyGuardrails', () => {
   // -----------------------------------------------------------------------
 
   describe('validateSchemaOperations', () => {
-    const mockGetFields = vi.fn<(tableId: string) => Promise<Array<{ key: string; name: string }>>>();
+    const mockGetFields =
+      vi.fn<(tableId: string) => Promise<Array<{ key: string; name: string }>>>();
     const mockGetTableCount = vi.fn<(baseId: string) => Promise<number>>();
 
     beforeEach(() => {
@@ -176,9 +180,7 @@ describe('SafetyGuardrails', () => {
     });
 
     it('rejects duplicate field keys', async () => {
-      mockGetFields.mockResolvedValue([
-        { key: 'email', name: 'Email' },
-      ]);
+      mockGetFields.mockResolvedValue([{ key: 'email', name: 'Email' }]);
 
       const ops = [
         {
@@ -195,9 +197,7 @@ describe('SafetyGuardrails', () => {
     });
 
     it('accepts valid field creation', async () => {
-      mockGetFields.mockResolvedValue([
-        { key: 'name', name: 'Name' },
-      ]);
+      mockGetFields.mockResolvedValue([{ key: 'name', name: 'Name' }]);
 
       const ops = [
         {
@@ -215,7 +215,8 @@ describe('SafetyGuardrails', () => {
 
     it('rejects when table has too many fields (>=100)', async () => {
       const existingFields = Array.from({ length: 100 }, (_, i) => ({
-        key: `field_${i}`, name: `Field ${i}`,
+        key: `field_${i}`,
+        name: `Field ${i}`,
       }));
       mockGetFields.mockResolvedValue(existingFields);
 

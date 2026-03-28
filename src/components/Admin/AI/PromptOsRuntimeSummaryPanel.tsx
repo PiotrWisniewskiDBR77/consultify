@@ -85,25 +85,35 @@ export const PromptOsRuntimeSummaryPanel: React.FC = () => {
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
               {t('superadmin.promptOsRuntime.fields.contract', { defaultValue: 'Contract' })}
             </dt>
-            <dd className="mt-1 font-mono text-sm text-slate-900 dark:text-white">{summary.contract}</dd>
+            <dd className="mt-1 font-mono text-sm text-slate-900 dark:text-white">
+              {summary.contract}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
               {t('superadmin.promptOsRuntime.fields.presetCount', { defaultValue: 'Presets' })}
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{summary.presetCount}</dd>
+            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+              {summary.presetCount}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
               {t('superadmin.promptOsRuntime.fields.bundleCount', { defaultValue: 'Bundles' })}
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{summary.bundleCount}</dd>
+            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+              {summary.bundleCount}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
-              {t('superadmin.promptOsRuntime.fields.activeBundleCount', { defaultValue: 'Active bundles' })}
+              {t('superadmin.promptOsRuntime.fields.activeBundleCount', {
+                defaultValue: 'Active bundles',
+              })}
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{summary.activeBundleCount}</dd>
+            <dd className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+              {summary.activeBundleCount}
+            </dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">

@@ -2491,6 +2491,12 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
  */
 async function runTablePlatformMigrations(db: any): Promise<void> {
   const TAG = '[TP-Migrations]';
+  const candidateDirs = [
+    path.resolve(__dirname_esm, '../../migrations'),
+    path.resolve(__dirname_esm, '../../../migrations'),
+    path.resolve(process.cwd(), 'migrations'),
+    path.resolve(process.cwd(), 'server/migrations'),
+  ];
 
   // 1. Ensure migration tracking table exists
   await db.query(`
@@ -2504,13 +2510,14 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
   `);
 
   // 2. Discover migration files
-  const migrationsDir = path.resolve(__dirname_esm, '../../migrations');
-  if (!fs.existsSync(migrationsDir)) {
-    logger.warn(`${TAG} Migrations directory not found: ${migrationsDir}`);
+  const migrationsDir = candidateDirs.find((dir) => fs.existsSync(dir));
+  if (!migrationsDir) {
+    logger.warn(`${TAG} Migrations directory not found: ${candidateDirs.join(', ')}`);
     return;
   }
 
-  const allFiles = fs.readdirSync(migrationsDir)
+  const allFiles = fs
+    .readdirSync(migrationsDir)
     .filter((f: string) => /^7\d{2}_.*\.sql$/.test(f))
     .sort();
 
@@ -2541,10 +2548,10 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
     try {
       await db.query('BEGIN');
       await db.query(sql);
-      await db.query(
-        'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
-        [file, Date.now() - startMs]
-      );
+      await db.query('INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)', [
+        file,
+        Date.now() - startMs,
+      ]);
       await db.query('COMMIT');
       applied++;
       logger.info(`${TAG} ✓ ${file} (${Date.now() - startMs}ms)`);
@@ -2706,9 +2713,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
         // Seed default templates after migrations succeed
         try {
-          const { default: templateService } = await import(
-            '../services/tablePlatform/TemplateService.js'
-          );
+          const { default: templateService } =
+            await import('../services/tablePlatform/TemplateService.js');
           await templateService.seedDefaultTemplates();
         } catch (seedErr: any) {
           logger.warn(

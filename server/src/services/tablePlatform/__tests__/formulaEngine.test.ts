@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../database/Database.js', () => ({
   getDatabase: () => ({ query: vi.fn() }),
@@ -9,11 +9,11 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  parseFormula,
   evaluateFormula,
   extractFieldDependencies,
-  FormulaError,
   type FormulaAST,
+  FormulaError,
+  parseFormula,
 } from '../formulaEngine.js';
 
 describe('FormulaEngine', () => {

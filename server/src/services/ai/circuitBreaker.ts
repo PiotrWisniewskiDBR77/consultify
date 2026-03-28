@@ -51,7 +51,8 @@ function shouldIgnoreFailure(providerId: string, error: Error): boolean {
   if (id === 'openrouter') {
     if (msg.includes('user not found')) return true;
     if (msg.includes('unauthorized') || msg.includes('forbidden')) return true;
-    if (msg.includes('invalid api key') || msg.includes('key invalid') || msg.includes('auth')) return true;
+    if (msg.includes('invalid api key') || msg.includes('key invalid') || msg.includes('auth'))
+      return true;
     if (msg.includes('http 401') || msg.includes('http 403')) return true;
   }
   return false;
@@ -93,7 +94,10 @@ export async function execute<T>(
   fn: () => Promise<T>,
   options: Record<string, unknown> = {}
 ): Promise<T> {
-  const breaker = CircuitBreakerService.getBreaker(providerId, getBreakerConfig(providerId, options));
+  const breaker = CircuitBreakerService.getBreaker(
+    providerId,
+    getBreakerConfig(providerId, options)
+  );
   return breaker.execute(fn, options);
 }
 
@@ -169,7 +173,8 @@ function registerProviderHealthChecks(): void {
         process.env.SITE_URL ||
         process.env.PUBLIC_URL ||
         process.env.APP_URL;
-      const title = process.env.OPENROUTER_APP_NAME || process.env.APP_NAME || process.env.npm_package_name;
+      const title =
+        process.env.OPENROUTER_APP_NAME || process.env.APP_NAME || process.env.npm_package_name;
       if (referer) headers['HTTP-Referer'] = String(referer);
       if (title) headers['X-Title'] = String(title);
 

@@ -15,20 +15,20 @@ import type {
   CollaborationRoom,
   CreateRoomParams,
   GetEventsOptions,
+  PresenceType,
   RecordEventParams,
   RoomMembership,
   RoomPresence,
   RoomState,
-  PresenceType,
   UpdatePresenceParams,
 } from '../../types/collaborationRoom.js';
 import {
   CreateRoomParamsSchema,
   JoinRoomParamsSchema,
   RecordEventParamsSchema,
+  TERMINAL_ROOM_STATES,
   UpdatePresenceParamsSchema,
   VALID_ROOM_TRANSITIONS,
-  TERMINAL_ROOM_STATES,
 } from '../../types/collaborationRoom.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -200,7 +200,7 @@ export async function createRoom(params: CreateRoomParams): Promise<Collaboratio
       room.createdAt,
       room.closedAt,
       JSON.stringify(room.metadata),
-    ],
+    ]
   );
 
   await recordEvent({
@@ -212,7 +212,9 @@ export async function createRoom(params: CreateRoomParams): Promise<Collaboratio
     payload: { resourceType: room.resourceType, resourceId: room.resourceId },
   });
 
-  logger.info(`${LOG_PREFIX} Created room ${roomId} for ${room.resourceType}:${room.resourceId} in org ${room.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created room ${roomId} for ${room.resourceType}:${room.resourceId} in org ${room.organizationId}`
+  );
   return room;
 }
 
@@ -221,13 +223,13 @@ export async function createRoom(params: CreateRoomParams): Promise<Collaboratio
  */
 export async function getRoom(
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CollaborationRoom | null> {
   const row = await dbGet<RoomRow>(
     `SELECT * FROM v8_collaboration_rooms
      WHERE room_id = ? AND organization_id = ?`,
     [roomId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -241,7 +243,7 @@ export async function getRoom(
 export async function getRoomByResource(
   resourceType: string,
   resourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CollaborationRoom | null> {
   const row = await dbGet<RoomRow>(
     `SELECT * FROM v8_collaboration_rooms
@@ -250,7 +252,7 @@ export async function getRoomByResource(
      ORDER BY created_at DESC
      LIMIT 1`,
     [resourceType, resourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -264,7 +266,7 @@ export async function transitionRoomState(
   roomId: string,
   organizationId: string,
   toState: RoomState,
-  reason?: string,
+  reason?: string
 ): Promise<CollaborationRoom> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {
@@ -276,7 +278,7 @@ export async function transitionRoomState(
   if (!isValidRoomTransition(fromState, toState)) {
     throw new Error(
       `Invalid room state transition: ${fromState} → ${toState}. ` +
-      `Allowed from ${fromState}: [${VALID_ROOM_TRANSITIONS[fromState].join(', ')}]`,
+        `Allowed from ${fromState}: [${VALID_ROOM_TRANSITIONS[fromState].join(', ')}]`
     );
   }
 
@@ -287,7 +289,7 @@ export async function transitionRoomState(
     `UPDATE v8_collaboration_rooms
      SET room_state = ?, closed_at = ?
      WHERE room_id = ? AND organization_id = ?`,
-    [toState, closedAt, roomId, organizationId],
+    [toState, closedAt, roomId, organizationId]
   );
 
   const eventTypeMap: Record<string, CollaborationEvent['eventType']> = {
@@ -327,7 +329,7 @@ export async function joinRoom(
   roomId: string,
   userId: string,
   presenceType: PresenceType,
-  clientId: string,
+  clientId: string
 ): Promise<RoomPresence> {
   JoinRoomParamsSchema.parse({ roomId, userId, presenceType, clientId });
 
@@ -362,14 +364,14 @@ export async function joinRoom(
       presence.connectedAt,
       presence.clientId,
       0,
-    ],
+    ]
   );
 
   await dbRun(
     `INSERT INTO v8_room_memberships (
       membership_id, room_id, user_id, joined_at, left_at, role
     ) VALUES (?, ?, ?, ?, ?, ?)`,
-    [membershipId, roomId, userId, now, null, presenceType],
+    [membershipId, roomId, userId, now, null, presenceType]
   );
 
   await recordEvent({
@@ -381,31 +383,29 @@ export async function joinRoom(
     payload: { presenceType, clientId },
   });
 
-  logger.info(`${LOG_PREFIX} User ${userId} (client ${clientId}) joined room ${roomId} as ${presenceType}`);
+  logger.info(
+    `${LOG_PREFIX} User ${userId} (client ${clientId}) joined room ${roomId} as ${presenceType}`
+  );
   return presence;
 }
 
 /**
  * Leave a room: removes presence record, stamps membership.leftAt.
  */
-export async function leaveRoom(
-  roomId: string,
-  userId: string,
-  clientId: string,
-): Promise<void> {
+export async function leaveRoom(roomId: string, userId: string, clientId: string): Promise<void> {
   const now = new Date().toISOString();
 
   await dbRun(
     `DELETE FROM v8_room_presence
      WHERE room_id = ? AND user_id = ? AND client_id = ?`,
-    [roomId, userId, clientId],
+    [roomId, userId, clientId]
   );
 
   await dbRun(
     `UPDATE v8_room_memberships
      SET left_at = ?
      WHERE room_id = ? AND user_id = ? AND left_at IS NULL`,
-    [now, roomId, userId],
+    [now, roomId, userId]
   );
 
   await recordEvent({
@@ -427,28 +427,31 @@ export async function updatePresence(
   roomId: string,
   userId: string,
   clientId: string,
-  updates: UpdatePresenceParams,
+  updates: UpdatePresenceParams
 ): Promise<RoomPresence> {
   UpdatePresenceParamsSchema.parse(updates);
 
   const now = new Date().toISOString();
-  const cursorStateJson = updates.cursorState !== undefined
-    ? (updates.cursorState ? JSON.stringify(updates.cursorState) : null)
-    : undefined;
+  const cursorStateJson =
+    updates.cursorState !== undefined
+      ? updates.cursorState
+        ? JSON.stringify(updates.cursorState)
+        : null
+      : undefined;
 
   if (cursorStateJson !== undefined) {
     await dbRun(
       `UPDATE v8_room_presence
        SET last_heartbeat = ?, cursor_state = ?, is_stale = 0
        WHERE room_id = ? AND user_id = ? AND client_id = ?`,
-      [now, cursorStateJson, roomId, userId, clientId],
+      [now, cursorStateJson, roomId, userId, clientId]
     );
   } else {
     await dbRun(
       `UPDATE v8_room_presence
        SET last_heartbeat = ?, is_stale = 0
        WHERE room_id = ? AND user_id = ? AND client_id = ?`,
-      [now, roomId, userId, clientId],
+      [now, roomId, userId, clientId]
     );
   }
 
@@ -456,7 +459,7 @@ export async function updatePresence(
     `SELECT * FROM v8_room_presence
      WHERE room_id = ? AND user_id = ? AND client_id = ?`,
     [roomId, userId, clientId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -475,7 +478,7 @@ export async function getActivePresence(roomId: string): Promise<RoomPresence[]>
      WHERE room_id = ? AND is_stale = 0
      ORDER BY connected_at ASC`,
     [roomId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToPresence);
@@ -487,7 +490,7 @@ export async function getActivePresence(roomId: string): Promise<RoomPresence[]>
  */
 export async function cleanStalePresence(
   roomId: string,
-  staleThresholdMs: number,
+  staleThresholdMs: number
 ): Promise<string[]> {
   const cutoff = new Date(Date.now() - staleThresholdMs).toISOString();
 
@@ -495,7 +498,7 @@ export async function cleanStalePresence(
     `SELECT * FROM v8_room_presence
      WHERE room_id = ? AND is_stale = 0 AND last_heartbeat < ?`,
     [roomId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   const staleRecords = staleRows || [];
@@ -505,7 +508,7 @@ export async function cleanStalePresence(
     `UPDATE v8_room_presence
      SET is_stale = 1
      WHERE room_id = ? AND is_stale = 0 AND last_heartbeat < ?`,
-    [roomId, cutoff],
+    [roomId, cutoff]
   );
 
   const removedUserIds: string[] = [];
@@ -522,7 +525,9 @@ export async function cleanStalePresence(
     });
   }
 
-  logger.info(`${LOG_PREFIX} Cleaned ${staleRecords.length} stale presence records from room ${roomId}`);
+  logger.info(
+    `${LOG_PREFIX} Cleaned ${staleRecords.length} stale presence records from room ${roomId}`
+  );
   return removedUserIds;
 }
 
@@ -566,7 +571,7 @@ export async function recordEvent(params: RecordEventParams): Promise<Collaborat
       JSON.stringify(event.payload),
       event.timestamp,
       event.stateVersion,
-    ],
+    ]
   );
 
   return event;
@@ -577,7 +582,7 @@ export async function recordEvent(params: RecordEventParams): Promise<Collaborat
  */
 export async function getEventsByRoom(
   roomId: string,
-  options?: GetEventsOptions,
+  options?: GetEventsOptions
 ): Promise<CollaborationEvent[]> {
   const { eventType, limit = 100, offset = 0 } = options ?? {};
 
@@ -615,7 +620,7 @@ const DEFAULT_STALE_THRESHOLD_MS = 5 * 60 * 1000;
 export async function detectStalePresence(
   roomId: string,
   organizationId: string,
-  staleThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS,
+  staleThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS
 ): Promise<RoomPresence[]> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {
@@ -628,7 +633,7 @@ export async function detectStalePresence(
     `SELECT * FROM v8_room_presence
      WHERE room_id = ? AND is_stale = 0 AND last_heartbeat < ?`,
     [roomId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   const staleRecords = (staleRows || []).map(rowToPresence);
@@ -640,12 +645,18 @@ export async function detectStalePresence(
       actorId: 'system',
       actorType: 'system',
       delivery: 'durable',
-      payload: { userId: entry.userId, clientId: entry.clientId, lastHeartbeat: entry.lastHeartbeat },
+      payload: {
+        userId: entry.userId,
+        clientId: entry.clientId,
+        lastHeartbeat: entry.lastHeartbeat,
+      },
     });
   }
 
   if (staleRecords.length > 0) {
-    logger.info(`${LOG_PREFIX} Detected ${staleRecords.length} stale presence entries in room ${roomId}`);
+    logger.info(
+      `${LOG_PREFIX} Detected ${staleRecords.length} stale presence entries in room ${roomId}`
+    );
   }
 
   return staleRecords;
@@ -668,7 +679,7 @@ export interface RoomHealthSummary {
  */
 export async function getRoomHealth(
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RoomHealthSummary> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {
@@ -678,39 +689,43 @@ export async function getRoomHealth(
   const activeRows = await dbAll<PresenceRow>(
     `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 0`,
     [roomId],
-    { fallback: true },
+    { fallback: true }
   );
   const activePresenceCount = (activeRows || []).length;
 
   const staleRows = await dbAll<PresenceRow>(
     `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 1`,
     [roomId],
-    { fallback: true },
+    { fallback: true }
   );
   const stalePresenceCount = (staleRows || []).length;
 
   const memberRows = await dbAll<MembershipRow>(
     `SELECT * FROM v8_room_memberships WHERE room_id = ? AND left_at IS NULL`,
     [roomId],
-    { fallback: true },
+    { fallback: true }
   );
   const memberCount = (memberRows || []).length;
 
   const lastEvent = await dbGet<EventRow>(
     `SELECT * FROM v8_collaboration_events WHERE room_id = ? ORDER BY timestamp DESC LIMIT 1`,
     [roomId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const degradedRow = await dbGet<{ degraded_since: string | null }>(
     `SELECT degraded_since FROM v8_collaboration_rooms WHERE room_id = ? AND organization_id = ?`,
     [roomId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   let degradedSince = degradedRow?.degraded_since ?? null;
 
-  if (!degradedSince && stalePresenceCount > activePresenceCount && activePresenceCount + stalePresenceCount > 0) {
+  if (
+    !degradedSince &&
+    stalePresenceCount > activePresenceCount &&
+    activePresenceCount + stalePresenceCount > 0
+  ) {
     degradedSince = new Date().toISOString();
   }
 
@@ -730,7 +745,7 @@ export async function getRoomHealth(
 export async function enterDegradedMode(
   roomId: string,
   organizationId: string,
-  reason: string,
+  reason: string
 ): Promise<CollaborationRoom> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {
@@ -748,7 +763,7 @@ export async function enterDegradedMode(
 
   await dbRun(
     `UPDATE v8_collaboration_rooms SET degraded_since = ? WHERE room_id = ? AND organization_id = ?`,
-    [now, roomId, organizationId],
+    [now, roomId, organizationId]
   );
 
   await recordEvent({
@@ -770,7 +785,7 @@ export async function enterDegradedMode(
  */
 export async function recoverFromDegraded(
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<CollaborationRoom> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {
@@ -781,11 +796,16 @@ export async function recoverFromDegraded(
     throw new Error(`Room ${roomId} is not in error state (current: ${room.roomState})`);
   }
 
-  const transitioned = await transitionRoomState(roomId, organizationId, 'active', 'Recovered from degraded');
+  const transitioned = await transitionRoomState(
+    roomId,
+    organizationId,
+    'active',
+    'Recovered from degraded'
+  );
 
   await dbRun(
     `UPDATE v8_collaboration_rooms SET degraded_since = NULL WHERE room_id = ? AND organization_id = ?`,
-    [roomId, organizationId],
+    [roomId, organizationId]
   );
 
   await recordEvent({
@@ -806,7 +826,7 @@ export async function recoverFromDegraded(
  */
 export async function getActiveRoomsByOrg(
   organizationId: string,
-  limit: number = 100,
+  limit: number = 100
 ): Promise<CollaborationRoom[]> {
   const rows = await dbAll<RoomRow>(
     `SELECT * FROM v8_collaboration_rooms
@@ -814,7 +834,7 @@ export async function getActiveRoomsByOrg(
      ORDER BY created_at DESC
      LIMIT ?`,
     [organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRoom);
@@ -827,7 +847,7 @@ export async function broadcastEvent(
   roomId: string,
   organizationId: string,
   eventType: CollaborationEventType,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Promise<CollaborationEvent> {
   const room = await getRoom(roomId, organizationId);
   if (!room) {

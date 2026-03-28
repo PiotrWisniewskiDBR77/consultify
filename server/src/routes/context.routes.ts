@@ -92,10 +92,9 @@ router.put(
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
     params.push(id);
     await dbRun(`UPDATE ai_contexts SET ${updates.join(', ')} WHERE id = ?`, params);
-    const row = (await dbGet(
-      `SELECT name, type, content, priority FROM ai_contexts WHERE id = ?`,
-      [id]
-    )) as { name?: string; type?: string; content?: string; priority?: number } | null;
+    const row = (await dbGet(`SELECT name, type, content, priority FROM ai_contexts WHERE id = ?`, [
+      id,
+    ])) as { name?: string; type?: string; content?: string; priority?: number } | null;
     if (orgId && row) {
       await organizationContextService.recordManualAIContext({
         organizationId: orgId,

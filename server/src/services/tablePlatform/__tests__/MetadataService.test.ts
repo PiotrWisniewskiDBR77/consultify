@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -27,7 +27,12 @@ describe('MetadataService', () => {
 
   // 1. createBase → returns base with id, name
   it('createBase returns base with id and name', async () => {
-    const baseRow = { id: 'mock-uuid-001', name: 'My Base', workspace_id: 'ws-1', organization_id: 'org-1' };
+    const baseRow = {
+      id: 'mock-uuid-001',
+      name: 'My Base',
+      workspace_id: 'ws-1',
+      organization_id: 'org-1',
+    };
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // INSERT
       .mockResolvedValueOnce({ rows: [baseRow] }); // SELECT after insert
@@ -42,9 +47,7 @@ describe('MetadataService', () => {
   it('getBase returns base with tables', async () => {
     const baseRow = { id: 'b-1', name: 'Base', workspace_id: 'ws-1' };
     const tableRows = [{ id: 't-1', name: 'Table 1', base_id: 'b-1' }];
-    mockQuery
-      .mockResolvedValueOnce({ rows: [baseRow] })
-      .mockResolvedValueOnce({ rows: tableRows });
+    mockQuery.mockResolvedValueOnce({ rows: [baseRow] }).mockResolvedValueOnce({ rows: tableRows });
 
     const result = await metadataService.getBase('b-1');
     expect(result.id).toBe('b-1');
@@ -105,7 +108,12 @@ describe('MetadataService', () => {
 
   // 6. createField → returns field with correct type
   it('createField returns field with correct type', async () => {
-    const fieldRow = { id: 'mock-uuid-001', name: 'Priority', field_type: 'singleSelect', table_id: 't-1' };
+    const fieldRow = {
+      id: 'mock-uuid-001',
+      name: 'Priority',
+      field_type: 'singleSelect',
+      table_id: 't-1',
+    };
     mockQuery
       .mockResolvedValueOnce({ rows: [{ next_order: 1 }] }) // MAX order
       .mockResolvedValueOnce({ rows: [] }) // INSERT
@@ -114,7 +122,13 @@ describe('MetadataService', () => {
       .mockResolvedValueOnce({ rows: [{ schema_version: 3 }] }) // bumpSchemaVersion UPDATE
       .mockResolvedValueOnce({ rows: [] }); // bumpSchemaVersion INSERT
 
-    const result = await metadataService.createField('t-1', 'Priority', 'singleSelect', { options: [{ value: 'High' }] }, 'user-1');
+    const result = await metadataService.createField(
+      't-1',
+      'Priority',
+      'singleSelect',
+      { options: [{ value: 'High' }] },
+      'user-1'
+    );
     expect(result.name).toBe('Priority');
     expect(result.field_type).toBe('singleSelect');
   });
@@ -132,7 +146,10 @@ describe('MetadataService', () => {
       .mockResolvedValueOnce({ rows: [{ schema_version: 4 }] }) // bumpSchemaVersion
       .mockResolvedValueOnce({ rows: [] }); // bumpSchemaVersion INSERT
 
-    const result = await metadataService.updateField('f-1', { name: 'New', options: { color: 'red' } });
+    const result = await metadataService.updateField('f-1', {
+      name: 'New',
+      options: { color: 'red' },
+    });
     expect(result.name).toBe('New');
   });
 
@@ -155,7 +172,11 @@ describe('MetadataService', () => {
   it('createView returns view object', async () => {
     const viewRow = { id: 'mock-uuid-001', name: 'Kanban', view_type: 'kanban', table_id: 't-1' };
     mockQuery.mockImplementation((sql: string) => {
-      if (typeof sql === 'string' && sql.includes('INSERT INTO tp_views') && sql.includes('config')) {
+      if (
+        typeof sql === 'string' &&
+        sql.includes('INSERT INTO tp_views') &&
+        sql.includes('config')
+      ) {
         return Promise.resolve({ rows: [] });
       }
       if (typeof sql === 'string' && sql.includes('SELECT * FROM tp_views WHERE id')) {
@@ -197,7 +218,8 @@ describe('MetadataService', () => {
     await metadataService.createTable('b-1', 'T', undefined, 'user-1');
 
     const bumpCalls = mockQuery.mock.calls.filter(
-      (call) => typeof call[0] === 'string' && call[0].includes('schema_version = schema_version + 1')
+      (call) =>
+        typeof call[0] === 'string' && call[0].includes('schema_version = schema_version + 1')
     );
     expect(bumpCalls.length).toBeGreaterThanOrEqual(1);
     expect(bumpCalls[0][1]).toContain('b-1');

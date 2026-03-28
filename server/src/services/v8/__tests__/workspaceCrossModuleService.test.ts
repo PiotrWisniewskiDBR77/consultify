@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import {
-  SessionModuleLinkSchema,
   CrossModuleActivitySchema,
   LinkModuleParamsSchema,
+  SessionModuleLinkSchema,
 } from '../../../types/workspaceCrossModule.js';
 
 // ==========================================
@@ -31,17 +31,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  linkModule,
-  unlinkModule,
-  getModuleLinks,
-  recordCrossModuleActivity,
+  computeEngagementScore,
+  findSessionsByModule,
   getCrossModuleActivity,
+  getModuleImpact,
+  getModuleLinks,
+  getRecentCrossModuleActivity,
   getSessionAnalytics,
   getWorkspaceAnalytics,
-  findSessionsByModule,
-  getModuleImpact,
-  getRecentCrossModuleActivity,
-  computeEngagementScore,
+  linkModule,
+  recordCrossModuleActivity,
+  unlinkModule,
 } from '../workspaceCrossModuleService.js';
 
 // ==========================================
@@ -152,7 +152,7 @@ describe('Zod schemas', () => {
         moduleType: 'invalid',
         moduleResourceId: 'x',
         linkedBy: USER_ID,
-      }),
+      })
     ).toThrow(ZodError);
   });
 });
@@ -167,7 +167,7 @@ describe('computeEngagementScore', () => {
         totalModuleLinks: 0,
         totalParticipants: 0,
         durationMs: null,
-      }),
+      })
     ).toBe(0);
   });
 
@@ -186,9 +186,7 @@ describe('computeEngagementScore', () => {
 
 describe('linkModule', () => {
   it('inserts a new module link when session exists and no duplicate active link', async () => {
-    mockDbGet
-      .mockResolvedValueOnce(makeSessionRow())
-      .mockResolvedValueOnce(null);
+    mockDbGet.mockResolvedValueOnce(makeSessionRow()).mockResolvedValueOnce(null);
 
     const result = await linkModule({
       sessionId: SESSION_ID,
@@ -232,7 +230,7 @@ describe('linkModule', () => {
         moduleType: 'initiative',
         moduleResourceId: INITIATIVE_ID,
         linkedBy: USER_ID,
-      }),
+      })
     ).rejects.toThrow(/not found/);
   });
 });
@@ -318,7 +316,7 @@ describe('recordCrossModuleActivity', () => {
         activityType: 'x',
         actorId: USER_ID,
         summary: 'y',
-      } as Parameters<typeof recordCrossModuleActivity>[0]),
+      } as Parameters<typeof recordCrossModuleActivity>[0])
     ).rejects.toThrow(ZodError);
   });
 });
@@ -357,7 +355,7 @@ describe('getSessionAnalytics', () => {
           makeSessionRow({
             session_id: params?.[0],
             completed_at: '2026-03-23T12:00:00.000Z',
-          }),
+          })
         );
       }
       if (s.includes('FROM v8_activity_feed') && s.includes('COUNT(DISTINCT actor_id)')) {
@@ -412,7 +410,7 @@ describe('getWorkspaceAnalytics', () => {
           makeSessionRow({
             session_id: sid,
             completed_at: null,
-          }),
+          })
         );
       }
       if (s.includes('COUNT(DISTINCT actor_id)')) {

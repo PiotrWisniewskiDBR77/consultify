@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
-  ExecutionAgentRun,
   ActionProposal,
-  CreateRunParams,
   CreateProposalParams,
+  CreateRunParams,
+  ExecutionAgentRun,
   RunState,
 } from '../../../../../types/executionSpine.js';
 
@@ -32,20 +32,20 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createRun,
-  transitionRunState,
-  createProposal,
-  submitForReview,
-  approveRun,
   applyRun,
+  approveRun,
+  checkRunExpiration,
   completeRun,
+  createProposal,
+  createRun,
+  getActiveRuns,
+  getProposalsByRun,
+  getRun,
   rejectRun,
   replanFromRejection,
-  checkRunExpiration,
   resolveProposalsBatch,
-  getActiveRuns,
-  getRun,
-  getProposalsByRun,
+  submitForReview,
+  transitionRunState,
 } from '../../../executionSpineService.js';
 
 // ==========================================
@@ -83,7 +83,10 @@ function makeRunParams(overrides?: Partial<CreateRunParams>): CreateRunParams {
   };
 }
 
-function makeProposalParams(runId: string, overrides?: Partial<CreateProposalParams>): CreateProposalParams {
+function makeProposalParams(
+  runId: string,
+  overrides?: Partial<CreateProposalParams>
+): CreateProposalParams {
   return {
     executionRunId: runId,
     contextSnapshotRef: SNAPSHOT_ID,
@@ -207,13 +210,19 @@ describe('Wave 3/4 — Execution Approval Flow Integration Proof', () => {
       const rejectedRun = await rejectRun(run.runId, ORG_ID, REVIEWER_ID, 'Needs rework');
       expect(rejectedRun.state).toBe('rejected');
 
-      mockDbGet.mockResolvedValueOnce(makeRunRow({ ...rejectedRun, state: 'rejected', plan_version: 1 } as unknown as ExecutionAgentRun));
+      mockDbGet.mockResolvedValueOnce(
+        makeRunRow({
+          ...rejectedRun,
+          state: 'rejected',
+          plan_version: 1,
+        } as unknown as ExecutionAgentRun)
+      );
       const replanRun = await replanFromRejection(run.runId, ORG_ID, USER_ID);
       expect(replanRun.state).toBe('planning');
       expect(replanRun.planVersion).toBe(2);
 
       const expireCalls = mockDbRun.mock.calls.filter(
-        (call) => typeof call[0] === 'string' && call[0].includes('SET status = \'expired\''),
+        (call) => typeof call[0] === 'string' && call[0].includes("SET status = 'expired'")
       );
       expect(expireCalls.length).toBeGreaterThanOrEqual(1);
     });
@@ -247,7 +256,11 @@ describe('Wave 3/4 — Execution Approval Flow Integration Proof', () => {
       expect(wasExpired).toBe(true);
 
       const transitionCalls = mockDbRun.mock.calls.filter(
-        (call) => typeof call[0] === 'string' && call[0].includes('UPDATE v8_execution_runs') && Array.isArray(call[1]) && call[1].includes('expired'),
+        (call) =>
+          typeof call[0] === 'string' &&
+          call[0].includes('UPDATE v8_execution_runs') &&
+          Array.isArray(call[1]) &&
+          call[1].includes('expired')
       );
       expect(transitionCalls.length).toBeGreaterThanOrEqual(1);
     });
@@ -273,9 +286,15 @@ describe('Wave 3/4 — Execution Approval Flow Integration Proof', () => {
     it('resolves multiple proposals in one batch call', async () => {
       const run = await createRun(makeRunParams());
 
-      const proposal1 = await createProposal(makeProposalParams(run.runId, { summary: 'Proposal A' }));
-      const proposal2 = await createProposal(makeProposalParams(run.runId, { summary: 'Proposal B' }));
-      const proposal3 = await createProposal(makeProposalParams(run.runId, { summary: 'Proposal C' }));
+      const proposal1 = await createProposal(
+        makeProposalParams(run.runId, { summary: 'Proposal A' })
+      );
+      const proposal2 = await createProposal(
+        makeProposalParams(run.runId, { summary: 'Proposal B' })
+      );
+      const proposal3 = await createProposal(
+        makeProposalParams(run.runId, { summary: 'Proposal C' })
+      );
 
       mockDbGet
         .mockResolvedValueOnce(makeProposalRow(proposal1))
@@ -285,7 +304,7 @@ describe('Wave 3/4 — Execution Approval Flow Integration Proof', () => {
       const resolved = await resolveProposalsBatch(
         [proposal1.proposalId, proposal2.proposalId, proposal3.proposalId],
         'approved',
-        REVIEWER_ID,
+        REVIEWER_ID
       );
 
       expect(resolved).toHaveLength(3);

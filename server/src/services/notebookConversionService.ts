@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { createReport } from './reportBuilderService.js';
-import { generateOutline } from './presentationGeneratorService.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { generateOutline } from './presentationGeneratorService.js';
+import { createReport } from './reportBuilderService.js';
 
 export type NotebookConvertTarget =
   | 'task'
@@ -39,7 +39,7 @@ async function requireTableColumns(tableName: string): Promise<Map<string, unkno
     throw new NotebookConversionError(
       503,
       `Database table missing: ${tableName}. Run migrations before using notebook convert.`,
-      'TABLE_NOT_CONFIGURED',
+      'TABLE_NOT_CONFIGURED'
     );
   }
   return cols as Map<string, unknown>;
@@ -68,8 +68,12 @@ async function createMyWorkToolSession(params: {
     insertParams.push(val);
   };
 
-  const safeTitle = String(title || 'MyWork Session').trim().slice(0, 255);
-  const normalizedSummary = String(summary || '').trim().slice(0, 4000);
+  const safeTitle = String(title || 'MyWork Session')
+    .trim()
+    .slice(0, 255);
+  const normalizedSummary = String(summary || '')
+    .trim()
+    .slice(0, 4000);
   const myWorkPayload = {
     origin: 'MYWORK',
     source: { type: sourceType, id: sourceId },
@@ -93,7 +97,7 @@ async function createMyWorkToolSession(params: {
 
   await queryHelpers.queryRun(
     `INSERT INTO tool_sessions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-    insertParams,
+    insertParams
   );
 
   return toolSessionId;
@@ -144,7 +148,7 @@ async function linkGraphAddEdge(params: {
   try {
     await queryHelpers.queryRun(
       `INSERT INTO link_graph_edges (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams,
+      insertParams
     );
     return { id };
   } catch (error: any) {
@@ -171,7 +175,7 @@ export async function convertNotebookPage(params: {
   const page = await queryHelpers.queryOne<any>(
     `SELECT id, owner_user_id, organization_id, project_id, title, content_text, tags_json, converted_to_json
      FROM notebook_pages WHERE id = ? LIMIT 1`,
-    [pageId],
+    [pageId]
   );
 
   if (!page) {
@@ -215,7 +219,7 @@ export async function convertNotebookPage(params: {
     add('source_id', pageId);
     await queryHelpers.queryRun(
       `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams,
+      insertParams
     );
     createdEntity = { id: newId, type: 'task', title: entityTitle };
 
@@ -252,7 +256,7 @@ export async function convertNotebookPage(params: {
     add('source_id', pageId);
     await queryHelpers.queryRun(
       `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams,
+      insertParams
     );
     createdEntity = { id: newId, type: 'decision', title: entityTitle };
 
@@ -302,7 +306,7 @@ export async function convertNotebookPage(params: {
 
     await queryHelpers.queryRun(
       `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams,
+      insertParams
     );
     createdEntity = {
       id: newId,
@@ -358,7 +362,7 @@ export async function convertNotebookPage(params: {
 
     await queryHelpers.queryRun(
       `INSERT INTO assessments (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams,
+      insertParams
     );
 
     createdEntity = { id: newId, type: 'assessment', title: entityTitle };
@@ -453,7 +457,7 @@ export async function convertNotebookPage(params: {
           },
         ],
       },
-      orgId,
+      orgId
     );
     createdEntity = {
       id: String(outline.deckId),
@@ -499,7 +503,7 @@ export async function convertNotebookPage(params: {
 
   await queryHelpers.queryRun(
     `UPDATE notebook_pages SET status = 'converted', converted_to_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [JSON.stringify(existingConverted), pageId],
+    [JSON.stringify(existingConverted), pageId]
   );
 
   return createdEntity!;

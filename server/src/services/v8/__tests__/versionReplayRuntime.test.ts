@@ -1,8 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  ActorAttribution,
-} from '../../../types/versionReplay.js';
+import type { ActorAttribution } from '../../../types/versionReplay.js';
 
 // ==========================================
 // MOCK DB LAYER
@@ -28,14 +26,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  getSnapshotsByResource,
-  getLatestSnapshot,
-  rollbackToSnapshot,
   detectAIStaleness,
   getAuditSummary,
+  getLatestSnapshot,
   getPendingRestores,
-  rejectRestore,
   getResourceHistory,
+  getSnapshotsByResource,
+  rejectRestore,
+  rollbackToSnapshot,
 } from '../versionReplayService.js';
 
 // ==========================================
@@ -174,9 +172,7 @@ describe('getSnapshotsByResource', () => {
 
 describe('getLatestSnapshot', () => {
   it('returns the most recent snapshot for a resource', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ state_version: 5 }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeSnapshotRow({ state_version: 5 }));
 
     const result = await getLatestSnapshot(RESOURCE_ID, ORG_ID);
 
@@ -216,31 +212,29 @@ describe('rollbackToSnapshot', () => {
   it('performs full rollback flow and returns applied restore request', async () => {
     // getVersionSnapshot (target)
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 }),
+      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 })
     );
     // getLatestSnapshot
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ state_version: 5, state_data: JSON.stringify({ title: 'Current' }) }),
+      makeFakeSnapshotRow({ state_version: 5, state_data: JSON.stringify({ title: 'Current' }) })
     );
     // requestRestore → getVersionSnapshot (target again)
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 }),
+      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 })
     );
     // requestRestore → captureVersionSnapshot → getNextStateVersion
     mockDbGet.mockResolvedValueOnce({ max_version: 5 });
     // applyRestore → dbGet restore row
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeRestoreRow({ status: 'pending' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeRestoreRow({ status: 'pending' }));
     // applyRestore → getVersionSnapshot (target)
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 }),
+      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_1, state_version: 2 })
     );
     // applyRestore → captureVersionSnapshot → getNextStateVersion
     mockDbGet.mockResolvedValueOnce({ max_version: 6 });
     // applyRestore → recordAuditEntry → getVersionSnapshot (safety)
     mockDbGet.mockResolvedValueOnce(
-      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_2, state_version: 6 }),
+      makeFakeSnapshotRow({ snapshot_id: SNAPSHOT_ID_2, state_version: 6 })
     );
 
     const result = await rollbackToSnapshot(SNAPSHOT_ID_1, ORG_ID, HUMAN_ACTOR);
@@ -252,9 +246,9 @@ describe('rollbackToSnapshot', () => {
   it('throws when target snapshot not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      rollbackToSnapshot(SNAPSHOT_ID_1, ORG_ID, HUMAN_ACTOR),
-    ).rejects.toThrow(`Snapshot ${SNAPSHOT_ID_1} not found`);
+    await expect(rollbackToSnapshot(SNAPSHOT_ID_1, ORG_ID, HUMAN_ACTOR)).rejects.toThrow(
+      `Snapshot ${SNAPSHOT_ID_1} not found`
+    );
   });
 });
 
@@ -279,7 +273,7 @@ describe('detectAIStaleness', () => {
       makeFakeSnapshotRow({
         trigger_type: 'ai_proposal_accepted',
         captured_at: twoHoursAgo,
-      }),
+      })
     );
 
     const result = await detectAIStaleness(RESOURCE_ID, ORG_ID);
@@ -295,7 +289,7 @@ describe('detectAIStaleness', () => {
       makeFakeSnapshotRow({
         trigger_type: 'ai_proposal_accepted',
         captured_at: fiveMinutesAgo,
-      }),
+      })
     );
 
     const result = await detectAIStaleness(RESOURCE_ID, ORG_ID);
@@ -311,7 +305,7 @@ describe('detectAIStaleness', () => {
       makeFakeSnapshotRow({
         trigger_type: 'ai_proposal_accepted',
         captured_at: tenMinutesAgo,
-      }),
+      })
     );
 
     const result = await detectAIStaleness(RESOURCE_ID, ORG_ID, 5 * 60 * 1000);
@@ -342,9 +336,10 @@ describe('getAuditSummary', () => {
     ]);
 
     const result = await getAuditSummary(
-      RESOURCE_ID, ORG_ID,
+      RESOURCE_ID,
+      ORG_ID,
       '2026-03-01T00:00:00.000Z',
-      '2026-03-31T23:59:59.999Z',
+      '2026-03-31T23:59:59.999Z'
     );
 
     expect(result).toBeInstanceOf(Map);
@@ -358,9 +353,10 @@ describe('getAuditSummary', () => {
     mockDbAll.mockResolvedValueOnce([]);
 
     const result = await getAuditSummary(
-      RESOURCE_ID, ORG_ID,
+      RESOURCE_ID,
+      ORG_ID,
       '2026-03-01T00:00:00.000Z',
-      '2026-03-31T23:59:59.999Z',
+      '2026-03-31T23:59:59.999Z'
     );
 
     expect(result.size).toBe(0);
@@ -437,11 +433,11 @@ describe('rejectRestore', () => {
     expect(result.status).toBe('rejected');
     expect(result.resolvedAt).not.toBeNull();
 
-    const updateCall = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('UPDATE v8_restore_requests'),
+    const updateCall = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('UPDATE v8_restore_requests')
     );
     expect(updateCall).toBeDefined();
-    expect((updateCall![0] as string)).toContain("status = 'rejected'");
+    expect(updateCall![0] as string).toContain("status = 'rejected'");
   });
 
   it('records restore.rejected audit entry', async () => {
@@ -449,8 +445,8 @@ describe('rejectRestore', () => {
 
     await rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'Rejected by admin');
 
-    const auditInsert = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('INSERT INTO v8_audit_entries'),
+    const auditInsert = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('INSERT INTO v8_audit_entries')
     );
     expect(auditInsert).toBeDefined();
     const auditParams = auditInsert![1] as unknown[];
@@ -460,25 +456,25 @@ describe('rejectRestore', () => {
   it('throws when restore request not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason'),
-    ).rejects.toThrow(`Restore request ${RESTORE_ID} not found`);
+    await expect(rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason')).rejects.toThrow(
+      `Restore request ${RESTORE_ID} not found`
+    );
   });
 
   it('throws when restore request is already applied', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRestoreRow({ status: 'applied' }));
 
-    await expect(
-      rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason'),
-    ).rejects.toThrow('already applied, cannot reject');
+    await expect(rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason')).rejects.toThrow(
+      'already applied, cannot reject'
+    );
   });
 
   it('throws when restore request is already rejected', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRestoreRow({ status: 'rejected' }));
 
-    await expect(
-      rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason'),
-    ).rejects.toThrow('already rejected, cannot reject');
+    await expect(rejectRestore(RESTORE_ID, ORG_ID, HUMAN_ACTOR, 'reason')).rejects.toThrow(
+      'already rejected, cannot reject'
+    );
   });
 });
 
@@ -489,15 +485,9 @@ describe('rejectRestore', () => {
 describe('getResourceHistory', () => {
   it('returns combined timeline sorted by timestamp desc', async () => {
     mockDbAll
-      .mockResolvedValueOnce([
-        makeFakeSnapshotRow({ captured_at: '2026-03-23T10:00:00.000Z' }),
-      ])
-      .mockResolvedValueOnce([
-        makeFakeAuditRow({ timestamp: '2026-03-23T10:05:00.000Z' }),
-      ])
-      .mockResolvedValueOnce([
-        makeFakeRestoreRow({ requested_at: '2026-03-23T10:03:00.000Z' }),
-      ]);
+      .mockResolvedValueOnce([makeFakeSnapshotRow({ captured_at: '2026-03-23T10:00:00.000Z' })])
+      .mockResolvedValueOnce([makeFakeAuditRow({ timestamp: '2026-03-23T10:05:00.000Z' })])
+      .mockResolvedValueOnce([makeFakeRestoreRow({ requested_at: '2026-03-23T10:03:00.000Z' })]);
 
     const results = await getResourceHistory(RESOURCE_ID, ORG_ID);
 
@@ -511,20 +501,14 @@ describe('getResourceHistory', () => {
   });
 
   it('returns empty array when no history exists', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     const results = await getResourceHistory(RESOURCE_ID, ORG_ID);
     expect(results).toEqual([]);
   });
 
   it('queries all three tables with resource_id and organization_id', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     await getResourceHistory(RESOURCE_ID, ORG_ID);
 
@@ -550,9 +534,7 @@ describe('getResourceHistory', () => {
           state_version: 1,
         }),
       ])
-      .mockResolvedValueOnce([
-        makeFakeAuditRow({ timestamp: '2026-03-23T10:05:00.000Z' }),
-      ])
+      .mockResolvedValueOnce([makeFakeAuditRow({ timestamp: '2026-03-23T10:05:00.000Z' })])
       .mockResolvedValueOnce([]);
 
     const results = await getResourceHistory(RESOURCE_ID, ORG_ID);

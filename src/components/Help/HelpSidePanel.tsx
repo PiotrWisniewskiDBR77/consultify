@@ -21,13 +21,13 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { getHelpConfig } from '../../config/helpContent';
 import {
   getLocalizedText,
   getOverviewCards,
   getOverviewGuides,
   HELP_SYSTEM_OVERVIEW,
 } from '../../config/helpExperience';
-import { getHelpConfig } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { getRouteFromAppView, ROUTES } from '../../routes/routeConfig';
@@ -187,7 +187,10 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   );
 };
 
-const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
   <section className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
     <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
       {title}
@@ -564,7 +567,10 @@ export const HelpSidePanel: React.FC = () => {
               <SectionCard title={t('help.sidePanel.thisStep.whatYouDo', 'What you do here')}>
                 <div className="space-y-2">
                   {currentDocument.whatYouDoHere.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+                    >
                       <CheckCircle2 size={14} className="text-purple-500 flex-shrink-0 mt-0.5" />
                       <span>{getLocalizedText(item, lang)}</span>
                     </div>
@@ -575,7 +581,10 @@ export const HelpSidePanel: React.FC = () => {
               <SectionCard title={t('help.sidePanel.thisStep.aiHelp', 'How AI helps here')}>
                 <div className="space-y-2">
                   {currentDocument.howAiHelpsHere.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+                    >
                       <Sparkles size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
                       <span>{getLocalizedText(item, lang)}</span>
                     </div>
@@ -686,7 +695,9 @@ export const HelpSidePanel: React.FC = () => {
           {activeTab === 'knowledge' && (
             <KnowledgeTabContent
               moduleId={
-                knowledgeModuleIdOverride || currentDocument.relatedKnowledgeModuleId || help.moduleId
+                knowledgeModuleIdOverride ||
+                currentDocument.relatedKnowledgeModuleId ||
+                help.moduleId
               }
               initialArticleSlug={selectedGuideArticle}
               onBack={() => setSelectedGuideArticle(null)}

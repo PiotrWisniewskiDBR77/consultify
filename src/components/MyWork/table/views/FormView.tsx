@@ -3,13 +3,7 @@
  * Shows one record at a time as a vertical form with navigation (prev/next),
  * create new, and support for all field types. Layout: single or two-column.
  */
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Plus,
-  Star,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Plus, Star } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -45,7 +39,15 @@ const FieldRenderer: React.FC<{
     case 'url':
       return (
         <input
-          type={col.type === 'email' ? 'email' : col.type === 'url' ? 'url' : col.type === 'phone' ? 'tel' : 'text'}
+          type={
+            col.type === 'email'
+              ? 'email'
+              : col.type === 'url'
+                ? 'url'
+                : col.type === 'phone'
+                  ? 'tel'
+                  : 'text'
+          }
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           className={baseInput}
@@ -87,7 +89,7 @@ const FieldRenderer: React.FC<{
             className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-violet-500 focus:ring-violet-500/30"
           />
           <span className="text-xs text-slate-600 dark:text-slate-300">
-            {value ? (isPl ? 'Tak' : 'Yes') : (isPl ? 'Nie' : 'No')}
+            {value ? (isPl ? 'Tak' : 'Yes') : isPl ? 'Nie' : 'No'}
           </span>
         </label>
       );
@@ -102,7 +104,9 @@ const FieldRenderer: React.FC<{
         >
           <option value="">{isPl ? '— Wybierz —' : '— Select —'}</option>
           {(col.options || []).map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
         </select>
       );
@@ -122,9 +126,7 @@ const FieldRenderer: React.FC<{
                   onChange(next);
                 }}
                 className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all ${
-                  isSelected
-                    ? 'ring-2 ring-violet-400/50 shadow-sm'
-                    : 'opacity-50 hover:opacity-80'
+                  isSelected ? 'ring-2 ring-violet-400/50 shadow-sm' : 'opacity-50 hover:opacity-80'
                 }`}
                 style={{ backgroundColor: bgColor, color: '#334155' }}
               >
@@ -148,7 +150,11 @@ const FieldRenderer: React.FC<{
             >
               <Star
                 size={18}
-                className={n <= numVal ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'}
+                className={
+                  n <= numVal
+                    ? 'text-amber-400 fill-amber-400'
+                    : 'text-slate-300 dark:text-navy-600'
+                }
               />
             </button>
           ))}
@@ -168,7 +174,9 @@ const FieldRenderer: React.FC<{
             onChange={(e) => onChange(Number(e.target.value))}
             className="flex-1 h-2 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-violet-500"
           />
-          <span className="text-xs font-bold text-slate-600 dark:text-slate-300 w-10 text-right">{pct}%</span>
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-300 w-10 text-right">
+            {pct}%
+          </span>
         </div>
       );
     }
@@ -218,7 +226,7 @@ export const FormView: React.FC<FormViewProps> = ({
         onRecordUpdate(currentRecord.id, { [fieldId]: val });
       }
     },
-    [currentRecord, isCreating, onRecordUpdate],
+    [currentRecord, isCreating, onRecordUpdate]
   );
 
   const handleCreate = useCallback(() => {
@@ -247,7 +255,7 @@ export const FormView: React.FC<FormViewProps> = ({
     setNewRecordData(null);
   }, [records.length]);
 
-  const displayData = isCreating ? newRecordData! : (currentRecord?.data || {});
+  const displayData = isCreating ? newRecordData! : currentRecord?.data || {};
 
   if (records.length === 0 && !isCreating) {
     return (
@@ -283,7 +291,9 @@ export const FormView: React.FC<FormViewProps> = ({
           </button>
           <span className="text-xs font-bold text-slate-600 dark:text-slate-300 min-w-[80px] text-center">
             {isCreating
-              ? (isPl ? 'Nowy rekord' : 'New record')
+              ? isPl
+                ? 'Nowy rekord'
+                : 'New record'
               : `${currentIndex + 1} / ${records.length}`}
           </span>
           <button
@@ -325,7 +335,9 @@ export const FormView: React.FC<FormViewProps> = ({
 
       {/* Form body */}
       <div className="flex-1 overflow-auto p-6">
-        <div className={`max-w-3xl mx-auto ${layout === 'two-column' ? 'grid grid-cols-2 gap-x-6 gap-y-4' : 'space-y-4'}`}>
+        <div
+          className={`max-w-3xl mx-auto ${layout === 'two-column' ? 'grid grid-cols-2 gap-x-6 gap-y-4' : 'space-y-4'}`}
+        >
           {visibleColumns.map((col) => {
             const typeLabel = COLUMN_TYPE_LABELS[col.type];
             return (

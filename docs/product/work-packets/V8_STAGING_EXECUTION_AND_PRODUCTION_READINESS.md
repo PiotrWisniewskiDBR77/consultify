@@ -3,7 +3,7 @@
 > Date: 2026-03-23
 > Owner: Manager Agent
 > Authority: Source-of-truth decisions D1-D6
-> Status: HONEST ASSESSMENT — not a closure narrative
+> Status: STAGING SHADOW EVIDENCE LANDED — code and staging shadow validation are now ahead of the older rollout narrative, but non-V8 confidence and post-staging promotion are still incomplete
 
 ---
 
@@ -11,26 +11,32 @@
 
 ### Internal consistency check
 
-The Report #6 stated `GO (conditional on staging DB access)` and implied near-production readiness. **This was premature.** Here is the honest interpretation:
+The older rollout narrative correctly warned against claiming production readiness too early, but several of its code-level assumptions are now stale.
 
-**`Frontend integration 4/8 (integrated)` — what it actually means:**
-- V8Provider is mounted in AppProviders.tsx — **TRUE**
-- V8Provider fetches feature flags on every app boot — **TRUE**
-- `useV8Gate()` hook exists and is exported — **TRUE**
-- **Zero components consume `useV8()`, `useV8Gate()`, `useV8Chat()`, or `V8AICoreApi`** — **TRUE**
-- **Zero UI surfaces conditionally render V8 vs legacy** — **TRUE**
-- The "4/8 integrated" rating was based on infrastructure existing, not on actual product integration. **Honest rating: 2/8 (implemented)** — the code exists but nothing uses it.
+**Current frontend truth:**
 
-**`Deployment readiness 6/8 (operator-ready)` — what it actually means:**
-- Deploy script exists (`v8-deploy.ts`) — **TRUE**
-- Smoke test script exists (`v8-smoke-test.ts`) — **TRUE**
-- Operator runbook exists — **TRUE**
-- **Neither script has ever been executed against a real environment** — **TRUE**
-- **No evidence of V8 migrations applied to any database** — **TRUE**
-- **No evidence of Railway env vars configured** — **TRUE**
-- **Shadow interceptor is not mounted in Gateway.ts** — **TRUE**
-- **Shadow route mappings are empty** — **TRUE**
-- The "6/8 operator-ready" rating was based on documentation existing, not on operational proof. **Honest rating: 3/8 (wired)** — the tooling exists but has never been exercised.
+- `V8Provider` is mounted in `AppProviders.tsx`
+- `useV8Gate()` is exported and consumed
+- V8 UI consumers now exist, including `V8ContextIndicator` and `V8ArtifactRunControl`
+- this is still a narrow first surface, not full product integration
+- honest rating remains **wired**, not pilot-ready
+
+**Current deployment/runtime truth:**
+
+- deploy helper exists (`v8-deploy.ts`)
+- migration runner exists (`v8-migrate.ts`)
+- smoke harness exists (`v8-smoke-test.ts`)
+- shadow interceptor is mounted in `Gateway.ts`
+- shadow route mappings are no longer empty
+- gateway E2E coverage exists
+- real staging migration / smoke / rollback evidence now exists
+- staging shadow observation now exists with live operator diagnostics and passing promotion-readiness
+
+The honest interpretation today is:
+
+- **code and wiring are materially ready for staging execution**
+- **pilot-readiness is still unproven**
+- **production-readiness is still unproven**
 
 ### Why the production-readiness claim was not justified
 
@@ -40,24 +46,21 @@ The previous report conflated:
 - "documentation written" with "procedures tested"
 - "hooks exported" with "features integrated"
 
-None of the following have been demonstrated:
-1. V8 migrations applied to a real Postgres instance
-2. V8 API routes responding on a deployed server
-3. Any UI component rendering V8 data
-4. Shadow mode recording real comparisons
-5. Rollback procedure executed and verified
-6. Operator monitoring workflow exercised
+What still has not been demonstrated:
+1. non-V8 confidence green enough for a full user-ready claim
+2. pilot observation window outside staging completed successfully
+3. production promotion monitoring completed successfully
 
 ### Correct status as of today
 
 | Status level | Justified? | Evidence |
 |-------------|-----------|----------|
-| `staging-ready` | **PARTIALLY** | Code is ready; operational execution has not started |
-| `pilot-ready` | **NO** | Zero staging evidence, zero UI integration, zero shadow data |
+| `staging-ready` | **YES, on live evidence** | Real staging migration, smoke, rollback, and shadow observation evidence now exist |
+| `pilot-ready` | **NO** | Staging shadow is proven, but pilot evidence outside staging does not exist yet |
 | `production-ready` | **NO** | Multiple hard gaps remain |
 | `partial` | **YES** | This is the honest status |
 
-**Verdict: The program is `staging-ready at the code level` but `not operationally validated`.**
+**Verdict: The rollout is `staging-validated`, but still `not pilot-complete` and `not production-ready`.**
 
 ---
 
@@ -67,15 +70,11 @@ None of the following have been demonstrated:
 
 | # | Gap | Severity | Why it blocks |
 |---|-----|----------|---------------|
-| 1 | **Zero UI consumers of V8** | P0 | V8 features cannot be seen or used by any user |
-| 2 | **V8 migrations never applied to real DB** | P0 | V8 services will fail at runtime (no tables) |
-| 3 | **Shadow interceptor not mounted** | P0 | Shadow mode is inert — no comparisons possible |
-| 4 | **Shadow route mappings empty** | P0 | Even if mounted, nothing would be compared |
-| 5 | **Deploy/smoke scripts never executed** | P1 | No proof the deployment pipeline works |
-| 6 | **No E2E tests through full Gateway** | P1 | Route mounting verified only in isolation |
-| 7 | **Railway env vars not confirmed** | P1 | V8 may be disabled in all environments |
-| 8 | **Rollback never tested** | P1 | Rollback procedure is documented but unverified |
-| 9 | **Operator monitoring never exercised** | P2 | Runbook exists but has never been followed |
+| 1 | **Non-V8 confidence remains incomplete** | P1 | Existing app confidence is still not green enough for a full user-ready claim |
+| 2 | **Pilot / canary observation outside staging has not happened** | P1 | Staging shadow proof is not the same as a real pilot window |
+| 3 | **Operator monitoring outside staging has not happened** | P1 | Admin workflow is proven on staging only |
+| 4 | **UI V8 coverage is still narrow** | P1 | First surfaces exist, but broader user-facing coverage is still limited |
+| 5 | **Shadow route coverage is still narrow** | P1 | The operator gate is green, but only on the first mapped coarse routes |
 
 ---
 
@@ -97,13 +96,13 @@ None of the following have been demonstrated:
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Create `v8` schema and all 120 tables in staging Postgres |
+| **Purpose** | Create the `v8` schema and the full manifest-backed V8/V8.1 table set in staging Postgres |
 | **Preconditions** | Step 1 passed; `DATABASE_PUBLIC_URL` resolves to staging Postgres |
 | **Commands** | `npx tsx scripts/v8-migrate.ts --dry-run` → review → `npx tsx scripts/v8-migrate.ts --apply` → `npx tsx scripts/v8-migrate.ts --verify` |
-| **Exact expected outcome** | Dry-run: 47 files listed, transformations shown. Apply: 47 migrations applied, 0 errors. Verify: all expected tables exist in `v8` schema. |
+| **Exact expected outcome** | Dry-run lists the full migration set with transformations shown. Apply finishes with 0 failed migrations. Verify confirms all expected tables exist in the `v8` schema. |
 | **Failure signals** | Any SQL error during apply; verify shows missing tables; connection refused |
 | **Rollback / stop condition** | If apply fails on any migration → STOP. Do not proceed. Fix the failing migration. If partial apply → `--rollback` to clean state. |
-| **Evidence to capture** | Full output of `--dry-run`, `--apply`, and `--verify`. Postgres `\dt v8.*` output showing table count. |
+| **Evidence to capture** | Full output of `--dry-run`, `--apply`, and `--verify`. Staging schema inventory showing the expected `v8` objects. |
 
 ### Step 3: Smoke test execution
 
@@ -112,7 +111,7 @@ None of the following have been demonstrated:
 | **Purpose** | Verify V8 API endpoints respond correctly on deployed server |
 | **Preconditions** | Step 2 passed; server deployed with `ENABLE_V8_GLOBAL=true`; valid JWT token available |
 | **Command** | `npm run v8:smoke-test -- --url <staging-url> --token <jwt>` |
-| **Exact expected outcome** | 10/10 smoke tests pass: health 200, admin 200, chat routes respond (400 for missing params = correct), AI core 200 |
+| **Exact expected outcome** | The smoke harness passes against staging and confirms health, readiness, admin, and live V8 route contracts under real auth. |
 | **Failure signals** | Any endpoint returns 500; health returns non-200; connection timeout |
 | **Rollback / stop condition** | If health endpoint fails → STOP. Check server logs. If > 2 endpoints fail → STOP. Investigate before proceeding. |
 | **Evidence to capture** | Full smoke test output with pass/fail per endpoint and response times |
@@ -122,17 +121,16 @@ None of the following have been demonstrated:
 | Field | Value |
 |-------|-------|
 | **Purpose** | Enable V8 parallel processing for a test org without affecting users |
-| **Preconditions** | Step 3 passed; shadow interceptor mounted in Gateway (requires code change); at least 1 shadow route mapping configured |
+| **Preconditions** | Step 3 passed; shadow interceptor is already mounted in `Gateway.ts`; at least one shadow route mapping is already configured; staging auth and admin access are available |
 | **Commands** | Set `ENABLE_V8_SHADOW_MODE=true` → `PUT /api/v8/admin/flags/chat {"enabled": true}` for test org |
 | **Exact expected outcome** | Shadow comparisons appear in `GET /api/v8/admin/shadow/stats` within minutes of test traffic |
 | **Failure signals** | Stats show 0 comparisons after traffic; errors in server logs |
 | **Rollback / stop condition** | If V8 errors affect legacy responses → disable immediately (`ENABLE_V8_GLOBAL=false`). If error rate > 10% → disable for that org. |
 | **Evidence to capture** | Shadow stats output showing comparison count, match rate, latency delta |
 
-**BLOCKER NOTE:** Step 4 cannot execute today because:
-- Shadow interceptor is NOT mounted in Gateway.ts
-- Shadow route mappings are EMPTY
-- These require code changes (new packets) before shadow mode is functional
+**Current note:** Step 4 is now proven on staging.
+
+Live staging observation reached `102` comparable comparisons, `100.0%` match rate, `0` recent mismatches, and passing `promotion-readiness`; see `evidence/485-v8-staging-shadow-observation-and-promotion-readiness.md`.
 
 ### Step 5: Monitoring verification
 
@@ -162,7 +160,7 @@ None of the following have been demonstrated:
 
 | Field | Value |
 |-------|-------|
-| **What proves success** | Smoke test 10/10 pass; `GET /api/v8/health` returns `{ data: {...}, meta: { version: 'v8' } }` with 200 |
+| **What proves success** | Live staging smoke harness passes and `GET /api/v8/health` returns `{ data: {...}, meta: { version: 'v8' } }` with 200 under valid auth |
 | **What counts as partial** | Health works but some domain endpoints return 500 |
 | **What fails the gate** | Health endpoint returns non-200; > 3 endpoints fail |
 
@@ -186,9 +184,9 @@ None of the following have been demonstrated:
 
 | Field | Value |
 |-------|-------|
-| **What proves success** | `v8-smoke-test.ts` output showing 10/10 pass against staging URL |
+| **What proves success** | `v8-smoke-test.ts` output showing the full harness passes against the staging URL |
 | **What counts as partial** | 7-9/10 pass with known non-critical failures |
-| **What fails the gate** | < 7/10 pass; health endpoint fails |
+| **What fails the gate** | Health endpoint fails or multiple live smoke contracts fail |
 
 ### E6: Operator monitoring evidence
 
@@ -343,12 +341,13 @@ Even if staging passes perfectly, these remain:
 
 ### Still NOT pilot-ready
 
-| Gap | Why | Required packet |
-|-----|-----|----------------|
-| Zero UI consumers of V8 | Users cannot see or interact with V8 features | CP-22: First V8 UI surface (Chat) |
-| Shadow interceptor not mounted | Shadow mode is inert | CP-23: Mount shadow interceptor + first mapping |
-| Shadow route mappings empty | Nothing to compare | CP-23 (same packet) |
-| No E2E tests through Gateway | Route mounting verified only in isolation | CP-24: Gateway E2E test |
+| Gap | Why | Required packet / action |
+|-----|-----|--------------------------|
+| No real staging migration evidence | Schema creation is still unproven on the target DB | CP-25 style staging migration execution |
+| No authenticated live smoke evidence | Route wiring is still unproven on the deployed server | CP-26 style staging smoke execution |
+| No real shadow comparison window | Wired shadow mode is not yet pilot evidence | CP-27 style shadow observation |
+| Rollback and flag-off not drilled live | Pilot safety is still only documented | Rollback verification packet |
+| UI and shadow coverage remain narrow | First surface and first mappings do not yet equal broad pilot confidence | Additional post-staging breadth only if staging proof shows the need |
 
 ### Still NOT full-prod-ready
 
@@ -363,16 +362,16 @@ Even if staging passes perfectly, these remain:
 
 ## 9. Recommended Next Work Packets
 
-### Tranche 04: Staging Validation + First UI Surface
+### Tranche 04 / Operational follow-through
 
 | # | Packet | Type | Priority | Depends on |
 |---|--------|------|----------|-----------|
-| CP-22 | First V8 UI surface — Chat context panel | code-eligible | P0 | Staging pass |
-| CP-23 | Mount shadow interceptor + first route mapping | code-eligible | P0 | — |
-| CP-24 | Gateway E2E test for V8 routes | code-eligible | P1 | — |
+| CP-22 | First V8 UI surface — Chat context panel | completed | P0 | done in code |
+| CP-23 | Mount shadow interceptor + first route mapping | completed | P0 | done in code |
+| CP-24 | Gateway E2E test for V8 routes | completed | P1 | done in code |
 | CP-25 | Staging migration execution + evidence capture | verification-only | P0 | DB access |
 | CP-26 | Staging smoke test execution + evidence capture | verification-only | P0 | CP-25 |
-| CP-27 | Shadow mode activation + monitoring (24h) | verification-only | P0 | CP-23 + CP-25 |
+| CP-27 | Shadow mode activation + monitoring (24h) | verification-only | P0 | CP-25 + CP-26 |
 
 ### Tranche 05: Pilot Preparation (after Tranche 04)
 
@@ -390,16 +389,15 @@ Even if staging passes perfectly, these remain:
 ### `GO for staging only`
 
 **Justification:**
-- Code infrastructure is complete and tested in isolation (160 closure tests, 32 smoke tests, 2598 V8 tests)
+- Code infrastructure is complete enough to justify staging execution
 - Deployment tooling exists and is ready to execute
-- The system has never been exercised on real infrastructure
-- Zero UI integration means users cannot interact with V8
-- Shadow mode is structurally inert (not mounted, no mappings)
+- The system has still not been fully exercised on real infrastructure
+- Initial UI integration and initial shadow wiring now exist, but they are not yet a pilot or production proof
 
 **What this means:**
 - We CAN deploy to staging and start collecting real evidence
-- We CANNOT claim pilot-readiness until staging evidence is captured
-- We CANNOT claim production-readiness until pilot is proven
+- We CANNOT claim pilot-readiness until staging evidence is captured and shadow observation succeeds
+- We CANNOT claim production-readiness until pilot is proven and rollback/monitoring are exercised
 - The program is at the **beginning of operational validation**, not the end
 
 **Estimated timeline to pilot-ready:** 2-3 weeks (staging validation + first UI surface + shadow mode activation)

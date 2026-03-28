@@ -51,7 +51,10 @@ const COMPARISON_OPS = ['>=', '<=', '!=', '>', '<', '='];
 const KEYWORDS = new Set(['AND', 'OR', 'NOT', 'TRUE', 'FALSE', 'true', 'false']);
 
 export class FormulaError extends Error {
-  constructor(message: string, public readonly position?: number) {
+  constructor(
+    message: string,
+    public readonly position?: number
+  ) {
     super(message);
     this.name = 'FormulaError';
   }
@@ -362,10 +365,7 @@ class Parser {
       return { type: 'fieldRef', name };
     }
 
-    throw new FormulaError(
-      `Unexpected token '${t.value}' at position ${t.pos}`,
-      t.pos
-    );
+    throw new FormulaError(`Unexpected token '${t.value}' at position ${t.pos}`, t.pos);
   }
 }
 
@@ -712,7 +712,7 @@ const BUILTINS: Record<string, BuiltinFn> = {
     const start = new Date(d.getFullYear(), 0, 1);
     const diff = d.getTime() - start.getTime();
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
-    return Math.ceil((diff / oneWeek) + start.getDay() / 7);
+    return Math.ceil(diff / oneWeek + start.getDay() / 7);
   },
 
   SET_TIMEZONE: (args) => {
@@ -812,7 +812,8 @@ function evalNode(
       }
 
       const left = evalNode(children[0], record, fieldMap, context);
-      const right = children.length > 1 ? evalNode(children[1], record, fieldMap, context) : undefined;
+      const right =
+        children.length > 1 ? evalNode(children[1], record, fieldMap, context) : undefined;
 
       switch (op) {
         case '+':
@@ -934,7 +935,10 @@ export async function recomputeAffectedFields(
     // Load current record data
     const recordResult = await db.query('SELECT data FROM tp_records WHERE id = $1', [recordId]);
     if (!recordResult.rows[0]) return {};
-    const data = ((recordResult.rows[0] as { data: Record<string, unknown> }).data ?? {}) as Record<string, unknown>;
+    const data = ((recordResult.rows[0] as { data: Record<string, unknown> }).data ?? {}) as Record<
+      string,
+      unknown
+    >;
 
     // Build field map for evaluator (name → id and id → id)
     const fieldMap = new Map<string, string>();
@@ -966,10 +970,10 @@ export async function recomputeAffectedFields(
 
     // Persist
     if (Object.keys(computed).length > 0) {
-      await db.query(
-        `UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`,
-        [recordId, JSON.stringify(data)]
-      );
+      await db.query(`UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`, [
+        recordId,
+        JSON.stringify(data),
+      ]);
     }
 
     return computed;

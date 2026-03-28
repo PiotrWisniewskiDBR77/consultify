@@ -52,7 +52,11 @@ const CURRENCY_SUFFIX = /\s?(PLN|USD|EUR|GBP|zł|zl)$/i;
 // parseCSV
 // ---------------------------------------------------------------------------
 
-export function parseCSV(csvContent: string): { headers: string[]; rows: string[][]; totalRows: number } {
+export function parseCSV(csvContent: string): {
+  headers: string[];
+  rows: string[][];
+  totalRows: number;
+} {
   if (!csvContent || typeof csvContent !== 'string') {
     return { headers: [], rows: [], totalRows: 0 };
   }
@@ -204,10 +208,7 @@ export function inferFieldTypes(
     } else {
       const unique = new Set(values);
       const ratio = unique.size / values.length;
-      if (
-        unique.size <= SINGLE_SELECT_MAX_OPTIONS &&
-        ratio <= SINGLE_SELECT_MAX_RATIO
-      ) {
+      if (unique.size <= SINGLE_SELECT_MAX_OPTIONS && ratio <= SINGLE_SELECT_MAX_RATIO) {
         fieldType = 'singleSelect';
         options = {
           options: Array.from(unique)
@@ -244,9 +245,7 @@ function buildCsvToFieldMapping(
     }
   } else {
     for (const h of headers) {
-      const field = tableFields.find(
-        (f) => f.name.toLowerCase() === h.toLowerCase().trim()
-      );
+      const field = tableFields.find((f) => f.name.toLowerCase() === h.toLowerCase().trim());
       if (field) {
         map.set(h, field.id);
       }
@@ -256,11 +255,7 @@ function buildCsvToFieldMapping(
   return map;
 }
 
-function coerceValue(
-  raw: string,
-  fieldType: string,
-  options?: Record<string, unknown>
-): unknown {
+function coerceValue(raw: string, fieldType: string, options?: Record<string, unknown>): unknown {
   const s = (raw ?? '').trim();
   if (s === '') return null;
 
@@ -306,17 +301,20 @@ export async function importToTable(
   }
 
   const db = getDatabase();
-  const tableResult = await db.query(
-    'SELECT id, name FROM tp_fields WHERE table_id = $1',
-    [tableId]
-  );
+  const tableResult = await db.query('SELECT id, name FROM tp_fields WHERE table_id = $1', [
+    tableId,
+  ]);
   const tableFields = tableResult.rows as Array<{ id: string; name: string }>;
   const fieldTypesResult = await db.query(
     'SELECT id, field_type, options FROM tp_fields WHERE table_id = $1',
     [tableId]
   );
   const fieldTypes = new Map<string, { type: string; options?: Record<string, unknown> }>();
-  for (const row of fieldTypesResult.rows as Array<{ id: string; field_type: string; options?: Record<string, unknown> }>) {
+  for (const row of fieldTypesResult.rows as Array<{
+    id: string;
+    field_type: string;
+    options?: Record<string, unknown>;
+  }>) {
     fieldTypes.set(row.id, {
       type: row.field_type,
       options: row.options ?? {},
@@ -485,7 +483,11 @@ export async function importToNewTable(
 // parseXlsx
 // ---------------------------------------------------------------------------
 
-export function parseXlsx(buffer: Buffer): { headers: string[]; rows: string[][]; totalRows: number } {
+export function parseXlsx(buffer: Buffer): {
+  headers: string[];
+  rows: string[][];
+  totalRows: number;
+} {
   // Dynamic import is not possible in a sync function, so we use require-style
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const XLSX = require('xlsx');
@@ -518,7 +520,9 @@ export async function importFromGoogleSheet(
 ): Promise<{ tableId: string; result: ImportResult }> {
   const match = sheetUrl.match(GSHEET_ID_REGEX);
   if (!match || !match[1]) {
-    throw new Error('Invalid Google Sheets URL. Expected format: https://docs.google.com/spreadsheets/d/{ID}/...');
+    throw new Error(
+      'Invalid Google Sheets URL. Expected format: https://docs.google.com/spreadsheets/d/{ID}/...'
+    );
   }
 
   const spreadsheetId = match[1];
@@ -534,7 +538,7 @@ export async function importFromGoogleSheet(
   } catch (err) {
     throw new Error(
       "Sheet must be publicly accessible or shared with 'Anyone with link'. " +
-      `Fetch failed: ${(err as Error).message}`
+        `Fetch failed: ${(err as Error).message}`
     );
   }
 

@@ -34,50 +34,56 @@ const db = {
  * POST /api/data-export/request
  * Create a new data export request
  */
-router.post('/request', verifyToken, isAuthenticated, requireAudit, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    await checkLegalHoldForUser(db, userId, 'Data export request');
-    const { format = 'json', includeAIData = true, includeActivityLogs = true } = req.body;
+router.post(
+  '/request',
+  verifyToken,
+  isAuthenticated,
+  requireAudit,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      await checkLegalHoldForUser(db, userId, 'Data export request');
+      const { format = 'json', includeAIData = true, includeActivityLogs = true } = req.body;
 
-    // Create export request record
-    const requestId = `dsr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      // Create export request record
+      const requestId = `dsr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    await db.run(
-      `
+      await db.run(
+        `
       INSERT INTO gdpr_requests (id, user_id, request_type, status, requested_at, format, options)
       VALUES (?, ?, 'EXPORT', 'PENDING', datetime('now'), ?, ?)
     `,
-      [requestId, userId, format, JSON.stringify({ includeAIData, includeActivityLogs })]
-    );
+        [requestId, userId, format, JSON.stringify({ includeAIData, includeActivityLogs })]
+      );
 
-    logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
-    await (req as any).emitAuditEvent?.({
-      actorType: 'USER',
-      action: 'create',
-      resourceType: 'data_export_request',
-      resourceId: requestId,
-      after: { format, includeAIData, includeActivityLogs, status: 'PENDING' },
-      metadata: { userId },
-    });
+      logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'data_export_request',
+        resourceId: requestId,
+        after: { format, includeAIData, includeActivityLogs, status: 'PENDING' },
+        metadata: { userId },
+      });
 
-    res.json({
-      success: true,
-      requestId,
-      message: 'Data export request created. You will be notified when the export is ready.',
-      estimatedTime: '24-48 hours',
-    });
-  } catch (error: any) {
-    if (error?.code === 'LEGAL_HOLD') {
-      return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+      res.json({
+        success: true,
+        requestId,
+        message: 'Data export request created. You will be notified when the export is ready.',
+        estimatedTime: '24-48 hours',
+      });
+    } catch (error: any) {
+      if (error?.code === 'LEGAL_HOLD') {
+        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+      }
+      logger.error('[DataExport] Failed to create export request:', error);
+      res.status(500).json({ error: 'Failed to create export request', message: error.message });
     }
-    logger.error('[DataExport] Failed to create export request:', error);
-    res.status(500).json({ error: 'Failed to create export request', message: error.message });
   }
-});
+);
 
 /**
  * GET /api/data-export/status/:requestId

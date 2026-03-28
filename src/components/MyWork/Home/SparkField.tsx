@@ -92,7 +92,9 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
             <div className="mb-3 rounded-2xl bg-amber-500/10 p-4 text-amber-200">
               <Plus size={22} />
             </div>
-            <div className="text-base font-semibold text-amber-50">{isPolish ? 'Nowy pomysł' : 'New idea'}</div>
+            <div className="text-base font-semibold text-amber-50">
+              {isPolish ? 'Nowy pomysł' : 'New idea'}
+            </div>
             <div className="mt-1 text-xs text-slate-300/65">
               {isPolish ? 'Uruchom nową ścieżkę transformacji' : 'Start a new transformation track'}
             </div>

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CollaborationRoom, RoomPresence } from '../../../types/collaborationRoom.js';
 import { VALID_ROOM_TRANSITIONS } from '../../../types/collaborationRoom.js';
@@ -27,18 +27,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  detectStalePresence,
-  getRoomHealth,
-  enterDegradedMode,
-  recoverFromDegraded,
-  getActiveRoomsByOrg,
   broadcastEvent,
+  detectStalePresence,
+  enterDegradedMode,
+  getActiveRoomsByOrg,
+  getRoomHealth,
+  recoverFromDegraded,
 } from '../collaborationRoomService.js';
-
-import {
-  getCrossCanvasPresence,
-  getToolRoomStatus,
-} from '../multiplayerHardeningService.js';
+import { getCrossCanvasPresence, getToolRoomStatus } from '../multiplayerHardeningService.js';
 
 // ==========================================
 // FIXTURES
@@ -151,14 +147,12 @@ describe('detectStalePresence', () => {
     const oldHeartbeat = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow());
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePresenceRow({ last_heartbeat: oldHeartbeat }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePresenceRow({ last_heartbeat: oldHeartbeat })]);
 
     await detectStalePresence(ROOM_ID, ORG_ID);
 
-    const eventInserts = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('INSERT INTO v8_collaboration_events'),
+    const eventInserts = mockDbRun.mock.calls.filter((call) =>
+      (call[0] as string).includes('INSERT INTO v8_collaboration_events')
     );
     expect(eventInserts.length).toBeGreaterThanOrEqual(1);
   });
@@ -195,9 +189,9 @@ describe('detectStalePresence', () => {
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      detectStalePresence(ROOM_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(detectStalePresence(ROOM_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -283,9 +277,9 @@ describe('getRoomHealth', () => {
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      getRoomHealth(ROOM_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(getRoomHealth(ROOM_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -304,13 +298,13 @@ describe('enterDegradedMode', () => {
 
     expect(result.roomState).toBe('error');
 
-    const degradedUpdate = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('degraded_since'),
+    const degradedUpdate = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('degraded_since')
     );
     expect(degradedUpdate).toBeDefined();
 
-    const eventInserts = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('INSERT INTO v8_collaboration_events'),
+    const eventInserts = mockDbRun.mock.calls.filter((call) =>
+      (call[0] as string).includes('INSERT INTO v8_collaboration_events')
     );
     const degradedEvent = eventInserts.find((call) => {
       const params = call[1] as unknown[];
@@ -326,7 +320,9 @@ describe('enterDegradedMode', () => {
 
     expect(result.roomState).toBe('error');
     const transitionCalls = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('UPDATE v8_collaboration_rooms') && (call[0] as string).includes('room_state'),
+      (call) =>
+        (call[0] as string).includes('UPDATE v8_collaboration_rooms') &&
+        (call[0] as string).includes('room_state')
     );
     expect(transitionCalls).toHaveLength(0);
   });
@@ -334,9 +330,9 @@ describe('enterDegradedMode', () => {
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      enterDegradedMode(ROOM_ID, OTHER_ORG_ID, 'test'),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(enterDegradedMode(ROOM_ID, OTHER_ORG_ID, 'test')).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -362,8 +358,8 @@ describe('recoverFromDegraded', () => {
 
     await recoverFromDegraded(ROOM_ID, ORG_ID);
 
-    const clearDegraded = mockDbRun.mock.calls.find(
-      (call) => (call[0] as string).includes('degraded_since = NULL'),
+    const clearDegraded = mockDbRun.mock.calls.find((call) =>
+      (call[0] as string).includes('degraded_since = NULL')
     );
     expect(clearDegraded).toBeDefined();
   });
@@ -374,8 +370,8 @@ describe('recoverFromDegraded', () => {
 
     await recoverFromDegraded(ROOM_ID, ORG_ID);
 
-    const eventInserts = mockDbRun.mock.calls.filter(
-      (call) => (call[0] as string).includes('INSERT INTO v8_collaboration_events'),
+    const eventInserts = mockDbRun.mock.calls.filter((call) =>
+      (call[0] as string).includes('INSERT INTO v8_collaboration_events')
     );
     const reconnectedEvent = eventInserts.find((call) => {
       const params = call[1] as unknown[];
@@ -387,17 +383,17 @@ describe('recoverFromDegraded', () => {
   it('throws when room is not in error state', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow({ room_state: 'active' }));
 
-    await expect(
-      recoverFromDegraded(ROOM_ID, ORG_ID),
-    ).rejects.toThrow('Room 00000000-0000-4000-8000-aaaaaaaaaaaa is not in error state (current: active)');
+    await expect(recoverFromDegraded(ROOM_ID, ORG_ID)).rejects.toThrow(
+      'Room 00000000-0000-4000-8000-aaaaaaaaaaaa is not in error state (current: active)'
+    );
   });
 
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      recoverFromDegraded(ROOM_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(recoverFromDegraded(ROOM_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -472,15 +468,17 @@ describe('broadcastEvent', () => {
   it('throws when room not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      broadcastEvent(ROOM_ID, OTHER_ORG_ID, 'system.heartbeat', {}),
-    ).rejects.toThrow(`Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(broadcastEvent(ROOM_ID, OTHER_ORG_ID, 'system.heartbeat', {})).rejects.toThrow(
+      `Room ${ROOM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 
   it('supports different event types', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow());
 
-    const result = await broadcastEvent(ROOM_ID, ORG_ID, 'collaboration.edit_started', { field: 'title' });
+    const result = await broadcastEvent(ROOM_ID, ORG_ID, 'collaboration.edit_started', {
+      field: 'title',
+    });
 
     expect(result.eventType).toBe('collaboration.edit_started');
     expect(result.payload).toEqual({ field: 'title' });
@@ -498,12 +496,14 @@ describe('getCrossCanvasPresence', () => {
       makeFakeRoomRow({ room_id: ROOM_ID_2, resource_type: 'whiteboard', resource_id: 'wb-001' }),
     ]);
     // presence for room 1
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePresenceRow({ room_id: ROOM_ID }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePresenceRow({ room_id: ROOM_ID })]);
     // presence for room 2
     mockDbAll.mockResolvedValueOnce([
-      makeFakePresenceRow({ room_id: ROOM_ID_2, user_id: USER_ID_2, presence_id: '00000000-0000-4000-8000-pppppppppp02' }),
+      makeFakePresenceRow({
+        room_id: ROOM_ID_2,
+        user_id: USER_ID_2,
+        presence_id: '00000000-0000-4000-8000-pppppppppp02',
+      }),
     ]);
 
     const result = await getCrossCanvasPresence(WORKSPACE_ID, ORG_ID);
@@ -563,7 +563,9 @@ describe('getCrossCanvasPresence', () => {
 
 describe('getToolRoomStatus', () => {
   it('returns room status with presence counts', async () => {
-    mockDbGet.mockResolvedValueOnce(makeFakeRoomRow({ resource_type: 'whiteboard', resource_id: 'wb-001' }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeRoomRow({ resource_type: 'whiteboard', resource_id: 'wb-001' })
+    );
     // active presence
     mockDbAll.mockResolvedValueOnce([makeFakePresenceRow()]);
     // stale presence

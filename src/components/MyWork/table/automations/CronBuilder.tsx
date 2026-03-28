@@ -48,7 +48,13 @@ function validateCronLocal(cron: string): { valid: boolean; error?: string; desc
   }
 
   const fieldNames = ['minute', 'hour', 'day of month', 'month', 'day of week'];
-  const ranges: [number, number][] = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 6]];
+  const ranges: [number, number][] = [
+    [0, 59],
+    [0, 23],
+    [1, 31],
+    [1, 12],
+    [0, 6],
+  ];
 
   for (let i = 0; i < 5; i++) {
     const expr = parts[i];
@@ -87,7 +93,13 @@ function validateCronLocal(cron: string): { valid: boolean; error?: string; desc
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     if (dow === '1-5') pieces.push('on weekdays');
     else if (dow === '0,6') pieces.push('on weekends');
-    else pieces.push(`on ${dow.split(',').map((d) => dayNames[parseInt(d, 10)] ?? d).join(', ')}`);
+    else
+      pieces.push(
+        `on ${dow
+          .split(',')
+          .map((d) => dayNames[parseInt(d, 10)] ?? d)
+          .join(', ')}`
+      );
   }
   if (dom !== '*') pieces.push(`on day ${dom}`);
   if (mon !== '*') pieces.push(`in month ${mon}`);
@@ -95,7 +107,12 @@ function validateCronLocal(cron: string): { valid: boolean; error?: string; desc
   return { valid: true, description: pieces.join(' ') };
 }
 
-export const CronBuilder: React.FC<CronBuilderProps> = ({ value, onChange, timezone, onTimezoneChange }) => {
+export const CronBuilder: React.FC<CronBuilderProps> = ({
+  value,
+  onChange,
+  timezone,
+  onTimezoneChange,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [customMode, setCustomMode] = useState(() => !PRESETS.some((p) => p.cron === value));

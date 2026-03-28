@@ -19,26 +19,26 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  WorkingMemoryEntry,
-  MemoryPromotionRequest,
-  WorkingMemoryOrchestrationResult,
-  MemoryFreshnessCheck,
   CreateWorkingMemoryEntryParams,
-  RequestMemoryPromotionParams,
-  OrchestrateRetrievalParams,
-  MemoryType,
   FreshnessPolicy,
+  MemoryFreshnessCheck,
+  MemoryPromotionRequest,
+  MemoryType,
+  OrchestrateRetrievalParams,
   PromotionStatus,
+  RequestMemoryPromotionParams,
+  WorkingMemoryEntry,
+  WorkingMemoryOrchestrationResult,
 } from '../../types/knowledgeRetrievalIntegration.js';
 import {
   CreateWorkingMemoryEntryParamsSchema,
-  RequestMemoryPromotionParamsSchema,
   OrchestrateRetrievalParamsSchema,
+  RequestMemoryPromotionParamsSchema,
 } from '../../types/knowledgeRetrievalIntegration.js';
-import { createRetrievalRequest } from './governedRetrievalService.js';
-import { assignTrustClass } from './trustAuditService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { createRetrievalRequest } from './governedRetrievalService.js';
+import { assignTrustClass } from './trustAuditService.js';
 
 // ==========================================
 // HELPERS
@@ -136,7 +136,7 @@ const MEMORY_FRESHNESS_POLICY: Record<MemoryType, FreshnessPolicy> = {
  * Store a working memory entry with lifecycle metadata.
  */
 export async function createWorkingMemoryEntry(
-  params: CreateWorkingMemoryEntryParams,
+  params: CreateWorkingMemoryEntryParams
 ): Promise<WorkingMemoryEntry> {
   const validated = CreateWorkingMemoryEntryParamsSchema.parse(params);
 
@@ -168,12 +168,12 @@ export async function createWorkingMemoryEntry(
       entry.sourceRef,
       entry.createdAt,
       entry.expiresAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created working memory entry ${entryId} ` +
-    `[type=${entry.memoryType}] for conversation ${entry.conversationId}`,
+      `[type=${entry.memoryType}] for conversation ${entry.conversationId}`
   );
 
   return entry;
@@ -185,7 +185,7 @@ export async function createWorkingMemoryEntry(
  */
 export async function getWorkingMemory(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkingMemoryEntry[]> {
   const now = new Date().toISOString();
 
@@ -195,7 +195,7 @@ export async function getWorkingMemory(
        AND (expires_at IS NULL OR expires_at > ?)
      ORDER BY created_at ASC`,
     [conversationId, organizationId, now],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToWorkingMemory);
@@ -211,7 +211,7 @@ export async function getWorkingMemory(
  * 4. Return unified result
  */
 export async function orchestrateRetrieval(
-  params: OrchestrateRetrievalParams,
+  params: OrchestrateRetrievalParams
 ): Promise<WorkingMemoryOrchestrationResult> {
   const validated = OrchestrateRetrievalParamsSchema.parse(params);
 
@@ -219,7 +219,7 @@ export async function orchestrateRetrieval(
 
   const workingMemoryResults = await getWorkingMemory(
     validated.conversationId,
-    validated.organizationId,
+    validated.organizationId
   );
 
   const workingMemoryContextRef =
@@ -242,8 +242,7 @@ export async function orchestrateRetrieval(
     evidenceRefs: [],
     modelDeclaredClass: null,
     degradedModeFlag: false,
-    uncertaintyClass:
-      workingMemoryResults.length === 0 ? 'partial_evidence' : null,
+    uncertaintyClass: workingMemoryResults.length === 0 ? 'partial_evidence' : null,
   });
 
   const result: WorkingMemoryOrchestrationResult = {
@@ -257,8 +256,8 @@ export async function orchestrateRetrieval(
 
   logger.info(
     `${LOG_PREFIX} Orchestrated retrieval ${requestId} ` +
-    `[retrievalReq=${retrievalRequest.requestId}, wmEntries=${workingMemoryResults.length}, ` +
-    `trust=${mergedTrustClass}] for org ${validated.organizationId}`,
+      `[retrievalReq=${retrievalRequest.requestId}, wmEntries=${workingMemoryResults.length}, ` +
+      `trust=${mergedTrustClass}] for org ${validated.organizationId}`
   );
 
   return result;
@@ -272,7 +271,7 @@ export async function orchestrateRetrieval(
  * no direct promotion as if it were original source evidence.
  */
 export async function requestMemoryPromotion(
-  params: RequestMemoryPromotionParams,
+  params: RequestMemoryPromotionParams
 ): Promise<MemoryPromotionRequest> {
   const validated = RequestMemoryPromotionParamsSchema.parse(params);
 
@@ -309,13 +308,13 @@ export async function requestMemoryPromotion(
       promotion.resolvedBy,
       promotion.resolvedAt,
       promotion.createdAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created memory promotion request ${requestId} ` +
-    `[source=${validated.sourceEntryId}, target=${validated.targetMemoryType}] ` +
-    `by ${validated.requestedBy}`,
+      `[source=${validated.sourceEntryId}, target=${validated.targetMemoryType}] ` +
+      `by ${validated.requestedBy}`
   );
 
   return promotion;
@@ -327,14 +326,14 @@ export async function requestMemoryPromotion(
 export async function resolveMemoryPromotion(
   requestId: string,
   status: 'approved' | 'rejected',
-  resolvedBy: string,
+  resolvedBy: string
 ): Promise<MemoryPromotionRequest> {
   const resolvedAt = new Date().toISOString();
 
   const row = await dbGet<PromotionRow>(
     `SELECT * FROM v8_memory_promotion_requests WHERE request_id = ?`,
     [requestId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -343,7 +342,7 @@ export async function resolveMemoryPromotion(
 
   if (row.promotion_status !== 'pending') {
     throw new Error(
-      `Memory promotion request ${requestId} already resolved (status=${row.promotion_status})`,
+      `Memory promotion request ${requestId} already resolved (status=${row.promotion_status})`
     );
   }
 
@@ -351,7 +350,7 @@ export async function resolveMemoryPromotion(
     `UPDATE v8_memory_promotion_requests
      SET promotion_status = ?, resolved_by = ?, resolved_at = ?
      WHERE request_id = ?`,
-    [status, resolvedBy, resolvedAt, requestId],
+    [status, resolvedBy, resolvedAt, requestId]
   );
 
   const resolved: MemoryPromotionRequest = {
@@ -361,9 +360,7 @@ export async function resolveMemoryPromotion(
     resolvedAt,
   };
 
-  logger.info(
-    `${LOG_PREFIX} Resolved memory promotion ${requestId}: ${status} by ${resolvedBy}`,
-  );
+  logger.info(`${LOG_PREFIX} Resolved memory promotion ${requestId}: ${status} by ${resolvedBy}`);
 
   return resolved;
 }
@@ -377,7 +374,7 @@ export async function resolveMemoryPromotion(
  */
 export async function checkMemoryFreshness(
   memoryType: MemoryType,
-  organizationId: string,
+  organizationId: string
 ): Promise<MemoryFreshnessCheck> {
   const policy = MEMORY_FRESHNESS_POLICY[memoryType];
   const now = new Date().toISOString();
@@ -392,7 +389,7 @@ export async function checkMemoryFreshness(
        WHERE organization_id = ? AND memory_type = ?
        ORDER BY created_at DESC LIMIT 1`,
       [organizationId, memoryType],
-      { fallback: true },
+      { fallback: true }
     );
 
     if (latestRow) {
@@ -406,7 +403,7 @@ export async function checkMemoryFreshness(
        WHERE organization_id = ? AND memory_type = ?
        ORDER BY created_at DESC LIMIT 1`,
       [organizationId, memoryType],
-      { fallback: true },
+      { fallback: true }
     );
 
     if (latestRow) {
@@ -426,7 +423,7 @@ export async function checkMemoryFreshness(
 
   logger.info(
     `${LOG_PREFIX} Freshness check [type=${memoryType}, policy=${policy}, stale=${isStale}] ` +
-    `for org ${organizationId}`,
+      `for org ${organizationId}`
   );
 
   return result;

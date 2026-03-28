@@ -10,9 +10,11 @@ describe('ApiGateway: stub routes are disabled in production by default', () => 
     const origEnv = process.env.NODE_ENV;
     const origEnable = process.env.ENABLE_STUB_ROUTES;
     const origMockBilling = process.env.MOCK_BILLING;
+    const origEncryptionSalt = process.env.ENCRYPTION_SALT;
     process.env.NODE_ENV = 'production';
     delete process.env.ENABLE_STUB_ROUTES;
     process.env.MOCK_BILLING = 'true';
+    process.env.ENCRYPTION_SALT = 'test-encryption-salt';
 
     vi.resetModules();
     const { ApiGateway } = await import('../../../../server/src/Gateway.ts');
@@ -37,5 +39,7 @@ describe('ApiGateway: stub routes are disabled in production by default', () => 
     else process.env.ENABLE_STUB_ROUTES = origEnable;
     if (origMockBilling === undefined) delete process.env.MOCK_BILLING;
     else process.env.MOCK_BILLING = origMockBilling;
+    if (origEncryptionSalt === undefined) delete process.env.ENCRYPTION_SALT;
+    else process.env.ENCRYPTION_SALT = origEncryptionSalt;
   });
 });

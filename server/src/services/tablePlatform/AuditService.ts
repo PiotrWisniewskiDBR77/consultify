@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -56,13 +57,13 @@ export interface SnapshotSummary {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function extractFieldChanges(before: Record<string, unknown> | null, after: Record<string, unknown> | null): FieldChange[] {
+function extractFieldChanges(
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null
+): FieldChange[] {
   if (!before && !after) return [];
   const changes: FieldChange[] = [];
-  const allKeys = new Set([
-    ...Object.keys(before ?? {}),
-    ...Object.keys(after ?? {}),
-  ]);
+  const allKeys = new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]);
   for (const key of allKeys) {
     const oldVal = before?.[key];
     const newVal = after?.[key];
@@ -127,7 +128,12 @@ const auditService = {
         ]
       );
     } catch (e) {
-      logger.error('[AuditService] logEvent failed', { eventType, entityType, entityId, error: (e as Error).message });
+      logger.error('[AuditService] logEvent failed', {
+        eventType,
+        entityType,
+        entityId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -144,7 +150,11 @@ const auditService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[AuditService] getEventsForEntity failed', { entityType, entityId, error: (e as Error).message });
+      logger.error('[AuditService] getEventsForEntity failed', {
+        entityType,
+        entityId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -161,7 +171,10 @@ const auditService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[AuditService] getEventsForActor failed', { actorId, error: (e as Error).message });
+      logger.error('[AuditService] getEventsForActor failed', {
+        actorId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -210,7 +223,10 @@ const auditService = {
         } satisfies RecordRevision;
       });
     } catch (e) {
-      logger.error('[AuditService] getRecordHistory failed', { recordId, error: (e as Error).message });
+      logger.error('[AuditService] getRecordHistory failed', {
+        recordId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -242,63 +258,60 @@ const auditService = {
 
       const result = await db.query(query, params);
 
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        eventType: row.event_type,
-        entityType: row.entity_type,
-        entityId: row.entity_id,
-        actorId: row.actor_id ?? undefined,
-        actorName: row.actor_name ?? undefined,
-        details: {
-          before: parseJsonSafe(row.before_data),
-          after: parseJsonSafe(row.after_data),
-          ...parseJsonSafe(row.metadata),
-        },
-        timestamp: row.created_at,
-        timeGroup: assignTimeGroup(row.created_at),
-      } satisfies AuditEvent));
+      return result.rows.map(
+        (row: any) =>
+          ({
+            id: row.id,
+            eventType: row.event_type,
+            entityType: row.entity_type,
+            entityId: row.entity_id,
+            actorId: row.actor_id ?? undefined,
+            actorName: row.actor_name ?? undefined,
+            details: {
+              before: parseJsonSafe(row.before_data),
+              after: parseJsonSafe(row.after_data),
+              ...parseJsonSafe(row.metadata),
+            },
+            timestamp: row.created_at,
+            timeGroup: assignTimeGroup(row.created_at),
+          }) satisfies AuditEvent
+      );
     } catch (e) {
-      logger.error('[AuditService] getTableActivityFeed failed', { tableId, error: (e as Error).message });
+      logger.error('[AuditService] getTableActivityFeed failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
 
   // ── Task 2.2: Snapshot Management ──────────────────────────────────────────
 
-  async createSnapshot(
-    baseId: string,
-    name?: string,
-    userId?: string
-  ): Promise<Snapshot> {
+  async createSnapshot(baseId: string, name?: string, userId?: string): Promise<Snapshot> {
     const db = getDatabase();
     const snapshotId = uuidv4();
     try {
       const tables = (await db.query('SELECT * FROM tp_tables WHERE base_id = $1', [baseId])).rows;
       const tableIds = tables.map((t: any) => t.id);
 
-      const fields = tableIds.length > 0
-        ? (await db.query(
-            `SELECT * FROM tp_fields WHERE table_id = ANY($1)`,
-            [tableIds]
-          )).rows
-        : [];
+      const fields =
+        tableIds.length > 0
+          ? (await db.query(`SELECT * FROM tp_fields WHERE table_id = ANY($1)`, [tableIds])).rows
+          : [];
 
-      const views = tableIds.length > 0
-        ? (await db.query(
-            `SELECT * FROM tp_views WHERE table_id = ANY($1)`,
-            [tableIds]
-          )).rows
-        : [];
+      const views =
+        tableIds.length > 0
+          ? (await db.query(`SELECT * FROM tp_views WHERE table_id = ANY($1)`, [tableIds])).rows
+          : [];
 
-      const records = tableIds.length > 0
-        ? (await db.query(
-            `SELECT * FROM tp_records WHERE table_id = ANY($1)`,
-            [tableIds]
-          )).rows
-        : [];
+      const records =
+        tableIds.length > 0
+          ? (await db.query(`SELECT * FROM tp_records WHERE table_id = ANY($1)`, [tableIds])).rows
+          : [];
 
       const snapshotData = { tables, fields, views, records };
-      const snapshotName = name || `Snapshot ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
+      const snapshotName =
+        name || `Snapshot ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
 
       await db.query(
         `INSERT INTO tp_audit_events (id, event_type, entity_type, entity_id, actor_id, after_data, metadata)
@@ -423,10 +436,7 @@ const auditService = {
     }
   },
 
-  async getRecordCellHistory(
-    recordId: string,
-    limit = 100
-  ): Promise<unknown[]> {
+  async getRecordCellHistory(recordId: string, limit = 100): Promise<unknown[]> {
     const db = getDatabase();
     try {
       const result = await db.query(
@@ -468,7 +478,9 @@ const auditService = {
         records: any[];
       };
 
-      const existingTables = (await db.query('SELECT id FROM tp_tables WHERE base_id = $1', [baseId])).rows;
+      const existingTables = (
+        await db.query('SELECT id FROM tp_tables WHERE base_id = $1', [baseId])
+      ).rows;
       const existingTableIds = existingTables.map((t: any) => t.id);
 
       if (existingTableIds.length > 0) {
@@ -478,39 +490,70 @@ const auditService = {
         await db.query('DELETE FROM tp_tables WHERE base_id = $1', [baseId]);
       }
 
-      for (const t of (tables ?? [])) {
+      for (const t of tables ?? []) {
         await db.query(
           `INSERT INTO tp_tables (id, base_id, name, description, created_by, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (id) DO NOTHING`,
-          [t.id, baseId, t.name, t.description ?? null, t.created_by ?? null, t.created_at, t.updated_at ?? t.created_at]
+          [
+            t.id,
+            baseId,
+            t.name,
+            t.description ?? null,
+            t.created_by ?? null,
+            t.created_at,
+            t.updated_at ?? t.created_at,
+          ]
         );
       }
 
-      for (const f of (fields ?? [])) {
+      for (const f of fields ?? []) {
         await db.query(
           `INSERT INTO tp_fields (id, table_id, name, field_type, config, field_order, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (id) DO NOTHING`,
-          [f.id, f.table_id, f.name, f.field_type, JSON.stringify(f.config ?? {}), f.field_order ?? 0, f.created_at]
+          [
+            f.id,
+            f.table_id,
+            f.name,
+            f.field_type,
+            JSON.stringify(f.config ?? {}),
+            f.field_order ?? 0,
+            f.created_at,
+          ]
         );
       }
 
-      for (const v of (views ?? [])) {
+      for (const v of views ?? []) {
         await db.query(
           `INSERT INTO tp_views (id, table_id, name, view_type, config, created_by, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (id) DO NOTHING`,
-          [v.id, v.table_id, v.name, v.view_type ?? 'grid', JSON.stringify(v.config ?? {}), v.created_by ?? null, v.created_at]
+          [
+            v.id,
+            v.table_id,
+            v.name,
+            v.view_type ?? 'grid',
+            JSON.stringify(v.config ?? {}),
+            v.created_by ?? null,
+            v.created_at,
+          ]
         );
       }
 
-      for (const r of (records ?? [])) {
+      for (const r of records ?? []) {
         await db.query(
           `INSERT INTO tp_records (id, table_id, data, created_by, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (id) DO NOTHING`,
-          [r.id, r.table_id, JSON.stringify(r.data ?? {}), r.created_by ?? null, r.created_at, r.updated_at ?? r.created_at]
+          [
+            r.id,
+            r.table_id,
+            JSON.stringify(r.data ?? {}),
+            r.created_by ?? null,
+            r.created_at,
+            r.updated_at ?? r.created_at,
+          ]
         );
       }
 
@@ -520,7 +563,10 @@ const auditService = {
 
       logger.info('[AuditService] snapshot restored', { snapshotId, baseId });
     } catch (e) {
-      logger.error('[AuditService] restoreSnapshot failed', { snapshotId, error: (e as Error).message });
+      logger.error('[AuditService] restoreSnapshot failed', {
+        snapshotId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

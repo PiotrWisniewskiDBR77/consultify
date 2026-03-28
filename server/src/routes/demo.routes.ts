@@ -69,7 +69,10 @@ router.post(
       try {
         await setUserDemoPreference(userId, isDemoEnabled);
       } catch (prefErr: any) {
-        logger.warn('[DemoMode] Preference storage failed (continuing):', prefErr?.message || prefErr);
+        logger.warn(
+          '[DemoMode] Preference storage failed (continuing):',
+          prefErr?.message || prefErr
+        );
       }
 
       if (isDemoEnabled) {

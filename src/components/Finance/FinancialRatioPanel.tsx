@@ -140,7 +140,6 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   );
   const [showFormula, setShowFormula] = useState<string | null>(null);
 
-
   // Load confirmed statements
   useEffect(() => {
     const load = async () => {

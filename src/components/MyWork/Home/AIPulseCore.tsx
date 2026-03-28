@@ -109,7 +109,13 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
         {payload.focusItems.map((item, index) => (
           <button
             key={item.id}
-            onClick={() => onAction({ type: 'open', target: item.type === 'idea' ? 'idea' : item.type, id: item.id })}
+            onClick={() =>
+              onAction({
+                type: 'open',
+                target: item.type === 'idea' ? 'idea' : item.type,
+                id: item.id,
+              })
+            }
             className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.07] hover:-translate-y-0.5"
           >
             <div className="flex items-center justify-between gap-3">

@@ -9,26 +9,26 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  DeadLetterRecord,
-  RetryPolicy,
-  ReplayRequest,
-  ProviderHealthModel,
-  SchemaDriftEvent,
+  BulkReplaySafeguards,
   CreateDeadLetterRecordParams,
-  SetRetryPolicyParams,
-  RequestReplayParams,
+  DeadLetterRecord,
+  ProviderHealthModel,
   RecordProviderHealthParams,
   RecordSchemaDriftParams,
+  ReplayRequest,
+  RequestReplayParams,
   ResolutionState,
-  BulkReplaySafeguards,
+  RetryPolicy,
+  SchemaDriftEvent,
+  SetRetryPolicyParams,
 } from '../../types/replayDeadLetterReliability.js';
 import {
   CreateDeadLetterRecordParamsSchema,
-  SetRetryPolicyParamsSchema,
-  RequestReplayParamsSchema,
+  DEAD_LETTER_RETENTION_DAYS,
   RecordProviderHealthParamsSchema,
   RecordSchemaDriftParamsSchema,
-  DEAD_LETTER_RETENTION_DAYS,
+  RequestReplayParamsSchema,
+  SetRetryPolicyParamsSchema,
 } from '../../types/replayDeadLetterReliability.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -214,7 +214,7 @@ function rowToSchemaDriftEvent(row: SchemaDriftRow): SchemaDriftEvent {
 // ==========================================
 
 export async function createDeadLetterRecord(
-  params: CreateDeadLetterRecordParams,
+  params: CreateDeadLetterRecordParams
 ): Promise<DeadLetterRecord> {
   const validated = CreateDeadLetterRecordParamsSchema.parse(params);
 
@@ -250,11 +250,11 @@ export async function createDeadLetterRecord(
       'pending_review',
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Dead-lettered ${validated.objectType}:${validated.objectRef} (${validated.errorClass}) for connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Dead-lettered ${validated.objectType}:${validated.objectRef} (${validated.errorClass}) for connector ${validated.connectorId}`
   );
 
   return {
@@ -283,14 +283,14 @@ export async function createDeadLetterRecord(
 
 export async function getDeadLetterQueue(
   connectorId: string,
-  orgId: string,
+  orgId: string
 ): Promise<DeadLetterRecord[]> {
   const rows = await dbAll<DeadLetterRow>(
     `SELECT * FROM v8_dead_letter_records
      WHERE connector_id = ? AND organization_id = ?
      ORDER BY dead_lettered_at DESC`,
     [connectorId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToDeadLetterRecord);
@@ -307,11 +307,11 @@ const VALID_RESOLUTION_TRANSITIONS: Record<string, readonly ResolutionState[]> =
 export async function updateDeadLetterResolution(
   deadLetterId: string,
   state: ResolutionState,
-  operatorNote?: string | null,
+  operatorNote?: string | null
 ): Promise<DeadLetterRecord> {
   const row = await dbGet<DeadLetterRow>(
     `SELECT * FROM v8_dead_letter_records WHERE dead_letter_id = ?`,
-    [deadLetterId],
+    [deadLetterId]
   );
 
   if (!row) {
@@ -320,9 +320,7 @@ export async function updateDeadLetterResolution(
 
   const allowed = VALID_RESOLUTION_TRANSITIONS[row.resolution_state] ?? [];
   if (!(allowed as readonly string[]).includes(state)) {
-    throw new Error(
-      `Invalid resolution transition: ${row.resolution_state} → ${state}`,
-    );
+    throw new Error(`Invalid resolution transition: ${row.resolution_state} → ${state}`);
   }
 
   const now = new Date().toISOString();
@@ -331,7 +329,7 @@ export async function updateDeadLetterResolution(
     `UPDATE v8_dead_letter_records
      SET resolution_state = ?, operator_note = COALESCE(?, operator_note), updated_at = ?
      WHERE dead_letter_id = ?`,
-    [state, operatorNote ?? null, now, deadLetterId],
+    [state, operatorNote ?? null, now, deadLetterId]
   );
 
   logger.info(`${LOG_PREFIX} Resolution ${deadLetterId}: ${row.resolution_state} → ${state}`);
@@ -348,16 +346,14 @@ export async function updateDeadLetterResolution(
 // RETRY POLICIES (Decision W5-5)
 // ==========================================
 
-export async function setRetryPolicy(
-  params: SetRetryPolicyParams,
-): Promise<RetryPolicy> {
+export async function setRetryPolicy(params: SetRetryPolicyParams): Promise<RetryPolicy> {
   const validated = SetRetryPolicyParamsSchema.parse(params);
 
   const existing = await dbGet<RetryPolicyRow>(
     `SELECT * FROM v8_retry_policies
      WHERE connector_family = ? AND organization_id = ?`,
     [validated.connectorFamily, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -375,10 +371,12 @@ export async function setRetryPolicy(
         validated.escalationHandoff ?? null,
         now,
         existing.policy_id,
-      ],
+      ]
     );
 
-    logger.info(`${LOG_PREFIX} Updated retry policy ${existing.policy_id} for ${validated.connectorFamily}`);
+    logger.info(
+      `${LOG_PREFIX} Updated retry policy ${existing.policy_id} for ${validated.connectorFamily}`
+    );
 
     return {
       policyId: existing.policy_id,
@@ -410,7 +408,7 @@ export async function setRetryPolicy(
       validated.escalationHandoff ?? null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created retry policy ${policyId} for ${validated.connectorFamily}`);
@@ -430,13 +428,13 @@ export async function setRetryPolicy(
 
 export async function getRetryPolicy(
   connectorFamily: string,
-  orgId: string,
+  orgId: string
 ): Promise<RetryPolicy | null> {
   const row = await dbGet<RetryPolicyRow>(
     `SELECT * FROM v8_retry_policies
      WHERE connector_family = ? AND organization_id = ?`,
     [connectorFamily, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -447,9 +445,7 @@ export async function getRetryPolicy(
 // REPLAY REQUESTS (Decision W5-7)
 // ==========================================
 
-export async function requestReplay(
-  params: RequestReplayParams,
-): Promise<ReplayRequest> {
+export async function requestReplay(params: RequestReplayParams): Promise<ReplayRequest> {
   const validated = RequestReplayParamsSchema.parse(params);
 
   if (validated.replayType === 'bulk' && !validated.safeguards) {
@@ -459,7 +455,7 @@ export async function requestReplay(
   const dlRow = await dbGet<DeadLetterRow>(
     `SELECT * FROM v8_dead_letter_records
      WHERE dead_letter_id = ? AND organization_id = ?`,
-    [validated.deadLetterId, validated.organizationId],
+    [validated.deadLetterId, validated.organizationId]
   );
 
   if (!dlRow) {
@@ -467,7 +463,9 @@ export async function requestReplay(
   }
 
   if (dlRow.replay_eligibility === 'blocked') {
-    throw new Error(`Dead-letter record ${validated.deadLetterId} is not replay-eligible (blocked)`);
+    throw new Error(
+      `Dead-letter record ${validated.deadLetterId} is not replay-eligible (blocked)`
+    );
   }
 
   const replayId = uuidv4();
@@ -488,11 +486,11 @@ export async function requestReplay(
       validated.safeguards ? JSON.stringify(validated.safeguards) : null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Replay requested ${replayId} (${validated.replayType}) for dead-letter ${validated.deadLetterId}`,
+    `${LOG_PREFIX} Replay requested ${replayId} (${validated.replayType}) for dead-letter ${validated.deadLetterId}`
   );
 
   return {
@@ -510,14 +508,14 @@ export async function requestReplay(
 
 export async function getReplayRequests(
   deadLetterId: string,
-  orgId: string,
+  orgId: string
 ): Promise<ReplayRequest[]> {
   const rows = await dbAll<ReplayRequestRow>(
     `SELECT * FROM v8_replay_requests
      WHERE dead_letter_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [deadLetterId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToReplayRequest);
@@ -528,7 +526,7 @@ export async function getReplayRequests(
 // ==========================================
 
 export async function recordProviderHealth(
-  params: RecordProviderHealthParams,
+  params: RecordProviderHealthParams
 ): Promise<ProviderHealthModel> {
   const validated = RecordProviderHealthParamsSchema.parse(params);
 
@@ -536,7 +534,7 @@ export async function recordProviderHealth(
     `SELECT * FROM v8_provider_health
      WHERE provider_key = ? AND organization_id = ?`,
     [validated.providerKey, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const now = new Date().toISOString();
@@ -559,7 +557,7 @@ export async function recordProviderHealth(
         now,
         now,
         existing.health_id,
-      ],
+      ]
     );
 
     logger.info(`${LOG_PREFIX} Updated provider health for ${validated.providerKey}`);
@@ -604,7 +602,7 @@ export async function recordProviderHealth(
       now,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created provider health ${healthId} for ${validated.providerKey}`);
@@ -628,13 +626,13 @@ export async function recordProviderHealth(
 
 export async function getProviderHealth(
   providerKey: string,
-  orgId: string,
+  orgId: string
 ): Promise<ProviderHealthModel | null> {
   const row = await dbGet<ProviderHealthRow>(
     `SELECT * FROM v8_provider_health
      WHERE provider_key = ? AND organization_id = ?`,
     [providerKey, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -646,7 +644,7 @@ export async function getProviderHealth(
 // ==========================================
 
 export async function recordSchemaDrift(
-  params: RecordSchemaDriftParams,
+  params: RecordSchemaDriftParams
 ): Promise<SchemaDriftEvent> {
   const validated = RecordSchemaDriftParamsSchema.parse(params);
 
@@ -666,11 +664,11 @@ export async function recordSchemaDrift(
       JSON.stringify(validated.affectedFields),
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Schema drift detected: ${validated.driftType} on connector ${validated.connectorId}`,
+    `${LOG_PREFIX} Schema drift detected: ${validated.driftType} on connector ${validated.connectorId}`
   );
 
   return {
@@ -694,9 +692,7 @@ export function getRetentionCutoffDate(): string {
   return cutoff.toISOString();
 }
 
-export async function getExpiredResolvedRecords(
-  orgId: string,
-): Promise<DeadLetterRecord[]> {
+export async function getExpiredResolvedRecords(orgId: string): Promise<DeadLetterRecord[]> {
   const cutoff = getRetentionCutoffDate();
 
   const rows = await dbAll<DeadLetterRow>(
@@ -706,7 +702,7 @@ export async function getExpiredResolvedRecords(
        AND dead_lettered_at < ?
      ORDER BY dead_lettered_at ASC`,
     [orgId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToDeadLetterRecord);

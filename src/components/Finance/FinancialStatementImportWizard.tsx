@@ -24,12 +24,12 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
-import { V8FinanceApi, shouldFallbackToLegacyFinance } from '../../services/api/v8/finance';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import {
-  FinancialStatementMappingEditor,
   type FinancialStatementCanonicalLineOption,
   type FinancialStatementMappedValue,
+  FinancialStatementMappingEditor,
 } from './FinancialStatementMappingEditor';
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,10 @@ async function getCanonicalLinesWithFallback() {
   }
 }
 
-async function saveStatementValuesWithFallback(statementId: string, values: Array<Record<string, unknown>>) {
+async function saveStatementValuesWithFallback(
+  statementId: string,
+  values: Array<Record<string, unknown>>
+) {
   try {
     return await V8FinanceApi.putStatementValues(statementId, { values });
   } catch (error) {
@@ -210,7 +213,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   // Extract state
   const [extractedLines, setExtractedLines] = useState<ExtractedLine[]>([]);
-  const [extractionDiagnostics, setExtractionDiagnostics] = useState<ExtractionDiagnostics | null>(null);
+  const [extractionDiagnostics, setExtractionDiagnostics] = useState<ExtractionDiagnostics | null>(
+    null
+  );
 
   // Map state
   const [mappedValues, setMappedValues] = useState<MappedValue[]>([]);
@@ -337,7 +342,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         setOverrideType(fallbackDetection.statementType);
         setOverrideCurrency(fallbackDetection.currency);
         setOverridePeriod(fallbackDetection.periodLabel || '');
-        trackFunnelEvent('financial_statement_import_started', { statementId: data.statementIds?.[0] });
+        trackFunnelEvent('financial_statement_import_started', {
+          statementId: data.statementIds?.[0],
+        });
         setStep('detect');
       }
     } catch (e: any) {
@@ -515,11 +522,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
   };
 
   const stepLabels = smartAnalysis
-    ? [
-        isPl ? 'Wgraj' : 'Upload',
-        isPl ? 'Analiza AI' : 'AI Analysis',
-        isPl ? 'Gotowe' : 'Done',
-      ]
+    ? [isPl ? 'Wgraj' : 'Upload', isPl ? 'Analiza AI' : 'AI Analysis', isPl ? 'Gotowe' : 'Done']
     : [
         t('finance.importWizard.stepUpload', 'Upload'),
         t('finance.importWizard.stepDetect', 'Detect'),
@@ -527,9 +530,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         t('finance.importWizard.stepConfirm', 'Confirm'),
       ];
 
-  const displaySteps = smartAnalysis
-    ? (['upload', 'detect', 'confirm'] as WizardStep[])
-    : STEPS;
+  const displaySteps = smartAnalysis ? (['upload', 'detect', 'confirm'] as WizardStep[]) : STEPS;
   const detectedStatementTypes = Array.isArray(detection?.containedStatementTypes)
     ? detection!.containedStatementTypes.filter(Boolean)
     : [];
@@ -570,7 +571,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       </div>
 
       {/* Steps indicator with progress line */}
-      <div className="flex items-center mb-8" role="navigation" aria-label={isPl ? 'Kroki importu' : 'Import steps'}>
+      <div
+        className="flex items-center mb-8"
+        role="navigation"
+        aria-label={isPl ? 'Kroki importu' : 'Import steps'}
+      >
         {displaySteps.map((s, i) => {
           const displayStepIdx = displaySteps.indexOf(step);
           const isCompleted = i < displayStepIdx;
@@ -642,11 +647,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             }}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+            }}
             aria-label={isPl ? 'Upuść plik lub kliknij aby wybrać' : 'Drop file or click to browse'}
           >
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-cyan-100/60 dark:bg-white/[0.05] dark:group-hover:bg-cyan-500/10">
-              <Upload size={28} className="text-slate-400 transition-colors group-hover:text-cyan-500" />
+              <Upload
+                size={28}
+                className="text-slate-400 transition-colors group-hover:text-cyan-500"
+              />
             </div>
             <p className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
               {t('finance.importWizard.dropOrClick', 'Drop file here or click to browse')}
@@ -669,11 +679,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
           {file && (
             <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/80">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                file.name.endsWith('.pdf')
-                  ? 'bg-rose-50 dark:bg-rose-500/10'
-                  : 'bg-emerald-50 dark:bg-emerald-500/10'
-              }`}>
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                  file.name.endsWith('.pdf')
+                    ? 'bg-rose-50 dark:bg-rose-500/10'
+                    : 'bg-emerald-50 dark:bg-emerald-500/10'
+                }`}
+              >
                 <FileText
                   size={18}
                   className={file.name.endsWith('.pdf') ? 'text-rose-500' : 'text-emerald-500'}
@@ -685,11 +697,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                   {(file.size / 1024).toFixed(1)} KB
-                  {file.type && <span className="ml-2">{file.type.split('/').pop()?.toUpperCase()}</span>}
+                  {file.type && (
+                    <span className="ml-2">{file.type.split('/').pop()?.toUpperCase()}</span>
+                  )}
                 </p>
               </div>
               <button
-                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                }}
                 className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 aria-label={isPl ? 'Usuń plik' : 'Remove file'}
               >
@@ -705,8 +722,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
             {loading
-              ? (isPl ? 'AI analizuje dokument...' : 'AI is analyzing document...')
-              : (isPl ? 'Wgraj i analizuj' : 'Upload & Analyze')}
+              ? isPl
+                ? 'AI analizuje dokument...'
+                : 'AI is analyzing document...'
+              : isPl
+                ? 'Wgraj i analizuj'
+                : 'Upload & Analyze'}
           </button>
         </div>
       )}
@@ -988,7 +1009,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     {isPl ? 'Dokument przeanalizowany przez AI' : 'Document analyzed by AI'}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {smartAnalysis.documentDescription || (isPl ? 'Analiza zakończona pomyślnie' : 'Analysis completed successfully')}
+                    {smartAnalysis.documentDescription ||
+                      (isPl ? 'Analiza zakończona pomyślnie' : 'Analysis completed successfully')}
                   </p>
                 </div>
               </div>
@@ -1083,32 +1105,40 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             }`}
           >
             {/* Gauge bar at top */}
-            <div className={`h-1.5 ${
-              isReadyForConfirm
-                ? 'bg-emerald-500'
-                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
-                  ? 'bg-amber-500'
-                  : 'bg-rose-500'
-            }`} />
+            <div
+              className={`h-1.5 ${
+                isReadyForConfirm
+                  ? 'bg-emerald-500'
+                  : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
+              }`}
+            />
 
-            <div className={`p-6 ${
-              isReadyForConfirm
-                ? 'bg-emerald-50/80 dark:bg-emerald-900/10'
-                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
-                  ? 'bg-amber-50/80 dark:bg-amber-900/10'
-                  : 'bg-rose-50/80 dark:bg-rose-900/10'
-            }`}>
+            <div
+              className={`p-6 ${
+                isReadyForConfirm
+                  ? 'bg-emerald-50/80 dark:bg-emerald-900/10'
+                  : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                    ? 'bg-amber-50/80 dark:bg-amber-900/10'
+                    : 'bg-rose-50/80 dark:bg-rose-900/10'
+              }`}
+            >
               <div className="flex items-start gap-4 mb-4">
-                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${
-                  isReadyForConfirm
-                    ? 'bg-emerald-100 dark:bg-emerald-500/15'
-                    : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
-                      ? 'bg-amber-100 dark:bg-amber-500/15'
-                      : 'bg-rose-100 dark:bg-rose-500/15'
-                }`}>
+                <div
+                  className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${
+                    isReadyForConfirm
+                      ? 'bg-emerald-100 dark:bg-emerald-500/15'
+                      : readiness?.readinessStatus === 'recoverable' ||
+                          validation.status === 'warnings'
+                        ? 'bg-amber-100 dark:bg-amber-500/15'
+                        : 'bg-rose-100 dark:bg-rose-500/15'
+                  }`}
+                >
                   {isReadyForConfirm ? (
                     <CheckCircle2 size={24} className="text-emerald-500" />
-                  ) : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings' ? (
+                  ) : readiness?.readinessStatus === 'recoverable' ||
+                    validation.status === 'warnings' ? (
                     <AlertTriangle size={24} className="text-amber-500" />
                   ) : (
                     <XCircle size={24} className="text-rose-500" />
@@ -1118,7 +1148,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {isReadyForConfirm
                       ? t('finance.importWizard.validationPass', 'All validations passed')
-                      : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                      : readiness?.readinessStatus === 'recoverable' ||
+                          validation.status === 'warnings'
                         ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
                         : t('finance.importWizard.validationErrors', 'Review required')}
                   </h3>
@@ -1129,7 +1160,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     </span>
                     <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                     <span>
-                      {validation.messages.filter((m) => m.type === 'error').length} {isPl ? 'błędów' : 'errors'}
+                      {validation.messages.filter((m) => m.type === 'error').length}{' '}
+                      {isPl ? 'błędów' : 'errors'}
                       {validation.messages.filter((m) => m.type === 'warning').length > 0 &&
                         `, ${validation.messages.filter((m) => m.type === 'warning').length} ${isPl ? 'ostrzeżeń' : 'warnings'}`}
                     </span>
@@ -1146,12 +1178,17 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               {validation.messages.length > 0 && (
                 <div className="space-y-2">
                   {validation.messages.map((msg, i) => (
-                    <div key={i} className="flex items-start gap-2.5 rounded-lg bg-white/50 px-3 py-2 text-sm dark:bg-white/[0.03]">
+                    <div
+                      key={i}
+                      className="flex items-start gap-2.5 rounded-lg bg-white/50 px-3 py-2 text-sm dark:bg-white/[0.03]"
+                    >
                       {validationIcon(msg.type)}
                       <div className="min-w-0 flex-1">
                         <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
                         {msg.details && (
-                          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{msg.details}</p>
+                          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                            {msg.details}
+                          </p>
                         )}
                       </div>
                     </div>

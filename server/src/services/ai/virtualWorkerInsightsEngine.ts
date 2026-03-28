@@ -48,7 +48,11 @@ function db() {
 function parseJsonb<T>(raw: unknown): T | null {
   if (!raw) return null;
   if (typeof raw === 'object') return raw as T;
-  try { return JSON.parse(String(raw)) as T; } catch { return null; }
+  try {
+    return JSON.parse(String(raw)) as T;
+  } catch {
+    return null;
+  }
 }
 
 function rowToInsight(row: Record<string, unknown>): WorkerInsight {
@@ -172,8 +176,9 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
 
   try {
     // 1. Knowledge gap detection: messages with no knowledge sources
-    const gapResult = await db().query<{ content: string; count: string }>(
-      `SELECT m.content, COUNT(*) as count
+    const gapResult = await db()
+      .query<{ content: string; count: string }>(
+        `SELECT m.content, COUNT(*) as count
        FROM virtual_worker_messages m
        JOIN virtual_worker_conversations c ON m.conversation_id = c.id
        WHERE c.worker_id = $1
@@ -184,8 +189,9 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
        HAVING COUNT(*) >= 2
        ORDER BY count DESC
        LIMIT 5`,
-      [workerId]
-    ).catch(() => ({ rows: [] as Array<{ content: string; count: string }> }));
+        [workerId]
+      )
+      .catch(() => ({ rows: [] as Array<{ content: string; count: string }> }));
 
     for (const row of gapResult.rows || []) {
       const count = parseInt(String(row.count), 10);
@@ -203,15 +209,17 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
     }
 
     // 2. Abandoned conversations (no outcome or abandoned)
-    const abandonedResult = await db().query<{ count: string; avg_msgs: string }>(
-      `SELECT COUNT(*) as count, AVG(message_count) as avg_msgs
+    const abandonedResult = await db()
+      .query<{ count: string; avg_msgs: string }>(
+        `SELECT COUNT(*) as count, AVG(message_count) as avg_msgs
        FROM virtual_worker_conversations
        WHERE worker_id = $1
          AND outcome IN ('abandoned', 'unknown')
          AND started_at > NOW() - INTERVAL '7 days'
          AND message_count >= 2`,
-      [workerId]
-    ).catch(() => ({ rows: [{ count: '0', avg_msgs: '0' }] }));
+        [workerId]
+      )
+      .catch(() => ({ rows: [{ count: '0', avg_msgs: '0' }] }));
 
     const abandonedCount = parseInt(String(abandonedResult.rows[0]?.count || '0'), 10);
     if (abandonedCount >= 3) {
@@ -228,8 +236,9 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
     }
 
     // 3. Frequent topics (most common user messages)
-    const topicResult = await db().query<{ word: string; count: string }>(
-      `SELECT lower(regexp_replace(m.content, '[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s]', '', 'g')) as word,
+    const topicResult = await db()
+      .query<{ word: string; count: string }>(
+        `SELECT lower(regexp_replace(m.content, '[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s]', '', 'g')) as word,
               COUNT(*) as count
        FROM virtual_worker_messages m
        JOIN virtual_worker_conversations c ON m.conversation_id = c.id
@@ -241,8 +250,9 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
        HAVING COUNT(*) >= 3
        ORDER BY count DESC
        LIMIT 5`,
-      [workerId]
-    ).catch(() => ({ rows: [] as Array<{ word: string; count: string }> }));
+        [workerId]
+      )
+      .catch(() => ({ rows: [] as Array<{ word: string; count: string }> }));
 
     for (const row of topicResult.rows || []) {
       const count = parseInt(String(row.count), 10);

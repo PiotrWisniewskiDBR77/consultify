@@ -125,8 +125,7 @@ function getIntegrationReadinessMeta(
       isReady: true,
       isPending: false,
       badgeLabel: t('settings.integrations.readiness.connected', 'Connected'),
-      badgeClassName:
-        'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+      badgeClassName: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
       guidance: null,
     };
   }
@@ -137,9 +136,11 @@ function getIntegrationReadinessMeta(
       return {
         isReady: false,
         isPending: true,
-        badgeLabel: t('settings.integrations.readiness.verificationPending', 'Verification pending'),
-        badgeClassName:
-          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        badgeLabel: t(
+          'settings.integrations.readiness.verificationPending',
+          'Verification pending'
+        ),
+        badgeClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
         guidance: t(
           'settings.integrations.readiness.verificationPendingGuidance',
           'Authorization callback reached governed sync, but verification still completes in Sync Hub.'
@@ -150,9 +151,11 @@ function getIntegrationReadinessMeta(
       return {
         isReady: false,
         isPending: true,
-        badgeLabel: t('settings.integrations.readiness.authorizationPending', 'Authorization pending'),
-        badgeClassName:
-          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        badgeLabel: t(
+          'settings.integrations.readiness.authorizationPending',
+          'Authorization pending'
+        ),
+        badgeClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
         guidance: t(
           'settings.integrations.readiness.authorizationPendingGuidance',
           'Governed setup is waiting for external authorization in Sync Hub.'
@@ -164,8 +167,7 @@ function getIntegrationReadinessMeta(
         isReady: false,
         isPending: true,
         badgeLabel: t('settings.integrations.readiness.validationPending', 'Validation pending'),
-        badgeClassName:
-          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        badgeClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
         guidance: t(
           'settings.integrations.readiness.validationPendingGuidance',
           'Configuration was submitted, but governed validation has not finished yet.'
@@ -177,8 +179,7 @@ function getIntegrationReadinessMeta(
       isReady: false,
       isPending: true,
       badgeLabel: t('settings.integrations.readiness.pendingSetup', 'Pending setup'),
-      badgeClassName:
-        'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+      badgeClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
       guidance: t(
         'settings.integrations.readiness.pendingSetupGuidance',
         'This integration exists on the governed sync path, but setup is not complete yet.'
@@ -426,7 +427,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     fetchWebhooks();
     fetchAvailableEvents();
     fetchMcpProviders();
-  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents, fetchProviders, fetchProjects]);
+  }, [
+    currentUser.organizationId,
+    fetchWebhooks,
+    fetchAvailableEvents,
+    fetchProviders,
+    fetchProjects,
+  ]);
 
   // Show message if user has no organization
   if (!currentUser.organizationId) {
@@ -962,7 +969,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           <div
                             className={`text-xs px-2 py-1 rounded inline-flex items-center gap-1 ${readiness.badgeClassName}`}
                           >
-                            {readiness.isReady ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                            {readiness.isReady ? (
+                              <CheckCircle size={12} />
+                            ) : (
+                              <AlertCircle size={12} />
+                            )}
                             {readiness.badgeLabel}
                           </div>
                         ) : null}
@@ -1002,8 +1013,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           ) : null}
                           {missingFields.length > 0 ? (
                             <div className="mt-1">
-                              {t('settings.integrations.missingSetupFields', 'Missing setup fields')}:{' '}
-                              {missingFields.join(', ')}
+                              {t(
+                                'settings.integrations.missingSetupFields',
+                                'Missing setup fields'
+                              )}
+                              : {missingFields.join(', ')}
                             </div>
                           ) : null}
                         </div>
@@ -1050,7 +1064,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     ) : (
                       <div className="space-y-2">
                         {(connected.onboarding_status === 'pending_configuration' ||
-                          connected.onboarding_status === 'pending_external_auth_or_configuration') && (
+                          connected.onboarding_status ===
+                            'pending_external_auth_or_configuration') && (
                           <button
                             onClick={() => handleEditConfig(connected)}
                             className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-amber-500 text-white hover:bg-amber-600 flex items-center justify-center gap-2"
@@ -1096,8 +1111,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       Project channel mappings
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Assign at least one project to a Slack or Teams channel. Optional mapping webhook
-                      URLs can override the default webhook per project.
+                      Assign at least one project to a Slack or Teams channel. Optional mapping
+                      webhook URLs can override the default webhook per project.
                     </div>
                   </div>
 
@@ -1173,7 +1188,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         <button
                           type="button"
                           onClick={() => {
-                            const next = communicationMappings.filter((_: any, i: number) => i !== index);
+                            const next = communicationMappings.filter(
+                              (_: any, i: number) => i !== index
+                            );
                             setEditorConfig({
                               ...communicationConfig,
                               projectChannelMappings: next,

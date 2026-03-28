@@ -11,20 +11,20 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  WorkspaceSession,
-  WorkspaceSessionState,
   ActivityFeedEntry,
   CreateSessionParams,
   RecordActivityParams,
   SharedContextUpdate,
+  WorkspaceSession,
+  WorkspaceSessionState,
 } from '../../types/workspaceCollaboration.js';
 import {
   CreateSessionParamsSchema,
   LinkRoomParamsSchema,
   RecordActivityParamsSchema,
+  TERMINAL_SESSION_STATES,
   UpdateSharedContextParamsSchema,
   VALID_SESSION_TRANSITIONS,
-  TERMINAL_SESSION_STATES,
 } from '../../types/workspaceCollaboration.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -157,7 +157,7 @@ export async function createSession(params: CreateSessionParams): Promise<Worksp
       session.createdAt,
       session.updatedAt,
       session.completedAt,
-    ],
+    ]
   );
 
   await recordActivity({
@@ -169,7 +169,9 @@ export async function createSession(params: CreateSessionParams): Promise<Worksp
     payload: { title: session.title },
   });
 
-  logger.info(`${LOG_PREFIX} Created session ${sessionId} in workspace ${session.workspaceId} org ${session.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created session ${sessionId} in workspace ${session.workspaceId} org ${session.organizationId}`
+  );
   return session;
 }
 
@@ -178,13 +180,13 @@ export async function createSession(params: CreateSessionParams): Promise<Worksp
  */
 export async function getSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession | null> {
   const row = await dbGet<SessionRow>(
     `SELECT * FROM v8_workspace_sessions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -196,7 +198,7 @@ export async function getSession(
  */
 export async function pauseSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession> {
   const session = await getSession(sessionId, organizationId);
   if (!session) {
@@ -206,7 +208,7 @@ export async function pauseSession(
   if (!isValidSessionTransition(session.state, 'paused')) {
     throw new Error(
       `Invalid session state transition: ${session.state} → paused. ` +
-      `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`,
+        `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`
     );
   }
 
@@ -216,7 +218,7 @@ export async function pauseSession(
     `UPDATE v8_workspace_sessions
      SET state = 'paused', updated_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [now, sessionId, organizationId],
+    [now, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Session ${sessionId} paused`);
@@ -233,7 +235,7 @@ export async function pauseSession(
  */
 export async function resumeSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession> {
   const session = await getSession(sessionId, organizationId);
   if (!session) {
@@ -243,7 +245,7 @@ export async function resumeSession(
   if (!isValidSessionTransition(session.state, 'active')) {
     throw new Error(
       `Invalid session state transition: ${session.state} → active. ` +
-      `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`,
+        `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`
     );
   }
 
@@ -253,7 +255,7 @@ export async function resumeSession(
     `UPDATE v8_workspace_sessions
      SET state = 'active', updated_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [now, sessionId, organizationId],
+    [now, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Session ${sessionId} resumed`);
@@ -270,7 +272,7 @@ export async function resumeSession(
  */
 export async function completeSession(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession> {
   const session = await getSession(sessionId, organizationId);
   if (!session) {
@@ -280,7 +282,7 @@ export async function completeSession(
   if (!isValidSessionTransition(session.state, 'completed')) {
     throw new Error(
       `Invalid session state transition: ${session.state} → completed. ` +
-      `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`,
+        `Allowed from ${session.state}: [${VALID_SESSION_TRANSITIONS[session.state].join(', ')}]`
     );
   }
 
@@ -290,7 +292,7 @@ export async function completeSession(
     `UPDATE v8_workspace_sessions
      SET state = 'completed', updated_at = ?, completed_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [now, now, sessionId, organizationId],
+    [now, now, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Session ${sessionId} completed`);
@@ -313,7 +315,7 @@ export async function completeSession(
 export async function linkRoom(
   sessionId: string,
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession> {
   LinkRoomParamsSchema.parse({ sessionId, roomId, organizationId });
 
@@ -323,7 +325,9 @@ export async function linkRoom(
   }
 
   if (TERMINAL_SESSION_STATES.has(session.state)) {
-    throw new Error(`Cannot link room to session ${sessionId} in terminal state '${session.state}'`);
+    throw new Error(
+      `Cannot link room to session ${sessionId} in terminal state '${session.state}'`
+    );
   }
 
   if (session.linkedRoomIds.includes(roomId)) {
@@ -338,7 +342,7 @@ export async function linkRoom(
     `UPDATE v8_workspace_sessions
      SET linked_room_ids = ?, updated_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [JSON.stringify(updatedRoomIds), now, sessionId, organizationId],
+    [JSON.stringify(updatedRoomIds), now, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Linked room ${roomId} to session ${sessionId}`);
@@ -356,7 +360,7 @@ export async function linkRoom(
 export async function unlinkRoom(
   sessionId: string,
   roomId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceSession> {
   LinkRoomParamsSchema.parse({ sessionId, roomId, organizationId });
 
@@ -366,7 +370,9 @@ export async function unlinkRoom(
   }
 
   if (TERMINAL_SESSION_STATES.has(session.state)) {
-    throw new Error(`Cannot unlink room from session ${sessionId} in terminal state '${session.state}'`);
+    throw new Error(
+      `Cannot unlink room from session ${sessionId} in terminal state '${session.state}'`
+    );
   }
 
   const updatedRoomIds = session.linkedRoomIds.filter((id) => id !== roomId);
@@ -376,7 +382,7 @@ export async function unlinkRoom(
     `UPDATE v8_workspace_sessions
      SET linked_room_ids = ?, updated_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [JSON.stringify(updatedRoomIds), now, sessionId, organizationId],
+    [JSON.stringify(updatedRoomIds), now, sessionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Unlinked room ${roomId} from session ${sessionId}`);
@@ -391,10 +397,7 @@ export async function unlinkRoom(
 /**
  * Get all linked room IDs for a session.
  */
-export async function getLinkedRooms(
-  sessionId: string,
-  organizationId: string,
-): Promise<string[]> {
+export async function getLinkedRooms(sessionId: string, organizationId: string): Promise<string[]> {
   const session = await getSession(sessionId, organizationId);
   if (!session) {
     throw new Error(`Session ${sessionId} not found in organization ${organizationId}`);
@@ -413,7 +416,7 @@ export async function getLinkedRooms(
 export async function updateSharedContext(
   sessionId: string,
   organizationId: string,
-  updates: SharedContextUpdate[],
+  updates: SharedContextUpdate[]
 ): Promise<WorkspaceSession> {
   UpdateSharedContextParamsSchema.parse({ sessionId, organizationId, updates });
 
@@ -423,7 +426,9 @@ export async function updateSharedContext(
   }
 
   if (TERMINAL_SESSION_STATES.has(session.state)) {
-    throw new Error(`Cannot update shared context on session ${sessionId} in terminal state '${session.state}'`);
+    throw new Error(
+      `Cannot update shared context on session ${sessionId} in terminal state '${session.state}'`
+    );
   }
 
   const updatedContext = { ...session.sharedContext };
@@ -437,10 +442,12 @@ export async function updateSharedContext(
     `UPDATE v8_workspace_sessions
      SET shared_context = ?, updated_at = ?
      WHERE session_id = ? AND organization_id = ?`,
-    [JSON.stringify(updatedContext), now, sessionId, organizationId],
+    [JSON.stringify(updatedContext), now, sessionId, organizationId]
   );
 
-  logger.info(`${LOG_PREFIX} Updated shared context on session ${sessionId}: ${updates.map((u) => u.key).join(', ')}`);
+  logger.info(
+    `${LOG_PREFIX} Updated shared context on session ${sessionId}: ${updates.map((u) => u.key).join(', ')}`
+  );
 
   return {
     ...session,
@@ -487,7 +494,7 @@ export async function recordActivity(params: RecordActivityParams): Promise<Acti
       entry.actorDisplayName,
       JSON.stringify(entry.payload),
       entry.createdAt,
-    ],
+    ]
   );
 
   return entry;
@@ -499,7 +506,7 @@ export async function recordActivity(params: RecordActivityParams): Promise<Acti
 export async function getActivityFeed(
   sessionId: string,
   organizationId: string,
-  limit: number = 100,
+  limit: number = 100
 ): Promise<ActivityFeedEntry[]> {
   const rows = await dbAll<ActivityFeedRow>(
     `SELECT * FROM v8_activity_feed
@@ -507,7 +514,7 @@ export async function getActivityFeed(
      ORDER BY created_at DESC
      LIMIT ?`,
     [sessionId, organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToActivityFeedEntry);
@@ -523,7 +530,7 @@ export async function getActivityFeed(
 export async function getSessionsByWorkspace(
   workspaceId: string,
   organizationId: string,
-  includeCompleted: boolean = false,
+  includeCompleted: boolean = false
 ): Promise<WorkspaceSession[]> {
   let query: string;
   let queryParams: unknown[];

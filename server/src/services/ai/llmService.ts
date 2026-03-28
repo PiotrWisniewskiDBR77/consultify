@@ -336,8 +336,15 @@ function getProviderSync(modelConfig: ModelConfig) {
 // @ai-sdk/openai v3 defaults to the Responses API when calling provider(modelId),
 // so we must use provider.chat(modelId) for these.
 const CHAT_COMPLETIONS_ONLY_PROVIDERS = new Set([
-  'deepseek', 'z_ai', 'zai', 'qwen', 'mistral', 'nvidia',
-  'cohere', 'openrouter', 'ollama',
+  'deepseek',
+  'z_ai',
+  'zai',
+  'qwen',
+  'mistral',
+  'nvidia',
+  'cohere',
+  'openrouter',
+  'ollama',
 ]);
 
 function getModel(modelConfig: ModelConfig) {

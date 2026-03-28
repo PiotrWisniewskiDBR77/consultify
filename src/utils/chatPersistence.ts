@@ -9,11 +9,28 @@ export interface PersistedConversationArtifact {
 }
 
 export interface PersistedAiResponseMetadata {
-  thinkingSteps: ThinkingStep[];
+  thinkingSteps: Array<{
+    id: string;
+    title: string;
+    content: string;
+    status: 'pending' | 'active' | 'completed';
+  }>;
   artifacts: PersistedConversationArtifact[];
   citations: any[];
   streamSessionId?: string;
   [key: string]: unknown;
+}
+
+function normalizeThinkingSteps(
+  thinking: ThinkingStep[] | undefined
+): PersistedAiResponseMetadata['thinkingSteps'] {
+  return (thinking || []).map((step) => ({
+    id: step.id,
+    title: step.label || 'Thinking',
+    content: step.content,
+    status:
+      step.status === 'done' ? 'completed' : step.status === 'in_progress' ? 'active' : 'pending',
+  }));
 }
 
 export function normalizeArtifactsForConversationMetadata(
@@ -35,16 +52,10 @@ export function buildPersistedAiResponseMetadata(params: {
   streamSessionId?: string;
   extra?: Record<string, unknown>;
 }): PersistedAiResponseMetadata {
-  const {
-    thinking = [],
-    artifacts = [],
-    citations = [],
-    streamSessionId,
-    extra = {},
-  } = params;
+  const { thinking = [], artifacts = [], citations = [], streamSessionId, extra = {} } = params;
 
   return {
-    thinkingSteps: thinking,
+    thinkingSteps: normalizeThinkingSteps(thinking),
     artifacts: normalizeArtifactsForConversationMetadata(artifacts),
     citations: Array.isArray(citations) ? citations : [],
     ...(streamSessionId ? { streamSessionId } : {}),

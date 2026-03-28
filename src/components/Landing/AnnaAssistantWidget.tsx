@@ -1,5 +1,5 @@
-import { GoogleGenAI, Modality } from '@google/genai';
 import type { LiveServerMessage, Session } from '@google/genai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,7 +72,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Who is Consultify for?',
       'Why start with a demo or trial?',
     ],
-    error: 'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+    error:
+      'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
     voiceReady: 'Tap the microphone to start a live voice conversation.',
     voiceConnecting: 'Connecting voice mode...',
     voiceListening: 'Anna is listening live. Start typing anytime to switch back to text.',
@@ -104,7 +105,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Dla kogo jest Consultify?',
       'Dlaczego warto zaczac od demo lub triala?',
     ],
-    error: 'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
+    error:
+      'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
     voiceReady: 'Kliknij mikrofon, aby uruchomic rozmowe glosowa na zywo.',
     voiceConnecting: 'Lacze tryb glosowy...',
     voiceListening: 'Anna slucha na zywo. Zacznij pisac w dowolnym momencie, aby wrocic do tekstu.',
@@ -136,10 +138,12 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Para quien es Consultify?',
       'Por que empezar con un demo o un trial?',
     ],
-    error: 'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
+    error:
+      'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
     voiceReady: 'Toca el microfono para iniciar una conversacion de voz en vivo.',
     voiceConnecting: 'Conectando modo de voz...',
-    voiceListening: 'Anna esta escuchando en vivo. Empieza a escribir en cualquier momento para volver al texto.',
+    voiceListening:
+      'Anna esta escuchando en vivo. Empieza a escribir en cualquier momento para volver al texto.',
     voiceUnavailable:
       'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
     voiceError:
@@ -168,7 +172,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Fur wen ist Consultify gedacht?',
       'Warum mit einem Demo oder Trial starten?',
     ],
-    error: 'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.',
+    error:
+      'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.',
     voiceReady: 'Tippe auf das Mikrofon, um ein Live-Sprachgesprach zu starten.',
     voiceConnecting: 'Sprachmodus wird verbunden...',
     voiceListening: 'Anna hort live zu. Du kannst jederzeit tippen, um zum Text zuruckzukehren.',
@@ -200,7 +205,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Consultifyは誰のためのものですか？',
       'なぜデモやトライアルから始めるべきですか？',
     ],
-    error: 'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。',
+    error:
+      'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。',
     voiceReady: 'マイクをタップするとライブ音声会話を開始できます。',
     voiceConnecting: '音声モードに接続中...',
     voiceListening: 'Annaがライブで聞いています。いつでも入力してテキストに戻れます。',
@@ -232,7 +238,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'لمن صمم Consultify؟',
       'لماذا أبدأ بعرض تجريبي أو نسخة تجريبية؟',
     ],
-    error: 'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
+    error:
+      'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
     voiceReady: 'اضغط على الميكروفون لبدء محادثة صوتية مباشرة.',
     voiceConnecting: 'جار الاتصال بوضع الصوت...',
     voiceListening: 'Anna تستمع الآن مباشرة. يمكنك البدء بالكتابة في أي وقت للعودة إلى النص.',
@@ -249,7 +256,10 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
   },
 };
 
-function buildVoiceSystemInstruction(lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', knowledgeContext?: string): string {
+function buildVoiceSystemInstruction(
+  lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar',
+  knowledgeContext?: string
+): string {
   if (lang === 'pl') {
     return `Jestes Anna, publiczna asystentka glosowa Consultify i DBR77 Vector.
 
@@ -555,7 +565,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         }
         const data = await response.json();
         return {
-          apiKey: typeof data?.apiKey === 'string' && data.apiKey.trim() ? data.apiKey.trim() : FRONTEND_GEMINI_KEY || null,
+          apiKey:
+            typeof data?.apiKey === 'string' && data.apiKey.trim()
+              ? data.apiKey.trim()
+              : FRONTEND_GEMINI_KEY || null,
           voiceName: typeof data?.voiceName === 'string' ? data.voiceName.trim() : LIVE_VOICE_NAME,
           enabled: data?.enabled !== false,
         };
@@ -790,8 +803,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
               upsertVoiceTranscriptMessage('assistant', outputTranscript, voiceAssistantDraftRef);
             }
 
-            const base64Audio = message.serverContent?.modelTurn?.parts?.find((part) => part.inlineData)
-              ?.inlineData?.data;
+            const base64Audio = message.serverContent?.modelTurn?.parts?.find(
+              (part) => part.inlineData
+            )?.inlineData?.data;
             if (!base64Audio) return;
 
             const binaryString = atob(base64Audio);
@@ -1083,7 +1097,16 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       }
       navigate(ROUTES.LEGAL.CONTACT);
     },
-    [closeWidget, lang, navigate, onContactClick, onDemoClick, onTrialClick, stopVoiceConversation, voiceStatus]
+    [
+      closeWidget,
+      lang,
+      navigate,
+      onContactClick,
+      onDemoClick,
+      onTrialClick,
+      stopVoiceConversation,
+      voiceStatus,
+    ]
   );
   const voiceHint =
     voiceStatus === 'live'
@@ -1202,7 +1225,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
 
                 {messages.length <= 1 && !isLoading && (
                   <div className="pt-1">
-                    <p className="mb-2 text-xs font-medium text-white/45">{copy.suggestionsLabel}</p>
+                    <p className="mb-2 text-xs font-medium text-white/45">
+                      {copy.suggestionsLabel}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {copy.suggestions.map((suggestion) => (
                         <button
@@ -1306,7 +1331,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                         ? copy.voiceStop
                         : copy.voiceStart
                   }
-                  title={actionMode === 'mic' && !voiceAvailable ? copy.voiceUnavailable : undefined}
+                  title={
+                    actionMode === 'mic' && !voiceAvailable ? copy.voiceUnavailable : undefined
+                  }
                 >
                   {actionMode === 'connecting' ? (
                     <Loader2 size={16} className="animate-spin" />

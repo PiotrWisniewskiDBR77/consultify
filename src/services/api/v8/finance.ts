@@ -414,11 +414,11 @@ export interface V8FinanceAnalysisCreatePayload {
 
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
-  getModels: () =>
-    v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
+  getModels: () => v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
   createModel: (body: V8FinanceModelCreatePayload) =>
     v8Post<{ model: V8FinanceModelDetail }>('/finance/models', body),
-  getModel: (modelId: string) => v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
+  getModel: (modelId: string) =>
+    v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
   getModelValidations: (modelId: string) =>
     v8Get<V8FinanceModelValidationResult>(`/finance/models/${modelId}/validations`),
   getModelOutputs: (modelId: string, params?: { scenario?: string }) =>
@@ -439,14 +439,13 @@ export const V8FinanceApi = {
     v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
-  getBudgets: () =>
-    v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
+  getBudgets: () => v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',
       {
         ...(params?.readiness ? { readiness: params.readiness } : {}),
-      },
+      }
     ),
   getStatementPack: (packId: string) =>
     v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
@@ -463,20 +462,20 @@ export const V8FinanceApi = {
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
   getStatementAnalytics: (statementId: string, params?: { level?: 1 | 2 | 3 }) =>
     v8Get<V8FinanceStatementAnalyticsResult>(`/finance/statements/${statementId}/analytics`, {
-      ...(typeof params?.level === 'number' ? { level: params.level } : {}),
+      ...(typeof params?.level === 'number' ? { level: String(params.level) } : {}),
     }),
   getStatementRatios: (statementId: string) =>
     v8Get<{ ratios: V8FinanceStatementRatioResult }>(`/finance/statements/${statementId}/ratios`),
   searchStatementDocumentIntelligence: (
     statementId: string,
-    params: { q: string; limit?: number },
+    params: { q: string; limit?: number }
   ) =>
     v8Get<{ matches: V8FinanceStatementDocumentIntelMatch[]; statementId: string; query: string }>(
       `/finance/statements/${statementId}/document-intelligence/search`,
       {
         q: params.q,
-        ...(typeof params.limit === 'number' ? { limit: params.limit } : {}),
-      },
+        ...(typeof params.limit === 'number' ? { limit: String(params.limit) } : {}),
+      }
     ),
   detectStatement: (statementId: string, body: Record<string, unknown> = {}) =>
     v8Post<V8FinanceStatementDetectResult>(`/finance/statements/${statementId}/detect`, body),
@@ -489,7 +488,9 @@ export const V8FinanceApi = {
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>
     v8Put<V8FinanceStatementValuesSaveResult>(`/finance/statements/${statementId}/values`, body),
   getCanonicalLines: () =>
-    v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
+    v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>(
+      '/finance/canonical-lines'
+    ),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),
@@ -499,15 +500,15 @@ export const V8FinanceApi = {
     v8Get<{ ratios: V8FinanceAnalysisRatio[] }>(`/finance/analyses/${analysisId}/ratios`),
   getInitiativeProposals: (analysisId: string) =>
     v8Get<{ proposals: V8FinanceInitiativeProposal[] }>(
-      `/finance/analyses/${analysisId}/initiative-proposals`,
+      `/finance/analyses/${analysisId}/initiative-proposals`
     ),
   createInitiativesFromAnalysis: (analysisId: string, body: { acceptedProposalIds: string[] }) =>
-    v8Post<V8FinanceInitiativeCreateResult>(
-      `/finance/analyses/${analysisId}/initiatives`,
-      body,
-    ),
+    v8Post<V8FinanceInitiativeCreateResult>(`/finance/analyses/${analysisId}/initiatives`, body),
   createAnalysis: (body: V8FinanceAnalysisCreatePayload) =>
-    v8Post<{ analysis: V8FinanceAnalysisSummary & Record<string, unknown> }>('/finance/analyses', body),
+    v8Post<{ analysis: V8FinanceAnalysisSummary & Record<string, unknown> }>(
+      '/finance/analyses',
+      body
+    ),
   deleteAnalysis: (analysisId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/analyses/${analysisId}`),
   runAnalysis: (analysisId: string) =>

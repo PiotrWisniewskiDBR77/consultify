@@ -7,6 +7,7 @@
  */
 
 import crypto from 'crypto';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -47,7 +48,7 @@ export class SSOService {
        VALUES ($1, 'saml', $2)
        ON CONFLICT (organization_id) DO UPDATE SET config = $2, provider = 'saml', updated_at = NOW()
        RETURNING *`,
-      [organizationId, JSON.stringify(config)],
+      [organizationId, JSON.stringify(config)]
     );
     return result.rows[0] as SSOConfigRow;
   }
@@ -59,17 +60,16 @@ export class SSOService {
        VALUES ($1, 'oidc', $2)
        ON CONFLICT (organization_id) DO UPDATE SET config = $2, provider = 'oidc', updated_at = NOW()
        RETURNING *`,
-      [organizationId, JSON.stringify(config)],
+      [organizationId, JSON.stringify(config)]
     );
     return result.rows[0] as SSOConfigRow;
   }
 
   async getSSOConfig(organizationId: string): Promise<SSOConfigRow | null> {
     const db = getDatabase();
-    const result = await db.query(
-      'SELECT * FROM tp_sso_configs WHERE organization_id = $1',
-      [organizationId],
-    );
+    const result = await db.query('SELECT * FROM tp_sso_configs WHERE organization_id = $1', [
+      organizationId,
+    ]);
     return (result.rows[0] as SSOConfigRow | undefined) || null;
   }
 
@@ -77,7 +77,7 @@ export class SSOService {
     const db = getDatabase();
     await db.query(
       'UPDATE tp_sso_configs SET enabled = $2, updated_at = NOW() WHERE organization_id = $1',
-      [organizationId, enabled],
+      [organizationId, enabled]
     );
   }
 
@@ -101,7 +101,7 @@ export class SSOService {
    */
   async validateSAMLResponse(
     _organizationId: string,
-    samlResponse: string,
+    samlResponse: string
   ): Promise<{
     valid: boolean;
     email?: string;
@@ -125,7 +125,9 @@ export class SSOService {
         attributes: {},
       };
     } catch (err) {
-      logger.error('[SSOService] SAML response validation failed', { error: (err as Error).message });
+      logger.error('[SSOService] SAML response validation failed', {
+        error: (err as Error).message,
+      });
       return { valid: false };
     }
   }

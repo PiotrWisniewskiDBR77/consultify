@@ -42,15 +42,14 @@ import ReactFlow, {
 import useStore from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { resolveTagColor } from './mindmap/tagColorMapping';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
+  type ArtifactLink,
   artifactLinkToOpenPayload,
+  type ArtifactType,
   buildArtifactLink,
   getArtifactPath,
-  type ArtifactLink,
-  type ArtifactType,
 } from '@/utils/artifactLinks';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
@@ -63,14 +62,15 @@ import {
 } from './ideaEntryTypes';
 import {
   type CanvasToolType,
-  IDEA_WORKSPACE_THEME_EVENT,
   IDEA_WORKSPACE_INSERT_EVENT,
+  IDEA_WORKSPACE_THEME_EVENT,
   type IdeaWorkspaceInsertDetail,
   type MapStructureType,
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
 import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
+import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
 import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
 import { AIBlindSpotsDetector } from './mindmap/AIBlindSpotsDetector';
 import { AIBranchBalancer } from './mindmap/AIBranchBalancer';
@@ -78,7 +78,10 @@ import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
 import { AIDependencyDetector, type DetectedDependency } from './mindmap/AIDependencyDetector';
 import { AIPriorityRecommender } from './mindmap/AIPriorityRecommender';
 import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
+import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
+import { AssignPersonModal } from './mindmap/AssignPersonModal';
+import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
 import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';
@@ -88,32 +91,29 @@ import {
   type CollaborationSessionState,
 } from './mindmap/CollaborationOverlay';
 import { DocumentToMap } from './mindmap/DocumentToMap';
+import { EdgeContextMenu } from './mindmap/EdgeContextMenu';
 import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
-import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
-import { AssignPersonModal } from './mindmap/AssignPersonModal';
-import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
-import { ImageUrlModal } from './mindmap/ImageUrlModal';
 import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
 import { GradientEdge } from './mindmap/GradientEdge';
 import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
+import { ImageUrlModal } from './mindmap/ImageUrlModal';
 import { ImportExternalMap } from './mindmap/ImportExternalMap';
 import { InterviewToMap } from './mindmap/InterviewToMap';
 import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
-import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
-import { NodeContextMenu } from './mindmap/NodeContextMenu';
-import { PaneContextMenu } from './mindmap/PaneContextMenu';
-import { EdgeContextMenu } from './mindmap/EdgeContextMenu';
+import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
 import {
-  applyNodeStyle,
   appendAIHistoryEntry,
+  applyNodeStyle,
   collectDescendantIds,
   copyNodeStyle,
 } from './mindmap/mindMapNodeModel';
+import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
+import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
 import {
   GlowWrapper,
@@ -122,20 +122,25 @@ import {
   StatusDot,
   VoteStars,
 } from './mindmap/NodeEnhancements';
+import { PaneContextMenu } from './mindmap/PaneContextMenu';
 import { PresentationMode } from './mindmap/PresentationMode';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
+import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
+import { resolveTagColor } from './mindmap/tagColorMapping';
 import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
-import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
-import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
 import { useMapExportPdf } from './mindmap/useMapExportPdf';
-import { hasMindMapClipboard, isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
+import {
+  hasMindMapClipboard,
+  isRelationEdge,
+  isStructuralEdge,
+  useMindMapNodes,
+} from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
-import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
@@ -187,7 +192,9 @@ function uid() {
 }
 
 function truncateDebugText(value: string, max = 120) {
-  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  const normalized = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return normalized.length > max ? `${normalized.slice(0, max - 1)}...` : normalized;
 }
 
@@ -278,7 +285,6 @@ function normalizeLegacyDebugEntries(raw: unknown): DebugEntry[] {
     })
     .filter(Boolean) as DebugEntry[];
 }
-
 
 const BRANCH_COLORS: Record<
   string,
@@ -713,7 +719,11 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
     typeof data.semanticType === 'string' ? data.semanticType : '',
     ...(Array.isArray(data.tags) ? data.tags : []),
   ]
-    .map((value) => String(value || '').trim().toLowerCase())
+    .map((value) =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+    )
     .filter(Boolean);
 
   for (const token of semanticTokens) {
@@ -735,7 +745,9 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
     <div className="text-center px-2">
       <Flower2 size={32} className="text-white mx-auto drop-shadow-sm" />
-      <div className="text-[11px] font-semibold text-white mt-1.5 line-clamp-2 drop-shadow-sm">{data.label}</div>
+      <div className="text-[11px] font-semibold text-white mt-1.5 line-clamp-2 drop-shadow-sm">
+        {data.label}
+      </div>
     </div>
     {selected && (
       <button
@@ -743,7 +755,11 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white text-amber-600 shadow-lg shadow-amber-500/25 hover:bg-amber-50 hover:scale-110 transition-all flex items-center justify-center border-2 border-amber-200"
         onClick={(e) => {
           e.stopPropagation();
-          window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', { detail: { action: 'add_child', nodeId: id } }));
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'add_child', nodeId: id },
+            })
+          );
         }}
       >
         <Plus size={20} strokeWidth={2.5} />
@@ -754,7 +770,10 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
-  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
+  const colors = useMemo(
+    () => branchColor(data.branchKey, data._depth),
+    [data.branchKey, data._depth]
+  );
   const collapsed = data._collapsed;
   const childCount = data.count || 0;
   const rfNodes = useStore((state: any) => state.nodes);
@@ -763,14 +782,21 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
   const edgeCount = rfEdges.length;
   const health = useMemo(
     () => computeBranchHealth(id, rfNodes, rfEdges),
-    [id, nodeCount, edgeCount],
+    [id, nodeCount, edgeCount]
   );
 
   if (data._simplified) {
     return (
-      <div className={`px-3 py-1.5 rounded-xl border ${colors.border} ${colors.bg} text-center min-w-[100px]`}>
+      <div
+        className={`px-3 py-1.5 rounded-xl border ${colors.border} ${colors.bg} text-center min-w-[100px]`}
+      >
         <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
-        <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          className="!opacity-0 !w-1 !h-1"
+        />
         <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
         <div className="text-[10px] text-slate-500 dark:text-slate-400">{childCount} nodes</div>
       </div>
@@ -802,9 +828,11 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
           className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
           onClick={(e) => {
             e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'mm_add_child', nodeId: id }
-            }));
+            window.dispatchEvent(
+              new CustomEvent('idea-mindmap-node-quick-action', {
+                detail: { action: 'mm_add_child', nodeId: id },
+              })
+            );
           }}
         >
           <Plus size={12} strokeWidth={2.5} />
@@ -828,13 +856,23 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
             className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
-                detail: { action: 'mm_ai_expand_node', nodeId: id }
-              }));
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-node-quick-action', {
+                  detail: { action: 'mm_ai_expand_node', nodeId: id },
+                })
+              );
             }}
           >
             <Sparkles size={10} />
-            <span>{childCount === 0 ? (data._isPl ? 'Rozwiń AI' : 'AI Expand') : (data._isPl ? 'Więcej AI' : 'More AI')}</span>
+            <span>
+              {childCount === 0
+                ? data._isPl
+                  ? 'Rozwiń AI'
+                  : 'AI Expand'
+                : data._isPl
+                  ? 'Więcej AI'
+                  : 'More AI'}
+            </span>
           </button>
           <button
             type="button"
@@ -842,9 +880,11 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
             className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-medium shadow-lg hover:bg-emerald-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              window.dispatchEvent(new CustomEvent('idea-mindmap-summarize-branch', {
-                detail: { nodeId: id, nodeLabel: data.label || '' }
-              }));
+              window.dispatchEvent(
+                new CustomEvent('idea-mindmap-summarize-branch', {
+                  detail: { nodeId: id, nodeLabel: data.label || '' },
+                })
+              );
             }}
           >
             <FileText size={10} />
@@ -868,7 +908,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
   const interactionMode = useContext(MindMapInteractionModeContext);
   const ideaId = useContext(MindMapIdeaIdContext);
   const { getNodes, getEdges } = useReactFlow();
-  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
+  const colors = useMemo(
+    () => branchColor(data.branchKey, data._depth),
+    [data.branchKey, data._depth]
+  );
   const tagColor = useMemo(() => resolveTagColor(data.tags || []), [data.tags]);
   const isAI =
     data.sourceType === 'ai_chat' ||
@@ -937,13 +980,37 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     setLoadingSuggestions(true);
 
     const branchSuggestionsFallback: Record<string, string[]> = {
-      causes: ['Market shift', 'Process gap', 'Resource constraint', 'Customer feedback', 'Competitor action'],
+      causes: [
+        'Market shift',
+        'Process gap',
+        'Resource constraint',
+        'Customer feedback',
+        'Competitor action',
+      ],
       options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
-      validation: ['A/B test', 'User interview', 'Data analysis', 'Prototype test', 'Expert review'],
+      validation: [
+        'A/B test',
+        'User interview',
+        'Data analysis',
+        'Prototype test',
+        'Expert review',
+      ],
       risks: ['Timeline risk', 'Budget overrun', 'Skill gap', 'Dependency', 'Market change'],
-      next: ['Research spike', 'Stakeholder review', 'Build prototype', 'Run pilot', 'Document findings'],
+      next: [
+        'Research spike',
+        'Stakeholder review',
+        'Build prototype',
+        'Run pilot',
+        'Document findings',
+      ],
     };
-    const defaultsFallback = ['Key insight', 'Open question', 'Action item', 'Evidence needed', 'Hypothesis'];
+    const defaultsFallback = [
+      'Key insight',
+      'Open question',
+      'Action item',
+      'Evidence needed',
+      'Hypothesis',
+    ];
 
     let cancelled = false;
 
@@ -974,16 +1041,18 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           suggestCacheRef.current.set(cacheKey, texts);
           setSuggestions(texts);
         } else {
-          const fallback = branchKey && branchSuggestionsFallback[branchKey]
-            ? branchSuggestionsFallback[branchKey]
-            : defaultsFallback;
+          const fallback =
+            branchKey && branchSuggestionsFallback[branchKey]
+              ? branchSuggestionsFallback[branchKey]
+              : defaultsFallback;
           setSuggestions(fallback);
         }
       } catch {
         if (cancelled) return;
-        const fallback = branchKey && branchSuggestionsFallback[branchKey]
-          ? branchSuggestionsFallback[branchKey]
-          : defaultsFallback;
+        const fallback =
+          branchKey && branchSuggestionsFallback[branchKey]
+            ? branchSuggestionsFallback[branchKey]
+            : defaultsFallback;
         setSuggestions(fallback);
       }
       if (!cancelled) setLoadingSuggestions(false);
@@ -1065,10 +1134,22 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   if (data._simplified) {
     return (
-      <div className={`px-2 py-1 rounded-lg border ${colors.border} ${colors.bg} text-xs min-w-[80px] max-w-[180px]`}>
+      <div
+        className={`px-2 py-1 rounded-lg border ${colors.border} ${colors.bg} text-xs min-w-[80px] max-w-[180px]`}
+      >
         <div className={`font-semibold ${colors.text} line-clamp-1`}>{data.label || '...'}</div>
-        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="target-left"
+          className="!opacity-0 !w-1 !h-1"
+        />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source-right"
+          className="!opacity-0 !w-1 !h-1"
+        />
       </div>
     );
   }
@@ -1108,7 +1189,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
             ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
-            : selected ? `ring-2 ${colors.ring}` : ''
+            : selected
+              ? `ring-2 ${colors.ring}`
+              : ''
         } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative transition-shadow duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
@@ -1154,9 +1237,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
               onClick={(e) => {
                 e.stopPropagation();
-                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
-                  detail: { action: 'mm_add_child', nodeId: id }
-                }));
+                window.dispatchEvent(
+                  new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                    detail: { action: 'mm_add_child', nodeId: id },
+                  })
+                );
               }}
             >
               <Plus size={14} strokeWidth={2.5} />
@@ -1171,9 +1256,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white shadow-md hover:bg-slate-600 hover:scale-110 transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
-                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
-                  detail: { action: 'mm_add_sibling', nodeId: id }
-                }));
+                window.dispatchEvent(
+                  new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                    detail: { action: 'mm_add_sibling', nodeId: id },
+                  })
+                );
               }}
             >
               <Plus size={12} strokeWidth={2} />
@@ -1203,7 +1290,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 const artId = first?.artifactRef?.id || first?.id;
                 if (artType && artId) {
                   window.dispatchEvent(
-                    new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: first?.label || artType } })
+                    new CustomEvent('mywork-open-item', {
+                      detail: { type: artType, id: artId, name: first?.label || artType },
+                    })
                   );
                 }
               } else {
@@ -1221,7 +1310,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
             className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-purple-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
-            title={isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`}
+            title={
+              isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`
+            }
           >
             <ExternalLink size={8} />
             <span className="uppercase">{String(data._convertedTo).replace('_', ' ')}</span>
@@ -1373,13 +1464,21 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
-                  <span className="inline-flex items-center gap-0.5 shrink-0" title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}>
+                  <span
+                    className="inline-flex items-center gap-0.5 shrink-0"
+                    title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}
+                  >
                     <Link2 size={8} className="text-blue-400 dark:text-blue-500" />
-                    <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">{data.evidenceLinks.length}</span>
+                    <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">
+                      {data.evidenceLinks.length}
+                    </span>
                   </span>
                 )}
                 {depth > 0 && (
-                  <div className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto" title={`Depth ${depth}`}>
+                  <div
+                    className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto"
+                    title={`Depth ${depth}`}
+                  >
                     L{depth}
                   </div>
                 )}
@@ -1495,17 +1594,15 @@ function MindMapInner({
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const debugEnabled = false;
-  const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } = useReactFlow();
+  const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
+    useReactFlow();
   const { autoLayout } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const { exportAsPdf } = useMapExportPdf();
   const interactionMode = externalInteractionMode;
   const [simplifiedMode, setSimplifiedMode] = useState(false);
   const reactFlowNodeTypes = useRef(nodeTypes).current;
-  const reactFlowEdgeTypes = useMemo(
-    () => (simplifiedMode ? {} : edgeTypes),
-    [simplifiedMode],
-  );
+  const reactFlowEdgeTypes = useMemo(() => (simplifiedMode ? {} : edgeTypes), [simplifiedMode]);
   const reactFlowFitViewOptions = useMemo(() => ({ padding: 0.3 }), []);
   const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
   const reactFlowDefaultEdgeOptions = useMemo(
@@ -1673,7 +1770,9 @@ function MindMapInner({
     if (!debugEnabled) return;
     let hadPreviousLogs = false;
     try {
-      const prev = sessionStorage.getItem(DEBUG_SESSION_KEY) || sessionStorage.getItem(LEGACY_DEBUG_SESSION_KEY);
+      const prev =
+        sessionStorage.getItem(DEBUG_SESSION_KEY) ||
+        sessionStorage.getItem(LEGACY_DEBUG_SESSION_KEY);
       if (prev) {
         const parsed = normalizeLegacyDebugEntries(JSON.parse(prev));
         if (parsed.length > 0) {
@@ -1694,14 +1793,22 @@ function MindMapInner({
           ];
         }
       }
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
     persistDebugEntries();
-    debugLog(`${hadPreviousLogs ? 'REACT_REMOUNT' : 'REACT_MOUNT'} ideaId=${ideaId} locked=${locked}`, {
-      source: 'lifecycle',
-    });
+    debugLog(
+      `${hadPreviousLogs ? 'REACT_REMOUNT' : 'REACT_MOUNT'} ideaId=${ideaId} locked=${locked}`,
+      {
+        source: 'lifecycle',
+      }
+    );
 
     const errorHandler = (e: ErrorEvent) => {
-      debugLog(`ERROR: ${e.message} at ${e.filename}:${e.lineno}`, { source: 'error', severity: 'error' });
+      debugLog(`ERROR: ${e.message} at ${e.filename}:${e.lineno}`, {
+        source: 'error',
+        severity: 'error',
+      });
     };
     const rejectionHandler = (e: PromiseRejectionEvent) => {
       debugLog(`UNHANDLED REJECTION: ${String(e.reason).slice(0, 200)}`, {
@@ -1715,7 +1822,9 @@ function MindMapInner({
       try {
         const vp = getViewport();
         localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     window.addEventListener('error', errorHandler);
     window.addEventListener('unhandledrejection', rejectionHandler);
@@ -1730,7 +1839,9 @@ function MindMapInner({
       try {
         const vp = getViewport();
         localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       window.removeEventListener('error', errorHandler);
       window.removeEventListener('unhandledrejection', rejectionHandler);
       window.removeEventListener('beforeunload', beforeUnload);
@@ -1829,7 +1940,6 @@ function MindMapInner({
   const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
   const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
-
   // Apply collapse visibility + drill-down filtering
   const visibleNodes = useMemo(() => {
     const childrenOf = new Map<string, string[]>();
@@ -1914,9 +2024,7 @@ function MindMapInner({
 
   const focusFilteredEdges = useMemo(() => {
     if (focusMode !== 'object' || !focusObjectId) return visibleEdges;
-    const hiddenNodeIds = new Set(
-      focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id)
-    );
+    const hiddenNodeIds = new Set(focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id));
     if (hiddenNodeIds.size === 0) return visibleEdges;
     return visibleEdges.map((e) => {
       const nextHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
@@ -2032,7 +2140,9 @@ function MindMapInner({
       priority: node.data?.priority,
       notes: meta.notes || node.data?.notes || '',
       status: meta.status || node.data?.status || 'idea',
-      childNodeIds: edges.filter((e) => e.source === node.id && isStructuralEdge(e)).map((e) => e.target),
+      childNodeIds: edges
+        .filter((e) => e.source === node.id && isStructuralEdge(e))
+        .map((e) => e.target),
       parentNodeId: edges.find((e) => e.target === node.id && isStructuralEdge(e))?.source,
       context: node.data?.context || '',
       goal: node.data?.goal || '',
@@ -2075,9 +2185,7 @@ function MindMapInner({
       }
       if (Object.keys(dataPatch).length > 0) {
         setNodes((prev: Node[]) =>
-          prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n
-          )
+          prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n))
         );
       }
     },
@@ -2088,7 +2196,9 @@ function MindMapInner({
     (nodeId: string, target: 'initiative' | 'decision') => {
       const action = target === 'initiative' ? 'convert_initiative' : 'convert_decision';
       setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, nodeIds: [nodeId] } }));
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', { detail: { action, nodeIds: [nodeId] } })
+      );
       setDrawerNodeId(null);
     },
     [setNodes]
@@ -2159,7 +2269,10 @@ function MindMapInner({
       try {
         if (!onSelectionChange) return;
         const selected = currentNodes.filter((n: Node) => n.selected);
-        const key = selected.map((n) => n.id).sort().join(',');
+        const key = selected
+          .map((n) => n.id)
+          .sort()
+          .join(',');
         if (key === prevSelectedIdsRef.current) return;
         prevSelectedIdsRef.current = key;
         debugLog(`reportSelection: ${selected.length} selected [${key.slice(0, 60)}]`, {
@@ -2229,30 +2342,29 @@ function MindMapInner({
     scheduleSave,
     saveViewportOnly,
     localVersionRef,
-  } =
-    useMindMapPersistence({
-      ideaId,
-      ideaTitle,
-      isPolish,
-      locked,
-      preferredTool,
-      extensions,
-      structureType,
-      i18nLanguage: i18n.language,
-      nodes,
-      edges,
-      setNodes,
-      setEdges,
-      setCollapsedNodeIds,
-      collapsedNodeIds,
-      fitView,
-      setViewport,
-      getViewport,
-      onPreferredToolLoaded,
-      onViewportReport,
-      clearUndoHistory,
-      externalRuntime,
-    });
+  } = useMindMapPersistence({
+    ideaId,
+    ideaTitle,
+    isPolish,
+    locked,
+    preferredTool,
+    extensions,
+    structureType,
+    i18nLanguage: i18n.language,
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    setCollapsedNodeIds,
+    collapsedNodeIds,
+    fitView,
+    setViewport,
+    getViewport,
+    onPreferredToolLoaded,
+    onViewportReport,
+    clearUndoHistory,
+    externalRuntime,
+  });
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSave = useCallback(() => {
@@ -2311,19 +2423,25 @@ function MindMapInner({
   });
 
   // ── AI Sidekick context detection ──────────────────────────────────────
-  const sidekickCtx = useMemo<SidekickContext>(() => detectMindmapIntent({
-    nodes: nodes.map((n: Node) => ({ id: n.id, data: n.data, type: n.type })),
-    edges: edges.map((e: Edge) => ({ source: e.source, target: e.target })),
-    selectedNodeIds,
-    isEditing: editingNodeIdRef.current !== null,
-    hasTemplate: nodes.some((n: Node) => n.data?._fromTemplate === true),
-    activeTool: 'mindmap',
-  }), [nodes, edges, selectedNodeIds]);
+  const sidekickCtx = useMemo<SidekickContext>(
+    () =>
+      detectMindmapIntent({
+        nodes: nodes.map((n: Node) => ({ id: n.id, data: n.data, type: n.type })),
+        edges: edges.map((e: Edge) => ({ source: e.source, target: e.target })),
+        selectedNodeIds,
+        isEditing: editingNodeIdRef.current !== null,
+        hasTemplate: nodes.some((n: Node) => n.data?._fromTemplate === true),
+        activeTool: 'mindmap',
+      }),
+    [nodes, edges, selectedNodeIds]
+  );
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('idea-mindmap-sidekick-context', {
-      detail: sidekickCtx,
-    }));
+    window.dispatchEvent(
+      new CustomEvent('idea-mindmap-sidekick-context', {
+        detail: sidekickCtx,
+      })
+    );
   }, [sidekickCtx]);
 
   useEffect(() => {
@@ -2334,12 +2452,22 @@ function MindMapInner({
       if (action === 'add_sibling' && detail.nodeId) addSiblingNode(detail.nodeId);
       if (action === 'open_properties' && detail.nodeId) setDrawerNodeId(detail.nodeId);
       if (action === 'pane_fit_view') {
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* */
+        }
       }
       if (action === 'pane_auto_layout') {
         const laid = autoLayout(nodes as any, edges as any);
         setNodes(laid);
-        setTimeout(() => { try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ } }, 50);
+        setTimeout(() => {
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
+        }, 50);
       }
       if (action === 'set_layout_mode' && detail.layoutMode) {
         setLayoutMode(detail.layoutMode as 'tree' | 'radial' | 'force');
@@ -2347,9 +2475,20 @@ function MindMapInner({
       }
       if (action === 'set_structure_type' && detail.structureType) {
         setStructureType(detail.structureType as MapStructureType);
-        const laid = applyStructureLayout(detail.structureType as MapStructureType, nodes as any, edges as any, autoLayout);
+        const laid = applyStructureLayout(
+          detail.structureType as MapStructureType,
+          nodes as any,
+          edges as any,
+          autoLayout
+        );
         setNodes(laid);
-        setTimeout(() => { try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ } }, 50);
+        setTimeout(() => {
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
+        }, 50);
       }
       if (action === 'set_map_theme' && detail.theme) {
         window.dispatchEvent(
@@ -2385,64 +2524,87 @@ function MindMapInner({
   // ── Manual drag tracking (disables auto-relayout for the session) ────────
   const userDraggedRef = useRef(false);
 
-  const onNodeDrag = useCallback((_event: React.MouseEvent, node: Node) => {
-    if (!node || !isReparentable(node.id)) {
+  const onNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (!node || !isReparentable(node.id)) {
+        clearDropTargets();
+        return;
+      }
+      const intersecting = getIntersectingNodes(node) as Node[];
+      const subtree = new Set(getSubtreeNodeIds(node.id));
+      const currentParent = findParentId(node.id);
+      const validTarget = intersecting.find(
+        (n: Node) =>
+          n.id !== node.id && !subtree.has(n.id) && n.id !== currentParent && n.id !== 'root'
+      );
+      setNodes((prev: Node[]) =>
+        prev.map((n) => {
+          const shouldHighlight = validTarget?.id === n.id;
+          if (n.data?._dropTarget === shouldHighlight) return n;
+          return { ...n, data: { ...n.data, _dropTarget: shouldHighlight } };
+        })
+      );
+    },
+    [
+      clearDropTargets,
+      findParentId,
+      getIntersectingNodes,
+      getSubtreeNodeIds,
+      isReparentable,
+      setNodes,
+    ]
+  );
+
+  const onNodeDragStop = useCallback(
+    (event?: React.MouseEvent, node?: Node) => {
+      userDraggedRef.current = true;
       clearDropTargets();
-      return;
-    }
-    const intersecting = getIntersectingNodes(node) as Node[];
-    const subtree = new Set(getSubtreeNodeIds(node.id));
-    const currentParent = findParentId(node.id);
-    const validTarget = intersecting.find(
-      (n: Node) =>
-        n.id !== node.id &&
-        !subtree.has(n.id) &&
-        n.id !== currentParent &&
-        n.id !== 'root'
-    );
-    setNodes((prev: Node[]) =>
-      prev.map((n) => {
-        const shouldHighlight = validTarget?.id === n.id;
-        if (n.data?._dropTarget === shouldHighlight) return n;
-        return { ...n, data: { ...n.data, _dropTarget: shouldHighlight } };
-      })
-    );
-  }, [clearDropTargets, findParentId, getIntersectingNodes, getSubtreeNodeIds, isReparentable, setNodes]);
-
-  const onNodeDragStop = useCallback((event?: React.MouseEvent, node?: Node) => {
-    userDraggedRef.current = true;
-    clearDropTargets();
-    debugLog('NODE_DRAG_STOP', {
-      source: 'handler',
-      detail: node ? `node:${node.id}` : undefined,
-    });
-    if (event?.target) {
-      markInputHandled('click', event.target, 'onNodeDragStop', node ? `node:${node.id}` : undefined);
-    }
-    debouncedSave();
-    if (!node || !isReparentable(node.id)) return;
-
-    const intersecting = getIntersectingNodes(node) as Node[];
-    const subtree = new Set(getSubtreeNodeIds(node.id));
-    const currentParent = findParentId(node.id);
-    const validTarget = intersecting.find(
-      (n: Node) =>
-        n.id !== node.id &&
-        !subtree.has(n.id) &&
-        n.id !== currentParent &&
-        n.id !== 'root'
-    );
-    if (validTarget) {
-      const ok = reparentNode(node.id, validTarget.id);
-      if (ok) {
-        toast.success(
-          isPolish
-            ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
-            : `Moved under "${validTarget.data?.label || validTarget.id}"`
+      debugLog('NODE_DRAG_STOP', {
+        source: 'handler',
+        detail: node ? `node:${node.id}` : undefined,
+      });
+      if (event?.target) {
+        markInputHandled(
+          'click',
+          event.target,
+          'onNodeDragStop',
+          node ? `node:${node.id}` : undefined
         );
       }
-    }
-  }, [clearDropTargets, debouncedSave, debugLog, findParentId, getIntersectingNodes, getSubtreeNodeIds, isPolish, isReparentable, markInputHandled, reparentNode]);
+      debouncedSave();
+      if (!node || !isReparentable(node.id)) return;
+
+      const intersecting = getIntersectingNodes(node) as Node[];
+      const subtree = new Set(getSubtreeNodeIds(node.id));
+      const currentParent = findParentId(node.id);
+      const validTarget = intersecting.find(
+        (n: Node) =>
+          n.id !== node.id && !subtree.has(n.id) && n.id !== currentParent && n.id !== 'root'
+      );
+      if (validTarget) {
+        const ok = reparentNode(node.id, validTarget.id);
+        if (ok) {
+          toast.success(
+            isPolish
+              ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
+              : `Moved under "${validTarget.data?.label || validTarget.id}"`
+          );
+        }
+      }
+    },
+    [
+      clearDropTargets,
+      debouncedSave,
+      debugLog,
+      findParentId,
+      getIntersectingNodes,
+      getSubtreeNodeIds,
+      isPolish,
+      isReparentable,
+      markInputHandled,
+      reparentNode,
+    ]
+  );
 
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -2518,7 +2680,9 @@ function MindMapInner({
             setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
             break;
           case 'update_node':
-            setNodes((prev: Node[]) => prev.map((n: Node) => n.id === op.data.id ? { ...n, ...op.data } : n));
+            setNodes((prev: Node[]) =>
+              prev.map((n: Node) => (n.id === op.data.id ? { ...n, ...op.data } : n))
+            );
             break;
           case 'add_edge':
             setEdges((prev: Edge[]) => [...prev, op.data]);
@@ -2527,7 +2691,9 @@ function MindMapInner({
             setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
             break;
           case 'update_edge':
-            setEdges((prev: Edge[]) => prev.map((e: Edge) => e.id === op.data.id ? { ...e, ...op.data } : e));
+            setEdges((prev: Edge[]) =>
+              prev.map((e: Edge) => (e.id === op.data.id ? { ...e, ...op.data } : e))
+            );
             break;
         }
       }
@@ -2553,7 +2719,9 @@ function MindMapInner({
 
       const rollbackNode = (nid: string) => {
         setNodes((prev: Node[]) => prev.filter((n) => n.id !== nid));
-        setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nid && edge.target !== nid));
+        setEdges((prev: Edge[]) =>
+          prev.filter((edge) => edge.source !== nid && edge.target !== nid)
+        );
       };
 
       if (cancelled) {
@@ -2698,7 +2866,9 @@ function MindMapInner({
           'options';
         const branchNode = nodes.find((n) => n.data?.branchKey === branchKey);
         const sourceNode = anchorNode || branchNode || nodes.find((n) => n.id === 'root') || null;
-        const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id && isStructuralEdge(edge));
+        const childrenOfSource = edges.filter(
+          (edge) => edge.source === sourceNode?.id && isStructuralEdge(edge)
+        );
         const yOffset = childrenOfSource.length * 70;
         const explicitPosition = item.position || detail.position;
         const defaultPosition = sourceNode
@@ -2779,7 +2949,8 @@ function MindMapInner({
       const container = containerRef.current;
       const isWithinMap =
         !!container &&
-        (container.contains(target) || (!!document.activeElement && container.contains(document.activeElement)));
+        (container.contains(target) ||
+          (!!document.activeElement && container.contains(document.activeElement)));
       if (!isWithinMap) return;
 
       const keyLabel = formatDebugKey(e);
@@ -2805,7 +2976,11 @@ function MindMapInner({
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
         e.preventDefault();
-        debugLog('KEY_HANDLED snapshotHistory', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED snapshotHistory', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         setShowSnapshots((prev) => !prev);
         return;
       }
@@ -2818,7 +2993,11 @@ function MindMapInner({
       // V4-IDEA-07: Select all (Ctrl+A)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && !e.shiftKey) {
         e.preventDefault();
-        debugLog('KEY_HANDLED selectAll', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED selectAll', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id !== 'root' })));
         return;
       }
@@ -2838,14 +3017,24 @@ function MindMapInner({
       if (e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey && /^[0-3]$/.test(e.key)) {
         e.preventDefault();
         const level = Number(e.key);
-        debugLog('KEY_HANDLED foldLevel', { source: 'keyboard', reaction: 'handled', detail: `Alt+${e.key} → level ${level}` });
+        debugLog('KEY_HANDLED foldLevel', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: `Alt+${e.key} → level ${level}`,
+        });
         setFoldLevel(level);
-        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, { duration: 1200 });
+        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, {
+          duration: 1200,
+        });
         return;
       }
       if (e.altKey && !e.metaKey && !e.ctrlKey && e.key === '9') {
         e.preventDefault();
-        debugLog('KEY_HANDLED foldExpandAll', { source: 'keyboard', reaction: 'handled', detail: 'Alt+9 → expand all' });
+        debugLog('KEY_HANDLED foldExpandAll', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: 'Alt+9 → expand all',
+        });
         setFoldLevel(Infinity);
         toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
         return;
@@ -2875,7 +3064,11 @@ function MindMapInner({
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        debugLog('KEY_HANDLED paste', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED paste', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         pasteNodes();
         return;
       }
@@ -2893,13 +3086,21 @@ function MindMapInner({
 
       if (e.key === 'Tab') {
         e.preventDefault();
-        debugLog('KEY_HANDLED addChild', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED addChild', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         addChildNode();
         return;
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        debugLog('KEY_HANDLED addSibling', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED addSibling', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         addSiblingNode();
         return;
       }
@@ -2924,7 +3125,11 @@ function MindMapInner({
         return;
       }
       if (e.key === 'Escape') {
-        debugLog('KEY_HANDLED escape', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        debugLog('KEY_HANDLED escape', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
         setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: false })));
         setContextMenu(null);
         return;
@@ -2956,22 +3161,38 @@ function MindMapInner({
         const rSel = getSelectedNode();
         if (!rSel) return;
         if (e.key === 'ArrowUp') {
-          debugLog('KEY_HANDLED promoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          debugLog('KEY_HANDLED promoteNode', {
+            source: 'keyboard',
+            reaction: 'handled',
+            detail: keyLabel,
+          });
           promoteNode(rSel.id);
           return;
         }
         if (e.key === 'ArrowDown') {
-          debugLog('KEY_HANDLED demoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          debugLog('KEY_HANDLED demoteNode', {
+            source: 'keyboard',
+            reaction: 'handled',
+            detail: keyLabel,
+          });
           demoteNode(rSel.id);
           return;
         }
         if (e.key === 'ArrowLeft') {
-          debugLog('KEY_HANDLED moveSiblingLeft', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          debugLog('KEY_HANDLED moveSiblingLeft', {
+            source: 'keyboard',
+            reaction: 'handled',
+            detail: keyLabel,
+          });
           moveBetweenSiblings(rSel.id, 'left');
           return;
         }
         if (e.key === 'ArrowRight') {
-          debugLog('KEY_HANDLED moveSiblingRight', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          debugLog('KEY_HANDLED moveSiblingRight', {
+            source: 'keyboard',
+            reaction: 'handled',
+            detail: keyLabel,
+          });
           moveBetweenSiblings(rSel.id, 'right');
           return;
         }
@@ -3184,10 +3405,13 @@ function MindMapInner({
 
       if (action === 'edge_add_label') {
         const current = targetEdge.data?.label || '';
-        const label = window.prompt(isPolish ? 'Etykieta połączenia:' : 'Connection label:', current);
+        const label = window.prompt(
+          isPolish ? 'Etykieta połączenia:' : 'Connection label:',
+          current
+        );
         if (label !== null) {
           setEdges((prev: Edge[]) =>
-            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e)),
+            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e))
           );
         }
       }
@@ -3199,18 +3423,22 @@ function MindMapInner({
         const midY = 0;
         const sourceNode = (nodes as Node[]).find((n) => n.id === targetEdge.source);
         const targetNode = (nodes as Node[]).find((n) => n.id === targetEdge.target);
-        const posX = sourceNode && targetNode
-          ? (sourceNode.position.x + targetNode.position.x) / 2
-          : midX;
-        const posY = sourceNode && targetNode
-          ? (sourceNode.position.y + targetNode.position.y) / 2
-          : midY;
+        const posX =
+          sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : midX;
+        const posY =
+          sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : midY;
 
         const newNode: Node = {
           id: newId,
           type: 'idea',
           position: { x: posX, y: posY },
-          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+          data: {
+            label: '',
+            branchKey: 'uncategorized',
+            sourceType: 'manual',
+            priority: 50,
+            _startEditing: Date.now(),
+          },
         } as any;
 
         setEdges((prev: Edge[]) => {
@@ -3218,10 +3446,18 @@ function MindMapInner({
           return [
             ...without,
             { ...targetEdge, id: `edge-${uid()}`, target: newId } as Edge,
-            { ...targetEdge, id: `edge-${uid()}`, source: newId, target: targetEdge.target } as Edge,
+            {
+              ...targetEdge,
+              id: `edge-${uid()}`,
+              source: newId,
+              target: targetEdge.target,
+            } as Edge,
           ];
         });
-        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setNodes((prev: Node[]) => [
+          ...prev.map((n) => ({ ...n, selected: false })),
+          { ...newNode, selected: true },
+        ]);
       }
 
       if (action === 'edge_reverse' && relationEdge) {
@@ -3229,25 +3465,34 @@ function MindMapInner({
         setEdges((prev: Edge[]) =>
           prev.map((e) =>
             e.id === targetEdge.id
-              ? { ...e, source: e.target, target: e.source, sourceHandle: e.targetHandle, targetHandle: e.sourceHandle }
-              : e,
-          ),
+              ? {
+                  ...e,
+                  source: e.target,
+                  target: e.source,
+                  sourceHandle: e.targetHandle,
+                  targetHandle: e.sourceHandle,
+                }
+              : e
+          )
         );
         toast.success(isPolish ? 'Kierunek odwrócony' : 'Direction reversed', { duration: 800 });
       }
 
       if (action === 'edge_change_style') {
         const styles = ['solid', 'dashed', 'dotted'];
-        const current = targetEdge.style?.strokeDasharray ? (targetEdge.style.strokeDasharray === '2 2' ? 'dotted' : 'dashed') : 'solid';
+        const current = targetEdge.style?.strokeDasharray
+          ? targetEdge.style.strokeDasharray === '2 2'
+            ? 'dotted'
+            : 'dashed'
+          : 'solid';
         const nextIdx = (styles.indexOf(current) + 1) % styles.length;
         const nextStyle = styles[nextIdx];
-        const dasharray = nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
+        const dasharray =
+          nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
         setEdges((prev: Edge[]) =>
           prev.map((e) =>
-            e.id === targetEdge.id
-              ? { ...e, style: { ...e.style, strokeDasharray: dasharray } }
-              : e,
-          ),
+            e.id === targetEdge.id ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
+          )
         );
         toast.success(`Style: ${nextStyle}`, { duration: 800 });
       }
@@ -3259,13 +3504,13 @@ function MindMapInner({
           isPolish
             ? `Typ relacji (${relations.join(', ')}):`
             : `Relation type (${relations.join(', ')}):`,
-          current,
+          current
         );
         if (label !== null) {
           setEdges((prev: Edge[]) =>
             prev.map((e) =>
-              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e,
-            ),
+              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e
+            )
           );
         }
       }
@@ -3278,7 +3523,7 @@ function MindMapInner({
 
       setEdgeContextMenu(null);
     },
-    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes],
+    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes]
   );
 
   const selectedBranchKey = useMemo(() => {
@@ -3482,7 +3727,10 @@ function MindMapInner({
           baseVersion: localVersionRef.current,
           reason: 'ai',
         });
-        localVersionRef.current = Math.max(1, Number(response?.version || localVersionRef.current || 1));
+        localVersionRef.current = Math.max(
+          1,
+          Number(response?.version || localVersionRef.current || 1)
+        );
         setLastSavedAt(Date.now());
       }
 
@@ -3776,7 +4024,12 @@ function MindMapInner({
 
   const onNodeContextMenu = useCallback(
     (e: React.MouseEvent, node: Node) => {
-      markInputHandled('contextmenu', e.target, 'onNodeContextMenu', `id=${node.id} type=${node.type}`);
+      markInputHandled(
+        'contextmenu',
+        e.target,
+        'onNodeContextMenu',
+        `id=${node.id} type=${node.type}`
+      );
       e.preventDefault();
       setPaneContextMenu(null);
       setEdgeContextMenu(null);
@@ -3792,7 +4045,9 @@ function MindMapInner({
       preContextMenuSelectionRef.current = (nodes as Node[])
         .filter((n) => n.selected)
         .map((n) => n.id);
-      setNodes((prev: Node[]) => prev.map((candidate) => ({ ...candidate, selected: candidate.id === node.id })));
+      setNodes((prev: Node[]) =>
+        prev.map((candidate) => ({ ...candidate, selected: candidate.id === node.id }))
+      );
       setContextMenu({
         nodeId: node.id,
         nodeType: node.type || 'idea',
@@ -3824,7 +4079,7 @@ function MindMapInner({
         canvasY,
       });
     },
-    [getViewport, markInputHandled],
+    [getViewport, markInputHandled]
   );
 
   const onPaneClick = useCallback(
@@ -3845,9 +4100,12 @@ function MindMapInner({
   }, [contextMenu, getSelectedNode, nodes]);
 
   // V5-IDEA-17: Collect all descendants of a node (for branch operations)
-  const collectDescendants = useCallback((nodeId: string): string[] => {
-    return collectDescendantIds(nodeId, edges as Edge[]);
-  }, [edges]);
+  const collectDescendants = useCallback(
+    (nodeId: string): string[] => {
+      return collectDescendantIds(nodeId, edges as Edge[]);
+    },
+    [edges]
+  );
 
   // V5-IDEA-17: Detach branch — disconnect node from parent, make it a root-level node
   const detachBranch = useCallback(
@@ -3898,7 +4156,9 @@ function MindMapInner({
       }
 
       // Connect duplicate root to the same structural parent as original
-      const parentEdge = (edges as Edge[]).find((e) => e.target === targetId && isStructuralEdge(e));
+      const parentEdge = (edges as Edge[]).find(
+        (e) => e.target === targetId && isStructuralEdge(e)
+      );
       if (parentEdge) {
         newEdges.push({
           ...parentEdge,
@@ -4030,7 +4290,11 @@ function MindMapInner({
       if (action === 'ctx_open_linked_artifacts' && ctxNode) {
         const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
         if (links.length === 0) {
-          toast(isPolish ? 'Ten wezel nie ma jeszcze artefaktow' : 'This node has no linked artifacts yet');
+          toast(
+            isPolish
+              ? 'Ten wezel nie ma jeszcze artefaktow'
+              : 'This node has no linked artifacts yet'
+          );
         } else if (links.length === 1) {
           const link = links[0];
           window.dispatchEvent(
@@ -4100,9 +4364,7 @@ function MindMapInner({
       }
       if (action === 'ctx_paste_style' && ctxNode && styleClipboard) {
         setNodes((prev: Node[]) =>
-          prev.map((node) =>
-            node.id === ctxNode.id ? applyNodeStyle(node, styleClipboard) : node
-          )
+          prev.map((node) => (node.id === ctxNode.id ? applyNodeStyle(node, styleClipboard) : node))
         );
       }
       if (action === 'ctx_share_branch') {
@@ -4163,7 +4425,13 @@ function MindMapInner({
           id: newId,
           type: 'idea',
           position: pos,
-          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+          data: {
+            label: '',
+            branchKey: 'uncategorized',
+            sourceType: 'manual',
+            priority: 50,
+            _startEditing: Date.now(),
+          },
         } as any;
         const rootEdge: Edge = {
           id: `edge-${uid()}`,
@@ -4175,7 +4443,10 @@ function MindMapInner({
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
         pushUndo();
-        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setNodes((prev: Node[]) => [
+          ...prev.map((n) => ({ ...n, selected: false })),
+          { ...newNode, selected: true },
+        ]);
         setEdges((prev: Edge[]) => [...prev, rootEdge]);
       }
 
@@ -4204,13 +4475,19 @@ function MindMapInner({
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
         pushUndo();
-        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setNodes((prev: Node[]) => [
+          ...prev.map((n) => ({ ...n, selected: false })),
+          { ...newNode, selected: true },
+        ]);
         setEdges((prev: Edge[]) => [...prev, rootEdge]);
       }
 
       if (action === 'pane_copy') copySelected();
       if (action === 'pane_cut') cutSelected();
-      if (action === 'pane_paste') pasteNodes(paneContextMenu ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY } : undefined);
+      if (action === 'pane_paste')
+        pasteNodes(
+          paneContextMenu ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY } : undefined
+        );
 
       if (action === 'pane_undo') undo();
       if (action === 'pane_redo') redo();
@@ -4242,12 +4519,20 @@ function MindMapInner({
         const laid = autoLayout(nodes as Node[], edges as Edge[]);
         setNodes(laid);
         setTimeout(() => {
-          try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
         }, 50);
       }
 
       if (action === 'pane_fit_view') {
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* */
+        }
       }
 
       if (action === 'pane_center_root') {
@@ -4255,7 +4540,9 @@ function MindMapInner({
         if (rootNode) {
           try {
             fitView({ nodes: [{ id: 'root' } as any], padding: 0.5, duration: 400 });
-          } catch { /* */ }
+          } catch {
+            /* */
+          }
         }
       }
 
@@ -4277,7 +4564,7 @@ function MindMapInner({
         window.dispatchEvent(
           new CustomEvent('idea-workspace-quick-action', {
             detail: { action: 'mm_auto_cluster' },
-          }),
+          })
         );
       }
 
@@ -4304,7 +4591,7 @@ function MindMapInner({
       setNodes,
       setViewport,
       undo,
-    ],
+    ]
   );
 
   const savedLabel = useMemo(() => {
@@ -4347,26 +4634,27 @@ function MindMapInner({
     };
   }, [locked, selectedNodeIds, nodes, contextMenu, getViewport]);
 
-  const handleFloatingToolbarUpdate = useCallback((patch: Record<string, any>) => {
-    debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
-    if (!floatingToolbarInfo) return;
-    updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
-  }, [debugLog, floatingToolbarInfo, updateNodeDataById]);
+  const handleFloatingToolbarUpdate = useCallback(
+    (patch: Record<string, any>) => {
+      debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
+      if (!floatingToolbarInfo) return;
+      updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
+    },
+    [debugLog, floatingToolbarInfo, updateNodeDataById]
+  );
 
   return (
-    <div
-      ref={containerRef}
-      className={containerClassName}
-      tabIndex={-1}
-      data-mm-surface="mindmap"
-    >
+    <div ref={containerRef} className={containerClassName} tabIndex={-1} data-mm-surface="mindmap">
       {/* Floating node toolbar */}
       {floatingToolbarInfo && (
         <FloatingNodeToolbar
           nodeId={floatingToolbarInfo.nodeId}
           nodeData={floatingToolbarInfo.node.data}
           disabled={locked || !!floatingToolbarInfo.node.data?.locked}
-          isProtected={floatingToolbarInfo.nodeId === 'root' || floatingToolbarInfo.nodeId.startsWith('branch-')}
+          isProtected={
+            floatingToolbarInfo.nodeId === 'root' ||
+            floatingToolbarInfo.nodeId.startsWith('branch-')
+          }
           hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
           style={{
             color: floatingToolbarInfo.node.data?.color,
@@ -4410,7 +4698,10 @@ function MindMapInner({
                 } else {
                   updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({
                     ...data,
-                    artifactLinks: (Array.isArray(data.artifactLinks) ? data.artifactLinks : []).filter(
+                    artifactLinks: (Array.isArray(data.artifactLinks)
+                      ? data.artifactLinks
+                      : []
+                    ).filter(
                       (item: ArtifactLink) =>
                         !(
                           item?.artifactRef?.type === link?.artifactRef?.type &&
@@ -4420,10 +4711,13 @@ function MindMapInner({
                     ),
                   }));
                 }
-                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', { duration: 900 });
+                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', {
+                  duration: 900,
+                });
               } catch (err: any) {
                 toast.error(
-                  err?.message || (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
+                  err?.message ||
+                    (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
                 );
               }
             })();
@@ -4688,7 +4982,9 @@ function MindMapInner({
           <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
             {interactionModeLabel}
           </span>
-          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">{savedLabel}</span>
+          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">
+            {savedLabel}
+          </span>
         </div>
       </div>
 
@@ -4710,219 +5006,252 @@ function MindMapInner({
         </div>
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>
-        <MindMapInteractionModeContext.Provider value={interactionMode}>
-        <ReactFlow
-          nodes={enrichedNodes}
-          edges={focusFilteredEdges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
-            onViewportReport?.(viewport);
-            saveViewportOnly();
-            try { localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport)); } catch { /* */ }
-          }}
-          onNodeClick={onNodeClick}
-          onNodeDoubleClick={onNodeDoubleClick}
-          onNodeContextMenu={onNodeContextMenu}
-          onPaneClick={onPaneClick}
-          onPaneContextMenu={onPaneContextMenu}
-          onConnect={onConnect}
-          onEdgeClick={onEdgeClick}
-          onNodeDrag={onNodeDrag}
-          onNodeDragStop={onNodeDragStop}
-          nodeTypes={reactFlowNodeTypes}
-          edgeTypes={reactFlowEdgeTypes}
-          nodesConnectable={!locked && interactionMode === 'connect'}
-          nodesDraggable={!locked && interactionMode === 'select'}
-          panOnDrag={interactionMode === 'pan'}
-          selectionOnDrag={interactionMode === 'select'}
-          nodesFocusable
-          edgesFocusable
-          connectionMode={ConnectionMode.Loose}
-          fitViewOptions={reactFlowFitViewOptions}
-          minZoom={0.1}
-          maxZoom={3}
-          proOptions={reactFlowProOptions}
-          className={`bg-slate-50 dark:bg-navy-950 ${
-            interactionMode === 'pan'
-              ? 'cursor-grab active:cursor-grabbing'
-              : interactionMode === 'connect'
-                ? 'cursor-crosshair'
-                : 'cursor-default'
-          }`}
-          aria-label={
-            isPolish
-              ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
-              : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
-          }
-          defaultEdgeOptions={reactFlowDefaultEdgeOptions}
-          onDragOver={(event: React.DragEvent) => {
-            if (event.dataTransfer.types.includes('application/idea-context-item')) {
-              event.preventDefault();
-              event.dataTransfer.dropEffect = 'copy';
-            }
-          }}
-          onDrop={(event: React.DragEvent) => {
-            const raw = event.dataTransfer.getData('application/idea-context-item');
-            if (!raw) return;
-            event.preventDefault();
-            try {
-              const item = JSON.parse(raw);
-              const position = screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-              });
-              const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-              const branchKey = item.type === 'initiative' ? 'options'
-                : item.type === 'gap' ? 'causes'
-                : item.type === 'insight' ? 'evidence'
-                : item.type === 'kpi' ? 'validation'
-                : 'uncategorized';
-              const newNode = {
-                id: newId,
-                type: 'idea' as const,
-                position,
-                data: {
-                  label: item.title || item.text || 'Dropped item',
-                  branchKey,
-                  sourceType: 'context_panel',
-                  priority: 50,
-                  notes: item.detail || '',
-                  context: item.source ? `Source: ${item.source}` : '',
-                  semanticType: item.type === 'gap' ? 'risk'
-                    : item.type === 'insight' ? 'evidence'
-                    : item.type === 'kpi' ? 'evidence'
-                    : item.type === 'initiative' ? 'action'
-                    : 'topic',
-                  status: 'idea',
-                  tags: item.type ? [item.type] : [],
-                },
-              };
-              const nearestNode = nodes.filter(n => !n.hidden).reduce((best, n) => {
-                const dx = n.position.x - position.x;
-                const dy = n.position.y - position.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (!best || dist < best.dist) return { node: n, dist };
-                return best;
-              }, null as { node: any; dist: number } | null);
+          <MindMapInteractionModeContext.Provider value={interactionMode}>
+            <ReactFlow
+              nodes={enrichedNodes}
+              edges={focusFilteredEdges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
+                onViewportReport?.(viewport);
+                saveViewportOnly();
+                try {
+                  localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport));
+                } catch {
+                  /* */
+                }
+              }}
+              onNodeClick={onNodeClick}
+              onNodeDoubleClick={onNodeDoubleClick}
+              onNodeContextMenu={onNodeContextMenu}
+              onPaneClick={onPaneClick}
+              onPaneContextMenu={onPaneContextMenu}
+              onConnect={onConnect}
+              onEdgeClick={onEdgeClick}
+              onNodeDrag={onNodeDrag}
+              onNodeDragStop={onNodeDragStop}
+              nodeTypes={reactFlowNodeTypes}
+              edgeTypes={reactFlowEdgeTypes}
+              nodesConnectable={!locked && interactionMode === 'connect'}
+              nodesDraggable={!locked && interactionMode === 'select'}
+              panOnDrag={interactionMode === 'pan'}
+              selectionOnDrag={interactionMode === 'select'}
+              nodesFocusable
+              edgesFocusable
+              connectionMode={ConnectionMode.Loose}
+              fitViewOptions={reactFlowFitViewOptions}
+              minZoom={0.1}
+              maxZoom={3}
+              proOptions={reactFlowProOptions}
+              className={`bg-slate-50 dark:bg-navy-950 ${
+                interactionMode === 'pan'
+                  ? 'cursor-grab active:cursor-grabbing'
+                  : interactionMode === 'connect'
+                    ? 'cursor-crosshair'
+                    : 'cursor-default'
+              }`}
+              aria-label={
+                isPolish
+                  ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
+                  : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
+              }
+              defaultEdgeOptions={reactFlowDefaultEdgeOptions}
+              onDragOver={(event: React.DragEvent) => {
+                if (event.dataTransfer.types.includes('application/idea-context-item')) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'copy';
+                }
+              }}
+              onDrop={(event: React.DragEvent) => {
+                const raw = event.dataTransfer.getData('application/idea-context-item');
+                if (!raw) return;
+                event.preventDefault();
+                try {
+                  const item = JSON.parse(raw);
+                  const position = screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
+                  const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                  const branchKey =
+                    item.type === 'initiative'
+                      ? 'options'
+                      : item.type === 'gap'
+                        ? 'causes'
+                        : item.type === 'insight'
+                          ? 'evidence'
+                          : item.type === 'kpi'
+                            ? 'validation'
+                            : 'uncategorized';
+                  const newNode = {
+                    id: newId,
+                    type: 'idea' as const,
+                    position,
+                    data: {
+                      label: item.title || item.text || 'Dropped item',
+                      branchKey,
+                      sourceType: 'context_panel',
+                      priority: 50,
+                      notes: item.detail || '',
+                      context: item.source ? `Source: ${item.source}` : '',
+                      semanticType:
+                        item.type === 'gap'
+                          ? 'risk'
+                          : item.type === 'insight'
+                            ? 'evidence'
+                            : item.type === 'kpi'
+                              ? 'evidence'
+                              : item.type === 'initiative'
+                                ? 'action'
+                                : 'topic',
+                      status: 'idea',
+                      tags: item.type ? [item.type] : [],
+                    },
+                  };
+                  const nearestNode = nodes
+                    .filter((n) => !n.hidden)
+                    .reduce(
+                      (best, n) => {
+                        const dx = n.position.x - position.x;
+                        const dy = n.position.y - position.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (!best || dist < best.dist) return { node: n, dist };
+                        return best;
+                      },
+                      null as { node: any; dist: number } | null
+                    );
 
-              const parentId = nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
-              const colors = branchColor(branchKey);
-              const newEdge = {
-                id: `edge-${newId}`,
-                source: parentId,
-                target: newId,
-                type: 'gradient',
-                style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-                animated: true,
-                data: { edgeRole: 'structural' },
-              };
+                  const parentId =
+                    nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
+                  const colors = branchColor(branchKey);
+                  const newEdge = {
+                    id: `edge-${newId}`,
+                    source: parentId,
+                    target: newId,
+                    type: 'gradient',
+                    style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+                    animated: true,
+                    data: { edgeRole: 'structural' },
+                  };
 
-              pushUndo();
-              setNodes(prev => [...prev.map(n => ({ ...n, selected: false })), { ...newNode, selected: true }]);
-              setEdges(prev => [...prev, newEdge]);
-            } catch { /* ignore bad data */ }
-          }}
-        >
-          {/* V5-IDEA-42: Unified canvas background */}
-          <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />
-          {showMiniMap && (
-            <MiniMap
-              nodeStrokeWidth={3}
-              zoomable
-              pannable
-              className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
-            />
-          )}
+                  pushUndo();
+                  setNodes((prev) => [
+                    ...prev.map((n) => ({ ...n, selected: false })),
+                    { ...newNode, selected: true },
+                  ]);
+                  setEdges((prev) => [...prev, newEdge]);
+                } catch {
+                  /* ignore bad data */
+                }
+              }}
+            >
+              {/* V5-IDEA-42: Unified canvas background */}
+              <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />
+              {showMiniMap && (
+                <MiniMap
+                  nodeStrokeWidth={3}
+                  zoomable
+                  pannable
+                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
+                />
+              )}
 
-          {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
-          {visibleIdeaNodeCount === 0 && (
-            <>
-              {locked ? (
-                <Panel position="center">
-                  <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                      <Lightbulb size={28} className="text-white" />
-                    </div>
-                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                      {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                      {isPolish
-                        ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
-                        : 'Fill in the title and description in the Tools panel on the right, then accept.'}
-                    </p>
-                    <div className="space-y-2 text-left mb-6">
-                      {[
-                        { n: '1', pl: 'Nadaj tytuł wyzwaniu', en: 'Name your challenge' },
-                        { n: '2', pl: 'Opisz problem lub pomysł', en: 'Describe the problem or idea' },
-                        { n: '3', pl: 'Kliknij „Akceptuj" w panelu Tools', en: 'Click "Accept" in the Tools panel' },
-                      ].map((step) => (
-                        <div key={step.n} className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
-                            {step.n}
-                          </span>
-                          <span className="text-sm text-slate-600 dark:text-slate-300">
-                            {isPolish ? step.pl : step.en}
-                          </span>
+              {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
+              {visibleIdeaNodeCount === 0 && (
+                <>
+                  {locked ? (
+                    <Panel position="center">
+                      <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
+                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                          <Lightbulb size={28} className="text-white" />
                         </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onCenterEdit?.()}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
-                    >
-                      <Sparkles size={16} />
-                      {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
-                    </button>
-                  </div>
-                </Panel>
-              ) : (
-                <Panel position="bottom-center">
-                  <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
-                    <Lightbulb size={16} className="text-amber-500 shrink-0" />
-                    <span className="text-slate-600 dark:text-slate-300">
-                      {isPolish
-                        ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
-                        : 'Select a branch and press Tab to add the first node'}
-                    </span>
-                    <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                          {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                          {isPolish
+                            ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
+                            : 'Fill in the title and description in the Tools panel on the right, then accept.'}
+                        </p>
+                        <div className="space-y-2 text-left mb-6">
+                          {[
+                            { n: '1', pl: 'Nadaj tytuł wyzwaniu', en: 'Name your challenge' },
+                            {
+                              n: '2',
+                              pl: 'Opisz problem lub pomysł',
+                              en: 'Describe the problem or idea',
+                            },
+                            {
+                              n: '3',
+                              pl: 'Kliknij „Akceptuj" w panelu Tools',
+                              en: 'Click "Accept" in the Tools panel',
+                            },
+                          ].map((step) => (
+                            <div key={step.n} className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
+                                {step.n}
+                              </span>
+                              <span className="text-sm text-slate-600 dark:text-slate-300">
+                                {isPolish ? step.pl : step.en}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onCenterEdit?.()}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
+                        >
+                          <Sparkles size={16} />
+                          {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
+                        </button>
+                      </div>
+                    </Panel>
+                  ) : (
+                    <Panel position="bottom-center">
+                      <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
+                        <Lightbulb size={16} className="text-amber-500 shrink-0" />
+                        <span className="text-slate-600 dark:text-slate-300">
+                          {isPolish
+                            ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
+                            : 'Select a branch and press Tab to add the first node'}
+                        </span>
+                        <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                      </div>
+                    </Panel>
+                  )}
+                </>
+              )}
+
+              {/* Cluster Bubbles overlay */}
+              {showClusterBubbles && (
+                <ClusterBubbles
+                  nodes={enrichedNodes
+                    .filter((n) => !n.hidden)
+                    .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
+                  edges={focusFilteredEdges
+                    .filter((e) => !e.hidden)
+                    .map((e) => ({ source: e.source, target: e.target }))}
+                  enabled={showClusterBubbles}
+                />
+              )}
+
+              {/* Active branch info removed — redundant with visual branch nodes on canvas */}
+
+              {/* AI Sidekick intent indicator */}
+              {sidekickCtx && nodes.length > 1 && (
+                <Panel position="top-center">
+                  <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
+                    <Sparkles size={10} className="text-violet-500 shrink-0" />
+                    <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
                   </div>
                 </Panel>
               )}
-            </>
-          )}
-
-          {/* Cluster Bubbles overlay */}
-          {showClusterBubbles && (
-            <ClusterBubbles
-              nodes={enrichedNodes
-                .filter((n) => !n.hidden)
-                .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-              edges={focusFilteredEdges
-                .filter((e) => !e.hidden)
-                .map((e) => ({ source: e.source, target: e.target }))}
-              enabled={showClusterBubbles}
-            />
-          )}
-
-          {/* Active branch info removed — redundant with visual branch nodes on canvas */}
-
-          {/* AI Sidekick intent indicator */}
-          {sidekickCtx && nodes.length > 1 && (
-            <Panel position="top-center">
-              <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
-                <Sparkles size={10} className="text-violet-500 shrink-0" />
-                <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
-              </div>
-            </Panel>
-          )}
-        </ReactFlow>
-        {showHealthScore && (
-          <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
-        )}
-        </MindMapInteractionModeContext.Provider>
+            </ReactFlow>
+            {showHealthScore && (
+              <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
+            )}
+          </MindMapInteractionModeContext.Provider>
         </MindMapIdeaIdContext.Provider>
       )}
 
@@ -5011,175 +5340,185 @@ function MindMapInner({
       {/* Batch Convert Modal */}
       {showBatchConvert ? (
         <BatchConvertModal
-        open={showBatchConvert}
-        onClose={() => setShowBatchConvert(false)}
-        nodes={nodes
-          .filter((n) => n.type === 'idea')
-          .map((n) => ({
-            id: n.id,
-            label: n.data?.label || '',
-            branchKey: n.data?.branchKey || '',
-            status: n.data?.status,
-          }))}
-        locked={locked}
-        onConvert={(nodeIds, target) => {
-          for (const nid of nodeIds) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) =>
-                n.id === nid ? { ...n, data: { ...n.data, status: 'converted' } } : n
-              )
+          open={showBatchConvert}
+          onClose={() => setShowBatchConvert(false)}
+          nodes={nodes
+            .filter((n) => n.type === 'idea')
+            .map((n) => ({
+              id: n.id,
+              label: n.data?.label || '',
+              branchKey: n.data?.branchKey || '',
+              status: n.data?.status,
+            }))}
+          locked={locked}
+          onConvert={(nodeIds, target) => {
+            for (const nid of nodeIds) {
+              setNodes((prev: Node[]) =>
+                prev.map((n) =>
+                  n.id === nid ? { ...n, data: { ...n.data, status: 'converted' } } : n
+                )
+              );
+            }
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: {
+                  action: target === 'initiative' ? 'convert_initiative' : 'convert_decision',
+                  nodeIds,
+                },
+              })
             );
-          }
-          window.dispatchEvent(
-            new CustomEvent('idea-workspace-quick-action', {
-              detail: {
-                action: target === 'initiative' ? 'convert_initiative' : 'convert_decision',
-                nodeIds,
-              },
-            })
-          );
-        }}
+          }}
         />
       ) : null}
 
       {/* Timeline View */}
       {showTimeline ? (
         <TimelineView
-        open={showTimeline}
-        onClose={() => setShowTimeline(false)}
-        nodes={nodes
-          .filter((n) => n.type === 'idea')
-          .map((n) => ({
-            id: n.id,
-            label: n.data?.label || '',
-            branchKey: n.data?.branchKey || '',
-            status: n.data?.status || 'idea',
-          }))}
-        onSelectNode={(nodeId) => {
-          setShowTimeline(false);
-          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-          setTimeout(() => {
-            try {
-              fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
-            } catch {
-              /* ignore */
-            }
-          }, 100);
-        }}
+          open={showTimeline}
+          onClose={() => setShowTimeline(false)}
+          nodes={nodes
+            .filter((n) => n.type === 'idea')
+            .map((n) => ({
+              id: n.id,
+              label: n.data?.label || '',
+              branchKey: n.data?.branchKey || '',
+              status: n.data?.status || 'idea',
+            }))}
+          onSelectNode={(nodeId) => {
+            setShowTimeline(false);
+            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+            setTimeout(() => {
+              try {
+                fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
+              } catch {
+                /* ignore */
+              }
+            }, 100);
+          }}
         />
       ) : null}
 
       {/* Presentation Mode */}
       {showPresentation ? (
         <PresentationMode
-        open={showPresentation}
-        onClose={() => setShowPresentation(false)}
-        ideaTitle={ideaTitle}
-        branches={nodes
-          .filter((n) => n.id.startsWith('branch-'))
-          .map((bn) => ({
-            branchKey: bn.data?.branchKey || '',
-            label: bn.data?.label || '',
-            nodes: edges
-              .filter((e) => e.source === bn.id)
-              .map((e) => {
-                const child = nodes.find((n) => n.id === e.target);
-                return child
-                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status, notes: child.data?.notes || '' }
-                  : null;
-              })
-              .filter(Boolean) as Array<{ id: string; label: string; status?: string; notes?: string }>,
-          }))}
-        onFocusBranch={(branchKey) => {
-          setShowPresentation(false);
-          const branchNode = nodes.find(
-            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
-          );
-          if (branchNode) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+          open={showPresentation}
+          onClose={() => setShowPresentation(false)}
+          ideaTitle={ideaTitle}
+          branches={nodes
+            .filter((n) => n.id.startsWith('branch-'))
+            .map((bn) => ({
+              branchKey: bn.data?.branchKey || '',
+              label: bn.data?.label || '',
+              nodes: edges
+                .filter((e) => e.source === bn.id)
+                .map((e) => {
+                  const child = nodes.find((n) => n.id === e.target);
+                  return child
+                    ? {
+                        id: child.id,
+                        label: child.data?.label || '',
+                        status: child.data?.status,
+                        notes: child.data?.notes || '',
+                      }
+                    : null;
+                })
+                .filter(Boolean) as Array<{
+                id: string;
+                label: string;
+                status?: string;
+                notes?: string;
+              }>,
+            }))}
+          onFocusBranch={(branchKey) => {
+            setShowPresentation(false);
+            const branchNode = nodes.find(
+              (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
             );
-            setTimeout(() => {
-              try {
-                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
-              } catch {
-                /* ignore */
-              }
-            }, 100);
-          }
-        }}
+            if (branchNode) {
+              setNodes((prev: Node[]) =>
+                prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+              );
+              setTimeout(() => {
+                try {
+                  fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+                } catch {
+                  /* ignore */
+                }
+              }, 100);
+            }
+          }}
         />
       ) : null}
 
       {/* Voice to Node */}
       {showVoiceToNode ? (
         <VoiceToNode
-        open={showVoiceToNode}
-        onClose={() => setShowVoiceToNode(false)}
-        locked={locked}
-        onAddNodes={(labels) => {
-          pushUndo();
-          for (const label of labels) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: { items: [{ text: label, type: 'topics' }], ideaId },
-              })
-            );
-          }
-        }}
+          open={showVoiceToNode}
+          onClose={() => setShowVoiceToNode(false)}
+          locked={locked}
+          onAddNodes={(labels) => {
+            pushUndo();
+            for (const label of labels) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items: [{ text: label, type: 'topics' }], ideaId },
+                })
+              );
+            }
+          }}
         />
       ) : null}
 
       {/* Document to Map */}
       {showDocToMap ? (
         <DocumentToMap
-        open={showDocToMap}
-        onClose={() => setShowDocToMap(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        locked={locked}
-        onAddNodes={(labels) => {
-          pushUndo();
-          for (const label of labels) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: { items: [{ text: label, type: 'topics' }], ideaId },
-              })
-            );
-          }
-        }}
+          open={showDocToMap}
+          onClose={() => setShowDocToMap(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          locked={locked}
+          onAddNodes={(labels) => {
+            pushUndo();
+            for (const label of labels) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items: [{ text: label, type: 'topics' }], ideaId },
+                })
+              );
+            }
+          }}
         />
       ) : null}
 
       {/* Interview to Map */}
       {showInterviewToMap ? (
         <InterviewToMap
-        open={showInterviewToMap}
-        onClose={() => setShowInterviewToMap(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        locked={locked}
-        onAddNodes={(items) => {
-          pushUndo();
-          const branchMap: Record<string, string> = {
-            problem: 'topics',
-            goal: 'topics',
-            options: 'topics',
-            evidence: 'findings',
-            risks: 'risk_flags',
-            experiments: 'next_steps',
-          };
-          for (const item of items) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: {
-                  items: [{ text: item.text, type: branchMap[item.branchKey] || 'topics' }],
-                  ideaId,
-                },
-              })
-            );
-          }
-        }}
+          open={showInterviewToMap}
+          onClose={() => setShowInterviewToMap(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          locked={locked}
+          onAddNodes={(items) => {
+            pushUndo();
+            const branchMap: Record<string, string> = {
+              problem: 'topics',
+              goal: 'topics',
+              options: 'topics',
+              evidence: 'findings',
+              risks: 'risk_flags',
+              experiments: 'next_steps',
+            };
+            for (const item of items) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: {
+                    items: [{ text: item.text, type: branchMap[item.branchKey] || 'topics' }],
+                    ideaId,
+                  },
+                })
+              );
+            }
+          }}
         />
       ) : null}
 
@@ -5209,73 +5548,37 @@ function MindMapInner({
       {/* Node Detail Drawer */}
       {drawerNodeId ? (
         <NodeDetailDrawer
-        open={!!drawerNodeId}
-        onClose={() => setDrawerNodeId(null)}
-        nodeData={drawerNodeData}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        locked={locked}
-        allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-        onUpdateNode={handleUpdateNode}
-        onAIExpandNode={(nodeId) => {
-          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-          handleAIExpand();
-        }}
-        onConvertNode={handleConvertNode}
-        onNavigateToNode={handleNavigateToNode}
-        onDrillDown={handleDrillDown}
+          open={!!drawerNodeId}
+          onClose={() => setDrawerNodeId(null)}
+          nodeData={drawerNodeData}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          locked={locked}
+          allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          onUpdateNode={handleUpdateNode}
+          onAIExpandNode={(nodeId) => {
+            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+            handleAIExpand();
+          }}
+          onConvertNode={handleConvertNode}
+          onNavigateToNode={handleNavigateToNode}
+          onDrillDown={handleDrillDown}
         />
       ) : null}
 
       {/* R1.3: AI Dependency Detection */}
       {showDependencyDetector ? (
         <AIDependencyDetector
-        open={showDependencyDetector}
-        onClose={() => setShowDependencyDetector(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-        locked={locked}
-        onAddDependency={(dep) => {
-          pushUndo();
-          const edgeId = `dep-edge-${uid()}`;
-          const depType = dep.type || 'related_to';
-          const color =
-            depType === 'depends_on'
-              ? '#ef4444'
-              : depType === 'enables'
-                ? '#22c55e'
-                : depType === 'conflicts_with'
-                  ? '#f59e0b'
-                  : '#8b5cf6';
-          const newEdge: Edge = {
-            id: edgeId,
-            source: dep.sourceNodeId,
-            target: dep.targetNodeId,
-            type: 'labeled',
-            animated: true,
-            style: {
-              stroke: color,
-              strokeWidth: 2,
-              opacity: 0.7,
-              strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
-            },
-            data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
-          };
-          setEdges((prev: Edge[]) => addEdge(newEdge, prev));
-          pushActivity(ideaId, {
-            type: 'node_edited',
-            actor: 'You',
-            nodeLabel: dep.sourceLabel,
-            nodeId: dep.sourceNodeId,
-            detail: `Dependency → ${dep.targetLabel}`,
-          });
-        }}
-        onAddAll={(deps) => {
-          pushUndo();
-          for (const dep of deps) {
+          open={showDependencyDetector}
+          onClose={() => setShowDependencyDetector(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          locked={locked}
+          onAddDependency={(dep) => {
+            pushUndo();
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
             const color =
@@ -5301,103 +5604,139 @@ function MindMapInner({
               data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
             };
             setEdges((prev: Edge[]) => addEdge(newEdge, prev));
-          }
-          pushActivity(ideaId, {
-            type: 'node_edited',
-            actor: 'You',
-            detail: `Added ${deps.length} dependencies`,
-          });
-        }}
+            pushActivity(ideaId, {
+              type: 'node_edited',
+              actor: 'You',
+              nodeLabel: dep.sourceLabel,
+              nodeId: dep.sourceNodeId,
+              detail: `Dependency → ${dep.targetLabel}`,
+            });
+          }}
+          onAddAll={(deps) => {
+            pushUndo();
+            for (const dep of deps) {
+              const edgeId = `dep-edge-${uid()}`;
+              const depType = dep.type || 'related_to';
+              const color =
+                depType === 'depends_on'
+                  ? '#ef4444'
+                  : depType === 'enables'
+                    ? '#22c55e'
+                    : depType === 'conflicts_with'
+                      ? '#f59e0b'
+                      : '#8b5cf6';
+              const newEdge: Edge = {
+                id: edgeId,
+                source: dep.sourceNodeId,
+                target: dep.targetNodeId,
+                type: 'labeled',
+                animated: true,
+                style: {
+                  stroke: color,
+                  strokeWidth: 2,
+                  opacity: 0.7,
+                  strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
+                },
+                data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
+              };
+              setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+            }
+            pushActivity(ideaId, {
+              type: 'node_edited',
+              actor: 'You',
+              detail: `Added ${deps.length} dependencies`,
+            });
+          }}
         />
       ) : null}
 
       {/* R1.5: AI Priority Recommender */}
       {showPriorityRecommender ? (
         <AIPriorityRecommender
-        open={showPriorityRecommender}
-        onClose={() => setShowPriorityRecommender(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        locked={locked}
-        onApplyPriorities={(updates) => {
-          pushUndo();
-          setNodes((prev: Node[]) =>
-            prev.map((n) => {
-              const upd = updates.find((u) => u.nodeId === n.id);
-              if (!upd) return n;
-              return { ...n, data: { ...n.data, priority: upd.priority } };
-            })
-          );
-          pushActivity(ideaId, {
-            type: 'ai_suggestion',
-            actor: 'AI',
-            detail: `Updated ${updates.length} node priorities`,
-          });
-        }}
+          open={showPriorityRecommender}
+          onClose={() => setShowPriorityRecommender(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          locked={locked}
+          onApplyPriorities={(updates) => {
+            pushUndo();
+            setNodes((prev: Node[]) =>
+              prev.map((n) => {
+                const upd = updates.find((u) => u.nodeId === n.id);
+                if (!upd) return n;
+                return { ...n, data: { ...n.data, priority: upd.priority } };
+              })
+            );
+            pushActivity(ideaId, {
+              type: 'ai_suggestion',
+              actor: 'AI',
+              detail: `Updated ${updates.length} node priorities`,
+            });
+          }}
         />
       ) : null}
 
       {/* R1.1: AI Auto-Clustering */}
       {showAutoClustering ? (
         <AIAutoClustering
-        open={showAutoClustering}
-        onClose={() => setShowAutoClustering(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        locked={locked}
-        onApplyClusters={(clusters) => {
-          pushUndo();
-          setNodes((prev: Node[]) =>
-            prev.map((n) => {
-              const cluster = clusters.find((c) => c.nodeIds.includes(n.id));
-              if (!cluster) return n;
-              return {
-                ...n,
-                data: { ...n.data, clusterColor: cluster.color, clusterName: cluster.name },
-              };
-            })
-          );
-          pushActivity(ideaId, {
-            type: 'ai_suggestion',
-            actor: 'AI',
-            detail: `Applied ${clusters.length} clusters`,
-          });
-        }}
+          open={showAutoClustering}
+          onClose={() => setShowAutoClustering(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          locked={locked}
+          onApplyClusters={(clusters) => {
+            pushUndo();
+            setNodes((prev: Node[]) =>
+              prev.map((n) => {
+                const cluster = clusters.find((c) => c.nodeIds.includes(n.id));
+                if (!cluster) return n;
+                return {
+                  ...n,
+                  data: { ...n.data, clusterColor: cluster.color, clusterName: cluster.name },
+                };
+              })
+            );
+            pushActivity(ideaId, {
+              type: 'ai_suggestion',
+              actor: 'AI',
+              detail: `Applied ${clusters.length} clusters`,
+            });
+          }}
         />
       ) : null}
 
       {/* R1.4: AI Sentiment Analysis */}
       {showSentimentOverlay ? (
         <AISentimentOverlay
-        open={showSentimentOverlay}
-        onClose={() => setShowSentimentOverlay(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        locked={locked}
-        onApplySentiment={(results) => {
-          pushUndo();
-          setNodes((prev: Node[]) =>
-            prev.map((n) => {
-              const r = results.find((s) => s.nodeId === n.id);
-              if (!r) return n;
-              const sentimentColor =
-                r.sentiment === 'positive'
-                  ? '#22c55e'
-                  : r.sentiment === 'negative'
-                    ? '#ef4444'
-                    : '#94a3b8';
-              return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
-            })
-          );
-          pushActivity(ideaId, {
-            type: 'ai_suggestion',
-            actor: 'AI',
-            detail: `Sentiment analysis applied to ${results.length} nodes`,
-          });
-        }}
+          open={showSentimentOverlay}
+          onClose={() => setShowSentimentOverlay(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          locked={locked}
+          onApplySentiment={(results) => {
+            pushUndo();
+            setNodes((prev: Node[]) =>
+              prev.map((n) => {
+                const r = results.find((s) => s.nodeId === n.id);
+                if (!r) return n;
+                const sentimentColor =
+                  r.sentiment === 'positive'
+                    ? '#22c55e'
+                    : r.sentiment === 'negative'
+                      ? '#ef4444'
+                      : '#94a3b8';
+                return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
+              })
+            );
+            pushActivity(ideaId, {
+              type: 'ai_suggestion',
+              actor: 'AI',
+              detail: `Sentiment analysis applied to ${results.length} nodes`,
+            });
+          }}
         />
       ) : null}
 
@@ -5441,10 +5780,10 @@ function MindMapInner({
       {/* R2.4: Activity Feed */}
       {showActivityFeed ? (
         <ActivityFeed
-        open={showActivityFeed}
-        onClose={() => setShowActivityFeed(false)}
-        ideaId={ideaId}
-        onNavigateToNode={handleNavigateToNode}
+          open={showActivityFeed}
+          onClose={() => setShowActivityFeed(false)}
+          ideaId={ideaId}
+          onNavigateToNode={handleNavigateToNode}
         />
       ) : null}
 
@@ -5453,9 +5792,9 @@ function MindMapInner({
       {/* R5.2: Idea Funnel Analytics */}
       {showFunnelAnalytics ? (
         <IdeaFunnelAnalytics
-        open={showFunnelAnalytics}
-        onClose={() => setShowFunnelAnalytics(false)}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          open={showFunnelAnalytics}
+          onClose={() => setShowFunnelAnalytics(false)}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
         />
       ) : null}
 
@@ -5494,80 +5833,80 @@ function MindMapInner({
       {/* R1.2: AI Competitive Landscape */}
       {showCompetitiveLandscape ? (
         <AICompetitiveLandscape
-        open={showCompetitiveLandscape}
-        onClose={() => setShowCompetitiveLandscape(false)}
-        ideaId={ideaId}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        locked={locked}
-        onAddToMap={(items) => {
-          for (const item of items) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: { items: [item], ideaId },
-              })
-            );
-          }
-          pushActivity(ideaId, {
-            type: 'ai_suggestion',
-            actor: 'AI',
-            detail: `Competitive landscape: ${items.length} items`,
-          });
-        }}
+          open={showCompetitiveLandscape}
+          onClose={() => setShowCompetitiveLandscape(false)}
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          locked={locked}
+          onAddToMap={(items) => {
+            for (const item of items) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items: [item], ideaId },
+                })
+              );
+            }
+            pushActivity(ideaId, {
+              type: 'ai_suggestion',
+              actor: 'AI',
+              detail: `Competitive landscape: ${items.length} items`,
+            });
+          }}
         />
       ) : null}
 
       {/* R5.3: Branch Comparison */}
       {showBranchComparison ? (
         <BranchComparison
-        open={showBranchComparison}
-        onClose={() => setShowBranchComparison(false)}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+          open={showBranchComparison}
+          onClose={() => setShowBranchComparison(false)}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          edges={edges.map((e) => ({ source: e.source, target: e.target }))}
         />
       ) : null}
 
       {/* R5.4: Time Heatmap */}
       {showTimeHeatmap ? (
         <TimeHeatmap
-        open={showTimeHeatmap}
-        onClose={() => setShowTimeHeatmap(false)}
-        ideaId={ideaId}
+          open={showTimeHeatmap}
+          onClose={() => setShowTimeHeatmap(false)}
+          ideaId={ideaId}
         />
       ) : null}
 
       {/* R4.2: Export Diagram Code */}
       {showExportDiagramCode ? (
         <ExportDiagramCode
-        open={showExportDiagramCode}
-        onClose={() => setShowExportDiagramCode(false)}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+          open={showExportDiagramCode}
+          onClose={() => setShowExportDiagramCode(false)}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          edges={edges.map((e) => ({ source: e.source, target: e.target }))}
         />
       ) : null}
 
       {/* R4.3: Import External Map */}
       {showImportExternalMap ? (
         <ImportExternalMap
-        open={showImportExternalMap}
-        onClose={() => setShowImportExternalMap(false)}
-        locked={locked}
-        onImport={(items) => {
-          pushUndo();
-          for (const item of items) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-insert', {
-                detail: { items: [{ text: item.label, type: 'topics' }], ideaId },
-              })
-            );
-          }
-          pushActivity(ideaId, {
-            type: 'node_added',
-            actor: 'You',
-            detail: `Imported ${items.length} nodes from external file`,
-          });
-        }}
+          open={showImportExternalMap}
+          onClose={() => setShowImportExternalMap(false)}
+          locked={locked}
+          onImport={(items) => {
+            pushUndo();
+            for (const item of items) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items: [{ text: item.label, type: 'topics' }], ideaId },
+                })
+              );
+            }
+            pushActivity(ideaId, {
+              type: 'node_added',
+              actor: 'You',
+              detail: `Imported ${items.length} nodes from external file`,
+            });
+          }}
         />
       ) : null}
 
@@ -5587,7 +5926,11 @@ function MindMapInner({
                 const laid = applyStructureLayout(type, nodes, edges, autoLayout);
                 setNodes(laid);
                 setTimeout(() => {
-                  try { fitView({ padding: 0.3, duration: 400 }); } catch { /* */ }
+                  try {
+                    fitView({ padding: 0.3, duration: 400 });
+                  } catch {
+                    /* */
+                  }
                 }, 50);
               }}
               onClose={() => setShowStructurePicker(false)}
@@ -5599,11 +5942,11 @@ function MindMapInner({
       {/* R3.3: 3D Mind Map View */}
       {showMindMap3D ? (
         <MindMap3DView
-        open={showMindMap3D}
-        onClose={() => setShowMindMap3D(false)}
-        ideaTitle={ideaTitle}
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data, position: n.position }))}
-        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+          open={showMindMap3D}
+          onClose={() => setShowMindMap3D(false)}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data, position: n.position }))}
+          edges={edges.map((e) => ({ source: e.source, target: e.target }))}
         />
       ) : null}
 
@@ -5622,9 +5965,9 @@ function MindMapInner({
       {/* R4.5: Webhook Settings */}
       {showWebhookSettings ? (
         <WebhookSettings
-        open={showWebhookSettings}
-        onClose={() => setShowWebhookSettings(false)}
-        ideaId={ideaId}
+          open={showWebhookSettings}
+          onClose={() => setShowWebhookSettings(false)}
+          ideaId={ideaId}
         />
       ) : null}
 
@@ -5644,12 +5987,33 @@ function MindMapInner({
             {[
               { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
               { key: 'svg', label: 'SVG', fn: () => exportAsSVG(`${ideaTitle || 'mindmap'}.svg`) },
-              { key: 'json', label: 'JSON', fn: () => exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`) },
-              { key: 'md', label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline', fn: () => { exportAsMarkdown(nodes, edges, { includeMetadata: true }, `${ideaTitle || 'mindmap'}.md`); toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'); } },
+              {
+                key: 'json',
+                label: 'JSON',
+                fn: () => exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`),
+              },
+              {
+                key: 'md',
+                label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline',
+                fn: () => {
+                  exportAsMarkdown(
+                    nodes,
+                    edges,
+                    { includeMetadata: true },
+                    `${ideaTitle || 'mindmap'}.md`
+                  );
+                  toast.success(
+                    isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
+                  );
+                },
+              },
             ].map((opt) => (
               <button
                 key={opt.key}
-                onClick={() => { opt.fn(); setExportMenuOpen(false); }}
+                onClick={() => {
+                  opt.fn();
+                  setExportMenuOpen(false);
+                }}
                 className="w-full rounded px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-navy-800"
               >
                 {opt.label}
@@ -5662,197 +6026,219 @@ function MindMapInner({
       {/* Inline modals replacing window.prompt */}
       {assignModalNodeId ? (
         <AssignPersonModal
-        open={!!assignModalNodeId}
-        onClose={() => setAssignModalNodeId(null)}
-        currentAssignee={assignModalNodeId ? nodes.find((n) => n.id === assignModalNodeId)?.data?.assignee : undefined}
-        recentAssignees={nodes.filter((n) => n.data?.assignee).map((n) => n.data.assignee)}
-        onAssign={(name) => {
-          if (assignModalNodeId) {
-            updateNodeDataById(assignModalNodeId, (data: any) => ({ ...data, assignee: name }));
-            toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, { duration: 1000 });
+          open={!!assignModalNodeId}
+          onClose={() => setAssignModalNodeId(null)}
+          currentAssignee={
+            assignModalNodeId
+              ? nodes.find((n) => n.id === assignModalNodeId)?.data?.assignee
+              : undefined
           }
-        }}
+          recentAssignees={nodes.filter((n) => n.data?.assignee).map((n) => n.data.assignee)}
+          onAssign={(name) => {
+            if (assignModalNodeId) {
+              updateNodeDataById(assignModalNodeId, (data: any) => ({ ...data, assignee: name }));
+              toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, {
+                duration: 1000,
+              });
+            }
+          }}
         />
       ) : null}
       {attachArtifactNodeId ? (
         <AttachArtifactModal
-        open={!!attachArtifactNodeId}
-        onClose={() => setAttachArtifactNodeId(null)}
-        onAttach={(type, id, label) => {
-          if (attachArtifactNodeId) {
-            void (async () => {
-              try {
-                await Api.attachArtifactToObject(ideaId, attachArtifactNodeId, {
-                  artifactRef: { type, id },
-                  label,
-                  linkRole: 'related',
-                });
-                if (externalRuntime) {
-                  await externalRuntime.refresh();
-                } else {
-                  updateNodeDataById(attachArtifactNodeId, (data: any) => ({
-                    ...data,
-                    artifactLinks: [
-                      ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
-                      buildArtifactLink(type, id, 'related', label),
-                    ],
-                  }));
+          open={!!attachArtifactNodeId}
+          onClose={() => setAttachArtifactNodeId(null)}
+          onAttach={(type, id, label) => {
+            if (attachArtifactNodeId) {
+              void (async () => {
+                try {
+                  await Api.attachArtifactToObject(ideaId, attachArtifactNodeId, {
+                    artifactRef: { type, id },
+                    label,
+                    linkRole: 'related',
+                  });
+                  if (externalRuntime) {
+                    await externalRuntime.refresh();
+                  } else {
+                    updateNodeDataById(attachArtifactNodeId, (data: any) => ({
+                      ...data,
+                      artifactLinks: [
+                        ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
+                        buildArtifactLink(type, id, 'related', label),
+                      ],
+                    }));
+                  }
+                  toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', {
+                    duration: 900,
+                  });
+                } catch (err: any) {
+                  toast.error(
+                    err?.message ||
+                      (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
+                  );
                 }
-                toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', { duration: 900 });
-              } catch (err: any) {
-                toast.error(
-                  err?.message || (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
-                );
-              }
-            })();
-          }
-        }}
+              })();
+            }
+          }}
         />
       ) : null}
       {imageUrlNodeId ? (
         <ImageUrlModal
-        open={!!imageUrlNodeId}
-        onClose={() => setImageUrlNodeId(null)}
-        onSubmit={(url) => {
-          if (imageUrlNodeId) {
-            updateNodeDataById(imageUrlNodeId, (data: any) => ({ ...data, imageUrl: url }));
-            toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
-          }
-        }}
+          open={!!imageUrlNodeId}
+          onClose={() => setImageUrlNodeId(null)}
+          onSubmit={(url) => {
+            if (imageUrlNodeId) {
+              updateNodeDataById(imageUrlNodeId, (data: any) => ({ ...data, imageUrl: url }));
+              toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+            }
+          }}
         />
       ) : null}
 
       {debugEnabled && (
-      <div
-        data-mm-debug-overlay="true"
-        className="absolute bottom-2 left-2 z-[200] w-[560px] max-w-[calc(100vw-1rem)] rounded-2xl bg-black/95 text-[10px] font-mono text-green-200 pointer-events-auto backdrop-blur-sm border border-green-500/30 shadow-2xl shadow-black/40 select-text"
-      >
-        <div className="sticky top-0 z-10 border-b border-green-500/20 bg-black/95 px-3 py-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-green-300">
-                DEBUG INSPECTOR ({debugStats.total})
+        <div
+          data-mm-debug-overlay="true"
+          className="absolute bottom-2 left-2 z-[200] w-[560px] max-w-[calc(100vw-1rem)] rounded-2xl bg-black/95 text-[10px] font-mono text-green-200 pointer-events-auto backdrop-blur-sm border border-green-500/30 shadow-2xl shadow-black/40 select-text"
+        >
+          <div className="sticky top-0 z-10 border-b border-green-500/20 bg-black/95 px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold text-green-300">
+                  DEBUG INSPECTOR ({debugStats.total})
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-cyan-300">
+                    inputs {debugStats.inputs}
+                  </span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-emerald-300">
+                    handlers {debugStats.handlers}
+                  </span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-violet-300">
+                    custom {debugStats.customs}
+                  </span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
+                    blocked {debugStats.blocked}
+                  </span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-orange-300">
+                    silent {debugStats.silent}
+                  </span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-red-300">
+                    errors {debugStats.errors}
+                  </span>
+                </div>
               </div>
-              <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-cyan-300">
-                  inputs {debugStats.inputs}
-                </span>
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-emerald-300">
-                  handlers {debugStats.handlers}
-                </span>
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-violet-300">
-                  custom {debugStats.customs}
-                </span>
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
-                  blocked {debugStats.blocked}
-                </span>
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-orange-300">
-                  silent {debugStats.silent}
-                </span>
-                <span className="rounded bg-white/5 px-1.5 py-0.5 text-red-300">
-                  errors {debugStats.errors}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-[9px]">
-              <button
-                onClick={() => {
-                  setDebugPaused((prev) => !prev);
-                  setDebugTick((t) => t + 1);
-                }}
-                className={debugPaused ? 'text-amber-300 hover:text-amber-200' : 'text-emerald-300 hover:text-emerald-200'}
-              >
-                {debugPaused ? 'resume' : 'pause'}
-              </button>
-              <button
-                onClick={() => setDebugOverlayExpanded((prev) => !prev)}
-                className="text-cyan-300 hover:text-cyan-200"
-              >
-                {debugOverlayExpanded ? 'collapse' : 'expand'}
-              </button>
-              <button
-                onClick={() => {
-                  const lines = debugEntriesRef.current.map((entry) =>
-                    [`[${entry.ts}]`, entry.source.toUpperCase(), entry.message, entry.detail || '']
-                      .filter(Boolean)
-                      .join(' | ')
-                  );
-                  navigator.clipboard?.writeText(lines.join('\n'));
-                }}
-                className="text-blue-300 hover:text-blue-200"
-              >
-                copy
-              </button>
-              <button
-                onClick={() => {
-                  for (const pending of pendingInteractionsRef.current.values()) {
-                    window.clearTimeout(pending.timeoutId);
+              <div className="flex items-center gap-2 text-[9px]">
+                <button
+                  onClick={() => {
+                    setDebugPaused((prev) => !prev);
+                    setDebugTick((t) => t + 1);
+                  }}
+                  className={
+                    debugPaused
+                      ? 'text-amber-300 hover:text-amber-200'
+                      : 'text-emerald-300 hover:text-emerald-200'
                   }
-                  pendingInteractionsRef.current.clear();
-                  debugEntriesRef.current = [];
-                  sessionStorage.removeItem(DEBUG_SESSION_KEY);
-                  sessionStorage.removeItem(LEGACY_DEBUG_SESSION_KEY);
-                  lastInputSummaryRef.current = 'none';
-                  lastHandlerSummaryRef.current = 'none';
-                  setDebugTick((t) => t + 1);
-                }}
-                className="text-red-300 hover:text-red-200"
-              >
-                clear
-              </button>
+                >
+                  {debugPaused ? 'resume' : 'pause'}
+                </button>
+                <button
+                  onClick={() => setDebugOverlayExpanded((prev) => !prev)}
+                  className="text-cyan-300 hover:text-cyan-200"
+                >
+                  {debugOverlayExpanded ? 'collapse' : 'expand'}
+                </button>
+                <button
+                  onClick={() => {
+                    const lines = debugEntriesRef.current.map((entry) =>
+                      [
+                        `[${entry.ts}]`,
+                        entry.source.toUpperCase(),
+                        entry.message,
+                        entry.detail || '',
+                      ]
+                        .filter(Boolean)
+                        .join(' | ')
+                    );
+                    navigator.clipboard?.writeText(lines.join('\n'));
+                  }}
+                  className="text-blue-300 hover:text-blue-200"
+                >
+                  copy
+                </button>
+                <button
+                  onClick={() => {
+                    for (const pending of pendingInteractionsRef.current.values()) {
+                      window.clearTimeout(pending.timeoutId);
+                    }
+                    pendingInteractionsRef.current.clear();
+                    debugEntriesRef.current = [];
+                    sessionStorage.removeItem(DEBUG_SESSION_KEY);
+                    sessionStorage.removeItem(LEGACY_DEBUG_SESSION_KEY);
+                    lastInputSummaryRef.current = 'none';
+                    lastHandlerSummaryRef.current = 'none';
+                    setDebugTick((t) => t + 1);
+                  }}
+                  className="text-red-300 hover:text-red-200"
+                >
+                  clear
+                </button>
+              </div>
+            </div>
+            <div className="mt-2 space-y-1 text-[9px] text-slate-300">
+              <div>last input: {lastInputSummaryRef.current}</div>
+              <div>last handler: {lastHandlerSummaryRef.current}</div>
+              {debugPaused && (
+                <div className="text-amber-300">stream paused, logs still collected</div>
+              )}
             </div>
           </div>
-          <div className="mt-2 space-y-1 text-[9px] text-slate-300">
-            <div>last input: {lastInputSummaryRef.current}</div>
-            <div>last handler: {lastHandlerSummaryRef.current}</div>
-            {debugPaused && <div className="text-amber-300">stream paused, logs still collected</div>}
-          </div>
-        </div>
 
-        {debugOverlayExpanded && (
-          <div className="max-h-[38vh] overflow-y-auto px-2 py-2">
-            {debugEntries.length === 0 ? (
-              <div className="px-2 py-3 text-slate-400">No events yet.</div>
-            ) : (
-              debugEntries.map((entry) => {
-                const lineClass =
-                  entry.severity === 'error'
-                    ? 'text-red-300'
-                    : entry.reaction === 'silent'
-                      ? 'text-orange-300'
-                      : entry.reaction === 'blocked'
-                        ? 'text-amber-300'
-                        : entry.source === 'input'
-                          ? 'text-cyan-300'
-                          : entry.source === 'keyboard'
-                            ? 'text-sky-300'
-                            : entry.source === 'custom'
-                              ? 'text-violet-300'
-                              : entry.source === 'persistence'
-                                ? 'text-teal-300'
-                                : entry.source === 'selection'
-                                  ? 'text-lime-300'
-                                  : 'text-green-200';
-                return (
-                  <div
-                    key={entry.id}
-                    className={`rounded-lg px-2 py-1 mb-1 bg-white/[0.03] border border-white/[0.04] ${lineClass}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="shrink-0 text-slate-500">[{entry.ts}]</span>
-                      <span className="shrink-0 uppercase opacity-70">{entry.source}</span>
-                      <span className="break-words">{entry.message}</span>
+          {debugOverlayExpanded && (
+            <div className="max-h-[38vh] overflow-y-auto px-2 py-2">
+              {debugEntries.length === 0 ? (
+                <div className="px-2 py-3 text-slate-400">No events yet.</div>
+              ) : (
+                debugEntries.map((entry) => {
+                  const lineClass =
+                    entry.severity === 'error'
+                      ? 'text-red-300'
+                      : entry.reaction === 'silent'
+                        ? 'text-orange-300'
+                        : entry.reaction === 'blocked'
+                          ? 'text-amber-300'
+                          : entry.source === 'input'
+                            ? 'text-cyan-300'
+                            : entry.source === 'keyboard'
+                              ? 'text-sky-300'
+                              : entry.source === 'custom'
+                                ? 'text-violet-300'
+                                : entry.source === 'persistence'
+                                  ? 'text-teal-300'
+                                  : entry.source === 'selection'
+                                    ? 'text-lime-300'
+                                    : 'text-green-200';
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`rounded-lg px-2 py-1 mb-1 bg-white/[0.03] border border-white/[0.04] ${lineClass}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="shrink-0 text-slate-500">[{entry.ts}]</span>
+                        <span className="shrink-0 uppercase opacity-70">{entry.source}</span>
+                        <span className="break-words">{entry.message}</span>
+                      </div>
+                      {entry.detail && (
+                        <div className="mt-0.5 pl-[88px] text-slate-400 break-words">
+                          {entry.detail}
+                        </div>
+                      )}
                     </div>
-                    {entry.detail && (
-                      <div className="mt-0.5 pl-[88px] text-slate-400 break-words">{entry.detail}</div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-      </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       <BranchSummaryPanel
@@ -5871,7 +6257,9 @@ function MindMapInner({
         onClose={() => setCommandPaletteOpen(false)}
         onAction={(action) => {
           setCommandPaletteOpen(false);
-          window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId } }));
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId } })
+          );
         }}
       />
 

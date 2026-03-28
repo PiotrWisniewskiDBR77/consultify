@@ -292,7 +292,9 @@ function hashIp(ip: string): string {
   return crypto.createHash('sha256').update(ip).digest('hex');
 }
 
-function mapAttributionStatusToClientStatus(status: string | undefined): 'active' | 'onboarding' | 'inactive' {
+function mapAttributionStatusToClientStatus(
+  status: string | undefined
+): 'active' | 'onboarding' | 'inactive' {
   switch (String(status || '').toUpperCase()) {
     case ATTRIBUTION_STATUS.ACTIVE:
       return 'active';
@@ -935,7 +937,7 @@ export async function getPartnerProjects(
        WHERE COALESCE(p.status, '') NOT IN ('deleted', 'DELETED', 'completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')
        ORDER BY COALESCE(p.updated_at, p.created_at) DESC
        LIMIT ? OFFSET ?`,
-      [partnerOrgId, limit, offset],
+      [partnerOrgId, limit, offset]
     );
 
     return rows.map((row) => ({
@@ -994,7 +996,8 @@ export async function getPartnerEmployees(
   options: { status?: string; limit?: number; offset?: number } = {}
 ): Promise<PartnerEmployeeListItem[]> {
   const { status, limit = 50, offset = 0 } = options;
-  const statusFilter = typeof status === 'string' && status.trim().length > 0 ? status.trim().toLowerCase() : null;
+  const statusFilter =
+    typeof status === 'string' && status.trim().length > 0 ? status.trim().toLowerCase() : null;
 
   try {
     const rows = await DbPromise.all<
@@ -1030,11 +1033,13 @@ export async function getPartnerEmployees(
          AND (? IS NULL OR LOWER(COALESCE(pu.status, '')) = ?)
        ORDER BY COALESCE(sessions.last_active_at, u.last_login, pu.updated_at, pu.joined_at) DESC
        LIMIT ? OFFSET ?`,
-      [partnerOrgId, statusFilter, statusFilter, limit, offset],
+      [partnerOrgId, statusFilter, statusFilter, limit, offset]
     );
 
     return rows.map((row) => {
-      const name = [row.first_name, row.last_name].filter((value) => typeof value === 'string' && value.trim().length > 0).join(' ');
+      const name = [row.first_name, row.last_name]
+        .filter((value) => typeof value === 'string' && value.trim().length > 0)
+        .join(' ');
       return {
         id: String(row.user_id),
         employeeName: name || String(row.email || 'Team Member'),
@@ -1044,7 +1049,7 @@ export async function getPartnerEmployees(
         clients: undefined,
         clientCount: null,
         status: mapPartnerUserStatusToEmployeeStatus(
-          typeof row.partner_status === 'string' ? row.partner_status : undefined,
+          typeof row.partner_status === 'string' ? row.partner_status : undefined
         ),
         lastActive:
           typeof row.last_active_at === 'string'

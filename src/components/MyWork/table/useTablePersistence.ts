@@ -104,19 +104,13 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
   const [loading, setLoading] = useState(open);
   const hydratedOnceRef = useRef(false);
   const didPersistPreferredRef = useRef(false);
-  const {
-    saving,
-    syncState,
-    lastSavedAt,
-    queueSync,
-    flushNow,
-    primeServerVersion,
-  } = useIdeaMapSync({
-    ideaId,
-    tool: 'table',
-    open,
-    locked,
-  });
+  const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
+    useIdeaMapSync({
+      ideaId,
+      tool: 'table',
+      open,
+      locked,
+    });
 
   const buildPayload = useCallback(
     () => ({

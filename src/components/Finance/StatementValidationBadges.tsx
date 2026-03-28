@@ -8,7 +8,10 @@ interface Props {
   emptyLabel: string;
 }
 
-const STATUS_CONFIG: Record<FinanceStatementValidation['status'], { bg: string; text: string; icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<
+  FinanceStatementValidation['status'],
+  { bg: string; text: string; icon: React.ReactNode }
+> = {
   fail: {
     bg: 'bg-rose-50 border-rose-200/60 dark:bg-rose-500/10 dark:border-rose-500/20',
     text: 'text-rose-700 dark:text-rose-300',

@@ -1,7 +1,16 @@
-import { Activity, AlertTriangle, BarChart2, Clock3, Cpu, RefreshCw, ShieldAlert, Zap } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  BarChart2,
+  Clock3,
+  Cpu,
+  RefreshCw,
+  ShieldAlert,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -147,7 +156,7 @@ export const LLMObservatoryTab: React.FC = () => {
 
       if (
         selectedProvider !== 'all' &&
-        !((data?.providers || []).some((provider) => provider.provider === selectedProvider))
+        !(data?.providers || []).some((provider) => provider.provider === selectedProvider)
       ) {
         setSelectedProvider('all');
       }
@@ -223,7 +232,9 @@ export const LLMObservatoryTab: React.FC = () => {
             onChange={(event) => setSelectedProvider(event.target.value)}
             className="h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-sm text-slate-700 dark:text-slate-200"
           >
-            <option value="all">{t('superadmin.ai.observatory.allProviders', 'All providers')}</option>
+            <option value="all">
+              {t('superadmin.ai.observatory.allProviders', 'All providers')}
+            </option>
             {providers.map((provider) => (
               <option key={provider.provider} value={provider.provider}>
                 {provider.name}
@@ -272,7 +283,8 @@ export const LLMObservatoryTab: React.FC = () => {
             {formatCompact(summary?.totalRequests || 0)}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('superadmin.ai.observatory.successRate', 'Success rate')}: {summary?.successRate ?? 0}%
+            {t('superadmin.ai.observatory.successRate', 'Success rate')}:{' '}
+            {summary?.successRate ?? 0}%
           </div>
         </div>
 
@@ -332,7 +344,8 @@ export const LLMObservatoryTab: React.FC = () => {
             {summary?.incidents ?? 0}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('superadmin.ai.observatory.activeIncidents', 'Active')}: {summary?.activeIncidents ?? 0}
+            {t('superadmin.ai.observatory.activeIncidents', 'Active')}:{' '}
+            {summary?.activeIncidents ?? 0}
           </div>
         </div>
 
@@ -344,7 +357,9 @@ export const LLMObservatoryTab: React.FC = () => {
             <AlertTriangle size={16} className="text-violet-500" />
           </div>
           <div className="mt-3 text-lg font-semibold text-slate-900 dark:text-white capitalize">
-            {selectedProvider === 'all' ? t('superadmin.ai.observatory.global', 'Global') : selectedProvider}
+            {selectedProvider === 'all'
+              ? t('superadmin.ai.observatory.global', 'Global')
+              : selectedProvider}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {t('superadmin.ai.observatory.period', 'Period')}: {payload?.period || range}
@@ -371,20 +386,31 @@ export const LLMObservatoryTab: React.FC = () => {
           <div className="space-y-2">
             {timeline.length === 0 ? (
               <div className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
-                {t('superadmin.ai.observatory.noTimeline', 'No historical request data for this period')}
+                {t(
+                  'superadmin.ai.observatory.noTimeline',
+                  'No historical request data for this period'
+                )}
               </div>
             ) : (
               timeline.map((point) => (
-                <div key={point.bucket} className="grid grid-cols-[120px_1fr_140px] gap-3 items-center">
-                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{point.bucket}</div>
+                <div
+                  key={point.bucket}
+                  className="grid grid-cols-[120px_1fr_140px] gap-3 items-center"
+                >
+                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {point.bucket}
+                  </div>
                   <div className="h-2 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-indigo-500/80"
-                      style={{ width: `${Math.max(4, (point.requests / maxTimelineRequests) * 100)}%` }}
+                      style={{
+                        width: `${Math.max(4, (point.requests / maxTimelineRequests) * 100)}%`,
+                      }}
                     />
                   </div>
                   <div className="text-right text-xs text-slate-600 dark:text-slate-300">
-                    {formatCompact(point.requests)} req · {point.successRate}% · {point.avgLatencyMs}ms
+                    {formatCompact(point.requests)} req · {point.successRate}% ·{' '}
+                    {point.avgLatencyMs}ms
                   </div>
                 </div>
               ))
@@ -465,12 +491,20 @@ export const LLMObservatoryTab: React.FC = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
-                  <th className="px-5 py-3">{t('superadmin.ai.observatory.provider', 'Provider')}</th>
+                  <th className="px-5 py-3">
+                    {t('superadmin.ai.observatory.provider', 'Provider')}
+                  </th>
                   <th className="px-5 py-3">{t('superadmin.ai.observatory.status', 'Status')}</th>
                   <th className="px-5 py-3">{t('superadmin.ai.observatory.uptime', 'Uptime')}</th>
-                  <th className="px-5 py-3">{t('superadmin.ai.observatory.requestsShort', 'Req')}</th>
-                  <th className="px-5 py-3">{t('superadmin.ai.observatory.latencyShort', 'Latency')}</th>
-                  <th className="px-5 py-3">{t('superadmin.ai.observatory.errorsShort', 'Errors')}</th>
+                  <th className="px-5 py-3">
+                    {t('superadmin.ai.observatory.requestsShort', 'Req')}
+                  </th>
+                  <th className="px-5 py-3">
+                    {t('superadmin.ai.observatory.latencyShort', 'Latency')}
+                  </th>
+                  <th className="px-5 py-3">
+                    {t('superadmin.ai.observatory.errorsShort', 'Errors')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -478,7 +512,9 @@ export const LLMObservatoryTab: React.FC = () => {
                   <tr
                     key={provider.provider}
                     className={`border-b border-slate-100 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] ${
-                      selectedProvider === provider.provider ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : ''
+                      selectedProvider === provider.provider
+                        ? 'bg-indigo-50/60 dark:bg-indigo-500/10'
+                        : ''
                     }`}
                     onClick={() =>
                       setSelectedProvider((current) =>
@@ -487,13 +523,17 @@ export const LLMObservatoryTab: React.FC = () => {
                     }
                   >
                     <td className="px-5 py-3">
-                      <div className="font-medium text-slate-900 dark:text-white">{provider.name}</div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {provider.name}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                         {provider.provider}
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <div className={`text-xs font-medium capitalize ${statusTone(provider.currentStatus)}`}>
+                      <div
+                        className={`text-xs font-medium capitalize ${statusTone(provider.currentStatus)}`}
+                      >
                         {provider.currentStatus || 'unknown'}
                       </div>
                       <div className="text-[11px] text-slate-400 dark:text-slate-500">
@@ -531,7 +571,10 @@ export const LLMObservatoryTab: React.FC = () => {
                 </div>
               ) : (
                 filteredModels.slice(0, 8).map((model) => (
-                  <div key={`${model.provider}-${model.model}`} className="flex items-start justify-between gap-3">
+                  <div
+                    key={`${model.provider}-${model.model}`}
+                    className="flex items-start justify-between gap-3"
+                  >
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {model.model}
@@ -557,11 +600,17 @@ export const LLMObservatoryTab: React.FC = () => {
             <div className="mt-4 space-y-3">
               {filteredErrors.length === 0 ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('superadmin.ai.observatory.noErrors', 'No error categories recorded in this period')}
+                  {t(
+                    'superadmin.ai.observatory.noErrors',
+                    'No error categories recorded in this period'
+                  )}
                 </div>
               ) : (
                 filteredErrors.slice(0, 8).map((entry, index) => (
-                  <div key={`${entry.provider}-${index}`} className="flex items-start justify-between gap-3">
+                  <div
+                    key={`${entry.provider}-${index}`}
+                    className="flex items-start justify-between gap-3"
+                  >
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-slate-900 dark:text-white capitalize">
                         {entry.provider}

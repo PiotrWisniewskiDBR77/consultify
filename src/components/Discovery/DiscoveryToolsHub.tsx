@@ -61,7 +61,6 @@ import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 
-import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import {
   type AssessmentFrameworkPreviewModel,
   AssessmentFrameworkPreviewV3Body,
@@ -93,6 +92,7 @@ import {
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from '../Initiatives/InitiativePreviewV3';
+import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import {
   FilterableTable,
   FilterChip,
@@ -1374,10 +1374,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     const libraryCount =
       isKnownToolsLoading && knownTools.length === 0
         ? 0
-        :
-      (knownTools || []).length +
-      Object.keys(ASSESSMENT_FRAMEWORK_META).length +
-      (hasAutomationInKnownTools ? 0 : 1);
+        : (knownTools || []).length +
+          Object.keys(ASSESSMENT_FRAMEWORK_META).length +
+          (hasAutomationInKnownTools ? 0 : 1);
 
     return [
       {
@@ -1672,7 +1671,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </span>
             ))}
             {(row.tags || []).length > 3 ? (
-              <span className="shrink-0 text-[10px] text-slate-400">+{(row.tags || []).length - 3}</span>
+              <span className="shrink-0 text-[10px] text-slate-400">
+                +{(row.tags || []).length - 3}
+              </span>
             ) : null}
           </div>
         ),
@@ -1715,7 +1716,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 : 'border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
             }`}
           >
-            {row.isActive ? (isPolish ? 'Aktywny' : 'Active') : isPolish ? 'Nieaktywny' : 'Inactive'}
+            {row.isActive
+              ? isPolish
+                ? 'Aktywny'
+                : 'Active'
+              : isPolish
+                ? 'Nieaktywny'
+                : 'Inactive'}
           </span>
         ),
       },
@@ -2916,7 +2923,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span>
                       Generated from:{' '}
                       <span className="text-slate-900 dark:text-white capitalize">
-                        {getSourceDisplayLabel(selectedInitiative.sourceType, i18n.language === 'pl')}
+                        {getSourceDisplayLabel(
+                          selectedInitiative.sourceType,
+                          i18n.language === 'pl'
+                        )}
                       </span>
                     </span>
                     {selectedInitiative.sourceId && (
@@ -3177,7 +3187,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
               <Loader2 className="w-8 h-8 animate-spin" />
-              <span>{isPolish ? 'Ładowanie biblioteki narzędzi...' : 'Loading tools library...'}</span>
+              <span>
+                {isPolish ? 'Ładowanie biblioteki narzędzi...' : 'Loading tools library...'}
+              </span>
             </div>
           </div>
         );
@@ -3191,9 +3203,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'}
               </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {knownToolsError}
-              </p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{knownToolsError}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -3277,7 +3287,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               selectedItem={selectedItem}
               onSelect={setPreviewItemId}
               itemIds={itemIds}
-              getItemById={(id) => { const x = filteredLibraryItems.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+              getItemById={(id) => {
+                const x = filteredLibraryItems.find((i) => i.id === id);
+                return x ? ({ ...x, title: x.name || x.id } as any) : null;
+              }}
               onOpenFull={(id) => {
                 const row = filteredLibraryItems.find((d) => d.id === id);
                 if (row) handleRowAction('library_open_full', row as any);
@@ -3310,7 +3323,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             selectedItem={selectedItem}
             onSelect={setPreviewItemId}
             itemIds={itemIds}
-            getItemById={(id) => { const x = filteredLibraryItems.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+            getItemById={(id) => {
+              const x = filteredLibraryItems.find((i) => i.id === id);
+              return x ? ({ ...x, title: x.name || x.id } as any) : null;
+            }}
             onOpenFull={(id) => {
               const row = filteredLibraryItems.find((d) => d.id === id);
               if (row) handleRowAction('library_open_full', row as any);
@@ -3401,7 +3417,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             selectedItem={selectedItem}
             onSelect={setPreviewItemId}
             itemIds={itemIds}
-            getItemById={(id) => { const x = unifiedSessionsData.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+            getItemById={(id) => {
+              const x = unifiedSessionsData.find((i) => i.id === id);
+              return x ? ({ ...x, title: x.name || x.id } as any) : null;
+            }}
             onOpenFull={(id) => {
               const row = unifiedSessionsData.find((d) => d.id === id);
               if (row) openFull(row as any);
@@ -3571,7 +3590,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           selectedItem={selectedItem}
           onSelect={setPreviewItemId}
           itemIds={itemIds}
-          getItemById={(id) => { const x = currentData.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+          getItemById={(id) => {
+            const x = currentData.find((i) => i.id === id);
+            return x ? ({ ...x, title: x.name || x.id } as any) : null;
+          }}
           onOpenFull={(id) => {
             const row = currentData.find((d) => d.id === id);
             if (!row) return;

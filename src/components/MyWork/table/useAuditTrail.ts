@@ -2,6 +2,7 @@
  * useAuditTrail — fetches and manages audit events for table platform entities.
  */
 import { useCallback, useEffect, useState } from 'react';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface AuditEvent {

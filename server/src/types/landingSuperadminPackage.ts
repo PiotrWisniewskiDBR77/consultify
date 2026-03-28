@@ -26,26 +26,16 @@ export const LandingSectionTypeValues = [
 ] as const;
 export type LandingSectionType = (typeof LandingSectionTypeValues)[number];
 
-export const AnnaIdentityRoleValues = [
-  'landing_guide',
-  'onboarding_assistant',
-] as const;
+export const AnnaIdentityRoleValues = ['landing_guide', 'onboarding_assistant'] as const;
 export type AnnaIdentityRole = (typeof AnnaIdentityRoleValues)[number];
 
 export const NarrativeVersionValues = ['v3', 'v8'] as const;
 export type NarrativeVersion = (typeof NarrativeVersionValues)[number];
 
-export const OwnershipTypeValues = [
-  'platform_operator',
-  'tenant_admin',
-] as const;
+export const OwnershipTypeValues = ['platform_operator', 'tenant_admin'] as const;
 export type OwnershipType = (typeof OwnershipTypeValues)[number];
 
-export const SurfaceAccessLevelValues = [
-  'platform',
-  'tenant',
-  'module',
-] as const;
+export const SurfaceAccessLevelValues = ['platform', 'tenant', 'module'] as const;
 export type SurfaceAccessLevel = (typeof SurfaceAccessLevelValues)[number];
 
 // ==========================================

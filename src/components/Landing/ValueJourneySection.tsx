@@ -15,7 +15,8 @@ export const ValueJourneySection: React.FC = () => {
     { title: 'Inspiration', description: 'Shows users new ideas, directions, and possibilities.' },
     {
       title: 'Knowledge',
-      description: 'Provides access to consulting knowledge that would otherwise be hard to obtain.',
+      description:
+        'Provides access to consulting knowledge that would otherwise be hard to obtain.',
     },
     {
       title: 'Frameworks',

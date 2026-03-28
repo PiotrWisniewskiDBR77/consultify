@@ -1,32 +1,32 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
+  FacilitationSessionState,
   RegisterResourceTypeMappingParams,
-  UpdateSurfacePresenceParams,
-  StartFacilitationParams,
   RegisterSeamParams,
   RegisterToolEventParams,
-  FacilitationSessionState,
+  StartFacilitationParams,
+  UpdateSurfacePresenceParams,
 } from '../../../types/multiplayerHardening.js';
 import {
-  ResourceTypeMappingSchema,
-  SurfacePresenceSchema,
   FacilitationSessionSchema,
+  FacilitationSessionStateValues,
   PlatformSeamRecordSchema,
-  ToolEventRegistrationSchema,
   RegisterResourceTypeMappingParamsSchema,
-  UpdateSurfacePresenceParamsSchema,
-  StartFacilitationParamsSchema,
   RegisterSeamParamsSchema,
   RegisterToolEventParamsSchema,
-  VALID_FACILITATION_TRANSITIONS,
-  TERMINAL_FACILITATION_STATES,
-  WorkspaceToolValues,
-  SurfaceValues,
-  FacilitationSessionStateValues,
-  SeamTypeValues,
+  ResourceTypeMappingSchema,
   SeamCurrentStateValues,
+  SeamTypeValues,
+  StartFacilitationParamsSchema,
+  SurfacePresenceSchema,
+  SurfaceValues,
+  TERMINAL_FACILITATION_STATES,
+  ToolEventRegistrationSchema,
+  UpdateSurfacePresenceParamsSchema,
+  VALID_FACILITATION_TRANSITIONS,
+  WorkspaceToolValues,
 } from '../../../types/multiplayerHardening.js';
 
 // ==========================================
@@ -53,22 +53,22 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  registerResourceTypeMapping,
-  resolveRoomBinding,
-  getResourceTypeMapping,
-  updateSurfacePresence,
-  getWorkspacePresence,
-  getPresenceBySurface,
-  startFacilitationSession,
-  getFacilitationSession,
-  pauseFacilitationSession,
-  resumeFacilitationSession,
   endFacilitationSession,
-  registerSeam,
-  migrateSeam,
+  getFacilitationSession,
+  getPresenceBySurface,
+  getResourceTypeMapping,
   getSeamsByOrg,
-  registerToolEvent,
   getToolEvents,
+  getWorkspacePresence,
+  migrateSeam,
+  pauseFacilitationSession,
+  registerResourceTypeMapping,
+  registerSeam,
+  registerToolEvent,
+  resolveRoomBinding,
+  resumeFacilitationSession,
+  startFacilitationSession,
+  updateSurfacePresence,
 } from '../multiplayerHardeningService.js';
 
 // ==========================================
@@ -83,7 +83,9 @@ const ROOM_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 const SESSION_ID = '00000000-0000-4000-8000-ssssssssssss';
 const SEAM_ID = '00000000-0000-4000-8000-dddddddddddd';
 
-function makeMappingParams(overrides?: Partial<RegisterResourceTypeMappingParams>): RegisterResourceTypeMappingParams {
+function makeMappingParams(
+  overrides?: Partial<RegisterResourceTypeMappingParams>
+): RegisterResourceTypeMappingParams {
   return {
     resourceType: 'whiteboard',
     roomGranularity: 'per_workspace',
@@ -107,7 +109,9 @@ function makeFakeMappingRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makeSurfacePresenceParams(overrides?: Partial<UpdateSurfacePresenceParams>): UpdateSurfacePresenceParams {
+function makeSurfacePresenceParams(
+  overrides?: Partial<UpdateSurfacePresenceParams>
+): UpdateSurfacePresenceParams {
   return {
     userId: USER_ID,
     roomId: ROOM_ID,
@@ -133,7 +137,9 @@ function makeFakeSurfacePresenceRow(overrides?: Partial<Record<string, unknown>>
   };
 }
 
-function makeFacilitationParams(overrides?: Partial<StartFacilitationParams>): StartFacilitationParams {
+function makeFacilitationParams(
+  overrides?: Partial<StartFacilitationParams>
+): StartFacilitationParams {
   return {
     roomId: ROOM_ID,
     facilitatorUserId: USER_ID,
@@ -150,7 +156,9 @@ function makeFakeFacilitationRow(overrides?: Partial<Record<string, unknown>>) {
     facilitator_user_id: USER_ID,
     session_state: 'active',
     current_phase: 'brainstorm',
-    phase_history: JSON.stringify([{ phase: 'brainstorm', startedAt: '2026-03-23T10:00:00.000Z', endedAt: null }]),
+    phase_history: JSON.stringify([
+      { phase: 'brainstorm', startedAt: '2026-03-23T10:00:00.000Z', endedAt: null },
+    ]),
     started_at: '2026-03-23T10:00:00.000Z',
     paused_at: null,
     ended_at: null,
@@ -183,7 +191,9 @@ function makeFakeSeamRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makeToolEventParams(overrides?: Partial<RegisterToolEventParams>): RegisterToolEventParams {
+function makeToolEventParams(
+  overrides?: Partial<RegisterToolEventParams>
+): RegisterToolEventParams {
   return {
     eventType: 'board.object_created',
     toolName: 'whiteboard',
@@ -238,7 +248,12 @@ describe('registerResourceTypeMapping', () => {
 
   it('registers a standalone mapping with no parent', async () => {
     const result = await registerResourceTypeMapping(
-      makeMappingParams({ resourceType: 'notebook', roomGranularity: 'per_resource', embeddedIn: null, surfaceAware: false }),
+      makeMappingParams({
+        resourceType: 'notebook',
+        roomGranularity: 'per_resource',
+        embeddedIn: null,
+        surfaceAware: false,
+      })
     );
 
     expect(result.resourceType).toBe('notebook');
@@ -248,21 +263,19 @@ describe('registerResourceTypeMapping', () => {
   });
 
   it('defaults embeddedIn to null when not provided', async () => {
-    const result = await registerResourceTypeMapping(
-      makeMappingParams({ embeddedIn: undefined }),
-    );
+    const result = await registerResourceTypeMapping(makeMappingParams({ embeddedIn: undefined }));
     expect(result.embeddedIn).toBeNull();
   });
 
   it('rejects invalid resourceType via Zod', async () => {
     await expect(
-      registerResourceTypeMapping({ ...makeMappingParams(), resourceType: 'invalid' as any }),
+      registerResourceTypeMapping({ ...makeMappingParams(), resourceType: 'invalid' as any })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      registerResourceTypeMapping(makeMappingParams({ organizationId: 'not-uuid' })),
+      registerResourceTypeMapping(makeMappingParams({ organizationId: 'not-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -278,7 +291,9 @@ describe('resolveRoomBinding', () => {
   });
 
   it('resolves standalone resource to its own room', async () => {
-    mockDbGet.mockResolvedValueOnce(makeFakeMappingRow({ embedded_in: null, room_granularity: 'per_resource' }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeMappingRow({ embedded_in: null, room_granularity: 'per_resource' })
+    );
 
     const result = await resolveRoomBinding('whiteboard', 'wb-standalone-001', ORG_ID);
 
@@ -351,7 +366,7 @@ describe('updateSurfacePresence', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSurfacePresenceRow());
 
     const result = await updateSurfacePresence(
-      makeSurfacePresenceParams({ activeSurface: 'mindmap', cursorState: { nodeId: 'n1' } }),
+      makeSurfacePresenceParams({ activeSurface: 'mindmap', cursorState: { nodeId: 'n1' } })
     );
 
     expect(result.activeSurface).toBe('mindmap');
@@ -365,7 +380,7 @@ describe('updateSurfacePresence', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     const result = await updateSurfacePresence(
-      makeSurfacePresenceParams({ cursorState: undefined }),
+      makeSurfacePresenceParams({ cursorState: undefined })
     );
 
     expect(result.cursorState).toBeNull();
@@ -373,13 +388,13 @@ describe('updateSurfacePresence', () => {
 
   it('rejects invalid surface via Zod', async () => {
     await expect(
-      updateSurfacePresence({ ...makeSurfacePresenceParams(), activeSurface: 'invalid' as any }),
+      updateSurfacePresence({ ...makeSurfacePresenceParams(), activeSurface: 'invalid' as any })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid presenceType via Zod', async () => {
     await expect(
-      updateSurfacePresence({ ...makeSurfacePresenceParams(), presenceType: 'invalid' as any }),
+      updateSurfacePresence({ ...makeSurfacePresenceParams(), presenceType: 'invalid' as any })
     ).rejects.toThrow(ZodError);
   });
 
@@ -387,7 +402,11 @@ describe('updateSurfacePresence', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     const result = await updateSurfacePresence(
-      makeSurfacePresenceParams({ userId: 'ai-001', presenceType: 'ai_agent', activeSurface: 'mindmap' }),
+      makeSurfacePresenceParams({
+        userId: 'ai-001',
+        presenceType: 'ai_agent',
+        activeSurface: 'mindmap',
+      })
     );
 
     expect(result.presenceType).toBe('ai_agent');
@@ -432,9 +451,7 @@ describe('getWorkspacePresence', () => {
 
 describe('getPresenceBySurface', () => {
   it('returns presence filtered by surface', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeSurfacePresenceRow({ active_surface: 'whiteboard' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeSurfacePresenceRow({ active_surface: 'whiteboard' })]);
 
     const results = await getPresenceBySurface(ROOM_ID, 'whiteboard', ORG_ID);
 
@@ -478,7 +495,7 @@ describe('startFacilitationSession', () => {
 
   it('creates a session without initial phase', async () => {
     const result = await startFacilitationSession(
-      makeFacilitationParams({ initialPhase: undefined }),
+      makeFacilitationParams({ initialPhase: undefined })
     );
 
     expect(result.currentPhase).toBeNull();
@@ -487,13 +504,13 @@ describe('startFacilitationSession', () => {
 
   it('rejects invalid roomId via Zod', async () => {
     await expect(
-      startFacilitationSession({ ...makeFacilitationParams(), roomId: 'not-uuid' }),
+      startFacilitationSession({ ...makeFacilitationParams(), roomId: 'not-uuid' })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects missing facilitatorUserId via Zod', async () => {
     await expect(
-      startFacilitationSession({ ...makeFacilitationParams(), facilitatorUserId: '' }),
+      startFacilitationSession({ ...makeFacilitationParams(), facilitatorUserId: '' })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -531,35 +548,37 @@ describe('pauseFacilitationSession', () => {
   it('rejects pausing an already paused session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({ session_state: 'paused_degraded' }));
 
-    await expect(
-      pauseFacilitationSession(SESSION_ID, 'manual', ORG_ID),
-    ).rejects.toThrow('Invalid facilitation state transition: paused_degraded → paused_degraded');
+    await expect(pauseFacilitationSession(SESSION_ID, 'manual', ORG_ID)).rejects.toThrow(
+      'Invalid facilitation state transition: paused_degraded → paused_degraded'
+    );
   });
 
   it('rejects pausing an ended session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({ session_state: 'ended' }));
 
-    await expect(
-      pauseFacilitationSession(SESSION_ID, 'manual', ORG_ID),
-    ).rejects.toThrow('Invalid facilitation state transition: ended → paused_degraded');
+    await expect(pauseFacilitationSession(SESSION_ID, 'manual', ORG_ID)).rejects.toThrow(
+      'Invalid facilitation state transition: ended → paused_degraded'
+    );
   });
 
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      pauseFacilitationSession('nonexistent', 'manual', ORG_ID),
-    ).rejects.toThrow('Facilitation session nonexistent not found');
+    await expect(pauseFacilitationSession('nonexistent', 'manual', ORG_ID)).rejects.toThrow(
+      'Facilitation session nonexistent not found'
+    );
   });
 });
 
 describe('resumeFacilitationSession', () => {
   it('resumes a paused session back to active', async () => {
-    mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({
-      session_state: 'paused_degraded',
-      paused_at: '2026-03-23T10:05:00.000Z',
-      pause_reason: 'facilitator_disconnect',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeFacilitationRow({
+        session_state: 'paused_degraded',
+        paused_at: '2026-03-23T10:05:00.000Z',
+        pause_reason: 'facilitator_disconnect',
+      })
+    );
 
     const result = await resumeFacilitationSession(SESSION_ID, ORG_ID);
 
@@ -574,25 +593,25 @@ describe('resumeFacilitationSession', () => {
   it('rejects resuming an active session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({ session_state: 'active' }));
 
-    await expect(
-      resumeFacilitationSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid facilitation state transition: active → active');
+    await expect(resumeFacilitationSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid facilitation state transition: active → active'
+    );
   });
 
   it('rejects resuming an ended session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({ session_state: 'ended' }));
 
-    await expect(
-      resumeFacilitationSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid facilitation state transition: ended → active');
+    await expect(resumeFacilitationSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid facilitation state transition: ended → active'
+    );
   });
 
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resumeFacilitationSession('nonexistent', ORG_ID),
-    ).rejects.toThrow('Facilitation session nonexistent not found');
+    await expect(resumeFacilitationSession('nonexistent', ORG_ID)).rejects.toThrow(
+      'Facilitation session nonexistent not found'
+    );
   });
 });
 
@@ -611,11 +630,13 @@ describe('endFacilitationSession', () => {
   });
 
   it('ends a paused session', async () => {
-    mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({
-      session_state: 'paused_degraded',
-      paused_at: '2026-03-23T10:05:00.000Z',
-      pause_reason: 'room_degraded',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeFacilitationRow({
+        session_state: 'paused_degraded',
+        paused_at: '2026-03-23T10:05:00.000Z',
+        pause_reason: 'room_degraded',
+      })
+    );
 
     const result = await endFacilitationSession(SESSION_ID, ORG_ID);
 
@@ -626,17 +647,17 @@ describe('endFacilitationSession', () => {
   it('rejects ending an already ended session', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({ session_state: 'ended' }));
 
-    await expect(
-      endFacilitationSession(SESSION_ID, ORG_ID),
-    ).rejects.toThrow('Invalid facilitation state transition: ended → ended');
+    await expect(endFacilitationSession(SESSION_ID, ORG_ID)).rejects.toThrow(
+      'Invalid facilitation state transition: ended → ended'
+    );
   });
 
   it('throws when session not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      endFacilitationSession('nonexistent', ORG_ID),
-    ).rejects.toThrow('Facilitation session nonexistent not found');
+    await expect(endFacilitationSession('nonexistent', ORG_ID)).rejects.toThrow(
+      'Facilitation session nonexistent not found'
+    );
   });
 });
 
@@ -646,14 +667,20 @@ describe('facilitation full lifecycle: active → paused → resumed → ended',
     expect(started.sessionState).toBe('active');
 
     mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow());
-    const paused = await pauseFacilitationSession(started.sessionId, 'facilitator_disconnect', ORG_ID);
+    const paused = await pauseFacilitationSession(
+      started.sessionId,
+      'facilitator_disconnect',
+      ORG_ID
+    );
     expect(paused.sessionState).toBe('paused_degraded');
 
-    mockDbGet.mockResolvedValueOnce(makeFakeFacilitationRow({
-      session_state: 'paused_degraded',
-      paused_at: paused.pausedAt,
-      pause_reason: 'facilitator_disconnect',
-    }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeFacilitationRow({
+        session_state: 'paused_degraded',
+        paused_at: paused.pausedAt,
+        pause_reason: 'facilitator_disconnect',
+      })
+    );
     const resumed = await resumeFacilitationSession(started.sessionId, ORG_ID);
     expect(resumed.sessionState).toBe('active');
 
@@ -679,25 +706,25 @@ describe('facilitation org isolation', () => {
   it('pauseFacilitationSession rejects cross-org access', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      pauseFacilitationSession(SESSION_ID, 'manual', OTHER_ORG_ID),
-    ).rejects.toThrow(`Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(pauseFacilitationSession(SESSION_ID, 'manual', OTHER_ORG_ID)).rejects.toThrow(
+      `Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 
   it('resumeFacilitationSession rejects cross-org access', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resumeFacilitationSession(SESSION_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(resumeFacilitationSession(SESSION_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 
   it('endFacilitationSession rejects cross-org access', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      endFacilitationSession(SESSION_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(endFacilitationSession(SESSION_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Facilitation session ${SESSION_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -734,15 +761,15 @@ describe('registerSeam', () => {
   });
 
   it('rejects invalid seamType via Zod', async () => {
-    await expect(
-      registerSeam({ ...makeSeamParams(), seamType: 'invalid' as any }),
-    ).rejects.toThrow(ZodError);
+    await expect(registerSeam({ ...makeSeamParams(), seamType: 'invalid' as any })).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid toolName via Zod', async () => {
-    await expect(
-      registerSeam({ ...makeSeamParams(), toolName: 'invalid' as any }),
-    ).rejects.toThrow(ZodError);
+    await expect(registerSeam({ ...makeSeamParams(), toolName: 'invalid' as any })).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -762,33 +789,27 @@ describe('migrateSeam', () => {
   it('rejects migrating an already migrated seam', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSeamRow({ current_state: 'platform_migrated' }));
 
-    await expect(
-      migrateSeam(SEAM_ID, ORG_ID),
-    ).rejects.toThrow('already platform_migrated');
+    await expect(migrateSeam(SEAM_ID, ORG_ID)).rejects.toThrow('already platform_migrated');
   });
 
   it('rejects migrating an eliminated seam', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSeamRow({ current_state: 'eliminated' }));
 
-    await expect(
-      migrateSeam(SEAM_ID, ORG_ID),
-    ).rejects.toThrow('already eliminated');
+    await expect(migrateSeam(SEAM_ID, ORG_ID)).rejects.toThrow('already eliminated');
   });
 
   it('throws when seam not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      migrateSeam('nonexistent', ORG_ID),
-    ).rejects.toThrow('Seam nonexistent not found');
+    await expect(migrateSeam('nonexistent', ORG_ID)).rejects.toThrow('Seam nonexistent not found');
   });
 
   it('enforces org isolation', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      migrateSeam(SEAM_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`Seam ${SEAM_ID} not found in organization ${OTHER_ORG_ID}`);
+    await expect(migrateSeam(SEAM_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `Seam ${SEAM_ID} not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -845,7 +866,11 @@ describe('registerToolEvent', () => {
 
   it('registers an ephemeral event without surface context', async () => {
     const result = await registerToolEvent(
-      makeToolEventParams({ eventType: 'surface.switched', deliveryTier: 'ephemeral', surfaceContext: false }),
+      makeToolEventParams({
+        eventType: 'surface.switched',
+        deliveryTier: 'ephemeral',
+        surfaceContext: false,
+      })
     );
 
     expect(result.deliveryTier).toBe('ephemeral');
@@ -854,14 +879,14 @@ describe('registerToolEvent', () => {
 
   it('rejects invalid deliveryTier via Zod', async () => {
     await expect(
-      registerToolEvent({ ...makeToolEventParams(), deliveryTier: 'invalid' as any }),
+      registerToolEvent({ ...makeToolEventParams(), deliveryTier: 'invalid' as any })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty eventType via Zod', async () => {
-    await expect(
-      registerToolEvent({ ...makeToolEventParams(), eventType: '' }),
-    ).rejects.toThrow(ZodError);
+    await expect(registerToolEvent({ ...makeToolEventParams(), eventType: '' })).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -947,7 +972,7 @@ describe('Zod schema validation', () => {
         surfaceAware: true,
         organizationId: ORG_ID,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -961,7 +986,7 @@ describe('Zod schema validation', () => {
         surfaceAware: false,
         organizationId: ORG_ID,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -976,7 +1001,7 @@ describe('Zod schema validation', () => {
         cursorState: null,
         lastHeartbeat: '2026-03-23T10:00:00.000Z',
         organizationId: ORG_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -988,13 +1013,15 @@ describe('Zod schema validation', () => {
         facilitatorUserId: USER_ID,
         sessionState: 'active',
         currentPhase: 'brainstorm',
-        phaseHistory: [{ phase: 'brainstorm', startedAt: '2026-03-23T10:00:00.000Z', endedAt: null }],
+        phaseHistory: [
+          { phase: 'brainstorm', startedAt: '2026-03-23T10:00:00.000Z', endedAt: null },
+        ],
         startedAt: '2026-03-23T10:00:00.000Z',
         pausedAt: null,
         endedAt: null,
         pauseReason: null,
         organizationId: ORG_ID,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1009,7 +1036,7 @@ describe('Zod schema validation', () => {
         organizationId: ORG_ID,
         createdAt: '2026-03-23T10:00:00.000Z',
         migratedAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1024,7 +1051,7 @@ describe('Zod schema validation', () => {
         registered: true,
         organizationId: ORG_ID,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1033,7 +1060,9 @@ describe('Zod schema validation', () => {
   });
 
   it('validates UpdateSurfacePresenceParams', () => {
-    expect(() => UpdateSurfacePresenceParamsSchema.parse(makeSurfacePresenceParams())).not.toThrow();
+    expect(() =>
+      UpdateSurfacePresenceParamsSchema.parse(makeSurfacePresenceParams())
+    ).not.toThrow();
   });
 
   it('validates StartFacilitationParams', () => {

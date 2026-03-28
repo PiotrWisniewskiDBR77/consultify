@@ -43,7 +43,7 @@ export interface V8MultiplayerLockRecord {
 export const V8MultiplayerApi = {
   getWorkspaceMapping: () =>
     v8Get<{ mapping: V8MultiplayerResourceMapping | null; resourceType: string }>(
-      '/multiplayer/resource-mappings/workspace',
+      '/multiplayer/resource-mappings/workspace'
     ),
 
   getRoomBinding: (resourceType: string, resourceId: string, parentResourceId?: string) =>
@@ -60,11 +60,11 @@ export const V8MultiplayerApi = {
 
   getRoomPresence: (roomId: string) =>
     v8Get<{ roomId: string; presence: V8MultiplayerSurfacePresence[]; count: number }>(
-      `/multiplayer/rooms/${encodeURIComponent(roomId)}/presence`,
+      `/multiplayer/rooms/${encodeURIComponent(roomId)}/presence`
     ),
 
   getRoomLocks: (roomId: string) =>
     v8Get<{ roomId: string; locks: V8MultiplayerLockRecord[]; count: number }>(
-      `/multiplayer/rooms/${encodeURIComponent(roomId)}/locks`,
+      `/multiplayer/rooms/${encodeURIComponent(roomId)}/locks`
     ),
 };

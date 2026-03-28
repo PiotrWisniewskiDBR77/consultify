@@ -83,7 +83,11 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
       return { status: 'RED', severity: 'RED', summary: `RED: gap ${gap} vs target ${target}` };
     }
     if (gap >= amber) {
-      return { status: 'AMBER', severity: 'AMBER', summary: `AMBER: gap ${gap} vs target ${target}` };
+      return {
+        status: 'AMBER',
+        severity: 'AMBER',
+        summary: `AMBER: gap ${gap} vs target ${target}`,
+      };
     }
     return { status: 'GREEN', severity: null, summary: 'On track' };
   };
@@ -91,7 +95,11 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
   return mode === 'ABSOLUTE' ? classifyAbsolute() : classifyPercent();
 }
 
-async function getKpiDefinition(db: IDatabase, orgId: string, kpiId: string): Promise<KpiDefinitionForEval | null> {
+async function getKpiDefinition(
+  db: IDatabase,
+  orgId: string,
+  kpiId: string
+): Promise<KpiDefinitionForEval | null> {
   const row = await db.get<{
     id: string;
     organization_id: string;
@@ -181,7 +189,8 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
   let caseId: string;
   if (existing?.id) {
     caseId = String(existing.id);
-    const nextStatus = String(existing.status || '').toUpperCase() === 'CLOSED' ? 'OPEN' : existing.status;
+    const nextStatus =
+      String(existing.status || '').toUpperCase() === 'CLOSED' ? 'OPEN' : existing.status;
     await db.run(
       `
       UPDATE kpi_deviation_cases
@@ -237,4 +246,3 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
 
   return { createdOrUpdatedCaseId: caseId, eval: evalRes };
 }
-

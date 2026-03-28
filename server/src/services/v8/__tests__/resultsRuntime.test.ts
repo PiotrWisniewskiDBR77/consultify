@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -20,19 +20,19 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
+  getActiveDeviations,
   getKPIScorecard,
   getKPITrend,
-  getActiveDeviations,
-  resolveDeviation,
-  getROIDashboard,
-  getROIPortfolioSummary,
-  getROIInitiativeDetail,
-  getResultsKpiCatalog,
-  getResultsKpiDrawerDetail,
-  getROIByDateRange,
-  getReviewPackTimeline,
   getReconciliationHealth,
   getResultsDashboard,
+  getResultsKpiCatalog,
+  getResultsKpiDrawerDetail,
+  getReviewPackTimeline,
+  getROIByDateRange,
+  getROIDashboard,
+  getROIInitiativeDetail,
+  getROIPortfolioSummary,
+  resolveDeviation,
 } from '../resultsROIService.js';
 
 const ORG_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
@@ -48,9 +48,7 @@ beforeEach(() => {
 
 describe('getKPIScorecard', () => {
   it('aggregates totals, status, metric type, and average achievement rate', async () => {
-    mockDbGet
-      .mockResolvedValueOnce({ total: 4 })
-      .mockResolvedValueOnce({ avg_rate: 0.875 });
+    mockDbGet.mockResolvedValueOnce({ total: 4 }).mockResolvedValueOnce({ avg_rate: 0.875 });
     mockDbAll
       .mockResolvedValueOnce([
         { status: 'active', cnt: 2 },
@@ -201,7 +199,7 @@ describe('getActiveDeviations', () => {
 
   it('throws on invalid severity', async () => {
     await expect(getActiveDeviations(ORG_ID, 'nope' as any)).rejects.toThrow(
-      'Invalid deviation severity',
+      'Invalid deviation severity'
     );
   });
 });
@@ -228,7 +226,7 @@ describe('resolveDeviation', () => {
       DEVIATION_ID,
       ORG_ID,
       'Root cause addressed',
-      'user-uuid-001',
+      'user-uuid-001'
     );
 
     expect(updated.resolvedBy).toBe('user-uuid-001');
@@ -241,9 +239,7 @@ describe('resolveDeviation', () => {
 
   it('throws when deviation is missing', async () => {
     mockDbGet.mockResolvedValueOnce(null);
-    await expect(
-      resolveDeviation(DEVIATION_ID, ORG_ID, 'x', 'y'),
-    ).rejects.toThrow('not found');
+    await expect(resolveDeviation(DEVIATION_ID, ORG_ID, 'x', 'y')).rejects.toThrow('not found');
   });
 });
 
@@ -532,7 +528,7 @@ describe('getROIByDateRange', () => {
     const rows = await getROIByDateRange(
       ORG_ID,
       '2026-03-01T00:00:00.000Z',
-      '2026-03-31T23:59:59.999Z',
+      '2026-03-31T23:59:59.999Z'
     );
 
     expect(rows).toHaveLength(1);
@@ -551,7 +547,8 @@ describe('getReviewPackTimeline', () => {
         pack_id: PACK_ID,
         organization_id: ORG_ID,
         review_period: '2026-Q1',
-        kpi_summaries: '[{"kpiId":"00000000-0000-4000-8000-aaaaaaaaaaaa","name":"A","status":"active","currentValue":1,"targetValue":2}]',
+        kpi_summaries:
+          '[{"kpiId":"00000000-0000-4000-8000-aaaaaaaaaaaa","name":"A","status":"active","currentValue":1,"targetValue":2}]',
         deviation_highlights: '[]',
         roi_snapshot: '{"totalRealized":99,"entriesCount":2,"period":"2026-Q1"}',
         status: 'draft',
@@ -598,7 +595,9 @@ describe('getReconciliationHealth', () => {
   });
 
   it('returns null average resolution when none reconciled', async () => {
-    mockDbAll.mockResolvedValueOnce([{ reconciliation_status: 'pending', cnt: 1 }]).mockResolvedValueOnce([]);
+    mockDbAll
+      .mockResolvedValueOnce([{ reconciliation_status: 'pending', cnt: 1 }])
+      .mockResolvedValueOnce([]);
     mockDbGet.mockResolvedValueOnce({ total: 1 });
 
     const health = await getReconciliationHealth(ORG_ID);
@@ -640,7 +639,10 @@ describe('getResultsDashboard', () => {
       if (sql.includes('GROUP BY initiative_id')) {
         return [{ initiative_id: null, entry_count: 1, realized_sum: 10 }];
       }
-      if (sql.includes('v8_kpi_finance_reconciliations') && sql.includes('GROUP BY reconciliation_status')) {
+      if (
+        sql.includes('v8_kpi_finance_reconciliations') &&
+        sql.includes('GROUP BY reconciliation_status')
+      ) {
         return [{ reconciliation_status: 'pending', cnt: 1 }];
       }
       if (sql.includes("reconciliation_status = 'reconciled'")) {

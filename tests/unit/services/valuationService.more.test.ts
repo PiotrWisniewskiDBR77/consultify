@@ -42,7 +42,7 @@ describe('valuationService additional paths', () => {
     });
 
     await expect(computeValuation('org-1', 'val-1')).rejects.toThrow(
-      'T054 source is not available'
+      'Financial model must be approved before valuation can use it'
     );
   });
 

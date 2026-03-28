@@ -22,7 +22,7 @@ const baseProps = {
   onAction: vi.fn(),
   onOpenChat: vi.fn(),
   onApplyTemplate: vi.fn(),
-  onSaveAsTemplate: vi.fn(),
+  onOpenTemplateGallery: vi.fn(),
 };
 
 describe('CanvasLeftToolbar', () => {
@@ -31,9 +31,9 @@ describe('CanvasLeftToolbar', () => {
     expect(container.querySelector('button')).toBeTruthy();
   });
 
-  it('does not render when isAccepted is false', () => {
+  it('still renders the toolbar shell when isAccepted is false', () => {
     const { container } = render(<CanvasLeftToolbar {...baseProps} isAccepted={false} />);
-    expect(container.innerHTML).toBe('');
+    expect(container.querySelector('button')).toBeTruthy();
   });
 
   it('renders mindmap-specific slots (GitBranch for Add node)', () => {
@@ -46,9 +46,11 @@ describe('CanvasLeftToolbar', () => {
   it('dispatches action on immediate button click', () => {
     const onAction = vi.fn();
     render(<CanvasLeftToolbar {...baseProps} onAction={onAction} />);
-    const selectBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'Select');
+    const selectBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title')?.startsWith('Select'));
     if (selectBtn) fireEvent.click(selectBtn);
-    expect(onAction).toHaveBeenCalledWith('mm_select_mode');
+    expect(onAction).toHaveBeenCalledWith('mm_pan_mode');
   });
 
   it('opens AI popover on click', () => {

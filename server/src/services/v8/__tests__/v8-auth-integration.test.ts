@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetPlatformHealth = vi.fn();
 const mockGetDomainReadiness = vi.fn();
@@ -69,7 +69,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     }
     next();
   },
-  requireRole: (..._roles: string[]) => (_req: any, _res: any, next: () => void) => next(),
+  requireRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
@@ -93,12 +96,17 @@ function createApp(): Express {
 function createAppWithFeatureGate(): Express {
   const app = express();
   app.use(express.json());
-  app.use('/api/v8', (req: any, _res: any, next: () => void) => {
-    if (mockUser) {
-      req.organizationId = mockUser.organizationId;
-    }
-    next();
-  }, v8FeatureGate, v8Router);
+  app.use(
+    '/api/v8',
+    (req: any, _res: any, next: () => void) => {
+      if (mockUser) {
+        req.organizationId = mockUser.organizationId;
+      }
+      next();
+    },
+    v8FeatureGate,
+    v8Router
+  );
   return app;
 }
 

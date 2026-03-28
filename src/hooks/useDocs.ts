@@ -11,7 +11,6 @@ import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
 const LEGACY_KB_BASE = '/api/kb';
 
-
 // ============================================
 // TYPES
 // ============================================
@@ -52,28 +51,47 @@ export interface KbArticle extends KbArticleListItem {
 // API FUNCTIONS
 // ============================================
 
-const fetchPublicKbBridge = async <T>(
-  path: string,
-  fallbackError: string
-): Promise<T> => {
+const fetchPublicKbBridge = async <T>(path: string, fallbackError: string): Promise<T> => {
   const response = await fetch(`${PUBLIC_V8_KB_BASE}${path}`);
   if (!response.ok) throw new Error(fallbackError);
   const data = await response.json();
   return data;
 };
 
+function normalizeCategoryList(
+  payload:
+    | { data?: { categories?: KbCategory[] }; categories?: KbCategory[] }
+    | KbCategory[]
+    | null
+    | undefined
+): KbCategory[] {
+  if (Array.isArray(payload)) return payload;
+  return payload?.data?.categories || payload?.categories || [];
+}
+
+function normalizeArticleList(
+  payload:
+    | { data?: { articles?: KbArticleListItem[] }; articles?: KbArticleListItem[] }
+    | KbArticleListItem[]
+    | null
+    | undefined
+): KbArticleListItem[] {
+  if (Array.isArray(payload)) return payload;
+  return payload?.data?.articles || payload?.articles || [];
+}
+
 const fetchCategories = async (language: string = 'en'): Promise<KbCategory[]> => {
   try {
-    const data = await fetchPublicKbBridge<{ data?: { categories?: KbCategory[] }; categories?: KbCategory[] }>(
-      `/categories?lang=${language}`,
-      'public v8 unavailable'
-    );
-    return data.data?.categories || data.categories || data || [];
+    const data = await fetchPublicKbBridge<{
+      data?: { categories?: KbCategory[] };
+      categories?: KbCategory[];
+    }>(`/categories?lang=${language}`, 'public v8 unavailable');
+    return normalizeCategoryList(data);
   } catch {
     const response = await fetch(`${LEGACY_KB_BASE}/categories?lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch categories');
     const data = await response.json();
-    return data.categories || data || [];
+    return normalizeCategoryList(data);
   }
 };
 
@@ -153,7 +171,9 @@ const fetchFeaturedArticles = async (
   limit: number = 4
 ): Promise<KbArticleListItem[]> => {
   try {
-    const publicResponse = await fetch(`${PUBLIC_V8_KB_BASE}/featured?lang=${language}&limit=${limit}`);
+    const publicResponse = await fetch(
+      `${PUBLIC_V8_KB_BASE}/featured?lang=${language}&limit=${limit}`
+    );
     if (!publicResponse.ok) throw new Error('public v8 unavailable');
     const publicData = await publicResponse.json();
     return (publicData.data?.articles || publicData.articles || []) as KbArticleListItem[];
@@ -175,20 +195,22 @@ const searchArticles = async (
   language: string = 'en'
 ): Promise<KbArticleListItem[]> => {
   try {
-    const data = await fetchPublicKbBridge<{ data?: { articles?: KbArticleListItem[] }; articles?: KbArticleListItem[] }>(
-      `/search?q=${encodeURIComponent(query)}&lang=${language}`,
-      'public v8 unavailable'
-    );
-    return data.data?.articles || data.articles || data || [];
+    const data = await fetchPublicKbBridge<{
+      data?: { articles?: KbArticleListItem[] };
+      articles?: KbArticleListItem[];
+    }>(`/search?q=${encodeURIComponent(query)}&lang=${language}`, 'public v8 unavailable');
+    return normalizeArticleList(data);
   } catch {
     try {
       const data = await V8KnowledgeBaseApi.searchArticles(query, language);
       return data.articles as KbArticleListItem[];
     } catch {
-      const response = await fetch(`${LEGACY_KB_BASE}/search?q=${encodeURIComponent(query)}&lang=${language}`);
+      const response = await fetch(
+        `${LEGACY_KB_BASE}/search?q=${encodeURIComponent(query)}&lang=${language}`
+      );
       if (!response.ok) throw new Error('Failed to search articles');
       const data = await response.json();
-      return data.articles || data || [];
+      return normalizeArticleList(data);
     }
   }
 };

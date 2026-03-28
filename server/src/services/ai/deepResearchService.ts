@@ -1323,7 +1323,11 @@ export async function conductDeepResearch(
     .filter((item) => item.length >= 40);
   const citedSentences = synthesisSentences.filter((sentence) => /\[\d+\]/.test(sentence)).length;
   const evidenceCoverage =
-    synthesisSentences.length > 0 ? citedSentences / synthesisSentences.length : citations.length > 0 ? 1 : 0;
+    synthesisSentences.length > 0
+      ? citedSentences / synthesisSentences.length
+      : citations.length > 0
+        ? 1
+        : 0;
   const unsupportedClaimRate = synthesisSentences.length > 0 ? 1 - evidenceCoverage : 0;
 
   const output: DeepResearchOutput = {

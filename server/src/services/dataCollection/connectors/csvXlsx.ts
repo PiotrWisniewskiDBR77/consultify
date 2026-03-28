@@ -6,13 +6,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
+
+import { inferFieldTypes, parseCSV } from '../../tablePlatform/CsvImportService.js';
 import type {
-  IConnector,
-  ExternalSchema,
   ExternalRecord,
+  ExternalSchema,
   FetchOptions,
+  IConnector,
 } from '../connectorFramework.js';
-import { parseCSV, inferFieldTypes } from '../../tablePlatform/CsvImportService.js';
 
 const SAMPLE_SIZE = 100;
 
@@ -53,10 +54,7 @@ function csvFetchSchema(content: string): ExternalSchema {
   };
 }
 
-function csvFetchRecords(
-  content: string,
-  options?: FetchOptions
-): ExternalRecord[] {
+function csvFetchRecords(content: string, options?: FetchOptions): ExternalRecord[] {
   const { headers, rows } = parseCSV(content);
   let data = rows;
 
@@ -94,9 +92,9 @@ function xlsxFetchSchema(filePath: string, config: Record<string, unknown>): Ext
   }
 
   const headers = (jsonData[0] || []).map((h) => String(h ?? '').trim() || 'Column');
-  const dataRows = jsonData.slice(1, SAMPLE_SIZE + 1).map((row) =>
-    row.map((cell) => String(cell ?? ''))
-  );
+  const dataRows = jsonData
+    .slice(1, SAMPLE_SIZE + 1)
+    .map((row) => row.map((cell) => String(cell ?? '')));
 
   const inferred = inferFieldTypes(headers, dataRows);
 
@@ -149,7 +147,9 @@ function xlsxFetchRecords(
 export const csvXlsxConnector: IConnector = {
   type: 'csv_xlsx',
 
-  async testConnection(config: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
+  async testConnection(
+    config: Record<string, unknown>
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const resolved = resolveFilePath(config);
       await fs.promises.access(resolved, fs.constants.R_OK);

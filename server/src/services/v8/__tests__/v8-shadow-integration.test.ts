@@ -1,6 +1,6 @@
 import express from 'express';
 import supertest from 'supertest';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockRecordShadowComparison = vi.fn().mockResolvedValue(undefined);
 const mockIsV8ShadowMode = vi.fn().mockResolvedValue(true);
@@ -105,7 +105,9 @@ describe('CP-25: Shadow Mode Integration — full interceptor flow', () => {
   });
 
   it('does not affect legacy response even if V8 fetch fails', async () => {
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Connection refused'));
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('Connection refused')
+    );
     const app = createTestApp();
 
     const res = await supertest(app)
@@ -129,9 +131,7 @@ describe('CP-25: Shadow Mode Integration — full interceptor flow', () => {
       res.json({ data: 'other' });
     });
 
-    const res = await supertest(app)
-      .get('/api/ai/other')
-      .set('Authorization', 'Bearer test-token');
+    const res = await supertest(app).get('/api/ai/other').set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
 

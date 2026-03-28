@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
@@ -359,8 +359,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                     kpi.openDeviationCase.severity === 'RED'
                       ? t('results.deviation.red', 'Deviation (Red)')
                       : t('results.deviation.amber', 'Deviation (Amber)'),
-                  dot:
-                    kpi.openDeviationCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500',
+                  dot: kpi.openDeviationCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500',
                   className:
                     kpi.openDeviationCase.severity === 'RED'
                       ? 'bg-red-500/10 text-red-400'

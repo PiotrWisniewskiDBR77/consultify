@@ -49,10 +49,7 @@ const STRATEGY_TYPES = ['strategy', 'roadmap', 'competitive_analysis'];
 const WORK_TYPES = ['task', 'decision', 'initiative', 'raid_item', 'tool_session'];
 const PUBLIC_TYPES = ['knowledge_base', 'help_doc', 'template'];
 
-export function classifyDataClass(
-  artifactType: string,
-  metadata?: Record<string, any>
-): DataClass {
+export function classifyDataClass(artifactType: string, metadata?: Record<string, any>): DataClass {
   if (FINANCIAL_TYPES.includes(artifactType)) return 'confidential';
   if (HR_TYPES.includes(artifactType)) return 'restricted';
   if (STRATEGY_TYPES.includes(artifactType)) return 'confidential';
@@ -265,9 +262,7 @@ export async function listApprovalRequests(
   orgId: string,
   status?: string
 ): Promise<ApprovalRequest[]> {
-  const where = status
-    ? `WHERE organization_id = ? AND status = ?`
-    : `WHERE organization_id = ?`;
+  const where = status ? `WHERE organization_id = ? AND status = ?` : `WHERE organization_id = ?`;
   const params = status ? [orgId, status] : [orgId];
 
   const rows = await dbAll<any>(

@@ -40,7 +40,10 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
             <Image size={16} />
             {isPl ? 'Dodaj obraz' : 'Add image'}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <X size={16} />
           </button>
         </div>
@@ -60,7 +63,9 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
               src={url}
               alt="preview"
               className="max-h-24 max-w-full rounded border border-slate-200 object-contain dark:border-navy-700"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
           </div>
         )}

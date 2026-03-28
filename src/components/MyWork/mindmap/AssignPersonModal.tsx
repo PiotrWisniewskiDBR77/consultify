@@ -54,7 +54,10 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
             <UserPlus size={16} />
             {isPl ? 'Przypisz osobę' : 'Assign person'}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <X size={16} />
           </button>
         </div>
@@ -78,7 +81,10 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
               {uniqueRecent.map((name) => (
                 <button
                   key={name}
-                  onClick={() => { onAssign(name); onClose(); }}
+                  onClick={() => {
+                    onAssign(name);
+                    onClose();
+                  }}
                   className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 hover:bg-blue-100 hover:text-blue-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-700"
                 >
                   {name}

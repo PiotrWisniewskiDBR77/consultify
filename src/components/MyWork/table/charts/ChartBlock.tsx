@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 interface ChartBlockProps {
   tableId: string;
@@ -36,12 +36,18 @@ function generateColors(count: number): string[] {
 function aggregate(vals: number[], method: ChartBlockProps['aggregation']): number {
   if (vals.length === 0) return 0;
   switch (method) {
-    case 'count': return vals.length;
-    case 'sum':   return vals.reduce((a, b) => a + b, 0);
-    case 'avg':   return vals.reduce((a, b) => a + b, 0) / vals.length;
-    case 'min':   return Math.min(...vals);
-    case 'max':   return Math.max(...vals);
-    default:      return vals.length;
+    case 'count':
+      return vals.length;
+    case 'sum':
+      return vals.reduce((a, b) => a + b, 0);
+    case 'avg':
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    case 'min':
+      return Math.min(...vals);
+    case 'max':
+      return Math.max(...vals);
+    default:
+      return vals.length;
   }
 }
 
@@ -74,20 +80,22 @@ export const ChartBlock: React.FC<ChartBlockProps> = ({
     }
 
     const labels = Array.from(groups.keys());
-    const values = labels.map(label => aggregate(groups.get(label)!, aggregation));
+    const values = labels.map((label) => aggregate(groups.get(label)!, aggregation));
     const colors = generateColors(labels.length);
     const isPieish = chartType === 'pie' || chartType === 'donut';
 
     return {
       labels,
-      datasets: [{
-        label: title || aggregation,
-        data: values,
-        backgroundColor: isPieish ? colors : colors[0],
-        borderColor: chartType === 'line' ? colors[0] : undefined,
-        borderWidth: 1,
-        fill: chartType !== 'line',
-      }],
+      datasets: [
+        {
+          label: title || aggregation,
+          data: values,
+          backgroundColor: isPieish ? colors : colors[0],
+          borderColor: chartType === 'line' ? colors[0] : undefined,
+          borderWidth: 1,
+          fill: chartType !== 'line',
+        },
+      ],
     };
   }, [records, xFieldId, yFieldId, aggregation, chartType, title]);
 
@@ -120,9 +128,11 @@ export const ChartBlock: React.FC<ChartBlockProps> = ({
               title: { display: !!title, text: title || '' },
               legend: { display: isPieish },
             },
-            scales: isPieish ? undefined : {
-              y: { beginAtZero: true },
-            },
+            scales: isPieish
+              ? undefined
+              : {
+                  y: { beginAtZero: true },
+                },
           },
         });
       } catch (err) {

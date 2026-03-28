@@ -5,10 +5,10 @@ import {
   ClipboardCopy,
   Copy,
   Diamond,
-  FoldVertical,
   Edit3,
   ExternalLink,
   FileText,
+  FoldVertical,
   GitBranch,
   Globe,
   Image,
@@ -19,20 +19,20 @@ import {
   Paintbrush,
   Plus,
   Rocket,
-  Scissors,
   ScanSearch,
+  Scissors,
   Share2,
   Sparkles,
+  Star,
   StickyNote,
   Tag,
-  Star,
   Target,
   Trash2,
   UserPlus,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { MENU_CONTAINER_CLASS, menuItemClass, type MenuItemBase } from './contextMenuTypes';
+import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
 export interface NodeContextMenuProps {
   x: number;
@@ -77,7 +77,10 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     };
     const keyHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (submenu) { setSubmenu(null); return; }
+        if (submenu) {
+          setSubmenu(null);
+          return;
+        }
         onClose();
       }
     };
@@ -95,98 +98,373 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       onAction(action);
       onClose();
     },
-    [onAction, onClose],
+    [onAction, onClose]
   );
 
   const isProtected = nodeId === 'root' || nodeId.startsWith('branch-');
 
-  const groups: MenuGroup[] = useMemo(() => [
-    {
-      titlePl: 'Edycja',
-      titleEn: 'Edit',
-      items: [
-        { id: 'ctx_edit', labelPl: 'Edytuj', labelEn: 'Edit', icon: Edit3, shortcut: 'F2', disabled: isProtected },
-        { id: 'ctx_open_detail', labelPl: 'Otwórz szczegóły', labelEn: 'Open details', icon: ExternalLink, disabled: isProtected },
-        { id: 'ctx_add_child', labelPl: 'Dodaj gałąź', labelEn: 'Add child', icon: Plus, shortcut: 'Tab', disabled: isLocked },
-        { id: 'ctx_add_sibling', labelPl: 'Dodaj sąsiada', labelEn: 'Add sibling', icon: GitBranch, shortcut: 'Enter', disabled: isLocked || isProtected },
-        { id: 'ctx_duplicate', labelPl: 'Duplikuj', labelEn: 'Duplicate', icon: Copy, shortcut: '⌘D', disabled: isLocked || isProtected },
-        { id: 'ctx_copy_nodes', labelPl: 'Kopiuj', labelEn: 'Copy', icon: ClipboardCopy, shortcut: '⌘C', disabled: isProtected },
-        { id: 'ctx_cut_nodes', labelPl: 'Wytnij', labelEn: 'Cut', icon: Scissors, shortcut: '⌘X', disabled: isLocked || isProtected },
-        { id: 'ctx_paste_nodes', labelPl: 'Wklej', labelEn: 'Paste', icon: Clipboard, shortcut: '⌘V', disabled: isLocked || !canPasteNodes },
-      ],
-    },
-    {
-      titlePl: 'Struktura',
-      titleEn: 'Structure',
-      items: [
-        { id: 'ctx_toggle_collapse', labelPl: 'Zwiń / rozwiń', labelEn: 'Fold / unfold', icon: FoldVertical, shortcut: 'Space', disabled: isProtected },
-        { id: 'ctx_focus_subtree', labelPl: 'Skup poddrzewo', labelEn: 'Focus subtree', icon: ScanSearch, disabled: isProtected },
-        { id: 'ctx_drill_down', labelPl: 'Drill down', labelEn: 'Drill down', icon: ChevronRight, disabled: isProtected },
-        { id: 'ctx_connect_to_selected', labelPl: 'Połącz z zaznaczonym', labelEn: 'Connect to selected', icon: Link2, disabled: isLocked || isProtected },
-        { id: 'ctx_detach_branch', labelPl: 'Odłącz gałąź', labelEn: 'Detach branch', icon: Scissors, disabled: isLocked || isProtected },
-        { id: 'ctx_duplicate_branch', labelPl: 'Duplikuj gałąź', labelEn: 'Duplicate branch', icon: Copy, disabled: isLocked || isProtected },
-      ],
-    },
-    {
-      titlePl: 'AI',
-      titleEn: 'AI',
-      items: [
-        { id: 'ctx_ai_expand', labelPl: 'Rozbuduj temat', labelEn: 'Expand topic', icon: Sparkles, disabled: isLocked },
-        { id: 'ctx_ai_deepen', labelPl: 'Pogłęb', labelEn: 'Deepen', icon: Sparkles, disabled: isLocked },
-        { id: 'ctx_what_if', labelPl: 'Co jeśli...?', labelEn: 'What if...?', icon: GitBranch, disabled: isLocked },
-        { id: 'ctx_summarize_branch', labelPl: 'Podsumuj gałąź', labelEn: 'Summarize branch', icon: FileText, disabled: isLocked },
-        { id: 'ctx_dependencies', labelPl: 'Wykryj zależności', labelEn: 'Detect dependencies', icon: Network, disabled: isLocked },
-        { id: 'ctx_priority', labelPl: 'Priorytetyzacja', labelEn: 'Prioritize', icon: Target, disabled: isLocked },
-        { id: 'ctx_competitive', labelPl: 'Konkurencja', labelEn: 'Competitors', icon: Globe, disabled: isLocked },
-        { id: 'ai_suggest_links', labelPl: 'AI: Zasugeruj powiązania', labelEn: 'AI: Suggest links', icon: Sparkles, disabled: isLocked },
-      ],
-    },
-    {
-      titlePl: 'Konwersja',
-      titleEn: 'Convert',
-      items: [
-        { id: 'ctx_convert_initiative', labelPl: '→ Inicjatywa', labelEn: '→ Initiative', icon: Rocket, disabled: isLocked },
-        { id: 'ctx_convert_decision', labelPl: '→ Decyzja', labelEn: '→ Decision', icon: Star, disabled: isLocked },
-        { id: 'ctx_convert_tasks', labelPl: '→ Zadania', labelEn: '→ Tasks', icon: ListChecks, disabled: isLocked },
-      ],
-    },
-    ...(hasChildren ? [{
-      titlePl: 'Konwertuj gałąź na...',
-      titleEn: 'Convert branch to...',
-      items: [
-        { id: 'ctx_subtree_convert_decision', labelPl: '→ Decyzja (gałąź)', labelEn: '→ Decision (branch)', icon: Star, disabled: isLocked },
-        { id: 'ctx_subtree_convert_tasks', labelPl: '→ Zadania (gałąź)', labelEn: '→ Tasks (branch)', icon: ListChecks, disabled: isLocked },
-        { id: 'ctx_subtree_convert_task_set', labelPl: '→ Zestaw zadań (gałąź)', labelEn: '→ Task set (branch)', icon: ListChecks, disabled: isLocked },
-        { id: 'ctx_subtree_convert_initiative', labelPl: '→ Inicjatywa (gałąź)', labelEn: '→ Initiative (branch)', icon: Rocket, disabled: isLocked },
-      ] as MenuItemBase[],
-    }] as MenuGroup[] : []),
-    {
-      titlePl: 'Wygląd i dane',
-      titleEn: 'Style & data',
-      items: [
-        { id: 'ctx_change_shape', labelPl: 'Zmień kształt', labelEn: 'Change shape', icon: Diamond, disabled: isLocked || isProtected },
-        { id: 'ctx_add_image', labelPl: 'Dodaj obraz', labelEn: 'Add image', icon: Image, disabled: isLocked || isProtected },
-        { id: 'ctx_copy_style', labelPl: 'Kopiuj styl', labelEn: 'Copy style', icon: Paintbrush, disabled: isProtected },
-        { id: 'ctx_paste_style', labelPl: 'Wklej styl', labelEn: 'Paste style', icon: Paintbrush, disabled: isLocked || isProtected || !canPasteStyle },
-        { id: 'ctx_vote_up', labelPl: 'Głosuj ↑', labelEn: 'Vote up', icon: Star, disabled: isLocked || isProtected },
-        { id: 'ctx_assign', labelPl: 'Przypisz osobę', labelEn: 'Assign person', icon: UserPlus, disabled: isLocked || isProtected },
-        { id: 'ctx_comments', labelPl: 'Komentarze', labelEn: 'Comments', icon: MessageSquare, disabled: isProtected },
-        { id: 'ctx_quick_notes', labelPl: 'Notatki', labelEn: 'Notes', icon: StickyNote, disabled: isProtected },
-        { id: 'ctx_quick_tags', labelPl: 'Tagi', labelEn: 'Tags', icon: Tag, disabled: isProtected },
-        { id: 'ctx_attach_knowledge', labelPl: 'Dołącz wiedzę', labelEn: 'Attach knowledge', icon: BookOpen, disabled: isLocked || isProtected },
-        { id: 'ctx_attach_artifact', labelPl: 'Dołącz artefakt', labelEn: 'Attach artifact', icon: BookOpen, disabled: isLocked || isProtected },
-        { id: 'ctx_open_linked_artifacts', labelPl: 'Powiązane artefakty', labelEn: 'Linked artifacts', icon: ExternalLink, disabled: isProtected },
-        { id: 'ctx_share_branch', labelPl: 'Kopiuj link', labelEn: 'Copy link', icon: Share2, disabled: isProtected },
-      ],
-    },
-    {
-      titlePl: '',
-      titleEn: '',
-      items: [
-        { id: 'ctx_delete', labelPl: 'Usuń', labelEn: 'Delete', icon: Trash2, shortcut: 'Del', danger: true, disabled: isLocked || isProtected },
-      ],
-    },
-  ], [canPasteNodes, canPasteStyle, hasChildren, isLocked, isProtected]);
+  const groups: MenuGroup[] = useMemo(
+    () => [
+      {
+        titlePl: 'Edycja',
+        titleEn: 'Edit',
+        items: [
+          {
+            id: 'ctx_edit',
+            labelPl: 'Edytuj',
+            labelEn: 'Edit',
+            icon: Edit3,
+            shortcut: 'F2',
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_open_detail',
+            labelPl: 'Otwórz szczegóły',
+            labelEn: 'Open details',
+            icon: ExternalLink,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_add_child',
+            labelPl: 'Dodaj gałąź',
+            labelEn: 'Add child',
+            icon: Plus,
+            shortcut: 'Tab',
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_add_sibling',
+            labelPl: 'Dodaj sąsiada',
+            labelEn: 'Add sibling',
+            icon: GitBranch,
+            shortcut: 'Enter',
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_duplicate',
+            labelPl: 'Duplikuj',
+            labelEn: 'Duplicate',
+            icon: Copy,
+            shortcut: '⌘D',
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_copy_nodes',
+            labelPl: 'Kopiuj',
+            labelEn: 'Copy',
+            icon: ClipboardCopy,
+            shortcut: '⌘C',
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_cut_nodes',
+            labelPl: 'Wytnij',
+            labelEn: 'Cut',
+            icon: Scissors,
+            shortcut: '⌘X',
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_paste_nodes',
+            labelPl: 'Wklej',
+            labelEn: 'Paste',
+            icon: Clipboard,
+            shortcut: '⌘V',
+            disabled: isLocked || !canPasteNodes,
+          },
+        ],
+      },
+      {
+        titlePl: 'Struktura',
+        titleEn: 'Structure',
+        items: [
+          {
+            id: 'ctx_toggle_collapse',
+            labelPl: 'Zwiń / rozwiń',
+            labelEn: 'Fold / unfold',
+            icon: FoldVertical,
+            shortcut: 'Space',
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_focus_subtree',
+            labelPl: 'Skup poddrzewo',
+            labelEn: 'Focus subtree',
+            icon: ScanSearch,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_drill_down',
+            labelPl: 'Drill down',
+            labelEn: 'Drill down',
+            icon: ChevronRight,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_connect_to_selected',
+            labelPl: 'Połącz z zaznaczonym',
+            labelEn: 'Connect to selected',
+            icon: Link2,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_detach_branch',
+            labelPl: 'Odłącz gałąź',
+            labelEn: 'Detach branch',
+            icon: Scissors,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_duplicate_branch',
+            labelPl: 'Duplikuj gałąź',
+            labelEn: 'Duplicate branch',
+            icon: Copy,
+            disabled: isLocked || isProtected,
+          },
+        ],
+      },
+      {
+        titlePl: 'AI',
+        titleEn: 'AI',
+        items: [
+          {
+            id: 'ctx_ai_expand',
+            labelPl: 'Rozbuduj temat',
+            labelEn: 'Expand topic',
+            icon: Sparkles,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_ai_deepen',
+            labelPl: 'Pogłęb',
+            labelEn: 'Deepen',
+            icon: Sparkles,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_what_if',
+            labelPl: 'Co jeśli...?',
+            labelEn: 'What if...?',
+            icon: GitBranch,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_summarize_branch',
+            labelPl: 'Podsumuj gałąź',
+            labelEn: 'Summarize branch',
+            icon: FileText,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_dependencies',
+            labelPl: 'Wykryj zależności',
+            labelEn: 'Detect dependencies',
+            icon: Network,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_priority',
+            labelPl: 'Priorytetyzacja',
+            labelEn: 'Prioritize',
+            icon: Target,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_competitive',
+            labelPl: 'Konkurencja',
+            labelEn: 'Competitors',
+            icon: Globe,
+            disabled: isLocked,
+          },
+          {
+            id: 'ai_suggest_links',
+            labelPl: 'AI: Zasugeruj powiązania',
+            labelEn: 'AI: Suggest links',
+            icon: Sparkles,
+            disabled: isLocked,
+          },
+        ],
+      },
+      {
+        titlePl: 'Konwersja',
+        titleEn: 'Convert',
+        items: [
+          {
+            id: 'ctx_convert_initiative',
+            labelPl: '→ Inicjatywa',
+            labelEn: '→ Initiative',
+            icon: Rocket,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_convert_decision',
+            labelPl: '→ Decyzja',
+            labelEn: '→ Decision',
+            icon: Star,
+            disabled: isLocked,
+          },
+          {
+            id: 'ctx_convert_tasks',
+            labelPl: '→ Zadania',
+            labelEn: '→ Tasks',
+            icon: ListChecks,
+            disabled: isLocked,
+          },
+        ],
+      },
+      ...(hasChildren
+        ? ([
+            {
+              titlePl: 'Konwertuj gałąź na...',
+              titleEn: 'Convert branch to...',
+              items: [
+                {
+                  id: 'ctx_subtree_convert_decision',
+                  labelPl: '→ Decyzja (gałąź)',
+                  labelEn: '→ Decision (branch)',
+                  icon: Star,
+                  disabled: isLocked,
+                },
+                {
+                  id: 'ctx_subtree_convert_tasks',
+                  labelPl: '→ Zadania (gałąź)',
+                  labelEn: '→ Tasks (branch)',
+                  icon: ListChecks,
+                  disabled: isLocked,
+                },
+                {
+                  id: 'ctx_subtree_convert_task_set',
+                  labelPl: '→ Zestaw zadań (gałąź)',
+                  labelEn: '→ Task set (branch)',
+                  icon: ListChecks,
+                  disabled: isLocked,
+                },
+                {
+                  id: 'ctx_subtree_convert_initiative',
+                  labelPl: '→ Inicjatywa (gałąź)',
+                  labelEn: '→ Initiative (branch)',
+                  icon: Rocket,
+                  disabled: isLocked,
+                },
+              ] as MenuItemBase[],
+            },
+          ] as MenuGroup[])
+        : []),
+      {
+        titlePl: 'Wygląd i dane',
+        titleEn: 'Style & data',
+        items: [
+          {
+            id: 'ctx_change_shape',
+            labelPl: 'Zmień kształt',
+            labelEn: 'Change shape',
+            icon: Diamond,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_add_image',
+            labelPl: 'Dodaj obraz',
+            labelEn: 'Add image',
+            icon: Image,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_copy_style',
+            labelPl: 'Kopiuj styl',
+            labelEn: 'Copy style',
+            icon: Paintbrush,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_paste_style',
+            labelPl: 'Wklej styl',
+            labelEn: 'Paste style',
+            icon: Paintbrush,
+            disabled: isLocked || isProtected || !canPasteStyle,
+          },
+          {
+            id: 'ctx_vote_up',
+            labelPl: 'Głosuj ↑',
+            labelEn: 'Vote up',
+            icon: Star,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_assign',
+            labelPl: 'Przypisz osobę',
+            labelEn: 'Assign person',
+            icon: UserPlus,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_comments',
+            labelPl: 'Komentarze',
+            labelEn: 'Comments',
+            icon: MessageSquare,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_quick_notes',
+            labelPl: 'Notatki',
+            labelEn: 'Notes',
+            icon: StickyNote,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_quick_tags',
+            labelPl: 'Tagi',
+            labelEn: 'Tags',
+            icon: Tag,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_attach_knowledge',
+            labelPl: 'Dołącz wiedzę',
+            labelEn: 'Attach knowledge',
+            icon: BookOpen,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_attach_artifact',
+            labelPl: 'Dołącz artefakt',
+            labelEn: 'Attach artifact',
+            icon: BookOpen,
+            disabled: isLocked || isProtected,
+          },
+          {
+            id: 'ctx_open_linked_artifacts',
+            labelPl: 'Powiązane artefakty',
+            labelEn: 'Linked artifacts',
+            icon: ExternalLink,
+            disabled: isProtected,
+          },
+          {
+            id: 'ctx_share_branch',
+            labelPl: 'Kopiuj link',
+            labelEn: 'Copy link',
+            icon: Share2,
+            disabled: isProtected,
+          },
+        ],
+      },
+      {
+        titlePl: '',
+        titleEn: '',
+        items: [
+          {
+            id: 'ctx_delete',
+            labelPl: 'Usuń',
+            labelEn: 'Delete',
+            icon: Trash2,
+            shortcut: 'Del',
+            danger: true,
+            disabled: isLocked || isProtected,
+          },
+        ],
+      },
+    ],
+    [canPasteNodes, canPasteStyle, hasChildren, isLocked, isProtected]
+  );
 
   const clampedX = Math.min(x, window.innerWidth - 260);
   const clampedY = Math.min(y, window.innerHeight - 400);

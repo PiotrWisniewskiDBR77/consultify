@@ -1,12 +1,12 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as aiOperatingEnvironmentService from '../../services/v8/aiOperatingEnvironmentService.js';
-import * as trustAuditService from '../../services/v8/trustAuditService.js';
 import * as toolGovernanceService from '../../services/v8/toolGovernanceService.js';
+import * as trustAuditService from '../../services/v8/trustAuditService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -22,7 +22,7 @@ router.get(
 
     const data = await aiOperatingEnvironmentService.getOperatingEnvironmentStatus(organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.post(
@@ -30,7 +30,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
 
-    const { conversationId, workspaceId, projectId, message, artifactRefs, effectiveScopeRef, resolvedRoleRef } = req.body;
+    const {
+      conversationId,
+      workspaceId,
+      projectId,
+      message,
+      artifactRefs,
+      effectiveScopeRef,
+      resolvedRoleRef,
+    } = req.body;
 
     if (!conversationId || !workspaceId || !message) {
       return res.status(400).json({
@@ -62,7 +70,7 @@ router.post(
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ==========================================
@@ -83,13 +91,16 @@ router.get(
     }
 
     const supportTraces = await trustAuditService.getSupportTracesByRun(snapshotId, organizationId);
-    const provenanceEntries = await trustAuditService.getProvenanceByOutput(snapshotId, organizationId);
+    const provenanceEntries = await trustAuditService.getProvenanceByOutput(
+      snapshotId,
+      organizationId
+    );
 
     return res.json({
       data: { supportTraces, provenanceEntries },
       meta: { version: 'v8' },
     });
-  }),
+  })
 );
 
 router.get(
@@ -107,7 +118,7 @@ router.get(
 
     const data = await trustAuditService.buildProvenanceLedger(snapshotId, organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 // ==========================================
@@ -121,7 +132,7 @@ router.get(
 
     const data = await toolGovernanceService.getToolCatalog(organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -144,14 +155,14 @@ router.get(
       toolId,
       consumerClass as any,
       organizationId,
-      projectId ?? null,
+      projectId ?? null
     );
 
     return res.json({
       data: { tool, effectivePolicy },
       meta: { version: 'v8' },
     });
-  }),
+  })
 );
 
 export default router;

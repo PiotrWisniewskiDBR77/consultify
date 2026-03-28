@@ -1,9 +1,9 @@
+import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   getCanonicalLineDefinitions,
   getCanonicalLineVersionTag,
 } from './financeCanonicalRegistry.js';
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 
 let syncPromise: Promise<void> | null = null;
 let lastVerifiedVersion: string | null = null;

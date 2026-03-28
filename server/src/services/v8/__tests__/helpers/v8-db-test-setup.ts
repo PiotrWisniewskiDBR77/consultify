@@ -7,6 +7,7 @@
  */
 
 import pg from 'pg';
+
 import { resolveReachableDatabaseUrl } from '../../../../config/databaseTargetResolver.js';
 
 const { Client } = pg;
@@ -28,9 +29,7 @@ export function isRealDbMode(): boolean {
 export async function connectV8Db(): Promise<InstanceType<typeof Client>> {
   const { databaseUrl, source } = resolveReachableDatabaseUrl();
   if (!databaseUrl) {
-    throw new Error(
-      'No database URL available. Set DATABASE_PUBLIC_URL for V8 DB tests.',
-    );
+    throw new Error('No database URL available. Set DATABASE_PUBLIC_URL for V8 DB tests.');
   }
 
   console.log(`[V8-DB-Test] Connecting via ${source}`);
@@ -43,13 +42,11 @@ export async function connectV8Db(): Promise<InstanceType<typeof Client>> {
   await c.query('SET search_path TO v8, public');
 
   const schemaCheck = await c.query(
-    "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'v8'",
+    "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'v8'"
   );
   if (schemaCheck.rows.length === 0) {
     await c.end();
-    throw new Error(
-      'v8 schema does not exist. Run: npx tsx scripts/v8-migrate.ts --apply',
-    );
+    throw new Error('v8 schema does not exist. Run: npx tsx scripts/v8-migrate.ts --apply');
   }
 
   client = c;
@@ -82,9 +79,7 @@ export async function disconnectV8Db(): Promise<void> {
  */
 export async function truncateV8Tables(): Promise<void> {
   const c = getV8DbClient();
-  const tables = await c.query(
-    "SELECT tablename FROM pg_tables WHERE schemaname = 'v8'",
-  );
+  const tables = await c.query("SELECT tablename FROM pg_tables WHERE schemaname = 'v8'");
   for (const row of tables.rows) {
     await c.query(`TRUNCATE TABLE v8."${row.tablename}" CASCADE`);
   }
@@ -95,9 +90,7 @@ export async function truncateV8Tables(): Promise<void> {
  */
 export async function getV8TableCount(): Promise<number> {
   const c = getV8DbClient();
-  const result = await c.query(
-    "SELECT COUNT(*) AS count FROM pg_tables WHERE schemaname = 'v8'",
-  );
+  const result = await c.query("SELECT COUNT(*) AS count FROM pg_tables WHERE schemaname = 'v8'");
   return parseInt(result.rows[0].count, 10);
 }
 
@@ -106,9 +99,7 @@ export async function getV8TableCount(): Promise<number> {
  */
 export async function getV8IndexCount(): Promise<number> {
   const c = getV8DbClient();
-  const result = await c.query(
-    "SELECT COUNT(*) AS count FROM pg_indexes WHERE schemaname = 'v8'",
-  );
+  const result = await c.query("SELECT COUNT(*) AS count FROM pg_indexes WHERE schemaname = 'v8'");
   return parseInt(result.rows[0].count, 10);
 }
 
@@ -118,7 +109,7 @@ export async function getV8IndexCount(): Promise<number> {
 export async function getV8TableNames(): Promise<string[]> {
   const c = getV8DbClient();
   const result = await c.query(
-    "SELECT tablename FROM pg_tables WHERE schemaname = 'v8' ORDER BY tablename",
+    "SELECT tablename FROM pg_tables WHERE schemaname = 'v8' ORDER BY tablename"
   );
   return result.rows.map((r: { tablename: string }) => r.tablename);
 }

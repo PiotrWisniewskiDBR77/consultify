@@ -47,19 +47,46 @@ interface SummaryStepProps {
 
 // ==================== INITIATIVE TYPE META ====================
 
-const INITIATIVE_TYPE_META: Record<InitiativeDraft['type'], { label: { en: string; pl: string }; color: string; icon: typeof Rocket }> = {
-  strategic: { label: { en: 'Strategic', pl: 'Strategiczna' }, color: 'text-violet-600 dark:text-violet-400', icon: Target },
-  operational: { label: { en: 'Operational', pl: 'Operacyjna' }, color: 'text-blue-600 dark:text-blue-400', icon: Wrench },
-  defensive: { label: { en: 'Defensive', pl: 'Defensywna' }, color: 'text-amber-600 dark:text-amber-400', icon: Shield },
-  growth: { label: { en: 'Growth', pl: 'Wzrostowa' }, color: 'text-emerald-600 dark:text-emerald-400', icon: Rocket },
+const INITIATIVE_TYPE_META: Record<
+  InitiativeDraft['type'],
+  { label: { en: string; pl: string }; color: string; icon: typeof Rocket }
+> = {
+  strategic: {
+    label: { en: 'Strategic', pl: 'Strategiczna' },
+    color: 'text-violet-600 dark:text-violet-400',
+    icon: Target,
+  },
+  operational: {
+    label: { en: 'Operational', pl: 'Operacyjna' },
+    color: 'text-blue-600 dark:text-blue-400',
+    icon: Wrench,
+  },
+  defensive: {
+    label: { en: 'Defensive', pl: 'Defensywna' },
+    color: 'text-amber-600 dark:text-amber-400',
+    icon: Shield,
+  },
+  growth: {
+    label: { en: 'Growth', pl: 'Wzrostowa' },
+    color: 'text-emerald-600 dark:text-emerald-400',
+    icon: Rocket,
+  },
 };
 
 type InitiativeAction = 'develop' | 'defer' | 'idea';
 
 // ==================== SECTION HEADER ====================
 
-function SectionHeader({ title, badge, description, children }: {
-  title: string; badge: string; description?: string; children?: React.ReactNode;
+function SectionHeader({
+  title,
+  badge,
+  description,
+  children,
+}: {
+  title: string;
+  badge: string;
+  description?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="flex items-start justify-between border-b border-slate-200/60 px-6 py-4 dark:border-navy-700/50">
@@ -67,7 +94,9 @@ function SectionHeader({ title, badge, description, children }: {
         {children || (
           <>
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h2>
-            {description && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>}
+            {description && (
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+            )}
           </>
         )}
       </div>
@@ -88,7 +117,12 @@ interface ContentSection {
   itemCount: number;
 }
 
-function ContentSelector({ sections, selected, onToggle, isPolish }: {
+function ContentSelector({
+  sections,
+  selected,
+  onToggle,
+  isPolish,
+}: {
   sections: ContentSection[];
   selected: Set<string>;
   onToggle: (id: string) => void;
@@ -119,7 +153,9 @@ function ContentSelector({ sections, selected, onToggle, isPolish }: {
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{s.label}</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {s.label}
+              </span>
               {s.itemCount > 0 && (
                 <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-navy-800 dark:text-slate-400">
                   {s.itemCount}
@@ -137,9 +173,14 @@ function ContentSelector({ sections, selected, onToggle, isPolish }: {
 // ==================== DYNAMIC SWOT OUTPUTS ====================
 
 function DynamicSwotOutputs({
-  session, isPolish, onAcceptCard, onRejectCard, onRethinkCard,
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
 }: {
-  session: ToolSession; isPolish: boolean;
+  session: ToolSession;
+  isPolish: boolean;
   onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
@@ -163,22 +204,34 @@ function DynamicSwotOutputs({
   const [initiativeActions, setInitiativeActions] = useState<Record<string, InitiativeAction>>({});
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
 
-  const [reportSections, setReportSections] = useState<Set<string>>(new Set(['executive-summary', 'swot-matrix', 'insights']));
-  const [presSections, setPresSections] = useState<Set<string>>(new Set(['executive-summary', 'swot-matrix']));
+  const [reportSections, setReportSections] = useState<Set<string>>(
+    new Set(['executive-summary', 'swot-matrix', 'insights'])
+  );
+  const [presSections, setPresSections] = useState<Set<string>>(
+    new Set(['executive-summary', 'swot-matrix'])
+  );
   const [reportCreated, setReportCreated] = useState(false);
   const [presCreated, setPresCreated] = useState(false);
 
   const toggleReportSection = (id: string) => {
     setReportSections((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
   const togglePresSection = (id: string) => {
     setPresSections((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -187,21 +240,77 @@ function DynamicSwotOutputs({
     setInitiativeActions((prev) => ({ ...prev, [id]: action }));
   };
 
-  const contentSections: ContentSection[] = useMemo(() => [
-    { id: 'executive-summary', label: isPolish ? 'Executive Summary' : 'Executive Summary', description: isPolish ? 'Podsumowanie całej analizy' : 'Full analysis summary', available: !!summary?.executiveSummary, itemCount: 0 },
-    { id: 'swot-matrix', label: isPolish ? 'Macierz SWOT' : 'SWOT Matrix', description: isPolish ? 'Czynniki w 4 kwadrantach' : 'Factors in 4 quadrants', available: items.length > 0, itemCount: items.length },
-    { id: 'insights', label: isPolish ? 'Wnioski strategiczne' : 'Strategic Insights', description: isPolish ? 'Kluczowe wnioski i obserwacje' : 'Key insights and observations', available: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0, itemCount: (summary?.keyInsights?.length || 0) + tensions.length },
-    { id: 'correlations', label: isPolish ? 'Korelacje' : 'Correlations', description: isPolish ? 'Powiązania między czynnikami' : 'Cross-factor correlations', available: correlations.length > 0, itemCount: correlations.length },
-    { id: 'recommendations', label: isPolish ? 'Rekomendacje' : 'Recommendations', description: isPolish ? 'Rekomendowane ruchy strategiczne' : 'Recommended strategic moves', available: moves.length > 0, itemCount: moves.length },
-    { id: 'initiatives', label: isPolish ? 'Inicjatywy' : 'Initiatives', description: isPolish ? 'Drafty inicjatyw do realizacji' : 'Initiative drafts for execution', available: allInitiatives.length > 0, itemCount: allInitiatives.length },
-  ], [isPolish, summary, items, tensions, correlations, moves, allInitiatives]);
+  const contentSections: ContentSection[] = useMemo(
+    () => [
+      {
+        id: 'executive-summary',
+        label: isPolish ? 'Executive Summary' : 'Executive Summary',
+        description: isPolish ? 'Podsumowanie całej analizy' : 'Full analysis summary',
+        available: !!summary?.executiveSummary,
+        itemCount: 0,
+      },
+      {
+        id: 'swot-matrix',
+        label: isPolish ? 'Macierz SWOT' : 'SWOT Matrix',
+        description: isPolish ? 'Czynniki w 4 kwadrantach' : 'Factors in 4 quadrants',
+        available: items.length > 0,
+        itemCount: items.length,
+      },
+      {
+        id: 'insights',
+        label: isPolish ? 'Wnioski strategiczne' : 'Strategic Insights',
+        description: isPolish ? 'Kluczowe wnioski i obserwacje' : 'Key insights and observations',
+        available: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0,
+        itemCount: (summary?.keyInsights?.length || 0) + tensions.length,
+      },
+      {
+        id: 'correlations',
+        label: isPolish ? 'Korelacje' : 'Correlations',
+        description: isPolish ? 'Powiązania między czynnikami' : 'Cross-factor correlations',
+        available: correlations.length > 0,
+        itemCount: correlations.length,
+      },
+      {
+        id: 'recommendations',
+        label: isPolish ? 'Rekomendacje' : 'Recommendations',
+        description: isPolish ? 'Rekomendowane ruchy strategiczne' : 'Recommended strategic moves',
+        available: moves.length > 0,
+        itemCount: moves.length,
+      },
+      {
+        id: 'initiatives',
+        label: isPolish ? 'Inicjatywy' : 'Initiatives',
+        description: isPolish
+          ? 'Drafty inicjatyw do realizacji'
+          : 'Initiative drafts for execution',
+        available: allInitiatives.length > 0,
+        itemCount: allInitiatives.length,
+      },
+    ],
+    [isPolish, summary, items, tensions, correlations, moves, allInitiatives]
+  );
 
   const readinessChecklist = [
-    { label: isPolish ? 'Mission brief jest jasny' : 'Mission brief is clear', done: !!swotData.context.goal && !!swotData.context.scope },
-    { label: isPolish ? 'Czynniki SWOT zdefiniowane' : 'SWOT factors defined', done: items.length >= 4 },
-    { label: isPolish ? 'Wnioski strategiczne' : 'Strategic insights exist', done: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0 },
-    { label: isPolish ? 'Rekomendacje lub ruchy' : 'Recommendations or moves', done: moves.length > 0 || allInitiatives.length > 0 },
-    { label: isPolish ? 'Inicjatywy zdefiniowane' : 'Initiatives defined', done: allInitiatives.length > 0 },
+    {
+      label: isPolish ? 'Mission brief jest jasny' : 'Mission brief is clear',
+      done: !!swotData.context.goal && !!swotData.context.scope,
+    },
+    {
+      label: isPolish ? 'Czynniki SWOT zdefiniowane' : 'SWOT factors defined',
+      done: items.length >= 4,
+    },
+    {
+      label: isPolish ? 'Wnioski strategiczne' : 'Strategic insights exist',
+      done: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0,
+    },
+    {
+      label: isPolish ? 'Rekomendacje lub ruchy' : 'Recommendations or moves',
+      done: moves.length > 0 || allInitiatives.length > 0,
+    },
+    {
+      label: isPolish ? 'Inicjatywy zdefiniowane' : 'Initiatives defined',
+      done: allInitiatives.length > 0,
+    },
   ];
   const readinessScore = readinessChecklist.filter((c) => c.done).length;
   const readinessTotal = readinessChecklist.length;
@@ -217,9 +326,11 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={isPolish ? 'Outputs & Actions' : 'Outputs & Actions'}
           badge={isPolish ? 'Zarządzanie wynikami' : 'Output management'}
-          description={isPolish
-            ? 'Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji.'
-            : 'Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration.'}
+          description={
+            isPolish
+              ? 'Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji.'
+              : 'Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration.'
+          }
         />
         <div className="p-5">
           {/* Readiness bar */}
@@ -229,7 +340,9 @@ function DynamicSwotOutputs({
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {isPolish ? 'Gotowość analizy' : 'Analysis readiness'}
                 </span>
-                <span className={`text-sm font-bold ${readinessScore >= 4 ? 'text-emerald-600 dark:text-emerald-400' : readinessScore >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                <span
+                  className={`text-sm font-bold ${readinessScore >= 4 ? 'text-emerald-600 dark:text-emerald-400' : readinessScore >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}
+                >
                   {readinessScore}/{readinessTotal}
                 </span>
               </div>
@@ -246,10 +359,22 @@ function DynamicSwotOutputs({
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {readinessChecklist.map((item) => (
               <div key={item.label} className="flex items-center gap-2.5 text-sm">
-                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${item.done ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-slate-100 dark:bg-navy-800'}`}>
-                  {item.done ? <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />}
+                <span
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${item.done ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-slate-100 dark:bg-navy-800'}`}
+                >
+                  {item.done ? (
+                    <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  )}
                 </span>
-                <span className={item.done ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}>
+                <span
+                  className={
+                    item.done
+                      ? 'text-slate-700 dark:text-slate-300'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }
+                >
                   {item.label}
                 </span>
               </div>
@@ -259,12 +384,32 @@ function DynamicSwotOutputs({
           {/* Metric pills */}
           <div className="mt-5 flex flex-wrap gap-3">
             {[
-              { label: isPolish ? 'Czynniki' : 'Factors', value: items.length, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-              { label: isPolish ? 'Napięcia' : 'Tensions', value: tensions.length, color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' },
-              { label: isPolish ? 'Ruchy' : 'Moves', value: moves.length, color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' },
-              { label: isPolish ? 'Inicjatywy' : 'Initiatives', value: allInitiatives.length, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+              {
+                label: isPolish ? 'Czynniki' : 'Factors',
+                value: items.length,
+                color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+              },
+              {
+                label: isPolish ? 'Napięcia' : 'Tensions',
+                value: tensions.length,
+                color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+              },
+              {
+                label: isPolish ? 'Ruchy' : 'Moves',
+                value: moves.length,
+                color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+              },
+              {
+                label: isPolish ? 'Inicjatywy' : 'Initiatives',
+                value: allInitiatives.length,
+                color:
+                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+              },
             ].map((m) => (
-              <div key={m.label} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${m.color}`}>
+              <div
+                key={m.label}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${m.color}`}
+              >
                 <span className="text-lg font-bold">{m.value}</span> {m.label}
               </div>
             ))}
@@ -277,9 +422,11 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={isPolish ? 'Inicjatywy — tabela decyzyjna' : 'Initiatives — decision table'}
           badge={isPolish ? 'Inicjatywy' : 'Initiatives'}
-          description={isPolish
-            ? 'Zdecyduj, które inicjatywy chcesz opracować, które odłożyć, a które zachować jako idee.'
-            : 'Decide which initiatives to develop, which to defer, and which to keep as ideas.'}
+          description={
+            isPolish
+              ? 'Zdecyduj, które inicjatywy chcesz opracować, które odłożyć, a które zachować jako idee.'
+              : 'Decide which initiatives to develop, which to defer, and which to keep as ideas.'
+          }
         />
         <div className="p-5">
           {allInitiatives.length === 0 ? (
@@ -298,17 +445,20 @@ function DynamicSwotOutputs({
                 <div className="mb-4 flex flex-wrap gap-3">
                   {developCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
-                      <Rocket className="h-3 w-3" /> {developCount} {isPolish ? 'do realizacji' : 'to develop'}
+                      <Rocket className="h-3 w-3" /> {developCount}{' '}
+                      {isPolish ? 'do realizacji' : 'to develop'}
                     </span>
                   )}
                   {deferCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                      <Shield className="h-3 w-3" /> {deferCount} {isPolish ? 'odłożone' : 'deferred'}
+                      <Shield className="h-3 w-3" /> {deferCount}{' '}
+                      {isPolish ? 'odłożone' : 'deferred'}
                     </span>
                   )}
                   {ideaCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                      <Lightbulb className="h-3 w-3" /> {ideaCount} {isPolish ? 'jako idee' : 'as ideas'}
+                      <Lightbulb className="h-3 w-3" /> {ideaCount}{' '}
+                      {isPolish ? 'jako idee' : 'as ideas'}
                     </span>
                   )}
                 </div>
@@ -317,7 +467,8 @@ function DynamicSwotOutputs({
               {/* Initiative rows */}
               <div className="space-y-3">
                 {allInitiatives.map((initiative, idx) => {
-                  const meta = INITIATIVE_TYPE_META[initiative.type] || INITIATIVE_TYPE_META.strategic;
+                  const meta =
+                    INITIATIVE_TYPE_META[initiative.type] || INITIATIVE_TYPE_META.strategic;
                   const TypeIcon = meta.icon;
                   const action = initiativeActions[initiative.id];
                   const isExpanded = expandedInitiative === initiative.id;
@@ -342,48 +493,72 @@ function DynamicSwotOutputs({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <TypeIcon className={`h-3.5 w-3.5 ${meta.color}`} />
-                            <span className={`text-[10px] font-bold uppercase tracking-[0.14em] ${meta.color}`}>
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-[0.14em] ${meta.color}`}
+                            >
                               {isPolish ? meta.label.pl : meta.label.en}
                             </span>
                             <div className="ml-auto flex items-center gap-1.5">
-                              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                                initiative.estimatedImpact === 'high'
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                                  : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                              }`}>
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                  initiative.estimatedImpact === 'high'
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                    : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                                }`}
+                              >
                                 {isPolish ? 'Wpływ' : 'Impact'}: {initiative.estimatedImpact}
                               </span>
-                              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                                initiative.estimatedEffort === 'low'
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                                  : initiative.estimatedEffort === 'medium'
-                                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                    : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
-                              }`}>
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                  initiative.estimatedEffort === 'low'
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                    : initiative.estimatedEffort === 'medium'
+                                      ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                                      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                                }`}
+                              >
                                 {isPolish ? 'Wysiłek' : 'Effort'}: {initiative.estimatedEffort}
                               </span>
                             </div>
                           </div>
-                          <h4 className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{initiative.title}</h4>
-                          <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{initiative.description}</p>
+                          <h4 className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {initiative.title}
+                          </h4>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                            {initiative.description}
+                          </p>
 
                           {isExpanded && (
                             <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
                               <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
                                 {isPolish ? 'Uzasadnienie' : 'Rationale'}
                               </div>
-                              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{initiative.rationale}</p>
+                              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                {initiative.rationale}
+                              </p>
                             </div>
                           )}
 
                           {/* Action buttons */}
                           <div className="mt-3 flex items-center gap-2">
                             <button
-                              onClick={() => setExpandedInitiative(isExpanded ? null : initiative.id)}
+                              onClick={() =>
+                                setExpandedInitiative(isExpanded ? null : initiative.id)
+                              }
                               className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                             >
-                              {isExpanded ? <ChevronUp className="inline h-3 w-3" /> : <ChevronDown className="inline h-3 w-3" />}
-                              {' '}{isExpanded ? (isPolish ? 'Zwiń' : 'Collapse') : (isPolish ? 'Szczegóły' : 'Details')}
+                              {isExpanded ? (
+                                <ChevronUp className="inline h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="inline h-3 w-3" />
+                              )}{' '}
+                              {isExpanded
+                                ? isPolish
+                                  ? 'Zwiń'
+                                  : 'Collapse'
+                                : isPolish
+                                  ? 'Szczegóły'
+                                  : 'Details'}
                             </button>
                             <div className="ml-auto flex gap-1.5">
                               <button
@@ -437,9 +612,11 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={isPolish ? 'Utwórz raport' : 'Create report'}
           badge={isPolish ? 'Raport' : 'Report'}
-          description={isPolish
-            ? 'Wybierz, które elementy analizy chcesz zawrzeć w raporcie konsultingowym.'
-            : 'Select which analysis elements to include in the consulting report.'}
+          description={
+            isPolish
+              ? 'Wybierz, które elementy analizy chcesz zawrzeć w raporcie konsultingowym.'
+              : 'Select which analysis elements to include in the consulting report.'
+          }
         />
         <div className="p-5">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
@@ -479,9 +656,11 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={isPolish ? 'Utwórz prezentację' : 'Create presentation'}
           badge={isPolish ? 'Prezentacja' : 'Presentation'}
-          description={isPolish
-            ? 'Wybierz, które elementy analizy chcesz zawrzeć w prezentacji dla stakeholderów.'
-            : 'Select which analysis elements to include in the stakeholder presentation.'}
+          description={
+            isPolish
+              ? 'Wybierz, które elementy analizy chcesz zawrzeć w prezentacji dla stakeholderów.'
+              : 'Select which analysis elements to include in the stakeholder presentation.'
+          }
         />
         <div className="p-5">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
@@ -521,14 +700,19 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={isPolish ? 'Bank idei' : 'Ideas bank'}
           badge={isPolish ? 'Idee' : 'Ideas'}
-          description={isPolish
-            ? 'Idee i obserwacje do dalszej eksploracji — nie wymagają natychmiastowego działania.'
-            : 'Ideas and observations for further exploration — no immediate action required.'}
+          description={
+            isPolish
+              ? 'Idee i obserwacje do dalszej eksploracji — nie wymagają natychmiastowego działania.'
+              : 'Ideas and observations for further exploration — no immediate action required.'
+          }
         />
         <div className="p-5">
           {(() => {
-            const ideaInitiatives = allInitiatives.filter((i) => initiativeActions[i.id] === 'idea');
-            const ideaCandidates = swotData.outputCandidates?.filter((c) => c.readiness === 'keep-as-idea') || [];
+            const ideaInitiatives = allInitiatives.filter(
+              (i) => initiativeActions[i.id] === 'idea'
+            );
+            const ideaCandidates =
+              swotData.outputCandidates?.filter((c) => c.readiness === 'keep-as-idea') || [];
             const hasIdeas = ideaInitiatives.length > 0 || ideaCandidates.length > 0;
 
             if (!hasIdeas) {
@@ -547,20 +731,34 @@ function DynamicSwotOutputs({
             return (
               <div className="space-y-2">
                 {ideaInitiatives.map((i) => (
-                  <div key={i.id} className="flex items-start gap-3 rounded-xl border border-blue-200/50 bg-blue-50/30 p-3 dark:border-blue-900/30 dark:bg-blue-950/10">
+                  <div
+                    key={i.id}
+                    className="flex items-start gap-3 rounded-xl border border-blue-200/50 bg-blue-50/30 p-3 dark:border-blue-900/30 dark:bg-blue-950/10"
+                  >
                     <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{i.title}</div>
-                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{i.description}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {i.title}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {i.description}
+                      </div>
                     </div>
                   </div>
                 ))}
                 {ideaCandidates.map((c) => (
-                  <div key={c.id} className="flex items-start gap-3 rounded-xl border border-blue-200/50 bg-blue-50/30 p-3 dark:border-blue-900/30 dark:bg-blue-950/10">
+                  <div
+                    key={c.id}
+                    className="flex items-start gap-3 rounded-xl border border-blue-200/50 bg-blue-50/30 p-3 dark:border-blue-900/30 dark:bg-blue-950/10"
+                  >
                     <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{c.title}</div>
-                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{c.description}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {c.title}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {c.description}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -575,7 +773,14 @@ function DynamicSwotOutputs({
 
 // ==================== COMPONENT ====================
 
-export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isPolish, onAcceptCard, onRejectCard, onRethinkCard }) => {
+export const SummaryStep: React.FC<SummaryStepProps> = ({
+  toolType,
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}) => {
   const inputData = session.inputData;
   const initiatives = session.generatedInitiatives;
 

@@ -1,30 +1,30 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  EmitSignalParams,
-  EmitResultsHandoffEventParams,
-  CreateRebaselineProposalParams,
   AssessForecastConfidenceParams,
+  CreateRebaselineProposalParams,
+  EmitResultsHandoffEventParams,
+  EmitSignalParams,
 } from '../../../types/executionVisibility.js';
 import {
-  ExecutionSignalSchema,
-  SignalAggregationSchema,
-  ResultsHandoffEventSchema,
-  RebaselineProposalSchema,
-  ForecastConfidenceSchema,
-  EmitSignalParamsSchema,
-  EmitResultsHandoffEventParamsSchema,
-  CreateRebaselineProposalParamsSchema,
-  AssessForecastConfidenceParamsSchema,
-  ExecutionSignalTypeValues,
-  SourceObjectTypeValues,
-  SignalSeverityValues,
   AggregationLevelValues,
-  ResultsHandoffEventTypeValues,
-  ForecastConfidenceLevelValues,
+  AssessForecastConfidenceParamsSchema,
   ConfidenceCapReasonValues,
+  CreateRebaselineProposalParamsSchema,
+  EmitResultsHandoffEventParamsSchema,
+  EmitSignalParamsSchema,
+  ExecutionSignalSchema,
+  ExecutionSignalTypeValues,
+  ForecastConfidenceLevelValues,
+  ForecastConfidenceSchema,
+  RebaselineProposalSchema,
+  ResultsHandoffEventSchema,
+  ResultsHandoffEventTypeValues,
   SIGNAL_SEVERITY_RANK,
+  SignalAggregationSchema,
+  SignalSeverityValues,
+  SourceObjectTypeValues,
 } from '../../../types/executionVisibility.js';
 
 // ==========================================
@@ -50,14 +50,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  emitSignal,
-  getSignalsBySource,
   aggregateSignals,
-  emitResultsHandoffEvent,
-  getHandoffEventsByInitiative,
-  createRebaselineProposal,
-  getRebaselineProposalsByInitiative,
   assessForecastConfidence,
+  createRebaselineProposal,
+  emitResultsHandoffEvent,
+  emitSignal,
+  getHandoffEventsByInitiative,
+  getRebaselineProposalsByInitiative,
+  getSignalsBySource,
 } from '../executionVisibilityService.js';
 
 // ==========================================
@@ -96,7 +96,7 @@ function makeFakeSignalRow(overrides?: Partial<Record<string, unknown>>) {
 }
 
 function makeHandoffParams(
-  overrides?: Partial<EmitResultsHandoffEventParams>,
+  overrides?: Partial<EmitResultsHandoffEventParams>
 ): EmitResultsHandoffEventParams {
   return {
     eventType: 'milestone_completed',
@@ -120,7 +120,7 @@ function makeFakeHandoffRow(overrides?: Partial<Record<string, unknown>>) {
 }
 
 function makeRebaselineParams(
-  overrides?: Partial<CreateRebaselineProposalParams>,
+  overrides?: Partial<CreateRebaselineProposalParams>
 ): CreateRebaselineProposalParams {
   return {
     initiativeId: INITIATIVE_ID,
@@ -210,32 +210,30 @@ describe('emitSignal', () => {
 
   it('rejects invalid signal type via Zod', async () => {
     await expect(
-      emitSignal(makeSignalParams({ signalType: 'invalid_type' as any })),
+      emitSignal(makeSignalParams({ signalType: 'invalid_type' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid severity via Zod', async () => {
-    await expect(
-      emitSignal(makeSignalParams({ severity: 'mega_bad' as any })),
-    ).rejects.toThrow(ZodError);
+    await expect(emitSignal(makeSignalParams({ severity: 'mega_bad' as any }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid UUID for organizationId', async () => {
-    await expect(
-      emitSignal(makeSignalParams({ organizationId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+    await expect(emitSignal(makeSignalParams({ organizationId: 'not-a-uuid' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty sourceObjectId', async () => {
-    await expect(
-      emitSignal(makeSignalParams({ sourceObjectId: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(emitSignal(makeSignalParams({ sourceObjectId: '' }))).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields', async () => {
-    await expect(
-      emitSignal({ signalType: 'overdue_tasks_count' } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(emitSignal({ signalType: 'overdue_tasks_count' } as any)).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -378,7 +376,7 @@ describe('aggregateSignals', () => {
     await aggregateSignals('initiative', INITIATIVE_ID, ORG_ID);
 
     const insertCalls = mockDbRun.mock.calls.filter((c: unknown[]) =>
-      (c[0] as string).includes('INSERT INTO v8_signal_aggregations'),
+      (c[0] as string).includes('INSERT INTO v8_signal_aggregations')
     );
     expect(insertCalls).toHaveLength(1);
   });
@@ -448,20 +446,20 @@ describe('emitResultsHandoffEvent', () => {
 
   it('rejects invalid event type via Zod', async () => {
     await expect(
-      emitResultsHandoffEvent(makeHandoffParams({ eventType: 'invalid' as any })),
+      emitResultsHandoffEvent(makeHandoffParams({ eventType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      emitResultsHandoffEvent(makeHandoffParams({ organizationId: 'bad' })),
+      emitResultsHandoffEvent(makeHandoffParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty initiativeId', async () => {
-    await expect(
-      emitResultsHandoffEvent(makeHandoffParams({ initiativeId: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(emitResultsHandoffEvent(makeHandoffParams({ initiativeId: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -530,25 +528,25 @@ describe('createRebaselineProposal', () => {
 
   it('rejects invalid UUID for executionRunId', async () => {
     await expect(
-      createRebaselineProposal(makeRebaselineParams({ executionRunId: 'bad' })),
+      createRebaselineProposal(makeRebaselineParams({ executionRunId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      createRebaselineProposal(makeRebaselineParams({ organizationId: 'bad' })),
+      createRebaselineProposal(makeRebaselineParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty reason', async () => {
-    await expect(
-      createRebaselineProposal(makeRebaselineParams({ reason: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createRebaselineProposal(makeRebaselineParams({ reason: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty initiativeId', async () => {
     await expect(
-      createRebaselineProposal(makeRebaselineParams({ initiativeId: '' })),
+      createRebaselineProposal(makeRebaselineParams({ initiativeId: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -713,7 +711,7 @@ describe('assessForecastConfidence', () => {
         dataReliabilityScore: 1.5,
         hasCapacityGap: false,
         criticalPathKnown: true,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -723,14 +721,14 @@ describe('assessForecastConfidence', () => {
         dataReliabilityScore: -0.1,
         hasCapacityGap: false,
         criticalPathKnown: true,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields', async () => {
-    await expect(
-      assessForecastConfidence({ dataReliabilityScore: 0.5 } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(assessForecastConfidence({ dataReliabilityScore: 0.5 } as any)).rejects.toThrow(
+      ZodError
+    );
   });
 });
 

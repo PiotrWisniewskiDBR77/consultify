@@ -3,133 +3,319 @@
  * V4-INIT-04, V4-INIT-06, V4-INIT-07
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { initiativeGovernanceService } from '../services/initiativeGovernanceService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 router.use(verifyToken);
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId = req.user?.organizationId || req.organizationId || (req.headers['x-organization-id'] as string) || (req.query.organizationId as string);
-  if (!userId || !orgId) { res.status(401).json({ error: 'Authentication required' }); return null; }
+  const orgId =
+    req.user?.organizationId ||
+    req.organizationId ||
+    (req.headers['x-organization-id'] as string) ||
+    (req.query.organizationId as string);
+  if (!userId || !orgId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return null;
+  }
   return { userId, orgId };
 };
 
 // ── INIT-04: Goals/OKR ──
 
-router.post('/goals', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ parentGoalId: z.string().optional(), goalType: z.string().optional(), title: z.string(), description: z.string().optional(), ownerId: z.string().optional(), timeFrame: z.string().optional(), startDate: z.string().optional(), endDate: z.string().optional(), targetValue: z.number().optional(), unit: z.string().optional() });
-  const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await initiativeGovernanceService.createGoal(id.orgId, p.data));
-}));
+router.post(
+  '/goals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const s = z.object({
+      parentGoalId: z.string().optional(),
+      goalType: z.string().optional(),
+      title: z.string(),
+      description: z.string().optional(),
+      ownerId: z.string().optional(),
+      timeFrame: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      targetValue: z.number().optional(),
+      unit: z.string().optional(),
+    });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res.status(201).json(await initiativeGovernanceService.createGoal(id.orgId, p.data));
+  })
+);
 
-router.get('/goals', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const parentGoalId = req.query.parentGoalId as string | undefined;
-  res.json({ goals: await initiativeGovernanceService.getGoals(id.orgId, parentGoalId) });
-}));
+router.get(
+  '/goals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const parentGoalId = req.query.parentGoalId as string | undefined;
+    res.json({ goals: await initiativeGovernanceService.getGoals(id.orgId, parentGoalId) });
+  })
+);
 
-router.get('/goals/:goalId', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const g = await initiativeGovernanceService.getGoal(id.orgId, req.params.goalId);
-  if (!g) { res.status(404).json({ error: 'Goal not found' }); return; }
-  res.json(g);
-}));
+router.get(
+  '/goals/:goalId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const g = await initiativeGovernanceService.getGoal(id.orgId, req.params.goalId);
+    if (!g) {
+      res.status(404).json({ error: 'Goal not found' });
+      return;
+    }
+    res.json(g);
+  })
+);
 
-router.put('/goals/:goalId', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json(await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, req.body));
-}));
+router.put(
+  '/goals/:goalId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json(await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, req.body));
+  })
+);
 
-router.get('/goals/:goalId/rollup', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json(await initiativeGovernanceService.getGoalRollup(id.orgId, req.params.goalId));
-}));
+router.get(
+  '/goals/:goalId/rollup',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json(await initiativeGovernanceService.getGoalRollup(id.orgId, req.params.goalId));
+  })
+);
 
-router.post('/goals/:goalId/initiatives', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ initiativeId: z.string(), contributionWeight: z.number().optional() });
-  const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await initiativeGovernanceService.linkGoalToInitiative(req.params.goalId, p.data.initiativeId, p.data.contributionWeight));
-}));
+router.post(
+  '/goals/:goalId/initiatives',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const s = z.object({ initiativeId: z.string(), contributionWeight: z.number().optional() });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res
+      .status(201)
+      .json(
+        await initiativeGovernanceService.linkGoalToInitiative(
+          req.params.goalId,
+          p.data.initiativeId,
+          p.data.contributionWeight
+        )
+      );
+  })
+);
 
-router.get('/goals/:goalId/initiatives', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json({ initiatives: await initiativeGovernanceService.getGoalInitiatives(req.params.goalId) });
-}));
+router.get(
+  '/goals/:goalId/initiatives',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json({
+      initiatives: await initiativeGovernanceService.getGoalInitiatives(req.params.goalId),
+    });
+  })
+);
 
-router.delete('/goals/:goalId/initiatives/:initiativeId', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json(await initiativeGovernanceService.unlinkGoalFromInitiative(req.params.goalId, req.params.initiativeId));
-}));
+router.delete(
+  '/goals/:goalId/initiatives/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json(
+      await initiativeGovernanceService.unlinkGoalFromInitiative(
+        req.params.goalId,
+        req.params.initiativeId
+      )
+    );
+  })
+);
 
 // ── INIT-06: AI Blueprints ──
 
-router.post('/blueprints', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ initiativeId: z.string().optional(), promptText: z.string().optional(), generatedWbs: z.array(z.record(z.string(), z.unknown())).optional(), generatedMilestones: z.array(z.record(z.string(), z.unknown())).optional(), generatedDeps: z.array(z.record(z.string(), z.unknown())).optional(), generatedResources: z.array(z.record(z.string(), z.unknown())).optional(), citations: z.array(z.string()).optional(), aiModelUsed: z.string().optional(), confidence: z.number().optional() });
-  const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await initiativeGovernanceService.createBlueprint(id.orgId, { ...p.data, createdBy: id.userId }));
-}));
+router.post(
+  '/blueprints',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const s = z.object({
+      initiativeId: z.string().optional(),
+      promptText: z.string().optional(),
+      generatedWbs: z.array(z.record(z.string(), z.unknown())).optional(),
+      generatedMilestones: z.array(z.record(z.string(), z.unknown())).optional(),
+      generatedDeps: z.array(z.record(z.string(), z.unknown())).optional(),
+      generatedResources: z.array(z.record(z.string(), z.unknown())).optional(),
+      citations: z.array(z.string()).optional(),
+      aiModelUsed: z.string().optional(),
+      confidence: z.number().optional(),
+    });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res.status(201).json(
+      await initiativeGovernanceService.createBlueprint(id.orgId, {
+        ...p.data,
+        createdBy: id.userId,
+      })
+    );
+  })
+);
 
-router.get('/blueprints', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const initiativeId = req.query.initiativeId as string | undefined;
-  res.json({ blueprints: await initiativeGovernanceService.getBlueprints(id.orgId, initiativeId) });
-}));
+router.get(
+  '/blueprints',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const initiativeId = req.query.initiativeId as string | undefined;
+    res.json({
+      blueprints: await initiativeGovernanceService.getBlueprints(id.orgId, initiativeId),
+    });
+  })
+);
 
-router.post('/blueprints/:blueprintId/apply', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const result = await initiativeGovernanceService.applyBlueprint(id.orgId, req.params.blueprintId, id.userId);
-  if (!result.ok && result.reason === 'not_found') { res.status(404).json({ error: 'Blueprint not found' }); return; }
-  if (!result.ok && result.reason === 'initiative_missing') { res.status(409).json({ error: 'Blueprint is missing initiative context' }); return; }
-  res.json(result);
-}));
+router.post(
+  '/blueprints/:blueprintId/apply',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const result = await initiativeGovernanceService.applyBlueprint(
+      id.orgId,
+      req.params.blueprintId,
+      id.userId
+    );
+    if (!result.ok && result.reason === 'not_found') {
+      res.status(404).json({ error: 'Blueprint not found' });
+      return;
+    }
+    if (!result.ok && result.reason === 'initiative_missing') {
+      res.status(409).json({ error: 'Blueprint is missing initiative context' });
+      return;
+    }
+    res.json(result);
+  })
+);
 
-router.post('/blueprints/:blueprintId/reject', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const result = await initiativeGovernanceService.rejectBlueprint(id.orgId, req.params.blueprintId);
-  if (!result.ok) { res.status(404).json({ error: 'Blueprint not found' }); return; }
-  res.json(result);
-}));
+router.post(
+  '/blueprints/:blueprintId/reject',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const result = await initiativeGovernanceService.rejectBlueprint(
+      id.orgId,
+      req.params.blueprintId
+    );
+    if (!result.ok) {
+      res.status(404).json({ error: 'Blueprint not found' });
+      return;
+    }
+    res.json(result);
+  })
+);
 
 // ── INIT-07: Governance Gates ──
 
-router.post('/initiatives/:initiativeId/gates', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ gateType: z.string().optional(), gateName: z.string(), requiredDecisions: z.array(z.string()).optional(), requiredRaidStatus: z.record(z.string(), z.unknown()).optional(), requiredApprovers: z.array(z.string()).optional() });
-  const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await initiativeGovernanceService.createGovernanceGate(id.orgId, { ...p.data, initiativeId: req.params.initiativeId }));
-}));
+router.post(
+  '/initiatives/:initiativeId/gates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const s = z.object({
+      gateType: z.string().optional(),
+      gateName: z.string(),
+      requiredDecisions: z.array(z.string()).optional(),
+      requiredRaidStatus: z.record(z.string(), z.unknown()).optional(),
+      requiredApprovers: z.array(z.string()).optional(),
+    });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res.status(201).json(
+      await initiativeGovernanceService.createGovernanceGate(id.orgId, {
+        ...p.data,
+        initiativeId: req.params.initiativeId,
+      })
+    );
+  })
+);
 
-router.get('/initiatives/:initiativeId/gates', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json({ gates: await initiativeGovernanceService.getGovernanceGates(id.orgId, req.params.initiativeId) });
-}));
+router.get(
+  '/initiatives/:initiativeId/gates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json({
+      gates: await initiativeGovernanceService.getGovernanceGates(
+        id.orgId,
+        req.params.initiativeId
+      ),
+    });
+  })
+);
 
-router.post('/gates/:gateId/evaluate', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const r = await initiativeGovernanceService.evaluateGate(id.orgId, req.params.gateId);
-  if (!r) { res.status(404).json({ error: 'Gate not found' }); return; }
-  res.json(r);
-}));
+router.post(
+  '/gates/:gateId/evaluate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const r = await initiativeGovernanceService.evaluateGate(id.orgId, req.params.gateId);
+    if (!r) {
+      res.status(404).json({ error: 'Gate not found' });
+      return;
+    }
+    res.json(r);
+  })
+);
 
-router.post('/initiatives/:initiativeId/decisions', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ decisionId: z.string(), linkType: z.string().optional() });
-  const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await initiativeGovernanceService.linkDecisionToInitiative(req.params.initiativeId, p.data.decisionId, p.data.linkType));
-}));
+router.post(
+  '/initiatives/:initiativeId/decisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const s = z.object({ decisionId: z.string(), linkType: z.string().optional() });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res
+      .status(201)
+      .json(
+        await initiativeGovernanceService.linkDecisionToInitiative(
+          req.params.initiativeId,
+          p.data.decisionId,
+          p.data.linkType
+        )
+      );
+  })
+);
 
-router.get('/initiatives/:initiativeId/decisions', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const id = requireUser(req, res); if (!id) return;
-  res.json({ decisions: await initiativeGovernanceService.getInitiativeDecisions(req.params.initiativeId) });
-}));
+router.get(
+  '/initiatives/:initiativeId/decisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json({
+      decisions: await initiativeGovernanceService.getInitiativeDecisions(req.params.initiativeId),
+    });
+  })
+);
 
 export default router;

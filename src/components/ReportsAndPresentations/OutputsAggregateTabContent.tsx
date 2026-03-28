@@ -13,9 +13,9 @@ import {
   Presentation,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -53,7 +53,7 @@ function formatLabel(value: string | null | undefined): string {
 
 function formatSourceSummary(
   row: Pick<UnifiedOutputRow, 'sourceType' | 'sourceInitiativeId'>,
-  t: (key: string, fallback?: string) => string,
+  t: (key: string, fallback?: string) => string
 ): string {
   const parts: string[] = [];
   if (row.sourceType) {
@@ -67,7 +67,7 @@ function formatSourceSummary(
 
 function formatReviewSummary(
   row: Pick<UnifiedOutputRow, 'governance'>,
-  t: (key: string, fallback?: string) => string,
+  t: (key: string, fallback?: string) => string
 ): string {
   const state = formatLabel(row.governance?.publishState);
   if (state === '—') return '—';
@@ -108,6 +108,10 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlags();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const translate = useCallback(
+    (key: string, fallback?: string) => t(key, { defaultValue: fallback ?? key }),
+    [t]
+  );
 
   const openGovernedSheetRow = useCallback(
     async (originRecordId: string) => {
@@ -121,13 +125,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       }
       const ok = await downloadSheetArtifactXlsx(tableId);
       if (ok) {
-        toast.success(
-          isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
-        );
+        toast.success(isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)');
       } else {
-        toast.error(
-          isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
-        );
+        toast.error(isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet');
       }
     },
     [isEnabled, isPolish, navigate]
@@ -262,7 +262,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '150px',
         render: (row: AggregateRow) => (
           <span className="text-xs text-slate-600 dark:text-slate-300">
-            {formatSourceSummary(row, t)}
+            {formatSourceSummary(row, translate)}
           </span>
         ),
       },
@@ -272,7 +272,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '130px',
         render: (row: AggregateRow) => (
           <span className="text-xs text-slate-600 dark:text-slate-300">
-            {formatReviewSummary(row, t)}
+            {formatReviewSummary(row, translate)}
           </span>
         ),
       },
@@ -465,7 +465,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.source', 'Source')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatSourceSummary(item, t)}
+                {formatSourceSummary(item, translate)}
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">

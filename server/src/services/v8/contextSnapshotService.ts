@@ -97,7 +97,7 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
   if (parentSnapshotId) {
     const parentRow = await dbGet<SnapshotRow>(
       `SELECT * FROM v8_context_snapshots WHERE snapshot_id = ?`,
-      [parentSnapshotId],
+      [parentSnapshotId]
     );
 
     if (parentRow) {
@@ -126,7 +126,9 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
 
       driftEvents = detectDrift(tempCurrent, parentSnapshot);
     } else {
-      logger.warn(`${LOG_PREFIX} Parent snapshot ${parentSnapshotId} not found, starting version at 1`);
+      logger.warn(
+        `${LOG_PREFIX} Parent snapshot ${parentSnapshotId} not found, starting version at 1`
+      );
     }
   }
 
@@ -175,17 +177,21 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
       snapshot.privacyMode ? 1 : 0,
       JSON.stringify(snapshot.sourceContextRefs),
       JSON.stringify(snapshot.driftEvents),
-    ],
+    ]
   );
 
   if (driftEvents.length > 0) {
     for (const drift of driftEvents) {
       await recordDriftEvent(snapshot.snapshotId, drift);
     }
-    logger.info(`${LOG_PREFIX} Auto-detected ${driftEvents.length} drift event(s) against parent ${parentSnapshotId}`);
+    logger.info(
+      `${LOG_PREFIX} Auto-detected ${driftEvents.length} drift event(s) against parent ${parentSnapshotId}`
+    );
   }
 
-  logger.info(`${LOG_PREFIX} Captured snapshot ${snapshotId} v${snapshotVersion} for org ${snapshot.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Captured snapshot ${snapshotId} v${snapshotVersion} for org ${snapshot.organizationId}`
+  );
   return snapshot;
 }
 
@@ -194,13 +200,13 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
  */
 export async function getSnapshot(
   snapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot | null> {
   const row = await dbGet<SnapshotRow>(
     `SELECT * FROM v8_context_snapshots
      WHERE snapshot_id = ? AND organization_id = ?`,
     [snapshotId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -212,14 +218,14 @@ export async function getSnapshot(
  */
 export async function getSnapshotsByConversation(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot[]> {
   const rows = await dbAll<SnapshotRow>(
     `SELECT * FROM v8_context_snapshots
      WHERE conversation_id = ? AND organization_id = ?
      ORDER BY captured_at ASC`,
     [conversationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSnapshot);
@@ -230,14 +236,14 @@ export async function getSnapshotsByConversation(
  */
 export async function getSnapshotsByRun(
   executionRunId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot[]> {
   const rows = await dbAll<SnapshotRow>(
     `SELECT * FROM v8_context_snapshots
      WHERE execution_run_id = ? AND organization_id = ?
      ORDER BY captured_at ASC`,
     [executionRunId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSnapshot);
@@ -247,10 +253,7 @@ export async function getSnapshotsByRun(
  * Compare two snapshots and return detected drift events.
  * Does not persist — call recordDriftEvent separately.
  */
-export function detectDrift(
-  current: ContextSnapshot,
-  previous: ContextSnapshot,
-): DriftEvent[] {
+export function detectDrift(current: ContextSnapshot, previous: ContextSnapshot): DriftEvent[] {
   const now = new Date().toISOString();
   const drifts: DriftEvent[] = [];
 
@@ -305,13 +308,10 @@ export function detectDrift(
 /**
  * Append a drift event to an existing snapshot's drift_events array.
  */
-export async function recordDriftEvent(
-  snapshotId: string,
-  driftEvent: DriftEvent,
-): Promise<void> {
+export async function recordDriftEvent(snapshotId: string, driftEvent: DriftEvent): Promise<void> {
   const row = await dbGet<{ drift_events: string }>(
     `SELECT drift_events FROM v8_context_snapshots WHERE snapshot_id = ?`,
-    [snapshotId],
+    [snapshotId]
   );
 
   if (!row) {
@@ -322,12 +322,14 @@ export async function recordDriftEvent(
   const existing: DriftEvent[] = safeJsonParse(row.drift_events, []);
   existing.push(driftEvent);
 
-  await dbRun(
-    `UPDATE v8_context_snapshots SET drift_events = ? WHERE snapshot_id = ?`,
-    [JSON.stringify(existing), snapshotId],
-  );
+  await dbRun(`UPDATE v8_context_snapshots SET drift_events = ? WHERE snapshot_id = ?`, [
+    JSON.stringify(existing),
+    snapshotId,
+  ]);
 
-  logger.info(`${LOG_PREFIX} Recorded drift event (${driftEvent.driftType}) on snapshot ${snapshotId}`);
+  logger.info(
+    `${LOG_PREFIX} Recorded drift event (${driftEvent.driftType}) on snapshot ${snapshotId}`
+  );
 }
 
 /**
@@ -336,7 +338,7 @@ export async function recordDriftEvent(
  */
 export async function getSnapshotChain(
   snapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot[]> {
   const chain: ContextSnapshot[] = [];
   let currentId: string | null = snapshotId;
@@ -351,7 +353,7 @@ export async function getSnapshotChain(
       `SELECT * FROM v8_context_snapshots
        WHERE snapshot_id = ? AND organization_id = ?`,
       [currentId, organizationId],
-      { fallback: true },
+      { fallback: true }
     );
 
     if (!row) break;
@@ -368,7 +370,7 @@ export async function getSnapshotChain(
  */
 export async function getLatestSnapshotForSession(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot | null> {
   const row = await dbGet<SnapshotRow>(
     `SELECT * FROM v8_context_snapshots
@@ -376,7 +378,7 @@ export async function getLatestSnapshotForSession(
      ORDER BY captured_at DESC
      LIMIT 1`,
     [conversationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -389,7 +391,7 @@ export async function getLatestSnapshotForSession(
 export async function getDriftEventsByOrg(
   organizationId: string,
   fromDate: string,
-  toDate: string,
+  toDate: string
 ): Promise<ContextSnapshot[]> {
   const rows = await dbAll<SnapshotRow>(
     `SELECT * FROM v8_context_snapshots
@@ -399,7 +401,7 @@ export async function getDriftEventsByOrg(
        AND drift_events != '[]'
      ORDER BY captured_at ASC`,
     [organizationId, fromDate, toDate],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSnapshot);
@@ -411,7 +413,7 @@ export async function getDriftEventsByOrg(
  */
 export async function markForArchival(
   organizationId: string,
-  olderThanDays: number,
+  olderThanDays: number
 ): Promise<number> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - olderThanDays);
@@ -424,10 +426,12 @@ export async function markForArchival(
      WHERE organization_id = ?
        AND captured_at < ?
        AND archived_at IS NULL`,
-    [archivedAt, organizationId, cutoffIso],
+    [archivedAt, organizationId, cutoffIso]
   );
 
   const count = (result as any)?.changes ?? 0;
-  logger.info(`${LOG_PREFIX} Marked ${count} snapshot(s) for archival in org ${organizationId} (older than ${olderThanDays}d)`);
+  logger.info(
+    `${LOG_PREFIX} Marked ${count} snapshot(s) for archival in org ${organizationId} (older than ${olderThanDays}d)`
+  );
   return count;
 }

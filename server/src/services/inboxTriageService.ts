@@ -1,7 +1,7 @@
-import inboxService, { type CanonicalInboxItem } from './inboxService.js';
-import NotificationService from './notificationService.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import inboxService, { type CanonicalInboxItem } from './inboxService.js';
+import NotificationService from './notificationService.js';
 
 export type InboxTriageAction =
   | 'accept_today'

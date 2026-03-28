@@ -9,26 +9,26 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import ActivityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
-import ActivityService from '../services/ActivityService.js';
-import {
-  getAllowedTaskTransitions,
-  TASK_STATUSES,
-  validateTaskStatusTransition,
-} from '../services/taskWorkflowService.js';
-import { getTableColumns as getSchemaColumns } from '../utils/dbSchema.js';
-import NotificationService from '../services/notificationService.js';
-import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
-import TaskAssignmentService from '../services/taskAssignmentService.js';
 import {
   createIssueFromTask,
   parseJiraConfig,
   updateIssueFromTask,
 } from '../services/integrations/jiraOrgClient.js';
+import NotificationService from '../services/notificationService.js';
+import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
+import TaskAssignmentService from '../services/taskAssignmentService.js';
+import {
+  getAllowedTaskTransitions,
+  TASK_STATUSES,
+  validateTaskStatusTransition,
+} from '../services/taskWorkflowService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import DbPromise from '../utils/DbPromise.js';
+import { getTableColumns as getSchemaColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import type {
   AddTaskCommentRequest,
@@ -257,7 +257,10 @@ async function logTaskAuditEvent(params: {
   });
 }
 
-function buildTransitionErrorPayload(from: string | null | undefined, to: string | null | undefined) {
+function buildTransitionErrorPayload(
+  from: string | null | undefined,
+  to: string | null | undefined
+) {
   return {
     from,
     to,
@@ -281,7 +284,10 @@ async function logJiraTaskSyncEvent(params: {
   triggerType?: 'event' | 'manual';
 }): Promise<void> {
   try {
-    const cols = await DbPromise.all<{ name: string }>('PRAGMA table_info(integration_sync_log)', []);
+    const cols = await DbPromise.all<{ name: string }>(
+      'PRAGMA table_info(integration_sync_log)',
+      []
+    );
     const names = new Set((cols || []).map((c) => String(c.name || '')));
     if (!names.size) return;
 
@@ -1222,13 +1228,18 @@ export class TaskController {
             }));
             const result = validateCustomFieldValues(defs as any, rawCustomFields);
             if (!result.valid) {
-              res.status(400).json({ error: 'Custom field validation failed', fieldErrors: result.errors });
+              res
+                .status(400)
+                .json({ error: 'Custom field validation failed', fieldErrors: result.errors });
               return;
             }
           }
           finalCustomFieldsJson = JSON.stringify(rawCustomFields);
         } catch (cfErr: any) {
-          logger.warn('[TaskController.createTask] Custom fields validation skipped:', cfErr?.message);
+          logger.warn(
+            '[TaskController.createTask] Custom fields validation skipped:',
+            cfErr?.message
+          );
           finalCustomFieldsJson = JSON.stringify(rawCustomFields);
         }
       }
@@ -1304,16 +1315,15 @@ export class TaskController {
       // Notifications
       if (assigneeId && assigneeId !== userId) {
         createNotificationSafely({
-            userId: assigneeId,
-            organizationId: orgId,
-            projectId: effectiveProjectId,
-            type: 'task_assigned',
-            title: 'New Task Assignment',
-            message: `You have been assigned to task "${title}"`,
-            relatedObjectType: 'TASK',
-            relatedObjectId: id,
-          })
-          .catch((err: any) => logger.error('[TaskController] Notification failed:', err));
+          userId: assigneeId,
+          organizationId: orgId,
+          projectId: effectiveProjectId,
+          type: 'task_assigned',
+          title: 'New Task Assignment',
+          message: `You have been assigned to task "${title}"`,
+          relatedObjectType: 'TASK',
+          relatedObjectId: id,
+        }).catch((err: any) => logger.error('[TaskController] Notification failed:', err));
       }
 
       // Activity logging
@@ -1483,7 +1493,10 @@ export class TaskController {
 
       // V4-TASK-03: Workflow guard — block invalid status transitions
       const newStatus = (updates as any)?.status;
-      if (newStatus != null && String(newStatus).toLowerCase() !== String(currentTask.status || '').toLowerCase()) {
+      if (
+        newStatus != null &&
+        String(newStatus).toLowerCase() !== String(currentTask.status || '').toLowerCase()
+      ) {
         const validation = validateTaskStatusTransition(currentTask.status, newStatus);
         if (!validation.allowed && 'rule' in validation && 'message' in validation) {
           res.status(400).json({
@@ -1545,13 +1558,18 @@ export class TaskController {
             }));
             const cfResult = validateCustomFieldValues(defs as any, updates.customFields);
             if (!cfResult.valid) {
-              res.status(400).json({ error: 'Custom field validation failed', fieldErrors: cfResult.errors });
+              res
+                .status(400)
+                .json({ error: 'Custom field validation failed', fieldErrors: cfResult.errors });
               return;
             }
           }
           updates.custom_fields_json = JSON.stringify(updates.customFields);
         } catch (cfErr: any) {
-          logger.warn('[TaskController.updateTask] Custom fields validation skipped:', cfErr?.message);
+          logger.warn(
+            '[TaskController.updateTask] Custom fields validation skipped:',
+            cfErr?.message
+          );
           updates.custom_fields_json = JSON.stringify(updates.customFields);
         }
         delete updates.customFields;
@@ -1760,10 +1778,10 @@ export class TaskController {
         })
         .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
-      const syncedTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      const syncedTask = await DbPromise.get<TaskRow>(
+        `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       await syncTaskToJiraIntegrations({
         organizationId: orgId,
         task: {
@@ -1778,7 +1796,9 @@ export class TaskController {
       });
 
       const nextProjectId = String(syncedTask?.project_id || currentTask.project_id || '').trim();
-      const nextTitle = String((updates as any).title || syncedTask?.title || currentTask.title || '');
+      const nextTitle = String(
+        (updates as any).title || syncedTask?.title || currentTask.title || ''
+      );
       const nextStatus = String(
         (updates as any).status || syncedTask?.status || currentTask.status || ''
       ).toLowerCase();
@@ -1855,15 +1875,14 @@ export class TaskController {
       const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
       if (affectedUserId && affectedUserId !== userId) {
         createNotificationSafely({
-            userId: affectedUserId,
-            organizationId: orgId,
-            type: 'task_updated',
-            title: 'Task Updated',
-            message: `Task "${currentTask.title}" has been updated`,
-            relatedObjectType: 'TASK',
-            relatedObjectId: id,
-          })
-          .catch((err: any) => logger.error('[TaskController] Notification failed:', err));
+          userId: affectedUserId,
+          organizationId: orgId,
+          type: 'task_updated',
+          title: 'Task Updated',
+          message: `Task "${currentTask.title}" has been updated`,
+          relatedObjectType: 'TASK',
+          relatedObjectId: id,
+        }).catch((err: any) => logger.error('[TaskController] Notification failed:', err));
       }
 
       // PMO Notification Rules (throttled)
@@ -1910,17 +1929,16 @@ export class TaskController {
             const recipients = recipientsUnique([assignee, owner, backup]);
             for (const rid of recipients) {
               createNotificationSafely({
-                  userId: rid,
-                  organizationId: orgId,
-                  type: 'task_overdue',
-                  title: 'Task Overdue',
-                  message: `Task "${row.title}" is overdue`,
-                  relatedObjectType: 'TASK',
-                  relatedObjectId: id,
-                })
-                .catch((err: any) =>
-                  logger.error('[TaskController] Overdue notification failed:', err)
-                );
+                userId: rid,
+                organizationId: orgId,
+                type: 'task_overdue',
+                title: 'Task Overdue',
+                message: `Task "${row.title}" is overdue`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: id,
+              }).catch((err: any) =>
+                logger.error('[TaskController] Overdue notification failed:', err)
+              );
             }
             await DbPromise.run(`UPDATE tasks SET last_overdue_notified_at = ? WHERE id = ?`, [
               nowIso,
@@ -1940,17 +1958,16 @@ export class TaskController {
           canNotify(row.last_acceptance_notified_at)
         ) {
           createNotificationSafely({
-              userId: acceptor,
-              organizationId: orgId,
-              type: 'task_pending_approval',
-              title: 'Approval Required',
-              message: `Task "${row.title}" is awaiting approval`,
-              relatedObjectType: 'TASK',
-              relatedObjectId: id,
-            })
-            .catch((err: any) =>
-              logger.error('[TaskController] Acceptance notification failed:', err)
-            );
+            userId: acceptor,
+            organizationId: orgId,
+            type: 'task_pending_approval',
+            title: 'Approval Required',
+            message: `Task "${row.title}" is awaiting approval`,
+            relatedObjectType: 'TASK',
+            relatedObjectId: id,
+          }).catch((err: any) =>
+            logger.error('[TaskController] Acceptance notification failed:', err)
+          );
           await DbPromise.run(`UPDATE tasks SET last_acceptance_notified_at = ? WHERE id = ?`, [
             nowIso,
             id,
@@ -1968,17 +1985,16 @@ export class TaskController {
           const target = backup || owner;
           if (target) {
             createNotificationSafely({
-                userId: target,
-                organizationId: orgId,
-                type: 'task_unassigned',
-                title: 'Task Unassigned',
-                message: `Task "${row.title}" has no assignee`,
-                relatedObjectType: 'TASK',
-                relatedObjectId: id,
-              })
-              .catch((err: any) =>
-                logger.error('[TaskController] Unassigned notification failed:', err)
-              );
+              userId: target,
+              organizationId: orgId,
+              type: 'task_unassigned',
+              title: 'Task Unassigned',
+              message: `Task "${row.title}" has no assignee`,
+              relatedObjectType: 'TASK',
+              relatedObjectId: id,
+            }).catch((err: any) =>
+              logger.error('[TaskController] Unassigned notification failed:', err)
+            );
             await DbPromise.run(`UPDATE tasks SET last_unassigned_notified_at = ? WHERE id = ?`, [
               nowIso,
               id,
@@ -1993,17 +2009,16 @@ export class TaskController {
           const recipients = recipientsUnique([assignee, owner, backup]);
           for (const rid of recipients) {
             createNotificationSafely({
-                userId: rid,
-                organizationId: orgId,
-                type: 'task_blocked',
-                title: 'Task Blocked',
-                message: `Task "${row.title}" is blocked`,
-                relatedObjectType: 'TASK',
-                relatedObjectId: id,
-              })
-              .catch((err: any) =>
-                logger.error('[TaskController] Blocked notification failed:', err)
-              );
+              userId: rid,
+              organizationId: orgId,
+              type: 'task_blocked',
+              title: 'Task Blocked',
+              message: `Task "${row.title}" is blocked`,
+              relatedObjectType: 'TASK',
+              relatedObjectId: id,
+            }).catch((err: any) =>
+              logger.error('[TaskController] Blocked notification failed:', err)
+            );
           }
           await DbPromise.run(`UPDATE tasks SET last_blocked_notified_at = ? WHERE id = ?`, [
             nowIso,
@@ -2327,7 +2342,10 @@ export class TaskController {
         action: 'TASK_ASSIGN',
         resourceId: taskId,
         before: { assigneeId: beforeTask.assignee_id },
-        after: { assigneeId: result?.assigneeId || assigneeId, slaHours: result?.slaHours || slaHours },
+        after: {
+          assigneeId: result?.assigneeId || assigneeId,
+          slaHours: result?.slaHours || slaHours,
+        },
         metadata: { taskTitle: beforeTask.title },
       }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
@@ -2617,10 +2635,14 @@ export class TaskController {
       }
 
       const now = new Date().toISOString();
-      const task = await DbPromise.get<{ status: string; blocked_reason: string | null; title: string }>(
-        'SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?',
-        [taskId, orgId]
-      );
+      const task = await DbPromise.get<{
+        status: string;
+        blocked_reason: string | null;
+        title: string;
+      }>('SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?', [
+        taskId,
+        orgId,
+      ]);
       if (!task) {
         res.status(404).json({ error: 'Task not found' });
         return;
@@ -2653,7 +2675,11 @@ export class TaskController {
         action: 'TASK_BLOCK',
         resourceId: taskId,
         before: { status: task.status, blockedReason: task.blocked_reason },
-        after: { status: 'blocked', blockedReason: reason, blockedByDecisionId: decisionId || null },
+        after: {
+          status: 'blocked',
+          blockedReason: reason,
+          blockedByDecisionId: decisionId || null,
+        },
         metadata: { taskTitle: task.title },
       }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
@@ -2682,10 +2708,14 @@ export class TaskController {
       }
 
       const now = new Date().toISOString();
-      const task = await DbPromise.get<{ status: string; blocked_reason: string | null; title: string }>(
-        'SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?',
-        [taskId, orgId]
-      );
+      const task = await DbPromise.get<{
+        status: string;
+        blocked_reason: string | null;
+        title: string;
+      }>('SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?', [
+        taskId,
+        orgId,
+      ]);
       if (!task) {
         res.status(404).json({ error: 'Task not found' });
         return;
@@ -2773,7 +2803,11 @@ export class TaskController {
       }
 
       // Get current task info
-      const task = await DbPromise.get<{ initiative_id: string; project_id: string; title: string }>(
+      const task = await DbPromise.get<{
+        initiative_id: string;
+        project_id: string;
+        title: string;
+      }>(
         'SELECT initiative_id, project_id, title FROM tasks WHERE id = ? AND organization_id = ?',
         [taskId, orgId]
       );

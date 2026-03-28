@@ -41,12 +41,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
   loadPartnerRuntimeSummary,
-  PartnerRuntimeSummaryStrip,
   type PartnerRuntimeSummary,
+  PartnerRuntimeSummaryStrip,
 } from '../../components/Partner/PartnerRuntimeSummaryStrip';
-import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
@@ -244,8 +244,7 @@ const DashboardSection: React.FC = () => {
           label: t('partner.dashboard.monthlyRevenue', 'Monthly Revenue'),
           value: `€${(s.monthlyRevenue || 0).toLocaleString()}`,
           change: `${(s.revenueChange ?? 0) > 0 ? '+' : ''}${s.revenueChange ?? 0}%`,
-          changeType:
-            (s.revenueChange ?? 0) >= 0 ? ('positive' as const) : ('negative' as const),
+          changeType: (s.revenueChange ?? 0) >= 0 ? ('positive' as const) : ('negative' as const),
           icon: TrendingUp,
         },
       ]
@@ -455,7 +454,10 @@ const buildFallbackMetricsData = (
 ): MetricsData => {
   const revenueChange =
     earningsSummary.lastMonth > 0
-      ? Math.round(((earningsSummary.thisMonth - earningsSummary.lastMonth) / earningsSummary.lastMonth) * 100)
+      ? Math.round(
+          ((earningsSummary.thisMonth - earningsSummary.lastMonth) / earningsSummary.lastMonth) *
+            100
+        )
       : earningsSummary.thisMonth > 0
         ? 100
         : 0;
@@ -494,7 +496,7 @@ const buildFallbackMetricsData = (
       ranking: 'Governed runtime snapshot',
     },
     satisfaction: {
-      score: Number((Math.min(5, referralAnalytics.conversionRate / 20 || 0)).toFixed(1)),
+      score: Number(Math.min(5, referralAnalytics.conversionRate / 20 || 0).toFixed(1)),
       responses: referralAnalytics.paidCustomers || 0,
       trend: 'governed runtime',
     },
@@ -906,7 +908,9 @@ interface ClientProject {
   targetEndDate?: string;
 }
 
-function normalizeClientOrganization(client: Partial<V8PartnerClient> | Record<string, any>): ClientOrganization {
+function normalizeClientOrganization(
+  client: Partial<V8PartnerClient> | Record<string, any>
+): ClientOrganization {
   return {
     id: String(client.id || client.organizationId || client.name || 'client'),
     name: String(client.name || client.organizationName || client.clientName || 'Organization'),
@@ -921,19 +925,16 @@ function normalizeClientOrganization(client: Partial<V8PartnerClient> | Record<s
           ? client.userCount
           : 0,
     projects: typeof client.projects === 'number' ? client.projects : 0,
-    assessmentScore:
-      typeof client.assessmentScore === 'number' ? client.assessmentScore : 0,
+    assessmentScore: typeof client.assessmentScore === 'number' ? client.assessmentScore : 0,
     status: typeof client.status === 'string' ? client.status : 'inactive',
-    onboardedAt:
-      typeof client.onboardedAt === 'string'
-        ? client.onboardedAt
-        : undefined,
-    contractValue:
-      typeof client.contractValue === 'number' ? client.contractValue : undefined,
+    onboardedAt: typeof client.onboardedAt === 'string' ? client.onboardedAt : undefined,
+    contractValue: typeof client.contractValue === 'number' ? client.contractValue : undefined,
   };
 }
 
-function normalizeClientProject(project: Partial<V8PartnerProject> | Record<string, any>): ClientProject {
+function normalizeClientProject(
+  project: Partial<V8PartnerProject> | Record<string, any>
+): ClientProject {
   return {
     id: String(project.id || 'project'),
     name: String(project.name || 'Project'),
@@ -943,10 +944,7 @@ function normalizeClientProject(project: Partial<V8PartnerProject> | Record<stri
     progress: typeof project.progress === 'number' ? project.progress : 0,
     status: typeof project.status === 'string' ? project.status : 'active',
     startDate: typeof project.startDate === 'string' ? project.startDate : undefined,
-    targetEndDate:
-      typeof project.targetEndDate === 'string'
-        ? project.targetEndDate
-        : undefined,
+    targetEndDate: typeof project.targetEndDate === 'string' ? project.targetEndDate : undefined,
   };
 }
 
@@ -2913,7 +2911,10 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
 
         const params = new URLSearchParams(location.search);
         params.set('tab', 'partner-home');
-        navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
+        navigate(
+          { pathname: ROUTES.PARTNER.LANDING, search: params.toString() },
+          { replace: true }
+        );
         return;
       }
 

@@ -242,7 +242,9 @@ function matchesAudience(update: UpdateRow, userRole: string, superadmin: boolea
   if (audience === 'all') return true;
   if (audience === 'admins') return ['ADMIN', 'SUPERADMIN'].includes(userRole);
   if (audience === 'superadmins') return superadmin;
-  const targetedRoles = safeJson<string[]>(update.target_roles, []).map((role) => normalizeRole(role));
+  const targetedRoles = safeJson<string[]>(update.target_roles, []).map((role) =>
+    normalizeRole(role)
+  );
   if (targetedRoles.length === 0) return true;
   return targetedRoles.includes(userRole);
 }
@@ -381,7 +383,9 @@ router.get(
           ...mapped,
           isRead: readMap.has(row.id),
           readAt: readMap.get(row.id) || null,
-          isContextMatch: Boolean(currentView && mapped.targetView && mapped.targetView === currentView),
+          isContextMatch: Boolean(
+            currentView && mapped.targetView && mapped.targetView === currentView
+          ),
         };
       })
       .sort((a, b) => Number(b.isContextMatch) - Number(a.isContextMatch));
@@ -485,9 +489,13 @@ router.get(
 
     const orgId = (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
     const superadmin = isSuperAdmin(req);
-    const scope = String(req.query?.scope || 'relevant').trim().toLowerCase();
+    const scope = String(req.query?.scope || 'relevant')
+      .trim()
+      .toLowerCase();
     const requestedOrgId = String(req.query?.organizationId || '').trim();
-    const status = String(req.query?.status || 'all').trim().toLowerCase();
+    const status = String(req.query?.status || 'all')
+      .trim()
+      .toLowerCase();
 
     const params: Array<string | number | null> = [];
     let whereSql = 'WHERE 1 = 1';
@@ -534,7 +542,9 @@ router.get(
       { fallback: false }
     );
 
-    const items = rows.filter((row) => superadmin || canManageUpdate(req, row) || row.organization_id === null);
+    const items = rows.filter(
+      (row) => superadmin || canManageUpdate(req, row) || row.organization_id === null
+    );
     const summary = {
       total: items.length,
       draft: items.filter((row) => row.status === 'draft').length,
@@ -560,7 +570,8 @@ router.post(
     await ensureFeatureUpdatesSchema();
     requireAdmin(req);
 
-    const actorOrgId = (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
+    const actorOrgId =
+      (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
     const userId = req.user?.id || null;
     const superadmin = isSuperAdmin(req);
     const title = String(req.body?.title || '').trim();
@@ -569,9 +580,7 @@ router.post(
     const tags = Array.isArray(req.body?.tags) ? req.body.tags : [];
     const actionPayload = req.body?.actionPayload || {};
     const requestedOrgId = String(req.body?.organizationId || '').trim();
-    const organizationId = superadmin
-      ? requestedOrgId || null
-      : actorOrgId;
+    const organizationId = superadmin ? requestedOrgId || null : actorOrgId;
     const audience = sanitizeEnum(req.body?.audience, VALID_AUDIENCES, 'all');
     const targetRoles = sanitizeRoles(req.body?.targetRoles);
     const surface = sanitizeEnum(req.body?.surface, VALID_SURFACES, 'global');
@@ -660,14 +669,14 @@ router.put(
     if (!row) return res.status(404).json({ error: 'Not found' });
     if (!canManageUpdate(req, row)) return res.status(403).json({ error: 'Forbidden' });
     if (row.status === 'published') {
-      return res.status(400).json({ error: 'Published updates cannot be edited; archive and republish instead' });
+      return res
+        .status(400)
+        .json({ error: 'Published updates cannot be edited; archive and republish instead' });
     }
     if (effectiveFrom && expiresAt && effectiveFrom >= expiresAt) {
       return res.status(400).json({ error: 'effectiveFrom must be before expiresAt' });
     }
-    const organizationId = superadmin
-      ? requestedOrgId || null
-      : row.organization_id;
+    const organizationId = superadmin ? requestedOrgId || null : row.organization_id;
     const nextStatus: UpdateStatus =
       requestedStatus === 'published' ? (row.status as UpdateStatus) : requestedStatus;
 
@@ -742,7 +751,8 @@ router.post(
 
     const updateId = String(req.params.id || '').trim();
     const actorId = req.user?.id || null;
-    const actorOrgId = (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
+    const actorOrgId =
+      (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
     const actorIsSuperAdmin = isSuperAdmin(req);
 
     const update = await dbGet<UpdateRow>(
@@ -796,12 +806,18 @@ router.post(
     // In-app notification distribution
     const users =
       update.organization_id === null && actorIsSuperAdmin
-        ? await dbAll<{ id: string; email?: string; organization_id?: string | null; role?: string }>(
-            `SELECT id, email, organization_id, role FROM users`,
-            [],
-            { fallback: true }
-          )
-        : await dbAll<{ id: string; email?: string; organization_id?: string | null; role?: string }>(
+        ? await dbAll<{
+            id: string;
+            email?: string;
+            organization_id?: string | null;
+            role?: string;
+          }>(`SELECT id, email, organization_id, role FROM users`, [], { fallback: true })
+        : await dbAll<{
+            id: string;
+            email?: string;
+            organization_id?: string | null;
+            role?: string;
+          }>(
             `SELECT id, email, organization_id, role FROM users WHERE organization_id = ?`,
             [update.organization_id || actorOrgId],
             { fallback: true }
@@ -814,12 +830,20 @@ router.post(
         ? String((actionPayload as any).label)
         : null;
     const audience = sanitizeEnum(update.audience, VALID_AUDIENCES, 'all');
-    const targetRoles = safeJson<string[]>(update.target_roles, []).map((role) => normalizeRole(role));
+    const targetRoles = safeJson<string[]>(update.target_roles, []).map((role) =>
+      normalizeRole(role)
+    );
 
     for (const u of users) {
       const recipientRole = normalizeRole((u as any)?.role);
       const recipientIsSuperAdmin = recipientRole === 'SUPERADMIN';
-      if (!matchesAudience({ ...update, audience, target_roles: JSON.stringify(targetRoles) }, recipientRole, recipientIsSuperAdmin)) {
+      if (
+        !matchesAudience(
+          { ...update, audience, target_roles: JSON.stringify(targetRoles) },
+          recipientRole,
+          recipientIsSuperAdmin
+        )
+      ) {
         continue;
       }
       try {
@@ -860,7 +884,13 @@ router.post(
       for (const u of users) {
         const recipientRole = normalizeRole((u as any)?.role);
         const recipientIsSuperAdmin = recipientRole === 'SUPERADMIN';
-        if (!matchesAudience({ ...update, audience, target_roles: JSON.stringify(targetRoles) }, recipientRole, recipientIsSuperAdmin)) {
+        if (
+          !matchesAudience(
+            { ...update, audience, target_roles: JSON.stringify(targetRoles) },
+            recipientRole,
+            recipientIsSuperAdmin
+          )
+        ) {
           continue;
         }
         if (!u.email) continue;

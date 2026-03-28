@@ -16,23 +16,23 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  ToolCollaborationAdapter,
-  ToolReadinessAudit,
   AIProposalVisibility,
   AIProposalVisibilityState,
-  RegisterAdapterParams,
-  RecordReadinessAuditParams,
-  SetAIProposalVisibilityParams,
-  VersioningPolicy,
   LockType,
   PrimitiveCheck,
+  RecordReadinessAuditParams,
+  RegisterAdapterParams,
+  SetAIProposalVisibilityParams,
+  ToolCollaborationAdapter,
+  ToolReadinessAudit,
+  VersioningPolicy,
 } from '../../types/toolCollaborationAdapter.js';
 import {
-  RegisterAdapterParamsSchema,
   RecordReadinessAuditParamsSchema,
+  RegisterAdapterParamsSchema,
   SetAIProposalVisibilityParamsSchema,
-  VALID_PROPOSAL_TRANSITIONS,
   TERMINAL_PROPOSAL_STATES,
+  VALID_PROPOSAL_TRANSITIONS,
 } from '../../types/toolCollaborationAdapter.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -157,7 +157,7 @@ function rowToProposal(row: ProposalRow): AIProposalVisibility {
 
 function isValidProposalTransition(
   from: AIProposalVisibilityState,
-  to: AIProposalVisibilityState,
+  to: AIProposalVisibilityState
 ): boolean {
   const allowed = VALID_PROPOSAL_TRANSITIONS[from];
   return allowed.includes(to);
@@ -172,7 +172,7 @@ function isValidProposalTransition(
  * Upserts on (organization_id, tool_name).
  */
 export async function registerAdapter(
-  params: RegisterAdapterParams,
+  params: RegisterAdapterParams
 ): Promise<ToolCollaborationAdapter> {
   const validated = RegisterAdapterParamsSchema.parse(params);
 
@@ -182,7 +182,7 @@ export async function registerAdapter(
     `SELECT * FROM v8_tool_collaboration_adapters
      WHERE organization_id = ? AND tool_name = ?`,
     [validated.organizationId, validated.toolName],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (existing) {
@@ -206,11 +206,11 @@ export async function registerAdapter(
         now,
         validated.organizationId,
         validated.toolName,
-      ],
+      ]
     );
 
     logger.info(
-      `${LOG_PREFIX} Updated adapter for ${validated.toolName} in org ${validated.organizationId}`,
+      `${LOG_PREFIX} Updated adapter for ${validated.toolName} in org ${validated.organizationId}`
     );
 
     return {
@@ -272,11 +272,11 @@ export async function registerAdapter(
       adapter.collaborationMode,
       adapter.registeredAt,
       adapter.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Registered adapter ${adapterId} for ${validated.toolName} in org ${validated.organizationId}`,
+    `${LOG_PREFIX} Registered adapter ${adapterId} for ${validated.toolName} in org ${validated.organizationId}`
   );
 
   return adapter;
@@ -287,13 +287,13 @@ export async function registerAdapter(
  */
 export async function getAdapter(
   toolName: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolCollaborationAdapter | null> {
   const row = await dbGet<AdapterRow>(
     `SELECT * FROM v8_tool_collaboration_adapters
      WHERE tool_name = ? AND organization_id = ?`,
     [toolName, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -303,15 +303,13 @@ export async function getAdapter(
 /**
  * Get all adapters for an organization.
  */
-export async function getAllAdapters(
-  organizationId: string,
-): Promise<ToolCollaborationAdapter[]> {
+export async function getAllAdapters(organizationId: string): Promise<ToolCollaborationAdapter[]> {
   const rows = await dbAll<AdapterRow>(
     `SELECT * FROM v8_tool_collaboration_adapters
      WHERE organization_id = ?
      ORDER BY tool_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToAdapter);
@@ -326,7 +324,7 @@ export async function getAllAdapters(
  * (append-only audit trail).
  */
 export async function recordReadinessAudit(
-  params: RecordReadinessAuditParams,
+  params: RecordReadinessAuditParams
 ): Promise<ToolReadinessAudit> {
   const validated = RecordReadinessAuditParamsSchema.parse(params);
 
@@ -356,11 +354,11 @@ export async function recordReadinessAudit(
       audit.overallReadiness,
       audit.auditedAt,
       audit.auditedBy,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Recorded readiness audit ${auditId} for ${validated.toolName} in org ${validated.organizationId}: ${validated.overallReadiness}`,
+    `${LOG_PREFIX} Recorded readiness audit ${auditId} for ${validated.toolName} in org ${validated.organizationId}: ${validated.overallReadiness}`
   );
 
   return audit;
@@ -371,7 +369,7 @@ export async function recordReadinessAudit(
  */
 export async function getReadinessAudit(
   toolName: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ToolReadinessAudit | null> {
   const row = await dbGet<AuditRow>(
     `SELECT * FROM v8_tool_readiness_audits
@@ -379,7 +377,7 @@ export async function getReadinessAudit(
      ORDER BY audited_at DESC
      LIMIT 1`,
     [toolName, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -396,7 +394,7 @@ export async function getReadinessAudit(
  * visibility state, validating the state machine.
  */
 export async function setAIProposalVisibility(
-  params: SetAIProposalVisibilityParams,
+  params: SetAIProposalVisibilityParams
 ): Promise<AIProposalVisibility> {
   const validated = SetAIProposalVisibilityParamsSchema.parse(params);
 
@@ -407,7 +405,7 @@ export async function setAIProposalVisibility(
       `SELECT * FROM v8_ai_proposal_visibility
        WHERE proposal_id = ? AND organization_id = ?`,
       [validated.proposalId, validated.organizationId],
-      { fallback: true },
+      { fallback: true }
     );
 
     if (existing) {
@@ -415,14 +413,14 @@ export async function setAIProposalVisibility(
 
       if (TERMINAL_PROPOSAL_STATES.has(currentVisibility)) {
         throw new Error(
-          `Proposal ${validated.proposalId} is in terminal state '${currentVisibility}' and cannot be transitioned`,
+          `Proposal ${validated.proposalId} is in terminal state '${currentVisibility}' and cannot be transitioned`
         );
       }
 
       if (!isValidProposalTransition(currentVisibility, validated.visibility)) {
         throw new Error(
           `Invalid proposal visibility transition: ${currentVisibility} → ${validated.visibility}. ` +
-            `Allowed from ${currentVisibility}: [${VALID_PROPOSAL_TRANSITIONS[currentVisibility].join(', ')}]`,
+            `Allowed from ${currentVisibility}: [${VALID_PROPOSAL_TRANSITIONS[currentVisibility].join(', ')}]`
         );
       }
 
@@ -430,11 +428,11 @@ export async function setAIProposalVisibility(
         `UPDATE v8_ai_proposal_visibility
          SET visibility = ?, updated_at = ?
          WHERE proposal_id = ? AND organization_id = ?`,
-        [validated.visibility, now, validated.proposalId, validated.organizationId],
+        [validated.visibility, now, validated.proposalId, validated.organizationId]
       );
 
       logger.info(
-        `${LOG_PREFIX} Proposal ${validated.proposalId}: ${currentVisibility} → ${validated.visibility}`,
+        `${LOG_PREFIX} Proposal ${validated.proposalId}: ${currentVisibility} → ${validated.visibility}`
       );
 
       return {
@@ -480,11 +478,11 @@ export async function setAIProposalVisibility(
       JSON.stringify(proposal.proposalPayload),
       proposal.createdAt,
       proposal.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Created proposal ${proposalId} for ${validated.toolName} as ${validated.visibility}`,
+    `${LOG_PREFIX} Created proposal ${proposalId} for ${validated.toolName} as ${validated.visibility}`
   );
 
   return proposal;
@@ -495,13 +493,13 @@ export async function setAIProposalVisibility(
  */
 export async function getAIProposalVisibility(
   proposalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<AIProposalVisibility | null> {
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM v8_ai_proposal_visibility
      WHERE proposal_id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;

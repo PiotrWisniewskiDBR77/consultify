@@ -35,8 +35,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CellRenderer } from './CellRenderer';
@@ -417,7 +417,13 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 { Icon: Italic, before: '_', after: '_', titleKey: 'Italic' },
                 { Icon: Heading1, before: '## ', after: '', titleKey: 'Heading' },
                 { Icon: List, before: '\n- ', after: '', titleKey: 'List' },
-                { Icon: Link2, before: '[', after: '](url)', placeholder: 'text', titleKey: 'Link' },
+                {
+                  Icon: Link2,
+                  before: '[',
+                  after: '](url)',
+                  placeholder: 'text',
+                  titleKey: 'Link',
+                },
                 { Icon: Code, before: '`', after: '`', placeholder: 'code', titleKey: 'Code' },
               ].map(({ Icon, before, after, placeholder, titleKey }) => (
                 <button
@@ -437,7 +443,13 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 onClick={() => setBodyEditMode(bodyEditMode === 'edit' ? 'preview' : 'edit')}
                 className="text-[10px] font-semibold px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
               >
-                {bodyEditMode === 'edit' ? (isPl ? 'Podgląd' : 'Preview') : (isPl ? 'Edycja' : 'Edit')}
+                {bodyEditMode === 'edit'
+                  ? isPl
+                    ? 'Podgląd'
+                    : 'Preview'
+                  : isPl
+                    ? 'Edycja'
+                    : 'Edit'}
               </button>
             </div>
             {bodyEditMode === 'edit' ? (
@@ -450,15 +462,21 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 }}
                 disabled={locked}
                 rows={6}
-                placeholder={isPl ? 'Notatki, kontekst, szczegóły...' : 'Notes, context, details...'}
+                placeholder={
+                  isPl ? 'Notatki, kontekst, szczegóły...' : 'Notes, context, details...'
+                }
                 className="w-full bg-transparent border-0 outline-none text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400/60 resize-none leading-relaxed focus:ring-0"
               />
             ) : (
               <div className="min-h-[120px] max-h-[180px] overflow-auto rounded-lg bg-slate-50/80 dark:bg-navy-900/50 px-3 py-2">
                 {React.createElement(ReactMarkdown as any, {
                   remarkPlugins: [remarkGfm],
-                  className: 'prose prose-sm dark:prose-invert max-w-none text-xs text-slate-700 dark:text-slate-300',
-                  children: node.data?.bodyMarkdown || node.data?.description || (isPl ? 'Brak treści' : 'No content'),
+                  className:
+                    'prose prose-sm dark:prose-invert max-w-none text-xs text-slate-700 dark:text-slate-300',
+                  children:
+                    node.data?.bodyMarkdown ||
+                    node.data?.description ||
+                    (isPl ? 'Brak treści' : 'No content'),
                 })}
               </div>
             )}
@@ -646,8 +664,15 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                       detail: { source: node.id, target: n.id },
                                     })
                                   );
-                                  const prev = (node.data?._relations as { source: string; target: string }[]) || [];
-                                  onFieldChange(node.id, '_relations', [...prev, { source: node.id, target: n.id }]);
+                                  const prev =
+                                    (node.data?._relations as {
+                                      source: string;
+                                      target: string;
+                                    }[]) || [];
+                                  onFieldChange(node.id, '_relations', [
+                                    ...prev,
+                                    { source: node.id, target: n.id },
+                                  ]);
                                   onAddRelation?.(node.id, n.id);
                                   setRelationDropdownOpen(false);
                                   setRelationSearch('');
@@ -734,42 +759,45 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {isPl ? 'Powiązane artefakty' : 'Linked artifacts'} (
                     {Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks.length : 0})
                   </label>
-                  {Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0 && (
-                    <div className="space-y-1">
-                      {node.data.artifactLinks.map((link: any, idx: number) => {
-                        const artType =
-                          link.artifactRef?.type || link.artifactType || link.type || 'unknown';
-                        const artId = link.artifactRef?.id || link.artifactId || link.id || '';
-                        const artLabel = link.label || link.title || `${artType}:${artId}`;
-                        return (
-                          <button
-                            key={`art-${idx}`}
-                            onClick={() => {
-                              if (artType && artId) {
-                                window.dispatchEvent(
-                                  new CustomEvent('mywork-open-item', {
-                                    detail: { type: artType, id: artId, name: artLabel },
-                                  })
-                                );
-                              }
-                            }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                              <Paperclip size={14} className="text-blue-500" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 truncate block">
-                                {artLabel}
-                              </span>
-                              <span className="text-[9px] text-slate-400 uppercase">{artType}</span>
-                            </div>
-                            <ArrowRight size={10} className="text-blue-400 flex-shrink-0" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {Array.isArray(node.data?.artifactLinks) &&
+                    node.data.artifactLinks.length > 0 && (
+                      <div className="space-y-1">
+                        {node.data.artifactLinks.map((link: any, idx: number) => {
+                          const artType =
+                            link.artifactRef?.type || link.artifactType || link.type || 'unknown';
+                          const artId = link.artifactRef?.id || link.artifactId || link.id || '';
+                          const artLabel = link.label || link.title || `${artType}:${artId}`;
+                          return (
+                            <button
+                              key={`art-${idx}`}
+                              onClick={() => {
+                                if (artType && artId) {
+                                  window.dispatchEvent(
+                                    new CustomEvent('mywork-open-item', {
+                                      detail: { type: artType, id: artId, name: artLabel },
+                                    })
+                                  );
+                                }
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                <Paperclip size={14} className="text-blue-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 truncate block">
+                                  {artLabel}
+                                </span>
+                                <span className="text-[9px] text-slate-400 uppercase">
+                                  {artType}
+                                </span>
+                              </div>
+                              <ArrowRight size={10} className="text-blue-400 flex-shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   {!locked && (
                     <div ref={artifactDropdownRef} className="relative mt-2">
                       <button

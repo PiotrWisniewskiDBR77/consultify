@@ -58,7 +58,12 @@ interface DistributionManagerProps {
   onClose: () => void;
 }
 
-const CHANNELS: { id: Channel; en: string; pl: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+const CHANNELS: {
+  id: Channel;
+  en: string;
+  pl: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}[] = [
   { id: 'email', en: 'Email', pl: 'Email', icon: Mail },
   { id: 'slack', en: 'Slack', pl: 'Slack', icon: MessageSquare },
   { id: 'teams', en: 'Teams', pl: 'Teams', icon: MessageSquare },
@@ -290,7 +295,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => { setSourceType('table'); setSourceId(tableId); }}
+                    onClick={() => {
+                      setSourceType('table');
+                      setSourceId(tableId);
+                    }}
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === 'table'
                         ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
@@ -321,7 +329,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 >
                   <option value="">{isPl ? 'Wybierz widok...' : 'Select view...'}</option>
                   {views.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
                   ))}
                 </select>
               )}
@@ -362,7 +372,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   return (
                     <button
                       key={ch.id}
-                      onClick={() => { setChannel(ch.id); setChannelConfig({}); }}
+                      onClick={() => {
+                        setChannel(ch.id);
+                        setChannelConfig({});
+                      }}
                       className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                         channel === ch.id
                           ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
@@ -440,7 +453,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     }`}
                   >
                     {schedule === s.value && <Check size={14} className="text-pink-500" />}
-                    <Clock size={14} className={schedule === s.value ? 'text-pink-500' : 'text-slate-400'} />
+                    <Clock
+                      size={14}
+                      className={schedule === s.value ? 'text-pink-500' : 'text-slate-400'}
+                    />
                     {isPl ? s.pl : s.en}
                     {s.value && (
                       <span className="ml-auto text-[10px] text-slate-400">{s.value}</span>
@@ -472,7 +488,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 <SummaryRow label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
                 <SummaryRow
                   label={isPl ? 'Źródło' : 'Source'}
-                  value={sourceType === 'table' ? (isPl ? 'Tabela' : 'Table') : (isPl ? 'Widok' : 'View')}
+                  value={
+                    sourceType === 'table' ? (isPl ? 'Tabela' : 'Table') : isPl ? 'Widok' : 'View'
+                  }
                 />
                 <SummaryRow label={isPl ? 'Format' : 'Format'} value={format.toUpperCase()} />
                 <SummaryRow
@@ -495,7 +513,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   {channel === 'email' && (
                     <p>
                       {isPl ? 'Email z załącznikiem' : 'Email with attachment'}{' '}
-                      <strong>{name}.{format}</strong>{' '}
+                      <strong>
+                        {name}.{format}
+                      </strong>{' '}
                       {isPl ? 'do' : 'to'}: {(channelConfig.to as string) || '(no recipients)'}
                     </p>
                   )}
@@ -531,7 +551,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
           >
-            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : (isPl ? 'Wstecz' : 'Back')}
+            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
           </button>
           {step === 'review' ? (
             <button
@@ -625,7 +645,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   key={dist.id}
                   className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
                 >
-                  <ChannelIcon size={16} className="flex-shrink-0 text-slate-500 dark:text-slate-400" />
+                  <ChannelIcon
+                    size={16}
+                    className="flex-shrink-0 text-slate-500 dark:text-slate-400"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -640,13 +663,19 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     </div>
                     <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
                       {dist.format?.toUpperCase()} · {isPl ? chDef.pl : chDef.en}
-                      {dist.schedule && <> · <Clock size={9} className="inline" /> {dist.schedule}</>}
+                      {dist.schedule && (
+                        <>
+                          {' '}
+                          · <Clock size={9} className="inline" /> {dist.schedule}
+                        </>
+                      )}
                       {dist.send_count > 0 && (
-                        <> · {dist.send_count}× {isPl ? 'wysłano' : 'sent'}</>
+                        <>
+                          {' '}
+                          · {dist.send_count}× {isPl ? 'wysłano' : 'sent'}
+                        </>
                       )}
-                      {dist.last_sent_at && (
-                        <> · {formatTime(dist.last_sent_at)}</>
-                      )}
+                      {dist.last_sent_at && <> · {formatTime(dist.last_sent_at)}</>}
                     </div>
                   </div>
 
@@ -657,7 +686,11 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       className="rounded-lg p-1.5 text-pink-600 transition-colors hover:bg-pink-50 disabled:opacity-50 dark:text-pink-400 dark:hover:bg-pink-900/20"
                       title={isPl ? 'Wyślij teraz' : 'Send now'}
                     >
-                      {isExecuting ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                      {isExecuting ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Play size={12} />
+                      )}
                     </button>
                     <button
                       onClick={() => handleToggle(dist.id)}
@@ -666,7 +699,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                           ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
                           : 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20'
                       }`}
-                      title={dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : (isPl ? 'Wznów' : 'Resume')}
+                      title={
+                        dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : isPl ? 'Wznów' : 'Resume'
+                      }
                     >
                       {dist.is_active ? <Pause size={12} /> : <Power size={12} />}
                     </button>

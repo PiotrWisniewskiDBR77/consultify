@@ -1,10 +1,13 @@
-import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { describe, expect, it } from 'vitest';
 
 describe('ModuleSyncService', () => {
   it('ModuleSyncService.ts exists and exports expected functions', () => {
-    const filePath = path.resolve(process.cwd(), 'server/src/services/tablePlatform/ModuleSyncService.ts');
+    const filePath = path.resolve(
+      process.cwd(),
+      'server/src/services/tablePlatform/ModuleSyncService.ts'
+    );
     expect(fs.existsSync(filePath)).toBe(true);
 
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -14,15 +17,21 @@ describe('ModuleSyncService', () => {
   });
 
   it('syncToModule accepts modelId, targetModule, and options', () => {
-    const filePath = path.resolve(process.cwd(), 'server/src/services/tablePlatform/ModuleSyncService.ts');
+    const filePath = path.resolve(
+      process.cwd(),
+      'server/src/services/tablePlatform/ModuleSyncService.ts'
+    );
     const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).toContain("targetModule: TargetModule");
-    expect(content).toContain("fieldMapping");
-    expect(content).toContain("kpiIds");
+    expect(content).toContain('targetModule: TargetModule');
+    expect(content).toContain('fieldMapping');
+    expect(content).toContain('kpiIds');
   });
 
   it('getLinkStatus returns status for all four modules', () => {
-    const filePath = path.resolve(process.cwd(), 'server/src/services/tablePlatform/ModuleSyncService.ts');
+    const filePath = path.resolve(
+      process.cwd(),
+      'server/src/services/tablePlatform/ModuleSyncService.ts'
+    );
     const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).toContain("'results'");
     expect(content).toContain("'finance'");
@@ -41,7 +50,10 @@ describe('ModuleSyncService', () => {
   });
 
   it('SyncResult type has correct shape', () => {
-    const filePath = path.resolve(process.cwd(), 'server/src/services/tablePlatform/ModuleSyncService.ts');
+    const filePath = path.resolve(
+      process.cwd(),
+      'server/src/services/tablePlatform/ModuleSyncService.ts'
+    );
     const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).toContain('syncId: string');
     expect(content).toContain('syncedRecords: number');

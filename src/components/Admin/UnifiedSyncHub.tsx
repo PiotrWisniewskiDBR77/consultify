@@ -45,14 +45,14 @@ import {
   type V8MultiplayerSurfacePresence,
 } from '@/services/api/v8/multiplayer';
 import {
-  V8SyncApi,
   shouldFallbackToLegacySync,
-  type V8SyncConnectorAuthState,
+  V8SyncApi,
   type V8SyncAuditEntry,
   type V8SyncAuthEscalation,
-  type V8SyncConnectorHealthSummary,
   type V8SyncCatalogConnector,
   type V8SyncConflictRecord,
+  type V8SyncConnectorAuthState,
+  type V8SyncConnectorHealthSummary,
   type V8SyncCredentialHealthSummary,
   type V8SyncErrorItem,
   type V8SyncHealthSummary,
@@ -118,7 +118,12 @@ interface IntegrationItem {
     tokenExpiresAt: string | null;
     lastVerificationAt: string | null;
     lastRefreshAt: string | null;
-    lastRefreshResult: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' | null;
+    lastRefreshResult:
+      | 'success'
+      | 'transient_failure'
+      | 'credential_expired'
+      | 'scope_revoked'
+      | null;
   } | null;
   connector: ConnectorInfo | null;
 }
@@ -252,7 +257,11 @@ const GOVERNED_REFRESH_POLICY_PRESETS: Record<
   V8SyncProviderFamily,
   { typicalTokenLifetimeMinutes: number; refreshWindowMinutes: number; maxRetryAttempts: number }
 > = {
-  google_workspace: { typicalTokenLifetimeMinutes: 60, refreshWindowMinutes: 10, maxRetryAttempts: 3 },
+  google_workspace: {
+    typicalTokenLifetimeMinutes: 60,
+    refreshWindowMinutes: 10,
+    maxRetryAttempts: 3,
+  },
   microsoft_365: { typicalTokenLifetimeMinutes: 60, refreshWindowMinutes: 10, maxRetryAttempts: 3 },
   atlassian: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 5 },
   asana: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 4 },
@@ -338,10 +347,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [errors, setErrors] = useState<SyncErrorItem[]>([]);
   const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
-  const [v8WorkspaceMapping, setV8WorkspaceMapping] =
-    useState<V8MultiplayerResourceMapping | null>(null);
-  const [v8WorkspaceBinding, setV8WorkspaceBinding] = useState<V8MultiplayerRoomBinding | null>(null);
-  const [v8WorkspacePresence, setV8WorkspacePresence] = useState<V8MultiplayerSurfacePresence[]>([]);
+  const [v8WorkspaceMapping, setV8WorkspaceMapping] = useState<V8MultiplayerResourceMapping | null>(
+    null
+  );
+  const [v8WorkspaceBinding, setV8WorkspaceBinding] = useState<V8MultiplayerRoomBinding | null>(
+    null
+  );
+  const [v8WorkspacePresence, setV8WorkspacePresence] = useState<V8MultiplayerSurfacePresence[]>(
+    []
+  );
   const [v8WorkspaceLocks, setV8WorkspaceLocks] = useState<V8MultiplayerLockRecord[]>([]);
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
@@ -356,7 +370,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [mutatingConnectorAuthId, setMutatingConnectorAuthId] = useState<string | null>(null);
   const [resolvingAuthEscalationId, setResolvingAuthEscalationId] = useState<string | null>(null);
-  const [recoveringAuthEscalationConnectorId, setRecoveringAuthEscalationConnectorId] = useState<string | null>(null);
+  const [recoveringAuthEscalationConnectorId, setRecoveringAuthEscalationConnectorId] = useState<
+    string | null
+  >(null);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [mutatingRefreshPolicyFamily, setMutatingRefreshPolicyFamily] =
     useState<V8SyncProviderFamily | null>(null);
@@ -368,14 +384,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingPendingConfigId, setEditingPendingConfigId] = useState<string | null>(null);
   const [savingPendingConfigId, setSavingPendingConfigId] = useState<string | null>(null);
-  const [pendingConfigDrafts, setPendingConfigDrafts] = useState<Record<string, Record<string, string>>>({});
-  const [externalAuthSessions, setExternalAuthSessions] = useState<Record<string, ExternalAuthSessionInfo>>({});
+  const [pendingConfigDrafts, setPendingConfigDrafts] = useState<
+    Record<string, Record<string, string>>
+  >({});
+  const [externalAuthSessions, setExternalAuthSessions] = useState<
+    Record<string, ExternalAuthSessionInfo>
+  >({});
   const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
   const [savingCredentialId, setSavingCredentialId] = useState<string | null>(null);
   const [credentialDrafts, setCredentialDrafts] = useState<Record<string, CredentialDraft>>({});
   const [editingRefreshResultId, setEditingRefreshResultId] = useState<string | null>(null);
   const [savingRefreshResultId, setSavingRefreshResultId] = useState<string | null>(null);
-  const [refreshResultDrafts, setRefreshResultDrafts] = useState<Record<string, RefreshResultDraft>>({});
+  const [refreshResultDrafts, setRefreshResultDrafts] = useState<
+    Record<string, RefreshResultDraft>
+  >({});
 
   const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
     const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
@@ -549,7 +571,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         } catch {
           return [target.providerFamily, null] as const;
         }
-      }),
+      })
     );
 
     setV8RefreshPolicies(Object.fromEntries(results));
@@ -571,13 +593,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           } catch {
             return [target.connectorId, null] as const;
           }
-        }),
+        })
       );
 
       setV8ConnectorHealth(
         Object.fromEntries(
-          results.filter((entry): entry is [string, V8SyncConnectorHealthSummary] => entry[1] !== null),
-        ),
+          results.filter(
+            (entry): entry is [string, V8SyncConnectorHealthSummary] => entry[1] !== null
+          )
+        )
       );
     } finally {
       setV8ConnectorHealthLoading(false);
@@ -748,8 +772,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         toast.success(
           t(
             'integrations.syncHub.connectInitiated',
-            'Connection started. The integration is pending external auth or configuration.',
-          ),
+            'Connection started. The integration is pending external auth or configuration.'
+          )
         );
         trackFunnelEvent('integration_connected', {
           connectorId,
@@ -763,11 +787,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   };
 
-  const handlePendingConfigDraftChange = (
-    integrationId: string,
-    field: string,
-    value: string,
-  ) => {
+  const handlePendingConfigDraftChange = (integrationId: string, field: string, value: string) => {
     setPendingConfigDrafts((current) => ({
       ...current,
       [integrationId]: {
@@ -780,12 +800,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const handleSavePendingConfig = async (integration: IntegrationItem) => {
     const draft = pendingConfigDrafts[integration.id] || {};
     const config = Object.fromEntries(
-      Object.entries(draft).filter(([, value]) => value.trim().length > 0),
+      Object.entries(draft).filter(([, value]) => value.trim().length > 0)
     );
 
     if (Object.keys(config).length === 0) {
       toast.error(
-        t('integrations.syncHub.setupConfigMissing', 'Enter at least one provider configuration value.'),
+        t(
+          'integrations.syncHub.setupConfigMissing',
+          'Enter at least one provider configuration value.'
+        )
       );
       return;
     }
@@ -823,19 +846,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         onboardingStatus === 'pending_external_auth'
           ? t(
               'integrations.syncHub.setupConfigSavedAuthPending',
-              'Configuration saved. External auth still needs to finish before sync controls become available.',
+              'Configuration saved. External auth still needs to finish before sync controls become available.'
             )
           : t(
               'integrations.syncHub.setupConfigSaved',
-              'Configuration saved. Finish the remaining onboarding steps before sync controls become available.',
-            ),
+              'Configuration saved. Finish the remaining onboarding steps before sync controls become available.'
+            )
       );
       setEditingPendingConfigId(null);
       setPendingConfigDrafts((current) => ({ ...current, [integration.id]: {} }));
       await loadAll();
     } catch {
       toast.error(
-        t('integrations.syncHub.setupConfigSaveFailed', 'Failed to save provider configuration.'),
+        t('integrations.syncHub.setupConfigSaveFailed', 'Failed to save provider configuration.')
       );
     } finally {
       setSavingPendingConfigId(null);
@@ -882,9 +905,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           data.onboardingStatus === 'pending_external_auth'
             ? t(
                 'integrations.syncHub.reauthPendingAuth',
-                'Re-authorization started. External auth still needs to complete before sync resumes.',
+                'Re-authorization started. External auth still needs to complete before sync resumes.'
               )
-            : t('integrations.syncHub.reauthStarted', 'Re-authorization started'),
+            : t('integrations.syncHub.reauthStarted', 'Re-authorization started')
         );
         trackFunnelEvent('integration_reauth_required', {
           integrationId,
@@ -1036,10 +1059,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       await Promise.all([fetchV8Conflicts(), fetchV8ConnectorHealth(), fetchIntegrations()]);
     } catch {
       toast.error(
-        t(
-          'integrations.syncHub.v8ConflictResolveFailed',
-          'Failed to resolve governed conflict',
-        ),
+        t('integrations.syncHub.v8ConflictResolveFailed', 'Failed to resolve governed conflict')
       );
     } finally {
       setResolvingConflictId(null);
@@ -1049,7 +1069,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const handleSetV8ConnectorAuthState = async (
     connectorId: string,
     targetState: V8SyncConnectorAuthState,
-    reason?: string,
+    reason?: string
   ) => {
     setMutatingConnectorAuthId(`${connectorId}:${targetState}`);
     try {
@@ -1059,16 +1079,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           ? t('integrations.syncHub.v8AuthMarkedHealthy', 'Governed auth state marked healthy')
           : t(
               'integrations.syncHub.v8AuthMarkedNeedsReauth',
-              'Governed auth state marked reauth needed',
-            ),
+              'Governed auth state marked reauth needed'
+            )
       );
-      await Promise.all([loadAll(), fetchV8ConnectorHealth(), fetchV8AuthHealth(), fetchV8AuthEscalations()]);
+      await Promise.all([
+        loadAll(),
+        fetchV8ConnectorHealth(),
+        fetchV8AuthHealth(),
+        fetchV8AuthEscalations(),
+      ]);
     } catch {
       toast.error(
-        t(
-          'integrations.syncHub.v8AuthStateUpdateFailed',
-          'Failed to update governed auth state',
-        ),
+        t('integrations.syncHub.v8AuthStateUpdateFailed', 'Failed to update governed auth state')
       );
     } finally {
       setMutatingConnectorAuthId(null);
@@ -1079,14 +1101,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     await handleSetV8ConnectorAuthState(
       integration.connectorId,
       'healthy',
-      'callback_verification_completed',
+      'callback_verification_completed'
     );
   };
 
   const handleCredentialDraftChange = (
     integrationId: string,
     field: keyof CredentialDraft,
-    value: string,
+    value: string
   ) => {
     setCredentialDrafts((current) => ({
       ...current,
@@ -1112,12 +1134,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       .map((value) => value.trim())
       .filter(Boolean);
 
-    if (!draft.providerAccountId.trim() || !draft.workspaceOrTenantId.trim() || scopesGranted.length === 0) {
+    if (
+      !draft.providerAccountId.trim() ||
+      !draft.workspaceOrTenantId.trim() ||
+      scopesGranted.length === 0
+    ) {
       toast.error(
         t(
           'integrations.syncHub.credentialMaterializationFieldsRequired',
-          'Provider account, workspace or tenant, and at least one scope are required.',
-        ),
+          'Provider account, workspace or tenant, and at least one scope are required.'
+        )
       );
       return;
     }
@@ -1131,10 +1157,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         tokenExpiresAt: draft.tokenExpiresAt.trim() || null,
       });
       toast.success(
-        t(
-          'integrations.syncHub.credentialMaterialized',
-          'Governed credential baseline recorded',
-        ),
+        t('integrations.syncHub.credentialMaterialized', 'Governed credential baseline recorded')
       );
       setEditingCredentialId(null);
       await loadAll();
@@ -1142,8 +1165,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       toast.error(
         t(
           'integrations.syncHub.credentialMaterializationFailed',
-          'Failed to record governed credential baseline',
-        ),
+          'Failed to record governed credential baseline'
+        )
       );
     } finally {
       setSavingCredentialId(null);
@@ -1166,12 +1189,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         data.authTransition === 'degraded_reauth_needed'
           ? t(
               'integrations.syncHub.refreshResultRecordedNeedsReauth',
-              'Governed refresh result recorded and reauthorization is now required',
+              'Governed refresh result recorded and reauthorization is now required'
             )
-          : t(
-              'integrations.syncHub.refreshResultRecorded',
-              'Governed refresh result recorded',
-            ),
+          : t('integrations.syncHub.refreshResultRecorded', 'Governed refresh result recorded')
       );
       setEditingRefreshResultId(null);
       await loadAll();
@@ -1179,8 +1199,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       toast.error(
         t(
           'integrations.syncHub.refreshResultRecordFailed',
-          'Failed to record governed refresh result',
-        ),
+          'Failed to record governed refresh result'
+        )
       );
     } finally {
       setSavingRefreshResultId(null);
@@ -1192,15 +1212,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     try {
       await V8SyncApi.resolveAuthEscalation(escalationId);
       toast.success(
-        t('integrations.syncHub.v8AuthEscalationResolved', 'Governed auth escalation resolved'),
+        t('integrations.syncHub.v8AuthEscalationResolved', 'Governed auth escalation resolved')
       );
       await Promise.all([fetchV8AuthEscalations(), fetchV8AuthHealth()]);
     } catch {
       toast.error(
         t(
           'integrations.syncHub.v8AuthEscalationResolveFailed',
-          'Failed to resolve governed auth escalation',
-        ),
+          'Failed to resolve governed auth escalation'
+        )
       );
     } finally {
       setResolvingAuthEscalationId(null);
@@ -1212,15 +1232,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       (integration) =>
         integration.connectorId === connectorId &&
         integration.connector?.authType === 'oauth2' &&
-        integration.status === 'requires_reauth',
+        integration.status === 'requires_reauth'
     );
 
     if (!recoveryTarget) {
       toast.error(
         t(
           'integrations.syncHub.v8AuthEscalationRecoveryUnavailable',
-          'No governed re-authorization target is available for this escalation yet',
-        ),
+          'No governed re-authorization target is available for this escalation yet'
+        )
       );
       return;
     }
@@ -1238,21 +1258,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     try {
       await V8SyncApi.setRefreshTimingPolicy(
         providerFamily,
-        GOVERNED_REFRESH_POLICY_PRESETS[providerFamily],
+        GOVERNED_REFRESH_POLICY_PRESETS[providerFamily]
       );
       toast.success(
-        t(
-          'integrations.syncHub.v8RefreshPolicyApplied',
-          'Governed refresh timing policy applied',
-        ),
+        t('integrations.syncHub.v8RefreshPolicyApplied', 'Governed refresh timing policy applied')
       );
       await fetchV8RefreshPolicies();
     } catch {
       toast.error(
         t(
           'integrations.syncHub.v8RefreshPolicyApplyFailed',
-          'Failed to apply governed refresh timing policy',
-        ),
+          'Failed to apply governed refresh timing policy'
+        )
       );
     } finally {
       setMutatingRefreshPolicyFamily(null);
@@ -1345,7 +1362,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const canResume = !isPendingOnboarding;
     const configuredFieldSet = new Set(int.configuredFields || []);
     const missingConfigFields = (int.connector?.configFields || []).filter(
-      (field) => !configuredFieldSet.has(field),
+      (field) => !configuredFieldSet.has(field)
     );
     const isEditingPendingConfig = editingPendingConfigId === int.id;
     const isEditingCredential = editingCredentialId === int.id;
@@ -1366,27 +1383,27 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       int.onboardingStatus === 'pending_external_auth'
         ? t(
             'integrations.syncHub.setupPendingAuthOnlyDesc',
-            'Required provider configuration is saved. Complete external auth before sync controls become available.',
+            'Required provider configuration is saved. Complete external auth before sync controls become available.'
           )
         : int.onboardingStatus === 'authorization_callback_received_pending_verification'
           ? t(
               'integrations.syncHub.setupCallbackReceivedDesc',
-              'The external authorization callback was received. Verification is still pending before sync controls become available.',
+              'The external authorization callback was received. Verification is still pending before sync controls become available.'
             )
-        : int.onboardingStatus === 'configuration_submitted_pending_validation'
-          ? t(
-              'integrations.syncHub.setupPendingValidationDesc',
-              'Configuration is saved. Provider validation must finish before sync controls become available.',
-            )
-          : int.onboardingStatus === 'pending_configuration'
+          : int.onboardingStatus === 'configuration_submitted_pending_validation'
             ? t(
-                'integrations.syncHub.setupPendingConfigOnlyDesc',
-                'Finish provider configuration before sync controls become available.',
+                'integrations.syncHub.setupPendingValidationDesc',
+                'Configuration is saved. Provider validation must finish before sync controls become available.'
               )
-            : t(
-                'integrations.syncHub.setupPendingDesc',
-                'Complete external auth or provider configuration before sync controls become available.',
-              );
+            : int.onboardingStatus === 'pending_configuration'
+              ? t(
+                  'integrations.syncHub.setupPendingConfigOnlyDesc',
+                  'Finish provider configuration before sync controls become available.'
+                )
+              : t(
+                  'integrations.syncHub.setupPendingDesc',
+                  'Complete external auth or provider configuration before sync controls become available.'
+                );
 
     return (
       <motion.div
@@ -1519,9 +1536,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <div className="font-medium">
                         {t('integrations.syncHub.setupPending', 'Connection setup still pending')}
                       </div>
-                      <div className="text-amber-200/80 mt-0.5">
-                        {pendingSetupDescription}
-                      </div>
+                      <div className="text-amber-200/80 mt-0.5">{pendingSetupDescription}</div>
                       {!!int.connector?.configFields?.length && (
                         <>
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1549,7 +1564,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               {
                                 configured: configuredFieldSet.size,
                                 total: int.connector.configFields.length,
-                              },
+                              }
                             )}
                           </div>
                         </>
@@ -1592,7 +1607,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 >
                                   {savingPendingConfigId === int.id
                                     ? t('common.saving', 'Saving...')
-                                    : t('integrations.syncHub.saveProviderConfig', 'Save provider config')}
+                                    : t(
+                                        'integrations.syncHub.saveProviderConfig',
+                                        'Save provider config'
+                                      )}
                                 </button>
                                 <button
                                   onClick={() => setEditingPendingConfigId(null)}
@@ -1610,7 +1628,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           <div className="font-medium text-sky-200">
                             {t(
                               'integrations.syncHub.externalAuthPrepared',
-                              'Governed external authorization is ready',
+                              'Governed external authorization is ready'
                             )}
                           </div>
                           <div className="mt-2">
@@ -1624,7 +1642,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               <ExternalLink size={12} />
                               {t(
                                 'integrations.syncHub.openExternalAuth',
-                                'Open provider authorization',
+                                'Open provider authorization'
                               )}
                             </a>
                           </div>
@@ -1634,19 +1652,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           <div className="mt-1 text-sky-100/60">
                             {t(
                               'integrations.syncHub.externalAuthPreparedDesc',
-                              'Use this governed authorization URL to finish the provider round-trip. It expires automatically if left unused.',
+                              'Use this governed authorization URL to finish the provider round-trip. It expires automatically if left unused.'
                             )}
                           </div>
                           <div className="mt-2 text-sky-100/60 break-all">
                             {t(
                               'integrations.syncHub.externalAuthCallbackUrl',
-                              'Registered callback URL:',
+                              'Registered callback URL:'
                             )}{' '}
                             {externalAuthSession.callbackUrl}
                           </div>
                         </div>
                       )}
-                      {int.onboardingStatus === 'authorization_callback_received_pending_verification' && (
+                      {int.onboardingStatus ===
+                        'authorization_callback_received_pending_verification' && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -1661,7 +1680,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             )}
                             {t(
                               'integrations.syncHub.markVerificationComplete',
-                              'Mark verification complete',
+                              'Mark verification complete'
                             )}
                           </button>
                         </div>
@@ -1696,18 +1715,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         <div className="font-medium text-violet-200">
                           {t(
                             'integrations.syncHub.governedCredentialBaseline',
-                            'Governed credential baseline',
+                            'Governed credential baseline'
                           )}
                         </div>
                         <div className="mt-1 text-violet-100/70">
                           {int.credential
                             ? t(
                                 'integrations.syncHub.governedCredentialBaselineSaved',
-                                'Credential metadata is recorded for governed refresh and recovery readback.',
+                                'Credential metadata is recorded for governed refresh and recovery readback.'
                               )
                             : t(
                                 'integrations.syncHub.governedCredentialBaselineMissing',
-                                'Record credential metadata here before broader governed refresh and recovery continuity can become real.',
+                                'Record credential metadata here before broader governed refresh and recovery continuity can become real.'
                               )}
                         </div>
                       </div>
@@ -1719,8 +1738,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         >
                           <CheckCircle2 size={12} />
                           {int.credential
-                            ? t('integrations.syncHub.editGovernedCredential', 'Edit governed credential')
-                            : t('integrations.syncHub.addGovernedCredential', 'Add governed credential')}
+                            ? t(
+                                'integrations.syncHub.editGovernedCredential',
+                                'Edit governed credential'
+                              )
+                            : t(
+                                'integrations.syncHub.addGovernedCredential',
+                                'Add governed credential'
+                              )}
                         </button>
                       )}
                     </div>
@@ -1784,7 +1809,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             type="text"
                             value={credentialDraft.providerAccountId}
                             onChange={(e) =>
-                              handleCredentialDraftChange(int.id, 'providerAccountId', e.target.value)
+                              handleCredentialDraftChange(
+                                int.id,
+                                'providerAccountId',
+                                e.target.value
+                              )
                             }
                             placeholder="acct-123"
                             className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
@@ -1798,7 +1827,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             type="text"
                             value={credentialDraft.workspaceOrTenantId}
                             onChange={(e) =>
-                              handleCredentialDraftChange(int.id, 'workspaceOrTenantId', e.target.value)
+                              handleCredentialDraftChange(
+                                int.id,
+                                'workspaceOrTenantId',
+                                e.target.value
+                              )
                             }
                             placeholder="tenant-456"
                             className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
@@ -1841,7 +1874,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           >
                             {savingCredentialId === int.id
                               ? t('common.saving', 'Saving...')
-                              : t('integrations.syncHub.saveGovernedCredential', 'Save governed credential')}
+                              : t(
+                                  'integrations.syncHub.saveGovernedCredential',
+                                  'Save governed credential'
+                                )}
                           </button>
                           <button
                             type="button"
@@ -1863,10 +1899,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15 transition-colors"
                           >
                             <RefreshCw size={12} />
-                            {t(
-                              'integrations.syncHub.recordRefreshResult',
-                              'Record refresh result',
-                            )}
+                            {t('integrations.syncHub.recordRefreshResult', 'Record refresh result')}
                           </button>
                         ) : (
                           <div className="space-y-2 rounded-lg border border-violet-500/20 bg-navy-950/30 p-3">
@@ -1879,7 +1912,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 onChange={(e) =>
                                   handleRefreshResultDraftChange(
                                     int.id,
-                                    e.target.value as RefreshResultDraft,
+                                    e.target.value as RefreshResultDraft
                                   )
                                 }
                                 className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-violet-500/40 focus:outline-none"
@@ -1899,7 +1932,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               >
                                 {savingRefreshResultId === int.id
                                   ? t('common.saving', 'Saving...')
-                                  : t('integrations.syncHub.saveRefreshResult', 'Save refresh result')}
+                                  : t(
+                                      'integrations.syncHub.saveRefreshResult',
+                                      'Save refresh result'
+                                    )}
                               </button>
                               <button
                                 type="button"
@@ -1974,20 +2010,21 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   {isPendingOnboarding && (
                     <span className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      {int.onboardingStatus === 'authorization_callback_received_pending_verification'
+                      {int.onboardingStatus ===
+                      'authorization_callback_received_pending_verification'
                         ? t(
                             'integrations.syncHub.setupPendingControlsVerification',
-                            'Verification still pending before sync controls unlock',
+                            'Verification still pending before sync controls unlock'
                           )
                         : int.onboardingStatus === 'pending_external_auth'
-                        ? t(
-                            'integrations.syncHub.setupPendingControlsAuthOnly',
-                            'Finish external auth to enable sync controls',
-                          )
-                        : t(
-                            'integrations.syncHub.setupPendingControls',
-                            'Finish auth/config to enable sync controls',
-                          )}
+                          ? t(
+                              'integrations.syncHub.setupPendingControlsAuthOnly',
+                              'Finish external auth to enable sync controls'
+                            )
+                          : t(
+                              'integrations.syncHub.setupPendingControls',
+                              'Finish auth/config to enable sync controls'
+                            )}
                     </span>
                   )}
                   <button
@@ -2160,7 +2197,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 (integration) =>
                   integration.connectorId === escalation.connectorId &&
                   integration.connector?.authType === 'oauth2' &&
-                  integration.status === 'requires_reauth',
+                  integration.status === 'requires_reauth'
               );
 
               return (
@@ -2171,27 +2208,32 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   <ShieldAlert size={14} className="text-orange-400 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-200">{escalation.connectorId}</span>
+                      <span className="text-xs font-medium text-slate-200">
+                        {escalation.connectorId}
+                      </span>
                       <span className="px-1.5 py-0.5 text-[11px] bg-orange-500/10 text-orange-300 rounded">
                         {t('integrations.syncHub.v8Escalated', 'escalated')}
                       </span>
                     </div>
                     <div className="text-xs text-slate-400 mt-0.5">
-                      {escalation.reason || t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
+                      {escalation.reason ||
+                        t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
                     </div>
-                    <div className="text-xs text-slate-600 mt-1">{timeAgo(escalation.escalatedAt)}</div>
+                    <div className="text-xs text-slate-600 mt-1">
+                      {timeAgo(escalation.escalatedAt)}
+                    </div>
                     {recoveryTarget ? (
                       <div className="mt-2 text-[11px] text-orange-200/70">
                         {t(
                           'integrations.syncHub.v8RecoveryTargetReady',
-                          'Governed re-authorization can start directly from this recovery panel.',
+                          'Governed re-authorization can start directly from this recovery panel.'
                         )}
                       </div>
                     ) : (
                       <div className="mt-2 text-[11px] text-orange-200/60">
                         {t(
                           'integrations.syncHub.v8RecoveryTargetMissing',
-                          'No governed re-authorization target is currently available for this escalation.',
+                          'No governed re-authorization target is currently available for this escalation.'
                         )}
                       </div>
                     )}
@@ -2246,13 +2288,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         {v8ConnectorHealthLoading ? (
           <div className="flex items-center justify-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             <Loader2 size={14} className="animate-spin mr-2" />
-            {t('integrations.syncHub.v8ConnectorHealthLoading', 'Loading governed connector health...')}
+            {t(
+              'integrations.syncHub.v8ConnectorHealthLoading',
+              'Loading governed connector health...'
+            )}
           </div>
         ) : v8ConnectorHealthTargets.length === 0 ? (
           <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t(
               'integrations.syncHub.v8NoConnectorTargets',
-              'No governed connector targets are available for this workspace yet.',
+              'No governed connector targets are available for this workspace yet.'
             )}
           </div>
         ) : (
@@ -2261,9 +2306,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               const health = v8ConnectorHealth[target.connectorId];
               const showMarkHealthy =
                 !health ||
-                ['unknown', 'connecting', 'connected_pending_verification', 'degraded_reauth_needed', 'degraded_scope_limited', 'suspended'].includes(
-                  health.authState,
-                );
+                [
+                  'unknown',
+                  'connecting',
+                  'connected_pending_verification',
+                  'degraded_reauth_needed',
+                  'degraded_scope_limited',
+                  'suspended',
+                ].includes(health.authState);
               const showMarkReauthNeeded =
                 health && ['healthy', 'connected_pending_verification'].includes(health.authState);
               const tone = !health
@@ -2337,7 +2387,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           {showMarkHealthy && (
                             <button
                               type="button"
-                              onClick={() => void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')}
+                              onClick={() =>
+                                void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')
+                              }
                               disabled={mutatingConnectorAuthId === `${target.connectorId}:healthy`}
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
                             >
@@ -2353,14 +2405,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             <button
                               type="button"
                               onClick={() =>
-                                void handleSetV8ConnectorAuthState(target.connectorId, 'degraded_reauth_needed')
+                                void handleSetV8ConnectorAuthState(
+                                  target.connectorId,
+                                  'degraded_reauth_needed'
+                                )
                               }
                               disabled={
-                                mutatingConnectorAuthId === `${target.connectorId}:degraded_reauth_needed`
+                                mutatingConnectorAuthId ===
+                                `${target.connectorId}:degraded_reauth_needed`
                               }
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 text-[11px] font-medium text-amber-300 hover:bg-amber-500/15 disabled:opacity-60 transition-colors"
                             >
-                              {mutatingConnectorAuthId === `${target.connectorId}:degraded_reauth_needed` ? (
+                              {mutatingConnectorAuthId ===
+                              `${target.connectorId}:degraded_reauth_needed` ? (
                                 <Loader2 size={12} className="animate-spin" />
                               ) : (
                                 <ShieldAlert size={12} />
@@ -2376,14 +2433,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <div className="text-xs text-slate-500 mt-3">
                         {t(
                           'integrations.syncHub.v8ConnectorHealthUnavailable',
-                          'Governed connector health is not available for this connector yet.',
+                          'Governed connector health is not available for this connector yet.'
                         )}
                       </div>
                       {showMarkHealthy && (
                         <div className="flex flex-wrap gap-2 mt-3">
                           <button
                             type="button"
-                            onClick={() => void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')}
+                            onClick={() =>
+                              void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')
+                            }
                             disabled={mutatingConnectorAuthId === `${target.connectorId}:healthy`}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
                           >
@@ -2429,13 +2488,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-200">{conflict.conflictClass}</span>
+                    <span className="text-xs font-medium text-slate-200">
+                      {conflict.conflictClass}
+                    </span>
                     <span className="px-1.5 py-0.5 text-[11px] bg-rose-500/10 text-rose-300 rounded uppercase">
                       {conflict.severity}
                     </span>
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">
-                    {conflict.resolutionPath || t('integrations.syncHub.v8ResolutionPending', 'Resolution pending')}
+                    {conflict.resolutionPath ||
+                      t('integrations.syncHub.v8ResolutionPending', 'Resolution pending')}
                   </div>
                   <div className="text-xs text-slate-600 mt-1">{timeAgo(conflict.createdAt)}</div>
                 </div>
@@ -2511,14 +2573,21 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </h3>
         {v8WorkspaceBinding ? (
           <div className="mb-3 text-xs text-slate-500">
-            {t('integrations.syncHub.v8WorkspaceRoom', 'Workspace room')}: {v8WorkspaceBinding.roomResourceId}
+            {t('integrations.syncHub.v8WorkspaceRoom', 'Workspace room')}:{' '}
+            {v8WorkspaceBinding.roomResourceId}
           </div>
         ) : null}
         {v8WorkspacePresence.length === 0 ? (
           <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {v8WorkspaceBinding
-              ? t('integrations.syncHub.v8NoWorkspacePresence', 'No governed workspace presence is active.')
-              : t('integrations.syncHub.v8NoWorkspaceBinding', 'No governed workspace room binding is available.')}
+              ? t(
+                  'integrations.syncHub.v8NoWorkspacePresence',
+                  'No governed workspace presence is active.'
+                )
+              : t(
+                  'integrations.syncHub.v8NoWorkspaceBinding',
+                  'No governed workspace room binding is available.'
+                )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -2536,7 +2605,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </span>
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">{presence.presenceType}</div>
-                  <div className="text-xs text-slate-600 mt-1">{timeAgo(presence.lastHeartbeat)}</div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    {timeAgo(presence.lastHeartbeat)}
+                  </div>
                 </div>
               </div>
             ))}
@@ -2650,10 +2721,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <div>
             <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
               <Zap size={14} className="text-violet-400" />
-              {t(
-                'integrations.syncHub.v8RefreshPolicies',
-                'Governed Refresh Timing Policies',
-              )}
+              {t('integrations.syncHub.v8RefreshPolicies', 'Governed Refresh Timing Policies')}
             </h3>
             <div className="space-y-2">
               {v8RefreshPolicyTargets.map((target) => {
@@ -2701,10 +2769,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         ) : (
                           <CheckCircle2 size={12} />
                         )}
-                        {t(
-                          'integrations.syncHub.v8ApplyGovernedPolicy',
-                          'Apply governed policy',
-                        )}
+                        {t('integrations.syncHub.v8ApplyGovernedPolicy', 'Apply governed policy')}
                       </button>
                     </div>
                   </div>

@@ -19,8 +19,8 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { CanvasToolType } from '../ideaSelectionTypes';
 import type { IdeaWorkspaceSeedIntent } from '../ideaEntryTypes';
+import type { CanvasToolType } from '../ideaSelectionTypes';
 
 interface IdeaStartupTemplatesProps {
   open: boolean;
@@ -36,16 +36,42 @@ const WORKSPACE_OPTIONS: {
   color: string;
 }[] = [
   { id: 'mindmap', icon: Network, labelPl: 'Mapa myśli', labelEn: 'Mind Map', color: 'violet' },
-  { id: 'process_flow', icon: GitFork, labelPl: 'Schemat procesu', labelEn: 'Process Flow', color: 'blue' },
+  {
+    id: 'process_flow',
+    icon: GitFork,
+    labelPl: 'Schemat procesu',
+    labelEn: 'Process Flow',
+    color: 'blue',
+  },
   { id: 'table', icon: Table2, labelPl: 'Tabela', labelEn: 'Table', color: 'emerald' },
   { id: 'whiteboard', icon: PenTool, labelPl: 'Whiteboard', labelEn: 'Whiteboard', color: 'amber' },
 ];
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; ring: string }> = {
-  violet: { bg: 'bg-violet-500/10', text: 'text-violet-500', border: 'border-violet-500/30', ring: 'ring-violet-500/40' },
-  blue: { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/30', ring: 'ring-blue-500/40' },
-  emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/30', ring: 'ring-emerald-500/40' },
-  amber: { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/30', ring: 'ring-amber-500/40' },
+  violet: {
+    bg: 'bg-violet-500/10',
+    text: 'text-violet-500',
+    border: 'border-violet-500/30',
+    ring: 'ring-violet-500/40',
+  },
+  blue: {
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-500',
+    border: 'border-blue-500/30',
+    ring: 'ring-blue-500/40',
+  },
+  emerald: {
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-500',
+    border: 'border-emerald-500/30',
+    ring: 'ring-emerald-500/40',
+  },
+  amber: {
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-500',
+    border: 'border-amber-500/30',
+    ring: 'ring-amber-500/40',
+  },
 };
 
 export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
@@ -82,7 +108,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="w-[520px] rounded-2xl border border-white/[0.06] bg-white/95 dark:bg-navy-900/[0.97] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* ── Header ─────────────────────────────────────────── */}
@@ -119,9 +147,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {isPl ? 'Twój pomysł' : 'Your idea'}
             </div>
             <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
-              {isPl
-                ? 'Opisz problem, pomysł albo wynik'
-                : 'Describe the problem, idea, or outcome'}
+              {isPl ? 'Opisz problem, pomysł albo wynik' : 'Describe the problem, idea, or outcome'}
             </h4>
             <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
               {isPl
@@ -163,7 +189,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     : 'Transfer seed to workspace and launch builder flow.'}
                 </div>
               </div>
-              <ArrowRight size={12} className="text-slate-400/60 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight
+                size={12}
+                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+              />
             </button>
 
             {/* Blank canvas */}
@@ -185,7 +214,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     : 'Open a calm workspace with your chosen starting system.'}
                 </div>
               </div>
-              <ArrowRight size={12} className="text-slate-400/60 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight
+                size={12}
+                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+              />
             </button>
 
             {/* Use template */}
@@ -207,7 +239,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     : 'Enter via a starter template with a default work system.'}
                 </div>
               </div>
-              <ArrowRight size={12} className="text-slate-400/60 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight
+                size={12}
+                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+              />
             </button>
           </div>
 
@@ -228,13 +263,20 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     onClick={() => setSelectedWorkspace(ws.id)}
                     className={`
                       flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all duration-200
-                      ${active
-                        ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
-                        : 'border border-slate-200/40 dark:border-white/[0.04] hover:border-slate-300/70 dark:hover:border-white/[0.08] hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'}
+                      ${
+                        active
+                          ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
+                          : 'border border-slate-200/40 dark:border-white/[0.04] hover:border-slate-300/70 dark:hover:border-white/[0.08] hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
+                      }
                     `}
                   >
-                    <Icon size={18} className={active ? c.text : 'text-slate-400 dark:text-slate-500'} />
-                    <span className={`text-[11px] font-medium ${active ? c.text : 'text-slate-500 dark:text-slate-400'}`}>
+                    <Icon
+                      size={18}
+                      className={active ? c.text : 'text-slate-400 dark:text-slate-500'}
+                    />
+                    <span
+                      className={`text-[11px] font-medium ${active ? c.text : 'text-slate-500 dark:text-slate-400'}`}
+                    >
                       {isPl ? ws.labelPl : ws.labelEn}
                     </span>
                   </button>

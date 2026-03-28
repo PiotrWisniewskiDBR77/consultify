@@ -28,7 +28,6 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-import { useHelpSidePanel } from '../../contexts/HelpContext';
 // Enterprise System Components
 import {
   EnterpriseAnalyticsPanel,
@@ -42,6 +41,7 @@ import {
 } from '../../components/SuperAdmin/system';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { SystemHealth } from '../../components/SystemHealth';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
 import { APIManagementView } from './APIManagementView';
 

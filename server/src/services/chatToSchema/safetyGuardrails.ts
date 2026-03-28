@@ -18,54 +18,71 @@ export const PROPOSAL_LIMITS = {
   MAX_OPERATIONS_TOTAL: 30,
 };
 
-export function validateProposalLimits(proposal: SchemaProposal): { valid: boolean; errors: string[] } {
+export function validateProposalLimits(proposal: SchemaProposal): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
-  const tableOps = proposal.operations.filter(op => op.operation_type === 'create_table');
+  const tableOps = proposal.operations.filter((op) => op.operation_type === 'create_table');
   if (tableOps.length > PROPOSAL_LIMITS.MAX_TABLES_PER_PROPOSAL) {
-    errors.push(`Proposal creates ${tableOps.length} tables (max ${PROPOSAL_LIMITS.MAX_TABLES_PER_PROPOSAL})`);
+    errors.push(
+      `Proposal creates ${tableOps.length} tables (max ${PROPOSAL_LIMITS.MAX_TABLES_PER_PROPOSAL})`
+    );
   }
 
   for (const op of tableOps) {
     const fields = (op.payload as Record<string, unknown>)?.fields;
     if (Array.isArray(fields) && fields.length > PROPOSAL_LIMITS.MAX_FIELDS_PER_TABLE) {
-      errors.push(`Table "${(op.payload as Record<string, unknown>)?.name}" has ${fields.length} fields (max ${PROPOSAL_LIMITS.MAX_FIELDS_PER_TABLE})`);
+      errors.push(
+        `Table "${(op.payload as Record<string, unknown>)?.name}" has ${fields.length} fields (max ${PROPOSAL_LIMITS.MAX_FIELDS_PER_TABLE})`
+      );
     }
   }
 
-  const fieldOps = proposal.operations.filter(op =>
-    op.operation_type === 'add_field' || op.operation_type === 'create_field'
+  const fieldOps = proposal.operations.filter(
+    (op) => op.operation_type === 'add_field' || op.operation_type === 'create_field'
   );
   if (fieldOps.length > PROPOSAL_LIMITS.MAX_FIELDS_ADDED) {
-    errors.push(`Proposal adds ${fieldOps.length} fields (max ${PROPOSAL_LIMITS.MAX_FIELDS_ADDED})`);
+    errors.push(
+      `Proposal adds ${fieldOps.length} fields (max ${PROPOSAL_LIMITS.MAX_FIELDS_ADDED})`
+    );
   }
 
-  const recordOps = proposal.operations.filter(op =>
-    op.operation_type === 'create_record' ||
-    op.operation_type === 'batch_create_records' ||
-    op.operation_type === 'seed_records'
+  const recordOps = proposal.operations.filter(
+    (op) =>
+      op.operation_type === 'create_record' ||
+      op.operation_type === 'batch_create_records' ||
+      op.operation_type === 'seed_records'
   );
   let totalRecords = 0;
   for (const op of recordOps) {
     if (op.operation_type === 'batch_create_records') {
-      totalRecords += ((op.payload as Record<string, unknown>)?.records as unknown[] | undefined)?.length ?? 0;
+      totalRecords +=
+        ((op.payload as Record<string, unknown>)?.records as unknown[] | undefined)?.length ?? 0;
     } else {
       totalRecords += 1;
     }
   }
   if (totalRecords > PROPOSAL_LIMITS.MAX_RECORDS_SEEDED) {
-    errors.push(`Proposal seeds ${totalRecords} records (max ${PROPOSAL_LIMITS.MAX_RECORDS_SEEDED})`);
+    errors.push(
+      `Proposal seeds ${totalRecords} records (max ${PROPOSAL_LIMITS.MAX_RECORDS_SEEDED})`
+    );
   }
 
-  const viewOps = proposal.operations.filter(op =>
-    op.operation_type === 'create_view' || op.operation_type === 'add_view'
+  const viewOps = proposal.operations.filter(
+    (op) => op.operation_type === 'create_view' || op.operation_type === 'add_view'
   );
   if (viewOps.length > PROPOSAL_LIMITS.MAX_VIEWS_PER_PROPOSAL) {
-    errors.push(`Proposal creates ${viewOps.length} views (max ${PROPOSAL_LIMITS.MAX_VIEWS_PER_PROPOSAL})`);
+    errors.push(
+      `Proposal creates ${viewOps.length} views (max ${PROPOSAL_LIMITS.MAX_VIEWS_PER_PROPOSAL})`
+    );
   }
 
   if (proposal.operations.length > PROPOSAL_LIMITS.MAX_OPERATIONS_TOTAL) {
-    errors.push(`Proposal has ${proposal.operations.length} operations (max ${PROPOSAL_LIMITS.MAX_OPERATIONS_TOTAL})`);
+    errors.push(
+      `Proposal has ${proposal.operations.length} operations (max ${PROPOSAL_LIMITS.MAX_OPERATIONS_TOTAL})`
+    );
   }
 
   return { valid: errors.length === 0, errors };
@@ -121,9 +138,7 @@ export function checkRateLimit(
 // Schema validation checks (WS-D §7)
 // ---------------------------------------------------------------------------
 
-const RESERVED_FIELD_KEYS = new Set([
-  'id', 'created_at', 'updated_at', 'version', 'table_id',
-]);
+const RESERVED_FIELD_KEYS = new Set(['id', 'created_at', 'updated_at', 'version', 'table_id']);
 
 export interface SchemaValidationResult {
   valid: boolean;
@@ -138,7 +153,7 @@ export async function validateSchemaOperations(
     payload?: Record<string, unknown>;
   }>,
   getFieldsForTable: (tableId: string) => Promise<Array<{ key: string; name: string }>>,
-  getTableCountForBase: (baseId: string) => Promise<number>,
+  getTableCountForBase: (baseId: string) => Promise<number>
 ): Promise<SchemaValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -158,8 +173,9 @@ export async function validateSchemaOperations(
         try {
           const existingFields = await getFieldsForTable(tableId);
           const duplicate = existingFields.find(
-            f => f.name.toLowerCase() === fieldKey.toLowerCase() ||
-                 f.key.toLowerCase() === fieldKeyLower
+            (f) =>
+              f.name.toLowerCase() === fieldKey.toLowerCase() ||
+              f.key.toLowerCase() === fieldKeyLower
           );
           if (duplicate) {
             errors.push(`Field "${fieldKey}" already exists in table ${tableId}`);
@@ -180,7 +196,9 @@ export async function validateSchemaOperations(
         const linkedTableId = (opts.linkedTableId ?? opts.linked_table_id) as string | undefined;
         const currentTableId = op.target?.table_id ?? op.target?.tableId;
         if (linkedTableId && currentTableId && linkedTableId === currentTableId) {
-          warnings.push(`Field "${fieldKey}" creates a self-referencing link on table ${currentTableId}`);
+          warnings.push(
+            `Field "${fieldKey}" creates a self-referencing link on table ${currentTableId}`
+          );
         }
       }
     }

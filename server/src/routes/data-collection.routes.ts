@@ -3,12 +3,13 @@
  * Connector CRUD, test, run, auto-map, run history, and webhook receive
  */
 
-import { Router, Request as ExpressRequest, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
-import { featureFlags } from '../config/FeatureFlags.js';
-import logger from '../utils/Logger.js';
-import { getDatabase } from '../database/Database.js';
+import { Request as ExpressRequest, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+
+import { featureFlags } from '../config/FeatureFlags.js';
+import { getDatabase } from '../database/Database.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 type Request = ExpressRequest<Record<string, string>>;
@@ -33,7 +34,9 @@ router.post('/webhook/:connectorId/receive', async (req: Request, res: Response)
       `SELECT id, config FROM tp_connectors WHERE id = $1 AND connector_type = 'webhook'`,
       [connectorId]
     );
-    const connector = connResult.rows[0] as { id: string; config: Record<string, unknown> } | undefined;
+    const connector = connResult.rows[0] as
+      | { id: string; config: Record<string, unknown> }
+      | undefined;
     if (!connector) {
       return res.status(404).json({ error: 'Webhook connector not found' });
     }
@@ -41,11 +44,10 @@ router.post('/webhook/:connectorId/receive', async (req: Request, res: Response)
     const credentials = connector.config.credentials as Record<string, unknown> | undefined;
     const expectedSecret = credentials?.webhookSecret as string | undefined;
     if (expectedSecret) {
-      const { validateWebhookSecret } = await import('../services/dataCollection/connectors/webhook.js');
+      const { validateWebhookSecret } =
+        await import('../services/dataCollection/connectors/webhook.js');
       const raw = req.headers['x-webhook-secret'] ?? req.query.secret;
-      const providedSecret = String(
-        Array.isArray(raw) ? raw[0] ?? '' : raw ?? ''
-      );
+      const providedSecret = String(Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? ''));
       if (!validateWebhookSecret(providedSecret, expectedSecret)) {
         return res.status(401).json({ error: 'Invalid webhook secret' });
       }
@@ -88,7 +90,8 @@ router.post('/connectors', async (req: Request, res: Response) => {
     const orgId = authReq.organizationId;
     if (!orgId) return res.status(403).json({ error: 'Organization context required' });
 
-    const { workspaceId, name, connectorType, config, targetTableId, fieldMapping, schedule } = req.body ?? {};
+    const { workspaceId, name, connectorType, config, targetTableId, fieldMapping, schedule } =
+      req.body ?? {};
     if (!workspaceId || typeof workspaceId !== 'string') {
       return res.status(400).json({ error: 'workspaceId is required' });
     }
@@ -129,7 +132,9 @@ router.post('/connectors', async (req: Request, res: Response) => {
     return res.status(201).json(result.rows[0]);
   } catch (e) {
     logger.error('[DataCollection] create connector failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Failed to create connector', details: (e as Error).message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to create connector', details: (e as Error).message });
   }
 });
 
@@ -139,7 +144,8 @@ router.get('/connectors', async (req: Request, res: Response) => {
     const orgId = authReq.organizationId;
     if (!orgId) return res.status(403).json({ error: 'Organization context required' });
 
-    const workspaceId = typeof req.query.workspaceId === 'string' ? req.query.workspaceId : undefined;
+    const workspaceId =
+      typeof req.query.workspaceId === 'string' ? req.query.workspaceId : undefined;
     const db = getDatabase();
 
     let sql = 'SELECT * FROM tp_connectors WHERE organization_id = $1';
@@ -236,7 +242,9 @@ router.patch('/connectors/:id', async (req: Request, res: Response) => {
     return res.status(200).json(result.rows[0]);
   } catch (e) {
     logger.error('[DataCollection] update connector failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Failed to update connector', details: (e as Error).message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to update connector', details: (e as Error).message });
   }
 });
 
@@ -351,10 +359,10 @@ router.post('/connectors/:id/schedule', async (req: Request, res: Response) => {
 
     const schedule = { enabled: enabled !== false, intervalMinutes };
 
-    await db.query(
-      `UPDATE tp_connectors SET schedule = $2, updated_at = NOW() WHERE id = $1`,
-      [id, JSON.stringify(schedule)]
-    );
+    await db.query(`UPDATE tp_connectors SET schedule = $2, updated_at = NOW() WHERE id = $1`, [
+      id,
+      JSON.stringify(schedule),
+    ]);
 
     const { syncScheduler } = await import('../services/dataCollection/index.js');
     if (schedule.enabled) {
@@ -380,10 +388,9 @@ router.delete('/connectors/:id/schedule', async (req: Request, res: Response) =>
       return res.status(404).json({ error: 'Connector not found' });
     }
 
-    await db.query(
-      `UPDATE tp_connectors SET schedule = NULL, updated_at = NOW() WHERE id = $1`,
-      [id]
-    );
+    await db.query(`UPDATE tp_connectors SET schedule = NULL, updated_at = NOW() WHERE id = $1`, [
+      id,
+    ]);
 
     const { syncScheduler } = await import('../services/dataCollection/index.js');
     syncScheduler.unscheduleConnector(id);
@@ -391,7 +398,9 @@ router.delete('/connectors/:id/schedule', async (req: Request, res: Response) =>
     return res.status(204).send();
   } catch (e) {
     logger.error('[DataCollection] delete schedule failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Failed to delete schedule', details: (e as Error).message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to delete schedule', details: (e as Error).message });
   }
 });
 
@@ -415,7 +424,8 @@ router.post('/connectors/:id/auto-map', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Connector has no target table set' });
     }
 
-    const { connectorRegistry, schemaMappingEngine } = await import('../services/dataCollection/index.js');
+    const { connectorRegistry, schemaMappingEngine } =
+      await import('../services/dataCollection/index.js');
     const impl = connectorRegistry.get(connector.connector_type as string);
     const externalSchema = await impl.fetchSchema(connector.config as Record<string, unknown>);
 

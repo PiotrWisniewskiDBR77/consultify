@@ -26,42 +26,10 @@ import { Request, Response, Router } from 'express';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { upload } from '../middleware/fileUpload.middleware.js';
 import {
-  autoMapLines,
-  classifyStatementDocument,
-  confirmStatement,
-  createStatement,
-  detectContainedStatementTypes,
-  detectStatementType,
-  evaluateStatementReadiness,
-  extractFinancialLines,
-  runCfoAutoValidation,
-  getLatestStatementIngestRun,
-  loadPersistedStatementCandidateRows,
-  learnStatementAliases,
-  loadStatementSourceText,
-  locateStatementSections,
-  openStatementRepairSession,
-  persistStatementValidationLedger,
-  persistStatementValueEvidence,
-  persistStatementCandidateRows,
-  persistStatementExtractedSections,
-  persistStatementMappingCandidates,
-  recordStatementQualityRun,
-  recordStatementSourceArtifact,
-  resolveStatementColumnSelection,
-  resolveDuplicateSuggestedMappings,
-  saveStatementValues,
-  snapshotCanonicalStatementVersion,
-  snapshotStatementValueVersion,
-  startStatementIngestRun,
-  loadLatestStatementVersionSnapshot,
-  updateStatementMetadata,
-  updateStatementIngestRun,
-  updateStatementReadinessState,
-  updateStatementStatus,
-  validateStatement,
-} from '../services/financialStatementService.js';
-import type { DetectionResult } from '../services/financialStatementService.js';
+  searchStatementDocumentIntelligence,
+  upsertStatementDocumentIntelligence,
+} from '../services/documentIntelligenceService.js';
+import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -69,36 +37,12 @@ import {
   summarizeTextPayload,
 } from '../services/financeDiagnosticsService.js';
 import {
-  searchStatementDocumentIntelligence,
-  upsertStatementDocumentIntelligence,
-} from '../services/documentIntelligenceService.js';
-import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
-import { saveStatementValuesFlow } from '../services/financialStatementValueWriteService.js';
-import PDFParserService from '../services/pdfParserService.js';
-import {
-  analyzeAndExtractFullDocument,
-  extractFinancialLinesWithAnthropic,
-  extractFinancialLinesWithOpenAI,
-} from '../services/openAIFinancialExtractionService.js';
-import {
-  mapUnmappedLinesWithLLM,
-  applyLlmProposals,
-  mapDuplicateConflictLinesWithLLM,
-  applySecondPassProposals,
-} from '../services/llmFinancialMappingService.js';
-import {
-  classifyMappingTier,
   assessCoverage,
-  isNonFinancialByPolicy,
+  classifyMappingTier,
   isLikelySubtotalOrAggregate,
+  isNonFinancialByPolicy,
 } from '../services/financeMappingPolicy.js';
-import {
-  computeGrowthRatios,
-  computeRatios,
-  getBenchmarks,
-  getRatioCatalog,
-  upsertBenchmark,
-} from '../services/ratioAnalysisService.js';
+import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
 import {
   assignStatementToExistingPack,
   detachStatementFromPack,
@@ -107,7 +51,63 @@ import {
   recomputeStatementPackForOrganization,
   syncStatementToPack,
 } from '../services/financialStatementPackService.js';
-import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
+import type { DetectionResult } from '../services/financialStatementService.js';
+import {
+  autoMapLines,
+  classifyStatementDocument,
+  confirmStatement,
+  createStatement,
+  detectContainedStatementTypes,
+  detectStatementType,
+  evaluateStatementReadiness,
+  extractFinancialLines,
+  getLatestStatementIngestRun,
+  learnStatementAliases,
+  loadLatestStatementVersionSnapshot,
+  loadPersistedStatementCandidateRows,
+  loadStatementSourceText,
+  locateStatementSections,
+  openStatementRepairSession,
+  persistStatementCandidateRows,
+  persistStatementExtractedSections,
+  persistStatementMappingCandidates,
+  persistStatementValidationLedger,
+  persistStatementValueEvidence,
+  recordStatementQualityRun,
+  recordStatementSourceArtifact,
+  resolveDuplicateSuggestedMappings,
+  resolveStatementColumnSelection,
+  runCfoAutoValidation,
+  saveStatementValues,
+  snapshotCanonicalStatementVersion,
+  snapshotStatementValueVersion,
+  startStatementIngestRun,
+  updateStatementIngestRun,
+  updateStatementMetadata,
+  updateStatementReadinessState,
+  updateStatementStatus,
+  validateStatement,
+} from '../services/financialStatementService.js';
+import { saveStatementValuesFlow } from '../services/financialStatementValueWriteService.js';
+import {
+  applyLlmProposals,
+  applySecondPassProposals,
+  mapDuplicateConflictLinesWithLLM,
+  mapUnmappedLinesWithLLM,
+} from '../services/llmFinancialMappingService.js';
+import {
+  analyzeAndExtractFullDocument,
+  extractFinancialLinesWithAnthropic,
+  extractFinancialLinesWithOpenAI,
+} from '../services/openAIFinancialExtractionService.js';
+import PDFParserService from '../services/pdfParserService.js';
+import {
+  computeGrowthRatios,
+  computeRatios,
+  getBenchmarks,
+  getRatioCatalog,
+  upsertBenchmark,
+} from '../services/ratioAnalysisService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -253,7 +253,8 @@ async function extractTextFromFile(
       const lines: string[] = [];
       for (const sheet of rankedSheets) {
         lines.push(`=== Sheet: ${sheet.name} ===`);
-        const cleanedLines = sheet.csv.split('\n')
+        const cleanedLines = sheet.csv
+          .split('\n')
           .filter((l: string) => l.trim().length > 0)
           .filter((l: string) => !/^\t+$/.test(l));
         lines.push(...cleanedLines);
@@ -478,7 +479,9 @@ router.post(
           ? 'Upload completed with unknown statement type fallback.'
           : 'Upload completed and initial document profile detected.',
       reasonCodes:
-        detection.statementType === 'UNKNOWN' ? ['DETECTION_UNKNOWN_FALLBACK'] : ['UPLOAD_COMPLETE'],
+        detection.statementType === 'UNKNOWN'
+          ? ['DETECTION_UNKNOWN_FALLBACK']
+          : ['UPLOAD_COMPLETE'],
       payload: {
         detection,
         documentProfile,
@@ -543,8 +546,11 @@ router.post(
     const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
 
     logFinanceEvent('statement.smartUpload.started', {
-      traceId, organizationId: orgId, userId,
-      fileName: file.originalname, sizeBytes: file.size,
+      traceId,
+      organizationId: orgId,
+      userId,
+      fileName: file.originalname,
+      sizeBytes: file.size,
     });
 
     // 2. LLM analyzes entire document — finds all sections, extracts all lines
@@ -558,7 +564,9 @@ router.post(
       // Fallback: create single statement with heuristic detection (old behavior)
       const detection = detectStatementType(text);
       const documentProfile = classifyStatementDocument({
-        fileName: file.originalname, parseMethod: effectiveParseMethod, text,
+        fileName: file.originalname,
+        parseMethod: effectiveParseMethod,
+        text,
       });
       const statementId = await createStatement({
         organizationId: orgId,
@@ -578,19 +586,28 @@ router.post(
         createdBy: userId,
       });
       const statementPackId = await syncStatementToPack(statementId);
-      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId], { fallback: false });
+      await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId],
+        { fallback: false }
+      );
 
       return res.status(201).json({
-        success: true, mode: 'fallback',
-        statementPackId, statementIds: [statementId],
+        success: true,
+        mode: 'fallback',
+        statementPackId,
+        statementIds: [statementId],
         analysis: null,
         message: 'LLM analysis unavailable — created single statement with heuristic detection.',
       });
     }
 
     // 3. Create statements for each section found by LLM
-    const createdStatements: Array<{ statementId: string; statementType: string; lineCount: number }> = [];
+    const createdStatements: Array<{
+      statementId: string;
+      statementType: string;
+      lineCount: number;
+    }> = [];
     let packId: string | null = null;
 
     for (const section of analysis.sections) {
@@ -613,8 +630,11 @@ router.post(
       });
 
       // Store text for later reference
-      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId], { fallback: false });
+      await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId],
+        { fallback: false }
+      );
 
       // Sync to pack (first statement creates the pack, rest join it)
       const thisPackId = await syncStatementToPack(statementId);
@@ -629,12 +649,18 @@ router.post(
       }
 
       const ingestRunId = await startStatementIngestRun({
-        statementId, organizationId: orgId,
-        sourceFileName: file.originalname, sourceFilePath: file.path,
+        statementId,
+        organizationId: orgId,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
         parseMethod: effectiveParseMethod,
-        documentClass: 'mixed_report', extractionStrategy: 'llm_full_document',
-        templateFamily: null, rawTextLength: text.length,
-        summary: { analysis: { entityName: analysis.entityName, sectionType: section.statementType } },
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        rawTextLength: text.length,
+        summary: {
+          analysis: { entityName: analysis.entityName, sectionType: section.statementType },
+        },
         createdBy: userId,
       });
 
@@ -651,21 +677,27 @@ router.post(
 
       let mappedLines = extractedLines;
       try {
-        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, { organizationId: orgId });
+        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+          organizationId: orgId,
+        });
         if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
       } catch (mapError) {
         logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
-          statementId, statementType: section.statementType, error: String(mapError),
+          statementId,
+          statementType: section.statementType,
+          error: String(mapError),
         });
       }
 
-      const valuesToSave = mappedLines.map(l => ({
+      const valuesToSave = mappedLines.map((l) => ({
         canonicalLineId: (l as any).suggestedCanonicalId || null,
         originalLabel: l.originalLabel,
         value: l.value,
         confidence: l.confidence,
         sourceRow: l.sourceRow,
-        mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as 'auto' | 'unmapped',
+        mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
+          | 'auto'
+          | 'unmapped',
         isNonFinancial: !!(l as any).isNonFinancial,
       }));
 
@@ -701,14 +733,19 @@ router.post(
         }
       } catch (valError) {
         logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
-          statementId, error: String(valError),
+          statementId,
+          error: String(valError),
         });
       }
 
       await updateStatementIngestRun({
-        ingestRunId, currentStage: 'complete', runStatus: 'completed',
-        documentClass: 'mixed_report', extractionStrategy: 'llm_full_document',
-        templateFamily: null, rawTextLength: text.length,
+        ingestRunId,
+        currentStage: 'complete',
+        runStatus: 'completed',
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        rawTextLength: text.length,
       });
 
       createdStatements.push({
@@ -723,21 +760,26 @@ router.post(
       try {
         await recomputeStatementPackForOrganization(orgId, packId);
       } catch (recomputeError) {
-        logger.warn('[SmartUpload] Pack recompute failed', { packId, error: String(recomputeError) });
+        logger.warn('[SmartUpload] Pack recompute failed', {
+          packId,
+          error: String(recomputeError),
+        });
       }
     }
 
     logFinanceEvent('statement.smartUpload.completed', {
-      traceId, packId, entityName: analysis.entityName,
+      traceId,
+      packId,
+      entityName: analysis.entityName,
       sectionCount: analysis.sections.length,
-      statementIds: createdStatements.map(s => s.statementId),
+      statementIds: createdStatements.map((s) => s.statementId),
     });
 
     res.status(201).json({
       success: true,
       mode: 'smart',
       statementPackId: packId,
-      statementIds: createdStatements.map(s => s.statementId),
+      statementIds: createdStatements.map((s) => s.statementId),
       statements: createdStatements,
       analysis: {
         entityName: analysis.entityName,
@@ -748,7 +790,7 @@ router.post(
         scaling: analysis.scaling,
         language: analysis.language,
         documentDescription: analysis.documentDescription,
-        sectionTypes: analysis.sections.map(s => s.statementType),
+        sectionTypes: analysis.sections.map((s) => s.statementType),
         totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
         warnings: analysis.warnings,
       },
@@ -802,8 +844,8 @@ router.post(
       periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
       currency: String(req.body?.currency || '').trim() || autoDetection.currency,
       scaling:
-        ((String(req.body?.scaling || '').trim() || autoDetection.scaling) as DetectionResult['scaling']) ||
-        'thousands',
+        ((String(req.body?.scaling || '').trim() ||
+          autoDetection.scaling) as DetectionResult['scaling']) || 'thousands',
       confidence:
         manualSelectionApplied &&
         ((autoDetection.containedStatementTypes || []).length > 1 ||
@@ -832,12 +874,15 @@ router.post(
         templateFamily: documentProfile.templateFamily,
       });
     } catch (error) {
-      logger.warn('[FinanceStatements] Detect metadata persistence failed; continuing with request-local selection', {
-        statementId,
-        requestedStatementType: req.body?.statementType,
-        effectiveStatementType: detection.statementType,
-        error: String((error as Error)?.message || error || 'unknown'),
-      });
+      logger.warn(
+        '[FinanceStatements] Detect metadata persistence failed; continuing with request-local selection',
+        {
+          statementId,
+          requestedStatementType: req.body?.statementType,
+          effectiveStatementType: detection.statementType,
+          error: String((error as Error)?.message || error || 'unknown'),
+        }
+      );
     }
     const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
@@ -926,15 +971,12 @@ router.post(
       normalizeStatementTypeInput(req.body?.statementType) ||
       normalizeStatementTypeInput(stmt.statement_type) ||
       'P&L';
-    const effectivePeriodLabel = String(req.body?.periodLabel || '').trim() || stmt.period_label || undefined;
+    const effectivePeriodLabel =
+      String(req.body?.periodLabel || '').trim() || stmt.period_label || undefined;
     const effectiveCurrency = String(req.body?.currency || '').trim() || stmt.currency || undefined;
     const effectiveScaling = String(req.body?.scaling || '').trim() || stmt.scaling || undefined;
     const minimumAiLines =
-      effectiveStatementType === 'CF'
-        ? 2
-        : ['BS', 'P&L'].includes(effectiveStatementType)
-          ? 3
-          : 2;
+      effectiveStatementType === 'CF' ? 2 : ['BS', 'P&L'].includes(effectiveStatementType) ? 3 : 2;
 
     const openAiExtraction =
       documentProfile.documentClass === 'spreadsheet' || documentProfile.documentClass === 'csv'
@@ -957,7 +999,8 @@ router.post(
             })
           : null;
     const aiExtraction =
-      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+      anthropicExtraction &&
+      anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? anthropicExtraction
         : openAiExtraction;
     const extractedSections = locateStatementSections(text, effectiveStatementType);
@@ -978,19 +1021,21 @@ router.post(
       ...extractionRaw,
       lines: extractionRaw.lines.map((line) => ({
         ...line,
-        selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
+        selectedPeriodLabel:
+          line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
       })),
     };
     const strategy =
-      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+      anthropicExtraction &&
+      anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
           ? 'anthropic_text_fallback'
           : 'anthropic_text_primary'
         : openAiExtraction && openAiExtraction.lines.length > 0
           ? 'openai_input_file'
-        : documentProfile.documentClass === 'spreadsheet'
-          ? 'spreadsheet_structured'
-          : 'local_parser';
+          : documentProfile.documentClass === 'spreadsheet'
+            ? 'spreadsheet_structured'
+            : 'local_parser';
 
     logFinanceEvent('statement.extract.completed', {
       traceId,
@@ -1051,7 +1096,8 @@ router.post(
       extractionStrategy: strategy,
       templateFamily: documentProfile.templateFamily,
       rawTextLength: text.length,
-      reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+      reasonCodes:
+        extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
       summary: {
         sections: persistedSections.length,
         candidateRows: candidateRows.length,
@@ -1146,7 +1192,10 @@ router.post(
           traceId,
         });
         if (llmMappingResult.proposals.length > 0) {
-          const { applied, skipped } = applyLlmProposals(heuristicMapped, llmMappingResult.proposals);
+          const { applied, skipped } = applyLlmProposals(
+            heuristicMapped,
+            llmMappingResult.proposals
+          );
           logFinanceEvent('statement.mapping.llm_applied', {
             traceId,
             statementId,
@@ -1163,7 +1212,9 @@ router.post(
 
     const mapped = resolveDuplicateSuggestedMappings(heuristicMapped);
 
-    const conflictCount = mapped.filter((l) => l.mappingReason === 'duplicate_candidate_conflict').length;
+    const conflictCount = mapped.filter(
+      (l) => l.mappingReason === 'duplicate_candidate_conflict'
+    ).length;
     let llmSecondPassResult = null;
     if (conflictCount > 0) {
       try {
@@ -1173,7 +1224,10 @@ router.post(
           traceId,
         });
         if (llmSecondPassResult.proposals.length > 0) {
-          const { applied, skipped } = applySecondPassProposals(mapped, llmSecondPassResult.proposals);
+          const { applied, skipped } = applySecondPassProposals(
+            mapped,
+            llmSecondPassResult.proposals
+          );
           logFinanceEvent('statement.mapping.llm_second_pass_applied', {
             traceId,
             statementId,
@@ -1184,7 +1238,10 @@ router.post(
           });
         }
       } catch (llm2Err) {
-        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, { traceId, statementId });
+        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, {
+          traceId,
+          statementId,
+        });
       }
     }
 
@@ -1228,7 +1285,9 @@ router.post(
       summary: {
         total: mapped.length,
         suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
-        heuristicMapped: mapped.filter((l) => l.suggestedCanonicalId && !l.mappingReason?.startsWith('llm_mapping')).length,
+        heuristicMapped: mapped.filter(
+          (l) => l.suggestedCanonicalId && !l.mappingReason?.startsWith('llm_mapping')
+        ).length,
         llmMapped: mapped.filter((l) => l.mappingReason?.startsWith('llm_mapping')).length,
         llmProvider: llmMappingResult?.provider || null,
         llmDurationMs: llmMappingResult?.durationMs || 0,
@@ -1260,7 +1319,11 @@ router.post(
         line.isNonFinancial = true;
         line.classificationReason = 'policy_non_financial';
       }
-      if (!line.isNonFinancial && !line.suggestedCanonicalId && isLikelySubtotalOrAggregate(line.originalLabel)) {
+      if (
+        !line.isNonFinancial &&
+        !line.suggestedCanonicalId &&
+        isLikelySubtotalOrAggregate(line.originalLabel)
+      ) {
         line.isNonFinancial = true;
         line.classificationReason = 'policy_subtotal_aggregate';
       }
@@ -1531,7 +1594,14 @@ router.post(
     }
     logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${userId}`);
 
-    res.json({ success: true, statementId, statementPackId, ingestRunId, status: 'confirmed', readiness });
+    res.json({
+      success: true,
+      statementId,
+      statementPackId,
+      ingestRunId,
+      status: 'confirmed',
+      readiness,
+    });
   })
 );
 
@@ -1542,7 +1612,9 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const readinessFilter = String(req.query.readiness || '').trim().toLowerCase();
+    const readinessFilter = String(req.query.readiness || '')
+      .trim()
+      .toLowerCase();
     let statements: any[];
     try {
       statements = await dbAll(
@@ -1622,7 +1694,9 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const readinessFilter = String(req.query.readiness || '').trim().toLowerCase();
+    const readinessFilter = String(req.query.readiness || '')
+      .trim()
+      .toLowerCase();
     const packs = await listStatementPacks(orgId, readinessFilter);
     res.json(packs || []);
   })
@@ -1701,16 +1775,26 @@ router.delete(
     for (const stmtId of childIds) {
       await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [stmtId]);
       await dbRun(`DELETE FROM financial_statement_validations WHERE statement_id = ?`, [stmtId]);
-      await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [stmtId]);
-      await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [stmtId]);
-      await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [stmtId]);
-      await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [
+        stmtId,
+      ]);
+      await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [
+        stmtId,
+      ]);
+      await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [
+        stmtId,
+      ]);
+      await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [
+        stmtId,
+      ]);
       await dbRun(`DELETE FROM financial_statement_quality_runs WHERE statement_id = ?`, [stmtId]);
       await dbRun(`DELETE FROM financial_statement_ingest_runs WHERE statement_id = ?`, [stmtId]);
       await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [stmtId]);
     }
 
-    await dbRun(`DELETE FROM financial_statement_validations WHERE statement_pack_id = ?`, [packId]);
+    await dbRun(`DELETE FROM financial_statement_validations WHERE statement_pack_id = ?`, [
+      packId,
+    ]);
     await dbRun(`DELETE FROM financial_statement_packs WHERE id = ?`, [packId]);
 
     res.json({ success: true, deleted: packId, statementsDeleted: childIds.length });
@@ -1803,8 +1887,7 @@ router.get(
         .map((row) => ({
           evidenceType: row.evidence_type || 'direct',
           weight: Number(row.weight ?? 1),
-          contributionValue:
-            row.contribution_value != null ? Number(row.contribution_value) : null,
+          contributionValue: row.contribution_value != null ? Number(row.contribution_value) : null,
           explanation: row.explanation || null,
           source: row.candidate_row_id
             ? {
@@ -2045,11 +2128,21 @@ router.delete(
       for (const stmtId of childIds) {
         await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [stmtId]);
         await dbRun(`DELETE FROM financial_statement_validations WHERE statement_id = ?`, [stmtId]);
-        await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [stmtId]);
-        await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [stmtId]);
-        await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [stmtId]);
-        await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [stmtId]);
-        await dbRun(`DELETE FROM financial_statement_quality_runs WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [
+          stmtId,
+        ]);
+        await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [
+          stmtId,
+        ]);
+        await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [
+          stmtId,
+        ]);
+        await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [
+          stmtId,
+        ]);
+        await dbRun(`DELETE FROM financial_statement_quality_runs WHERE statement_id = ?`, [
+          stmtId,
+        ]);
         await dbRun(`DELETE FROM financial_statement_ingest_runs WHERE statement_id = ?`, [stmtId]);
         await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [stmtId]);
       }

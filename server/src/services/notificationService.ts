@@ -363,7 +363,11 @@ class NotificationService {
 
     // Exclude snoozed notifications that haven't expired
     if (cols.has('snoozed_until')) {
-      query += ` AND (snoozed_until IS NULL OR snoozed_until < datetime('now'))`;
+      query += ` AND (
+        snoozed_until IS NULL
+        OR CAST(snoozed_until AS TEXT) = ''
+        OR CAST(snoozed_until AS TEXT) < CAST(CURRENT_TIMESTAMP AS TEXT)
+      )`;
     }
 
     query += ` ORDER BY created_at DESC`;

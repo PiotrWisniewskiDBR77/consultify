@@ -428,9 +428,7 @@ export async function approveBudget(
       l.statementType?.toLowerCase() === 'capex'
   );
   if (!hasCapex) {
-    throw new Error(
-      'CAPEX line is required before approval. Add at least one CAPEX budget line.'
-    );
+    throw new Error('CAPEX line is required before approval. Add at least one CAPEX budget line.');
   }
   await dbRun(
     `INSERT INTO budget_snapshots (id,budget_id,version,snapshot_data,approved_by,created_at) VALUES (?,?,?,?,?,?)`,

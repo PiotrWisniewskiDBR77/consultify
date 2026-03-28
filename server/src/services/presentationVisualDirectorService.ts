@@ -173,7 +173,11 @@ export function planSlideVisuals(params: {
 
   // Fallback: section_intro-like intents without explicit rules
   if (priority === 'quality' && meetsThreshold(density, 'medium')) {
-    if (['comparison', 'assessment', 'recommendation_portfolio', 'prioritization_matrix'].includes(slide.intent)) {
+    if (
+      ['comparison', 'assessment', 'recommendation_portfolio', 'prioritization_matrix'].includes(
+        slide.intent
+      )
+    ) {
       visuals.push({
         slot: 'background_texture',
         purpose: purposeForIntent(slide.intent),

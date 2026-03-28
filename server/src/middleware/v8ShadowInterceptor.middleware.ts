@@ -1,9 +1,9 @@
 import type { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import type { AuthRequest } from './auth.middleware.js';
 import { recordShadowComparison } from '../services/v8/shadowModeService.js';
 import Logger from '../utils/Logger.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 const LOG_PREFIX = '[v8:shadow]';
 
@@ -11,6 +11,7 @@ interface ShadowRouteMapping {
   legacyPattern: RegExp;
   v8Path: string;
   method: string;
+  comparisonMode?: 'exact-json' | 'health-status' | 'status-only';
 }
 
 /**
@@ -23,11 +24,13 @@ const SHADOW_ROUTE_MAPPINGS: ShadowRouteMapping[] = [
     legacyPattern: /^\/context$/,
     v8Path: '/ai-core/environment',
     method: 'GET',
+    comparisonMode: 'status-only',
   },
   {
     legacyPattern: /^\/health$/,
     v8Path: '/health',
     method: 'GET',
+    comparisonMode: 'health-status',
   },
 ];
 
@@ -70,7 +73,7 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
 
   // Check if this route has a V8 shadow mapping
   const mapping = SHADOW_ROUTE_MAPPINGS.find(
-    (m) => m.legacyPattern.test(originalPath) && m.method === method,
+    (m) => m.legacyPattern.test(originalPath) && m.method === method
   );
 
   if (!mapping) {
@@ -94,6 +97,7 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
       endpoint: originalPath,
       method,
       v8Path: mapping.v8Path,
+      comparisonMode: mapping.comparisonMode,
       legacyBody,
       legacyStatus,
       legacyTimeMs: Date.now() - legacyStart,
@@ -113,6 +117,7 @@ async function callV8AndRecord(params: {
   endpoint: string;
   method: string;
   v8Path: string;
+  comparisonMode?: 'exact-json' | 'health-status' | 'status-only';
   legacyBody: unknown;
   legacyStatus: number;
   legacyTimeMs: number;
@@ -157,9 +162,12 @@ async function callV8AndRecord(params: {
     v8ResponseTimeMs: v8TimeMs,
     legacyResponseBody: params.legacyBody,
     v8ResponseBody: v8Body,
+    comparisonMode: params.comparisonMode,
   });
 
-  Logger.info(`${LOG_PREFIX} Comparison recorded: ${params.endpoint} legacy=${params.legacyStatus} v8=${v8Status}`);
+  Logger.info(
+    `${LOG_PREFIX} Comparison recorded: ${params.endpoint} legacy=${params.legacyStatus} v8=${v8Status}`
+  );
 }
 
 export default v8ShadowInterceptor;

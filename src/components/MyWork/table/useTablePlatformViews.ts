@@ -4,12 +4,11 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField, TablePlatformView } from '@/types/tablePlatform';
-import {
-  legacyViewToTP,
-  tpViewToLegacy,
-} from './tablePlatformMappers';
+
+import { legacyViewToTP, tpViewToLegacy } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
 
@@ -76,7 +75,7 @@ export function useTablePlatformViews(
       const tpViews = rawViews.map(normalizeView);
       const legacy = tpViews.map((v) => tpViewToLegacy(v, fields));
       setSavedViews(legacy);
-      setActiveViewId((prev) => (prev || (legacy[0]?.id ?? '')));
+      setActiveViewId((prev) => prev || (legacy[0]?.id ?? ''));
     } catch {
       setSavedViews([]);
     } finally {

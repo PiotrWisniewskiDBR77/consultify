@@ -1,11 +1,5 @@
+import { BarChart3, Clock, MessageSquare, RefreshCw, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  BarChart3,
-  Clock,
-  MessageSquare,
-  RefreshCw,
-  TrendingUp,
-} from 'lucide-react';
 
 import { Api } from '../../../services/api';
 
@@ -74,7 +68,9 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
       try {
         const [workerResponse, annaResponse] = await Promise.all([
           Api.get(`/api/virtual-workers/${workerId}/analytics`),
-          workerSlug === 'anna' ? Api.get('/api/superadmin/analytics/anna-funnel') : Promise.resolve(null),
+          workerSlug === 'anna'
+            ? Api.get('/api/superadmin/analytics/anna-funnel')
+            : Promise.resolve(null),
         ]);
 
         const payload = workerResponse?.data?.data ?? workerResponse?.data;
@@ -213,7 +209,9 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
               Recent Public Anna Events
             </h4>
             {annaRecentEvents.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No public Anna events yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No public Anna events yet.
+              </p>
             ) : (
               <div className="space-y-2">
                 {annaRecentEvents.slice(0, 5).map((event) => (

@@ -200,9 +200,7 @@ const writePublicReportDocx = async (
   if (report.sourceName) {
     children.push(
       new Paragraph({
-        children: [
-          new TextRun({ text: `Source: ${String(report.sourceName)}`, color: '64748B' }),
-        ],
+        children: [new TextRun({ text: `Source: ${String(report.sourceName)}`, color: '64748B' })],
       })
     );
   }
@@ -255,7 +253,10 @@ const writePublicReportDocx = async (
       }
     } else {
       const plain = markdownToPlainText(raw);
-      const parts = plain.split(/\n{2,}|\n/).map((p) => p.trim()).filter(Boolean);
+      const parts = plain
+        .split(/\n{2,}|\n/)
+        .map((p) => p.trim())
+        .filter(Boolean);
       if (parts.length === 0) {
         children.push(new Paragraph({ text: '' }));
       } else {

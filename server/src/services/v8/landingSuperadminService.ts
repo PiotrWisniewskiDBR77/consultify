@@ -15,23 +15,23 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  LandingPageSection,
   AnnaLPAssistantConfig,
-  DemoTrialConfig,
-  SuperadminDomain,
-  SuperadminSurface,
   CreateLandingSectionParams,
-  SetAnnaLPConfigParams,
-  SetDemoTrialConfigParams,
+  DemoTrialConfig,
+  LandingPageSection,
   RegisterSuperadminDomainParams,
   RegisterSuperadminSurfaceParams,
+  SetAnnaLPConfigParams,
+  SetDemoTrialConfigParams,
+  SuperadminDomain,
+  SuperadminSurface,
 } from '../../types/landingSuperadminPackage.js';
 import {
   CreateLandingSectionParamsSchema,
-  SetAnnaLPConfigParamsSchema,
-  SetDemoTrialConfigParamsSchema,
   RegisterSuperadminDomainParamsSchema,
   RegisterSuperadminSurfaceParamsSchema,
+  SetAnnaLPConfigParamsSchema,
+  SetDemoTrialConfigParamsSchema,
 } from '../../types/landingSuperadminPackage.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -189,7 +189,7 @@ function rowToSuperadminSurface(row: SuperadminSurfaceRow): SuperadminSurface {
 // ==========================================
 
 export async function createLandingSection(
-  params: CreateLandingSectionParams,
+  params: CreateLandingSectionParams
 ): Promise<LandingPageSection> {
   const validated = CreateLandingSectionParamsSchema.parse(params);
 
@@ -221,24 +221,22 @@ export async function createLandingSection(
       section.isActive ? 1 : 0,
       section.createdAt,
       section.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Created landing section ${sectionId} type=${validated.sectionType} for org ${validated.organizationId}`,
+    `${LOG_PREFIX} Created landing section ${sectionId} type=${validated.sectionType} for org ${validated.organizationId}`
   );
   return section;
 }
 
-export async function getLandingSections(
-  organizationId: string,
-): Promise<LandingPageSection[]> {
+export async function getLandingSections(organizationId: string): Promise<LandingPageSection[]> {
   const rows = await dbAll<LandingSectionRow>(
     `SELECT * FROM v8_landing_page_sections
      WHERE organization_id = ?
      ORDER BY display_order ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToLandingSection);
@@ -249,7 +247,7 @@ export async function getLandingSections(
 // ==========================================
 
 export async function setAnnaLPConfig(
-  params: SetAnnaLPConfigParams,
+  params: SetAnnaLPConfigParams
 ): Promise<AnnaLPAssistantConfig> {
   const validated = SetAnnaLPConfigParamsSchema.parse(params);
 
@@ -284,24 +282,24 @@ export async function setAnnaLPConfig(
       config.degradedStateBehavior,
       config.createdAt,
       config.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Set ANNA LP config ${configId} role=${validated.identityRole} for org ${validated.organizationId}`,
+    `${LOG_PREFIX} Set ANNA LP config ${configId} role=${validated.identityRole} for org ${validated.organizationId}`
   );
   return config;
 }
 
 export async function getAnnaLPConfig(
-  organizationId: string,
+  organizationId: string
 ): Promise<AnnaLPAssistantConfig | null> {
   const row = await dbGet<AnnaLPConfigRow>(
     `SELECT * FROM v8_anna_lp_configs
      WHERE organization_id = ?
      ORDER BY updated_at DESC LIMIT 1`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -313,7 +311,7 @@ export async function getAnnaLPConfig(
 // ==========================================
 
 export async function setDemoTrialConfig(
-  params: SetDemoTrialConfigParams,
+  params: SetDemoTrialConfigParams
 ): Promise<DemoTrialConfig> {
   const validated = SetDemoTrialConfigParamsSchema.parse(params);
 
@@ -348,23 +346,21 @@ export async function setDemoTrialConfig(
       config.isRefreshed ? 1 : 0,
       config.createdAt,
       config.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Set demo/trial config ${configId} narrative=${validated.narrativeVersion} for org ${validated.organizationId}`,
+    `${LOG_PREFIX} Set demo/trial config ${configId} narrative=${validated.narrativeVersion} for org ${validated.organizationId}`
   );
   return config;
 }
 
-export async function getDemoTrialConfig(
-  organizationId: string,
-): Promise<DemoTrialConfig | null> {
+export async function getDemoTrialConfig(organizationId: string): Promise<DemoTrialConfig | null> {
   const row = await dbGet<DemoTrialConfigRow>(
     `SELECT * FROM v8_demo_trial_configs
      WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -376,7 +372,7 @@ export async function getDemoTrialConfig(
 // ==========================================
 
 export async function registerSuperadminDomain(
-  params: RegisterSuperadminDomainParams,
+  params: RegisterSuperadminDomainParams
 ): Promise<SuperadminDomain> {
   const validated = RegisterSuperadminDomainParamsSchema.parse(params);
 
@@ -409,24 +405,22 @@ export async function registerSuperadminDomain(
       JSON.stringify(domain.crossDomainCapabilities),
       domain.createdAt,
       domain.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Registered superadmin domain ${domainId} "${validated.domainName}" for org ${validated.organizationId}`,
+    `${LOG_PREFIX} Registered superadmin domain ${domainId} "${validated.domainName}" for org ${validated.organizationId}`
   );
   return domain;
 }
 
-export async function getSuperadminDomains(
-  organizationId: string,
-): Promise<SuperadminDomain[]> {
+export async function getSuperadminDomains(organizationId: string): Promise<SuperadminDomain[]> {
   const rows = await dbAll<SuperadminDomainRow>(
     `SELECT * FROM v8_superadmin_domains
      WHERE organization_id = ?
      ORDER BY domain_name ASC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSuperadminDomain);
@@ -437,7 +431,7 @@ export async function getSuperadminDomains(
 // ==========================================
 
 export async function registerSuperadminSurface(
-  params: RegisterSuperadminSurfaceParams,
+  params: RegisterSuperadminSurfaceParams
 ): Promise<SuperadminSurface> {
   const validated = RegisterSuperadminSurfaceParamsSchema.parse(params);
 
@@ -469,25 +463,25 @@ export async function registerSuperadminSurface(
       surface.moduleRef,
       surface.createdAt,
       surface.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Registered superadmin surface ${surfaceId} "${validated.surfaceName}" in domain ${validated.domainId}`,
+    `${LOG_PREFIX} Registered superadmin surface ${surfaceId} "${validated.surfaceName}" in domain ${validated.domainId}`
   );
   return surface;
 }
 
 export async function getSuperadminSurfaces(
   domainId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SuperadminSurface[]> {
   const rows = await dbAll<SuperadminSurfaceRow>(
     `SELECT * FROM v8_superadmin_surfaces
      WHERE domain_id = ? AND organization_id = ?
      ORDER BY surface_name ASC`,
     [domainId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSuperadminSurface);

@@ -8,7 +8,6 @@ import type { NextFunction, Request, Response } from 'express';
 // ==========================================
 // EXPRESS EXTENSIONS
 // ==========================================
-
 import type { IDatabase } from '../database/IDatabase.js';
 
 export interface AuthenticatedUser {

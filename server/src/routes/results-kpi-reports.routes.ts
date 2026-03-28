@@ -7,10 +7,13 @@ import { type NextFunction, type Request, type Response, Router } from 'express'
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import * as ReportBuilderService from '../services/reportBuilderService.js';
-import { createKpiReportSnapshot, getKpiReportSnapshot } from '../services/results/kpiReportSnapshotService.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
+import {
+  createKpiReportSnapshot,
+  getKpiReportSnapshot,
+} from '../services/results/kpiReportSnapshotService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -38,10 +41,12 @@ router.get(
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const includeHistory =
-      String(req.query.includeHistory || '').toLowerCase() === 'true' || String(req.query.includeHistory) === '1';
-    const scope = String(req.query.scope || 'org_plus_global').toLowerCase() === 'org'
-      ? 'org_only'
-      : 'org_plus_global';
+      String(req.query.includeHistory || '').toLowerCase() === 'true' ||
+      String(req.query.includeHistory) === '1';
+    const scope =
+      String(req.query.scope || 'org_plus_global').toLowerCase() === 'org'
+        ? 'org_only'
+        : 'org_plus_global';
 
     try {
       const rows = await queryHelpers.queryAll<any>(
@@ -222,12 +227,11 @@ router.post(
 
     const { periodStart, periodEnd, title, filters, kpiIds } = req.body || {};
     const safeStart = String(periodStart || '').slice(0, 10);
-    if (!safeStart) return res.status(400).json({ success: false, error: 'periodStart is required' });
+    if (!safeStart)
+      return res.status(400).json({ success: false, error: 'periodStart is required' });
 
     const selectedKpiIds: string[] | null = Array.isArray(kpiIds)
-      ? (kpiIds as any[])
-          .map((x) => String(x || '').trim())
-          .filter(Boolean)
+      ? (kpiIds as any[]).map((x) => String(x || '').trim()).filter(Boolean)
       : null;
 
     const created = await createKpiReportSnapshot({
@@ -252,11 +256,36 @@ router.post(
 
     // Prefill sections with snapshot markdown (best-effort)
     try {
-      await ReportBuilderService.updateSectionContent(rb.report.id, 'executive_summary', created.markdown.executive_summary, userId);
-      await ReportBuilderService.updateSectionContent(rb.report.id, 'kpi_overview', created.markdown.kpi_overview, userId);
-      await ReportBuilderService.updateSectionContent(rb.report.id, 'deviation_cases', created.markdown.deviation_cases, userId);
-      await ReportBuilderService.updateSectionContent(rb.report.id, 'action_plan', created.markdown.action_plan, userId);
-      await ReportBuilderService.updateSectionContent(rb.report.id, 'appendix', created.markdown.appendix, userId);
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        'executive_summary',
+        created.markdown.executive_summary,
+        userId
+      );
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        'kpi_overview',
+        created.markdown.kpi_overview,
+        userId
+      );
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        'deviation_cases',
+        created.markdown.deviation_cases,
+        userId
+      );
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        'action_plan',
+        created.markdown.action_plan,
+        userId
+      );
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        'appendix',
+        created.markdown.appendix,
+        userId
+      );
       await ReportBuilderService.updateReportStatus(rb.report.id, 'GENERATED', userId);
     } catch (err: any) {
       logger.warn('[Results KPI Reports] Failed to prefill report sections (non-fatal)', {
@@ -276,7 +305,8 @@ router.get(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const snapshotId = String(req.params.snapshotId || '').trim();
-    if (!snapshotId) return res.status(400).json({ success: false, error: 'snapshotId is required' });
+    if (!snapshotId)
+      return res.status(400).json({ success: false, error: 'snapshotId is required' });
 
     const data = await getKpiReportSnapshot({ organizationId: orgId, snapshotId });
     if (!data) return res.status(404).json({ success: false, error: 'Not found' });
@@ -286,4 +316,3 @@ router.get(
 );
 
 export default router;
-

@@ -79,7 +79,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const auth = getAuth(req, res);
     if (!auth) return;
-    const brief = await aiOperatorService.getMeetingBrief(auth.organizationId, String(req.params.meetingId));
+    const brief = await aiOperatorService.getMeetingBrief(
+      auth.organizationId,
+      String(req.params.meetingId)
+    );
     if (!brief) {
       res.status(404).json({ error: 'Meeting not found' });
       return;
@@ -102,7 +105,9 @@ router.put(
       clientDna:
         req.body?.clientDna && typeof req.body.clientDna === 'object' ? req.body.clientDna : {},
       preferences:
-        req.body?.preferences && typeof req.body.preferences === 'object' ? req.body.preferences : {},
+        req.body?.preferences && typeof req.body.preferences === 'object'
+          ? req.body.preferences
+          : {},
       notes: typeof req.body?.notes === 'string' ? req.body.notes : null,
     });
     res.json({ profile });
@@ -147,9 +152,13 @@ router.post(
       res.status(400).json({ error: 'templateKey is required' });
       return;
     }
-    const intervention = await aiOperatorService.proposeIntervention(auth.organizationId, auth.userId, {
-      templateKey: templateKey as any,
-    });
+    const intervention = await aiOperatorService.proposeIntervention(
+      auth.organizationId,
+      auth.userId,
+      {
+        templateKey: templateKey as any,
+      }
+    );
     if (!intervention) {
       res.status(404).json({ error: 'Intervention template unavailable' });
       return;

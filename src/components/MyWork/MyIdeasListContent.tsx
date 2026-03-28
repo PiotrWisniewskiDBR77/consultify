@@ -33,8 +33,8 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
-import { bucketIdeaStageForList, normalizeStageToV5, type IdeaStageV5 } from './ideaEntryTypes';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
@@ -638,26 +638,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
   }, [selectedIds, showConfirm, fetchIdeas, clearSelection, isPolish]);
 
-  const handleDeleteSingleIdea = useCallback(async (idea: MyIdea) => {
-    const ok = await showConfirm({
-      title: isPolish ? 'Usunąć pomysł?' : 'Delete idea?',
-      description: isPolish
-        ? `„${idea.title || 'Bez tytułu'}" zostanie trwale usunięty.`
-        : `"${idea.title || 'Untitled'}" will be permanently deleted.`,
-      confirmLabel: isPolish ? 'Usuń' : 'Delete',
-      cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
-      variant: 'danger',
-    });
-    if (!ok) return;
-    try {
-      await Api.deleteMyIdea(idea.id);
-      trackFunnelEvent('idea_triaged', { action: 'delete', count: 1 });
-      toast.success(isPolish ? 'Usunięto' : 'Deleted');
-      await fetchIdeas();
-    } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
-    }
-  }, [showConfirm, fetchIdeas, isPolish]);
+  const handleDeleteSingleIdea = useCallback(
+    async (idea: MyIdea) => {
+      const ok = await showConfirm({
+        title: isPolish ? 'Usunąć pomysł?' : 'Delete idea?',
+        description: isPolish
+          ? `„${idea.title || 'Bez tytułu'}" zostanie trwale usunięty.`
+          : `"${idea.title || 'Untitled'}" will be permanently deleted.`,
+        confirmLabel: isPolish ? 'Usuń' : 'Delete',
+        cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      try {
+        await Api.deleteMyIdea(idea.id);
+        trackFunnelEvent('idea_triaged', { action: 'delete', count: 1 });
+        toast.success(isPolish ? 'Usunięto' : 'Deleted');
+        await fetchIdeas();
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
+      }
+    },
+    [showConfirm, fetchIdeas, isPolish]
+  );
 
   useEffect(() => {
     if (!onBulkBarChange) return;

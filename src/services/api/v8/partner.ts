@@ -298,7 +298,8 @@ export const V8PartnerApi = {
   completeOnboarding: () =>
     v8Post<V8PartnerOnboardingCompleteResult>('/partner/onboarding/complete', {}),
   getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
-  getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
+  getEarningsSummary: () =>
+    v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),
   getCommissionTransactions: () =>
     v8Get<{ transactions: V8PartnerCommissionTransaction[] }>('/partner/commission-transactions'),
@@ -319,5 +320,8 @@ export const V8PartnerApi = {
     v8Put<V8PartnerListingUpdateResult>('/partner/organization/listing', body),
   getPayoutSettings: () => v8Get<{ settings: V8PartnerPayoutSettings }>('/partner/payout-settings'),
   updatePayoutSettings: (body: V8PartnerPayoutSettingsUpdatePayload) =>
-    v8Put<{ success: boolean; settings: V8PartnerPayoutSettings }>('/partner/payout-settings', body),
+    v8Put<{ success: boolean; settings: V8PartnerPayoutSettings }>(
+      '/partner/payout-settings',
+      body
+    ),
 };

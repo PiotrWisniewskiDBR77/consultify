@@ -33,12 +33,7 @@ export type ProviderTier = (typeof ProviderTierValues)[number];
 export const DriftStateValues = ['none', 'schema', 'mapping', 'auth', 'policy'] as const;
 export type DriftState = (typeof DriftStateValues)[number];
 
-export const PackageLifecycleStateValues = [
-  'draft',
-  'published',
-  'deprecated',
-  'retired',
-] as const;
+export const PackageLifecycleStateValues = ['draft', 'published', 'deprecated', 'retired'] as const;
 export type PackageLifecycleState = (typeof PackageLifecycleStateValues)[number];
 
 export const SupportNoteAuthorRoleValues = ['support', 'operator'] as const;

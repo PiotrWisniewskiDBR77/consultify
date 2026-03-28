@@ -27,8 +27,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
+import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
 import { AUDIT_METHODOLOGIES, AuditMethodology } from '@/data/auditShowcaseData';

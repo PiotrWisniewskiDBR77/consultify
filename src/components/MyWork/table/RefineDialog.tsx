@@ -3,14 +3,8 @@
  * Shows current proposal summary, text input for refinement instructions,
  * loading state, and version history.
  */
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import {
-  Edit3,
-  History,
-  Loader2,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { Edit3, History, Loader2, Sparkles, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
@@ -124,7 +118,8 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                 {isPl ? 'Doprecyzuj propozycję' : 'Refine Proposal'}
               </h3>
               <p className="text-[10px] text-slate-400 dark:text-zinc-500">
-                {isPl ? `Wersja ${currentVersion}` : `Version ${currentVersion}`} · {proposalIntent.replace(/_/g, ' ')}
+                {isPl ? `Wersja ${currentVersion}` : `Version ${currentVersion}`} ·{' '}
+                {proposalIntent.replace(/_/g, ' ')}
               </p>
             </div>
           </div>
@@ -215,7 +210,10 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                     <div className="min-w-0">
                       <p className="truncate">{entry.message}</p>
                       <p className="text-[9px] text-slate-300 dark:text-zinc-600">
-                        {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(entry.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </p>
                     </div>
                   </div>

@@ -11,6 +11,20 @@ type AdminDiagnosticsState = {
   shadowComparisons: any[];
 };
 
+function normalizeShadowComparisons(payload: unknown): any[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+
+  const candidate = payload as {
+    comparisons?: unknown;
+    items?: unknown;
+  };
+
+  if (Array.isArray(candidate.comparisons)) return candidate.comparisons;
+  if (Array.isArray(candidate.items)) return candidate.items;
+  return [];
+}
+
 const emptyState: AdminDiagnosticsState = {
   health: null,
   metrics: null,
@@ -46,7 +60,7 @@ export const V8AdminDiagnosticsPanel: React.FC = () => {
         metrics,
         shadowStats,
         shadowReadiness,
-        shadowComparisons: shadowComparisons?.comparisons || shadowComparisons?.items || shadowComparisons || [],
+        shadowComparisons: normalizeShadowComparisons(shadowComparisons),
       });
       setError(null);
     } catch (err) {

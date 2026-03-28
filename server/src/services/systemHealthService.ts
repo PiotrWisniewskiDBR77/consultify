@@ -226,7 +226,7 @@ class SystemHealthServiceClass {
       );
 
       if (!totalRequests || Number(totalRequests.count) === 0) return 0;
-      return ((Number(errorRequests?.count || 0) / Number(totalRequests.count)) * 100) || 0;
+      return (Number(errorRequests?.count || 0) / Number(totalRequests.count)) * 100 || 0;
     } catch (err: any) {
       logger.warn('[SystemHealth] Error calculating error rate:', err);
       return 0;

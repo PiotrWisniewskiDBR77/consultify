@@ -22,8 +22,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
-import type { CanvasToolType } from './ideaSelectionTypes';
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
+import type { CanvasToolType } from './ideaSelectionTypes';
 
 // ── Template types ───────────────────────────────────────────────────────────
 
@@ -69,37 +69,67 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
         id: 'pf-pi-start',
         type: 'flowNode',
         position: { x: 40, y: 60 },
-        data: { label: 'Current state start', shape: 'start', laneId: 'lane-current', laneColor: '#dbeafe' },
+        data: {
+          label: 'Current state start',
+          shape: 'start',
+          laneId: 'lane-current',
+          laneColor: '#dbeafe',
+        },
       },
       {
         id: 'pf-pi-map',
         type: 'flowNode',
         position: { x: 240, y: 60 },
-        data: { label: 'Map current process', shape: 'action', laneId: 'lane-current', laneColor: '#dbeafe' },
+        data: {
+          label: 'Map current process',
+          shape: 'action',
+          laneId: 'lane-current',
+          laneColor: '#dbeafe',
+        },
       },
       {
         id: 'pf-pi-bottleneck',
         type: 'flowNode',
         position: { x: 460, y: 60 },
-        data: { label: 'Identify bottlenecks', shape: 'decision', laneId: 'lane-current', laneColor: '#dbeafe' },
+        data: {
+          label: 'Identify bottlenecks',
+          shape: 'decision',
+          laneId: 'lane-current',
+          laneColor: '#dbeafe',
+        },
       },
       {
         id: 'pf-pi-kpi',
         type: 'flowNode',
         position: { x: 700, y: 220 },
-        data: { label: 'Define KPI baseline', shape: 'action', laneId: 'lane-kpi', laneColor: '#fef3c7' },
+        data: {
+          label: 'Define KPI baseline',
+          shape: 'action',
+          laneId: 'lane-kpi',
+          laneColor: '#fef3c7',
+        },
       },
       {
         id: 'pf-pi-hypothesis',
         type: 'flowNode',
         position: { x: 700, y: 60 },
-        data: { label: 'Improvement hypothesis', shape: 'action', laneId: 'lane-target', laneColor: '#d1fae5' },
+        data: {
+          label: 'Improvement hypothesis',
+          shape: 'action',
+          laneId: 'lane-target',
+          laneColor: '#d1fae5',
+        },
       },
       {
         id: 'pf-pi-future',
         type: 'flowNode',
         position: { x: 930, y: 60 },
-        data: { label: 'Future state design', shape: 'action', laneId: 'lane-target', laneColor: '#d1fae5' },
+        data: {
+          label: 'Future state design',
+          shape: 'action',
+          laneId: 'lane-target',
+          laneColor: '#d1fae5',
+        },
       },
       {
         id: 'pf-pi-review',
@@ -700,12 +730,29 @@ const TYPED_PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     edges: [
       { id: 'e-bpmn-1', source: 'bpmn-start', target: 'bpmn-task-1', type: 'flowEdge' },
       { id: 'e-bpmn-2', source: 'bpmn-task-1', target: 'bpmn-gateway', type: 'flowEdge' },
-      { id: 'e-bpmn-3', source: 'bpmn-gateway', target: 'bpmn-task-2', type: 'flowEdge', label: 'Yes' },
+      {
+        id: 'e-bpmn-3',
+        source: 'bpmn-gateway',
+        target: 'bpmn-task-2',
+        type: 'flowEdge',
+        label: 'Yes',
+      },
       { id: 'e-bpmn-4', source: 'bpmn-gateway', target: 'bpmn-end', type: 'flowEdge', label: 'No' },
       { id: 'e-bpmn-5', source: 'bpmn-task-2', target: 'bpmn-end', type: 'flowEdge' },
     ],
-    extensions: { processFlow: { semanticKit: 'bpmn', lanes: [{ id: 'lane-1', label: 'BPMN Lane', color: '#dbeafe' }] } },
-    governance: { category: 'process', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
+    extensions: {
+      processFlow: {
+        semanticKit: 'bpmn',
+        lanes: [{ id: 'lane-1', label: 'BPMN Lane', color: '#dbeafe' }],
+      },
+    },
+    governance: {
+      category: 'process',
+      library: 'core',
+      version: '1.0.0',
+      scope: 'global',
+      capability: 'real',
+    },
   },
   {
     id: 'pf-system-architecture',
@@ -716,18 +763,49 @@ const TYPED_PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: Network,
     tool: 'process_flow',
     nodes: [
-      { id: 'sys-actor', type: 'flowNode', position: { x: 60, y: 80 }, data: { label: 'Business user', shape: 'system_actor', semanticType: 'role' } },
-      { id: 'sys-service', type: 'flowNode', position: { x: 280, y: 80 }, data: { label: 'Core service', shape: 'system_service', semanticType: 'system' } },
-      { id: 'sys-db', type: 'flowNode', position: { x: 520, y: 80 }, data: { label: 'ERP data store', shape: 'system_db', semanticType: 'system' } },
-      { id: 'sys-gateway', type: 'flowNode', position: { x: 760, y: 80 }, data: { label: 'API gateway', shape: 'decision', semanticType: 'system' } },
+      {
+        id: 'sys-actor',
+        type: 'flowNode',
+        position: { x: 60, y: 80 },
+        data: { label: 'Business user', shape: 'system_actor', semanticType: 'role' },
+      },
+      {
+        id: 'sys-service',
+        type: 'flowNode',
+        position: { x: 280, y: 80 },
+        data: { label: 'Core service', shape: 'system_service', semanticType: 'system' },
+      },
+      {
+        id: 'sys-db',
+        type: 'flowNode',
+        position: { x: 520, y: 80 },
+        data: { label: 'ERP data store', shape: 'system_db', semanticType: 'system' },
+      },
+      {
+        id: 'sys-gateway',
+        type: 'flowNode',
+        position: { x: 760, y: 80 },
+        data: { label: 'API gateway', shape: 'decision', semanticType: 'system' },
+      },
     ],
     edges: [
       { id: 'e-sys-1', source: 'sys-actor', target: 'sys-service', type: 'flowEdge' },
       { id: 'e-sys-2', source: 'sys-service', target: 'sys-db', type: 'flowEdge' },
       { id: 'e-sys-3', source: 'sys-db', target: 'sys-gateway', type: 'flowEdge' },
     ],
-    extensions: { processFlow: { semanticKit: 'system', lanes: [{ id: 'lane-1', label: 'System Boundary', color: '#cffafe' }] } },
-    governance: { category: 'system', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
+    extensions: {
+      processFlow: {
+        semanticKit: 'system',
+        lanes: [{ id: 'lane-1', label: 'System Boundary', color: '#cffafe' }],
+      },
+    },
+    governance: {
+      category: 'system',
+      library: 'core',
+      version: '1.0.0',
+      scope: 'global',
+      capability: 'real',
+    },
   },
   {
     id: 'pf-org-handoffs',
@@ -738,19 +816,62 @@ const TYPED_PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: Layers,
     tool: 'process_flow',
     nodes: [
-      { id: 'org-role', type: 'flowNode', position: { x: 60, y: 80 }, data: { label: 'Request owner', shape: 'org_role', semanticType: 'role' } },
-      { id: 'org-team', type: 'flowNode', position: { x: 280, y: 80 }, data: { label: 'Operations team', shape: 'org_team', semanticType: 'role' } },
-      { id: 'org-handoff', type: 'flowNode', position: { x: 520, y: 80 }, data: { label: 'Approval handoff', shape: 'org_handoff', semanticType: 'process' } },
-      { id: 'org-role-2', type: 'flowNode', position: { x: 760, y: 80 }, data: { label: 'Finance reviewer', shape: 'org_role', semanticType: 'role' } },
+      {
+        id: 'org-role',
+        type: 'flowNode',
+        position: { x: 60, y: 80 },
+        data: { label: 'Request owner', shape: 'org_role', semanticType: 'role' },
+      },
+      {
+        id: 'org-team',
+        type: 'flowNode',
+        position: { x: 280, y: 80 },
+        data: { label: 'Operations team', shape: 'org_team', semanticType: 'role' },
+      },
+      {
+        id: 'org-handoff',
+        type: 'flowNode',
+        position: { x: 520, y: 80 },
+        data: { label: 'Approval handoff', shape: 'org_handoff', semanticType: 'process' },
+      },
+      {
+        id: 'org-role-2',
+        type: 'flowNode',
+        position: { x: 760, y: 80 },
+        data: { label: 'Finance reviewer', shape: 'org_role', semanticType: 'role' },
+      },
     ],
     edges: [
       { id: 'e-org-1', source: 'org-role', target: 'org-team', type: 'flowEdge' },
       { id: 'e-org-2', source: 'org-team', target: 'org-handoff', type: 'flowEdge' },
-      { id: 'e-org-3', source: 'org-handoff', target: 'org-role-2', type: 'flowEdge', label: 'Escalate' },
-      { id: 'e-org-4', source: 'org-handoff', target: 'org-role', type: 'flowEdge', label: 'Feedback' },
+      {
+        id: 'e-org-3',
+        source: 'org-handoff',
+        target: 'org-role-2',
+        type: 'flowEdge',
+        label: 'Escalate',
+      },
+      {
+        id: 'e-org-4',
+        source: 'org-handoff',
+        target: 'org-role',
+        type: 'flowEdge',
+        label: 'Feedback',
+      },
     ],
-    extensions: { processFlow: { semanticKit: 'org', lanes: [{ id: 'lane-1', label: 'Org Flow', color: '#f3e8ff' }] } },
-    governance: { category: 'org', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
+    extensions: {
+      processFlow: {
+        semanticKit: 'org',
+        lanes: [{ id: 'lane-1', label: 'Org Flow', color: '#f3e8ff' }],
+      },
+    },
+    governance: {
+      category: 'org',
+      library: 'core',
+      version: '1.0.0',
+      scope: 'global',
+      capability: 'real',
+    },
   },
 ];
 
@@ -1826,8 +1947,12 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [applying, setApplying] = useState<string | null>(null);
   const [aiFilling, setAiFilling] = useState<string | null>(null);
-  const [scopeFilter, setScopeFilter] = useState<'all' | CanvasTemplateGovernanceMeta['scope']>('all');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | CanvasTemplateGovernanceMeta['category']>('all');
+  const [scopeFilter, setScopeFilter] = useState<'all' | CanvasTemplateGovernanceMeta['scope']>(
+    'all'
+  );
+  const [categoryFilter, setCategoryFilter] = useState<
+    'all' | CanvasTemplateGovernanceMeta['category']
+  >('all');
 
   const templates = ALL_TEMPLATES.filter((t) => {
     if (t.tool !== activeTool) return false;
@@ -1892,7 +2017,8 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           onClose();
         } else {
           toast.error(
-            err?.message || (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
+            err?.message ||
+              (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
           );
         }
       } finally {
@@ -1942,20 +2068,22 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
               {scope}
             </button>
           ))}
-          {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setCategoryFilter(category)}
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
-                categoryFilter === category
-                  ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-                  : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map(
+            (category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setCategoryFilter(category)}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                  categoryFilter === category
+                    ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                    : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+                }`}
+              >
+                {category}
+              </button>
+            )
+          )}
         </div>
 
         {/* Templates grid */}

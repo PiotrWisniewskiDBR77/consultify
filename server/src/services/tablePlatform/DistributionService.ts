@@ -126,12 +126,14 @@ const distributionService = {
     return (r.rows[0] as Distribution) || null;
   },
 
-  async executeDistribution(id: string): Promise<{ success: boolean; recordCount: number; channel: string }> {
+  async executeDistribution(
+    id: string
+  ): Promise<{ success: boolean; recordCount: number; channel: string }> {
     const dist = await this.getDistribution(id);
     if (!dist) throw new Error('Distribution not found');
 
     let data: any[] = [];
-    let fields: any[] = [];
+    const fields: any[] = [];
 
     if (dist.source_type === 'view' || dist.source_type === 'table') {
       try {
@@ -142,7 +144,10 @@ const distributionService = {
         });
         data = result.records;
       } catch (err) {
-        logger.warn('[Distribution] Failed to fetch source data', { id, error: (err as Error).message });
+        logger.warn('[Distribution] Failed to fetch source data', {
+          id,
+          error: (err as Error).message,
+        });
       }
     }
 
@@ -152,11 +157,12 @@ const distributionService = {
 
     switch (dist.format) {
       case 'csv': {
-        const headers = fields.length > 0
-          ? fields.map((f: any) => f.name || f.id)
-          : data.length > 0
-            ? Object.keys(data[0].data ?? data[0])
-            : [];
+        const headers =
+          fields.length > 0
+            ? fields.map((f: any) => f.name || f.id)
+            : data.length > 0
+              ? Object.keys(data[0].data ?? data[0])
+              : [];
         const rows = data.map((r: any) =>
           headers.map((h: string) => {
             const val = r.data?.[h] ?? r[h] ?? '';
@@ -185,7 +191,9 @@ const distributionService = {
 
     switch (dist.channel) {
       case 'email': {
-        logger.info(`[Distribution] Would send email to ${channelConfig.to} with ${filename}`, { id });
+        logger.info(`[Distribution] Would send email to ${channelConfig.to} with ${filename}`, {
+          id,
+        });
         break;
       }
       case 'slack': {
@@ -233,7 +241,10 @@ const distributionService = {
               body: payload,
             });
           } catch (err) {
-            logger.error('[Distribution] Webhook send failed', { id, error: (err as Error).message });
+            logger.error('[Distribution] Webhook send failed', {
+              id,
+              error: (err as Error).message,
+            });
           }
         }
         break;

@@ -6,8 +6,7 @@
 import { v8Get, v8Post } from './client';
 
 export const V8AICoreApi = {
-  getEnvironment: () =>
-    v8Get('/ai-core/environment'),
+  getEnvironment: () => v8Get('/ai-core/environment'),
 
   processChatTurn: (params: {
     conversationId: string;
@@ -16,14 +15,11 @@ export const V8AICoreApi = {
     [key: string]: unknown;
   }) => v8Post('/ai-core/chat-turn', params),
 
-  getAuditTrail: (snapshotId: string) =>
-    v8Get('/ai-core/trust/audit-trail', { snapshotId }),
+  getAuditTrail: (snapshotId: string) => v8Get('/ai-core/trust/audit-trail', { snapshotId }),
 
-  getProvenance: (snapshotId: string) =>
-    v8Get('/ai-core/trust/provenance', { snapshotId }),
+  getProvenance: (snapshotId: string) => v8Get('/ai-core/trust/provenance', { snapshotId }),
 
-  getTools: () =>
-    v8Get('/ai-core/tools'),
+  getTools: () => v8Get('/ai-core/tools'),
 
   getToolPolicy: (toolId: string, consumerClass?: string) =>
     v8Get(`/ai-core/tools/${toolId}/policy`, consumerClass ? { consumerClass } : undefined),

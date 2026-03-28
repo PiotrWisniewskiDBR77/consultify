@@ -9,13 +9,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 
@@ -70,10 +70,18 @@ function usePresentationPreviewData(presentation: PresentationItem) {
       ? [{ label: `${presentation.sourceRefs.length} ${isPolish ? 'referencji' : 'references'}` }]
       : []),
     ...(governance?.publishReviewers?.length
-      ? [{ label: `${governance.publishReviewers.length} ${isPolish ? 'reviewerów' : 'reviewers'}` }]
+      ? [
+          {
+            label: `${governance.publishReviewers.length} ${isPolish ? 'reviewerów' : 'reviewers'}`,
+          },
+        ]
       : []),
     ...(governance?.accessGrants?.length
-      ? [{ label: `${governance.accessGrants.length} ${isPolish ? 'grantów dostępu' : 'access grants'}` }]
+      ? [
+          {
+            label: `${governance.accessGrants.length} ${isPolish ? 'grantów dostępu' : 'access grants'}`,
+          },
+        ]
       : []),
   ];
 
@@ -124,20 +132,39 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
     actionRows.push({
       buttons: [
         ...(onStartReview
-          ? [{
-              label: t('rap.actions.startReview', 'Start review'),
-              icon: ShieldCheck,
-              onClick: onStartReview,
-              colorScheme: 'purple' as const,
-              disabled: reviewActionDisabled,
-              shortcut: 'R',
-            }]
+          ? [
+              {
+                label: t('rap.actions.startReview', 'Start review'),
+                icon: ShieldCheck,
+                onClick: onStartReview,
+                colorScheme: 'purple' as const,
+                disabled: reviewActionDisabled,
+                shortcut: 'R',
+              },
+            ]
           : []),
         ...(onOpen
-          ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true, shortcut: 'O' }]
+          ? [
+              {
+                label: t('rap.preview.openFull', 'Otwórz pełny'),
+                icon: ExternalLink,
+                onClick: onOpen,
+                colorScheme: 'primary' as const,
+                flex: true,
+                shortcut: 'O',
+              },
+            ]
           : []),
         ...(onExport
-          ? [{ label: t('rap.actions.export', 'Eksportuj'), icon: Download, onClick: onExport, colorScheme: 'neutral' as const, shortcut: 'E' }]
+          ? [
+              {
+                label: t('rap.actions.export', 'Eksportuj'),
+                icon: Download,
+                onClick: onExport,
+                colorScheme: 'neutral' as const,
+                shortcut: 'E',
+              },
+            ]
           : []),
       ],
     });
@@ -149,15 +176,17 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
     <div className="space-y-0">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
-          hints={[
-            isPolish ? 'Prezentacja gotowa do przeglądu' : 'Presentation ready for review',
-            governance?.visibilityScope
-              ? `${isPolish ? 'Scope' : 'Scope'}: ${governance.visibilityScope}`
-              : null,
-            governance?.publishState
-              ? `${isPolish ? 'Review' : 'Review'}: ${governance.publishState}`
-              : null,
-          ].filter(Boolean) as string[]}
+          hints={
+            [
+              isPolish ? 'Prezentacja gotowa do przeglądu' : 'Presentation ready for review',
+              governance?.visibilityScope
+                ? `${isPolish ? 'Scope' : 'Scope'}: ${governance.visibilityScope}`
+                : null,
+              governance?.publishState
+                ? `${isPolish ? 'Review' : 'Review'}: ${governance.publishState}`
+                : null,
+            ].filter(Boolean) as string[]
+          }
         />
       </div>
       {relations.length > 0 && (

@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import type { RadarActionType, UserRadarProfileRecord } from './radarTypes.js';
 import { radarRankingService } from './radarRankingService.js';
+import type { RadarActionType, UserRadarProfileRecord } from './radarTypes.js';
 
 type ActionInput = {
   userId: string;
@@ -22,7 +22,9 @@ function uniqueList(values: string[]): string[] {
 }
 
 class RadarActionService {
-  async record(input: ActionInput): Promise<{ success: true; profile?: UserRadarProfileRecord | null }> {
+  async record(
+    input: ActionInput
+  ): Promise<{ success: true; profile?: UserRadarProfileRecord | null }> {
     await queryHelpers.queryRun(
       `INSERT INTO radar_actions (
         id, user_id, organization_id, signal_id, action_type, source_context,
@@ -53,7 +55,9 @@ class RadarActionService {
     return { success: true, profile: updatedProfile };
   }
 
-  private async applyPreferenceFeedback(input: ActionInput): Promise<UserRadarProfileRecord | null> {
+  private async applyPreferenceFeedback(
+    input: ActionInput
+  ): Promise<UserRadarProfileRecord | null> {
     const profile = await radarRankingService.getOrCreateProfile({
       userId: input.userId,
       orgId: input.orgId,
@@ -83,11 +87,12 @@ class RadarActionService {
       : [];
     const sourceName = signal?.source_name ? String(signal.source_name) : undefined;
 
-    let patch: Partial<UserRadarProfileRecord> = {};
+    const patch: Partial<UserRadarProfileRecord> = {};
 
     if (input.actionType === 'add_to_watchlist') {
-      const watchValue =
-        String(input.payload?.value || input.payload?.topic || topicTags[0] || sourceName || '').trim();
+      const watchValue = String(
+        input.payload?.value || input.payload?.topic || topicTags[0] || sourceName || ''
+      ).trim();
       const itemType = String(input.payload?.itemType || (sourceName ? 'company' : 'topic'));
       if (watchValue) {
         await queryHelpers.queryRun(

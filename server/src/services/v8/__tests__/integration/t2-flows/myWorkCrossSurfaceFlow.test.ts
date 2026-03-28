@@ -9,7 +9,7 @@
  *       with latency band classification
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock DB layer ──────────────────────────────────────────────────────────
 
@@ -29,20 +29,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 // ── Real service imports ───────────────────────────────────────────────────
 
+import { acquireLock, releaseLock } from '../../../concurrentEditingService.js';
+import { emitSignal } from '../../../executionVisibilityService.js';
 import {
-  setCanonicalObjectState,
   getSurfaceProjection,
   recordInboxMaterialization,
+  setCanonicalObjectState,
 } from '../../../myWorkRoofService.js';
-
-import {
-  emitSignal,
-} from '../../../executionVisibilityService.js';
-
-import {
-  acquireLock,
-  releaseLock,
-} from '../../../concurrentEditingService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 

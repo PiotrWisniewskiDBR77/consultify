@@ -7,16 +7,14 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import {
-  buildWorkerKnowledgeContext,
-  buildWorkerVoiceBootstrap,
-} from '../services/ai/virtualWorkerKnowledgeService.js';
-import {
-  getWorkerWithProfile,
-} from '../services/ai/virtualWorkerService.js';
-import {
   findOrCreateConversation,
   logMessage as logConversationMessage,
 } from '../services/ai/virtualWorkerConversationLogger.js';
+import {
+  buildWorkerKnowledgeContext,
+  buildWorkerVoiceBootstrap,
+} from '../services/ai/virtualWorkerKnowledgeService.js';
+import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import {
   PUBLIC_ANNA_FUNNEL_EVENT_NAMES,
   recordPublicAnnaFunnelEvent,
@@ -156,8 +154,13 @@ function buildAnnaRateLimitMessage(locale?: string): string {
   return 'Please wait a moment before sending another message. In the meantime, you can use the demo, trial, or contact options.';
 }
 
-function detectAnnaConversationLanguage(message: string, locale?: string): AnnaConversationLanguage {
-  const normalized = String(message || '').trim().toLowerCase();
+function detectAnnaConversationLanguage(
+  message: string,
+  locale?: string
+): AnnaConversationLanguage {
+  const normalized = String(message || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) {
     return resolveAnnaLocale(locale);
   }
@@ -175,17 +178,68 @@ function detectAnnaConversationLanguage(message: string, locale?: string): AnnaC
   }
 
   if (
-    /[\u0400-\u04FF\u0590-\u05FF\u0900-\u097F\u0E00-\u0E7F\uAC00-\uD7AF\u0370-\u03FF]/u.test(
-      normalized
-    )
+    [
+      /[\u0400-\u04FF]/u,
+      /[\u0590-\u05FF]/u,
+      /[\u0900-\u097F]/u,
+      /[\u0E00-\u0E7F]/u,
+      /[\uAC00-\uD7AF]/u,
+      /[\u0370-\u03FF]/u,
+    ].some((pattern) => pattern.test(normalized))
   ) {
     return 'unsupported';
   }
 
-  const polishHints = ['czy', 'jak', 'jest', 'dla', 'moze', 'możesz', 'chce', 'chcę', 'potrzebuje', 'potrzebuję', 'kontakt', 'pomoc'];
-  const englishHints = ['what', 'how', 'is', 'are', 'can', 'for', 'with', 'about', 'pricing', 'product', 'trial', 'demo'];
-  const spanishHints = ['hola', 'gracias', 'precio', 'como', 'para', 'producto', 'prueba', 'seguridad', 'demo', 'costo'];
-  const germanHints = ['hallo', 'danke', 'preis', 'produkt', 'kontakt', 'sicherheit', 'demo', 'testversion'];
+  const polishHints = [
+    'czy',
+    'jak',
+    'jest',
+    'dla',
+    'moze',
+    'możesz',
+    'chce',
+    'chcę',
+    'potrzebuje',
+    'potrzebuję',
+    'kontakt',
+    'pomoc',
+  ];
+  const englishHints = [
+    'what',
+    'how',
+    'is',
+    'are',
+    'can',
+    'for',
+    'with',
+    'about',
+    'pricing',
+    'product',
+    'trial',
+    'demo',
+  ];
+  const spanishHints = [
+    'hola',
+    'gracias',
+    'precio',
+    'como',
+    'para',
+    'producto',
+    'prueba',
+    'seguridad',
+    'demo',
+    'costo',
+  ];
+  const germanHints = [
+    'hallo',
+    'danke',
+    'preis',
+    'produkt',
+    'kontakt',
+    'sicherheit',
+    'demo',
+    'testversion',
+  ];
   const unsupportedLatinHints = ['bonjour', 'merci', 'prix', 'comment', 'ciao', 'grazie', 'prezzo'];
 
   if (/[ąćęłńóśżź]/u.test(normalized) || polishHints.some((hint) => normalized.includes(hint))) {
@@ -237,7 +291,9 @@ function buildAnnaServiceUnavailableMessage(locale?: string): string {
 
 function safeSlice(text: string, maxChars: number): string {
   const value = String(text || '').trim();
-  return value.length <= maxChars ? value : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+  return value.length <= maxChars
+    ? value
+    : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
 function buildAnnaRateLimitKey(req: Request, sessionId?: string): string {
@@ -413,7 +469,10 @@ function buildAnnaRetrievalQuery(message: string, history: AnnaChatBody['history
   return `${lastUserMessage}\n\nFollow-up question: ${normalizedMessage}`;
 }
 
-function buildAnnaConversationContext(message: string, history: AnnaChatBody['history']): string | null {
+function buildAnnaConversationContext(
+  message: string,
+  history: AnnaChatBody['history']
+): string | null {
   const normalizedMessage = String(message || '').trim();
   if (!shouldExpandAnnaRetrievalQuery(normalizedMessage)) {
     return null;
@@ -427,7 +486,7 @@ function buildAnnaConversationContext(message: string, history: AnnaChatBody['hi
   const lastAssistantMessage = findLastAssistantMessage(history);
   const sections = [
     'RECENT CONVERSATION CONTEXT',
-    '- Treat the user\'s new message as a follow-up to the recent topic below.',
+    "- Treat the user's new message as a follow-up to the recent topic below.",
     `- Latest user topic: ${lastUserMessage}`,
   ];
 
@@ -435,7 +494,9 @@ function buildAnnaConversationContext(message: string, history: AnnaChatBody['hi
     sections.push(`- Latest Anna reply: ${safeSlice(lastAssistantMessage, 280)}`);
   }
 
-  sections.push('- Answer the new question directly without restarting the conversation from zero.');
+  sections.push(
+    '- Answer the new question directly without restarting the conversation from zero.'
+  );
   return sections.join('\n');
 }
 
@@ -445,7 +506,10 @@ async function callGemini(systemInstruction: string, contents: GeminiContent[]):
 
   const payload: GeminiContent[] = [
     { role: 'user', parts: [{ text: systemInstruction }] },
-    { role: 'model', parts: [{ text: 'Understood. I am Anna and I will use public product knowledge only.' }] },
+    {
+      role: 'model',
+      parts: [{ text: 'Understood. I am Anna and I will use public product knowledge only.' }],
+    },
     ...contents,
   ];
 
@@ -515,7 +579,10 @@ async function callOpenAICompatible(
   return answer.trim();
 }
 
-async function callAnnaModel(systemInstruction: string, contents: GeminiContent[]): Promise<string> {
+async function callAnnaModel(
+  systemInstruction: string,
+  contents: GeminiContent[]
+): Promise<string> {
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     return callGemini(systemInstruction, contents);
@@ -599,11 +666,18 @@ router.post(
       const startMs = Date.now();
 
       // Try worker-based knowledge first, fall back to legacy
-      let knowledge: { contextText: string; sources: string[]; matchedProducts: string[]; primaryProducts: string[] };
+      let knowledge: {
+        contextText: string;
+        sources: string[];
+        matchedProducts: string[];
+        primaryProducts: string[];
+      };
       let workerConfig: Awaited<ReturnType<typeof getWorkerWithProfile>> = null;
       try {
         workerConfig = await getWorkerWithProfile('anna');
-      } catch { /* worker table may not exist yet */ }
+      } catch {
+        /* worker table may not exist yet */
+      }
 
       if (workerConfig?.worker && workerConfig.profile) {
         knowledge = await buildWorkerKnowledgeContext({
@@ -717,11 +791,18 @@ router.get(
         ? req.query.locale.trim()
         : undefined;
 
-    let knowledge: { contextText: string; sources: string[]; matchedProducts: string[]; primaryProducts: string[] };
+    let knowledge: {
+      contextText: string;
+      sources: string[];
+      matchedProducts: string[];
+      primaryProducts: string[];
+    };
     let workerConfig: Awaited<ReturnType<typeof getWorkerWithProfile>> = null;
     try {
       workerConfig = await getWorkerWithProfile('anna');
-    } catch { /* worker table may not exist yet */ }
+    } catch {
+      /* worker table may not exist yet */
+    }
 
     if (workerConfig?.worker) {
       knowledge = await buildWorkerVoiceBootstrap('anna', locale);
@@ -799,7 +880,9 @@ router.post(
       let workerConfig: Awaited<ReturnType<typeof getWorkerWithProfile>> = null;
       try {
         workerConfig = await getWorkerWithProfile('anna');
-      } catch { /* table may not exist */ }
+      } catch {
+        /* table may not exist */
+      }
 
       if (workerConfig?.worker) {
         const { logVoiceEvent } = await import('../services/ai/virtualWorkerConversationLogger.js');

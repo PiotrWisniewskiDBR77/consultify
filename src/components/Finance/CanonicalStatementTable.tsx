@@ -24,7 +24,10 @@ function formatValue(value: number): string {
   }).format(value);
 }
 
-function computeDelta(current: number, previous: number): { pct: number; direction: 'up' | 'down' | 'flat' } | null {
+function computeDelta(
+  current: number,
+  previous: number
+): { pct: number; direction: 'up' | 'down' | 'flat' } | null {
   if (previous === 0 && current === 0) return null;
   if (previous === 0) return { pct: 100, direction: current > 0 ? 'up' : 'down' };
   const pct = ((current - previous) / Math.abs(previous)) * 100;
@@ -69,8 +72,18 @@ export const CanonicalStatementTable: React.FC<Props> = ({
           : null;
 
       const label = isPl
-        ? row.lineNamePl || row.lineName || row.lineNameEn || row.originalLabel || row.lineCode || '—'
-        : row.lineNameEn || row.lineName || row.lineNamePl || row.originalLabel || row.lineCode || '—';
+        ? row.lineNamePl ||
+          row.lineName ||
+          row.lineNameEn ||
+          row.originalLabel ||
+          row.lineCode ||
+          '—'
+        : row.lineNameEn ||
+          row.lineName ||
+          row.lineNamePl ||
+          row.originalLabel ||
+          row.lineCode ||
+          '—';
 
       return { ...row, olderValue, newerValue, delta, label };
     });
@@ -144,11 +157,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
               ? 'border-t border-b border-slate-200/70 dark:border-white/[0.08]'
               : 'border-b border-slate-100/80 dark:border-white/[0.03]';
 
-          const fontWeight = isTotal
-            ? 'font-bold'
-            : isSubtotal
-              ? 'font-semibold'
-              : 'font-normal';
+          const fontWeight = isTotal ? 'font-bold' : isSubtotal ? 'font-semibold' : 'font-normal';
 
           const textColor = isTotal
             ? 'text-slate-900 dark:text-white'
@@ -156,11 +165,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
               ? 'text-slate-800 dark:text-slate-100'
               : 'text-slate-700 dark:text-slate-200';
 
-          const nameWeight = isTotal
-            ? 'font-bold'
-            : isSubtotal
-              ? 'font-semibold'
-              : 'font-medium';
+          const nameWeight = isTotal ? 'font-bold' : isSubtotal ? 'font-semibold' : 'font-medium';
 
           return (
             <button

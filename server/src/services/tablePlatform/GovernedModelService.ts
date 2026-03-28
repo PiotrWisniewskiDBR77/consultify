@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -41,10 +42,15 @@ const governedModelService = {
          VALUES ($1, $2, $3, $4, $5)`,
         [modelId, baseId, name, description ?? null, createdBy ?? null]
       );
-      const row = (await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])).rows[0];
+      const row = (
+        await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])
+      ).rows[0];
       return (row ?? { model_id: modelId }) as Record<string, unknown>;
     } catch (e) {
-      logger.error('[GovernedModelService] createModel failed', { baseId, error: (e as Error).message });
+      logger.error('[GovernedModelService] createModel failed', {
+        baseId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -52,31 +58,41 @@ const governedModelService = {
   async getModel(modelId: string): Promise<Record<string, unknown> | null> {
     const db = getDatabase();
     try {
-      const modelResult = await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId]);
+      const modelResult = await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [
+        modelId,
+      ]);
       const model = modelResult.rows[0] as Record<string, unknown> | undefined;
       if (!model) return null;
 
-      const kpis = (await db.query(
-        'SELECT * FROM tp_kpi_definitions WHERE model_id = $1 ORDER BY created_at ASC',
-        [modelId]
-      )).rows;
+      const kpis = (
+        await db.query(
+          'SELECT * FROM tp_kpi_definitions WHERE model_id = $1 ORDER BY created_at ASC',
+          [modelId]
+        )
+      ).rows;
 
-      const dimensions = (await db.query(
-        'SELECT * FROM tp_dimensions WHERE model_id = $1 ORDER BY created_at ASC',
-        [modelId]
-      )).rows;
+      const dimensions = (
+        await db.query('SELECT * FROM tp_dimensions WHERE model_id = $1 ORDER BY created_at ASC', [
+          modelId,
+        ])
+      ).rows;
 
-      const sources = (await db.query(
-        'SELECT * FROM tp_model_sources WHERE model_id = $1 ORDER BY created_at ASC',
-        [modelId]
-      )).rows;
+      const sources = (
+        await db.query(
+          'SELECT * FROM tp_model_sources WHERE model_id = $1 ORDER BY created_at ASC',
+          [modelId]
+        )
+      ).rows;
 
       model.kpis = kpis;
       model.dimensions = dimensions;
       model.sources = sources;
       return model;
     } catch (e) {
-      logger.error('[GovernedModelService] getModel failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] getModel failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -90,7 +106,10 @@ const governedModelService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[GovernedModelService] listModels failed', { baseId, error: (e as Error).message });
+      logger.error('[GovernedModelService] listModels failed', {
+        baseId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -101,7 +120,9 @@ const governedModelService = {
   ): Promise<Record<string, unknown> | null> {
     const db = getDatabase();
     try {
-      const before = (await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])).rows[0];
+      const before = (
+        await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])
+      ).rows[0];
       if (!before) return null;
 
       const setClauses: string[] = [];
@@ -129,10 +150,15 @@ const governedModelService = {
         values
       );
 
-      const after = (await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])).rows[0];
+      const after = (
+        await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])
+      ).rows[0];
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[GovernedModelService] updateModel failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] updateModel failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -140,12 +166,17 @@ const governedModelService = {
   async deleteModel(modelId: string): Promise<boolean> {
     const db = getDatabase();
     try {
-      const before = (await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])).rows[0];
+      const before = (
+        await db.query('SELECT * FROM tp_governed_models WHERE model_id = $1', [modelId])
+      ).rows[0];
       if (!before) return false;
       await db.query('DELETE FROM tp_governed_models WHERE model_id = $1', [modelId]);
       return true;
     } catch (e) {
-      logger.error('[GovernedModelService] deleteModel failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] deleteModel failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -176,10 +207,15 @@ const governedModelService = {
           kpi.format ?? 'number',
         ]
       );
-      const row = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId])).rows[0];
+      const row = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId]))
+        .rows[0];
       return (row ?? { kpi_id: kpiId }) as Record<string, unknown>;
     } catch (e) {
-      logger.error('[GovernedModelService] addKpi failed', { modelId, code: kpi.code, error: (e as Error).message });
+      logger.error('[GovernedModelService] addKpi failed', {
+        modelId,
+        code: kpi.code,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -193,7 +229,10 @@ const governedModelService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[GovernedModelService] listKpis failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] listKpis failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -204,7 +243,10 @@ const governedModelService = {
       const result = await db.query('DELETE FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId]);
       return (result.rowCount ?? 0) > 0;
     } catch (e) {
-      logger.error('[GovernedModelService] removeKpi failed', { kpiId, error: (e as Error).message });
+      logger.error('[GovernedModelService] removeKpi failed', {
+        kpiId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -229,10 +271,16 @@ const governedModelService = {
           dim.dimensionType ?? 'categorical',
         ]
       );
-      const row = (await db.query('SELECT * FROM tp_dimensions WHERE dimension_id = $1', [dimensionId])).rows[0];
+      const row = (
+        await db.query('SELECT * FROM tp_dimensions WHERE dimension_id = $1', [dimensionId])
+      ).rows[0];
       return (row ?? { dimension_id: dimensionId }) as Record<string, unknown>;
     } catch (e) {
-      logger.error('[GovernedModelService] addDimension failed', { modelId, name: dim.name, error: (e as Error).message });
+      logger.error('[GovernedModelService] addDimension failed', {
+        modelId,
+        name: dim.name,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -246,7 +294,10 @@ const governedModelService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[GovernedModelService] listDimensions failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] listDimensions failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -254,10 +305,15 @@ const governedModelService = {
   async removeDimension(dimensionId: string): Promise<boolean> {
     const db = getDatabase();
     try {
-      const result = await db.query('DELETE FROM tp_dimensions WHERE dimension_id = $1', [dimensionId]);
+      const result = await db.query('DELETE FROM tp_dimensions WHERE dimension_id = $1', [
+        dimensionId,
+      ]);
       return (result.rowCount ?? 0) > 0;
     } catch (e) {
-      logger.error('[GovernedModelService] removeDimension failed', { dimensionId, error: (e as Error).message });
+      logger.error('[GovernedModelService] removeDimension failed', {
+        dimensionId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -281,13 +337,19 @@ const governedModelService = {
          ON CONFLICT (model_id, table_id) DO UPDATE SET trusted = EXCLUDED.trusted, required_provenance = EXCLUDED.required_provenance`,
         [id, modelId, tableId, trusted, requiredProvenance ?? null]
       );
-      const row = (await db.query(
-        'SELECT * FROM tp_model_sources WHERE model_id = $1 AND table_id = $2',
-        [modelId, tableId]
-      )).rows[0];
+      const row = (
+        await db.query('SELECT * FROM tp_model_sources WHERE model_id = $1 AND table_id = $2', [
+          modelId,
+          tableId,
+        ])
+      ).rows[0];
       return (row ?? { id }) as Record<string, unknown>;
     } catch (e) {
-      logger.error('[GovernedModelService] addModelSource failed', { modelId, tableId, error: (e as Error).message });
+      logger.error('[GovernedModelService] addModelSource failed', {
+        modelId,
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -305,7 +367,10 @@ const governedModelService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[GovernedModelService] listModelSources failed', { modelId, error: (e as Error).message });
+      logger.error('[GovernedModelService] listModelSources failed', {
+        modelId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -319,7 +384,10 @@ const governedModelService = {
       );
       return (result.rows[0] ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[GovernedModelService] setSourceTrust failed', { id, error: (e as Error).message });
+      logger.error('[GovernedModelService] setSourceTrust failed', {
+        id,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -328,10 +396,13 @@ const governedModelService = {
   // KPI COMPUTATION
   // ==========================================
 
-  async computeKpi(kpiId: string): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
+  async computeKpi(
+    kpiId: string
+  ): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
     const db = getDatabase();
     try {
-      const kpiRow = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId])).rows[0] as Record<string, unknown> | undefined;
+      const kpiRow = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId]))
+        .rows[0] as Record<string, unknown> | undefined;
       if (!kpiRow) {
         throw new Error(`KPI ${kpiId} not found`);
       }
@@ -347,13 +418,19 @@ const governedModelService = {
           `SELECT SUM((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
           [sourceTableId, sourceFieldId]
         );
-        value = (result.rows[0] as { val: string | null })?.val != null ? Number((result.rows[0] as { val: string }).val) : null;
+        value =
+          (result.rows[0] as { val: string | null })?.val != null
+            ? Number((result.rows[0] as { val: string }).val)
+            : null;
       } else if (formulaType === 'field_avg' && sourceTableId && sourceFieldId) {
         const result = await db.query(
           `SELECT AVG((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
           [sourceTableId, sourceFieldId]
         );
-        value = (result.rows[0] as { val: string | null })?.val != null ? Number((result.rows[0] as { val: string }).val) : null;
+        value =
+          (result.rows[0] as { val: string | null })?.val != null
+            ? Number((result.rows[0] as { val: string }).val)
+            : null;
       } else if (formulaType === 'field_count' && sourceTableId) {
         const result = await db.query(
           'SELECT COUNT(*) AS val FROM tp_records WHERE table_id = $1',
@@ -368,7 +445,10 @@ const governedModelService = {
 
       return { kpiId, value, computedAt: new Date().toISOString() };
     } catch (e) {
-      logger.error('[GovernedModelService] computeKpi failed', { kpiId, error: (e as Error).message });
+      logger.error('[GovernedModelService] computeKpi failed', {
+        kpiId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

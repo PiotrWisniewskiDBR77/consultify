@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -24,16 +24,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  grantPermission,
-  revokePermission,
-  getPermissions,
-  getUserRole,
   checkPermission,
   classifyContent,
-  getContentClassifications,
-  runComplianceCheck,
   getComplianceHistory,
+  getContentClassifications,
   getGovernanceDashboard,
+  getPermissions,
+  getUserRole,
+  grantPermission,
+  revokePermission,
+  runComplianceCheck,
 } from '../workspaceGovernanceService.js';
 
 // ==========================================
@@ -117,7 +117,7 @@ describe('grantPermission', () => {
     expect(result.grantedBy).toBe(GRANTER_ID);
     expect(result.revokedAt).toBeNull();
     expect(result.permissionId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     );
 
     expect(mockDbRun).toHaveBeenCalledTimes(1);
@@ -160,7 +160,11 @@ describe('getPermissions', () => {
   it('returns mapped active permissions', async () => {
     mockDbAll.mockResolvedValueOnce([
       makePermissionRow({ permission_id: '00000000-0000-4000-8000-0000000000a1', role: 'viewer' }),
-      makePermissionRow({ permission_id: '00000000-0000-4000-8000-0000000000a2', user_id: USER_ID_2, role: 'admin' }),
+      makePermissionRow({
+        permission_id: '00000000-0000-4000-8000-0000000000a2',
+        user_id: USER_ID_2,
+        role: 'admin',
+      }),
     ]);
 
     const list = await getPermissions(WORKSPACE_ID, ORG_ID);
@@ -220,14 +224,14 @@ describe('checkPermission', () => {
 
   it('allows viewer for decision.vote but not decision.close', async () => {
     mockDbAll.mockResolvedValueOnce([{ role: 'viewer' }]);
-    await expect(
-      checkPermission(WORKSPACE_ID, USER_ID, 'decision.vote', ORG_ID),
-    ).resolves.toBe(true);
+    await expect(checkPermission(WORKSPACE_ID, USER_ID, 'decision.vote', ORG_ID)).resolves.toBe(
+      true
+    );
 
     mockDbAll.mockResolvedValueOnce([{ role: 'viewer' }]);
-    await expect(
-      checkPermission(WORKSPACE_ID, USER_ID, 'decision.close', ORG_ID),
-    ).resolves.toBe(false);
+    await expect(checkPermission(WORKSPACE_ID, USER_ID, 'decision.close', ORG_ID)).resolves.toBe(
+      false
+    );
   });
 });
 
@@ -264,7 +268,7 @@ describe('runComplianceCheck', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     await expect(
-      runComplianceCheck(SESSION_ID, ORG_ID, 'content.classification.present'),
+      runComplianceCheck(SESSION_ID, ORG_ID, 'content.classification.present')
     ).rejects.toThrow('Session');
   });
 

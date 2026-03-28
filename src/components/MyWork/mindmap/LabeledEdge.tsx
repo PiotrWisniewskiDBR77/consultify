@@ -100,8 +100,13 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
           e.stopPropagation();
           window.dispatchEvent(
             new CustomEvent('mindmap-edge-contextmenu', {
-              detail: { edgeId: id, isUserCreated: !!data?.userCreated, x: e.clientX, y: e.clientY },
-            }),
+              detail: {
+                edgeId: id,
+                isUserCreated: !!data?.userCreated,
+                x: e.clientX,
+                y: e.clientY,
+              },
+            })
           );
         }}
       />

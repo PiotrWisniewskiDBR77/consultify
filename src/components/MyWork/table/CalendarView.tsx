@@ -453,7 +453,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <div className="row-span-1" />
             <div
               className={`text-sm font-bold py-2 ${
-                todayStr === `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(viewDay).padStart(2, '0')}`
+                todayStr ===
+                `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(viewDay).padStart(2, '0')}`
                   ? 'text-violet-600 dark:text-violet-400'
                   : 'text-slate-600 dark:text-slate-300'
               }`}
@@ -466,8 +467,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               const rowsAtHour = dayRows.filter((r) => parseHour(r.data?.[dateCol.key]) === hour);
               const isToday = dateStr === todayStr;
               const isHovered = hoverSlot?.date === dateStr && hoverSlot?.hour === hour;
-              const canAdd =
-                !locked && onAddEventAtDate && (isHovered || rowsAtHour.length === 0);
+              const canAdd = !locked && onAddEventAtDate && (isHovered || rowsAtHour.length === 0);
               return (
                 <React.Fragment key={hour}>
                   <div className="text-[9px] text-slate-400 dark:text-slate-500 py-1 pr-1 text-right">

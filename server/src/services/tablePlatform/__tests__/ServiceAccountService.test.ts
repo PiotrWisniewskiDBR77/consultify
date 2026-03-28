@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
 import crypto from 'crypto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -92,8 +92,8 @@ describe('ServiceAccountService', () => {
         expires_at: null,
       };
       mockQuery
-        .mockResolvedValueOnce({ rows: [accountRow] })  // SELECT
-        .mockResolvedValueOnce({ rows: [] });            // UPDATE last_used_at (fire-and-forget)
+        .mockResolvedValueOnce({ rows: [accountRow] }) // SELECT
+        .mockResolvedValueOnce({ rows: [] }); // UPDATE last_used_at (fire-and-forget)
 
       const result = await service.validateToken(rawToken);
 
@@ -147,10 +147,9 @@ describe('ServiceAccountService', () => {
 
       await service.revokeServiceAccount('sa-1');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        'DELETE FROM tp_service_accounts WHERE id = $1',
-        ['sa-1'],
-      );
+      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM tp_service_accounts WHERE id = $1', [
+        'sa-1',
+      ]);
     });
   });
 
@@ -161,8 +160,26 @@ describe('ServiceAccountService', () => {
   describe('listServiceAccounts', () => {
     it('returns accounts without token_hash', async () => {
       const rows = [
-        { id: 'sa-1', name: 'Bot A', description: null, token_prefix: 'tp_sa_AAAA', scopes: ['records:read'], last_used_at: null, expires_at: null, created_at: '2025-01-01' },
-        { id: 'sa-2', name: 'Bot B', description: 'Deploy', token_prefix: 'tp_sa_BBBB', scopes: ['records:write'], last_used_at: '2025-01-02', expires_at: null, created_at: '2025-01-01' },
+        {
+          id: 'sa-1',
+          name: 'Bot A',
+          description: null,
+          token_prefix: 'tp_sa_AAAA',
+          scopes: ['records:read'],
+          last_used_at: null,
+          expires_at: null,
+          created_at: '2025-01-01',
+        },
+        {
+          id: 'sa-2',
+          name: 'Bot B',
+          description: 'Deploy',
+          token_prefix: 'tp_sa_BBBB',
+          scopes: ['records:write'],
+          last_used_at: '2025-01-02',
+          expires_at: null,
+          created_at: '2025-01-01',
+        },
       ];
       mockQuery.mockResolvedValueOnce({ rows });
 

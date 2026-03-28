@@ -132,7 +132,11 @@ Return a JSON object:
     };
   } catch (error) {
     logger.warn('[VisionQA] Evaluation failed, passing image by default', { error });
-    return { score: 0.7, passed: true, issues: ['QA evaluation failed — image accepted by default'] };
+    return {
+      score: 0.7,
+      passed: true,
+      issues: ['QA evaluation failed — image accepted by default'],
+    };
   }
 }
 
@@ -146,10 +150,7 @@ export async function qaGatedImageGeneration(
 ): Promise<ImageGenerationResult> {
   const firstUrl = await generateImage(context.originalPrompt);
 
-  const firstEval = await evaluateImage(
-    { ...context, imageUrl: firstUrl },
-    aiProvider
-  );
+  const firstEval = await evaluateImage({ ...context, imageUrl: firstUrl }, aiProvider);
 
   if (firstEval.passed) {
     logger.info(`[VisionQA] Image passed QA (score: ${firstEval.score.toFixed(2)})`);
@@ -164,13 +165,12 @@ export async function qaGatedImageGeneration(
 
   try {
     const secondUrl = await generateImage(improvedPrompt);
-    const secondEval = await evaluateImage(
-      { ...context, imageUrl: secondUrl },
-      aiProvider
-    );
+    const secondEval = await evaluateImage({ ...context, imageUrl: secondUrl }, aiProvider);
 
     if (secondEval.score > firstEval.score) {
-      logger.info(`[VisionQA] Regen improved score: ${firstEval.score.toFixed(2)} → ${secondEval.score.toFixed(2)}`);
+      logger.info(
+        `[VisionQA] Regen improved score: ${firstEval.score.toFixed(2)} → ${secondEval.score.toFixed(2)}`
+      );
       return { url: secondUrl, qaScore: secondEval.score, wasRegenerated: true };
     }
 

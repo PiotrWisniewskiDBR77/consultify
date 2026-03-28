@@ -63,7 +63,9 @@ function saveLocalActivity(ideaId: string, entries: ActivityEntry[]) {
       `${STORAGE_KEY_PREFIX}${ideaId}`,
       JSON.stringify(entries.slice(-MAX_LOCAL_ENTRIES))
     );
-  } catch { /* storage full */ }
+  } catch {
+    /* storage full */
+  }
 }
 
 /**
@@ -88,7 +90,9 @@ export function pushActivity(ideaId: string, entry: Omit<ActivityEntry, 'id' | '
     nodeId: entry.nodeId,
     nodeLabel: entry.nodeLabel,
     detail: entry.detail,
-  }).catch(() => { /* API unavailable, localStorage already has it */ });
+  }).catch(() => {
+    /* API unavailable, localStorage already has it */
+  });
 
   window.dispatchEvent(new CustomEvent('mm-activity-update'));
 }
@@ -140,14 +144,18 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           setEntries(data.entries);
           return;
         }
-      } catch { /* API unavailable */ }
+      } catch {
+        /* API unavailable */
+      }
 
       if (!cancelled) {
         setEntries(loadLocalActivity(ideaId));
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [ideaId, open]);
 
   useEffect(() => {

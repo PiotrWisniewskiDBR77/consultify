@@ -6,7 +6,6 @@
  */
 
 import crypto from 'crypto';
-
 import { z } from 'zod';
 
 // ==========================================
@@ -30,9 +29,7 @@ export const SAMLConfigSchema = z.object({
   ssoUrl: z.string().url(),
   certificate: z.string().min(1),
   sloUrl: z.string().url().optional(),
-  nameIdFormat: z
-    .string()
-    .default('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'),
+  nameIdFormat: z.string().default('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'),
   attributeMappings: z.record(z.string(), z.string()).default({}),
 });
 
@@ -43,11 +40,7 @@ export type SAMLConfig = z.infer<typeof SAMLConfigSchema>;
 // OIDC HELPERS
 // ==========================================
 
-export function buildOIDCAuthUrl(
-  config: OIDCConfig,
-  state: string,
-  nonce: string,
-): string {
+export function buildOIDCAuthUrl(config: OIDCConfig, state: string, nonce: string): string {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: config.clientId,
@@ -56,21 +49,19 @@ export function buildOIDCAuthUrl(
     state,
     nonce,
   });
-  const authEndpoint =
-    config.authorizationEndpoint || `${config.issuer}/authorize`;
+  const authEndpoint = config.authorizationEndpoint || `${config.issuer}/authorize`;
   return `${authEndpoint}?${params.toString()}`;
 }
 
 export async function exchangeOIDCCode(
   config: OIDCConfig,
-  code: string,
+  code: string
 ): Promise<{
   accessToken: string;
   idToken: string;
   refreshToken?: string;
 }> {
-  const tokenEndpoint =
-    config.tokenEndpoint || `${config.issuer}/oauth/token`;
+  const tokenEndpoint = config.tokenEndpoint || `${config.issuer}/oauth/token`;
   const resp = await fetch(tokenEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -84,9 +75,7 @@ export async function exchangeOIDCCode(
   });
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');
-    throw new Error(
-      `OIDC token exchange failed (${resp.status}): ${text}`,
-    );
+    throw new Error(`OIDC token exchange failed (${resp.status}): ${text}`);
   }
   const data = (await resp.json()) as Record<string, string>;
   return {
@@ -96,9 +85,7 @@ export async function exchangeOIDCCode(
   };
 }
 
-export function decodeIdToken(
-  idToken: string,
-): Record<string, unknown> {
+export function decodeIdToken(idToken: string): Record<string, unknown> {
   const parts = idToken.split('.');
   if (parts.length !== 3) throw new Error('Invalid id_token format');
   return JSON.parse(Buffer.from(parts[1], 'base64url').toString());
@@ -106,10 +93,9 @@ export function decodeIdToken(
 
 export async function getUserInfo(
   config: OIDCConfig,
-  accessToken: string,
+  accessToken: string
 ): Promise<Record<string, unknown>> {
-  const endpoint =
-    config.userinfoEndpoint || `${config.issuer}/userinfo`;
+  const endpoint = config.userinfoEndpoint || `${config.issuer}/userinfo`;
   const resp = await fetch(endpoint, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -126,7 +112,7 @@ export async function getUserInfo(
 export function buildSAMLAuthnRequest(
   config: SAMLConfig,
   acsUrl: string,
-  requestId: string,
+  requestId: string
 ): string {
   const issueInstant = new Date().toISOString();
   return [
@@ -151,9 +137,7 @@ export function parseSAMLResponse(samlResponse: string): {
 } {
   const xml = Buffer.from(samlResponse, 'base64').toString('utf-8');
 
-  const nameIdMatch = xml.match(
-    /<(?:saml2?:)?NameID[^>]*>([^<]+)<\//,
-  );
+  const nameIdMatch = xml.match(/<(?:saml2?:)?NameID[^>]*>([^<]+)<\//);
   const nameId = nameIdMatch?.[1] || '';
 
   const attributes: Record<string, string> = {};

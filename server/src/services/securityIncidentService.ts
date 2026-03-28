@@ -41,8 +41,9 @@ class SecurityIncidentServiceClass {
     const mapRow = (row: any) => {
       const affectedFromColumn = safeJson(row.affected_resources, null);
       const meta = safeJson(row.metadata_json, {});
-      const affectedResources =
-        Array.isArray(affectedFromColumn) ? affectedFromColumn : meta?.affectedResources || [];
+      const affectedResources = Array.isArray(affectedFromColumn)
+        ? affectedFromColumn
+        : meta?.affectedResources || [];
 
       return {
         id: row.id,
@@ -194,8 +195,13 @@ class SecurityIncidentServiceClass {
     } = data || {};
 
     const normalizedType = incidentType || type;
-    const nextMetadata = { ...(metadata || {}), affectedResources: affectedResources || metadata?.affectedResources };
-    const affectedJson = Array.isArray(affectedResources) ? JSON.stringify(affectedResources) : null;
+    const nextMetadata = {
+      ...(metadata || {}),
+      affectedResources: affectedResources || metadata?.affectedResources,
+    };
+    const affectedJson = Array.isArray(affectedResources)
+      ? JSON.stringify(affectedResources)
+      : null;
 
     // Prefer extended schema insert (incident_type + affected_resources)
     try {
@@ -217,7 +223,15 @@ class SecurityIncidentServiceClass {
       // Fallback legacy schema (type + metadata_json)
       await this.db.run(
         'INSERT INTO security_incidents (id, title, description, severity, type, status, metadata_json) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, title, description, severity, normalizedType, 'open', JSON.stringify(nextMetadata || {})]
+        [
+          id,
+          title,
+          description,
+          severity,
+          normalizedType,
+          'open',
+          JSON.stringify(nextMetadata || {}),
+        ]
       );
     }
 

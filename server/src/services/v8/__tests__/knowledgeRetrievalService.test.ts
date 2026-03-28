@@ -1,20 +1,20 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   CreateWorkingMemoryEntryParams,
-  RequestMemoryPromotionParams,
-  OrchestrateRetrievalParams,
   MemoryType,
+  OrchestrateRetrievalParams,
+  RequestMemoryPromotionParams,
 } from '../../../types/knowledgeRetrievalIntegration.js';
 import {
-  WorkingMemoryEntrySchema,
-  MemoryPromotionRequestSchema,
-  WorkingMemoryOrchestrationResultSchema,
-  MemoryFreshnessCheckSchema,
   CreateWorkingMemoryEntryParamsSchema,
-  RequestMemoryPromotionParamsSchema,
+  MemoryFreshnessCheckSchema,
+  MemoryPromotionRequestSchema,
   OrchestrateRetrievalParamsSchema,
+  RequestMemoryPromotionParamsSchema,
+  WorkingMemoryEntrySchema,
+  WorkingMemoryOrchestrationResultSchema,
 } from '../../../types/knowledgeRetrievalIntegration.js';
 
 // ==========================================
@@ -41,12 +41,12 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
+  checkMemoryFreshness,
   createWorkingMemoryEntry,
   getWorkingMemory,
   orchestrateRetrieval,
   requestMemoryPromotion,
   resolveMemoryPromotion,
-  checkMemoryFreshness,
 } from '../knowledgeRetrievalService.js';
 
 // ==========================================
@@ -61,7 +61,7 @@ const ENTRY_ID = '00000000-0000-4000-8000-000000000040';
 const PROMO_ID = '00000000-0000-4000-8000-000000000050';
 
 function makeEntryParams(
-  overrides?: Partial<CreateWorkingMemoryEntryParams>,
+  overrides?: Partial<CreateWorkingMemoryEntryParams>
 ): CreateWorkingMemoryEntryParams {
   return {
     conversationId: CONV_ID,
@@ -75,7 +75,7 @@ function makeEntryParams(
 }
 
 function makePromotionParams(
-  overrides?: Partial<RequestMemoryPromotionParams>,
+  overrides?: Partial<RequestMemoryPromotionParams>
 ): RequestMemoryPromotionParams {
   return {
     organizationId: ORG_ID,
@@ -88,7 +88,7 @@ function makePromotionParams(
 }
 
 function makeOrchestrateParams(
-  overrides?: Partial<OrchestrateRetrievalParams>,
+  overrides?: Partial<OrchestrateRetrievalParams>
 ): OrchestrateRetrievalParams {
   return {
     organizationId: ORG_ID,
@@ -164,7 +164,12 @@ describe('createWorkingMemoryEntry', () => {
   });
 
   it('accepts all four memory types', async () => {
-    const types: MemoryType[] = ['ephemeral', 'session', 'user_private_durable', 'organization_durable'];
+    const types: MemoryType[] = [
+      'ephemeral',
+      'session',
+      'user_private_durable',
+      'organization_durable',
+    ];
     for (const memoryType of types) {
       vi.clearAllMocks();
       const result = await createWorkingMemoryEntry(makeEntryParams({ memoryType }));
@@ -174,7 +179,7 @@ describe('createWorkingMemoryEntry', () => {
 
   it('stores sourceRef when provided', async () => {
     const result = await createWorkingMemoryEntry(
-      makeEntryParams({ sourceRef: 'retrieval:trace:xyz' }),
+      makeEntryParams({ sourceRef: 'retrieval:trace:xyz' })
     );
     expect(result.sourceRef).toBe('retrieval:trace:xyz');
   });
@@ -182,26 +187,26 @@ describe('createWorkingMemoryEntry', () => {
   it('stores expiresAt for ephemeral entries', async () => {
     const expires = new Date(Date.now() + 3600_000).toISOString();
     const result = await createWorkingMemoryEntry(
-      makeEntryParams({ memoryType: 'ephemeral', expiresAt: expires }),
+      makeEntryParams({ memoryType: 'ephemeral', expiresAt: expires })
     );
     expect(result.expiresAt).toBe(expires);
   });
 
   it('rejects empty content', async () => {
-    await expect(
-      createWorkingMemoryEntry(makeEntryParams({ content: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createWorkingMemoryEntry(makeEntryParams({ content: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid memory type', async () => {
     await expect(
-      createWorkingMemoryEntry(makeEntryParams({ memoryType: 'invalid' as any })),
+      createWorkingMemoryEntry(makeEntryParams({ memoryType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid organizationId', async () => {
     await expect(
-      createWorkingMemoryEntry(makeEntryParams({ organizationId: 'not-a-uuid' })),
+      createWorkingMemoryEntry(makeEntryParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -260,7 +265,9 @@ describe('orchestrateRetrieval', () => {
 
     expect(mockDbRun).toHaveBeenCalled();
     const insertCalls = mockDbRun.mock.calls.filter(
-      (call) => typeof call[0] === 'string' && (call[0] as string).includes('INSERT INTO v8_retrieval_requests'),
+      (call) =>
+        typeof call[0] === 'string' &&
+        (call[0] as string).includes('INSERT INTO v8_retrieval_requests')
     );
     expect(insertCalls.length).toBe(1);
   });
@@ -271,7 +278,7 @@ describe('orchestrateRetrieval', () => {
     const result = await orchestrateRetrieval(
       makeOrchestrateParams({
         budgetHint: { maxResults: 5, maxTokenBudget: 2000 },
-      }),
+      })
     );
 
     expect(result.budgetUsed).toEqual({ maxResults: 5, maxTokenBudget: 2000 });
@@ -283,7 +290,9 @@ describe('orchestrateRetrieval', () => {
     await orchestrateRetrieval(makeOrchestrateParams());
 
     const retrievalInsert = mockDbRun.mock.calls.find(
-      (call) => typeof call[0] === 'string' && (call[0] as string).includes('INSERT INTO v8_retrieval_requests'),
+      (call) =>
+        typeof call[0] === 'string' &&
+        (call[0] as string).includes('INSERT INTO v8_retrieval_requests')
     );
     expect(retrievalInsert).toBeDefined();
     const insertParams = retrievalInsert![1] as (string | null)[];
@@ -293,14 +302,14 @@ describe('orchestrateRetrieval', () => {
 
   it('rejects invalid consumer class', async () => {
     await expect(
-      orchestrateRetrieval(makeOrchestrateParams({ consumerClass: 'worker' as any })),
+      orchestrateRetrieval(makeOrchestrateParams({ consumerClass: 'worker' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty query', async () => {
-    await expect(
-      orchestrateRetrieval(makeOrchestrateParams({ query: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(orchestrateRetrieval(makeOrchestrateParams({ query: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -329,19 +338,19 @@ describe('requestMemoryPromotion', () => {
 
   it('requires provenance ref — not silent promotion (Decision W2-6)', async () => {
     await expect(
-      requestMemoryPromotion(makePromotionParams({ provenanceRef: '' })),
+      requestMemoryPromotion(makePromotionParams({ provenanceRef: '' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('requires requestedBy', async () => {
-    await expect(
-      requestMemoryPromotion(makePromotionParams({ requestedBy: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(requestMemoryPromotion(makePromotionParams({ requestedBy: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid target memory type', async () => {
     await expect(
-      requestMemoryPromotion(makePromotionParams({ targetMemoryType: 'archived' as any })),
+      requestMemoryPromotion(makePromotionParams({ targetMemoryType: 'archived' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -377,19 +386,17 @@ describe('resolveMemoryPromotion', () => {
   it('throws when request not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      resolveMemoryPromotion('nonexistent', 'approved', 'admin'),
-    ).rejects.toThrow('not found');
+    await expect(resolveMemoryPromotion('nonexistent', 'approved', 'admin')).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('throws when request already resolved', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakePromotionRow({ promotion_status: 'approved' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakePromotionRow({ promotion_status: 'approved' }));
 
-    await expect(
-      resolveMemoryPromotion(PROMO_ID, 'rejected', 'admin'),
-    ).rejects.toThrow('already resolved');
+    await expect(resolveMemoryPromotion(PROMO_ID, 'rejected', 'admin')).rejects.toThrow(
+      'already resolved'
+    );
   });
 });
 
@@ -420,7 +427,7 @@ describe('checkMemoryFreshness', () => {
       makeFakeMemoryRow({
         memory_type: 'user_private_durable',
         created_at: new Date().toISOString(),
-      }),
+      })
     );
 
     const result = await checkMemoryFreshness('user_private_durable', ORG_ID);
@@ -435,7 +442,7 @@ describe('checkMemoryFreshness', () => {
       makeFakeMemoryRow({
         memory_type: 'user_private_durable',
         created_at: twoHoursAgo,
-      }),
+      })
     );
 
     const result = await checkMemoryFreshness('user_private_durable', ORG_ID);
@@ -448,7 +455,7 @@ describe('checkMemoryFreshness', () => {
       makeFakeMemoryRow({
         memory_type: 'organization_durable',
         created_at: new Date().toISOString(),
-      }),
+      })
     );
 
     const result = await checkMemoryFreshness('organization_durable', ORG_ID);
@@ -463,7 +470,7 @@ describe('checkMemoryFreshness', () => {
       makeFakeMemoryRow({
         memory_type: 'organization_durable',
         created_at: fiveHoursAgo,
-      }),
+      })
     );
 
     const result = await checkMemoryFreshness('organization_durable', ORG_ID);
@@ -499,17 +506,22 @@ describe('Zod schema validation', () => {
         sourceRef: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         expiresAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 
   it('validates all four memory types', () => {
-    for (const memoryType of ['ephemeral', 'session', 'user_private_durable', 'organization_durable'] as const) {
+    for (const memoryType of [
+      'ephemeral',
+      'session',
+      'user_private_durable',
+      'organization_durable',
+    ] as const) {
       expect(() =>
         CreateWorkingMemoryEntryParamsSchema.parse({
           ...makeEntryParams(),
           memoryType,
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -527,7 +539,7 @@ describe('Zod schema validation', () => {
         resolvedBy: null,
         resolvedAt: null,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -545,7 +557,7 @@ describe('Zod schema validation', () => {
           resolvedBy: status !== 'pending' ? 'admin' : null,
           resolvedAt: status !== 'pending' ? '2026-03-23T11:00:00.000Z' : null,
           createdAt: '2026-03-23T10:00:00.000Z',
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -558,7 +570,7 @@ describe('Zod schema validation', () => {
         freshnessPolicy: 'inherently_fresh',
         lastCheckedAt: '2026-03-23T10:00:00.000Z',
         isStale: false,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -571,7 +583,7 @@ describe('Zod schema validation', () => {
           freshnessPolicy: policy,
           lastCheckedAt: '2026-03-23T10:00:00.000Z',
           isStale: false,
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -585,7 +597,7 @@ describe('Zod schema validation', () => {
       OrchestrateRetrievalParamsSchema.parse({
         ...makeOrchestrateParams(),
         consumerClass: 'background',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -594,7 +606,7 @@ describe('Zod schema validation', () => {
       RequestMemoryPromotionParamsSchema.parse({
         ...makePromotionParams(),
         provenanceRef: '',
-      }),
+      })
     ).toThrow(ZodError);
   });
 });

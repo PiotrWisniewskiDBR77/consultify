@@ -49,7 +49,12 @@ const safeFilename = (name: string): string => {
     .trim();
 };
 
-const buildDocKey = (row: { organization_id?: unknown; project_id?: unknown; filename?: unknown; id?: unknown }) => {
+const buildDocKey = (row: {
+  organization_id?: unknown;
+  project_id?: unknown;
+  filename?: unknown;
+  id?: unknown;
+}) => {
   return [
     String(row.organization_id || 'global').trim() || 'global',
     String(row.project_id || 'default').trim() || 'default',

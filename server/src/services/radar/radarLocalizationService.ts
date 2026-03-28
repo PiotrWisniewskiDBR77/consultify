@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { RadarProcessedSignal } from './radarTypes.js';
 
 const localizedSignalSchema = z.object({
@@ -89,11 +89,16 @@ function detectTextLanguage(sample: string, fallback = 'en'): 'pl' | 'en' {
 
 function inferSignalLanguage(signal: RadarProcessedSignal, metadata: RadarSignalMetadata): string {
   const originalTitle =
-    typeof signal.metadata.originalTitle === 'string' ? signal.metadata.originalTitle : signal.normalizedTitle;
+    typeof signal.metadata.originalTitle === 'string'
+      ? signal.metadata.originalTitle
+      : signal.normalizedTitle;
   const fallbackLanguage = metadata.sourceLanguage || 'en';
   const titleLanguage = detectTextLanguage(originalTitle, fallbackLanguage);
   const shortSummaryLanguage = detectTextLanguage(signal.summaryShort, fallbackLanguage);
-  const longSummaryLanguage = detectTextLanguage(signal.summaryLong || signal.summaryShort, fallbackLanguage);
+  const longSummaryLanguage = detectTextLanguage(
+    signal.summaryLong || signal.summaryShort,
+    fallbackLanguage
+  );
 
   if (titleLanguage === shortSummaryLanguage && shortSummaryLanguage === longSummaryLanguage) {
     return titleLanguage;
@@ -160,7 +165,9 @@ class RadarLocalizationService {
       const resolution = this.resolveSignal(signal, normalizedLanguage);
       if (!resolution.pending) return false;
       const metadata = parseSignalMetadata(signal);
-      return !this.inflight.has(buildInflightKey(signal.id, normalizedLanguage, metadata.contentHash || ''));
+      return !this.inflight.has(
+        buildInflightKey(signal.id, normalizedLanguage, metadata.contentHash || '')
+      );
     });
 
     if (missing.length === 0) return 0;
@@ -168,7 +175,9 @@ class RadarLocalizationService {
     const batch = missing.slice(0, 8);
     for (const signal of batch) {
       const metadata = parseSignalMetadata(signal);
-      this.inflight.add(buildInflightKey(signal.id, normalizedLanguage, metadata.contentHash || ''));
+      this.inflight.add(
+        buildInflightKey(signal.id, normalizedLanguage, metadata.contentHash || '')
+      );
     }
 
     void this.translateBatch(batch, normalizedLanguage);
@@ -181,7 +190,8 @@ class RadarLocalizationService {
       const payload = signals.map((signal) => ({
         signalId: signal.id,
         title:
-          typeof signal.metadata.originalTitle === 'string' && signal.metadata.originalTitle.trim().length > 0
+          typeof signal.metadata.originalTitle === 'string' &&
+          signal.metadata.originalTitle.trim().length > 0
             ? signal.metadata.originalTitle.trim()
             : signal.normalizedTitle,
         summaryShort: signal.summaryShort,
@@ -256,7 +266,9 @@ ${JSON.stringify(payload)}`,
     } finally {
       for (const signal of signals) {
         const metadata = parseSignalMetadata(signal);
-        this.inflight.delete(buildInflightKey(signal.id, requestedLanguage, metadata.contentHash || ''));
+        this.inflight.delete(
+          buildInflightKey(signal.id, requestedLanguage, metadata.contentHash || '')
+        );
       }
     }
   }

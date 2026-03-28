@@ -7,12 +7,12 @@
  * Base financial modeling CRUD remains in financial-modeling.routes.ts.
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { financeEnterpriseService } from '../services/financeEnterpriseService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -40,10 +40,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ scenarioLabel: z.string().max(100).optional(), parentVersionId: z.string().optional() });
+    const schema = z.object({
+      scenarioLabel: z.string().max(100).optional(),
+      parentVersionId: z.string().optional(),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const version = await financeEnterpriseService.createModelVersion(identity.orgId, identity.userId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const version = await financeEnterpriseService.createModelVersion(
+      identity.orgId,
+      identity.userId,
+      { modelId: req.params.modelId, ...parsed.data }
+    );
     res.status(201).json(version);
   })
 );
@@ -53,7 +63,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const versions = await financeEnterpriseService.getModelVersions(identity.orgId, req.params.modelId);
+    const versions = await financeEnterpriseService.getModelVersions(
+      identity.orgId,
+      req.params.modelId
+    );
     res.json({ versions });
   })
 );
@@ -63,8 +76,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const result = await financeEnterpriseService.compareVersions(identity.orgId, req.params.fromId, req.params.toId);
-    if (!result) { res.status(404).json({ error: 'Version not found' }); return; }
+    const result = await financeEnterpriseService.compareVersions(
+      identity.orgId,
+      req.params.fromId,
+      req.params.toId
+    );
+    if (!result) {
+      res.status(404).json({ error: 'Version not found' });
+      return;
+    }
     res.json(result);
   })
 );
@@ -74,8 +94,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await financeEnterpriseService.mergeVersion(identity.orgId, req.params.versionId, identity.userId);
-    if (!ok) { res.status(404).json({ error: 'Version not found' }); return; }
+    const ok = await financeEnterpriseService.mergeVersion(
+      identity.orgId,
+      req.params.versionId,
+      identity.userId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Version not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -89,9 +116,16 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ dimensionName: z.string().min(1).max(200), dimensionType: z.string().max(50).optional(), hierarchy: z.array(z.unknown()).optional() });
+    const schema = z.object({
+      dimensionName: z.string().min(1).max(200),
+      dimensionType: z.string().max(50).optional(),
+      hierarchy: z.array(z.unknown()).optional(),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
     const dim = await financeEnterpriseService.createDimension(identity.orgId, parsed.data);
     res.status(201).json(dim);
   })
@@ -113,13 +147,22 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const schema = z.object({
-      sourceDimensionId: z.string().optional(), targetDimensionId: z.string().optional(),
-      allocationMethod: z.string().optional(), allocationRules: z.record(z.string(), z.unknown()).optional(),
-      amount: z.number().optional(), period: z.string().optional(),
+      sourceDimensionId: z.string().optional(),
+      targetDimensionId: z.string().optional(),
+      allocationMethod: z.string().optional(),
+      allocationRules: z.record(z.string(), z.unknown()).optional(),
+      amount: z.number().optional(),
+      period: z.string().optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const alloc = await financeEnterpriseService.createAllocation(identity.orgId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const alloc = await financeEnterpriseService.createAllocation(identity.orgId, {
+      modelId: req.params.modelId,
+      ...parsed.data,
+    });
     res.status(201).json(alloc);
   })
 );
@@ -129,7 +172,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const allocations = await financeEnterpriseService.getAllocations(identity.orgId, req.params.modelId);
+    const allocations = await financeEnterpriseService.getAllocations(
+      identity.orgId,
+      req.params.modelId
+    );
     res.json({ allocations });
   })
 );
@@ -139,10 +185,21 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ name: z.string().min(1).max(200), sourceModelIds: z.array(z.string()), consolidationRules: z.record(z.string(), z.unknown()).optional() });
+    const schema = z.object({
+      name: z.string().min(1).max(200),
+      sourceModelIds: z.array(z.string()),
+      consolidationRules: z.record(z.string(), z.unknown()).optional(),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const cons = await financeEnterpriseService.createConsolidation(identity.orgId, identity.userId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const cons = await financeEnterpriseService.createConsolidation(
+      identity.orgId,
+      identity.userId,
+      parsed.data
+    );
     res.status(201).json(cons);
   })
 );
@@ -167,12 +224,21 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const schema = z.object({
-      budgetType: z.string().optional(), fiscalYear: z.number().int(),
-      versionLabel: z.string().optional(), plannedData: z.record(z.string(), z.unknown()),
+      budgetType: z.string().optional(),
+      fiscalYear: z.number().int(),
+      versionLabel: z.string().optional(),
+      plannedData: z.record(z.string(), z.unknown()),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const budget = await financeEnterpriseService.createBudgetVersion(identity.orgId, identity.userId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const budget = await financeEnterpriseService.createBudgetVersion(
+      identity.orgId,
+      identity.userId,
+      { modelId: req.params.modelId, ...parsed.data }
+    );
     res.status(201).json(budget);
   })
 );
@@ -182,7 +248,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const budgets = await financeEnterpriseService.getBudgetVersions(identity.orgId, req.params.modelId);
+    const budgets = await financeEnterpriseService.getBudgetVersions(
+      identity.orgId,
+      req.params.modelId
+    );
     res.json({ budgets });
   })
 );
@@ -194,9 +263,19 @@ router.post(
     if (!identity) return;
     const schema = z.object({ actualData: z.record(z.string(), z.unknown()) });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const ok = await financeEnterpriseService.updateBudgetActuals(identity.orgId, req.params.budgetId, parsed.data.actualData as Record<string, unknown>);
-    if (!ok) { res.status(404).json({ error: 'Budget not found' }); return; }
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const ok = await financeEnterpriseService.updateBudgetActuals(
+      identity.orgId,
+      req.params.budgetId,
+      parsed.data.actualData as Record<string, unknown>
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -206,8 +285,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await financeEnterpriseService.approveBudget(identity.orgId, req.params.budgetId, identity.userId);
-    if (!ok) { res.status(404).json({ error: 'Budget not found' }); return; }
+    const ok = await financeEnterpriseService.approveBudget(
+      identity.orgId,
+      req.params.budgetId,
+      identity.userId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -217,10 +303,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ cycleName: z.string().min(1).max(200), cycleType: z.string().optional(), forecastHorizonMonths: z.number().int().optional() });
+    const schema = z.object({
+      cycleName: z.string().min(1).max(200),
+      cycleType: z.string().optional(),
+      forecastHorizonMonths: z.number().int().optional(),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const cycle = await financeEnterpriseService.createForecastCycle(identity.orgId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const cycle = await financeEnterpriseService.createForecastCycle(identity.orgId, {
+      modelId: req.params.modelId,
+      ...parsed.data,
+    });
     res.status(201).json(cycle);
   })
 );
@@ -230,7 +326,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const alerts = await financeEnterpriseService.getVarianceAlerts(identity.orgId, req.params.budgetId);
+    const alerts = await financeEnterpriseService.getVarianceAlerts(
+      identity.orgId,
+      req.params.budgetId
+    );
     res.json({ alerts });
   })
 );
@@ -251,8 +350,15 @@ router.post(
       syncDirection: z.enum(['import', 'export', 'bidirectional']).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const connector = await financeEnterpriseService.createConnector(identity.orgId, identity.userId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const connector = await financeEnterpriseService.createConnector(
+      identity.orgId,
+      identity.userId,
+      parsed.data
+    );
     res.status(201).json(connector);
   })
 );
@@ -273,13 +379,23 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const schema = z.object({
-      syncType: z.string(), recordsProcessed: z.number().int(),
-      recordsCreated: z.number().int(), recordsUpdated: z.number().int(),
-      recordsErrors: z.number().int(), errorDetails: z.array(z.unknown()).optional(),
+      syncType: z.string(),
+      recordsProcessed: z.number().int(),
+      recordsCreated: z.number().int(),
+      recordsUpdated: z.number().int(),
+      recordsErrors: z.number().int(),
+      errorDetails: z.array(z.unknown()).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const log = await financeEnterpriseService.logSync(identity.orgId, req.params.connectorId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const log = await financeEnterpriseService.logSync(
+      identity.orgId,
+      req.params.connectorId,
+      parsed.data
+    );
     res.status(201).json(log);
   })
 );
@@ -290,7 +406,11 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 100) : 20;
-    const logs = await financeEnterpriseService.getSyncLog(identity.orgId, req.params.connectorId, limit);
+    const logs = await financeEnterpriseService.getSyncLog(
+      identity.orgId,
+      req.params.connectorId,
+      limit
+    );
     res.json({ logs });
   })
 );
@@ -310,8 +430,15 @@ router.post(
       outputs: z.record(z.string(), z.unknown()),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const snapshot = await financeEnterpriseService.createValuationSnapshot(identity.orgId, identity.userId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const snapshot = await financeEnterpriseService.createValuationSnapshot(
+      identity.orgId,
+      identity.userId,
+      { modelId: req.params.modelId, ...parsed.data }
+    );
     res.status(201).json(snapshot);
   })
 );
@@ -321,7 +448,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const snapshots = await financeEnterpriseService.getValuationSnapshots(identity.orgId, req.params.modelId);
+    const snapshots = await financeEnterpriseService.getValuationSnapshots(
+      identity.orgId,
+      req.params.modelId
+    );
     res.json({ snapshots });
   })
 );
@@ -331,7 +461,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const audit = await financeEnterpriseService.getValuationAudit(identity.orgId, req.params.snapshotId);
+    const audit = await financeEnterpriseService.getValuationAudit(
+      identity.orgId,
+      req.params.snapshotId
+    );
     res.json({ audit });
   })
 );
@@ -346,14 +479,21 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const schema = z.object({
-      assumptionKey: z.string().min(1).max(200), assumptionValue: z.string(),
+      assumptionKey: z.string().min(1).max(200),
+      assumptionValue: z.string(),
       confidence: z.number().min(0).max(1).optional(),
       sourceCitations: z.array(z.unknown()).optional(),
       aiModelUsed: z.string().optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const assumption = await financeEnterpriseService.createAIAssumption(identity.orgId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const assumption = await financeEnterpriseService.createAIAssumption(identity.orgId, {
+      modelId: req.params.modelId,
+      ...parsed.data,
+    });
     res.status(201).json(assumption);
   })
 );
@@ -363,7 +503,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const assumptions = await financeEnterpriseService.getAIAssumptions(identity.orgId, req.params.modelId);
+    const assumptions = await financeEnterpriseService.getAIAssumptions(
+      identity.orgId,
+      req.params.modelId
+    );
     res.json({ assumptions });
   })
 );
@@ -373,8 +516,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await financeEnterpriseService.acceptAIAssumption(identity.orgId, req.params.assumptionId, identity.userId);
-    if (!ok) { res.status(404).json({ error: 'Assumption not found' }); return; }
+    const ok = await financeEnterpriseService.acceptAIAssumption(
+      identity.orgId,
+      req.params.assumptionId,
+      identity.userId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Assumption not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -389,12 +539,19 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const schema = z.object({
-      initiativeId: z.string().optional(), benefitId: z.string().optional(),
+      initiativeId: z.string().optional(),
+      benefitId: z.string().optional(),
       assumptionIds: z.array(z.string()).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const link = await financeEnterpriseService.createROILink(identity.orgId, { modelId: req.params.modelId, ...parsed.data });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const link = await financeEnterpriseService.createROILink(identity.orgId, {
+      modelId: req.params.modelId,
+      ...parsed.data,
+    });
     res.status(201).json(link);
   })
 );
@@ -416,9 +573,19 @@ router.post(
     if (!identity) return;
     const schema = z.object({ realizedValue: z.number(), evidence: z.array(z.unknown()) });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const ok = await financeEnterpriseService.captureRealizedValue(identity.orgId, req.params.linkId, parsed.data);
-    if (!ok) { res.status(404).json({ error: 'ROI link not found' }); return; }
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const ok = await financeEnterpriseService.captureRealizedValue(
+      identity.orgId,
+      req.params.linkId,
+      parsed.data
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'ROI link not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );

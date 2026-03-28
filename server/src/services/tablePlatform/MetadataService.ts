@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
@@ -41,10 +42,7 @@ async function bumpSchemaVersion(
 
 async function assertNotGoverned(tableId: string): Promise<void> {
   const db = getDatabase();
-  const result = await db.query(
-    'SELECT governance_mode FROM tp_tables WHERE id = $1',
-    [tableId]
-  );
+  const result = await db.query('SELECT governance_mode FROM tp_tables WHERE id = $1', [tableId]);
   const mode = (result.rows[0] as { governance_mode?: string } | undefined)?.governance_mode;
   if (mode === 'governed') {
     throw new PermissionError(
@@ -72,7 +70,11 @@ const metadataService = {
       await auditService.logEvent('create', 'base', id, createdBy, undefined, row, undefined);
       return (row ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] createBase failed', { workspaceId, orgId, error: (e as Error).message });
+      logger.error('[MetadataService] createBase failed', {
+        workspaceId,
+        orgId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -83,7 +85,10 @@ const metadataService = {
       const baseResult = await db.query('SELECT * FROM tp_bases WHERE id = $1', [baseId]);
       const base = baseResult.rows[0];
       if (!base) return null;
-      const tablesResult = await db.query('SELECT * FROM tp_tables WHERE base_id = $1 ORDER BY created_at ASC', [baseId]);
+      const tablesResult = await db.query(
+        'SELECT * FROM tp_tables WHERE base_id = $1 ORDER BY created_at ASC',
+        [baseId]
+      );
       (base as Record<string, unknown>).tables = tablesResult.rows;
       return base as Record<string, unknown>;
     } catch (e) {
@@ -101,25 +106,24 @@ const metadataService = {
       );
       return result.rows;
     } catch (e) {
-      logger.error('[MetadataService] listBases failed', { workspaceId, error: (e as Error).message });
+      logger.error('[MetadataService] listBases failed', {
+        workspaceId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
 
-  async updateBase(
-    baseId: string,
-    updates: { name?: string },
-    updatedBy?: string
-  ): Promise<any> {
+  async updateBase(baseId: string, updates: { name?: string }, updatedBy?: string): Promise<any> {
     const db = getDatabase();
     try {
       const before = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [baseId])).rows[0];
       if (!before) return null;
       if (updates.name !== undefined) {
-        await db.query(
-          `UPDATE tp_bases SET name = $2, updated_at = NOW() WHERE id = $1`,
-          [baseId, updates.name]
-        );
+        await db.query(`UPDATE tp_bases SET name = $2, updated_at = NOW() WHERE id = $1`, [
+          baseId,
+          updates.name,
+        ]);
       }
       const after = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [baseId])).rows[0];
       await auditService.logEvent('update', 'base', baseId, updatedBy, before, after, undefined);
@@ -136,7 +140,15 @@ const metadataService = {
       const before = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [baseId])).rows[0];
       if (!before) return false;
       await db.query('DELETE FROM tp_bases WHERE id = $1', [baseId]);
-      await auditService.logEvent('delete', 'base', baseId, deletedBy, before, undefined, undefined);
+      await auditService.logEvent(
+        'delete',
+        'base',
+        baseId,
+        deletedBy,
+        before,
+        undefined,
+        undefined
+      );
       return true;
     } catch (e) {
       logger.error('[MetadataService] deleteBase failed', { baseId, error: (e as Error).message });
@@ -167,10 +179,7 @@ const metadataService = {
       if (setClauses.length === 0) return before;
       setClauses.push(`updated_at = NOW()`);
       values.push(tableId);
-      await db.query(
-        `UPDATE tp_tables SET ${setClauses.join(', ')} WHERE id = $${idx}`,
-        values
-      );
+      await db.query(`UPDATE tp_tables SET ${setClauses.join(', ')} WHERE id = $${idx}`, values);
       const after = (await db.query('SELECT * FROM tp_tables WHERE id = $1', [tableId])).rows[0];
       await auditService.logEvent('update', 'table', tableId, updatedBy, before, after, undefined);
       const baseId = (before as { base_id?: string }).base_id;
@@ -179,7 +188,10 @@ const metadataService = {
       }
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] updateTable failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] updateTable failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -191,21 +203,34 @@ const metadataService = {
       if (!before) return false;
       const baseId = (before as { base_id?: string }).base_id;
       await db.query('DELETE FROM tp_tables WHERE id = $1', [tableId]);
-      await auditService.logEvent('delete', 'table', tableId, deletedBy, before, undefined, undefined);
+      await auditService.logEvent(
+        'delete',
+        'table',
+        tableId,
+        deletedBy,
+        before,
+        undefined,
+        undefined
+      );
       if (baseId) {
         await bumpSchemaVersion(baseId, { action: 'deleteTable', tableId }, deletedBy);
         await this.notifySchemaMutated(baseId, [tableId]);
 
-        webhookDispatcher.dispatchEvent(baseId, {
-          source: 'publicApi',
-          sourceMetadata: { userId: deletedBy },
-          actionType: 'deleteTable',
-          tableId,
-        }).catch(() => {});
+        webhookDispatcher
+          .dispatchEvent(baseId, {
+            source: 'publicApi',
+            sourceMetadata: { userId: deletedBy },
+            actionType: 'deleteTable',
+            tableId,
+          })
+          .catch(() => {});
       }
       return true;
     } catch (e) {
-      logger.error('[MetadataService] deleteTable failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] deleteTable failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -218,25 +243,43 @@ const metadataService = {
       const tableId = (before as { table_id?: string }).table_id;
       if (tableId) await assertNotGoverned(tableId);
       await db.query('DELETE FROM tp_fields WHERE id = $1', [fieldId]);
-      await auditService.logEvent('delete', 'field', fieldId, deletedBy, before, undefined, undefined);
+      await auditService.logEvent(
+        'delete',
+        'field',
+        fieldId,
+        deletedBy,
+        before,
+        undefined,
+        undefined
+      );
       if (tableId) {
-        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+          .rows[0] as { base_id?: string } | undefined;
         if (tableRow?.base_id) {
-          await bumpSchemaVersion(tableRow.base_id, { action: 'deleteField', fieldId, tableId }, deletedBy);
+          await bumpSchemaVersion(
+            tableRow.base_id,
+            { action: 'deleteField', fieldId, tableId },
+            deletedBy
+          );
           await this.notifySchemaMutated(tableRow.base_id, [tableId]);
 
-          webhookDispatcher.dispatchEvent(tableRow.base_id, {
-            source: 'publicApi',
-            sourceMetadata: { userId: deletedBy },
-            actionType: 'deleteField',
-            tableId,
-            fieldId,
-          }).catch(() => {});
+          webhookDispatcher
+            .dispatchEvent(tableRow.base_id, {
+              source: 'publicApi',
+              sourceMetadata: { userId: deletedBy },
+              actionType: 'deleteField',
+              tableId,
+              fieldId,
+            })
+            .catch(() => {});
         }
       }
       return true;
     } catch (e) {
-      logger.error('[MetadataService] deleteField failed', { fieldId, error: (e as Error).message });
+      logger.error('[MetadataService] deleteField failed', {
+        fieldId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -248,11 +291,24 @@ const metadataService = {
       if (!before) return false;
       const tableId = (before as { table_id?: string }).table_id;
       await db.query('DELETE FROM tp_views WHERE id = $1', [viewId]);
-      await auditService.logEvent('delete', 'view', viewId, deletedBy, before, undefined, undefined);
+      await auditService.logEvent(
+        'delete',
+        'view',
+        viewId,
+        deletedBy,
+        before,
+        undefined,
+        undefined
+      );
       if (tableId) {
-        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+          .rows[0] as { base_id?: string } | undefined;
         if (tableRow?.base_id) {
-          await bumpSchemaVersion(tableRow.base_id, { action: 'deleteView', viewId, tableId }, deletedBy);
+          await bumpSchemaVersion(
+            tableRow.base_id,
+            { action: 'deleteView', viewId, tableId },
+            deletedBy
+          );
         }
       }
       return true;
@@ -293,20 +349,28 @@ const metadataService = {
         [viewId, tableId, 'Grid view', 'grid', [fieldId], true, createdBy ?? null]
       );
       const table = await this.getTable(tableId);
-      await auditService.logEvent('create', 'table', tableId, createdBy, undefined, table, { base_id: baseId });
+      await auditService.logEvent('create', 'table', tableId, createdBy, undefined, table, {
+        base_id: baseId,
+      });
       await bumpSchemaVersion(baseId, { action: 'createTable', tableId, name }, createdBy);
       await this.notifySchemaMutated(baseId, [tableId]);
 
-      webhookDispatcher.dispatchEvent(baseId, {
-        source: 'publicApi',
-        sourceMetadata: { userId: createdBy },
-        actionType: 'createTable',
-        tableId,
-      }).catch(() => {});
+      webhookDispatcher
+        .dispatchEvent(baseId, {
+          source: 'publicApi',
+          sourceMetadata: { userId: createdBy },
+          actionType: 'createTable',
+          tableId,
+        })
+        .catch(() => {});
 
       return table;
     } catch (e) {
-      logger.error('[MetadataService] createTable failed', { baseId, name, error: (e as Error).message });
+      logger.error('[MetadataService] createTable failed', {
+        baseId,
+        name,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -321,9 +385,10 @@ const metadataService = {
         'SELECT * FROM tp_fields WHERE table_id = $1 ORDER BY field_order ASC, created_at ASC',
         [tableId]
       );
-      const viewsResult = await db.query('SELECT * FROM tp_views WHERE table_id = $1 ORDER BY created_at ASC', [
-        tableId,
-      ]);
+      const viewsResult = await db.query(
+        'SELECT * FROM tp_views WHERE table_id = $1 ORDER BY created_at ASC',
+        [tableId]
+      );
       (table as Record<string, unknown>).fields = fieldsResult.rows;
       (table as Record<string, unknown>).views = viewsResult.rows;
       return table as Record<string, unknown>;
@@ -355,23 +420,36 @@ const metadataService = {
         [id, tableId, name, fieldType, options ? JSON.stringify(options) : '{}', fieldOrder]
       );
       const field = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [id])).rows[0];
-      await auditService.logEvent('create', 'field', id, createdBy, undefined, field, { table_id: tableId });
-      const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+      await auditService.logEvent('create', 'field', id, createdBy, undefined, field, {
+        table_id: tableId,
+      });
+      const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+        .rows[0] as { base_id?: string } | undefined;
       if (tableRow?.base_id) {
-        await bumpSchemaVersion(tableRow.base_id, { action: 'createField', fieldId: id, tableId, name, fieldType }, createdBy);
+        await bumpSchemaVersion(
+          tableRow.base_id,
+          { action: 'createField', fieldId: id, tableId, name, fieldType },
+          createdBy
+        );
         await this.notifySchemaMutated(tableRow.base_id, [tableId]);
 
-        webhookDispatcher.dispatchEvent(tableRow.base_id, {
-          source: 'publicApi',
-          sourceMetadata: { userId: createdBy },
-          actionType: 'createField',
-          tableId,
-          fieldId: id,
-        }).catch(() => {});
+        webhookDispatcher
+          .dispatchEvent(tableRow.base_id, {
+            source: 'publicApi',
+            sourceMetadata: { userId: createdBy },
+            actionType: 'createField',
+            tableId,
+            fieldId: id,
+          })
+          .catch(() => {});
       }
       return (field ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] createField failed', { tableId, name, error: (e as Error).message });
+      logger.error('[MetadataService] createField failed', {
+        tableId,
+        name,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -400,29 +478,32 @@ const metadataService = {
       if (setClauses.length === 0) return before;
       setClauses.push(`updated_at = NOW()`);
       values.push(fieldId);
-      await db.query(
-        `UPDATE tp_fields SET ${setClauses.join(', ')} WHERE id = $${idx}`,
-        values
-      );
+      await db.query(`UPDATE tp_fields SET ${setClauses.join(', ')} WHERE id = $${idx}`, values);
       const after = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0];
       await auditService.logEvent('update', 'field', fieldId, undefined, before, after, undefined);
       if (tableId) {
-        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+          .rows[0] as { base_id?: string } | undefined;
         if (tableRow?.base_id) {
           await bumpSchemaVersion(tableRow.base_id, { action: 'updateField', fieldId, updates });
           await this.notifySchemaMutated(tableRow.base_id, [tableId]);
 
-          webhookDispatcher.dispatchEvent(tableRow.base_id, {
-            source: 'publicApi',
-            actionType: 'updateField',
-            tableId,
-            fieldId,
-          }).catch(() => {});
+          webhookDispatcher
+            .dispatchEvent(tableRow.base_id, {
+              source: 'publicApi',
+              actionType: 'updateField',
+              tableId,
+              fieldId,
+            })
+            .catch(() => {});
         }
       }
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] updateField failed', { fieldId, error: (e as Error).message });
+      logger.error('[MetadataService] updateField failed', {
+        fieldId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -463,17 +544,37 @@ const metadataService = {
       await db.query(
         `INSERT INTO tp_views (id, table_id, name, view_type, config, created_by, is_personal, owner_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [id, tableId, name, viewType, config ? JSON.stringify(config) : '{}', createdBy ?? null, isPersonal, ownerId ?? null]
+        [
+          id,
+          tableId,
+          name,
+          viewType,
+          config ? JSON.stringify(config) : '{}',
+          createdBy ?? null,
+          isPersonal,
+          ownerId ?? null,
+        ]
       );
       const view = (await db.query('SELECT * FROM tp_views WHERE id = $1', [id])).rows[0];
-      await auditService.logEvent('create', 'view', id, createdBy, undefined, view, { table_id: tableId });
-      const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+      await auditService.logEvent('create', 'view', id, createdBy, undefined, view, {
+        table_id: tableId,
+      });
+      const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+        .rows[0] as { base_id?: string } | undefined;
       if (tableRow?.base_id) {
-        await bumpSchemaVersion(tableRow.base_id, { action: 'createView', viewId: id, tableId, name, viewType }, createdBy);
+        await bumpSchemaVersion(
+          tableRow.base_id,
+          { action: 'createView', viewId: id, tableId, name, viewType },
+          createdBy
+        );
       }
       return (view ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] createView failed', { tableId, name, error: (e as Error).message });
+      logger.error('[MetadataService] createView failed', {
+        tableId,
+        name,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -504,15 +605,13 @@ const metadataService = {
       if (setClauses.length === 0) return before;
       setClauses.push(`updated_at = NOW()`);
       values.push(viewId);
-      await db.query(
-        `UPDATE tp_views SET ${setClauses.join(', ')} WHERE id = $${idx}`,
-        values
-      );
+      await db.query(`UPDATE tp_views SET ${setClauses.join(', ')} WHERE id = $${idx}`, values);
       const after = (await db.query('SELECT * FROM tp_views WHERE id = $1', [viewId])).rows[0];
       await auditService.logEvent('update', 'view', viewId, undefined, before, after, undefined);
       const tableId = (before as { table_id?: string }).table_id;
       if (tableId) {
-        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
+        const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
+          .rows[0] as { base_id?: string } | undefined;
         if (tableRow?.base_id) {
           await bumpSchemaVersion(tableRow.base_id, { action: 'updateView', viewId, updates });
         }
@@ -557,10 +656,16 @@ const metadataService = {
         [tableId, mode]
       );
       const after = (await db.query('SELECT * FROM tp_tables WHERE id = $1', [tableId])).rows[0];
-      await auditService.logEvent('update', 'table', tableId, updatedBy, before, after, { action: 'setGovernanceMode', mode });
+      await auditService.logEvent('update', 'table', tableId, updatedBy, before, after, {
+        action: 'setGovernanceMode',
+        mode,
+      });
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] setGovernanceMode failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] setGovernanceMode failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -568,7 +673,9 @@ const metadataService = {
   async getGovernanceMode(tableId: string): Promise<string> {
     const db = getDatabase();
     const result = await db.query('SELECT governance_mode FROM tp_tables WHERE id = $1', [tableId]);
-    return (result.rows[0] as { governance_mode?: string } | undefined)?.governance_mode ?? 'operational';
+    return (
+      (result.rows[0] as { governance_mode?: string } | undefined)?.governance_mode ?? 'operational'
+    );
   },
 
   // ==========================================
@@ -592,7 +699,10 @@ const metadataService = {
       await db.query('COMMIT');
     } catch (e) {
       await db.query('ROLLBACK');
-      logger.error('[MetadataService] reorderFields failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] reorderFields failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -618,7 +728,10 @@ const metadataService = {
       await db.query('COMMIT');
     } catch (e) {
       await db.query('ROLLBACK');
-      logger.error('[MetadataService] reorderViews failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] reorderViews failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -631,11 +744,7 @@ const metadataService = {
   // DUPLICATE BASE / TABLE
   // ==========================================
 
-  async duplicateBase(
-    baseId: string,
-    newName: string,
-    userId?: string
-  ): Promise<any> {
+  async duplicateBase(baseId: string, newName: string, userId?: string): Promise<any> {
     const db = getDatabase();
     try {
       const original = await this.getBase(baseId);
@@ -651,28 +760,24 @@ const metadataService = {
 
       const tables = (origBase.tables ?? []) as Array<Record<string, unknown>>;
       for (const table of tables) {
-        await this.duplicateTableInternal(
-          String(table.id),
-          newBaseId,
-          String(table.name),
-          userId
-        );
+        await this.duplicateTableInternal(String(table.id), newBaseId, String(table.name), userId);
       }
 
       const newBase = await this.getBase(newBaseId);
-      await auditService.logEvent('create', 'base', newBaseId, userId, undefined, newBase, { duplicatedFrom: baseId });
+      await auditService.logEvent('create', 'base', newBaseId, userId, undefined, newBase, {
+        duplicatedFrom: baseId,
+      });
       return newBase;
     } catch (e) {
-      logger.error('[MetadataService] duplicateBase failed', { baseId, error: (e as Error).message });
+      logger.error('[MetadataService] duplicateBase failed', {
+        baseId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
 
-  async duplicateTable(
-    tableId: string,
-    newName: string,
-    userId?: string
-  ): Promise<any> {
+  async duplicateTable(tableId: string, newName: string, userId?: string): Promise<any> {
     const db = getDatabase();
     try {
       const tableResult = await db.query('SELECT * FROM tp_tables WHERE id = $1', [tableId]);
@@ -682,11 +787,22 @@ const metadataService = {
       const baseId = String(original.base_id);
       const newTable = await this.duplicateTableInternal(tableId, baseId, newName, userId);
 
-      await bumpSchemaVersion(baseId, { action: 'duplicateTable', sourceTableId: tableId, newTableId: (newTable as Record<string, unknown>)?.id }, userId);
+      await bumpSchemaVersion(
+        baseId,
+        {
+          action: 'duplicateTable',
+          sourceTableId: tableId,
+          newTableId: (newTable as Record<string, unknown>)?.id,
+        },
+        userId
+      );
       await this.notifySchemaMutated(baseId, [String((newTable as Record<string, unknown>)?.id)]);
       return newTable;
     } catch (e) {
-      logger.error('[MetadataService] duplicateTable failed', { tableId, error: (e as Error).message });
+      logger.error('[MetadataService] duplicateTable failed', {
+        tableId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -711,15 +827,23 @@ const metadataService = {
       fieldIdMap.set(String(f.id), uuidv4());
     }
 
-    const sourceTable = (await db.query('SELECT * FROM tp_tables WHERE id = $1', [sourceTableId])).rows[0] as Record<string, unknown>;
+    const sourceTable = (await db.query('SELECT * FROM tp_tables WHERE id = $1', [sourceTableId]))
+      .rows[0] as Record<string, unknown>;
     const newPrimaryFieldId = sourceTable?.primary_field_id
-      ? fieldIdMap.get(String(sourceTable.primary_field_id)) ?? null
+      ? (fieldIdMap.get(String(sourceTable.primary_field_id)) ?? null)
       : null;
 
     await db.query(
       `INSERT INTO tp_tables (id, base_id, name, description, primary_field_id, created_by)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [newTableId, targetBaseId, newName, sourceTable?.description ?? null, newPrimaryFieldId, userId ?? null]
+      [
+        newTableId,
+        targetBaseId,
+        newName,
+        sourceTable?.description ?? null,
+        newPrimaryFieldId,
+        userId ?? null,
+      ]
     );
 
     for (const f of fields) {
@@ -727,7 +851,14 @@ const metadataService = {
       await db.query(
         `INSERT INTO tp_fields (id, table_id, name, field_type, options, field_order)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [newFieldId, newTableId, f.name, f.field_type, typeof f.options === 'string' ? f.options : JSON.stringify(f.options ?? {}), f.field_order ?? 0]
+        [
+          newFieldId,
+          newTableId,
+          f.name,
+          f.field_type,
+          typeof f.options === 'string' ? f.options : JSON.stringify(f.options ?? {}),
+          f.field_order ?? 0,
+        ]
       );
     }
 
@@ -744,21 +875,28 @@ const metadataService = {
         `INSERT INTO tp_views (id, table_id, name, view_type, visible_field_ids, config, is_default, is_personal, owner_id, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
-          newViewId, newTableId, v.name, v.view_type,
+          newViewId,
+          newTableId,
+          v.name,
+          v.view_type,
           visibleFieldIds,
           typeof v.config === 'string' ? v.config : JSON.stringify(v.config ?? {}),
-          v.is_default ?? false, v.is_personal ?? false, v.owner_id ?? null, userId ?? null,
+          v.is_default ?? false,
+          v.is_personal ?? false,
+          v.owner_id ?? null,
+          userId ?? null,
         ]
       );
     }
 
-    const recordsResult = await db.query(
-      'SELECT * FROM tp_records WHERE table_id = $1',
-      [sourceTableId]
-    );
+    const recordsResult = await db.query('SELECT * FROM tp_records WHERE table_id = $1', [
+      sourceTableId,
+    ]);
     for (const r of recordsResult.rows as Array<Record<string, unknown>>) {
       const newRecordId = uuidv4();
-      const originalData = (typeof r.data === 'string' ? JSON.parse(r.data) : r.data ?? {}) as Record<string, unknown>;
+      const originalData = (
+        typeof r.data === 'string' ? JSON.parse(r.data) : (r.data ?? {})
+      ) as Record<string, unknown>;
       const remappedData: Record<string, unknown> = {};
       for (const [key, val] of Object.entries(originalData)) {
         const newKey = fieldIdMap.get(key) ?? key;
@@ -772,7 +910,9 @@ const metadataService = {
     }
 
     const newTable = await this.getTable(newTableId);
-    await auditService.logEvent('create', 'table', newTableId, userId, undefined, newTable, { duplicatedFrom: sourceTableId });
+    await auditService.logEvent('create', 'table', newTableId, userId, undefined, newTable, {
+      duplicatedFrom: sourceTableId,
+    });
     return newTable;
   },
 
@@ -796,7 +936,10 @@ const metadataService = {
       const after = (await db.query('SELECT * FROM tp_views WHERE id = $1', [viewId])).rows[0];
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
-      logger.error('[MetadataService] updateViewColumnConfig failed', { viewId, error: (e as Error).message });
+      logger.error('[MetadataService] updateViewColumnConfig failed', {
+        viewId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -841,9 +984,15 @@ const metadataService = {
     }
   },
 
-  async getSharedView(
-    token: string
-  ): Promise<{ viewId: string; tableId: string; viewName: string; viewType: string; config: any; tableName: string; fields: any[] } | null> {
+  async getSharedView(token: string): Promise<{
+    viewId: string;
+    tableId: string;
+    viewName: string;
+    viewType: string;
+    config: any;
+    tableName: string;
+    fields: any[];
+  } | null> {
     const db = getDatabase();
     try {
       const viewResult = await db.query(
@@ -875,7 +1024,10 @@ const metadataService = {
         fields: fieldsResult.rows,
       };
     } catch (e) {
-      logger.error('[MetadataService] getSharedView failed', { token, error: (e as Error).message });
+      logger.error('[MetadataService] getSharedView failed', {
+        token,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

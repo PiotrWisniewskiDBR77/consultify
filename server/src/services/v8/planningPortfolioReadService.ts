@@ -1,10 +1,10 @@
-import logger from '../../utils/Logger.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   GATE_PERMISSIONS,
   getGateForTransition,
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 
@@ -143,7 +143,9 @@ const collectRequestedStatuses = (filters: V8PlanningPortfolioReadFilters): stri
   if (Array.isArray(filters.status)) out.push(...filters.status);
   else if (filters.status) out.push(filters.status);
 
-  return Array.from(new Set(out.map((status) => String(status || '').toUpperCase()).filter(Boolean)));
+  return Array.from(
+    new Set(out.map((status) => String(status || '').toUpperCase()).filter(Boolean))
+  );
 };
 
 export async function getPortfolioRead(
@@ -177,7 +179,9 @@ export async function getPortfolioRead(
     params.push(String(filters.programId));
   }
   if (priorities.length > 0) {
-    const normalized = priorities.map((priority) => String(priority || '').toUpperCase()).filter(Boolean);
+    const normalized = priorities
+      .map((priority) => String(priority || '').toUpperCase())
+      .filter(Boolean);
     if (normalized.length > 0) {
       sql += ` AND UPPER(COALESCE(i.priority,'')) IN (${normalized.map(() => '?').join(', ')})`;
       params.push(...normalized);
@@ -270,7 +274,10 @@ export async function getPortfolioRead(
   });
 
   const total = initiatives.length;
-  const totalBudget = initiatives.reduce((sum, initiative) => sum + Number(initiative.budget || 0), 0);
+  const totalBudget = initiatives.reduce(
+    (sum, initiative) => sum + Number(initiative.budget || 0),
+    0
+  );
   const totalValue = initiatives.reduce(
     (sum, initiative) => sum + Number(initiative.businessValue || 0),
     0
@@ -291,7 +298,8 @@ export async function getPortfolioRead(
       avgProgress:
         total > 0
           ? Math.round(
-              initiatives.reduce((sum, initiative) => sum + Number(initiative.progress || 0), 0) / total
+              initiatives.reduce((sum, initiative) => sum + Number(initiative.progress || 0), 0) /
+                total
             )
           : 0,
     },
@@ -582,7 +590,9 @@ export async function getInitiativeGateRolesRead(
     });
   }
 
-  const explicitKeys = new Set(explicitRoles.map((role: any) => `${role.gateRole}::${role.userId}`));
+  const explicitKeys = new Set(
+    explicitRoles.map((role: any) => `${role.gateRole}::${role.userId}`)
+  );
   const mergedDerived = derived
     .filter((role) => !explicitKeys.has(`${role.gateRole}::${role.userId}`))
     .map((role) => ({ ...role, id: `derived-${role.gateRole}-${role.userId}` }));
@@ -1069,11 +1079,15 @@ export async function getInitiativeGateReadinessRead(
     }
   }
 
-  const nextGates = availableTransitions.filter((transition) => transition.gate && transition.gate !== 'CANCEL');
+  const nextGates = availableTransitions.filter(
+    (transition) => transition.gate && transition.gate !== 'CANCEL'
+  );
   for (const transition of nextGates) {
     const missingRoles = ((transition.requiredRoles as string[]) || []).filter(
       (role: string) =>
-        !expandedAssignments.some((assignment) => String(assignment.gateRole).toUpperCase() === role)
+        !expandedAssignments.some(
+          (assignment) => String(assignment.gateRole).toUpperCase() === role
+        )
     );
     if (missingRoles.length > 0) {
       addCheck(
@@ -1298,7 +1312,9 @@ export async function getInitiativeKpisRead(
       progressPercentage,
       status: kpi.status || 'on_track',
       trendData: safeJsonParse(kpi.trendData, []),
-      isOnTarget: Boolean(kpi.isOnTarget ?? (targetValue > 0 ? currentValue >= targetValue : false)),
+      isOnTarget: Boolean(
+        kpi.isOnTarget ?? (targetValue > 0 ? currentValue >= targetValue : false)
+      ),
     };
   });
 }

@@ -72,7 +72,9 @@ describe('Sync Hub external auth callback route', () => {
     const app = express();
     app.use('/api/sync-hub', syncHubRoutes);
 
-    const res = await request(app).get('/api/sync-hub/external-auth/callback?state=state-1&code=code-1');
+    const res = await request(app).get(
+      '/api/sync-hub/external-auth/callback?state=state-1&code=code-1'
+    );
 
     expect(res.status).toBe(200);
     expect(res.text).toContain('Authorization callback received');
@@ -101,7 +103,7 @@ describe('Sync Hub external auth callback route', () => {
         'external_auth_callback_received',
         'external_auth_callback',
         'external_auth_callback',
-      ]),
+      ])
     );
   });
 });

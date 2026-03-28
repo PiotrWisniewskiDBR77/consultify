@@ -119,28 +119,42 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   const swotData = toolType === 'dynamic-swot' ? (session.inputData as SWOTData) : null;
   const readiness = swotData ? computeDynamicSwotOverallReadiness(swotData, isPolish) : null;
 
-  const proposalCounts = swotData ? {
-    signals: swotData.signals.filter(s => s.proposalStatus === 'ai-proposed').length,
-    items: swotData.items.filter(i => i.proposalStatus === 'ai-proposed').length,
-    tensions: swotData.tensions.filter(t => t.proposalStatus === 'ai-proposed').length,
-    moves: swotData.recommendedMoves.filter(m => m.proposalStatus === 'ai-proposed').length,
-    outputs: swotData.outputCandidates.filter(o => o.proposalStatus === 'ai-proposed').length,
-    total: 0,
-  } : null;
+  const proposalCounts = swotData
+    ? {
+        signals: swotData.signals.filter((s) => s.proposalStatus === 'ai-proposed').length,
+        items: swotData.items.filter((i) => i.proposalStatus === 'ai-proposed').length,
+        tensions: swotData.tensions.filter((t) => t.proposalStatus === 'ai-proposed').length,
+        moves: swotData.recommendedMoves.filter((m) => m.proposalStatus === 'ai-proposed').length,
+        outputs: swotData.outputCandidates.filter((o) => o.proposalStatus === 'ai-proposed').length,
+        total: 0,
+      }
+    : null;
   if (proposalCounts) {
-    proposalCounts.total = proposalCounts.signals + proposalCounts.items + proposalCounts.tensions + proposalCounts.moves + proposalCounts.outputs;
+    proposalCounts.total =
+      proposalCounts.signals +
+      proposalCounts.items +
+      proposalCounts.tensions +
+      proposalCounts.moves +
+      proposalCounts.outputs;
   }
 
-  const acceptedCounts = swotData ? {
-    signals: swotData.signals.filter(s => s.proposalStatus === 'accepted').length,
-    items: swotData.items.filter(i => i.proposalStatus === 'accepted').length,
-    tensions: swotData.tensions.filter(t => t.proposalStatus === 'accepted').length,
-    moves: swotData.recommendedMoves.filter(m => m.proposalStatus === 'accepted').length,
-    outputs: swotData.outputCandidates.filter(o => o.proposalStatus === 'accepted').length,
-    total: 0,
-  } : null;
+  const acceptedCounts = swotData
+    ? {
+        signals: swotData.signals.filter((s) => s.proposalStatus === 'accepted').length,
+        items: swotData.items.filter((i) => i.proposalStatus === 'accepted').length,
+        tensions: swotData.tensions.filter((t) => t.proposalStatus === 'accepted').length,
+        moves: swotData.recommendedMoves.filter((m) => m.proposalStatus === 'accepted').length,
+        outputs: swotData.outputCandidates.filter((o) => o.proposalStatus === 'accepted').length,
+        total: 0,
+      }
+    : null;
   if (acceptedCounts) {
-    acceptedCounts.total = acceptedCounts.signals + acceptedCounts.items + acceptedCounts.tensions + acceptedCounts.moves + acceptedCounts.outputs;
+    acceptedCounts.total =
+      acceptedCounts.signals +
+      acceptedCounts.items +
+      acceptedCounts.tensions +
+      acceptedCounts.moves +
+      acceptedCounts.outputs;
   }
   const phaseSummaries = swotData ? computeDynamicSwotPhaseSummaries(swotData, isPolish) : [];
   const swotSignals = swotData ? computeDynamicSwotSessionSignals(swotData, isPolish) : null;
@@ -259,7 +273,9 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  {isPolish ? 'Akceptuj ten framing i generuj dalej' : 'Accept this framing and generate next'}
+                  {isPolish
+                    ? 'Akceptuj ten framing i generuj dalej'
+                    : 'Accept this framing and generate next'}
                 </>
               )}
             </button>
@@ -293,7 +309,9 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4 dark:border-violet-800/40 dark:bg-violet-950/20">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
               <Sparkles className="h-4 w-4 animate-pulse" />
-              <span>{isPolish ? 'AI przygotowuje sesję...' : 'AI is preparing your session...'}</span>
+              <span>
+                {isPolish ? 'AI przygotowuje sesję...' : 'AI is preparing your session...'}
+              </span>
             </div>
             <p className="mt-2 text-xs text-violet-600 dark:text-violet-400">
               {isPolish

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { Check, Save } from 'lucide-react';
+import React, { useState } from 'react';
 
 import { Api } from '../../../services/api';
 
@@ -76,8 +76,16 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
     try {
       let parsedRules: Record<string, unknown> | undefined;
       let parsedBoundaries: Record<string, unknown> | undefined;
-      try { parsedRules = JSON.parse(priorityRules); } catch { /* keep undefined */ }
-      try { parsedBoundaries = JSON.parse(boundaries); } catch { /* keep undefined */ }
+      try {
+        parsedRules = JSON.parse(priorityRules);
+      } catch {
+        /* keep undefined */
+      }
+      try {
+        parsedBoundaries = JSON.parse(boundaries);
+      } catch {
+        /* keep undefined */
+      }
 
       await handleSaveWorker();
 
@@ -109,7 +117,9 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Name
+            </label>
             <input
               type="text"
               value={workerName}
@@ -118,7 +128,9 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Status
+            </label>
             <select
               value={workerStatus}
               onChange={(e) => setWorkerStatus(e.target.value)}
@@ -130,7 +142,9 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Description
+            </label>
             <input
               type="text"
               value={description}
@@ -199,9 +213,7 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
         <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
           System Prompt
           {profile && (
-            <span className="ml-2 text-xs font-normal text-slate-500">
-              v{profile.version}
-            </span>
+            <span className="ml-2 text-xs font-normal text-slate-500">v{profile.version}</span>
           )}
         </h3>
         <textarea

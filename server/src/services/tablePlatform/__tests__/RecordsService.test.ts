@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 
@@ -32,8 +32,8 @@ vi.mock('uuid', () => ({
   v4: vi.fn(() => 'rec-uuid-001'),
 }));
 
-import recordsService from '../RecordsService.js';
 import { ValidationError } from '../ErrorHandling.js';
+import recordsService from '../RecordsService.js';
 
 describe('RecordsService', () => {
   beforeEach(() => {
@@ -51,7 +51,9 @@ describe('RecordsService', () => {
       .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // INSERT
       .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
-      .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields
+      .mockResolvedValueOnce({
+        rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
+      }); // recomputeAffectedFields tp_fields
 
     const result = await recordsService.createRecord('t-1', { Name: 'Test' }, 'user-1');
 
@@ -84,7 +86,9 @@ describe('RecordsService', () => {
       .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
       .mockResolvedValueOnce({ rows: [after] }) // SELECT after
-      .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields
+      .mockResolvedValueOnce({
+        rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
+      }); // recomputeAffectedFields tp_fields
 
     const result = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
 

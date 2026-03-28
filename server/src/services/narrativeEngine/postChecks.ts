@@ -123,9 +123,7 @@ function checkPeriodReferences(ctx: CheckContext): void {
  */
 function checkSourceCoverage(ctx: CheckContext): void {
   const importantFacts = ctx.facts.filter((f) => {
-    const seg = ctx.plan.segments.find((s) =>
-      s.related_observations.length > 0
-    );
+    const seg = ctx.plan.segments.find((s) => s.related_observations.length > 0);
     return seg !== undefined || typeof f.value === 'number';
   });
 
@@ -176,7 +174,8 @@ function checkHedgingCompliance(ctx: CheckContext): void {
   if (!hasRecommendationSection && recSegments.length > 0) {
     ctx.warnings.push({
       code: 'MISSING_RECOMMENDATIONS',
-      message: 'Discourse plan includes recommendation segments but content lacks a recommendations section',
+      message:
+        'Discourse plan includes recommendation segments but content lacks a recommendations section',
       section_key: ctx.plan.section_key,
     });
     return;
@@ -204,7 +203,8 @@ function checkHedgingCompliance(ctx: CheckContext): void {
   if (!hasEvidence) {
     ctx.warnings.push({
       code: 'HEDGING_NO_EVIDENCE',
-      message: 'Recommendations section lacks evidence markers (e.g. "because", "based on", "due to")',
+      message:
+        'Recommendations section lacks evidence markers (e.g. "because", "based on", "due to")',
       section_key: ctx.plan.section_key,
     });
   }

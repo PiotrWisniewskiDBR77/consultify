@@ -1,8 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import { logFinanceError, logFinanceEvent, summarizeTextPayload } from './financeDiagnosticsService.js';
 import logger from '../utils/Logger.js';
+import {
+  logFinanceError,
+  logFinanceEvent,
+  summarizeTextPayload,
+} from './financeDiagnosticsService.js';
 
 type ParsedScores = { scores: Record<string, number> };
 

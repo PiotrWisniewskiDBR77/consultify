@@ -59,12 +59,17 @@ const TextDisplay: React.FC<{ value: unknown }> = ({ value }) => (
   </span>
 );
 
-const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({ value, precision = 2 }) => {
+const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
+  value,
+  precision = 2,
+}) => {
   if (value == null || value === '') {
     return <span className="text-xs text-slate-400 px-1">—</span>;
   }
   const num = Number(value);
-  const formatted = Number.isFinite(num) ? num.toLocaleString(undefined, { maximumFractionDigits: precision }) : '—';
+  const formatted = Number.isFinite(num)
+    ? num.toLocaleString(undefined, { maximumFractionDigits: precision })
+    : '—';
   return (
     <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums text-right block px-1">
       {formatted}
@@ -141,9 +146,7 @@ const DateDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const d = new Date(String(value));
   const str = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums px-1">
-      {str}
-    </span>
+    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums px-1">{str}</span>
   );
 };
 
@@ -259,14 +262,14 @@ const AttachmentDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   );
 };
 
-const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({
-  fieldOptions,
-}) => {
-  const opts = fieldOptions as {
-    label?: string;
-    actionType?: string;
-    actionConfig?: { url?: string; automationId?: string };
-  } | undefined;
+const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({ fieldOptions }) => {
+  const opts = fieldOptions as
+    | {
+        label?: string;
+        actionType?: string;
+        actionConfig?: { url?: string; automationId?: string };
+      }
+    | undefined;
   return (
     <button
       type="button"
@@ -335,7 +338,9 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
         <Star
           key={i}
           size={12}
-          className={i < rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'}
+          className={
+            i < rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'
+          }
         />
       ))}
     </span>
@@ -400,23 +405,40 @@ const RENDERERS: Partial<Record<FieldType, React.FC<PlatformCellRendererProps>>>
     const htmlContent = String(value || '');
     const isHtml = htmlContent.includes('<');
     if (isHtml) {
-      return <div className="text-xs text-slate-800 dark:text-slate-200 truncate px-1" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
+      return (
+        <div
+          className="text-xs text-slate-800 dark:text-slate-200 truncate px-1"
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
+      );
     }
     return <TextDisplay value={value} />;
   },
-  number: ({ value, fieldOptions }) => <NumberDisplay value={value} precision={getPrecision(fieldOptions)} />,
-  currency: ({ value, fieldOptions }) => <CurrencyDisplay value={value} fieldOptions={fieldOptions} />,
-  percent: ({ value, fieldOptions }) => <PercentDisplay value={value} fieldOptions={fieldOptions} />,
+  number: ({ value, fieldOptions }) => (
+    <NumberDisplay value={value} precision={getPrecision(fieldOptions)} />
+  ),
+  currency: ({ value, fieldOptions }) => (
+    <CurrencyDisplay value={value} fieldOptions={fieldOptions} />
+  ),
+  percent: ({ value, fieldOptions }) => (
+    <PercentDisplay value={value} fieldOptions={fieldOptions} />
+  ),
   checkbox: ({ value, onChange }) => <CheckboxDisplay value={value} onChange={onChange} />,
   date: ({ value }) => <DateDisplay value={value} />,
-  singleSelect: ({ value, fieldOptions }) => <SingleSelectDisplay value={value} fieldOptions={fieldOptions} />,
-  multiSelect: ({ value, fieldOptions }) => <MultiSelectDisplay value={value} fieldOptions={fieldOptions} />,
+  singleSelect: ({ value, fieldOptions }) => (
+    <SingleSelectDisplay value={value} fieldOptions={fieldOptions} />
+  ),
+  multiSelect: ({ value, fieldOptions }) => (
+    <MultiSelectDisplay value={value} fieldOptions={fieldOptions} />
+  ),
   url: ({ value }) => <UrlDisplay value={value} />,
   email: ({ value }) => <EmailDisplay value={value} />,
   phone: ({ value }) => <PhoneDisplay value={value} />,
   linkedRecord: ({ value }) => <LinkedRecordDisplay value={value} />,
   attachment: ({ value }) => <AttachmentDisplay value={value} />,
-  formula: ({ value, fieldOptions }) => <FormulaDisplay value={value} fieldOptions={fieldOptions} />,
+  formula: ({ value, fieldOptions }) => (
+    <FormulaDisplay value={value} fieldOptions={fieldOptions} />
+  ),
   button: ({ fieldOptions }) => <ButtonDisplay fieldOptions={fieldOptions} />,
   rating: ({ value, fieldOptions }) => <RatingDisplay value={value} fieldOptions={fieldOptions} />,
   duration: ({ value }) => <DurationDisplay value={value} />,
@@ -425,13 +447,11 @@ const RENDERERS: Partial<Record<FieldType, React.FC<PlatformCellRendererProps>>>
   lastModifiedBy: (props) => <LastModifiedByDisplay {...props} />,
 };
 
-export const PlatformCellRenderer: React.FC<PlatformCellRendererProps> = React.memo(
-  (props) => {
-    const Renderer = RENDERERS[props.fieldType];
-    if (Renderer) return <Renderer {...props} />;
-    return <TextDisplay value={props.value} />;
-  },
-);
+export const PlatformCellRenderer: React.FC<PlatformCellRendererProps> = React.memo((props) => {
+  const Renderer = RENDERERS[props.fieldType];
+  if (Renderer) return <Renderer {...props} />;
+  return <TextDisplay value={props.value} />;
+});
 
 PlatformCellRenderer.displayName = 'PlatformCellRenderer';
 

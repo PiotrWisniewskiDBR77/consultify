@@ -2,15 +2,7 @@
  * StructurePickerPopover — Lets the user choose a map structure type:
  * Mind Map, Org Chart, Tree (Right), Fishbone, Timeline.
  */
-import {
-  Brain,
-  GitBranch,
-  Network,
-  type LucideIcon,
-  Rows3,
-  Timer,
-  Waypoints,
-} from 'lucide-react';
+import { Brain, GitBranch, type LucideIcon, Network, Rows3, Timer, Waypoints } from 'lucide-react';
 import React from 'react';
 
 import type { MapStructureType } from '../../ideaSelectionTypes';
@@ -115,9 +107,7 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
               <Icon
                 size={14}
                 className={`mt-0.5 shrink-0 ${
-                  isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400'
+                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
                 }`}
               />
               <div className="min-w-0">

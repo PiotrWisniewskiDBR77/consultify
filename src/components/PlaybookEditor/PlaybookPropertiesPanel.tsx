@@ -47,10 +47,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
     });
   };
 
-  const actionTypes = [
-    'TASK_CREATE',
-    'PLAYBOOK_ASSIGN',
-  ];
+  const actionTypes = ['TASK_CREATE', 'PLAYBOOK_ASSIGN'];
 
   return (
     <div className="w-80 bg-white dark:bg-navy-900 border-l border-gray-200 h-full overflow-y-auto">

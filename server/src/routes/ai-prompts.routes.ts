@@ -208,7 +208,8 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { name, category, description, template, system_prompt, variables, is_active } = req.body;
+      const { name, category, description, template, system_prompt, variables, is_active } =
+        req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -283,7 +284,8 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, category, description, template, system_prompt, variables, is_active } = req.body;
+      const { name, category, description, template, system_prompt, variables, is_active } =
+        req.body;
       const userId = req.user?.id;
 
       if (!userId) {

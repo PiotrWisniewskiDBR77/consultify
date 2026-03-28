@@ -18,11 +18,18 @@ export const WorkspaceSessionStateValues = ['active', 'paused', 'completed', 'ab
 export type WorkspaceSessionState = (typeof WorkspaceSessionStateValues)[number];
 
 export const ActivityFeedEntryTypeValues = [
-  'session.started', 'session.paused', 'session.resumed', 'session.completed',
-  'participant.joined', 'participant.left',
-  'room.linked', 'room.unlinked',
-  'context.shared', 'context.updated',
-  'decision.made', 'action.assigned',
+  'session.started',
+  'session.paused',
+  'session.resumed',
+  'session.completed',
+  'participant.joined',
+  'participant.left',
+  'room.linked',
+  'room.unlinked',
+  'context.shared',
+  'context.updated',
+  'decision.made',
+  'action.assigned',
 ] as const;
 export type ActivityFeedEntryType = (typeof ActivityFeedEntryTypeValues)[number];
 
@@ -147,22 +154,32 @@ export interface UpdateSharedContextParams {
 export const UpdateSharedContextParamsSchema = z.object({
   sessionId: z.string().uuid(),
   organizationId: z.string().uuid(),
-  updates: z.array(z.object({
-    key: z.string().min(1),
-    value: z.unknown(),
-    updatedBy: z.string().min(1),
-  })).min(1),
+  updates: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        value: z.unknown(),
+        updatedBy: z.string().min(1),
+      })
+    )
+    .min(1),
 });
 
 // ==========================================
 // STATE MACHINE
 // ==========================================
 
-export const VALID_SESSION_TRANSITIONS: Record<WorkspaceSessionState, readonly WorkspaceSessionState[]> = {
+export const VALID_SESSION_TRANSITIONS: Record<
+  WorkspaceSessionState,
+  readonly WorkspaceSessionState[]
+> = {
   active: ['paused', 'completed', 'abandoned'],
   paused: ['active', 'completed', 'abandoned'],
   completed: [],
   abandoned: [],
 } as const;
 
-export const TERMINAL_SESSION_STATES: ReadonlySet<WorkspaceSessionState> = new Set(['completed', 'abandoned']);
+export const TERMINAL_SESSION_STATES: ReadonlySet<WorkspaceSessionState> = new Set([
+  'completed',
+  'abandoned',
+]);

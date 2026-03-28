@@ -190,7 +190,10 @@ const auditLogMiddleware = async (
               action: auditAction,
               resourceType,
               resourceId: entityId,
-              after: req.method !== 'DELETE' && req.body ? (req.body as Record<string, unknown>) : undefined,
+              after:
+                req.method !== 'DELETE' && req.body
+                  ? (req.body as Record<string, unknown>)
+                  : undefined,
               organizationId,
               ip: req.ip,
               userAgent: req.get('user-agent') || undefined,
@@ -223,7 +226,9 @@ const auditLogMiddleware = async (
               resourceId: entityId,
               organizationId,
               newValues:
-                req.method !== 'DELETE' && req.body ? (req.body as Record<string, unknown>) : undefined,
+                req.method !== 'DELETE' && req.body
+                  ? (req.body as Record<string, unknown>)
+                  : undefined,
               metadata: {
                 correlationId,
                 databaseHost,

@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -96,12 +97,14 @@ export class WebhookDispatcherService {
 
     const hasMore = result.rows.length > limit;
     const payloads = result.rows.slice(0, limit) as Array<Record<string, unknown>>;
-    const lastCursor = payloads.length > 0
-      ? (payloads[payloads.length - 1].cursor_number as number)
-      : startCursor;
+    const lastCursor =
+      payloads.length > 0 ? (payloads[payloads.length - 1].cursor_number as number) : startCursor;
 
     this.refreshWebhook(webhookId).catch((err) => {
-      logger.warn('[WebhookDispatcher] refresh on payload access failed', { webhookId, error: (err as Error).message });
+      logger.warn('[WebhookDispatcher] refresh on payload access failed', {
+        webhookId,
+        error: (err as Error).message,
+      });
     });
 
     return {
@@ -153,10 +156,10 @@ export class WebhookDispatcherService {
         ]
       );
 
-      await db.query(
-        'UPDATE tp_webhooks SET cursor_number = $2 WHERE id = $1',
-        [webhook.id, cursorNum]
-      );
+      await db.query('UPDATE tp_webhooks SET cursor_number = $2 WHERE id = $1', [
+        webhook.id,
+        cursorNum,
+      ]);
 
       this.sendPing(webhook).catch((err) => {
         logger.error(`[WebhookDispatcher] Ping failed for ${webhook.id}:`, err.message);
@@ -191,7 +194,9 @@ export class WebhookDispatcherService {
 
   private matchesFilter(event: WebhookEvent, specification: unknown): boolean {
     const spec = specification as Record<string, unknown> | null;
-    const filters = (spec?.options as Record<string, unknown> | undefined)?.filters as Record<string, unknown> | undefined;
+    const filters = (spec?.options as Record<string, unknown> | undefined)?.filters as
+      | Record<string, unknown>
+      | undefined;
     if (!filters || Object.keys(filters).length === 0) return true;
 
     if (Array.isArray(filters.dataTypes) && !filters.dataTypes.includes(event.actionType)) {
@@ -203,7 +208,10 @@ export class WebhookDispatcherService {
     }
 
     const recordChangeScope = filters.recordChangeScope as Record<string, unknown> | undefined;
-    if (Array.isArray(recordChangeScope?.tableIds) && !recordChangeScope!.tableIds.includes(event.tableId)) {
+    if (
+      Array.isArray(recordChangeScope?.tableIds) &&
+      !recordChangeScope!.tableIds.includes(event.tableId)
+    ) {
       return false;
     }
 

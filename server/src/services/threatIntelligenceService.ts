@@ -33,8 +33,12 @@ class ThreatIntelligenceServiceClass {
       id: row.id,
       threatType: row.threat_type,
       source: row.source || 'Manual',
-      ipAddress: (row.threat_type === 'ip' || row.threat_type === 'malicious_ip') ? row.indicator : null,
-      domain: (row.threat_type === 'domain' || row.threat_type === 'suspicious_domain') ? row.indicator : null,
+      ipAddress:
+        row.threat_type === 'ip' || row.threat_type === 'malicious_ip' ? row.indicator : null,
+      domain:
+        row.threat_type === 'domain' || row.threat_type === 'suspicious_domain'
+          ? row.indicator
+          : null,
       reputationScore: row.reputation_score ?? 50,
       threatLevel: row.threat_level,
       description: row.description,
@@ -46,15 +50,38 @@ class ThreatIntelligenceServiceClass {
   }
 
   async getThreats(filters: any = {}): Promise<any[]> {
-    const { limit = 100, offset = 0, threatType, threatLevel, isBlocked, ipAddress, domain } = filters;
+    const {
+      limit = 100,
+      offset = 0,
+      threatType,
+      threatLevel,
+      isBlocked,
+      ipAddress,
+      domain,
+    } = filters;
     let sql = 'SELECT * FROM threat_intelligence WHERE 1=1';
     const params: any[] = [];
 
-    if (threatType) { sql += ' AND threat_type = ?'; params.push(threatType); }
-    if (threatLevel) { sql += ' AND threat_level = ?'; params.push(threatLevel); }
-    if (isBlocked !== undefined) { sql += ' AND is_blocked = ?'; params.push(isBlocked ? 1 : 0); }
-    if (ipAddress) { sql += ' AND indicator LIKE ?'; params.push(`%${ipAddress}%`); }
-    if (domain) { sql += ' AND indicator LIKE ?'; params.push(`%${domain}%`); }
+    if (threatType) {
+      sql += ' AND threat_type = ?';
+      params.push(threatType);
+    }
+    if (threatLevel) {
+      sql += ' AND threat_level = ?';
+      params.push(threatLevel);
+    }
+    if (isBlocked !== undefined) {
+      sql += ' AND is_blocked = ?';
+      params.push(isBlocked ? 1 : 0);
+    }
+    if (ipAddress) {
+      sql += ' AND indicator LIKE ?';
+      params.push(`%${ipAddress}%`);
+    }
+    if (domain) {
+      sql += ' AND indicator LIKE ?';
+      params.push(`%${domain}%`);
+    }
 
     sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
@@ -100,7 +127,11 @@ class ThreatIntelligenceServiceClass {
   async addThreat(data: any): Promise<any> {
     const id = this.uuidv4();
     const indicator = data.indicator || data.ipAddress || data.domain || '';
-    const threatType = data.ipAddress ? 'ip' : data.domain ? 'domain' : (data.threatType || data.type || 'ip');
+    const threatType = data.ipAddress
+      ? 'ip'
+      : data.domain
+        ? 'domain'
+        : data.threatType || data.type || 'ip';
     const threatLevel = data.threatLevel || data.severity || 'MEDIUM';
     const description = data.description || '';
     const source = data.source || 'Manual';
@@ -111,7 +142,9 @@ class ThreatIntelligenceServiceClass {
       [id, threatType, indicator, threatLevel, description, 0, source, reputationScore]
     );
 
-    return this.mapRowToThreat(await this.db.get('SELECT * FROM threat_intelligence WHERE id = ?', [id]));
+    return this.mapRowToThreat(
+      await this.db.get('SELECT * FROM threat_intelligence WHERE id = ?', [id])
+    );
   }
 
   async updateThreat(id: string, updates: any): Promise<boolean> {

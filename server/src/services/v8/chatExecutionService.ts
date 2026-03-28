@@ -136,7 +136,7 @@ function rowToChatProposal(row: ChatProposalRow): ChatActionProposal {
 export async function classifyIntent(
   message: string,
   contextSnapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<IntentClassification> {
   ClassifyIntentParamsSchema.parse({ message, contextSnapshotId, organizationId });
 
@@ -182,7 +182,8 @@ export async function classifyIntent(
     intentType: 'ambiguous',
     confidence: 0.5,
     suggestedAction: 'ask_user_confirmation',
-    reasoning: 'Intent is ambiguous — both conversational and work-producing signals detected, or neither matched clearly',
+    reasoning:
+      'Intent is ambiguous — both conversational and work-producing signals detected, or neither matched clearly',
     classifiedAt: now,
   };
 }
@@ -198,16 +199,18 @@ export async function classifyIntent(
  * 2. Creates an ExecutionAgentRun via executionSpineService.createRun().
  * 3. Records the handoff linking conversation → snapshot → run.
  */
-export async function initiateHandoff(params: InitiateHandoffParams): Promise<ChatExecutionHandoff> {
+export async function initiateHandoff(
+  params: InitiateHandoffParams
+): Promise<ChatExecutionHandoff> {
   const validated = InitiateHandoffParamsSchema.parse(params);
 
   const snapshot = await contextSnapshotService.getSnapshot(
     validated.contextSnapshotId,
-    validated.organizationId,
+    validated.organizationId
   );
   if (!snapshot) {
     throw new Error(
-      `ContextSnapshot ${validated.contextSnapshotId} not found in organization ${validated.organizationId}`,
+      `ContextSnapshot ${validated.contextSnapshotId} not found in organization ${validated.organizationId}`
     );
   }
 
@@ -221,7 +224,7 @@ export async function initiateHandoff(params: InitiateHandoffParams): Promise<Ch
   const intentClassification = await classifyIntent(
     validated.goal,
     validated.contextSnapshotId,
-    validated.organizationId,
+    validated.organizationId
   );
 
   const handoffId = uuidv4();
@@ -254,11 +257,11 @@ export async function initiateHandoff(params: InitiateHandoffParams): Promise<Ch
       JSON.stringify(handoff.intentClassification),
       handoff.goal,
       handoff.createdAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Handoff ${handoffId}: conversation ${validated.conversationId} → run ${run.runId}`,
+    `${LOG_PREFIX} Handoff ${handoffId}: conversation ${validated.conversationId} → run ${run.runId}`
   );
   return handoff;
 }
@@ -268,13 +271,13 @@ export async function initiateHandoff(params: InitiateHandoffParams): Promise<Ch
  */
 export async function getHandoff(
   handoffId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ChatExecutionHandoff | null> {
   const row = await dbGet<HandoffRow>(
     `SELECT * FROM v8_chat_execution_handoffs
      WHERE handoff_id = ? AND organization_id = ?`,
     [handoffId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -286,14 +289,14 @@ export async function getHandoff(
  */
 export async function getHandoffsByConversation(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ChatExecutionHandoff[]> {
   const rows = await dbAll<HandoffRow>(
     `SELECT * FROM v8_chat_execution_handoffs
      WHERE conversation_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [conversationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToHandoff);
@@ -308,7 +311,7 @@ export async function getHandoffsByConversation(
  * with chat-specific rendering hints.
  */
 export async function createChatActionProposal(
-  params: CreateChatActionProposalParams,
+  params: CreateChatActionProposalParams
 ): Promise<ChatActionProposal> {
   const validated = CreateChatActionProposalParamsSchema.parse(params);
 
@@ -340,11 +343,11 @@ export async function createChatActionProposal(
       chatProposal.displaySummary,
       JSON.stringify(chatProposal.renderingHints),
       chatProposal.createdAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} ChatProposal ${chatProposalId} wrapping ${validated.underlyingProposalId} in conversation ${validated.conversationId}`,
+    `${LOG_PREFIX} ChatProposal ${chatProposalId} wrapping ${validated.underlyingProposalId} in conversation ${validated.conversationId}`
   );
   return chatProposal;
 }
@@ -354,14 +357,14 @@ export async function createChatActionProposal(
  */
 export async function getChatProposalsByConversation(
   conversationId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ChatActionProposal[]> {
   const rows = await dbAll<ChatProposalRow>(
     `SELECT * FROM v8_chat_action_proposals
      WHERE conversation_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [conversationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToChatProposal);

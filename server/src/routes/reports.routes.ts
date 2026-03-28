@@ -68,12 +68,9 @@ router.get(
           ? Math.round((Number(summary?.onTrackProjects || 0) / totalProjects) * 100)
           : 0;
       const taskCompletionRate =
-        totalTasks > 0
-          ? Math.round((Number(summary?.completedTasks || 0) / totalTasks) * 100)
-          : 0;
+        totalTasks > 0 ? Math.round((Number(summary?.completedTasks || 0) / totalTasks) * 100) : 0;
       const healthScore = Math.round((avgProjectProgress + taskCompletionRate) / 2);
-      const riskLevel =
-        healthScore >= 75 ? 'low' : healthScore >= 50 ? 'medium' : 'high';
+      const riskLevel = healthScore >= 75 ? 'low' : healthScore >= 50 ? 'medium' : 'high';
 
       return res.json({
         success: true,
@@ -153,7 +150,9 @@ router.get(
     } catch (error: any) {
       logger.error('[Reports] Error generating org overview:', error);
       if (isSchemaMissingError(error)) {
-        return res.status(503).json({ error: 'Organization overview unavailable: storage not ready' });
+        return res
+          .status(503)
+          .json({ error: 'Organization overview unavailable: storage not ready' });
       }
       return res.status(500).json({ error: 'Failed to generate organization overview' });
     }

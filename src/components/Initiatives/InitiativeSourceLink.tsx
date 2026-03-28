@@ -8,7 +8,9 @@ import { ClipboardList, ExternalLink, FileText, Sparkles } from 'lucide-react';
 
 /** Helper to get display label for source type (tool/tool_session/idea -> Idea Workspace) */
 export function getSourceDisplayLabel(sourceType: string, isPolish = false): string {
-  const t = String(sourceType || '').trim().toLowerCase();
+  const t = String(sourceType || '')
+    .trim()
+    .toLowerCase();
   const ideaTypes = ['tool', 'tool_session', 'idea'];
   if (ideaTypes.includes(t)) {
     return isPolish ? 'Workspace pomysłu' : 'Idea Workspace';

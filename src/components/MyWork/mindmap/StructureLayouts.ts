@@ -35,13 +35,12 @@ function placeOrphans(
   nodes: Node[],
   positions: Map<string, { x: number; y: number }>,
   nodeWidth: number,
-  nodeHeight: number,
+  nodeHeight: number
 ): void {
   const orphans = nodes.filter((n) => !positions.has(n.id));
   if (orphans.length === 0) return;
-  const maxY = positions.size > 0
-    ? Math.max(...Array.from(positions.values()).map((p) => p.y)) + 100
-    : 0;
+  const maxY =
+    positions.size > 0 ? Math.max(...Array.from(positions.values()).map((p) => p.y)) + 100 : 0;
   orphans.forEach((orphan, idx) => {
     const col = idx % 4;
     const row = Math.floor(idx / 4);
@@ -71,7 +70,7 @@ function orgChartSubtree(
   y: number,
   adj: Map<string, string[]>,
   positions: Map<string, { x: number; y: number }>,
-  visited: Set<string>,
+  visited: Set<string>
 ): number {
   if (visited.has(nodeId)) return xStart;
   visited.add(nodeId);
@@ -118,7 +117,7 @@ function treeRightSubtree(
   yStart: number,
   adj: Map<string, string[]>,
   positions: Map<string, { x: number; y: number }>,
-  visited: Set<string>,
+  visited: Set<string>
 ): number {
   if (visited.has(nodeId)) return yStart;
   visited.add(nodeId);
@@ -254,7 +253,7 @@ const SEM_NODE_V_GAP = 80;
 export function applySemanticLayout(
   nodes: Node[],
   edges: Edge[],
-  fallbackLayout: (n: Node[], e: Edge[]) => Node[],
+  fallbackLayout: (n: Node[], e: Edge[]) => Node[]
 ): Node[] {
   if (nodes.length === 0) return nodes;
 
@@ -315,7 +314,7 @@ export function applyStructureLayout(
   structureType: MapStructureType,
   nodes: Node[],
   edges: Edge[],
-  autoLayout: (n: Node[], e: Edge[]) => Node[],
+  autoLayout: (n: Node[], e: Edge[]) => Node[]
 ): Node[] {
   switch (structureType) {
     case 'org_chart':
@@ -345,7 +344,7 @@ export function resolveLayout(
   structureType: MapStructureType,
   nodes: Node[],
   edges: Edge[],
-  autoLayout: (n: Node[], e: Edge[]) => Node[],
+  autoLayout: (n: Node[], e: Edge[]) => Node[]
 ): Node[] {
   if (structureType !== 'mindmap') {
     return applyStructureLayout(structureType, nodes, edges, autoLayout);

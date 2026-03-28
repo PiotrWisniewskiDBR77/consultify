@@ -7,13 +7,13 @@
  */
 
 import type {
-  ContextSnapshot,
   ConsumerClass,
-  V8ArtifactRef,
+  ContextSnapshot,
   SourceRef,
+  V8ArtifactRef,
 } from '../../types/contextSnapshot.js';
-import * as contextSnapshotService from './contextSnapshotService.js';
 import logger from '../../utils/Logger.js';
+import * as contextSnapshotService from './contextSnapshotService.js';
 
 // ==========================================
 // HELPERS
@@ -74,12 +74,10 @@ export interface ConsumerClassValidation {
  * Looks up the latest snapshot for the same conversation to establish
  * parent chaining, then captures a new snapshot with consumerClass 'chat'.
  */
-export async function captureForChat(
-  params: CaptureForChatParams,
-): Promise<ContextSnapshot> {
+export async function captureForChat(params: CaptureForChatParams): Promise<ContextSnapshot> {
   const previousSnapshots = await contextSnapshotService.getSnapshotsByConversation(
     params.conversationId,
-    params.organizationId,
+    params.organizationId
   );
 
   const parentSnapshotId =
@@ -104,7 +102,7 @@ export async function captureForChat(
 
   logger.info(
     `${LOG_PREFIX} Chat snapshot ${snapshot.snapshotId} captured for conversation ${params.conversationId}` +
-    (parentSnapshotId ? ` (parent: ${parentSnapshotId})` : ' (root)'),
+      (parentSnapshotId ? ` (parent: ${parentSnapshotId})` : ' (root)')
   );
 
   return snapshot;
@@ -117,7 +115,7 @@ export async function captureForChat(
  * chat → execution inheritance chain.
  */
 export async function captureForExecution(
-  params: CaptureForExecutionParams,
+  params: CaptureForExecutionParams
 ): Promise<ContextSnapshot> {
   const snapshot = await contextSnapshotService.captureSnapshot({
     workspaceId: params.workspaceId,
@@ -136,7 +134,7 @@ export async function captureForExecution(
 
   logger.info(
     `${LOG_PREFIX} Execution snapshot ${snapshot.snapshotId} captured for run ${params.executionRunId}` +
-    ` (parent chat: ${params.chatSnapshotId})`,
+      ` (parent chat: ${params.chatSnapshotId})`
   );
 
   return snapshot;
@@ -149,7 +147,7 @@ export async function captureForExecution(
  * as the parent, with consumerClass 'retrieval'.
  */
 export async function captureForRetrieval(
-  params: CaptureForRetrievalParams,
+  params: CaptureForRetrievalParams
 ): Promise<ContextSnapshot> {
   const snapshot = await contextSnapshotService.captureSnapshot({
     workspaceId: params.workspaceId,
@@ -168,7 +166,7 @@ export async function captureForRetrieval(
 
   logger.info(
     `${LOG_PREFIX} Retrieval snapshot ${snapshot.snapshotId} captured` +
-    ` (parent: ${params.activeSnapshotId})`,
+      ` (parent: ${params.activeSnapshotId})`
   );
 
   return snapshot;
@@ -183,13 +181,13 @@ export async function captureForRetrieval(
 export async function validateConsumerClass(
   snapshotId: string,
   expectedClass: ConsumerClass,
-  organizationId: string,
+  organizationId: string
 ): Promise<ConsumerClassValidation> {
   const snapshot = await contextSnapshotService.getSnapshot(snapshotId, organizationId);
 
   if (!snapshot) {
     logger.warn(
-      `${LOG_PREFIX} validateConsumerClass: snapshot ${snapshotId} not found in org ${organizationId}`,
+      `${LOG_PREFIX} validateConsumerClass: snapshot ${snapshotId} not found in org ${organizationId}`
     );
     return {
       valid: false,
@@ -203,7 +201,7 @@ export async function validateConsumerClass(
   if (!valid) {
     logger.warn(
       `${LOG_PREFIX} Consumer class mismatch on ${snapshotId}: ` +
-      `expected ${expectedClass}, got ${snapshot.consumerClass}`,
+        `expected ${expectedClass}, got ${snapshot.consumerClass}`
     );
   }
 
@@ -223,7 +221,7 @@ export async function validateConsumerClass(
  */
 export async function getInheritanceChain(
   snapshotId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContextSnapshot[]> {
   const chain: ContextSnapshot[] = [];
   const visited = new Set<string>();
@@ -243,7 +241,7 @@ export async function getInheritanceChain(
 
   logger.info(
     `${LOG_PREFIX} Inheritance chain for ${snapshotId}: ${chain.length} snapshot(s) ` +
-    `[${chain.map((s) => s.consumerClass).join(' → ')}]`,
+      `[${chain.map((s) => s.consumerClass).join(' → ')}]`
   );
 
   return chain;

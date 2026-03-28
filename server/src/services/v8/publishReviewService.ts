@@ -13,26 +13,26 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  PublishRecord,
-  ReviewGate,
-  CoordinatedPublish,
-  OutputRecall,
-  FinanceLockedState,
-  CreatePublishRecordParams,
-  TransitionPublishStateParams,
-  SubmitReviewGateParams,
-  CreateCoordinatedPublishParams,
-  RecallOutputParams,
   ApplyFinanceLockParams,
+  CoordinatedPublish,
+  CreateCoordinatedPublishParams,
+  CreatePublishRecordParams,
+  FinanceLockedState,
+  OutputRecall,
   PublishLifecycleState,
+  PublishRecord,
+  RecallOutputParams,
+  ReviewGate,
+  SubmitReviewGateParams,
+  TransitionPublishStateParams,
 } from '../../types/publishReviewSemantics.js';
 import {
-  CreatePublishRecordParamsSchema,
-  TransitionPublishStateParamsSchema,
-  SubmitReviewGateParamsSchema,
-  CreateCoordinatedPublishParamsSchema,
-  RecallOutputParamsSchema,
   ApplyFinanceLockParamsSchema,
+  CreateCoordinatedPublishParamsSchema,
+  CreatePublishRecordParamsSchema,
+  RecallOutputParamsSchema,
+  SubmitReviewGateParamsSchema,
+  TransitionPublishStateParamsSchema,
   VALID_STATE_TRANSITIONS,
 } from '../../types/publishReviewSemantics.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -175,7 +175,7 @@ function rowToFinanceLocked(row: FinanceLockedRow): FinanceLockedState {
 // ==========================================
 
 export async function createPublishRecord(
-  params: CreatePublishRecordParams,
+  params: CreatePublishRecordParams
 ): Promise<PublishRecord> {
   const validated = CreatePublishRecordParamsSchema.parse(params);
 
@@ -216,18 +216,18 @@ export async function createPublishRecord(
       record.approvedAt,
       record.createdAt,
       record.updatedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created publish record ${recordId} for artifact ${record.artifactId} ` +
-    `(type=${record.artifactType}, state=${record.currentState})`,
+      `(type=${record.artifactType}, state=${record.currentState})`
   );
   return record;
 }
 
 export async function transitionPublishState(
-  params: TransitionPublishStateParams,
+  params: TransitionPublishStateParams
 ): Promise<PublishRecord> {
   const validated = TransitionPublishStateParamsSchema.parse(params);
 
@@ -235,7 +235,7 @@ export async function transitionPublishState(
     `SELECT * FROM v8_publish_records
      WHERE record_id = ? AND organization_id = ?`,
     [validated.recordId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -248,7 +248,7 @@ export async function transitionPublishState(
   if (!allowedNext.includes(validated.newState)) {
     throw new Error(
       `Invalid state transition: ${currentState} → ${validated.newState}. ` +
-      `Allowed transitions from ${currentState}: [${allowedNext.join(', ')}]`,
+        `Allowed transitions from ${currentState}: [${allowedNext.join(', ')}]`
     );
   }
 
@@ -269,12 +269,20 @@ export async function transitionPublishState(
     `UPDATE v8_publish_records
      SET current_state = ?, published_at = ?, approved_by = ?, approved_at = ?, updated_at = ?
      WHERE record_id = ? AND organization_id = ?`,
-    [validated.newState, publishedAt, approvedBy, approvedAt, now, validated.recordId, validated.organizationId],
+    [
+      validated.newState,
+      publishedAt,
+      approvedBy,
+      approvedAt,
+      now,
+      validated.recordId,
+      validated.organizationId,
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Transitioned record ${validated.recordId}: ${currentState} → ${validated.newState} ` +
-    `(actor=${validated.actor})`,
+      `(actor=${validated.actor})`
   );
 
   return rowToPublishRecord({
@@ -289,13 +297,13 @@ export async function transitionPublishState(
 
 export async function getPublishRecord(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<PublishRecord | null> {
   const row = await dbGet<PublishRecordRow>(
     `SELECT * FROM v8_publish_records
      WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -306,9 +314,7 @@ export async function getPublishRecord(
 // REVIEW GATES
 // ==========================================
 
-export async function submitReviewGate(
-  params: SubmitReviewGateParams,
-): Promise<ReviewGate> {
+export async function submitReviewGate(params: SubmitReviewGateParams): Promise<ReviewGate> {
   const validated = SubmitReviewGateParamsSchema.parse(params);
 
   const gateId = uuidv4();
@@ -338,26 +344,26 @@ export async function submitReviewGate(
       gate.reviewerId,
       gate.result,
       gate.comments,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Submitted review gate ${gateId} for artifact ${gate.artifactId} ` +
-    `(type=${gate.reviewType}, result=${gate.result})`,
+      `(type=${gate.reviewType}, result=${gate.result})`
   );
   return gate;
 }
 
 export async function getReviewGates(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ReviewGate[]> {
   const rows = await dbAll<ReviewGateRow>(
     `SELECT * FROM v8_review_gates
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToReviewGate);
@@ -368,7 +374,7 @@ export async function getReviewGates(
 // ==========================================
 
 export async function createCoordinatedPublish(
-  params: CreateCoordinatedPublishParams,
+  params: CreateCoordinatedPublishParams
 ): Promise<CoordinatedPublish> {
   const validated = CreateCoordinatedPublishParamsSchema.parse(params);
 
@@ -397,12 +403,12 @@ export async function createCoordinatedPublish(
       coord.organizationId,
       coord.coordinationMode,
       coord.coordinatedPublishAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Created coordinated publish ${coordinationId} ` +
-    `(primary=${coord.primaryArtifactId}, paired=${coord.pairedArtifactId}, mode=${coord.coordinationMode})`,
+      `(primary=${coord.primaryArtifactId}, paired=${coord.pairedArtifactId}, mode=${coord.coordinationMode})`
   );
   return coord;
 }
@@ -411,9 +417,7 @@ export async function createCoordinatedPublish(
 // OUTPUT RECALL (Decision W6-13)
 // ==========================================
 
-export async function recallOutput(
-  params: RecallOutputParams,
-): Promise<OutputRecall> {
+export async function recallOutput(params: RecallOutputParams): Promise<OutputRecall> {
   const validated = RecallOutputParamsSchema.parse(params);
 
   const recallId = uuidv4();
@@ -444,26 +448,26 @@ export async function recallOutput(
       recall.recalledAt,
       recall.postRecallState,
       1,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Recalled output ${recall.artifactId} by ${recall.recalledBy} ` +
-    `(reason=${recall.reason})`,
+      `(reason=${recall.reason})`
   );
   return recall;
 }
 
 export async function getRecallHistory(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<OutputRecall[]> {
   const rows = await dbAll<OutputRecallRow>(
     `SELECT * FROM v8_output_recalls
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY recalled_at ASC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToOutputRecall);
@@ -474,7 +478,7 @@ export async function getRecallHistory(
 // ==========================================
 
 export async function applyFinanceLock(
-  params: ApplyFinanceLockParams,
+  params: ApplyFinanceLockParams
 ): Promise<FinanceLockedState> {
   const validated = ApplyFinanceLockParamsSchema.parse(params);
 
@@ -506,12 +510,12 @@ export async function applyFinanceLock(
       lock.lockLevel,
       lock.lockedAt,
       lock.unlockedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Applied finance lock ${lockId} on artifact ${lock.artifactId} ` +
-    `(level=${lock.lockLevel})`,
+      `(level=${lock.lockLevel})`
   );
   return lock;
 }
@@ -519,13 +523,13 @@ export async function applyFinanceLock(
 export async function removeFinanceLock(
   lockId: string,
   organizationId: string,
-  unlockedBy: string,
+  unlockedBy: string
 ): Promise<FinanceLockedState> {
   const row = await dbGet<FinanceLockedRow>(
     `SELECT * FROM v8_finance_locked_states
      WHERE lock_id = ? AND organization_id = ?`,
     [lockId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -542,12 +546,10 @@ export async function removeFinanceLock(
     `UPDATE v8_finance_locked_states
      SET unlocked_at = ?
      WHERE lock_id = ? AND organization_id = ?`,
-    [now, lockId, organizationId],
+    [now, lockId, organizationId]
   );
 
-  logger.info(
-    `${LOG_PREFIX} Removed finance lock ${lockId} by ${unlockedBy}`,
-  );
+  logger.info(`${LOG_PREFIX} Removed finance lock ${lockId} by ${unlockedBy}`);
 
   return rowToFinanceLocked({
     ...row,
@@ -557,14 +559,14 @@ export async function removeFinanceLock(
 
 export async function getFinanceLocks(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<FinanceLockedState[]> {
   const rows = await dbAll<FinanceLockedRow>(
     `SELECT * FROM v8_finance_locked_states
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY locked_at ASC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToFinanceLocked);

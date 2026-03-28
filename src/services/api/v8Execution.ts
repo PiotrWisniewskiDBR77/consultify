@@ -1,4 +1,4 @@
-import { getHeaders, fetchWithRetry, handleResponse } from './baseClient';
+import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export type ExecutionRunState =
   | 'drafting'
@@ -71,31 +71,37 @@ export const V8ExecutionApi = {
     });
     const json = await handleResponse<{ data: ExecutionRunRecord }>(
       res,
-      'Failed to fetch governed execution run',
+      'Failed to fetch governed execution run'
     );
     return json.data;
   },
 
   getRunProposals: async (runId: string): Promise<ExecutionProposalRecord[]> => {
-    const res = await fetchWithRetry(`${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/proposals`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/proposals`,
+      {
+        method: 'GET',
+        headers: getHeaders(),
+      }
+    );
     const json = await handleResponse<{ data: ExecutionProposalRecord[] }>(
       res,
-      'Failed to fetch governed execution proposals',
+      'Failed to fetch governed execution proposals'
     );
     return json.data;
   },
 
   getRunTransitions: async (runId: string): Promise<ExecutionTransitionRecord[]> => {
-    const res = await fetchWithRetry(`${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/transitions`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/transitions`,
+      {
+        method: 'GET',
+        headers: getHeaders(),
+      }
+    );
     const json = await handleResponse<{ data: ExecutionTransitionRecord[] }>(
       res,
-      'Failed to fetch governed execution transitions',
+      'Failed to fetch governed execution transitions'
     );
     return json.data;
   },
@@ -107,37 +113,43 @@ export const V8ExecutionApi = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({}),
-      },
+      }
     );
     const json = await handleResponse<{ data: ExecutionRunRecord }>(
       res,
-      'Failed to submit governed execution review',
+      'Failed to submit governed execution review'
     );
     return json.data;
   },
 
   approveRun: async (runId: string, reason?: string): Promise<ExecutionRunRecord> => {
-    const res = await fetchWithRetry(`${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/approve`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(reason ? { reason } : {}),
-    });
+    const res = await fetchWithRetry(
+      `${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/approve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(reason ? { reason } : {}),
+      }
+    );
     const json = await handleResponse<{ data: ExecutionRunRecord }>(
       res,
-      'Failed to approve governed execution run',
+      'Failed to approve governed execution run'
     );
     return json.data;
   },
 
   rejectRun: async (runId: string, reason: string): Promise<ExecutionRunRecord> => {
-    const res = await fetchWithRetry(`${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/reject`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ reason }),
-    });
+    const res = await fetchWithRetry(
+      `${V8_EXECUTION_BASE}/runs/${encodeURIComponent(runId)}/reject`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ reason }),
+      }
+    );
     const json = await handleResponse<{ data: ExecutionRunRecord }>(
       res,
-      'Failed to reject governed execution run',
+      'Failed to reject governed execution run'
     );
     return json.data;
   },

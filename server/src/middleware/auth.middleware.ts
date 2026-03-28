@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -23,6 +24,39 @@ const FORCED_SUPERADMIN_EMAILS = (() => {
       .filter(Boolean)
   );
 })();
+
+type UserSessionCompatibility = {
+  activityColumn: 'last_activity_at' | 'last_active_at' | 'created_at';
+  hasIsActive: boolean;
+};
+
+let userSessionCompatibilityPromise: Promise<UserSessionCompatibility> | null = null;
+
+async function getUserSessionCompatibility(): Promise<UserSessionCompatibility> {
+  if (!userSessionCompatibilityPromise) {
+    userSessionCompatibilityPromise = getTableColumns('user_sessions')
+      .then((columns) => {
+        const activityColumn: UserSessionCompatibility['activityColumn'] = columns.has(
+          'last_activity_at'
+        )
+          ? 'last_activity_at'
+          : columns.has('last_active_at')
+            ? 'last_active_at'
+            : 'created_at';
+
+        return {
+          activityColumn,
+          hasIsActive: columns.has('is_active'),
+        };
+      })
+      .catch(() => ({
+        activityColumn: 'created_at',
+        hasIsActive: false,
+      }));
+  }
+
+  return await userSessionCompatibilityPromise;
+}
 
 // ==========================================
 // TYPES
@@ -257,21 +291,27 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
 
   (async () => {
     try {
-      const session = await dbGet<{ id: string; is_active: boolean | number | null }>(
-        `SELECT id, is_active FROM user_sessions
+      const { activityColumn, hasIsActive } = await getUserSessionCompatibility();
+      const activeFilter = hasIsActive
+        ? `AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')`
+        : '';
+      const session = await dbGet<{ id: string; is_active?: boolean | number | null }>(
+        `SELECT id${hasIsActive ? ', is_active' : ''}
+         FROM user_sessions
          WHERE user_id = ?
-           AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')
-         ORDER BY last_activity_at DESC LIMIT 1`,
-        [userId],
+           ${activeFilter}
+         ORDER BY ${activityColumn} DESC LIMIT 1`,
+        [userId]
       );
 
       if (session) {
-        if (session.is_active !== true && session.is_active !== 1) return;
+        if (hasIsActive && session.is_active !== true && session.is_active !== 1) return;
         res.setHeader('X-Session-Id', session.id);
-        await dbRun(
-          `UPDATE user_sessions SET last_activity_at = datetime('now') WHERE id = ?`,
-          [session.id],
-        );
+        if (activityColumn !== 'created_at') {
+          await dbRun(`UPDATE user_sessions SET ${activityColumn} = datetime('now') WHERE id = ?`, [
+            session.id,
+          ]);
+        }
       }
     } catch {
       // Non-critical — don't break auth flow on session tracking errors
@@ -289,14 +329,20 @@ const _revokeAllCache = new Map<string, { jti: string | null; ts: number }>();
 function getCachedRevoke(jti: string): boolean | undefined {
   const entry = _revokeCache.get(jti);
   if (!entry) return undefined;
-  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) { _revokeCache.delete(jti); return undefined; }
+  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) {
+    _revokeCache.delete(jti);
+    return undefined;
+  }
   return entry.revoked;
 }
 
 function getCachedRevokeAll(userId: string): { jti: string | null } | undefined {
   const entry = _revokeAllCache.get(userId);
   if (!entry) return undefined;
-  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) { _revokeAllCache.delete(userId); return undefined; }
+  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) {
+    _revokeAllCache.delete(userId);
+    return undefined;
+  }
   return { jti: entry.jti };
 }
 
@@ -628,6 +674,10 @@ export const __private__ = {
   mapRole,
   normalizePermissionRole,
   getDeps,
+  resetRevocationCachesForTests: () => {
+    _revokeCache.clear();
+    _revokeAllCache.clear();
+  },
   resetDepsForTests: () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deps = undefined as any;

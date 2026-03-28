@@ -1,18 +1,18 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
+  CreateDecisionParams,
   GenerateSuggestionParams,
   RecordInsightParams,
-  CreateDecisionParams,
 } from '../../../types/workspaceAIFacilitation.js';
 import {
   AISuggestionSchema,
-  SessionInsightSchema,
   CollaborativeDecisionSchema,
+  CreateDecisionParamsSchema,
   GenerateSuggestionParamsSchema,
   RecordInsightParamsSchema,
-  CreateDecisionParamsSchema,
+  SessionInsightSchema,
 } from '../../../types/workspaceAIFacilitation.js';
 
 // ==========================================
@@ -39,18 +39,18 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  generateSuggestion,
-  getSuggestions,
   acceptSuggestion,
+  closeDecision,
+  createCollaborativeDecision,
   dismissSuggestion,
   expireStaleSuggestions,
-  recordInsight,
-  getInsights,
-  createCollaborativeDecision,
-  voteOnDecision,
-  closeDecision,
+  generateSuggestion,
   getDecisions,
+  getInsights,
   getSessionAISummary,
+  getSuggestions,
+  recordInsight,
+  voteOnDecision,
 } from '../workspaceAIFacilitationService.js';
 
 // ==========================================
@@ -65,7 +65,9 @@ const USER_ID_2 = '00000000-0000-4000-8000-000000000004';
 const SUGGESTION_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 const DECISION_ID = '00000000-0000-4000-8000-dddddddddddd';
 
-function makeSuggestionParams(overrides?: Partial<GenerateSuggestionParams>): GenerateSuggestionParams {
+function makeSuggestionParams(
+  overrides?: Partial<GenerateSuggestionParams>
+): GenerateSuggestionParams {
   return {
     sessionId: SESSION_ID,
     organizationId: ORG_ID,
@@ -181,28 +183,26 @@ describe('generateSuggestion', () => {
   });
 
   it('defaults confidence to 0.5 when not provided', async () => {
-    const result = await generateSuggestion(
-      makeSuggestionParams({ confidence: undefined }),
-    );
+    const result = await generateSuggestion(makeSuggestionParams({ confidence: undefined }));
     expect(result.confidence).toBe(0.5);
   });
 
   it('rejects invalid suggestionType via Zod', async () => {
     await expect(
-      generateSuggestion(makeSuggestionParams({ suggestionType: 'invalid' as any })),
+      generateSuggestion(makeSuggestionParams({ suggestionType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      generateSuggestion(makeSuggestionParams({ organizationId: 'not-a-uuid' })),
+      generateSuggestion(makeSuggestionParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty content', async () => {
-    await expect(
-      generateSuggestion(makeSuggestionParams({ content: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(generateSuggestion(makeSuggestionParams({ content: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -264,17 +264,15 @@ describe('acceptSuggestion', () => {
   it('throws when suggestion not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      acceptSuggestion('nonexistent', ORG_ID, USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(acceptSuggestion('nonexistent', ORG_ID, USER_ID)).rejects.toThrow('not found');
   });
 
   it('throws when suggestion is not pending', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSuggestionRow({ state: 'dismissed' }));
 
-    await expect(
-      acceptSuggestion(SUGGESTION_ID, ORG_ID, USER_ID),
-    ).rejects.toThrow("current state is 'dismissed'");
+    await expect(acceptSuggestion(SUGGESTION_ID, ORG_ID, USER_ID)).rejects.toThrow(
+      "current state is 'dismissed'"
+    );
   });
 });
 
@@ -299,17 +297,15 @@ describe('dismissSuggestion', () => {
   it('throws when suggestion not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      dismissSuggestion('nonexistent', ORG_ID, USER_ID),
-    ).rejects.toThrow('not found');
+    await expect(dismissSuggestion('nonexistent', ORG_ID, USER_ID)).rejects.toThrow('not found');
   });
 
   it('throws when suggestion is already accepted', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeSuggestionRow({ state: 'accepted' }));
 
-    await expect(
-      dismissSuggestion(SUGGESTION_ID, ORG_ID, USER_ID),
-    ).rejects.toThrow("current state is 'accepted'");
+    await expect(dismissSuggestion(SUGGESTION_ID, ORG_ID, USER_ID)).rejects.toThrow(
+      "current state is 'accepted'"
+    );
   });
 });
 
@@ -371,15 +367,13 @@ describe('recordInsight', () => {
   });
 
   it('rejects empty title via Zod', async () => {
-    await expect(
-      recordInsight(makeInsightParams({ title: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordInsight(makeInsightParams({ title: '' }))).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid organizationId', async () => {
-    await expect(
-      recordInsight(makeInsightParams({ organizationId: 'bad' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordInsight(makeInsightParams({ organizationId: 'bad' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -442,15 +436,15 @@ describe('createCollaborativeDecision', () => {
   it('rejects fewer than 2 options via Zod', async () => {
     await expect(
       createCollaborativeDecision(
-        makeDecisionParams({ options: [{ optionId: 'only', label: 'Only one' }] }),
-      ),
+        makeDecisionParams({ options: [{ optionId: 'only', label: 'Only one' }] })
+      )
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty question', async () => {
-    await expect(
-      createCollaborativeDecision(makeDecisionParams({ question: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createCollaborativeDecision(makeDecisionParams({ question: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -474,25 +468,23 @@ describe('voteOnDecision', () => {
   it('throws when decision not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      voteOnDecision('nonexistent', 'opt-a', USER_ID, ORG_ID),
-    ).rejects.toThrow('not found');
+    await expect(voteOnDecision('nonexistent', 'opt-a', USER_ID, ORG_ID)).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('throws when decision is closed', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecisionRow({ status: 'closed' }));
 
-    await expect(
-      voteOnDecision(DECISION_ID, 'opt-a', USER_ID, ORG_ID),
-    ).rejects.toThrow('closed');
+    await expect(voteOnDecision(DECISION_ID, 'opt-a', USER_ID, ORG_ID)).rejects.toThrow('closed');
   });
 
   it('throws when option does not exist', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecisionRow());
 
-    await expect(
-      voteOnDecision(DECISION_ID, 'opt-nonexistent', USER_ID, ORG_ID),
-    ).rejects.toThrow('not found');
+    await expect(voteOnDecision(DECISION_ID, 'opt-nonexistent', USER_ID, ORG_ID)).rejects.toThrow(
+      'not found'
+    );
   });
 
   it('throws on duplicate vote', async () => {
@@ -502,12 +494,12 @@ describe('voteOnDecision', () => {
           { optionId: 'opt-a', label: 'Big bang migration', votes: [USER_ID] },
           { optionId: 'opt-b', label: 'Incremental migration', votes: [] },
         ]),
-      }),
+      })
     );
 
-    await expect(
-      voteOnDecision(DECISION_ID, 'opt-a', USER_ID, ORG_ID),
-    ).rejects.toThrow('already voted');
+    await expect(voteOnDecision(DECISION_ID, 'opt-a', USER_ID, ORG_ID)).rejects.toThrow(
+      'already voted'
+    );
   });
 });
 
@@ -532,17 +524,13 @@ describe('closeDecision', () => {
   it('throws when decision not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      closeDecision('nonexistent', ORG_ID, 'outcome'),
-    ).rejects.toThrow('not found');
+    await expect(closeDecision('nonexistent', ORG_ID, 'outcome')).rejects.toThrow('not found');
   });
 
   it('throws when decision is already closed', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecisionRow({ status: 'closed' }));
 
-    await expect(
-      closeDecision(DECISION_ID, ORG_ID, 'outcome'),
-    ).rejects.toThrow('already closed');
+    await expect(closeDecision(DECISION_ID, ORG_ID, 'outcome')).rejects.toThrow('already closed');
   });
 });
 
@@ -615,10 +603,7 @@ describe('getSessionAISummary', () => {
   });
 
   it('returns zeroes when session has no data', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     const summary = await getSessionAISummary(SESSION_ID, ORG_ID);
 
@@ -649,17 +634,17 @@ describe('org isolation', () => {
   it('acceptSuggestion enforces organization_id', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      acceptSuggestion(SUGGESTION_ID, OTHER_ORG_ID, USER_ID),
-    ).rejects.toThrow(`not found in organization ${OTHER_ORG_ID}`);
+    await expect(acceptSuggestion(SUGGESTION_ID, OTHER_ORG_ID, USER_ID)).rejects.toThrow(
+      `not found in organization ${OTHER_ORG_ID}`
+    );
   });
 
   it('voteOnDecision enforces organization_id', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      voteOnDecision(DECISION_ID, 'opt-a', USER_ID, OTHER_ORG_ID),
-    ).rejects.toThrow(`not found in organization ${OTHER_ORG_ID}`);
+    await expect(voteOnDecision(DECISION_ID, 'opt-a', USER_ID, OTHER_ORG_ID)).rejects.toThrow(
+      `not found in organization ${OTHER_ORG_ID}`
+    );
   });
 });
 
@@ -682,7 +667,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         resolvedAt: null,
         resolvedBy: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -700,7 +685,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         resolvedAt: null,
         resolvedBy: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -715,7 +700,7 @@ describe('Zod schema validation', () => {
         body: 'Test body',
         severity: 'warning',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -734,7 +719,7 @@ describe('Zod schema validation', () => {
         outcome: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         closedAt: null,
-      }),
+      })
     ).not.toThrow();
   });
 

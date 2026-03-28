@@ -1,12 +1,5 @@
+import { ArrowLeft, Clock, MessageSquare, Mic, RefreshCw, Type } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  ArrowLeft,
-  Clock,
-  MessageSquare,
-  Mic,
-  RefreshCw,
-  Type,
-} from 'lucide-react';
 
 import { Api } from '../../../services/api';
 
@@ -97,9 +90,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
   const fetchMessages = async (convId: string) => {
     setLoadingMessages(true);
     try {
-      const response = await Api.get(
-        `/api/virtual-workers/${workerId}/conversations/${convId}`
-      );
+      const response = await Api.get(`/api/virtual-workers/${workerId}/conversations/${convId}`);
       if (response?.data) {
         const list = response.data.data ?? response.data;
         setMessages(Array.isArray(list) ? list : []);
@@ -124,7 +115,10 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
     return (
       <div className="space-y-4">
         <button
-          onClick={() => { setSelectedConv(null); setMessages([]); }}
+          onClick={() => {
+            setSelectedConv(null);
+            setMessages([]);
+          }}
           className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
         >
           <ArrowLeft size={16} />
@@ -256,7 +250,9 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                       {formatDuration(conv.duration_seconds)}
                     </span>
                   )}
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${OUTCOME_COLORS[conv.outcome] || OUTCOME_COLORS.unknown}`}>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${OUTCOME_COLORS[conv.outcome] || OUTCOME_COLORS.unknown}`}
+                  >
                     {conv.outcome.replace('_', ' ')}
                   </span>
                 </div>

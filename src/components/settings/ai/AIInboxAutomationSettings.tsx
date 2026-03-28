@@ -55,9 +55,10 @@ export const AIInboxAutomationSettings: React.FC = () => {
   const [manualReviewCount, setManualReviewCount] = useState(0);
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [canonicalStats, setCanonicalStats] = useState<{ total?: number; actionRequired?: number } | null>(
-    null
-  );
+  const [canonicalStats, setCanonicalStats] = useState<{
+    total?: number;
+    actionRequired?: number;
+  } | null>(null);
   const [aiEvalRuns, setAiEvalRuns] = useState<InboxAIEvalRun[]>([]);
   const [aiCostSummary, setAiCostSummary] = useState<InboxAICostSummary | null>(null);
 
@@ -125,7 +126,9 @@ export const AIInboxAutomationSettings: React.FC = () => {
         );
       } else {
         toast.success(
-          isPolish ? 'Brak pozycji spełniających warunki auto-triage' : 'No items matched auto-triage'
+          isPolish
+            ? 'Brak pozycji spełniających warunki auto-triage'
+            : 'No items matched auto-triage'
         );
       }
 
@@ -271,7 +274,9 @@ export const AIInboxAutomationSettings: React.FC = () => {
             <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Ostatnie runy eval' : 'Recent eval runs'}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{aiEvalRuns.length}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {aiEvalRuns.length}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Koszt okna' : 'Cost window'}</span>
@@ -281,7 +286,9 @@ export const AIInboxAutomationSettings: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Manual review' : 'Manual review'}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{manualReviewCount}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {manualReviewCount}
+                </span>
               </div>
             </div>
           </div>

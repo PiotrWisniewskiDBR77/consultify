@@ -46,23 +46,13 @@ export const ReviewTypeValues = [
 ] as const;
 export type ReviewType = (typeof ReviewTypeValues)[number];
 
-export const ReviewResultValues = [
-  'approved',
-  'rejected',
-  'changes_requested',
-] as const;
+export const ReviewResultValues = ['approved', 'rejected', 'changes_requested'] as const;
 export type ReviewResult = (typeof ReviewResultValues)[number];
 
-export const CoordinationModeValues = [
-  'coordinated',
-  'independent',
-] as const;
+export const CoordinationModeValues = ['coordinated', 'independent'] as const;
 export type CoordinationMode = (typeof CoordinationModeValues)[number];
 
-export const LockLevelValues = [
-  'standard',
-  'finance_strict',
-] as const;
+export const LockLevelValues = ['standard', 'finance_strict'] as const;
 export type LockLevel = (typeof LockLevelValues)[number];
 
 /**

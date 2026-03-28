@@ -96,7 +96,15 @@ export async function checkDeckQualityGates(
       deckId,
       canExport: false,
       canShare: false,
-      gates: [{ id: 'qg-no-deck', gateType: 'DECK_NOT_FOUND', severity: 'error', message: 'Deck not found', category: 'structure' }],
+      gates: [
+        {
+          id: 'qg-no-deck',
+          gateType: 'DECK_NOT_FOUND',
+          severity: 'error',
+          message: 'Deck not found',
+          category: 'structure',
+        },
+      ],
       score: 0,
       checkedAt: new Date().toISOString(),
     };
@@ -105,7 +113,9 @@ export async function checkDeckQualityGates(
   let deckData: { cards?: DeckCard[]; theme?: any } = {};
   try {
     deckData = JSON.parse(deck.deck_json || '{}');
-  } catch { /* */ }
+  } catch {
+    /* */
+  }
 
   const cards: DeckCard[] = deckData.cards || [];
   const presentationMode: string = deck.presentation_mode || 'briefing';
@@ -178,16 +188,16 @@ export async function checkDeckQualityGates(
   }
 
   // Gate 5: Brand consistency
-  const brandKit = await dbGet(
-    `SELECT id FROM brand_kits WHERE organization_id = ?`,
-    [organizationId]
-  );
+  const brandKit = await dbGet(`SELECT id FROM brand_kits WHERE organization_id = ?`, [
+    organizationId,
+  ]);
   if (!brandKit && cards.length > 0) {
     gates.push({
       id: 'qg-no-brand-kit',
       gateType: 'NO_BRAND_KIT',
       severity: 'info',
-      message: 'No Brand Kit configured. Set up your brand colors, logo, and fonts for professional consistency.',
+      message:
+        'No Brand Kit configured. Set up your brand colors, logo, and fonts for professional consistency.',
       category: 'brand',
     });
   }
@@ -256,7 +266,9 @@ export async function checkDeckQualityGates(
 
   // Gate 9: Speaker notes coverage
   if (cards.length >= 5 && presentationMode === 'show') {
-    const withNotes = cards.filter((c) => c.speaker_notes && c.speaker_notes.trim().length > 10).length;
+    const withNotes = cards.filter(
+      (c) => c.speaker_notes && c.speaker_notes.trim().length > 10
+    ).length;
     if (withNotes < cards.length * 0.5) {
       gates.push({
         id: 'qg-missing-notes',

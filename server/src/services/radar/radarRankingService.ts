@@ -4,11 +4,11 @@ import { tableExists } from '../../utils/DbPromise.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   RadarDynamicContext,
+  RadarImpactType,
   RadarProcessedSignal,
   RadarRankedSignal,
   RadarRelevanceBreakdown,
   RadarSignalCard,
-  RadarImpactType,
   UserRadarProfileRecord,
 } from './radarTypes.js';
 
@@ -59,7 +59,10 @@ function matchScore(tokens: string[], candidates: string[], weight: number): num
   return Math.round(weight * ratio);
 }
 
-async function loadIdeaTitlesForRadar(orgId: string, userId: string): Promise<Array<{ title: string }>> {
+async function loadIdeaTitlesForRadar(
+  orgId: string,
+  userId: string
+): Promise<Array<{ title: string }>> {
   const result: Array<{ title: string }> = [];
   const seen = new Set<string>();
 
@@ -103,8 +106,10 @@ async function loadIdeaTitlesForRadar(orgId: string, userId: string): Promise<Ar
 }
 
 function classifyImpactType(signal: RadarProcessedSignal): RadarImpactType {
-  if (signal.domainTags.includes('compliance') || signal.domainTags.includes('cyber')) return 'compliance';
-  if (signal.domainTags.includes('competition') || signal.domainTags.includes('market')) return 'commercial';
+  if (signal.domainTags.includes('compliance') || signal.domainTags.includes('cyber'))
+    return 'compliance';
+  if (signal.domainTags.includes('competition') || signal.domainTags.includes('market'))
+    return 'commercial';
   if (signal.domainTags.includes('operations') || signal.domainTags.includes('execution'))
     return 'operational';
   if (signal.domainTags.includes('product')) return 'product';
@@ -312,7 +317,10 @@ class RadarRankingService {
     };
   }
 
-  async updateProfile(userId: string, patch: Partial<UserRadarProfileRecord>): Promise<UserRadarProfileRecord | null> {
+  async updateProfile(
+    userId: string,
+    patch: Partial<UserRadarProfileRecord>
+  ): Promise<UserRadarProfileRecord | null> {
     const current = await this.getOrCreateProfile({
       userId,
       orgId: patch.organizationId || '',
@@ -409,7 +417,9 @@ class RadarRankingService {
       ideaTitles: ideas.map((item) => String(item.title || '')),
       noteTitles: notes.map((item) => String(item.title || '')),
       initiativeTitles: initiatives.map((item) => String(item.title || '')),
-      calendarKeywords: [...tasks, ...decisions].map((item) => String(item.title || '')).slice(0, 8),
+      calendarKeywords: [...tasks, ...decisions]
+        .map((item) => String(item.title || ''))
+        .slice(0, 8),
       recentActions: actions.map((item) => ({
         actionType: String(item.action_type || ''),
         signalId: item.signal_id ? String(item.signal_id) : null,
@@ -462,12 +472,17 @@ class RadarRankingService {
           if (action.signalId !== signal.id) return score;
           if (action.actionType === 'save') return score + 3;
           if (action.actionType === 'ask_ai') return score + 2;
-          if (action.actionType === 'less_like_this' || action.actionType === 'dismiss') return score - 3;
+          if (action.actionType === 'less_like_this' || action.actionType === 'dismiss')
+            return score - 3;
           return score;
         }, 0) + repeatedPenalty;
 
       const breakdown: RadarRelevanceBreakdown = {
-        roleMatch: matchScore(roleTokens, signalText, profile.personalizationWeights.roleMatch || 15),
+        roleMatch: matchScore(
+          roleTokens,
+          signalText,
+          profile.personalizationWeights.roleMatch || 15
+        ),
         industryMatch: matchScore(
           industryTokens,
           signalText,
@@ -493,7 +508,9 @@ class RadarRankingService {
           signalText,
           profile.personalizationWeights.recentWorkContextMatch || 10
         ),
-        freshness: Math.round((signal.freshnessScore / 100) * (profile.personalizationWeights.freshness || 5)),
+        freshness: Math.round(
+          (signal.freshnessScore / 100) * (profile.personalizationWeights.freshness || 5)
+        ),
         trust: Math.round((signal.trustScore / 100) * (profile.personalizationWeights.trust || 5)),
         actionability: Math.round(
           (signal.actionabilityScore / 100) * (profile.personalizationWeights.actionability || 5)
@@ -513,10 +530,7 @@ class RadarRankingService {
         whyItMatters: deriveWhyItMatters(signal, impactType, isPolish),
         suggestedNextStep: deriveNextStep(signal, isPolish),
         impactType,
-        confidenceScore: Math.min(
-          0.98,
-          Number((0.52 + Math.min(finalScore, 80) / 160).toFixed(2))
-        ),
+        confidenceScore: Math.min(0.98, Number((0.52 + Math.min(finalScore, 80) / 160).toFixed(2))),
         relatedProjects: dynamicContext.initiativeTitles.slice(0, 2),
         relatedContext: [
           ...dynamicContext.taskTitles.slice(0, 2),

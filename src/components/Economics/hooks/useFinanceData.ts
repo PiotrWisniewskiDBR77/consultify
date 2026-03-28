@@ -9,9 +9,9 @@ import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
   deriveStatementReadinessStatus,
   type FinanceKind,
-  type FinanceStatementRow,
   type FinanceModelRow,
   type FinanceRow,
+  type FinanceStatementRow,
   type FinanceStatus,
   isWorkableStatement,
   normalizeModelStatus,
@@ -20,32 +20,185 @@ import {
 } from '../financeTypes';
 
 const DEMO_STATEMENTS = [
-  { id: 'demo-s1', entity_name: 'Atelier Sp. z o.o.', period_label: 'FY 2025', period_start: '2025-01-01', period_end: '2025-12-31', currency: 'PLN', scaling: 'thousands', pack_readiness_status: 'ready', pack_status: 'validated', pl_count: 1, bs_count: 1, cf_count: 1, source_statement_count: 3, updated_at: '2026-03-10T14:00:00Z', statements: [] },
-  { id: 'demo-s2', entity_name: 'Atelier Sp. z o.o.', period_label: 'H1 2025', period_start: '2025-01-01', period_end: '2025-06-30', currency: 'PLN', scaling: 'thousands', pack_readiness_status: 'ready', pack_status: 'validated', pl_count: 1, bs_count: 1, cf_count: 0, source_statement_count: 2, updated_at: '2026-02-15T10:00:00Z', statements: [] },
-  { id: 'demo-s3', entity_name: 'NovaTech GmbH', period_label: 'FY 2025', period_start: '2025-01-01', period_end: '2025-12-31', currency: 'EUR', scaling: 'thousands', pack_readiness_status: 'recoverable', pack_status: 'pending', pl_count: 1, bs_count: 0, cf_count: 0, source_statement_count: 1, updated_at: '2026-03-14T09:00:00Z', statements: [] },
-  { id: 'demo-s4', entity_name: 'GreenField Inc.', period_label: 'Q4 2025', period_start: '2025-10-01', period_end: '2025-12-31', currency: 'USD', scaling: 'units', pack_readiness_status: 'pending', pack_status: 'draft', pl_count: 1, bs_count: 1, cf_count: 1, source_statement_count: 3, updated_at: '2026-03-16T11:00:00Z', statements: [] },
+  {
+    id: 'demo-s1',
+    entity_name: 'Atelier Sp. z o.o.',
+    period_label: 'FY 2025',
+    period_start: '2025-01-01',
+    period_end: '2025-12-31',
+    currency: 'PLN',
+    scaling: 'thousands',
+    pack_readiness_status: 'ready',
+    pack_status: 'validated',
+    pl_count: 1,
+    bs_count: 1,
+    cf_count: 1,
+    source_statement_count: 3,
+    updated_at: '2026-03-10T14:00:00Z',
+    statements: [],
+  },
+  {
+    id: 'demo-s2',
+    entity_name: 'Atelier Sp. z o.o.',
+    period_label: 'H1 2025',
+    period_start: '2025-01-01',
+    period_end: '2025-06-30',
+    currency: 'PLN',
+    scaling: 'thousands',
+    pack_readiness_status: 'ready',
+    pack_status: 'validated',
+    pl_count: 1,
+    bs_count: 1,
+    cf_count: 0,
+    source_statement_count: 2,
+    updated_at: '2026-02-15T10:00:00Z',
+    statements: [],
+  },
+  {
+    id: 'demo-s3',
+    entity_name: 'NovaTech GmbH',
+    period_label: 'FY 2025',
+    period_start: '2025-01-01',
+    period_end: '2025-12-31',
+    currency: 'EUR',
+    scaling: 'thousands',
+    pack_readiness_status: 'recoverable',
+    pack_status: 'pending',
+    pl_count: 1,
+    bs_count: 0,
+    cf_count: 0,
+    source_statement_count: 1,
+    updated_at: '2026-03-14T09:00:00Z',
+    statements: [],
+  },
+  {
+    id: 'demo-s4',
+    entity_name: 'GreenField Inc.',
+    period_label: 'Q4 2025',
+    period_start: '2025-10-01',
+    period_end: '2025-12-31',
+    currency: 'USD',
+    scaling: 'units',
+    pack_readiness_status: 'pending',
+    pack_status: 'draft',
+    pl_count: 1,
+    bs_count: 1,
+    cf_count: 1,
+    source_statement_count: 3,
+    updated_at: '2026-03-16T11:00:00Z',
+    statements: [],
+  },
 ];
 
 const DEMO_MODELS = [
-  { id: 'demo-m1', name: 'Atelier - FY26-FY28 Revenue & Margin Forecast', scenario: 'base', currency: 'PLN', horizon_months: 36, start_date: '2026-01-01', status: 'approved', source_statement_pack_id: 'demo-s1', updated_at: '2026-03-12T10:00:00Z' },
-  { id: 'demo-m2', name: 'Atelier - FY26-FY28 Working Capital Forecast', scenario: 'base', currency: 'PLN', horizon_months: 36, start_date: '2026-01-01', status: 'review', source_statement_pack_id: 'demo-s1', updated_at: '2026-03-14T14:00:00Z' },
-  { id: 'demo-m3', name: 'NovaTech - FY26-FY28 Cash Protection Forecast', scenario: 'base', currency: 'EUR', horizon_months: 36, start_date: '2026-04-01', status: 'draft', updated_at: '2026-03-15T16:00:00Z' },
+  {
+    id: 'demo-m1',
+    name: 'Atelier - FY26-FY28 Revenue & Margin Forecast',
+    scenario: 'base',
+    currency: 'PLN',
+    horizon_months: 36,
+    start_date: '2026-01-01',
+    status: 'approved',
+    source_statement_pack_id: 'demo-s1',
+    updated_at: '2026-03-12T10:00:00Z',
+  },
+  {
+    id: 'demo-m2',
+    name: 'Atelier - FY26-FY28 Working Capital Forecast',
+    scenario: 'base',
+    currency: 'PLN',
+    horizon_months: 36,
+    start_date: '2026-01-01',
+    status: 'review',
+    source_statement_pack_id: 'demo-s1',
+    updated_at: '2026-03-14T14:00:00Z',
+  },
+  {
+    id: 'demo-m3',
+    name: 'NovaTech - FY26-FY28 Cash Protection Forecast',
+    scenario: 'base',
+    currency: 'EUR',
+    horizon_months: 36,
+    start_date: '2026-04-01',
+    status: 'draft',
+    updated_at: '2026-03-15T16:00:00Z',
+  },
 ];
 
 const DEMO_ANALYSES = [
-  { id: 'demo-a1', title: 'Atelier FY 2025 – Comprehensive Analysis', analysisType: 'comprehensive', currency: 'PLN', status: 'approved', periods: [1, 2, 3, 4], updatedAt: '2026-03-11T10:00:00Z' },
-  { id: 'demo-a2', title: 'Cloud Migration – Investment Case', analysisType: 'investment_case', currency: 'PLN', status: 'review', periods: [1, 2, 3], updatedAt: '2026-03-13T14:00:00Z' },
-  { id: 'demo-a3', title: 'NovaTech Acquisition – Due Diligence', analysisType: 'comprehensive', currency: 'EUR', status: 'draft', periods: [1, 2], updatedAt: '2026-03-16T09:00:00Z' },
+  {
+    id: 'demo-a1',
+    title: 'Atelier FY 2025 – Comprehensive Analysis',
+    analysisType: 'comprehensive',
+    currency: 'PLN',
+    status: 'approved',
+    periods: [1, 2, 3, 4],
+    updatedAt: '2026-03-11T10:00:00Z',
+  },
+  {
+    id: 'demo-a2',
+    title: 'Cloud Migration – Investment Case',
+    analysisType: 'investment_case',
+    currency: 'PLN',
+    status: 'review',
+    periods: [1, 2, 3],
+    updatedAt: '2026-03-13T14:00:00Z',
+  },
+  {
+    id: 'demo-a3',
+    title: 'NovaTech Acquisition – Due Diligence',
+    analysisType: 'comprehensive',
+    currency: 'EUR',
+    status: 'draft',
+    periods: [1, 2],
+    updatedAt: '2026-03-16T09:00:00Z',
+  },
 ];
 
 const DEMO_VALUATIONS = [
-  { id: 'demo-v1', title: 'Atelier – DCF Valuation 2026', sourceType: 'financial_model', method: 'DCF', currency: 'PLN', horizonYears: 5, status: 'approved', updatedAt: '2026-03-10T12:00:00Z' },
-  { id: 'demo-v2', title: 'NovaTech – Comparable Analysis', sourceType: 'financial_analysis', method: 'Comparables', currency: 'EUR', horizonYears: 3, status: 'draft', updatedAt: '2026-03-15T15:00:00Z' },
+  {
+    id: 'demo-v1',
+    title: 'Atelier – DCF Valuation 2026',
+    sourceType: 'financial_model',
+    method: 'DCF',
+    currency: 'PLN',
+    horizonYears: 5,
+    status: 'approved',
+    updatedAt: '2026-03-10T12:00:00Z',
+  },
+  {
+    id: 'demo-v2',
+    title: 'NovaTech – Comparable Analysis',
+    sourceType: 'financial_analysis',
+    method: 'Comparables',
+    currency: 'EUR',
+    horizonYears: 3,
+    status: 'draft',
+    updatedAt: '2026-03-15T15:00:00Z',
+  },
 ];
 
 const DEMO_BUDGETS = [
-  { id: 'demo-b1', title: 'Atelier – Budget 2026', currency: 'PLN', status: 'approved', periodStart: '2026-01-01', periodEnd: '2026-12-31', granularity: 'monthly', updatedAt: '2026-03-01T10:00:00Z' },
-  { id: 'demo-b2', title: 'Marketing Campaign – Q2 2026', currency: 'PLN', status: 'draft', periodStart: '2026-04-01', periodEnd: '2026-06-30', granularity: 'monthly', updatedAt: '2026-03-14T08:00:00Z' },
+  {
+    id: 'demo-b1',
+    title: 'Atelier – Budget 2026',
+    currency: 'PLN',
+    status: 'approved',
+    periodStart: '2026-01-01',
+    periodEnd: '2026-12-31',
+    granularity: 'monthly',
+    updatedAt: '2026-03-01T10:00:00Z',
+  },
+  {
+    id: 'demo-b2',
+    title: 'Marketing Campaign – Q2 2026',
+    currency: 'PLN',
+    status: 'draft',
+    periodStart: '2026-04-01',
+    periodEnd: '2026-06-30',
+    granularity: 'monthly',
+    updatedAt: '2026-03-14T08:00:00Z',
+  },
 ];
 
 function isInvestmentAnalysisType(value: unknown): boolean {
@@ -224,14 +377,14 @@ export function useFinanceData(
       activeTab === 'statements'
         ? 'statements'
         : activeTab === 'models'
-        ? 'models'
-        : activeTab === 'analysis'
-          ? 'analysis'
-          : activeTab === 'investment'
-            ? 'investment'
-          : activeTab === 'prediction'
-            ? 'prediction'
-            : 'valuation';
+          ? 'models'
+          : activeTab === 'analysis'
+            ? 'analysis'
+            : activeTab === 'investment'
+              ? 'investment'
+              : activeTab === 'prediction'
+                ? 'prediction'
+                : 'valuation';
 
     let cancelled = false;
     const run = async () => {
@@ -257,120 +410,121 @@ export function useFinanceData(
 
   const rowsForActiveTab: FinanceRow[] = useMemo(() => {
     if (activeTab === 'statements') {
-      return (statements || [])
-        .map((s: any): FinanceStatementRow => {
-          const rawStatus = String(s.pack_status || s.status || 'draft');
-          const validationStatus = String(s.validation_status || 'pending');
-          const readinessStatus = String(s.pack_readiness_status || s.readiness_status || 'pending');
-          const childStatements = Array.isArray(s.statements)
-            ? s.statements.map((statement: any) => ({
-                id: String(statement.id),
-                statementType: String(statement.statement_type || ''),
-                rawStatus: String(statement.status || 'draft'),
-                readinessStatus: String(statement.readiness_status || 'pending'),
-                readinessScore: Number(statement.readiness_score ?? 0),
-                validationStatus: String(statement.validation_status || 'pending'),
-                mappedLineCount: Number(statement.mapped_line_count ?? 0),
-                totalLineCount: Number(statement.total_line_count ?? 0),
-                unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
-                sourceFileName: String(statement.source_file_name || ''),
-                updatedAt: String(statement.updated_at || statement.created_at || ''),
-              }))
-            : [];
-          const presentTypes = new Set<string>();
-          if (Number(s.pl_count ?? 0) > 0) presentTypes.add('P&L');
-          if (Number(s.bs_count ?? 0) > 0) presentTypes.add('BS');
-          if (Number(s.cf_count ?? 0) > 0) presentTypes.add('CF');
-          for (const statement of childStatements) {
-            if (statement.statementType) presentTypes.add(statement.statementType);
-          }
-          const mappedLineCount = childStatements.reduce(
-            (sum: number, statement: any) => sum + Number(statement.mappedLineCount || 0),
-            0
-          );
-          const unmappedLineCount = childStatements.reduce(
-            (sum: number, statement: any) => sum + Number(statement.unmappedLineCount || 0),
-            0
-          );
-          const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
-          const effectiveReadiness = String(readinessStatus || 'pending').toLowerCase();
-          let readinessReasonCodes: string[] = [];
-          try {
-            readinessReasonCodes = Array.isArray(s.pack_quality_reason_codes)
-              ? s.pack_quality_reason_codes.map((code: unknown) => String(code))
-              : typeof s.pack_quality_reason_codes === 'string' &&
-                  s.pack_quality_reason_codes.trim().startsWith('[')
-                ? JSON.parse(s.pack_quality_reason_codes).map((code: unknown) => String(code))
-                : [];
-          } catch {
-            readinessReasonCodes = [];
-          }
-          let missingStatementTypes: string[] = [];
-          try {
-            missingStatementTypes = Array.isArray(s.missing_statement_types)
-              ? s.missing_statement_types.map((type: unknown) => String(type))
-              : typeof s.missing_statement_types === 'string' &&
-                  s.missing_statement_types.trim().startsWith('[')
-                ? JSON.parse(s.missing_statement_types).map((type: unknown) => String(type))
-                : [];
-          } catch {
-            missingStatementTypes = [];
-          }
-          const completenessLabel = ['P&L', 'BS', 'CF']
-            .map((type) => (presentTypes.has(type) ? type : `—${type}`))
-            .join(' / ');
-          return {
-            id: String(s.id),
-            title: String(
-              s.entity_name || s.period_label || `${t('finance.pack.titleFallback', 'Statement Pack')} ${s.period_end || ''}`
-            ),
-            kind: 'statements',
-            status:
-              effectiveReadiness === 'ready'
-                ? 'APPROVED'
-                : effectiveReadiness === 'recoverable'
-                  ? 'REVIEW'
-                  : 'DRAFT',
-            statementType: 'PACK',
-            statementPackId: String(s.id),
-            entityName: String(s.entity_name || ''),
-            periodStart: String(s.period_start || ''),
-            periodEnd: String(s.period_end || ''),
-            periodLabel: String(s.period_label || ''),
-            currency: String(s.currency || 'PLN'),
-            scaling: String(s.scaling || 'units'),
-            sourceFileName: childStatements
-              .map((statement: any) => statement.sourceFileName)
-              .filter(Boolean)
-              .join(', '),
-            validationStatus,
-            mappedLineCount,
-            totalLineCount,
-            unmappedLineCount,
-            sourceStatementCount: Number(
-              s.source_statement_count ??
-                childStatements.length ??
-                Number(s.pl_count ?? 0) + Number(s.bs_count ?? 0) + Number(s.cf_count ?? 0)
-            ),
-            statementIds: childStatements.map((statement: any) => statement.id),
-            missingStatementTypes,
-            completenessLabel,
-            childStatements,
-            nonFinancialLineCount: Number(s.non_financial_line_count ?? 0),
-            overallConfidence: Number(s.overall_confidence ?? 0),
-            rawStatus,
-            readinessStatus: effectiveReadiness,
-            readinessScore: Number(s.pack_readiness_score ?? s.readiness_score ?? 0),
-            readinessSummary: String(s.pack_quality_summary || s.quality_summary || ''),
-            readinessReasonCodes,
-            documentClass: String(s.document_class || ''),
-            extractionStrategy: String(s.extraction_strategy || ''),
-            templateFamily: s.template_family ? String(s.template_family) : null,
-            valuesVersion: Number(s.values_version ?? 0),
-            isWorkable: effectiveReadiness === 'ready',
-            updatedAt: String(s.updated_at || s.created_at || new Date().toISOString()),
-          };
-        });
+      return (statements || []).map((s: any): FinanceStatementRow => {
+        const rawStatus = String(s.pack_status || s.status || 'draft');
+        const validationStatus = String(s.validation_status || 'pending');
+        const readinessStatus = String(s.pack_readiness_status || s.readiness_status || 'pending');
+        const childStatements = Array.isArray(s.statements)
+          ? s.statements.map((statement: any) => ({
+              id: String(statement.id),
+              statementType: String(statement.statement_type || ''),
+              rawStatus: String(statement.status || 'draft'),
+              readinessStatus: String(statement.readiness_status || 'pending'),
+              readinessScore: Number(statement.readiness_score ?? 0),
+              validationStatus: String(statement.validation_status || 'pending'),
+              mappedLineCount: Number(statement.mapped_line_count ?? 0),
+              totalLineCount: Number(statement.total_line_count ?? 0),
+              unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
+              sourceFileName: String(statement.source_file_name || ''),
+              updatedAt: String(statement.updated_at || statement.created_at || ''),
+            }))
+          : [];
+        const presentTypes = new Set<string>();
+        if (Number(s.pl_count ?? 0) > 0) presentTypes.add('P&L');
+        if (Number(s.bs_count ?? 0) > 0) presentTypes.add('BS');
+        if (Number(s.cf_count ?? 0) > 0) presentTypes.add('CF');
+        for (const statement of childStatements) {
+          if (statement.statementType) presentTypes.add(statement.statementType);
+        }
+        const mappedLineCount = childStatements.reduce(
+          (sum: number, statement: any) => sum + Number(statement.mappedLineCount || 0),
+          0
+        );
+        const unmappedLineCount = childStatements.reduce(
+          (sum: number, statement: any) => sum + Number(statement.unmappedLineCount || 0),
+          0
+        );
+        const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
+        const effectiveReadiness = String(readinessStatus || 'pending').toLowerCase();
+        let readinessReasonCodes: string[] = [];
+        try {
+          readinessReasonCodes = Array.isArray(s.pack_quality_reason_codes)
+            ? s.pack_quality_reason_codes.map((code: unknown) => String(code))
+            : typeof s.pack_quality_reason_codes === 'string' &&
+                s.pack_quality_reason_codes.trim().startsWith('[')
+              ? JSON.parse(s.pack_quality_reason_codes).map((code: unknown) => String(code))
+              : [];
+        } catch {
+          readinessReasonCodes = [];
+        }
+        let missingStatementTypes: string[] = [];
+        try {
+          missingStatementTypes = Array.isArray(s.missing_statement_types)
+            ? s.missing_statement_types.map((type: unknown) => String(type))
+            : typeof s.missing_statement_types === 'string' &&
+                s.missing_statement_types.trim().startsWith('[')
+              ? JSON.parse(s.missing_statement_types).map((type: unknown) => String(type))
+              : [];
+        } catch {
+          missingStatementTypes = [];
+        }
+        const completenessLabel = ['P&L', 'BS', 'CF']
+          .map((type) => (presentTypes.has(type) ? type : `—${type}`))
+          .join(' / ');
+        return {
+          id: String(s.id),
+          title: String(
+            s.entity_name ||
+              s.period_label ||
+              `${t('finance.pack.titleFallback', 'Statement Pack')} ${s.period_end || ''}`
+          ),
+          kind: 'statements',
+          status:
+            effectiveReadiness === 'ready'
+              ? 'APPROVED'
+              : effectiveReadiness === 'recoverable'
+                ? 'REVIEW'
+                : 'DRAFT',
+          statementType: 'PACK',
+          statementPackId: String(s.id),
+          entityName: String(s.entity_name || ''),
+          periodStart: String(s.period_start || ''),
+          periodEnd: String(s.period_end || ''),
+          periodLabel: String(s.period_label || ''),
+          currency: String(s.currency || 'PLN'),
+          scaling: String(s.scaling || 'units'),
+          sourceFileName: childStatements
+            .map((statement: any) => statement.sourceFileName)
+            .filter(Boolean)
+            .join(', '),
+          validationStatus,
+          mappedLineCount,
+          totalLineCount,
+          unmappedLineCount,
+          sourceStatementCount: Number(
+            s.source_statement_count ??
+              childStatements.length ??
+              Number(s.pl_count ?? 0) + Number(s.bs_count ?? 0) + Number(s.cf_count ?? 0)
+          ),
+          statementIds: childStatements.map((statement: any) => statement.id),
+          missingStatementTypes,
+          completenessLabel,
+          childStatements,
+          nonFinancialLineCount: Number(s.non_financial_line_count ?? 0),
+          overallConfidence: Number(s.overall_confidence ?? 0),
+          rawStatus,
+          readinessStatus: effectiveReadiness,
+          readinessScore: Number(s.pack_readiness_score ?? s.readiness_score ?? 0),
+          readinessSummary: String(s.pack_quality_summary || s.quality_summary || ''),
+          readinessReasonCodes,
+          documentClass: String(s.document_class || ''),
+          extractionStrategy: String(s.extraction_strategy || ''),
+          templateFamily: s.template_family ? String(s.template_family) : null,
+          valuesVersion: Number(s.values_version ?? 0),
+          isWorkable: effectiveReadiness === 'ready',
+          updatedAt: String(s.updated_at || s.created_at || new Date().toISOString()),
+        };
+      });
     }
     if (activeTab === 'models') {
       return (models || []).map((m: any) => {
@@ -380,34 +534,34 @@ export function useFinanceData(
         const forecastStartYear =
           Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear();
         return {
-        id: String(m.id),
-        title: String(m.name || t('common.untitled', 'Untitled')),
-        kind: 'models' as const,
-        predictionType: 'model' as PredictionType,
-        status: normalizeModelStatus(m.status),
-        scenario: String(m.scenario || 'base'),
-        currency: String(m.currency || 'PLN'),
-        horizonMonths: Number(m.horizon_months || 0),
-        startDate: String(m.start_date || ''),
-        sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
-        sourceStatementPackId: m.source_statement_pack_id
-          ? String(m.source_statement_pack_id)
-          : undefined,
-        seedSourceType: m.source_statement_pack_id
-          ? 'statement_pack'
-          : m.source_statement_id
-            ? 'statement'
-            : 'manual',
-        sourceDocumentTitle: sourcePack
-          ? String(sourcePack.entity_name || sourcePack.period_label || sourcePack.id)
-          : m.source_statement_pack_id
-            ? t('finance.model.seededFromPack', 'Seeded statement pack')
-            : t('finance.model.seededManuallyShort', 'Manual'),
-        forecastWindowLabel: `${forecastStartYear}-${forecastStartYear + 2}`,
-        variantLabel: 'base / optimistic / conservative',
-        analyticalDepthLabel: 'L1-L3',
-        updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
-      };
+          id: String(m.id),
+          title: String(m.name || t('common.untitled', 'Untitled')),
+          kind: 'models' as const,
+          predictionType: 'model' as PredictionType,
+          status: normalizeModelStatus(m.status),
+          scenario: String(m.scenario || 'base'),
+          currency: String(m.currency || 'PLN'),
+          horizonMonths: Number(m.horizon_months || 0),
+          startDate: String(m.start_date || ''),
+          sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
+          sourceStatementPackId: m.source_statement_pack_id
+            ? String(m.source_statement_pack_id)
+            : undefined,
+          seedSourceType: m.source_statement_pack_id
+            ? 'statement_pack'
+            : m.source_statement_id
+              ? 'statement'
+              : 'manual',
+          sourceDocumentTitle: sourcePack
+            ? String(sourcePack.entity_name || sourcePack.period_label || sourcePack.id)
+            : m.source_statement_pack_id
+              ? t('finance.model.seededFromPack', 'Seeded statement pack')
+              : t('finance.model.seededManuallyShort', 'Manual'),
+          forecastWindowLabel: `${forecastStartYear}-${forecastStartYear + 2}`,
+          variantLabel: 'base / optimistic / conservative',
+          analyticalDepthLabel: 'L1-L3',
+          updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
+        };
       });
     }
     if (activeTab === 'prediction') {

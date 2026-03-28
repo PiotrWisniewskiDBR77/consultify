@@ -65,31 +65,91 @@ interface ToolSlot {
 }
 
 const SHARED_TOP: ToolSlot[] = [
-  { id: 'pointer_toggle', icon: MousePointer2, labelPl: 'Tryb kursora', labelEn: 'Cursor mode', action: 'mm_toggle_pointer' },
-  { id: 'templates', icon: LayoutTemplate, labelPl: 'Szablony', labelEn: 'Templates', popover: 'templates' },
+  {
+    id: 'pointer_toggle',
+    icon: MousePointer2,
+    labelPl: 'Tryb kursora',
+    labelEn: 'Cursor mode',
+    action: 'mm_toggle_pointer',
+  },
+  {
+    id: 'templates',
+    icon: LayoutTemplate,
+    labelPl: 'Szablony',
+    labelEn: 'Templates',
+    popover: 'templates',
+  },
 ];
 
 const MM_CONTEXT_SLOTS: ToolSlot[] = [
   { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'mm_add_frame' },
   { id: 'add', icon: GitBranch, labelPl: 'Dodaj węzeł', labelEn: 'Add node', popover: 'addNode' },
-  { id: 'knowledge', icon: FileText, labelPl: 'Wiedza', labelEn: 'Knowledge', popover: 'knowledge' },
-  { id: 'comment', icon: MessageSquare, labelPl: 'Komentarze', labelEn: 'Comments', action: 'mm_comments' },
-  { id: 'connect', icon: Link2, labelPl: 'Połącz — przeciągnij z uchwytu jednego węzła do drugiego', labelEn: 'Connect — drag from one node handle to another', action: 'mm_connect_mode' },
-  { id: 'present', icon: Play, labelPl: 'Prezentacja', labelEn: 'Present', action: 'mm_presentation' },
+  {
+    id: 'knowledge',
+    icon: FileText,
+    labelPl: 'Wiedza',
+    labelEn: 'Knowledge',
+    popover: 'knowledge',
+  },
+  {
+    id: 'comment',
+    icon: MessageSquare,
+    labelPl: 'Komentarze',
+    labelEn: 'Comments',
+    action: 'mm_comments',
+  },
+  {
+    id: 'connect',
+    icon: Link2,
+    labelPl: 'Połącz — przeciągnij z uchwytu jednego węzła do drugiego',
+    labelEn: 'Connect — drag from one node handle to another',
+    action: 'mm_connect_mode',
+  },
+  {
+    id: 'present',
+    icon: Play,
+    labelPl: 'Prezentacja',
+    labelEn: 'Present',
+    action: 'mm_presentation',
+  },
 ];
 
 const WB_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'sticky', icon: StickyNote, labelPl: 'Karteczka', labelEn: 'Sticky', action: 'wb_add_sticky' },
+  {
+    id: 'sticky',
+    icon: StickyNote,
+    labelPl: 'Karteczka',
+    labelEn: 'Sticky',
+    action: 'wb_add_sticky',
+  },
   { id: 'text', icon: Type, labelPl: 'Tekst', labelEn: 'Text', action: 'wb_add_text' },
-  { id: 'shape', icon: Square, labelPl: 'Kształt', labelEn: 'Shape', action: 'wb_add_shape_rectangle' },
+  {
+    id: 'shape',
+    icon: Square,
+    labelPl: 'Kształt',
+    labelEn: 'Shape',
+    action: 'wb_add_shape_rectangle',
+  },
   { id: 'pen', icon: Pen, labelPl: 'Rysuj', labelEn: 'Draw', action: 'wb_mode_draw' },
   { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
 ];
 
 const PF_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'start', icon: Workflow, labelPl: 'Start/End', labelEn: 'Start/End', action: 'pf_add_start' },
+  {
+    id: 'start',
+    icon: Workflow,
+    labelPl: 'Start/End',
+    labelEn: 'Start/End',
+    action: 'pf_add_start',
+  },
   { id: 'task', icon: Square, labelPl: 'Task', labelEn: 'Task', action: 'pf_add_action' },
-  { id: 'decision', icon: Diamond, labelPl: 'Decyzja', labelEn: 'Decision', action: 'pf_add_decision' },
+  {
+    id: 'decision',
+    icon: Diamond,
+    labelPl: 'Decyzja',
+    labelEn: 'Decision',
+    action: 'pf_add_decision',
+  },
   { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
   { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
 ];
@@ -110,9 +170,21 @@ const CONTEXT_SLOTS: Record<CanvasToolType, ToolSlot[]> = {
 };
 
 const SHARED_BOTTOM: ToolSlot[] = [
-  { id: 'import', icon: Upload, labelPl: 'Import / Eksport', labelEn: 'Import / Export', popover: 'importExport' },
+  {
+    id: 'import',
+    icon: Upload,
+    labelPl: 'Import / Eksport',
+    labelEn: 'Import / Export',
+    popover: 'importExport',
+  },
   { id: 'ai', icon: Sparkles, labelPl: 'AI', labelEn: 'AI', popover: 'ai' },
-  { id: 'more', icon: MoreHorizontal, labelPl: 'Więcej narzędzi', labelEn: 'More tools', popover: 'more' },
+  {
+    id: 'more',
+    icon: MoreHorizontal,
+    labelPl: 'Więcej narzędzi',
+    labelEn: 'More tools',
+    popover: 'more',
+  },
 ];
 
 const UNDO_REDO: ToolSlot[] = [
@@ -147,18 +219,24 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSlotClick = useCallback((slot: ToolSlot) => {
-    if (slot.popover) {
-      setOpenPopover((cur) => (cur === slot.popover ? null : (slot.popover as PopoverId)));
-    } else if (slot.action) {
-      onAction(slot.action);
-      setOpenPopover(null);
-    }
-  }, [onAction]);
+  const handleSlotClick = useCallback(
+    (slot: ToolSlot) => {
+      if (slot.popover) {
+        setOpenPopover((cur) => (cur === slot.popover ? null : (slot.popover as PopoverId)));
+      } else if (slot.action) {
+        onAction(slot.action);
+        setOpenPopover(null);
+      }
+    },
+    [onAction]
+  );
 
-  const handlePopoverAction = useCallback((action: string) => {
-    onAction(action);
-  }, [onAction]);
+  const handlePopoverAction = useCallback(
+    (action: string) => {
+      onAction(action);
+    },
+    [onAction]
+  );
 
   const closePopover = useCallback(() => setOpenPopover(null), []);
 
@@ -194,7 +272,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
-              {interactionMode === 'pan' ? (isPl ? 'PAN' : 'PAN') : (isPl ? 'SEL' : 'SEL')}
+              {interactionMode === 'pan' ? (isPl ? 'PAN' : 'PAN') : isPl ? 'SEL' : 'SEL'}
             </span>
           </div>
         </div>
@@ -203,8 +281,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
     const Icon = slot.icon;
     const isModeSlot =
-      activeTool === 'mindmap' &&
-      (slot.id === 'connect' && interactionMode === 'connect');
+      activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
     const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (
       <div key={slot.id} className="relative">
@@ -264,11 +341,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               />
             )}
             {slot.popover === 'more' && (
-              <MoreToolsPanel
-                isPl={!!isPl}
-                onAction={handlePopoverAction}
-                onClose={closePopover}
-              />
+              <MoreToolsPanel isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
             )}
           </div>
         )}

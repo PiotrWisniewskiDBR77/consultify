@@ -36,12 +36,37 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 const AI_GENERATOR_ACTIONS = [
-  { action: 'mm_ai_expand', iconEl: Sparkles, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
-  { action: 'mm_ai_suggest', iconEl: Lightbulb, labelPl: 'Zasugeruj gałęzie', labelEn: 'Suggest branches' },
+  {
+    action: 'mm_ai_expand',
+    iconEl: Sparkles,
+    labelPl: 'Rozwiń mapę (AI)',
+    labelEn: 'Expand map (AI)',
+  },
+  {
+    action: 'mm_ai_suggest',
+    iconEl: Lightbulb,
+    labelPl: 'Zasugeruj gałęzie',
+    labelEn: 'Suggest branches',
+  },
   { action: 'mm_ai_gap_analysis', iconEl: Search, labelPl: 'Analiza luk', labelEn: 'Gap analysis' },
-  { action: 'mm_ai_cluster', iconEl: GitBranch, labelPl: 'Auto-klasteryzacja', labelEn: 'Auto-clustering' },
-  { action: 'mm_ai_summarize', iconEl: Target, labelPl: 'Podsumowanie mapy', labelEn: 'Map summary' },
-  { action: 'mm_ai_auto_connect', iconEl: Target, labelPl: 'Auto cross-links', labelEn: 'Auto cross-links' },
+  {
+    action: 'mm_ai_cluster',
+    iconEl: GitBranch,
+    labelPl: 'Auto-klasteryzacja',
+    labelEn: 'Auto-clustering',
+  },
+  {
+    action: 'mm_ai_summarize',
+    iconEl: Target,
+    labelPl: 'Podsumowanie mapy',
+    labelEn: 'Map summary',
+  },
+  {
+    action: 'mm_ai_auto_connect',
+    iconEl: Target,
+    labelPl: 'Auto cross-links',
+    labelEn: 'Auto cross-links',
+  },
 ];
 
 type SuggestionCategory =
@@ -542,7 +567,11 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                       action: gen.action,
                       tool: activeTool || 'mindmap',
                     });
-                    window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: gen.action } }));
+                    window.dispatchEvent(
+                      new CustomEvent('idea-workspace-quick-action', {
+                        detail: { action: gen.action },
+                      })
+                    );
                   }}
                   disabled={!isAccepted}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-violet-500/5 transition-colors disabled:opacity-40"

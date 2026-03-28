@@ -52,13 +52,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerOnboardingStatus,
 } from '../../services/api/v8';
-import { ROUTES } from '../../routes/routeConfig';
 import { cn } from '../../utils/cn';
 
 // ============================================================================

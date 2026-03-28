@@ -90,7 +90,9 @@ function buildArc(
   const segments: NarrativeSegment[] = [];
 
   const relatedFacts = facts.filter((f) => obs.related_facts.includes(f.fact_id));
-  const factLabels = relatedFacts.map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ''}`).join('; ');
+  const factLabels = relatedFacts
+    .map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ''}`)
+    .join('; ');
 
   segments.push({
     order: startOrder,
@@ -106,7 +108,9 @@ function buildArc(
       segment_type: 'explanation',
       content_hint: `Explain why this ${obs.type} occurred. Reference: ${factLabels || 'context data'}.`,
       related_observations: [obs.observation_id],
-      target_word_count: Math.round(profile.baseWords * profile.explanationMultiplier * dataAdj.factReferenceBoost),
+      target_word_count: Math.round(
+        profile.baseWords * profile.explanationMultiplier * dataAdj.factReferenceBoost
+      ),
     });
   }
 
@@ -116,7 +120,9 @@ function buildArc(
       segment_type: 'implication',
       content_hint: `Describe the business implication of this ${obs.type} for the organization.`,
       related_observations: [obs.observation_id],
-      target_word_count: Math.round(profile.baseWords * profile.implicationMultiplier * dataAdj.implicationBoost),
+      target_word_count: Math.round(
+        profile.baseWords * profile.implicationMultiplier * dataAdj.implicationBoost
+      ),
     });
   }
 

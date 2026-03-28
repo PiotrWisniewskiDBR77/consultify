@@ -9,6 +9,7 @@ import {
   requireOrganization,
   requirePermission,
   setDependencies,
+  __private__,
   AuthRequest,
 } from '../../../../server/src/middleware/auth.middleware.ts';
 
@@ -35,6 +36,7 @@ describe('AuthMiddleware', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __private__.resetRevocationCachesForTests();
 
     mockReq = {
       headers: {},
@@ -668,11 +670,13 @@ describe('AuthMiddleware', () => {
       mockReq.headers!['authorization'] = 'Bearer revoke-all-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         // iat in seconds -> tokenIssuedAt = 100_000ms
-        callback(null, { id: 'user-123', jti: 'tok-1', iat: 100 });
+        callback(null, { id: 'user-revoke-before', jti: 'tok-1', iat: 100 });
       });
-      mockDbGet
-        .mockResolvedValueOnce(null) // token not revoked
-        .mockResolvedValueOnce({ jti: 'revoke-all-200000' }); // revokeTime=200_000ms
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT jti FROM revoked_tokens WHERE jti = ?')) return null;
+        if (sql.includes("reason = 'revoke-all'")) return { jti: 'revoke-all-200000' };
+        return null;
+      });
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -687,15 +691,17 @@ describe('AuthMiddleware', () => {
       mockReq.headers!['authorization'] = 'Bearer revoke-all-ok';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         // iat in seconds -> tokenIssuedAt = 300_000ms
-        callback(null, { id: 'user-123', jti: 'tok-2', iat: 300 });
+        callback(null, { id: 'user-revoke-after', jti: 'tok-2', iat: 300 });
       });
-      mockDbGet
-        .mockResolvedValueOnce(null) // token not revoked
-        .mockResolvedValueOnce({ jti: 'revoke-all-200000' }); // revokeTime=200_000ms
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT jti FROM revoked_tokens WHERE jti = ?')) return null;
+        if (sql.includes("reason = 'revoke-all'")) return { jti: 'revoke-all-200000' };
+        return null;
+      });
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockReq.user?.id).toBe('user-123');
+      expect(mockReq.user?.id).toBe('user-revoke-after');
       expect(mockNext).toHaveBeenCalled();
     });
 

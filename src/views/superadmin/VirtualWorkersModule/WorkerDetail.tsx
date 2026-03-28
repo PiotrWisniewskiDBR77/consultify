@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
-import { WorkerProfileEditor } from './WorkerProfileEditor';
-import { KnowledgeAssignmentPanel } from './KnowledgeAssignmentPanel';
 import { ConversationBrowser } from './ConversationBrowser';
-import { WorkerAnalyticsDashboard } from './WorkerAnalyticsDashboard';
 import { InsightsPanel } from './InsightsPanel';
+import { KnowledgeAssignmentPanel } from './KnowledgeAssignmentPanel';
+import { WorkerAnalyticsDashboard } from './WorkerAnalyticsDashboard';
+import { WorkerProfileEditor } from './WorkerProfileEditor';
 
 interface VirtualWorker {
   id: string;
@@ -39,11 +39,7 @@ interface WorkerDetailProps {
   onBack: () => void;
 }
 
-export const WorkerDetail: React.FC<WorkerDetailProps> = ({
-  workerId,
-  activeTab,
-  onBack,
-}) => {
+export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab, onBack }) => {
   const [worker, setWorker] = useState<VirtualWorker | null>(null);
   const [profile, setProfile] = useState<VirtualWorkerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +76,10 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({
     return (
       <div className="p-6 text-center">
         <p className="text-slate-500 dark:text-slate-400">Worker not found.</p>
-        <button onClick={onBack} className="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+        <button
+          onClick={onBack}
+          className="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+        >
           Back to list
         </button>
       </div>
@@ -101,9 +100,7 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({
             {worker.name.charAt(0)}
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {worker.name}
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{worker.name}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {worker.slug} · {worker.role} · {worker.status}
             </p>
@@ -112,24 +109,14 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({
       </div>
 
       {activeTab === 'profile' && (
-        <WorkerProfileEditor
-          worker={worker}
-          profile={profile}
-          onProfileUpdated={fetchWorker}
-        />
+        <WorkerProfileEditor worker={worker} profile={profile} onProfileUpdated={fetchWorker} />
       )}
-      {activeTab === 'knowledge' && (
-        <KnowledgeAssignmentPanel workerId={worker.id} />
-      )}
-      {activeTab === 'conversations' && (
-        <ConversationBrowser workerId={worker.id} />
-      )}
+      {activeTab === 'knowledge' && <KnowledgeAssignmentPanel workerId={worker.id} />}
+      {activeTab === 'conversations' && <ConversationBrowser workerId={worker.id} />}
       {activeTab === 'analytics' && (
         <WorkerAnalyticsDashboard workerId={worker.id} workerSlug={worker.slug} />
       )}
-      {activeTab === 'insights' && (
-        <InsightsPanel workerId={worker.id} />
-      )}
+      {activeTab === 'insights' && <InsightsPanel workerId={worker.id} />}
     </div>
   );
 };

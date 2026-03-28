@@ -10,7 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode, withCanonicalAliases } from './financeCanonicalResolver.js';
-import { computeAllCompositeScores, type CompositeScoresSummary } from './financeCompositeScores.js';
+import {
+  type CompositeScoresSummary,
+  computeAllCompositeScores,
+} from './financeCompositeScores.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -165,7 +168,10 @@ function deriveComputedValues(v: Record<string, number>): Record<string, number>
   }
 
   const totalDebt = (r.LONG_TERM_DEBT ?? 0) + (r.SHORT_TERM_DEBT ?? 0);
-  if (r.TOTAL_DEBT === undefined && (r.LONG_TERM_DEBT !== undefined || r.SHORT_TERM_DEBT !== undefined)) {
+  if (
+    r.TOTAL_DEBT === undefined &&
+    (r.LONG_TERM_DEBT !== undefined || r.SHORT_TERM_DEBT !== undefined)
+  ) {
     r.TOTAL_DEBT = totalDebt;
   }
 
@@ -173,11 +179,19 @@ function deriveComputedValues(v: Record<string, number>): Record<string, number>
     r.NET_DEBT = r.TOTAL_DEBT - r.CASH;
   }
 
-  if (r.INVESTED_CAPITAL === undefined && r.TOTAL_EQUITY !== undefined && r.NET_DEBT !== undefined) {
+  if (
+    r.INVESTED_CAPITAL === undefined &&
+    r.TOTAL_EQUITY !== undefined &&
+    r.NET_DEBT !== undefined
+  ) {
     r.INVESTED_CAPITAL = r.TOTAL_EQUITY + r.NET_DEBT;
   }
 
-  if (r.CAPITAL_EMPLOYED === undefined && r.TOTAL_ASSETS !== undefined && r.CURRENT_LIABILITIES !== undefined) {
+  if (
+    r.CAPITAL_EMPLOYED === undefined &&
+    r.TOTAL_ASSETS !== undefined &&
+    r.CURRENT_LIABILITIES !== undefined
+  ) {
     r.CAPITAL_EMPLOYED = r.TOTAL_ASSETS - r.CURRENT_LIABILITIES;
   }
 
@@ -205,7 +219,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     category: 'liquidity',
     formula: 'Current Assets / Current Liabilities',
     formulaDescription: 'Measures ability to cover short-term obligations with current assets',
-    formulaDescriptionPl: 'Mierzy zdolność pokrycia zobowiązań krótkoterminowych aktywami obrotowymi',
+    formulaDescriptionPl:
+      'Mierzy zdolność pokrycia zobowiązań krótkoterminowych aktywami obrotowymi',
     requiredLines: ['CURRENT_ASSETS', 'CURRENT_LIABILITIES'],
     compute: (v) => safe(v.CURRENT_ASSETS, v.CURRENT_LIABILITIES, div),
     thresholds: { warn: 1.2, critical: 1.0, direction: 'higher_better' },
@@ -358,7 +373,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     category: 'profitability',
     formula: 'EBIT / (Total Assets − Current Liabilities) × 100',
     formulaDescription: 'Return generated on all long-term capital (equity + long-term debt)',
-    formulaDescriptionPl: 'Zwrot z całego kapitału długoterminowego (kapitał własny + dług długoterminowy)',
+    formulaDescriptionPl:
+      'Zwrot z całego kapitału długoterminowego (kapitał własny + dług długoterminowy)',
     requiredLines: ['EBIT', 'TOTAL_ASSETS', 'CURRENT_LIABILITIES'],
     compute: (v) => {
       const ce = (v.TOTAL_ASSETS ?? 0) - (v.CURRENT_LIABILITIES ?? 0);
@@ -375,7 +391,15 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     formula: 'NOPAT / Invested Capital × 100',
     formulaDescription: 'After-tax operating return on all investor capital',
     formulaDescriptionPl: 'Zwrot operacyjny po opodatkowaniu na kapitale wszystkich inwestorów',
-    requiredLines: ['EBIT', 'TAX_EXPENSE', 'EBT', 'TOTAL_EQUITY', 'LONG_TERM_DEBT', 'SHORT_TERM_DEBT', 'CASH'],
+    requiredLines: [
+      'EBIT',
+      'TAX_EXPENSE',
+      'EBT',
+      'TOTAL_EQUITY',
+      'LONG_TERM_DEBT',
+      'SHORT_TERM_DEBT',
+      'CASH',
+    ],
     compute: (v) => {
       const ebt = v.EBT ?? 0;
       const taxRate = ebt !== 0 ? Math.abs(v.TAX_EXPENSE ?? 0) / Math.abs(ebt) : 0.19;
@@ -395,7 +419,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     category: 'profitability',
     formula: '|Tax Expense| / |EBT| × 100',
     formulaDescription: 'Actual tax burden as percentage of pre-tax profit',
-    formulaDescriptionPl: 'Rzeczywiste obciążenie podatkowe jako procent zysku przed opodatkowaniem',
+    formulaDescriptionPl:
+      'Rzeczywiste obciążenie podatkowe jako procent zysku przed opodatkowaniem',
     requiredLines: ['TAX_EXPENSE', 'EBT'],
     compute: (v) => {
       const ebt = Math.abs(v.EBT ?? 0);
@@ -467,7 +492,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     category: 'leverage',
     formula: '(LT Debt + ST Debt − Cash) / EBITDA',
     formulaDescription: 'Key credit metric — years of EBITDA needed to repay net debt',
-    formulaDescriptionPl: 'Kluczowy wskaźnik kredytowy — lata EBITDA potrzebne do spłaty długu netto',
+    formulaDescriptionPl:
+      'Kluczowy wskaźnik kredytowy — lata EBITDA potrzebne do spłaty długu netto',
     requiredLines: ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT', 'CASH', 'EBITDA'],
     compute: (v) => {
       const netDebt = (v.LONG_TERM_DEBT ?? 0) + (v.SHORT_TERM_DEBT ?? 0) - (v.CASH ?? 0);

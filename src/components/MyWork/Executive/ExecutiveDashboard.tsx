@@ -635,10 +635,16 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       try {
         setOperatorActionBusyId(templateKey);
         await Api.proposeAIOperatorIntervention({ templateKey });
-        toast.success(isPolish ? 'Interwencja operatora została zaproponowana.' : 'Operator intervention proposed.');
+        toast.success(
+          isPolish
+            ? 'Interwencja operatora została zaproponowana.'
+            : 'Operator intervention proposed.'
+        );
         await fetchDashboardData(true);
       } catch {
-        toast.error(isPolish ? 'Nie udało się zaproponować interwencji.' : 'Failed to propose intervention.');
+        toast.error(
+          isPolish ? 'Nie udało się zaproponować interwencji.' : 'Failed to propose intervention.'
+        );
       } finally {
         setOperatorActionBusyId(null);
       }
@@ -654,7 +660,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         toast.success(isPolish ? 'Interwencja została zaakceptowana.' : 'Intervention accepted.');
         await fetchDashboardData(true);
       } catch {
-        toast.error(isPolish ? 'Nie udało się zaakceptować interwencji.' : 'Failed to accept intervention.');
+        toast.error(
+          isPolish ? 'Nie udało się zaakceptować interwencji.' : 'Failed to accept intervention.'
+        );
       } finally {
         setOperatorActionBusyId(null);
       }
@@ -670,7 +678,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         toast.success(isPolish ? 'Interwencja została wykonana.' : 'Intervention executed.');
         await fetchDashboardData(true);
       } catch {
-        toast.error(isPolish ? 'Nie udało się wykonać interwencji.' : 'Failed to execute intervention.');
+        toast.error(
+          isPolish ? 'Nie udało się wykonać interwencji.' : 'Failed to execute intervention.'
+        );
       } finally {
         setOperatorActionBusyId(null);
       }
@@ -686,7 +696,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         toast.success(isPolish ? 'Interwencja została odrzucona.' : 'Intervention rejected.');
         await fetchDashboardData(true);
       } catch {
-        toast.error(isPolish ? 'Nie udało się odrzucić interwencji.' : 'Failed to reject intervention.');
+        toast.error(
+          isPolish ? 'Nie udało się odrzucić interwencji.' : 'Failed to reject intervention.'
+        );
       } finally {
         setOperatorActionBusyId(null);
       }

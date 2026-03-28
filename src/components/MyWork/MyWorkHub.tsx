@@ -55,8 +55,8 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -79,6 +79,7 @@ import {
 
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
+import type { HomeScreenAction } from './Home/homeV2Types';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
@@ -91,7 +92,6 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
-import type { HomeScreenAction } from './Home/homeV2Types';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -137,7 +137,15 @@ const DecisionsTimelineContainer = lazyWithRetry(() =>
 );
 
 // Types
-type ModuleTab = 'home' | 'ideas' | 'notebook' | 'inbox' | 'calendar' | 'tasks' | 'decisions' | 'manager';
+type ModuleTab =
+  | 'home'
+  | 'ideas'
+  | 'notebook'
+  | 'inbox'
+  | 'calendar'
+  | 'tasks'
+  | 'decisions'
+  | 'manager';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'table' | 'grid';
@@ -148,8 +156,7 @@ type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
-  home:
-    'You are an AI transformation companion operating from the user\'s live Home screen. Synthesize signals across ideas, decisions, execution, team alignment, and industry context. Help the user understand what matters now, frame transformation moves, and convert signals into action. Stay strategic, concise, and highly relevant.',
+  home: "You are an AI transformation companion operating from the user's live Home screen. Synthesize signals across ideas, decisions, execution, team alignment, and industry context. Help the user understand what matters now, frame transformation moves, and convert signals into action. Stay strategic, concise, and highly relevant.",
   ideas: [
     'You have two roles inside the Idea Workspace:',
     '',
@@ -285,7 +292,10 @@ function isOpenDocument(value: unknown): value is OpenDocument {
     typeof doc.id === 'string' &&
     typeof doc.name === 'string' &&
     typeof doc.status === 'string' &&
-    (doc.type === 'task' || doc.type === 'idea' || doc.type === 'decision' || doc.type === 'notification')
+    (doc.type === 'task' ||
+      doc.type === 'idea' ||
+      doc.type === 'decision' ||
+      doc.type === 'notification')
   );
 }
 
@@ -537,7 +547,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
     const restoredActiveDoc = restoredDocumentState.activeDocumentId
-      ? restoredDocumentState.openDocuments.find((doc) => doc.id === restoredDocumentState.activeDocumentId) || null
+      ? restoredDocumentState.openDocuments.find(
+          (doc) => doc.id === restoredDocumentState.activeDocumentId
+        ) || null
       : null;
     return restoredActiveDoc
       ? getDocumentTab(restoredActiveDoc.type)
@@ -674,7 +686,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     | 'snoozeTomorrow'
   > | null>(null);
   // V3-A02: Dynamic documents state with sessionStorage persistence
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => restoredDocumentState.openDocuments);
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(
+    () => restoredDocumentState.openDocuments
+  );
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(
     () => restoredDocumentState.activeDocumentId
   );
@@ -755,7 +769,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     prevDocIdRef.current = activeDocumentId;
     const isNewIdeaDoc = Boolean(
       openDocuments.find((doc) => doc.id === activeDocumentId)?.data?.isNew ||
-        String(activeDocumentId).startsWith('new-idea-')
+      String(activeDocumentId).startsWith('new-idea-')
     );
     setIdeaActivePanel(isNewIdeaDoc ? 'tools' : null);
   }, [activeTab, activeDocumentId, openDocuments]);
@@ -997,9 +1011,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           }
           const ok = await downloadSheetArtifactXlsx(tableId);
           if (ok) {
-            toast.success(
-              isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
-            );
+            toast.success(isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)');
           } else {
             toast.error(
               isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
@@ -1011,8 +1023,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (
         [
           'initiative',
-          'report',
           'assessment',
+          'report',
           'presentation',
           'meeting',
           'financial_model',
@@ -2675,7 +2687,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'home':
         return (
           <React.Suspense fallback={lazyFallback}>
-            <HomeView userName={currentUser?.firstName} refreshTrigger={refreshTrigger} onAction={handleHomeAction} />
+            <HomeView
+              userName={currentUser?.firstName}
+              refreshTrigger={refreshTrigger}
+              onAction={handleHomeAction}
+            />
           </React.Suspense>
         );
       case 'manager':
@@ -2959,14 +2975,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
             {/* Scrollable controls (keep primary action always visible) */}
             <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap">
-            {/* Filters (furthest left in right cluster) */}
-            {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
-            {currentFilters.length > 0 && (
-              <div className="relative">
-                <select
-                  value={currentFilterValue}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                  className="
+              {/* Filters (furthest left in right cluster) */}
+              {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
+              {currentFilters.length > 0 && (
+                <div className="relative">
+                  <select
+                    value={currentFilterValue}
+                    onChange={(e) => handleFilterChange(e.target.value)}
+                    className="
                     appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
                     bg-white/70 dark:bg-white/[0.04]
                     border border-slate-200/70 dark:border-white/[0.06]
@@ -2976,30 +2992,30 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     transition-colors duration-150
                     cursor-pointer min-w-[140px]
                   "
-                >
-                  {currentFilters.map((filter) => (
-                    <option key={filter.id} value={filter.id}>
-                      {filter.label}
-                      {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                />
-              </div>
-            )}
+                  >
+                    {currentFilters.map((filter) => (
+                      <option key={filter.id} value={filter.id}>
+                        {filter.label}
+                        {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                  />
+                </div>
+              )}
 
-            {/* Decisions: Priority filter */}
-            {activeTab === 'decisions' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={decisionPriorityFilter}
-                  onChange={(e) =>
-                    setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
-                  }
-                  className="
+              {/* Decisions: Priority filter */}
+              {activeTab === 'decisions' && !activeDocumentId && (
+                <div className="relative">
+                  <select
+                    value={decisionPriorityFilter}
+                    onChange={(e) =>
+                      setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
+                    }
+                    className="
                     appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
                     bg-white/70 dark:bg-white/[0.04]
                     border border-slate-200/70 dark:border-white/[0.06]
@@ -3009,224 +3025,228 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     transition-colors duration-150
                     cursor-pointer min-w-[170px]
                   "
-                  aria-label={isPolish ? 'Priorytet' : 'Priority'}
-                  title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                    title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                  >
+                    <option value="all">
+                      {isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}
+                    </option>
+                    <option value="CRITICAL">
+                      {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
+                    </option>
+                    <option value="HIGH">
+                      {isPolish ? 'Priorytet: wysoki' : 'Priority: high'}
+                    </option>
+                    <option value="MEDIUM">
+                      {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
+                    </option>
+                    <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                  />
+                </div>
+              )}
+
+              {/* View tools */}
+              {/* Tasks View Mode Toggle (icons; no dropdown) */}
+              {activeTab === 'tasks' && !activeDocumentId && (
+                <div
+                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  role="radiogroup"
+                  aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
                 >
-                  <option value="all">{isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}</option>
-                  <option value="CRITICAL">
-                    {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
-                  </option>
-                  <option value="HIGH">{isPolish ? 'Priorytet: wysoki' : 'Priority: high'}</option>
-                  <option value="MEDIUM">
-                    {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
-                  </option>
-                  <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                />
-              </div>
-            )}
+                  {(
+                    [
+                      {
+                        id: 'table' as TasksViewMode,
+                        icon: LayoutList,
+                        titlePl: 'Lista',
+                        titleEn: 'List',
+                      },
+                      {
+                        id: 'kanban' as TasksViewMode,
+                        icon: Kanban,
+                        titlePl: 'Kanban',
+                        titleEn: 'Kanban',
+                      },
+                      {
+                        id: 'calendar' as TasksViewMode,
+                        icon: CalendarDays,
+                        titlePl: 'Kalendarz',
+                        titleEn: 'Calendar',
+                      },
+                    ] as const
+                  ).map(({ id, icon: Icon, titlePl, titleEn }) => {
+                    const isActive = tasksViewMode === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => setTasksViewMode(id)}
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                          isActive
+                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        }`}
+                        title={isPolish ? titlePl : titleEn}
+                        role="radio"
+                        aria-checked={isActive}
+                        data-testid={`mywork-tasks-view-${id}`}
+                      >
+                        <Icon size={16} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
-            {/* View tools */}
-            {/* Tasks View Mode Toggle (icons; no dropdown) */}
-            {activeTab === 'tasks' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
-              >
-                {(
-                  [
-                    {
-                      id: 'table' as TasksViewMode,
-                      icon: LayoutList,
-                      titlePl: 'Lista',
-                      titleEn: 'List',
-                    },
-                    {
-                      id: 'kanban' as TasksViewMode,
-                      icon: Kanban,
-                      titlePl: 'Kanban',
-                      titleEn: 'Kanban',
-                    },
-                    {
-                      id: 'calendar' as TasksViewMode,
-                      icon: CalendarDays,
-                      titlePl: 'Kalendarz',
-                      titleEn: 'Calendar',
-                    },
-                  ] as const
-                ).map(({ id, icon: Icon, titlePl, titleEn }) => {
-                  const isActive = tasksViewMode === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setTasksViewMode(id)}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                        isActive
-                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                      }`}
-                      title={isPolish ? titlePl : titleEn}
-                      role="radio"
-                      aria-checked={isActive}
-                      data-testid={`mywork-tasks-view-${id}`}
-                    >
-                      <Icon size={16} />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Decisions View Mode Toggle (icons; no dropdown) */}
-            {activeTab === 'decisions' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
-              >
-                {(
-                  [
-                    {
-                      id: 'table' as DecisionsViewMode,
-                      icon: LayoutList,
-                      titlePl: 'Lista',
-                      titleEn: 'List',
-                    },
-                    {
-                      id: 'kanban' as DecisionsViewMode,
-                      icon: Kanban,
-                      titlePl: 'Kanban',
-                      titleEn: 'Kanban',
-                    },
-                    {
-                      id: 'timeline' as DecisionsViewMode,
-                      icon: GanttChart,
-                      titlePl: 'Timeline',
-                      titleEn: 'Timeline',
-                    },
-                  ] as const
-                ).map(({ id, icon: Icon, titlePl, titleEn }) => {
-                  const isActive = decisionsViewMode === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setDecisionsViewMode(id)}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                        isActive
-                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                      }`}
-                      title={isPolish ? titlePl : titleEn}
-                      role="radio"
-                      aria-checked={isActive}
-                      data-testid={`mywork-decisions-view-${id}`}
-                    >
-                      <Icon size={16} />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Inbox View Mode Toggle (list / cards) — match screenshot (pill container + dark bg) */}
-            {activeTab === 'inbox' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setInboxViewMode('flat')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    inboxViewMode === 'flat'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Lista' : 'List'}
-                  role="radio"
-                  aria-checked={inboxViewMode === 'flat'}
+              {/* Decisions View Mode Toggle (icons; no dropdown) */}
+              {activeTab === 'decisions' && !activeDocumentId && (
+                <div
+                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  role="radiogroup"
+                  aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
                 >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setInboxViewMode('sections')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    inboxViewMode === 'sections'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Karty' : 'Cards'}
-                  role="radio"
-                  aria-checked={inboxViewMode === 'sections'}
+                  {(
+                    [
+                      {
+                        id: 'table' as DecisionsViewMode,
+                        icon: LayoutList,
+                        titlePl: 'Lista',
+                        titleEn: 'List',
+                      },
+                      {
+                        id: 'kanban' as DecisionsViewMode,
+                        icon: Kanban,
+                        titlePl: 'Kanban',
+                        titleEn: 'Kanban',
+                      },
+                      {
+                        id: 'timeline' as DecisionsViewMode,
+                        icon: GanttChart,
+                        titlePl: 'Timeline',
+                        titleEn: 'Timeline',
+                      },
+                    ] as const
+                  ).map(({ id, icon: Icon, titlePl, titleEn }) => {
+                    const isActive = decisionsViewMode === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => setDecisionsViewMode(id)}
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                          isActive
+                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        }`}
+                        title={isPolish ? titlePl : titleEn}
+                        role="radio"
+                        aria-checked={isActive}
+                        data-testid={`mywork-decisions-view-${id}`}
+                      >
+                        <Icon size={16} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Inbox View Mode Toggle (list / cards) — match screenshot (pill container + dark bg) */}
+              {activeTab === 'inbox' && !activeDocumentId && (
+                <div
+                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  role="radiogroup"
+                  aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
                 >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-            )}
-
-            {/* Tools */}
-
-            {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
-            {activeTab === 'ideas' && activeDocumentId && (
-              <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
-            )}
-
-            {/* Ideas: canonical view mode switcher — table / grid */}
-            {activeTab === 'ideas' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
-              >
-                {(
-                  [
-                    {
-                      id: 'table' as IdeasViewMode,
-                      icon: LayoutList,
-                      label: 'Table',
-                      labelPl: 'Tabela',
-                    },
-                    {
-                      id: 'grid' as IdeasViewMode,
-                      icon: LayoutGrid,
-                      label: 'Grid',
-                      labelPl: 'Siatka',
-                    },
-                  ] as const
-                ).map(({ id, icon: Icon, label, labelPl }) => (
                   <button
-                    key={id}
-                    onClick={() => setIdeasViewMode(id)}
+                    onClick={() => setInboxViewMode('flat')}
                     className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                      ideasViewMode === id
+                      inboxViewMode === 'flat'
                         ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
-                    title={isPolish ? labelPl : label}
+                    title={isPolish ? 'Lista' : 'List'}
                     role="radio"
-                    aria-checked={ideasViewMode === id}
+                    aria-checked={inboxViewMode === 'flat'}
                   >
-                    <Icon size={16} />
+                    <LayoutList size={16} />
                   </button>
-                ))}
-              </div>
-            )}
+                  <button
+                    onClick={() => setInboxViewMode('sections')}
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                      inboxViewMode === 'sections'
+                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                    }`}
+                    title={isPolish ? 'Karty' : 'Cards'}
+                    role="radio"
+                    aria-checked={inboxViewMode === 'sections'}
+                  >
+                    <LayoutGrid size={16} />
+                  </button>
+                </div>
+              )}
 
-            {/* Workspace 3-tools strip — Notebook only */}
-            {activeTab === 'notebook' && !activeDocumentId && (
-              <WorkspacePanelStrip
-                value={notebookActivePanel}
-                onChange={(next) => {
-                  setNotebookChatOpen(next === 'tools');
-                  setNotebookLinkedIdeasOpen(next === 'context');
-                  setNotebookTopicsOpen(next === 'ai_suggestions');
-                }}
-              />
-            )}
+              {/* Tools */}
+
+              {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
+              {activeTab === 'ideas' && activeDocumentId && (
+                <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
+              )}
+
+              {/* Ideas: canonical view mode switcher — table / grid */}
+              {activeTab === 'ideas' && !activeDocumentId && (
+                <div
+                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  role="radiogroup"
+                  aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
+                >
+                  {(
+                    [
+                      {
+                        id: 'table' as IdeasViewMode,
+                        icon: LayoutList,
+                        label: 'Table',
+                        labelPl: 'Tabela',
+                      },
+                      {
+                        id: 'grid' as IdeasViewMode,
+                        icon: LayoutGrid,
+                        label: 'Grid',
+                        labelPl: 'Siatka',
+                      },
+                    ] as const
+                  ).map(({ id, icon: Icon, label, labelPl }) => (
+                    <button
+                      key={id}
+                      onClick={() => setIdeasViewMode(id)}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        ideasViewMode === id
+                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                      }`}
+                      title={isPolish ? labelPl : label}
+                      role="radio"
+                      aria-checked={ideasViewMode === id}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Workspace 3-tools strip — Notebook only */}
+              {activeTab === 'notebook' && !activeDocumentId && (
+                <WorkspacePanelStrip
+                  value={notebookActivePanel}
+                  onChange={(next) => {
+                    setNotebookChatOpen(next === 'tools');
+                    setNotebookLinkedIdeasOpen(next === 'context');
+                    setNotebookTopicsOpen(next === 'ai_suggestions');
+                  }}
+                />
+              )}
             </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) */}
@@ -3240,7 +3260,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <span>{actionButton.label}</span>
               </button>
             )}
-
           </div>
         </div>
       </div>
@@ -3248,7 +3267,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {renderCommandRow()}
 
       {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
-      <div className={`flex-1 min-h-0 ${activeTab === 'calendar' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>{renderContent()}</div>
+      <div
+        className={`flex-1 min-h-0 ${activeTab === 'calendar' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}
+      >
+        {renderContent()}
+      </div>
 
       {/* Startup template picker */}
       <IdeaStartupTemplates

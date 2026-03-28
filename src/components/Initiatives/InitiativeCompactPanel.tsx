@@ -43,12 +43,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { Api } from '@/services/api';
-import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
-import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
+import { Api } from '@/services/api';
+import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { getArtifactPath } from '@/utils/artifactLinks';
+import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
@@ -638,7 +638,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                   ? raidItems.length
                   : tab.id === 'outputs'
                     ? outputRows.length
-                  : undefined;
+                    : undefined;
           return (
             <button
               key={tab.id}
@@ -687,7 +687,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                       ? '/presentations?tab=sheets'
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
-                          row.originRecordId,
+                          row.originRecordId
                         );
                   onClose();
                   navigate(targetPath);
@@ -1186,10 +1186,18 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
               <MitigationPanel
                 raidItemId={item.id}
                 initialPlan={item.mitigation_plan || ''}
-                initialStrategy={item.response_strategy || ''}
+                initialStrategy={
+                  (item.response_strategy as React.ComponentProps<
+                    typeof MitigationPanel
+                  >['initialStrategy']) || ''
+                }
                 initialOwnerId={item.mitigation_owner_id || ''}
                 initialDueDate={item.mitigation_due_date || ''}
-                initialStatus={item.mitigation_status || 'OPEN'}
+                initialStatus={
+                  (item.mitigation_status as React.ComponentProps<
+                    typeof MitigationPanel
+                  >['initialStatus']) || 'OPEN'
+                }
               />
             )}
           </div>

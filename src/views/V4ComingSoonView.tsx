@@ -1,7 +1,14 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-type ModuleKey = 'iris' | 'marketplace' | 'execution' | 'results' | 'finance' | 'presentations' | 'meeting';
+type ModuleKey =
+  | 'iris'
+  | 'marketplace'
+  | 'execution'
+  | 'results'
+  | 'finance'
+  | 'presentations'
+  | 'meeting';
 
 const copyByModule: Record<ModuleKey, { title: string; subtitle: string; bullets: string[] }> = {
   iris: {
@@ -72,7 +79,12 @@ const copyByModule: Record<ModuleKey, { title: string; subtitle: string; bullets
 function resolveModuleKey(pathname: string): ModuleKey {
   if (pathname.includes('marketplace')) return 'marketplace';
   if (pathname.includes('mcp')) return 'iris';
-  if (pathname.includes('execution') || pathname.includes('implementation') || pathname.includes('rollout')) return 'execution';
+  if (
+    pathname.includes('execution') ||
+    pathname.includes('implementation') ||
+    pathname.includes('rollout')
+  )
+    return 'execution';
   if (pathname.includes('benefits') || pathname.includes('kpi')) return 'results';
   if (pathname.includes('economics') || pathname.includes('finance')) return 'finance';
   if (pathname.includes('presentations') || pathname.includes('reports')) return 'presentations';

@@ -17,22 +17,22 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewActionBar,
-  PreviewAIHintStrip,
-  PreviewDetailsSection,
-  PreviewMetaCard,
-  PreviewRelations,
   actionPillClass,
   type ActionRow,
   type DetailsAction,
   type ExtraCopyFormat,
   type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { DelegationModal } from './shared/DelegationModal';
 
@@ -214,16 +214,15 @@ export const DecisionPreviewBody: React.FC<{
         ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
         : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
 
-  const priLabel =
-    isPolish
-      ? pri === 'CRITICAL'
-        ? 'Krytyczne'
-        : pri === 'HIGH'
-          ? 'Wysoki'
-          : pri === 'MEDIUM'
-            ? 'Średni'
-            : 'Niski'
-      : pri[0] + pri.slice(1).toLowerCase();
+  const priLabel = isPolish
+    ? pri === 'CRITICAL'
+      ? 'Krytyczne'
+      : pri === 'HIGH'
+        ? 'Wysoki'
+        : pri === 'MEDIUM'
+          ? 'Średni'
+          : 'Niski'
+    : pri[0] + pri.slice(1).toLowerCase();
 
   const urgencyClassName =
     brief?.urgency === 'urgent'
@@ -261,16 +260,15 @@ export const DecisionPreviewBody: React.FC<{
       : []),
   ];
 
-  const trailing =
-    decision?.dueDate ? (
-      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-        {formatShortDate(decision.dueDate) || ''}
-      </span>
-    ) : (
-      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
-        {isPolish ? 'Bez terminu' : 'No due date'}
-      </span>
-    );
+  const trailing = decision?.dueDate ? (
+    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+      {formatShortDate(decision.dueDate) || ''}
+    </span>
+  ) : (
+    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
+      {isPolish ? 'Bez terminu' : 'No due date'}
+    </span>
+  );
 
   const detailsText = detailsOverride ?? String(decision?.description || '').trim();
 
@@ -287,54 +285,56 @@ export const DecisionPreviewBody: React.FC<{
       <PreviewDetailsSection
         text={detailsText}
         loading={detailsLoading}
-        customActions={[
-          {
-            id: 'expand',
-            label: isPolish ? 'Rozwiń' : 'Expand',
-            icon: ChevronDown,
-            onClick: () => onDetailsAction('expand'),
-            disabled: detailsLoading,
-          },
-          {
-            id: 'summarize',
-            label: isPolish ? 'Podsumuj' : 'Summarize',
-            icon: Sparkles,
-            onClick: () => onDetailsAction('summarize'),
-            disabled: detailsLoading,
-          },
-          {
-            id: 'copy',
-            label: isPolish ? 'Kopiuj' : 'Copy',
-            icon: Copy,
-            onClick: () => onDetailsAction('copy'),
-          },
-          {
-            id: 'copy-md',
-            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
-            onClick: () =>
-              void copyAsMarkdown(
-                {
-                  title: decision?.title || '',
-                  status: decision?.status ?? undefined,
-                  description: detailsText,
-                },
-                isPolish ? 'pl' : 'en'
-              ),
-          },
-          {
-            id: 'copy-slack',
-            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
-            onClick: () =>
-              void copyForSlack(
-                {
-                  title: decision?.title || '',
-                  status: decision?.status ?? undefined,
-                  description: detailsText,
-                },
-                isPolish ? 'pl' : 'en'
-              ),
-          },
-        ] as DetailsAction[]}
+        customActions={
+          [
+            {
+              id: 'expand',
+              label: isPolish ? 'Rozwiń' : 'Expand',
+              icon: ChevronDown,
+              onClick: () => onDetailsAction('expand'),
+              disabled: detailsLoading,
+            },
+            {
+              id: 'summarize',
+              label: isPolish ? 'Podsumuj' : 'Summarize',
+              icon: Sparkles,
+              onClick: () => onDetailsAction('summarize'),
+              disabled: detailsLoading,
+            },
+            {
+              id: 'copy',
+              label: isPolish ? 'Kopiuj' : 'Copy',
+              icon: Copy,
+              onClick: () => onDetailsAction('copy'),
+            },
+            {
+              id: 'copy-md',
+              label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+              onClick: () =>
+                void copyAsMarkdown(
+                  {
+                    title: decision?.title || '',
+                    status: decision?.status ?? undefined,
+                    description: detailsText,
+                  },
+                  isPolish ? 'pl' : 'en'
+                ),
+            },
+            {
+              id: 'copy-slack',
+              label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+              onClick: () =>
+                void copyForSlack(
+                  {
+                    title: decision?.title || '',
+                    status: decision?.status ?? undefined,
+                    description: detailsText,
+                  },
+                  isPolish ? 'pl' : 'en'
+                ),
+            },
+          ] as DetailsAction[]
+        }
       />
     </div>
   );
@@ -403,12 +403,10 @@ export const DecisionPreviewFooter: React.FC<{
     return 'summarize_context';
   };
 
-  const relationItems: RelationItem[] = (decision?.linkedItems || [])
-    .slice(0, 6)
-    .map((r) => ({
-      label: clampText(String(r.title || r.id), 42),
-      tone: relationTone(r.type),
-    }));
+  const relationItems: RelationItem[] = (decision?.linkedItems || []).slice(0, 6).map((r) => ({
+    label: clampText(String(r.title || r.id), 42),
+    tone: relationTone(r.type),
+  }));
 
   const actionRows: ActionRow[] = [
     ...(canAct
@@ -499,17 +497,11 @@ export const DecisionPreviewFooter: React.FC<{
         <PreviewActionBar rows={actionRows} />
 
         <div className="flex gap-2">
-          <button
-            onClick={onRemind}
-            className={actionPillClass('neutral', 'flex-1')}
-          >
+          <button onClick={onRemind} className={actionPillClass('neutral', 'flex-1')}>
             <Bell size={14} />
             {isPolish ? 'Przypomnij' : 'Remind'}
           </button>
-          <button
-            onClick={onEscalate}
-            className={actionPillClass('amber', '')}
-          >
+          <button onClick={onEscalate} className={actionPillClass('amber', '')}>
             <TrendingUp size={14} />
             {isPolish ? 'Eskaluj' : 'Escalate'}
           </button>

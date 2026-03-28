@@ -78,11 +78,20 @@ function describeCron(parts: string[]): string {
 export function validateCronExpression(cron: string): CronValidationResult {
   const parts = cron.trim().split(/\s+/);
   if (parts.length !== 5) {
-    return { valid: false, error: 'Cron expression must have exactly 5 fields: minute hour dayOfMonth month dayOfWeek' };
+    return {
+      valid: false,
+      error: 'Cron expression must have exactly 5 fields: minute hour dayOfMonth month dayOfWeek',
+    };
   }
 
   const fieldNames = ['minute', 'hour', 'day of month', 'month', 'day of week'];
-  const ranges: [number, number][] = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 6]];
+  const ranges: [number, number][] = [
+    [0, 59],
+    [0, 23],
+    [1, 31],
+    [1, 12],
+    [0, 6],
+  ];
 
   for (let i = 0; i < 5; i++) {
     if (!isValidCronField(parts[i], ranges[i][0], ranges[i][1])) {
@@ -126,7 +135,10 @@ function matchesCronField(expr: string, value: number): boolean {
 
 // ─── Timezone helpers ────────────────────────────────────────────
 
-function getDatePartsInTimezone(date: Date, timezone: string): { minute: number; hour: number; day: number; month: number; dow: number } {
+function getDatePartsInTimezone(
+  date: Date,
+  timezone: string
+): { minute: number; hour: number; day: number; month: number; dow: number } {
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
     year: 'numeric',
@@ -232,7 +244,10 @@ export class ScheduledAutomationExecutor {
           const newNextRun = this.calculateNextRun(config.cron, config.timezone);
           await db.query(
             `UPDATE tp_automations SET trigger_config = trigger_config || $2::jsonb, updated_at = NOW() WHERE id = $1`,
-            [auto.id, JSON.stringify({ lastRunAt: now.toISOString(), nextRunAt: newNextRun.toISOString() })]
+            [
+              auto.id,
+              JSON.stringify({ lastRunAt: now.toISOString(), nextRunAt: newNextRun.toISOString() }),
+            ]
           );
         }
       }
@@ -255,7 +270,12 @@ export class ScheduledAutomationExecutor {
       const actions: any[] = Array.isArray(automation.actions) ? automation.actions : [];
       for (const action of actions) {
         const result = await this.executeAction(action, automation);
-        actionResults.push({ actionId: action.id, actionType: action.actionType, status: 'completed', result });
+        actionResults.push({
+          actionId: action.id,
+          actionType: action.actionType,
+          status: 'completed',
+          result,
+        });
       }
 
       await db.query(
@@ -311,7 +331,9 @@ export class ScheduledAutomationExecutor {
           const resp = await fetch(url, {
             method: method || 'POST',
             headers: { 'Content-Type': 'application/json', ...(headers || {}) },
-            body: JSON.stringify(bodyTemplate || { automation: automation.name, triggeredAt: new Date().toISOString() }),
+            body: JSON.stringify(
+              bodyTemplate || { automation: automation.name, triggeredAt: new Date().toISOString() }
+            ),
             signal: AbortSignal.timeout(10_000),
           });
           return { status: resp.status, ok: resp.ok };
@@ -390,7 +412,8 @@ export class ScheduledAutomationExecutor {
   async runNow(automationId: string): Promise<{ runId: string; status: string }> {
     const automation = await this.getAutomation(automationId);
     if (!automation) throw new Error('Automation not found');
-    if (automation.trigger_type !== 'scheduled') throw new Error('Automation is not a scheduled type');
+    if (automation.trigger_type !== 'scheduled')
+      throw new Error('Automation is not a scheduled type');
 
     await this.executeScheduledAutomation(automation);
 
@@ -400,7 +423,13 @@ export class ScheduledAutomationExecutor {
       const newNextRun = this.calculateNextRun(config.cron, config.timezone);
       await db.query(
         `UPDATE tp_automations SET trigger_config = trigger_config || $2::jsonb, updated_at = NOW() WHERE id = $1`,
-        [automationId, JSON.stringify({ lastRunAt: new Date().toISOString(), nextRunAt: newNextRun.toISOString() })]
+        [
+          automationId,
+          JSON.stringify({
+            lastRunAt: new Date().toISOString(),
+            nextRunAt: newNextRun.toISOString(),
+          }),
+        ]
       );
     }
 

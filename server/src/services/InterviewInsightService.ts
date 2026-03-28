@@ -427,14 +427,22 @@ class InterviewInsightService {
    * V6 three-layer truth model prompt.
    * Replaces all per-promptType templates with a single structured JSON output contract.
    */
-  private buildV6Prompt(promptType: InsightPromptType, formattedData: string, customPrompt?: string, sessionCount = 1): string {
+  private buildV6Prompt(
+    promptType: InsightPromptType,
+    formattedData: string,
+    customPrompt?: string,
+    sessionCount = 1
+  ): string {
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
     const isMultiSession = sessionCount > 1;
 
-    const crossSessionBlock = isMultiSession ? `
-      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions)` : '';
+    const crossSessionBlock = isMultiSession
+      ? `
+      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions)`
+      : '';
 
-    const crossSessionInstructions = isMultiSession ? `
+    const crossSessionInstructions = isMultiSession
+      ? `
 
 CROSS-SESSION ANALYSIS (${sessionCount} respondents):
 - Identify RECURRING themes that appear across multiple respondents
@@ -443,7 +451,8 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
 - Distinguish single-respondent observations from cross-session patterns
 - In each theme/issue/opportunity, note which sessions support it (by respondent name or session name)
 - Add a "cross_session_pattern" boolean to each theme/issue/opportunity indicating if it spans multiple sessions
-` : '';
+`
+      : '';
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
 
@@ -548,7 +557,9 @@ Rules:
       executive_summary: String(parsed.executive_summary || ''),
       themes: Array.isArray(parsed.themes) ? mapCrossSession(parsed.themes) : [],
       issues: Array.isArray(parsed.issues) ? mapCrossSession(parsed.issues) : [],
-      opportunities: Array.isArray(parsed.opportunities) ? mapCrossSession(parsed.opportunities) : [],
+      opportunities: Array.isArray(parsed.opportunities)
+        ? mapCrossSession(parsed.opportunities)
+        : [],
       signals: Array.isArray(parsed.signals) ? parsed.signals : [],
       evidence_map: Array.isArray(parsed.evidence_map) ? parsed.evidence_map : [],
       missing_data: Array.isArray(parsed.missing_data) ? parsed.missing_data : [],
@@ -558,7 +569,9 @@ Rules:
   /**
    * Build a markdown rendering of the structured V6 data for the legacy `content` column.
    */
-  private renderV6ContentAsMarkdown(data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>): string {
+  private renderV6ContentAsMarkdown(
+    data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>
+  ): string {
     const lines: string[] = [];
 
     lines.push('## Executive Summary', '', data.executive_summary, '');
@@ -623,7 +636,12 @@ Rules:
       }
 
       const formattedData = this.formatSessionDataForPrompt(sessionData);
-      const prompt = this.buildV6Prompt(promptType, formattedData, customPrompt, sessionData.length);
+      const prompt = this.buildV6Prompt(
+        promptType,
+        formattedData,
+        customPrompt,
+        sessionData.length
+      );
 
       const systemPrompt =
         'You are a senior management consultant performing structured interview analysis. ' +
@@ -687,7 +705,7 @@ Rules:
 
       logger.info(
         `[InterviewInsightService] Generated V6 insight ${insightId} in ${generationTime}ms ` +
-        `(${v6Data.themes.length} themes, ${v6Data.issues.length} issues, ${v6Data.opportunities.length} opportunities)`
+          `(${v6Data.themes.length} themes, ${v6Data.issues.length} issues, ${v6Data.opportunities.length} opportunities)`
       );
     } catch (error) {
       const err = error as Error;

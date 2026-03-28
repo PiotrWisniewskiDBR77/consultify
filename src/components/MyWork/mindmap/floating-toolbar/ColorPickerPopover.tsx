@@ -6,24 +6,70 @@ interface ColorPickerPopoverProps {
   currentColor?: string;
   currentFillOpacity?: number;
   currentLineStyle?: 'solid' | 'dashed' | 'dotted';
-  onUpdate: (patch: { color?: string; fillOpacity?: number; lineStyle?: 'solid' | 'dashed' | 'dotted' }) => void;
+  onUpdate: (patch: {
+    color?: string;
+    fillOpacity?: number;
+    lineStyle?: 'solid' | 'dashed' | 'dotted';
+  }) => void;
   onClose: () => void;
 }
 
 const RECOMMENDED_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
 ];
 
 const PALETTE = [
-  '#1e293b', '#334155', '#475569', '#64748b', '#94a3b8',
-  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
-  '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
-  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-  '#ec4899', '#f43f5e', '#fb923c', '#fbbf24', '#a3e635',
-  '#34d399', '#2dd4bf', '#22d3ee', '#38bdf8', '#818cf8',
-  '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185',
-  '#fca5a5', '#fdba74', '#fde047', '#bef264', '#86efac',
-  '#6ee7b7', '#5eead4', '#67e8f9', '#7dd3fc', '#93c5fd',
+  '#1e293b',
+  '#334155',
+  '#475569',
+  '#64748b',
+  '#94a3b8',
+  '#ef4444',
+  '#f97316',
+  '#f59e0b',
+  '#eab308',
+  '#84cc16',
+  '#22c55e',
+  '#10b981',
+  '#14b8a6',
+  '#06b6d4',
+  '#0ea5e9',
+  '#3b82f6',
+  '#6366f1',
+  '#8b5cf6',
+  '#a855f7',
+  '#d946ef',
+  '#ec4899',
+  '#f43f5e',
+  '#fb923c',
+  '#fbbf24',
+  '#a3e635',
+  '#34d399',
+  '#2dd4bf',
+  '#22d3ee',
+  '#38bdf8',
+  '#818cf8',
+  '#a78bfa',
+  '#c084fc',
+  '#e879f9',
+  '#f472b6',
+  '#fb7185',
+  '#fca5a5',
+  '#fdba74',
+  '#fde047',
+  '#bef264',
+  '#86efac',
+  '#6ee7b7',
+  '#5eead4',
+  '#67e8f9',
+  '#7dd3fc',
+  '#93c5fd',
 ];
 
 const LINE_STYLES: Array<{ id: 'solid' | 'dashed' | 'dotted'; label: string; dash: string }> = [
@@ -42,20 +88,26 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 }) => {
   const [opacity, setOpacity] = useState(currentFillOpacity);
 
-  const handleColorClick = useCallback((c: string) => {
-    onUpdate({ color: c });
-  }, [onUpdate]);
+  const handleColorClick = useCallback(
+    (c: string) => {
+      onUpdate({ color: c });
+    },
+    [onUpdate]
+  );
 
   const handleRandomize = useCallback(() => {
     const c = RECOMMENDED_COLORS[Math.floor(Math.random() * RECOMMENDED_COLORS.length)];
     onUpdate({ color: c });
   }, [onUpdate]);
 
-  const handleOpacityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value);
-    setOpacity(v);
-    onUpdate({ fillOpacity: v });
-  }, [onUpdate]);
+  const handleOpacityChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = Number(e.target.value);
+      setOpacity(v);
+      onUpdate({ fillOpacity: v });
+    },
+    [onUpdate]
+  );
 
   return (
     <div className="w-60 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-2">

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -25,11 +25,11 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 import {
   enforceConsumerPolicy,
-  getEffectiveConsumerPolicy,
   getDeferredApprovals,
+  getEffectiveConsumerPolicy,
+  getToolUsageByRun,
   processDeferredApproval,
   validateSubagentAccess,
-  getToolUsageByRun,
 } from '../toolGovernanceService.js';
 
 // ==========================================
@@ -142,7 +142,7 @@ describe('enforceConsumerPolicy', () => {
         mutation_type: 'read_only',
         default_approval_mode: 'auto_executable',
         risk_class: 'no_risk',
-      }),
+      })
     );
     // org policies query
     mockDbAll.mockResolvedValueOnce([]);
@@ -160,7 +160,7 @@ describe('enforceConsumerPolicy', () => {
         mutation_type: 'bounded_write',
         default_approval_mode: 'auto_executable',
         risk_class: 'low_risk',
-      }),
+      })
     );
     // org policies query
     mockDbAll.mockResolvedValueOnce([]);
@@ -178,7 +178,7 @@ describe('enforceConsumerPolicy', () => {
         mutation_type: 'read_only',
         default_approval_mode: 'auto_executable',
         risk_class: 'no_risk',
-      }),
+      })
     );
     // org policies query returns force_human_approval
     mockDbAll.mockResolvedValueOnce([
@@ -204,12 +204,8 @@ describe('enforceConsumerPolicy', () => {
   });
 
   it('returns blocked when org policy denies the tool', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow({ allowed: 0 }),
-    ]);
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow({ allowed: 0 })]);
 
     const result = await enforceConsumerPolicy(TOOL_ID, 'chat', ORG_ID);
 
@@ -219,12 +215,8 @@ describe('enforceConsumerPolicy', () => {
   });
 
   it('returns blocked when policy has force_blocked override', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ default_approval_mode: 'auto_executable' }),
-    );
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow({ approval_override: 'force_blocked' }),
-    ]);
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow({ approval_override: 'force_blocked' })]);
 
     const result = await enforceConsumerPolicy(TOOL_ID, 'chat', ORG_ID);
 
@@ -248,9 +240,7 @@ describe('getEffectiveConsumerPolicy', () => {
   });
 
   it('returns org-level policy when no project specified', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow(),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow()]);
 
     const result = await getEffectiveConsumerPolicy(TOOL_ID, 'chat', ORG_ID);
 
@@ -309,9 +299,7 @@ describe('getEffectiveConsumerPolicy', () => {
 
   it('project blocked overrides org allowed', async () => {
     // org policies: allowed
-    mockDbAll.mockResolvedValueOnce([
-      makeFakePolicyRow({ allowed: 1 }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakePolicyRow({ allowed: 1 })]);
     // project policies: blocked
     mockDbAll.mockResolvedValueOnce([
       makeFakePolicyRow({
@@ -397,7 +385,7 @@ describe('processDeferredApproval', () => {
       INVOCATION_ID,
       'reject',
       USER_ID,
-      'not_authorized',
+      'not_authorized'
     );
 
     expect(result.approvalResult).toBe('blocked');
@@ -407,19 +395,17 @@ describe('processDeferredApproval', () => {
   it('throws when invocation not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      processDeferredApproval(INVOCATION_ID, 'approve', USER_ID),
-    ).rejects.toThrow(`Invocation ${INVOCATION_ID} not found`);
+    await expect(processDeferredApproval(INVOCATION_ID, 'approve', USER_ID)).rejects.toThrow(
+      `Invocation ${INVOCATION_ID} not found`
+    );
   });
 
   it('throws when invocation is not in deferred_approval state', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeInvocationRow({ approval_result: 'allowed' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeInvocationRow({ approval_result: 'allowed' }));
 
-    await expect(
-      processDeferredApproval(INVOCATION_ID, 'approve', USER_ID),
-    ).rejects.toThrow('not in deferred_approval state');
+    await expect(processDeferredApproval(INVOCATION_ID, 'approve', USER_ID)).rejects.toThrow(
+      'not in deferred_approval state'
+    );
   });
 });
 
@@ -436,9 +422,7 @@ describe('validateSubagentAccess', () => {
       organization_id: ORG_ID,
     });
     // getTool
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ risk_class: 'critical' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ risk_class: 'critical' }));
 
     const result = await validateSubagentAccess(TOOL_ID, RUN_ID, ORG_ID);
 
@@ -477,9 +461,7 @@ describe('validateSubagentAccess', () => {
       organization_id: ORG_ID,
     });
     // getTool
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeToolRow({ risk_class: 'low_risk' }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ risk_class: 'low_risk' }));
 
     const result = await validateSubagentAccess(TOOL_ID, RUN_ID, ORG_ID);
 
@@ -521,9 +503,7 @@ describe('getToolUsageByRun', () => {
   });
 
   it('returns empty arrays when no usage exists', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     const result = await getToolUsageByRun(RUN_ID, ORG_ID);
 
@@ -532,9 +512,7 @@ describe('getToolUsageByRun', () => {
   });
 
   it('queries with correct run and org filters', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     await getToolUsageByRun(RUN_ID, ORG_ID);
 

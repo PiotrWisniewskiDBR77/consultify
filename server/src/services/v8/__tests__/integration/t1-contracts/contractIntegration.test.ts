@@ -5,117 +5,75 @@
  * input schema of another V8 service.  No DB calls — pure Zod schema validation.
  */
 
-import { describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 
-// ── Upstream / downstream schemas ──────────────────────────────────────────
+import { describe, expect, it } from 'vitest';
 
 import {
-  ContextSnapshotSchema,
-} from '../../../../../types/contextSnapshot.js';
-
-import {
-  ExecutionAgentRunSchema,
-  ActionProposalSchema,
-} from '../../../../../types/executionSpine.js';
-
-import {
-  InitiateHandoffParamsSchema,
-  CreateChatActionProposalParamsSchema,
   ChatExecutionHandoffSchema,
+  CreateChatActionProposalParamsSchema,
+  InitiateHandoffParamsSchema,
 } from '../../../../../types/chatExecutionIntegration.js';
-
-import {
-  CreateRetrievalRequestParamsSchema,
-} from '../../../../../types/governedRetrieval.js';
-
-import {
-  TrustClassValues as TrustAuditTrustClassValues,
-} from '../../../../../types/trustAudit.js';
-
-import {
-  WorkingMemoryOrchestrationResultSchema,
-  OrchestrateRetrievalParamsSchema,
-} from '../../../../../types/knowledgeRetrievalIntegration.js';
-
-import {
-  ReleaseBundleSchema,
-} from '../../../../../types/promptOsRuntime.js';
-
-import {
-  SetAIGovernanceConfigParamsSchema,
-  OutputArtifactSchema,
-} from '../../../../../types/reportsPresOperatingModel.js';
-
-import {
-  RecordMaterializationParamsSchema,
-  ValidatePromotionParamsSchema,
-  PromotionValidationSchema,
-} from '../../../../../types/sourceTruthPreservation.js';
-
-import {
-  CreateRebaselineProposalParamsSchema,
-  ExecutionSignalSchema,
-} from '../../../../../types/executionVisibility.js';
-
 import {
   CollaborationRoomSchema,
   RecordEventParamsSchema,
 } from '../../../../../types/collaborationRoom.js';
-
+import {
+  AcquireLockParamsSchema,
+  LockRecordSchema,
+} from '../../../../../types/concurrentEditingNotification.js';
+// ── Upstream / downstream schemas ──────────────────────────────────────────
+import { ContextSnapshotSchema } from '../../../../../types/contextSnapshot.js';
+import {
+  ActionProposalSchema,
+  ExecutionAgentRunSchema,
+} from '../../../../../types/executionSpine.js';
+import {
+  CreateRebaselineProposalParamsSchema,
+  ExecutionSignalSchema,
+} from '../../../../../types/executionVisibility.js';
+import { PromotionGateSchema } from '../../../../../types/financeIntegrationPromotion.js';
+import { CreateRetrievalRequestParamsSchema } from '../../../../../types/governedRetrieval.js';
+import {
+  OrchestrateRetrievalParamsSchema,
+  WorkingMemoryOrchestrationResultSchema,
+} from '../../../../../types/knowledgeRetrievalIntegration.js';
 import {
   StartFacilitationParamsSchema,
   UpdateSurfacePresenceParamsSchema,
 } from '../../../../../types/multiplayerHardening.js';
-
+import { RecordInboxMaterializationParamsSchema } from '../../../../../types/myWorkRoofPackage.js';
+import { RecordFleetHealthParamsSchema } from '../../../../../types/operatorAdminSurfaces.js';
+import { EscalationLevelValues } from '../../../../../types/pmSyncAuthBaseline.js';
 import {
   ConnectorAuthRecordSchema,
   SetConnectorAuthStateParamsSchema,
 } from '../../../../../types/pmSyncTruth.js';
-
+import { ReleaseBundleSchema } from '../../../../../types/promptOsRuntime.js';
+import { CreatePublishRecordParamsSchema } from '../../../../../types/publishReviewSemantics.js';
+import { DeadLetterRecordSchema } from '../../../../../types/replayDeadLetterReliability.js';
 import {
-  EscalationLevelValues,
-} from '../../../../../types/pmSyncAuthBaseline.js';
-
+  OutputArtifactSchema,
+  SetAIGovernanceConfigParamsSchema,
+} from '../../../../../types/reportsPresOperatingModel.js';
 import {
-  DeadLetterRecordSchema,
-} from '../../../../../types/replayDeadLetterReliability.js';
-
-import {
-  RecordFleetHealthParamsSchema,
-} from '../../../../../types/operatorAdminSurfaces.js';
-
-import {
-  KPIDefinitionSchema,
   InitiateReconciliationParamsSchema,
+  KPIDefinitionSchema,
 } from '../../../../../types/resultsROIContinuity.js';
-
 import {
-  CreatePublishRecordParamsSchema,
-} from '../../../../../types/publishReviewSemantics.js';
-
+  PromotionValidationSchema,
+  RecordMaterializationParamsSchema,
+  ValidatePromotionParamsSchema,
+} from '../../../../../types/sourceTruthPreservation.js';
 import {
-  PromotionGateSchema,
-} from '../../../../../types/financeIntegrationPromotion.js';
-
-import {
-  RecordInboxMaterializationParamsSchema,
-} from '../../../../../types/myWorkRoofPackage.js';
-
-import {
-  ToolCapabilitySchema,
   RegisterToolParamsSchema as GovRegisterToolParamsSchema,
+  ToolCapabilitySchema,
 } from '../../../../../types/toolGovernance.js';
-
 import {
-  SharedToolsRegistryEntrySchema,
   RegisterToolParamsSchema as OrgAdminRegisterToolParamsSchema,
+  SharedToolsRegistryEntrySchema,
 } from '../../../../../types/toolsOrgAdminHardening.js';
-
-import {
-  LockRecordSchema,
-  AcquireLockParamsSchema,
-} from '../../../../../types/concurrentEditingNotification.js';
+import { TrustClassValues as TrustAuditTrustClassValues } from '../../../../../types/trustAudit.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

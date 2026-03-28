@@ -1,5 +1,6 @@
 export type FunnelEventName =
   | 'auth_login_success'
+  | 'reports_entry_redirected'
   | 'demo_session_started'
   | 'trial_org_setup_completed'
   | 'billing_payment_method_added'

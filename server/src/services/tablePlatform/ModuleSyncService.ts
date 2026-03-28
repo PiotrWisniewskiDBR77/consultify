@@ -5,6 +5,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
@@ -29,10 +30,9 @@ export interface LinkStatusEntry {
  */
 async function getModelSourceTableIds(modelId: string): Promise<string[]> {
   const db = getDatabase();
-  const result = await db.query(
-    'SELECT table_id FROM tp_model_sources WHERE model_id = $1',
-    [modelId]
-  );
+  const result = await db.query('SELECT table_id FROM tp_model_sources WHERE model_id = $1', [
+    modelId,
+  ]);
   return ((result.rows || []) as Array<{ table_id: string }>).map((r) => r.table_id);
 }
 
@@ -75,7 +75,10 @@ export async function syncToModule(
     syncedRecords = await countSourceRecords(modelId);
 
     // Merge fieldMapping/fieldMappings for storage
-    const fieldMapping = (options.fieldMapping ?? options.fieldMappings ?? {}) as Record<string, unknown>;
+    const fieldMapping = (options.fieldMapping ?? options.fieldMappings ?? {}) as Record<
+      string,
+      unknown
+    >;
     if (options.tableId) {
       (fieldMapping as Record<string, string>)['_targetTableId'] = options.tableId;
     }
@@ -93,7 +96,15 @@ export async function syncToModule(
          last_sync_at = NOW(),
          sync_status = EXCLUDED.sync_status,
          error_message = EXCLUDED.error_message`,
-      [syncId, modelId, targetModule, JSON.stringify(fieldMapping), syncedRecords, syncStatus, errorMessage]
+      [
+        syncId,
+        modelId,
+        targetModule,
+        JSON.stringify(fieldMapping),
+        syncedRecords,
+        syncStatus,
+        errorMessage,
+      ]
     );
 
     return { syncId, syncedRecords, syncStatus, errorMessage: errorMessage ?? undefined };
@@ -116,10 +127,22 @@ export async function syncToModule(
            last_sync_at = NOW(),
            sync_status = EXCLUDED.sync_status,
            error_message = EXCLUDED.error_message`,
-        [syncId, modelId, targetModule, JSON.stringify(options.fieldMapping ?? options.fieldMappings ?? {}), 0, syncStatus, errorMessage]
+        [
+          syncId,
+          modelId,
+          targetModule,
+          JSON.stringify(options.fieldMapping ?? options.fieldMappings ?? {}),
+          0,
+          syncStatus,
+          errorMessage,
+        ]
       );
     } catch (inner) {
-      logger.error('[ModuleSyncService] Failed to record sync error', { modelId, targetModule, error: (inner as Error).message });
+      logger.error('[ModuleSyncService] Failed to record sync error', {
+        modelId,
+        targetModule,
+        error: (inner as Error).message,
+      });
     }
 
     return { syncId, syncedRecords: 0, syncStatus, errorMessage };
@@ -129,7 +152,9 @@ export async function syncToModule(
 /**
  * Get link status for all modules for a given model
  */
-export async function getLinkStatus(modelId: string): Promise<Record<TargetModule, LinkStatusEntry>> {
+export async function getLinkStatus(
+  modelId: string
+): Promise<Record<TargetModule, LinkStatusEntry>> {
   const db = getDatabase();
   const result = await db.query(
     `SELECT target_module, field_mapping, synced_record_count, last_sync_at, sync_status, error_message
@@ -146,7 +171,12 @@ export async function getLinkStatus(modelId: string): Promise<Record<TargetModul
   };
 
   for (const _row of result.rows || []) {
-    const row = _row as { target_module: string; last_sync_at?: string; synced_record_count?: number; error_message?: string };
+    const row = _row as {
+      target_module: string;
+      last_sync_at?: string;
+      synced_record_count?: number;
+      error_message?: string;
+    };
     const mod = row.target_module as TargetModule;
     if (mod in status) {
       status[mod] = {

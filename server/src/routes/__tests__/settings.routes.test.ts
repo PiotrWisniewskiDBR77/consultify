@@ -9,6 +9,7 @@ const {
   mockDbGet,
   mockDbRun,
   mockDisconnectIntegration,
+  mockUpdateIntegrationStatus,
   mockGetTableColumns,
   mockListGovernedIntegrations,
   mockBuildGovernedExternalAuthSession,
@@ -18,6 +19,7 @@ const {
   mockDbGet: vi.fn(),
   mockDbRun: vi.fn(),
   mockDisconnectIntegration: vi.fn(),
+  mockUpdateIntegrationStatus: vi.fn(),
   mockGetTableColumns: vi.fn(),
   mockListGovernedIntegrations: vi.fn(),
   mockBuildGovernedExternalAuthSession: vi.fn(),
@@ -67,6 +69,7 @@ vi.mock('../../services/integrationHubService.js', async () => {
   return {
     ...actual,
     disconnectIntegration: (...args: unknown[]) => mockDisconnectIntegration(...args),
+    updateIntegrationStatus: (...args: unknown[]) => mockUpdateIntegrationStatus(...args),
   };
 });
 
@@ -81,16 +84,37 @@ describe('settings integrations authority continuity', () => {
     vi.clearAllMocks();
     mockDbRun.mockResolvedValue({ success: true });
     mockDbGet.mockResolvedValue(undefined);
-    mockGetTableColumns.mockResolvedValue(new Set(['connector_id', 'config']));
-    mockDbAll.mockResolvedValue([
-      {
-        id: 'int-1',
-        connector_id: 'jira',
-        config: JSON.stringify({ site_url: 'https://acme.atlassian.net' }),
-        created_at: '2026-03-27T20:00:00.000Z',
-        updated_at: '2026-03-27T20:05:00.000Z',
-      },
-    ]);
+    mockGetTableColumns.mockImplementation(async (table: string) => {
+      if (table === 'integrations') {
+        return new Set(['connector_id', 'config']);
+      }
+      if (table === 'integration_sync_log') {
+        return new Set([
+          'items_processed',
+          'trigger_type',
+          'items_created',
+          'items_updated',
+          'items_failed',
+          'error_summary',
+          'error_details',
+        ]);
+      }
+      return new Set();
+    });
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM integrations')) {
+        return [
+          {
+            id: 'int-1',
+            connector_id: 'jira',
+            config: JSON.stringify({ site_url: 'https://acme.atlassian.net' }),
+            created_at: '2026-03-27T20:00:00.000Z',
+            updated_at: '2026-03-27T20:05:00.000Z',
+          },
+        ];
+      }
+      return [];
+    });
     mockListGovernedIntegrations.mockResolvedValue([
       {
         id: 'int-1',
@@ -134,6 +158,7 @@ describe('settings integrations authority continuity', () => {
       reason: 'settings_integrations_connect_initiated',
     });
     mockDisconnectIntegration.mockResolvedValue({ success: true });
+    mockUpdateIntegrationStatus.mockResolvedValue({ success: true });
   });
 
   it('GET /api/settings/integrations exposes governed pending sync truth on the settings surface', async () => {
@@ -165,7 +190,7 @@ describe('settings integrations authority continuity', () => {
             status: 'pending',
           }),
         }),
-      ]),
+      ])
     );
     expect(res.body.connectedCount).toBe(0);
   });
@@ -175,14 +200,16 @@ describe('settings integrations authority continuity', () => {
     app.use(express.json());
     app.use('/api/settings', settingsRoutes);
 
-    const res = await request(app).post('/api/settings/integrations/jira/connect').send({
-      config: {
-        site_url: 'https://acme.atlassian.net',
-        cloud_id: 'cloud-1',
-        client_id: 'jira-client-id',
-        client_secret: 'jira-client-secret',
-      },
-    });
+    const res = await request(app)
+      .post('/api/settings/integrations/jira/connect')
+      .send({
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -207,17 +234,11 @@ describe('settings integrations authority continuity', () => {
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
-      }),
+      })
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integrations'),
-      expect.arrayContaining([
-        'org-1',
-        'jira',
-        'Jira',
-        'project_management',
-        'pending',
-      ]),
+      expect.arrayContaining(['org-1', 'jira', 'Jira', 'project_management', 'pending'])
     );
   });
 
@@ -250,7 +271,7 @@ describe('settings integrations authority continuity', () => {
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
       ['user-1', 'settings:integrations', '[]'],
-      { fallback: false },
+      { fallback: false }
     );
   });
 
@@ -269,8 +290,213 @@ describe('settings integrations authority continuity', () => {
         status: 'pending',
         onboardingStatus: 'pending_external_auth_or_configuration',
         isConnected: false,
-      }),
+      })
     );
+  });
+
+  it('PUT /api/settings/integrations/:provider/config reuses governed configuration authority', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).put('/api/settings/integrations/jira/config').send({
+      config: {
+        cloud_id: 'cloud-1',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
+        ignored_field: 'should-not-persist',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.authUrl).toContain('https://auth.atlassian.com/authorize?state=');
+    expect(res.body.integration).toEqual(
+      expect.objectContaining({
+        id: 'int-1',
+        provider: 'jira',
+        status: 'pending',
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        requiredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+      })
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE integrations'),
+      [
+        JSON.stringify({
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        }),
+        'int-1',
+        'org-1',
+      ]
+    );
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      targetState: 'connecting',
+      transitionedBy: 'user-1',
+      reason: 'settings_integrations_configured',
+    });
+    expect(mockBuildGovernedExternalAuthSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        integrationId: 'int-1',
+        organizationId: 'org-1',
+        connectorId: 'jira',
+        mode: 'connect',
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      })
+    );
+  });
+
+  it('POST /api/settings/integrations/:provider/refresh reuses governed reauthorization authority', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM integrations')) {
+        return [
+          {
+            id: 'int-1',
+            connector_id: 'jira',
+            config: JSON.stringify({
+              site_url: 'https://acme.atlassian.net',
+              cloud_id: 'cloud-1',
+              client_id: 'jira-client-id',
+              client_secret: 'jira-client-secret',
+            }),
+            created_at: '2026-03-27T20:00:00.000Z',
+            updated_at: '2026-03-27T20:05:00.000Z',
+          },
+        ];
+      }
+      return [];
+    });
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).post('/api/settings/integrations/jira/refresh');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      success: true,
+      message: 'Re-authorization initiated',
+      onboardingStatus: 'pending_external_auth',
+      authUrl: 'https://auth.atlassian.com/authorize?state=state-1',
+    });
+    expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      targetState: 'connecting',
+      transitionedBy: 'user-1',
+      reason: 'settings_integrations_refresh_started',
+    });
+    expect(mockBuildGovernedExternalAuthSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        integrationId: 'int-1',
+        organizationId: 'org-1',
+        connectorId: 'jira',
+        mode: 'reauth',
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      })
+    );
+  });
+
+  it('GET /api/settings/integrations/:provider/logs returns canonical sync logs for the effective governed integration', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM integrations')) {
+        return [
+          {
+            id: 'int-1',
+            connector_id: 'jira',
+            config: JSON.stringify({ site_url: 'https://acme.atlassian.net' }),
+            created_at: '2026-03-27T20:00:00.000Z',
+            updated_at: '2026-03-27T20:05:00.000Z',
+          },
+        ];
+      }
+      if (sql.includes('FROM integration_sync_log')) {
+        return [
+          {
+            id: 'log-1',
+            status: 'success',
+            sync_type: 'issues',
+            direction: 'bidirectional',
+            trigger_type: 'manual',
+            items_processed: 12,
+            items_created: 3,
+            items_updated: 8,
+            items_failed: 1,
+            error_summary: null,
+            error_details: JSON.stringify({ failedIds: ['ISSUE-9'] }),
+            started_at: '2026-03-27T20:10:00.000Z',
+            completed_at: '2026-03-27T20:10:30.000Z',
+            duration_ms: 30000,
+          },
+        ];
+      }
+      return [];
+    });
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/integrations/jira/logs?limit=10');
+
+    expect(res.status).toBe(200);
+    expect(res.body.logs).toEqual([
+      {
+        id: 'log-1',
+        status: 'success',
+        syncType: 'issues',
+        direction: 'bidirectional',
+        syncScope: 'bidirectional',
+        syncScopeLabel: 'Bidirectional sync',
+        triggerType: 'manual',
+        itemsProcessed: 12,
+        itemsCreated: 3,
+        itemsUpdated: 8,
+        itemsFailed: 1,
+        errorSummary: null,
+        errorDetails: { failedIds: ['ISSUE-9'] },
+        startedAt: '2026-03-27T20:10:00.000Z',
+        completedAt: '2026-03-27T20:10:30.000Z',
+        durationMs: 30000,
+      },
+    ]);
+  });
+
+  it('GET /api/settings/integrations/:provider/logs returns 404 when the provider is absent from effective settings', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/integrations/notion/logs');
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({
+      logs: [],
+      error: 'Integration not connected',
+    });
   });
 
   it('POST /api/settings/integrations/:provider/test uses governed status truth instead of stubbed success', async () => {

@@ -8,12 +8,18 @@
  * @module routes/v8/execution-control.routes
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { validateBody } from '../../middleware/validation.middleware.js';
+import {
+  detectDelaySignals,
+  getPersistedDelaySignals,
+  persistDelaySignals,
+} from '../../services/delayDetectionService.js';
 import {
   createBudgetEntry,
   detectOverspendSignals,
@@ -21,18 +27,9 @@ import {
   getPortfolioBudgetSummary,
 } from '../../services/executionBudgetService.js';
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
-import {
-  detectDelaySignals,
-  getPersistedDelaySignals,
-  persistDelaySignals,
-} from '../../services/delayDetectionService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
-import {
-  getCapacityTimeline,
-  getLevelingAlerts,
-} from '../../services/workloadCapacityService.js';
+import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { validateBody } from '../../middleware/validation.middleware.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
@@ -120,7 +117,7 @@ router.get(
       data: { signals, count: signals.length },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -149,8 +146,13 @@ router.patch(
   validateBody(MitigationUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const { mitigationPlan, responseStrategy, mitigationOwnerId, mitigationDueDate, mitigationStatus } =
-      req.body;
+    const {
+      mitigationPlan,
+      responseStrategy,
+      mitigationOwnerId,
+      mitigationDueDate,
+      mitigationStatus,
+    } = req.body;
     const updates: string[] = [];
     const params: unknown[] = [];
 
@@ -176,13 +178,18 @@ router.patch(
     }
 
     if (updates.length === 0) {
-      return res.status(400).json({ error: 'No fields to update', code: 'EXECUTION_MITIGATION_EMPTY_PATCH' });
+      return res
+        .status(400)
+        .json({ error: 'No fields to update', code: 'EXECUTION_MITIGATION_EMPTY_PATCH' });
     }
 
     updates.push('updated_at = NOW()');
     params.push(req.params.id, organizationId);
 
-    await dbRun(`UPDATE raid_items SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`, params);
+    await dbRun(
+      `UPDATE raid_items SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
 
     return res.json({
       data: { success: true, raidItemId: String(req.params.id) },
@@ -205,7 +212,7 @@ router.get(
       data: { warnings, total },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -243,7 +250,7 @@ router.get(
       data: { signals: filtered, count: filtered.length, source: 'live' as const },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -340,7 +347,7 @@ router.get(
       data: { alerts },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -356,7 +363,7 @@ router.get(
       data: { weeks },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -366,15 +373,20 @@ router.get(
   '/budget/initiative/:initiativeId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const summary = await getInitiativeBudgetSummary(organizationId, String(req.params.initiativeId));
+    const summary = await getInitiativeBudgetSummary(
+      organizationId,
+      String(req.params.initiativeId)
+    );
     if (!summary) {
-      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_BUDGET_INITIATIVE_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Initiative not found', code: 'EXECUTION_BUDGET_INITIATIVE_NOT_FOUND' });
     }
     return res.json({
       data: { summary },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -390,7 +402,7 @@ router.get(
       data: { summary },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -419,7 +431,7 @@ router.get(
       data: { signals, count: signals.length },
       meta: executionControlMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -435,7 +447,9 @@ router.post(
     )) as { current_value: string | null }[];
 
     if (!existing || existing.length === 0) {
-      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
     }
 
     const oldValue = existing[0].current_value;

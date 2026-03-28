@@ -69,7 +69,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
         connectorId: 'gmail',
         mode: 'connect',
         config: { domain: 'acme.com' },
-      },
+      }
     );
 
     expect(session.authUrl).toContain('https://accounts.google.com/o/oauth2/v2/auth?');
@@ -77,7 +77,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     expect(session.authUrl).toContain('access_type=offline');
     expect(session.authUrl).toContain('prompt=consent');
     expect(session.callbackUrl).toBe(
-      'https://consultify.test/api/sync-hub/external-auth/callback?state=state-1',
+      'https://consultify.test/api/sync-hub/external-auth/callback?state=state-1'
     );
   });
 
@@ -131,14 +131,14 @@ describe('pmSyncExternalAuthMaterializationService', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }),
+      })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'https://www.googleapis.com/oauth2/v3/userinfo',
       expect.objectContaining({
         headers: { Authorization: 'Bearer google-access-1' },
-      }),
+      })
     );
     expect(mockStoreCredential).toHaveBeenCalledWith({
       connectorId: 'gmail',
@@ -182,7 +182,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
         connectorId: 'asana',
         mode: 'connect',
         config: { workspace_gid: 'workspace-123' },
-      },
+      }
     );
 
     expect(session.authUrl).toContain('https://app.asana.com/-/oauth_authorize?');
@@ -247,14 +247,14 @@ describe('pmSyncExternalAuthMaterializationService', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }),
+      })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'https://app.asana.com/api/1.0/users/me',
       expect.objectContaining({
         headers: { Authorization: 'Bearer asana-access-1' },
-      }),
+      })
     );
     expect(mockStoreCredential).toHaveBeenCalledWith({
       connectorId: 'asana',
@@ -293,11 +293,11 @@ describe('pmSyncExternalAuthMaterializationService', () => {
         connectorId: 'teams',
         mode: 'connect',
         config: { tenant_id: 'tenant-123' },
-      },
+      }
     );
 
     expect(session.authUrl).toContain(
-      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?',
+      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?'
     );
     expect(session.authUrl).toContain('client_id=microsoft-client-id');
     expect(session.authUrl).toContain('response_mode=query');
@@ -360,14 +360,14 @@ describe('pmSyncExternalAuthMaterializationService', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }),
+      })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'https://graph.microsoft.com/v1.0/me?$select=id,userPrincipalName,mail',
       expect.objectContaining({
         headers: { Authorization: 'Bearer microsoft-access-1' },
-      }),
+      })
     );
     expect(mockStoreCredential).toHaveBeenCalledWith({
       connectorId: 'teams',
@@ -406,7 +406,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
         connectorId: 'slack',
         mode: 'connect',
         config: { workspace_id: 'workspace-123' },
-      },
+      }
     );
 
     expect(session.authUrl).toContain('https://slack.com/oauth/v2/authorize?');
@@ -462,7 +462,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }),
+      })
     );
     expect(mockStoreCredential).toHaveBeenCalledWith({
       connectorId: 'slack',

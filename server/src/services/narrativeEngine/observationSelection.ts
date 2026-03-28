@@ -21,8 +21,10 @@ function detectDeviations(facts: FactSet[]): Observation[] {
 
   for (const fact of facts) {
     const lower = fact.label.toLowerCase();
-    const isTarget = lower.includes('target') || lower.includes('planned') || lower.includes('budget');
-    const isActual = lower.includes('actual') || lower.includes('current') || lower.includes('completed');
+    const isTarget =
+      lower.includes('target') || lower.includes('planned') || lower.includes('budget');
+    const isActual =
+      lower.includes('actual') || lower.includes('current') || lower.includes('completed');
 
     const baseLabel = fact.label
       .replace(/\b(target|planned|budget|actual|current|completed)\b/gi, '')
@@ -40,7 +42,8 @@ function detectDeviations(facts: FactSet[]): Observation[] {
 
   for (const [label, { planned, actual }] of pairs) {
     if (!planned || !actual) continue;
-    const pVal = typeof planned.value === 'number' ? planned.value : parseFloat(String(planned.value));
+    const pVal =
+      typeof planned.value === 'number' ? planned.value : parseFloat(String(planned.value));
     const aVal = typeof actual.value === 'number' ? actual.value : parseFloat(String(actual.value));
     if (isNaN(pVal) || isNaN(aVal) || pVal === 0) continue;
 
@@ -75,7 +78,8 @@ function detectOverdueItems(facts: FactSet[]): Observation[] {
     if (isNaN(d.getTime())) continue;
 
     const lower = fact.label.toLowerCase();
-    const isDueDate = lower.includes('due') || lower.includes('deadline') || lower.includes('target_date');
+    const isDueDate =
+      lower.includes('due') || lower.includes('deadline') || lower.includes('target_date');
 
     if (isDueDate && d < now) {
       const daysOverdue = Math.ceil((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
@@ -117,7 +121,11 @@ function detectRisks(facts: FactSet[]): Observation[] {
     if (fact.category !== 'risk') continue;
     const valStr = String(fact.value).toLowerCase();
     const severity: Observation['severity'] =
-      valStr.includes('critical') || valStr.includes('high') ? 'high' : valStr.includes('medium') ? 'medium' : 'low';
+      valStr.includes('critical') || valStr.includes('high')
+        ? 'high'
+        : valStr.includes('medium')
+          ? 'medium'
+          : 'low';
 
     observations.push({
       observation_id: generateObservationId(2000 + idx++),
@@ -253,10 +261,7 @@ function rankAndFilter(
 /**
  * Analyse extracted facts and produce ranked observations.
  */
-export function selectObservations(
-  facts: FactSet[],
-  config: NarrativeEngineInput
-): Observation[] {
+export function selectObservations(facts: FactSet[], config: NarrativeEngineInput): Observation[] {
   const all: Observation[] = [
     ...detectDeviations(facts),
     ...detectOverdueItems(facts),
@@ -270,9 +275,5 @@ export function selectObservations(
     obs.section_key = config.section_key;
   }
 
-  return rankAndFilter(
-    all,
-    config.report_config.goal_v3,
-    config.section_key
-  );
+  return rankAndFilter(all, config.report_config.goal_v3, config.section_key);
 }

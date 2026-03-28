@@ -27,13 +27,14 @@ export interface ExpandedRecord {
 }
 
 const relationService = {
-  async getFieldOptions(fieldId: string): Promise<{ fieldType: string; options: Record<string, unknown> } | null> {
+  async getFieldOptions(
+    fieldId: string
+  ): Promise<{ fieldType: string; options: Record<string, unknown> } | null> {
     const db = getDatabase();
     try {
-      const result = await db.query(
-        'SELECT field_type, options FROM tp_fields WHERE id = $1',
-        [fieldId]
-      );
+      const result = await db.query('SELECT field_type, options FROM tp_fields WHERE id = $1', [
+        fieldId,
+      ]);
       const row = result.rows[0];
       if (!row) return null;
       const r = row as { field_type: string; options: Record<string, unknown> };
@@ -42,7 +43,10 @@ const relationService = {
         options: (r.options ?? {}) as Record<string, unknown>,
       };
     } catch (e) {
-      logger.error('[RelationService] getFieldOptions failed', { fieldId, error: (e as Error).message });
+      logger.error('[RelationService] getFieldOptions failed', {
+        fieldId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -59,7 +63,9 @@ const relationService = {
     if (opts.reverseFieldId) return opts.reverseFieldId;
 
     const db = getDatabase();
-    const targetRecord = (await db.query('SELECT table_id FROM tp_records WHERE id = $1', [targetRecordId])).rows[0] as { table_id: string } | undefined;
+    const targetRecord = (
+      await db.query('SELECT table_id FROM tp_records WHERE id = $1', [targetRecordId])
+    ).rows[0] as { table_id: string } | undefined;
     if (!targetRecord) return null;
 
     const backlinkResult = await db.query(
@@ -88,7 +94,9 @@ const relationService = {
         throw new Error(`Field ${fromFieldId} is not a linkedRecord field`);
       }
 
-      const sourceRecord = (await db.query('SELECT table_id FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { table_id: string } | undefined;
+      const sourceRecord = (
+        await db.query('SELECT table_id FROM tp_records WHERE id = $1', [fromRecordId])
+      ).rows[0] as { table_id: string } | undefined;
       const sourceTableId = sourceRecord?.table_id;
 
       for (const toRecordId of toRecordIds) {
@@ -100,7 +108,11 @@ const relationService = {
         );
 
         if (sourceTableId) {
-          const backlinkFieldId = await this.findBacklinkFieldId(fromFieldId, sourceTableId, toRecordId);
+          const backlinkFieldId = await this.findBacklinkFieldId(
+            fromFieldId,
+            sourceTableId,
+            toRecordId
+          );
           if (backlinkFieldId) {
             await db.query(
               `INSERT INTO tp_record_links (from_record_id, from_field_id, to_record_id)
@@ -114,14 +126,15 @@ const relationService = {
 
       const linked = await this.getLinkedRecords(fromRecordId, fromFieldId);
       const linkedIds = linked.map((r: { id: string }) => r.id);
-      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { data?: Record<string, unknown> } | undefined;
+      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId]))
+        .rows[0] as { data?: Record<string, unknown> } | undefined;
       if (record) {
         const data = (record.data ?? {}) as Record<string, unknown>;
         data[fromFieldId] = linkedIds;
-        await db.query(
-          `UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`,
-          [fromRecordId, JSON.stringify(data)]
-        );
+        await db.query(`UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`, [
+          fromRecordId,
+          JSON.stringify(data),
+        ]);
       }
 
       await auditService.logEvent(
@@ -156,7 +169,9 @@ const relationService = {
   ): Promise<void> {
     const db = getDatabase();
     try {
-      const sourceRecord = (await db.query('SELECT table_id FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { table_id: string } | undefined;
+      const sourceRecord = (
+        await db.query('SELECT table_id FROM tp_records WHERE id = $1', [fromRecordId])
+      ).rows[0] as { table_id: string } | undefined;
       const sourceTableId = sourceRecord?.table_id;
 
       for (const toRecordId of toRecordIds) {
@@ -167,7 +182,11 @@ const relationService = {
         );
 
         if (sourceTableId) {
-          const backlinkFieldId = await this.findBacklinkFieldId(fromFieldId, sourceTableId, toRecordId);
+          const backlinkFieldId = await this.findBacklinkFieldId(
+            fromFieldId,
+            sourceTableId,
+            toRecordId
+          );
           if (backlinkFieldId) {
             await db.query(
               `DELETE FROM tp_record_links
@@ -180,14 +199,15 @@ const relationService = {
 
       const linked = await this.getLinkedRecords(fromRecordId, fromFieldId);
       const linkedIds = linked.map((r: { id: string }) => r.id);
-      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { data?: Record<string, unknown> } | undefined;
+      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId]))
+        .rows[0] as { data?: Record<string, unknown> } | undefined;
       if (record) {
         const data = (record.data ?? {}) as Record<string, unknown>;
         data[fromFieldId] = linkedIds;
-        await db.query(
-          `UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`,
-          [fromRecordId, JSON.stringify(data)]
-        );
+        await db.query(`UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`, [
+          fromRecordId,
+          JSON.stringify(data),
+        ]);
       }
 
       await auditService.logEvent(
@@ -226,7 +246,11 @@ const relationService = {
       );
       return result.rows ?? [];
     } catch (e) {
-      logger.error('[RelationService] getLinkedRecords failed', { recordId, fieldId, error: (e as Error).message });
+      logger.error('[RelationService] getLinkedRecords failed', {
+        recordId,
+        fieldId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -243,7 +267,11 @@ const relationService = {
       );
       return result.rows ?? [];
     } catch (e) {
-      logger.error('[RelationService] getReverseLinks failed', { recordId, fieldId, error: (e as Error).message });
+      logger.error('[RelationService] getReverseLinks failed', {
+        recordId,
+        fieldId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -282,14 +310,20 @@ const relationService = {
   async computeRollup(recordId: string, rollupFieldId: string): Promise<unknown> {
     const fieldOpts = await this.getFieldOptions(rollupFieldId);
     if (!fieldOpts || fieldOpts.fieldType !== 'rollup') return null;
-    const opts = fieldOpts.options as { linkedFieldId?: string; lookupFieldId?: string; aggregation?: string };
+    const opts = fieldOpts.options as {
+      linkedFieldId?: string;
+      lookupFieldId?: string;
+      aggregation?: string;
+    };
     const linkedFieldId = opts.linkedFieldId;
     const lookupFieldId = opts.lookupFieldId;
     const aggregation = opts.aggregation ?? 'count';
     if (!linkedFieldId || !lookupFieldId) return null;
 
     const linked = await this.getLinkedRecords(recordId, linkedFieldId);
-    const values = linked.map((rec: { data?: Record<string, unknown> }) => (rec.data ?? {})[lookupFieldId]);
+    const values = linked.map(
+      (rec: { data?: Record<string, unknown> }) => (rec.data ?? {})[lookupFieldId]
+    );
     const filtered = (values as unknown[]).filter((v) => v != null && v !== '');
 
     switch (aggregation) {
@@ -337,7 +371,10 @@ const relationService = {
     const fields = fieldsResult.rows as Array<{ id: string; field_type: string }>;
 
     const computed: Record<string, unknown> = {};
-    const data = ((record as { data?: Record<string, unknown> }).data ?? {}) as Record<string, unknown>;
+    const data = ((record as { data?: Record<string, unknown> }).data ?? {}) as Record<
+      string,
+      unknown
+    >;
 
     for (const f of fields) {
       try {
@@ -349,15 +386,19 @@ const relationService = {
           computed[f.id] = await this.computeRollup(recordId, f.id);
         }
       } catch (e) {
-        logger.error('[RelationService] recompute field failed', { recordId, fieldId: f.id, error: (e as Error).message });
+        logger.error('[RelationService] recompute field failed', {
+          recordId,
+          fieldId: f.id,
+          error: (e as Error).message,
+        });
       }
     }
 
     const merged = { ...data, ...computed };
-    await db.query(
-      `UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`,
-      [recordId, JSON.stringify(merged)]
-    );
+    await db.query(`UPDATE tp_records SET data = $2, updated_at = NOW() WHERE id = $1`, [
+      recordId,
+      JSON.stringify(merged),
+    ]);
 
     return computed;
   },
@@ -369,7 +410,9 @@ const relationService = {
 
     try {
       const recordResult = await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId]);
-      const record = recordResult.rows[0] as { id: string; table_id: string; data?: Record<string, unknown> } | undefined;
+      const record = recordResult.rows[0] as
+        | { id: string; table_id: string; data?: Record<string, unknown> }
+        | undefined;
       if (!record) return null;
 
       const expanded: ExpandedRecord = {
@@ -413,7 +456,11 @@ const relationService = {
 
       return expanded;
     } catch (e) {
-      logger.error('[RelationService] expandRecord failed', { recordId, depth, error: (e as Error).message });
+      logger.error('[RelationService] expandRecord failed', {
+        recordId,
+        depth,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -432,7 +479,11 @@ const relationService = {
       );
 
       const displayNames: Record<string, string> = {};
-      for (const row of result.rows as Array<{ id: string; data?: Record<string, unknown>; primary_field_id?: string }>) {
+      for (const row of result.rows as Array<{
+        id: string;
+        data?: Record<string, unknown>;
+        primary_field_id?: string;
+      }>) {
         const primaryFieldId = row.primary_field_id;
         const data = (row.data ?? {}) as Record<string, unknown>;
         if (primaryFieldId && data[primaryFieldId] != null) {
@@ -450,7 +501,9 @@ const relationService = {
 
       return displayNames;
     } catch (e) {
-      logger.error('[RelationService] getLinkedRecordDisplayNames failed', { error: (e as Error).message });
+      logger.error('[RelationService] getLinkedRecordDisplayNames failed', {
+        error: (e as Error).message,
+      });
       throw e;
     }
   },
@@ -476,10 +529,10 @@ const relationService = {
         if (row.from_record_id && row.from_record_id !== recordId) affected.add(row.from_record_id);
       }
 
-      await db.query(
-        `DELETE FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`,
-        [recordId, recordId]
-      );
+      await db.query(`DELETE FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`, [
+        recordId,
+        recordId,
+      ]);
 
       for (const recId of affected) {
         try {
@@ -492,7 +545,10 @@ const relationService = {
         }
       }
     } catch (e) {
-      logger.error('[RelationService] onRecordDeleted failed', { recordId, error: (e as Error).message });
+      logger.error('[RelationService] onRecordDeleted failed', {
+        recordId,
+        error: (e as Error).message,
+      });
       throw e;
     }
   },

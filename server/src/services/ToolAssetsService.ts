@@ -58,9 +58,7 @@ class ToolAssetsService {
   }> {
     const db = await this.getDb();
     const qa = new QueryAdapter(db);
-    const rows = await qa.all<AssetRow>(
-      'SELECT * FROM tool_assets ORDER BY tool_slug, asset_type'
-    );
+    const rows = await qa.all<AssetRow>('SELECT * FROM tool_assets ORDER BY tool_slug, asset_type');
 
     const byTool = new Map<string, ToolAssetItem[]>();
     for (const row of rows) {
@@ -79,13 +77,25 @@ class ToolAssetsService {
     for (const [, assets] of byTool) {
       for (const a of assets) {
         if (a.assetType === 'thumbnail') {
-          a.exists ? thumbnailsPresent++ : thumbnailsMissing++;
+          if (a.exists) {
+            thumbnailsPresent++;
+          } else {
+            thumbnailsMissing++;
+          }
         }
         if (a.assetType === 'micro_video') {
-          a.exists ? microVideosPresent++ : microVideosMissing++;
+          if (a.exists) {
+            microVideosPresent++;
+          } else {
+            microVideosMissing++;
+          }
         }
         if (a.assetType === 'preview_graphic') {
-          a.exists ? previewGraphicsPresent++ : previewGraphicsMissing++;
+          if (a.exists) {
+            previewGraphicsPresent++;
+          } else {
+            previewGraphicsMissing++;
+          }
         }
       }
     }

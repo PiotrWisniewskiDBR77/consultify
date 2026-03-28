@@ -117,7 +117,9 @@ export const OrgSetupWizard: React.FC = () => {
       // Fallback: try direct org update
       const orgId = (currentOrganization as any)?.id;
       if (orgId) {
-        await Api.put(`/organizations/${orgId}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' }).catch(() => {});
+        await Api.put(`/organizations/${orgId}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' }).catch(
+          () => {}
+        );
       }
     }
     setCurrentView(AppView.AI_CHAT);

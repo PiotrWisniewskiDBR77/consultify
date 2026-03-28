@@ -281,7 +281,10 @@ const RagService = {
       params.push(organizationId);
     }
 
-    const rows = await queryDb<{ content: string; filename: string; embedding: string }>(sql, params);
+    const rows = await queryDb<{ content: string; filename: string; embedding: string }>(
+      sql,
+      params
+    );
 
     if (!rows || rows.length === 0) {
       return RagService.getContextKeyword(expandedQuery, limit, organizationId || null);

@@ -3,13 +3,13 @@
  * Uses native fetch (Node 18+); no airtable package required.
  */
 
-import type {
-  IConnector,
-  ExternalSchema,
-  ExternalRecord,
-  FetchOptions,
-} from '../connectorFramework.js';
 import logger from '../../../utils/Logger.js';
+import type {
+  ExternalRecord,
+  ExternalSchema,
+  FetchOptions,
+  IConnector,
+} from '../connectorFramework.js';
 
 const AIRTABLE_API = 'https://api.airtable.com/v0';
 const AIRTABLE_META_API = 'https://api.airtable.com/v0/meta/bases';
@@ -74,10 +74,7 @@ function mapAirtableType(airtableType: string): string {
   return AIRTABLE_TYPE_MAP[airtableType] ?? 'singleLineText';
 }
 
-async function airtableGet(
-  url: string,
-  token: string
-): Promise<unknown> {
+async function airtableGet(url: string, token: string): Promise<unknown> {
   const resp = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -108,10 +105,7 @@ export const airtableConnector: IConnector = {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const cfg = parseConfig(config);
-      await airtableGet(
-        `${AIRTABLE_META_API}/${cfg.baseId}/tables`,
-        cfg.apiToken
-      );
+      await airtableGet(`${AIRTABLE_META_API}/${cfg.baseId}/tables`, cfg.apiToken);
       return { success: true };
     } catch (e) {
       logger.warn('[AirtableConnector] testConnection failed', {
@@ -124,10 +118,7 @@ export const airtableConnector: IConnector = {
   async fetchSchema(config: Record<string, unknown>): Promise<ExternalSchema> {
     const cfg = parseConfig(config);
 
-    const meta = (await airtableGet(
-      `${AIRTABLE_META_API}/${cfg.baseId}/tables`,
-      cfg.apiToken
-    )) as {
+    const meta = (await airtableGet(`${AIRTABLE_META_API}/${cfg.baseId}/tables`, cfg.apiToken)) as {
       tables: Array<{
         id: string;
         name: string;

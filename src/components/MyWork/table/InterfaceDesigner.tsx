@@ -1,8 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 interface InterfaceBlock {
   id: string;
-  type: 'table_grid' | 'record_detail' | 'chart' | 'text' | 'button' | 'filter' | 'search' | 'summary';
+  type:
+    | 'table_grid'
+    | 'record_detail'
+    | 'chart'
+    | 'text'
+    | 'button'
+    | 'filter'
+    | 'search'
+    | 'summary';
   config: Record<string, unknown>;
   position: { x: number; y: number; w: number; h: number };
 }
@@ -28,30 +36,58 @@ const BLOCK_TYPES = [
 
 function getDefaultConfig(type: string): Record<string, unknown> {
   switch (type) {
-    case 'table_grid': return { tableId: '', viewId: '', visibleFieldIds: [], maxRows: 50 };
-    case 'record_detail': return { tableId: '', recordId: '', visibleFieldIds: [] };
-    case 'chart': return { tableId: '', chartType: 'bar', xFieldId: '', yFieldId: '', aggregation: 'count' };
-    case 'text': return { content: 'Enter text here...', fontSize: 14 };
-    case 'button': return { label: 'Click me', action: 'none', url: '' };
-    case 'filter': return { tableId: '', fieldId: '' };
-    case 'search': return { tableId: '', placeholder: 'Search...' };
-    case 'summary': return { tableId: '', fieldId: '', aggregation: 'count', label: 'Total' };
-    default: return {};
+    case 'table_grid':
+      return { tableId: '', viewId: '', visibleFieldIds: [], maxRows: 50 };
+    case 'record_detail':
+      return { tableId: '', recordId: '', visibleFieldIds: [] };
+    case 'chart':
+      return { tableId: '', chartType: 'bar', xFieldId: '', yFieldId: '', aggregation: 'count' };
+    case 'text':
+      return { content: 'Enter text here...', fontSize: 14 };
+    case 'button':
+      return { label: 'Click me', action: 'none', url: '' };
+    case 'filter':
+      return { tableId: '', fieldId: '' };
+    case 'search':
+      return { tableId: '', placeholder: 'Search...' };
+    case 'summary':
+      return { tableId: '', fieldId: '', aggregation: 'count', label: 'Total' };
+    default:
+      return {};
   }
 }
 
-const BlockPreview: React.FC<{ block: InterfaceBlock; tables: InterfaceDesignerProps['tables'] }> = ({ block, tables }) => {
+const BlockPreview: React.FC<{
+  block: InterfaceBlock;
+  tables: InterfaceDesignerProps['tables'];
+}> = ({ block, tables }) => {
   switch (block.type) {
     case 'text':
-      return <p style={{ fontSize: (block.config.fontSize as number) || 14 }}>{String(block.config.content || '')}</p>;
+      return (
+        <p style={{ fontSize: (block.config.fontSize as number) || 14 }}>
+          {String(block.config.content || '')}
+        </p>
+      );
     case 'table_grid': {
-      const table = tables.find(t => t.id === block.config.tableId);
-      return <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">{table ? `Table: ${table.name}` : 'Select a table'}</div>;
+      const table = tables.find((t) => t.id === block.config.tableId);
+      return (
+        <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">
+          {table ? `Table: ${table.name}` : 'Select a table'}
+        </div>
+      );
     }
     case 'chart':
-      return <div className="bg-gray-100 rounded p-6 text-center text-sm text-gray-500">Chart: {String(block.config.chartType || 'bar')}</div>;
+      return (
+        <div className="bg-gray-100 rounded p-6 text-center text-sm text-gray-500">
+          Chart: {String(block.config.chartType || 'bar')}
+        </div>
+      );
     case 'button':
-      return <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{String(block.config.label || 'Button')}</button>;
+      return (
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          {String(block.config.label || 'Button')}
+        </button>
+      );
     case 'summary':
       return (
         <div className="bg-blue-50 rounded p-3">
@@ -89,22 +125,35 @@ const BlockConfigPanel: React.FC<{
     onUpdate({ config: { ...block.config, [key]: value } });
   };
 
-  const hasTableSelector = ['table_grid', 'record_detail', 'chart', 'filter', 'search', 'summary'].includes(block.type);
+  const hasTableSelector = [
+    'table_grid',
+    'record_detail',
+    'chart',
+    'filter',
+    'search',
+    'summary',
+  ].includes(block.type);
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700">{block.type.replace(/_/g, ' ')} Config</h3>
+      <h3 className="text-sm font-semibold text-gray-700">
+        {block.type.replace(/_/g, ' ')} Config
+      </h3>
 
       {hasTableSelector && (
         <div>
           <label className="text-xs text-gray-500">Table</label>
           <select
             value={String(block.config.tableId || '')}
-            onChange={e => updateConfig('tableId', e.target.value)}
+            onChange={(e) => updateConfig('tableId', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           >
             <option value="">Select table...</option>
-            {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {tables.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
           </select>
         </div>
       )}
@@ -115,7 +164,7 @@ const BlockConfigPanel: React.FC<{
             <label className="text-xs text-gray-500">Content</label>
             <textarea
               value={String(block.config.content || '')}
-              onChange={e => updateConfig('content', e.target.value)}
+              onChange={(e) => updateConfig('content', e.target.value)}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
               rows={3}
             />
@@ -125,7 +174,7 @@ const BlockConfigPanel: React.FC<{
             <input
               type="number"
               value={Number(block.config.fontSize || 14)}
-              onChange={e => updateConfig('fontSize', Number(e.target.value))}
+              onChange={(e) => updateConfig('fontSize', Number(e.target.value))}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
             />
           </div>
@@ -137,7 +186,7 @@ const BlockConfigPanel: React.FC<{
           <label className="text-xs text-gray-500">Chart Type</label>
           <select
             value={String(block.config.chartType || 'bar')}
-            onChange={e => updateConfig('chartType', e.target.value)}
+            onChange={(e) => updateConfig('chartType', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           >
             <option value="bar">Bar</option>
@@ -154,7 +203,7 @@ const BlockConfigPanel: React.FC<{
           <input
             type="text"
             value={String(block.config.label || '')}
-            onChange={e => updateConfig('label', e.target.value)}
+            onChange={(e) => updateConfig('label', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           />
         </div>
@@ -167,7 +216,7 @@ const BlockConfigPanel: React.FC<{
             <input
               type="text"
               value={String(block.config.label || '')}
-              onChange={e => updateConfig('label', e.target.value)}
+              onChange={(e) => updateConfig('label', e.target.value)}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
             />
           </div>
@@ -175,7 +224,7 @@ const BlockConfigPanel: React.FC<{
             <label className="text-xs text-gray-500">Aggregation</label>
             <select
               value={String(block.config.aggregation || 'count')}
-              onChange={e => updateConfig('aggregation', e.target.value)}
+              onChange={(e) => updateConfig('aggregation', e.target.value)}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
             >
               <option value="count">Count</option>
@@ -194,7 +243,7 @@ const BlockConfigPanel: React.FC<{
           <input
             type="text"
             value={String(block.config.placeholder || '')}
-            onChange={e => updateConfig('placeholder', e.target.value)}
+            onChange={(e) => updateConfig('placeholder', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           />
         </div>
@@ -208,23 +257,26 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  const addBlock = useCallback((type: InterfaceBlock['type']) => {
-    const newBlock: InterfaceBlock = {
-      id: crypto.randomUUID(),
-      type,
-      config: getDefaultConfig(type),
-      position: { x: 0, y: blocks.length * 4, w: 12, h: 4 },
-    };
-    setBlocks(prev => [...prev, newBlock]);
-  }, [blocks.length]);
+  const addBlock = useCallback(
+    (type: InterfaceBlock['type']) => {
+      const newBlock: InterfaceBlock = {
+        id: crypto.randomUUID(),
+        type,
+        config: getDefaultConfig(type),
+        position: { x: 0, y: blocks.length * 4, w: 12, h: 4 },
+      };
+      setBlocks((prev) => [...prev, newBlock]);
+    },
+    [blocks.length]
+  );
 
   const updateBlock = useCallback((blockId: string, updates: Partial<InterfaceBlock>) => {
-    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, ...updates } : b));
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)));
   }, []);
 
   const removeBlock = useCallback((blockId: string) => {
-    setBlocks(prev => prev.filter(b => b.id !== blockId));
-    setSelectedBlock(prev => prev === blockId ? null : prev);
+    setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+    setSelectedBlock((prev) => (prev === blockId ? null : prev));
   }, []);
 
   const handleSave = () => {
@@ -238,7 +290,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
-    setBlocks(prev => {
+    setBlocks((prev) => {
       const updated = [...prev];
       const [moved] = updated.splice(draggedIndex, 1);
       updated.splice(index, 0, moved);
@@ -256,7 +308,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
       {/* Left: Block palette */}
       <div className="w-60 border-r bg-gray-50 p-4 flex flex-col gap-2 shrink-0">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">Add Block</h3>
-        {BLOCK_TYPES.map(bt => (
+        {BLOCK_TYPES.map((bt) => (
           <button
             key={bt.type}
             onClick={() => addBlock(bt.type as InterfaceBlock['type'])}
@@ -295,11 +347,21 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="cursor-grab text-gray-400 hover:text-gray-600" title="Drag to reorder">⋮⋮</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase">{block.type.replace(/_/g, ' ')}</span>
+                  <span
+                    className="cursor-grab text-gray-400 hover:text-gray-600"
+                    title="Drag to reorder"
+                  >
+                    ⋮⋮
+                  </span>
+                  <span className="text-xs font-medium text-gray-500 uppercase">
+                    {block.type.replace(/_/g, ' ')}
+                  </span>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeBlock(block.id);
+                  }}
                   className="text-gray-400 hover:text-red-500 text-sm transition-colors"
                 >
                   ×
@@ -318,10 +380,10 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
       </div>
 
       {/* Right: Config panel */}
-      {selectedBlock && blocks.find(b => b.id === selectedBlock) && (
+      {selectedBlock && blocks.find((b) => b.id === selectedBlock) && (
         <div className="w-72 border-l bg-gray-50 p-4 shrink-0 overflow-y-auto">
           <BlockConfigPanel
-            block={blocks.find(b => b.id === selectedBlock)!}
+            block={blocks.find((b) => b.id === selectedBlock)!}
             tables={tables}
             onUpdate={(updates) => updateBlock(selectedBlock, updates)}
           />

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import type { ConnectorType } from './useConnectors';
 
 interface IconProps {
@@ -27,13 +28,7 @@ export const CsvIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
 );
 
 export const GoogleSheetsIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <rect x="3" y="2" width="18" height="20" rx="2" stroke="#34A853" strokeWidth={1.8} />
     <line x1="3" y1="8" x2="21" y2="8" stroke="#34A853" strokeWidth={1.5} />
     <line x1="3" y1="13" x2="21" y2="13" stroke="#34A853" strokeWidth={1.5} />
@@ -44,13 +39,7 @@ export const GoogleSheetsIcon: React.FC<IconProps> = ({ size = 20, className = '
 );
 
 export const AirtableIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <rect x="2" y="3" width="20" height="18" rx="3" stroke="#2D7FF9" strokeWidth={1.8} />
     <rect x="5" y="7" width="6" height="4" rx="1" fill="#2D7FF9" opacity={0.3} />
     <rect x="13" y="7" width="6" height="4" rx="1" fill="#2D7FF9" opacity={0.3} />
@@ -62,13 +51,7 @@ export const AirtableIcon: React.FC<IconProps> = ({ size = 20, className = '' })
 );
 
 export const PostgresIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <ellipse cx="12" cy="6" rx="8" ry="3" stroke="#336791" strokeWidth={1.8} />
     <path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6" stroke="#336791" strokeWidth={1.8} />
     <path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6" stroke="#336791" strokeWidth={1.8} />
@@ -84,13 +67,7 @@ export const PostgresIcon: React.FC<IconProps> = ({ size = 20, className = '' })
 );
 
 export const JiraIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <path
       d="M11.53 2c0 4.97 4.03 9 9 9h1.47v1.47c0 4.97-4.03 9-9 9H2v-1.47c0-4.97 4.03-9 9-9h.53V2z"
       fill="#2684FF"
@@ -99,13 +76,7 @@ export const JiraIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => 
 );
 
 export const WebhookIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <circle cx="12" cy="5" r="3" stroke="#6366f1" strokeWidth={2} />
     <circle cx="5" cy="19" r="3" stroke="#6366f1" strokeWidth={2} />
     <circle cx="19" cy="19" r="3" stroke="#6366f1" strokeWidth={2} />
@@ -130,7 +101,10 @@ export const ConnectorIcon: React.FC<IconProps & { type: ConnectorType }> = ({
   return <Icon {...props} />;
 };
 
-export const connectorMeta: Record<ConnectorType, { labelEn: string; labelPl: string; descEn: string; descPl: string }> = {
+export const connectorMeta: Record<
+  ConnectorType,
+  { labelEn: string; labelPl: string; descEn: string; descPl: string }
+> = {
   csv: {
     labelEn: 'CSV / XLSX',
     labelPl: 'CSV / XLSX',

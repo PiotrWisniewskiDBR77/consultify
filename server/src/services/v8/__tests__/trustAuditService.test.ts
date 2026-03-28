@@ -1,40 +1,40 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   AssignTrustClassParams,
+  CitationBinding,
   CreateProvenanceLedgerEntryParams,
   CreateSupportTraceParams,
+  DegradedCondition,
+  EvidenceRef,
   RecordDegradedConditionParams,
   RecordHealthSignalParams,
-  EvidenceRef,
-  CitationBinding,
-  TrustSummary,
   RoutingExplanation,
-  DegradedCondition,
   TrustClass,
+  TrustSummary,
 } from '../../../types/trustAudit.js';
 import {
-  TrustClassValues,
-  BindingStrengthValues,
-  VerificationStateValues,
-  DegradedConditionTypeValues,
-  HealthSignalTypeValues,
-  HealthStatusValues,
-  EvidenceRefSchema,
-  CitationBindingSchema,
-  TrustSummarySchema,
-  ProvenanceLedgerEntrySchema,
-  DegradedConditionSchema,
-  RoutingExplanationSchema,
-  SupportTraceSchema,
-  HealthSignalSchema,
   AssignTrustClassParamsSchema,
+  BindingStrengthValues,
+  CitationBindingSchema,
   CreateProvenanceLedgerEntryParamsSchema,
   CreateSupportTraceParamsSchema,
+  DegradedConditionSchema,
+  DegradedConditionTypeValues,
+  EvidenceRefSchema,
+  HealthSignalSchema,
+  HealthSignalTypeValues,
+  HealthStatusValues,
+  ProvenanceLedgerEntrySchema,
   RecordDegradedConditionParamsSchema,
   RecordHealthSignalParamsSchema,
+  RoutingExplanationSchema,
+  SupportTraceSchema,
   TRUST_CLASS_RANK,
+  TrustClassValues,
+  TrustSummarySchema,
+  VerificationStateValues,
 } from '../../../types/trustAudit.js';
 
 // ==========================================
@@ -63,11 +63,11 @@ vi.mock('../../../utils/Logger.js', () => ({
 import {
   assignTrustClass,
   createProvenanceLedgerEntry,
-  getProvenanceByOutput,
   createSupportTrace,
+  getProvenanceByOutput,
+  getRoutingExplanation,
   getSupportTrace,
   getSupportTracesByRun,
-  getRoutingExplanation,
   recordDegradedCondition,
   recordHealthSignal,
 } from '../trustAuditService.js';
@@ -141,7 +141,7 @@ function makeRoutingExplanation(overrides?: Partial<RoutingExplanation>): Routin
 }
 
 function makeProvenanceParams(
-  overrides?: Partial<CreateProvenanceLedgerEntryParams>,
+  overrides?: Partial<CreateProvenanceLedgerEntryParams>
 ): CreateProvenanceLedgerEntryParams {
   return {
     organizationId: ORG_ID,
@@ -160,7 +160,7 @@ function makeProvenanceParams(
 }
 
 function makeSupportTraceParams(
-  overrides?: Partial<CreateSupportTraceParams>,
+  overrides?: Partial<CreateSupportTraceParams>
 ): CreateSupportTraceParams {
   return {
     organizationId: ORG_ID,
@@ -285,8 +285,16 @@ describe('assignTrustClass', () => {
   it('returns synthesis with multiple moderate evidence refs', async () => {
     const result = await assignTrustClass({
       evidenceRefs: [
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01', bindingStrength: 'moderate', verificationState: 'partially_verified' }),
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02', bindingStrength: 'moderate', verificationState: 'partially_verified' }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01',
+          bindingStrength: 'moderate',
+          verificationState: 'partially_verified',
+        }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02',
+          bindingStrength: 'moderate',
+          verificationState: 'partially_verified',
+        }),
       ],
       modelDeclaredClass: null,
       degradedModeFlag: false,
@@ -308,8 +316,16 @@ describe('assignTrustClass', () => {
   it('downgrades model-declared grounded_fact to synthesis with 2+ weak refs', async () => {
     const result = await assignTrustClass({
       evidenceRefs: [
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01', bindingStrength: 'weak', verificationState: 'unverified' }),
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02', bindingStrength: 'weak', verificationState: 'unverified' }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01',
+          bindingStrength: 'weak',
+          verificationState: 'unverified',
+        }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02',
+          bindingStrength: 'weak',
+          verificationState: 'unverified',
+        }),
       ],
       modelDeclaredClass: 'grounded_fact',
       degradedModeFlag: false,
@@ -321,8 +337,16 @@ describe('assignTrustClass', () => {
   it('returns grounded_fact with multiple refs including strong+verified', async () => {
     const result = await assignTrustClass({
       evidenceRefs: [
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01', bindingStrength: 'strong', verificationState: 'verified' }),
-        makeEvidenceRef({ evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02', bindingStrength: 'moderate', verificationState: 'partially_verified' }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee01',
+          bindingStrength: 'strong',
+          verificationState: 'verified',
+        }),
+        makeEvidenceRef({
+          evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02',
+          bindingStrength: 'moderate',
+          verificationState: 'partially_verified',
+        }),
       ],
       modelDeclaredClass: null,
       degradedModeFlag: false,
@@ -332,9 +356,7 @@ describe('assignTrustClass', () => {
   });
 
   it('rejects invalid params via Zod', async () => {
-    await expect(
-      assignTrustClass({ evidenceRefs: 'bad' } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(assignTrustClass({ evidenceRefs: 'bad' } as any)).rejects.toThrow(ZodError);
   });
 });
 
@@ -370,28 +392,29 @@ describe('createProvenanceLedgerEntry', () => {
 
   it('supports all output types', async () => {
     const types = [
-      'chat_response', 'execution_output', 'report_section',
-      'presentation_slide', 'background_job_result',
+      'chat_response',
+      'execution_output',
+      'report_section',
+      'presentation_slide',
+      'background_job_result',
     ] as const;
 
     for (const outputType of types) {
       vi.clearAllMocks();
-      const result = await createProvenanceLedgerEntry(
-        makeProvenanceParams({ outputType }),
-      );
+      const result = await createProvenanceLedgerEntry(makeProvenanceParams({ outputType }));
       expect(result.outputType).toBe(outputType);
     }
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      createProvenanceLedgerEntry(makeProvenanceParams({ organizationId: 'not-uuid' })),
+      createProvenanceLedgerEntry(makeProvenanceParams({ organizationId: 'not-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid trust class via Zod', async () => {
     await expect(
-      createProvenanceLedgerEntry(makeProvenanceParams({ trustClass: 'invalid' as any })),
+      createProvenanceLedgerEntry(makeProvenanceParams({ trustClass: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -447,9 +470,7 @@ describe('createSupportTrace', () => {
   });
 
   it('creates a trace without routing explanation', async () => {
-    const result = await createSupportTrace(
-      makeSupportTraceParams({ routingExplanation: null }),
-    );
+    const result = await createSupportTrace(makeSupportTraceParams({ routingExplanation: null }));
     expect(result.routingExplanation).toBeNull();
   });
 
@@ -466,7 +487,7 @@ describe('createSupportTrace', () => {
     };
 
     const result = await createSupportTrace(
-      makeSupportTraceParams({ degradedConditions: [degraded], trustClass: 'degraded' }),
+      makeSupportTraceParams({ degradedConditions: [degraded], trustClass: 'degraded' })
     );
 
     expect(result.degradedConditions).toHaveLength(1);
@@ -475,9 +496,7 @@ describe('createSupportTrace', () => {
   });
 
   it('rejects invalid params via Zod', async () => {
-    await expect(
-      createSupportTrace({ organizationId: 'bad' } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createSupportTrace({ organizationId: 'bad' } as any)).rejects.toThrow(ZodError);
   });
 });
 
@@ -557,9 +576,9 @@ describe('getRoutingExplanation', () => {
             fallbackOccurred: true,
             fallbackReason: 'Provider timeout',
             fallbackFrom: 'gpt-4o',
-          }),
+          })
         ),
-      }),
+      })
     );
 
     const result = await getRoutingExplanation(TRACE_ID, ORG_ID, 'user');
@@ -600,9 +619,9 @@ describe('getRoutingExplanation', () => {
             fallbackReason: 'Provider timeout',
             fallbackFrom: 'gpt-4o',
             modelSelected: 'gpt-4o-mini',
-          }),
+          })
         ),
-      }),
+      })
     );
 
     const result = await getRoutingExplanation(TRACE_ID, ORG_ID, 'operator');
@@ -618,9 +637,7 @@ describe('getRoutingExplanation', () => {
   });
 
   it('returns null when trace has no routing explanation', async () => {
-    mockDbGet.mockResolvedValueOnce(
-      makeFakeSupportTraceRow({ routing_explanation: null }),
-    );
+    mockDbGet.mockResolvedValueOnce(makeFakeSupportTraceRow({ routing_explanation: null }));
     const result = await getRoutingExplanation(TRACE_ID, ORG_ID, 'operator');
     expect(result).toBeNull();
   });
@@ -688,7 +705,7 @@ describe('recordDegradedCondition', () => {
         severity: 'low',
         userMessage: 'msg',
         operatorDetail: 'detail',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -700,7 +717,7 @@ describe('recordDegradedCondition', () => {
         severity: 'low',
         userMessage: '',
         operatorDetail: 'detail',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -780,7 +797,7 @@ describe('recordHealthSignal', () => {
         signalType: 'invalid_signal' as any,
         componentId: 'test',
         status: 'healthy',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -791,7 +808,7 @@ describe('recordHealthSignal', () => {
         signalType: 'model_availability',
         componentId: 'test',
         status: 'healthy',
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -842,15 +859,11 @@ describe('Zod schema validation', () => {
   });
 
   it('rejects EvidenceRef with confidence > 1', () => {
-    expect(() =>
-      EvidenceRefSchema.parse(makeEvidenceRef({ confidence: 1.5 })),
-    ).toThrow(ZodError);
+    expect(() => EvidenceRefSchema.parse(makeEvidenceRef({ confidence: 1.5 }))).toThrow(ZodError);
   });
 
   it('rejects EvidenceRef with confidence < 0', () => {
-    expect(() =>
-      EvidenceRefSchema.parse(makeEvidenceRef({ confidence: -0.1 })),
-    ).toThrow(ZodError);
+    expect(() => EvidenceRefSchema.parse(makeEvidenceRef({ confidence: -0.1 }))).toThrow(ZodError);
   });
 
   it('validates CitationBinding', () => {
@@ -945,7 +958,7 @@ describe('Zod schema validation', () => {
         trustSummary: makeTrustSummary(),
         createdAt: '2026-03-23T10:00:00.000Z',
         createdBy: USER_ID,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -956,20 +969,18 @@ describe('Zod schema validation', () => {
         modelDeclaredClass: 'synthesis',
         degradedModeFlag: false,
         uncertaintyClass: 'stale_source',
-      }),
+      })
     ).not.toThrow();
   });
 
   it('validates CreateProvenanceLedgerEntryParams', () => {
     expect(() =>
-      CreateProvenanceLedgerEntryParamsSchema.parse(makeProvenanceParams()),
+      CreateProvenanceLedgerEntryParamsSchema.parse(makeProvenanceParams())
     ).not.toThrow();
   });
 
   it('validates CreateSupportTraceParams', () => {
-    expect(() =>
-      CreateSupportTraceParamsSchema.parse(makeSupportTraceParams()),
-    ).not.toThrow();
+    expect(() => CreateSupportTraceParamsSchema.parse(makeSupportTraceParams())).not.toThrow();
   });
 
   it('validates RecordDegradedConditionParams', () => {
@@ -980,7 +991,7 @@ describe('Zod schema validation', () => {
         severity: 'high',
         userMessage: 'Sources unavailable.',
         operatorDetail: 'Connector timeout after 5s.',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -993,7 +1004,7 @@ describe('Zod schema validation', () => {
         status: 'warning',
         value: 6.5,
         threshold: 5.0,
-      }),
+      })
     ).not.toThrow();
   });
 });

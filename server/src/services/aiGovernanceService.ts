@@ -359,7 +359,10 @@ export async function listEvalDatasets(orgId: string): Promise<EvalDataset[]> {
   return (rows as EvalDataset[]) || [];
 }
 
-export async function getEvalDataset(orgId: string, datasetId: string): Promise<EvalDataset | null> {
+export async function getEvalDataset(
+  orgId: string,
+  datasetId: string
+): Promise<EvalDataset | null> {
   await ensureGovernanceSchema();
   const row = await dbGet(
     `SELECT * FROM ai_eval_datasets WHERE id = ? AND organization_id = ?`,
@@ -379,7 +382,15 @@ export async function createEvalDataset(
   await dbRun(
     `INSERT INTO ai_eval_datasets (id, organization_id, name, purpose, samples_json, sample_count, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-    [id, orgId, data.name, data.purpose, JSON.stringify(samples), samples.length, data.createdBy || null],
+    [
+      id,
+      orgId,
+      data.name,
+      data.purpose,
+      JSON.stringify(samples),
+      samples.length,
+      data.createdBy || null,
+    ],
     { fallback: false } as any
   );
   return (await getEvalDataset(orgId, id))!;
@@ -569,9 +580,9 @@ export async function updateGovernancePolicy(
   if (!existing) return null;
 
   const policyType = data.policyType ?? existing.policy_type;
-  const configJson =
-    data.config !== undefined ? JSON.stringify(data.config) : existing.config_json;
-  const isActive = data.isActive !== undefined ? (data.isActive ? 1 : 0) : existing.is_active ? 1 : 0;
+  const configJson = data.config !== undefined ? JSON.stringify(data.config) : existing.config_json;
+  const isActive =
+    data.isActive !== undefined ? (data.isActive ? 1 : 0) : existing.is_active ? 1 : 0;
 
   await dbRun(
     `UPDATE ai_governance_policies
@@ -614,7 +625,10 @@ export async function enforcePolicy(
   for (const policy of matching) {
     let config: Record<string, any> = {};
     try {
-      config = typeof policy.config_json === 'string' ? JSON.parse(policy.config_json) : policy.config_json || {};
+      config =
+        typeof policy.config_json === 'string'
+          ? JSON.parse(policy.config_json)
+          : policy.config_json || {};
     } catch {
       config = {};
     }
@@ -624,7 +638,10 @@ export async function enforcePolicy(
         const maxRequests = Number(config.max_requests_per_hour) || Infinity;
         const currentRequests = Number(context.current_requests) || 0;
         if (currentRequests >= maxRequests) {
-          return { allowed: false, reason: `Rate limit exceeded: ${currentRequests}/${maxRequests} requests/hour` };
+          return {
+            allowed: false,
+            reason: `Rate limit exceeded: ${currentRequests}/${maxRequests} requests/hour`,
+          };
         }
         break;
       }
@@ -632,12 +649,17 @@ export async function enforcePolicy(
         const maxSpend = Number(config.max_spend_usd) || Infinity;
         const currentSpend = Number(context.current_spend_usd) || 0;
         if (currentSpend >= maxSpend) {
-          return { allowed: false, reason: `Budget gate: spent $${currentSpend.toFixed(2)} of $${maxSpend.toFixed(2)} limit` };
+          return {
+            allowed: false,
+            reason: `Budget gate: spent $${currentSpend.toFixed(2)} of $${maxSpend.toFixed(2)} limit`,
+          };
         }
         break;
       }
       case 'purpose_restriction': {
-        const allowedPurposes: string[] = Array.isArray(config.allowed_purposes) ? config.allowed_purposes : [];
+        const allowedPurposes: string[] = Array.isArray(config.allowed_purposes)
+          ? config.allowed_purposes
+          : [];
         const requestedPurpose = String(context.purpose || '');
         if (allowedPurposes.length > 0 && !allowedPurposes.includes(requestedPurpose)) {
           return { allowed: false, reason: `Purpose '${requestedPurpose}' is not in allowed list` };
@@ -645,7 +667,9 @@ export async function enforcePolicy(
         break;
       }
       case 'content_filter': {
-        const blockedKeywords: string[] = Array.isArray(config.blocked_keywords) ? config.blocked_keywords : [];
+        const blockedKeywords: string[] = Array.isArray(config.blocked_keywords)
+          ? config.blocked_keywords
+          : [];
         const content = String(context.content || '').toLowerCase();
         const found = blockedKeywords.find((kw) => content.includes(kw.toLowerCase()));
         if (found) {

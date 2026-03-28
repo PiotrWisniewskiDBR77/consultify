@@ -812,7 +812,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                       ? '/presentations?tab=sheets'
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
-                          row.originRecordId,
+                          row.originRecordId
                         );
                   navigate(targetPath);
                 }}

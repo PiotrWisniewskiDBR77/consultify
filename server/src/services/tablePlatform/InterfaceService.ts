@@ -4,12 +4,21 @@
  */
 
 import crypto from 'crypto';
+
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 
 export interface InterfaceBlock {
   id: string;
-  type: 'table_grid' | 'record_detail' | 'chart' | 'text' | 'button' | 'filter' | 'search' | 'summary';
+  type:
+    | 'table_grid'
+    | 'record_detail'
+    | 'chart'
+    | 'text'
+    | 'button'
+    | 'filter'
+    | 'search'
+    | 'summary';
   config: Record<string, unknown>;
   position: { x: number; y: number; w: number; h: number };
 }
@@ -20,14 +29,21 @@ export interface InterfaceLayout {
 }
 
 export class InterfaceService {
-  async createInterface(baseId: string, data: { name: string; description?: string; createdBy?: string }): Promise<any> {
+  async createInterface(
+    baseId: string,
+    data: { name: string; description?: string; createdBy?: string }
+  ): Promise<any> {
     const db = getDatabase();
     const result = await db.query(
       `INSERT INTO tp_interfaces (base_id, name, description, created_by)
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [baseId, data.name, data.description ?? null, data.createdBy ?? null]
     );
-    logger.info('[InterfaceService] Created interface', { baseId, name: data.name, id: (result.rows[0] as { id: string })?.id });
+    logger.info('[InterfaceService] Created interface', {
+      baseId,
+      name: data.name,
+      id: (result.rows[0] as { id: string })?.id,
+    });
     return result.rows[0];
   }
 

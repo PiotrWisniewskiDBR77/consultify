@@ -26,7 +26,11 @@ export class OfflineQueue {
   constructor() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      try { this.queue = JSON.parse(stored) as QueuedOperation[]; } catch { /* corrupted data, start fresh */ }
+      try {
+        this.queue = JSON.parse(stored) as QueuedOperation[];
+      } catch {
+        /* corrupted data, start fresh */
+      }
     }
 
     const storedSync = localStorage.getItem(LAST_SYNC_KEY);
@@ -55,7 +59,7 @@ export class OfflineQueue {
     // LWW merge: if updating the same record, merge data fields
     if (op.type === 'update' && op.recordId) {
       const existingIdx = this.queue.findIndex(
-        q => q.type === 'update' && q.recordId === op.recordId
+        (q) => q.type === 'update' && q.recordId === op.recordId
       );
       if (existingIdx >= 0) {
         this.queue[existingIdx]!.data = { ...this.queue[existingIdx]!.data, ...op.data };
@@ -69,7 +73,7 @@ export class OfflineQueue {
     // Delete cancels a pending create for the same record
     if (op.type === 'delete' && op.recordId) {
       const createIdx = this.queue.findIndex(
-        q => q.type === 'create' && q.recordId === op.recordId
+        (q) => q.type === 'create' && q.recordId === op.recordId
       );
       if (createIdx >= 0) {
         this.queue.splice(createIdx, 1);
@@ -103,12 +107,12 @@ export class OfflineQueue {
       for (const op of toProcess) {
         try {
           await this.executeOperation(op);
-          this.queue = this.queue.filter(q => q.id !== op.id);
+          this.queue = this.queue.filter((q) => q.id !== op.id);
           synced++;
         } catch {
           op.retryCount++;
           if (op.retryCount >= MAX_RETRIES) {
-            this.queue = this.queue.filter(q => q.id !== op.id);
+            this.queue = this.queue.filter((q) => q.id !== op.id);
             failed++;
           }
         }
@@ -180,14 +184,14 @@ export class OfflineQueue {
   subscribe(listener: QueueListener): () => void {
     this.listeners.push(listener);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 
   subscribeSyncTime(listener: SyncListener): () => void {
     this.syncListeners.push(listener);
     return () => {
-      this.syncListeners = this.syncListeners.filter(l => l !== listener);
+      this.syncListeners = this.syncListeners.filter((l) => l !== listener);
     };
   }
 

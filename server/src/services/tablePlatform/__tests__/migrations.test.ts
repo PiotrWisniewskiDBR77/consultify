@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
+import { describe, expect, it } from 'vitest';
 
 const MIGRATIONS_DIR = resolve(__dirname, '../../../../migrations');
 
@@ -45,9 +45,7 @@ describe('Migration Chain Verification (700-704)', () => {
     for (const file of MIGRATION_FILES) {
       const sql = readMigration(file);
 
-      const createMatches = sql.matchAll(
-        /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+(\w+)/gi,
-      );
+      const createMatches = sql.matchAll(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+(\w+)/gi);
       for (const m of createMatches) {
         createdTables.add(m[1].toLowerCase());
       }
@@ -57,7 +55,7 @@ describe('Migration Chain Verification (700-704)', () => {
         const refTable = m[1].toLowerCase();
         expect(
           createdTables.has(refTable),
-          `FK references ${refTable} in ${file}, but table not created in prior/current migrations`,
+          `FK references ${refTable} in ${file}, but table not created in prior/current migrations`
         ).toBe(true);
       }
     }
@@ -70,7 +68,7 @@ describe('Migration Chain Verification (700-704)', () => {
     for (const file of MIGRATION_FILES) {
       const sql = readMigration(file);
       const indexMatches = sql.matchAll(
-        /CREATE\s+(?:UNIQUE\s+)?INDEX\s+IF\s+NOT\s+EXISTS\s+(\w+)/gi,
+        /CREATE\s+(?:UNIQUE\s+)?INDEX\s+IF\s+NOT\s+EXISTS\s+(\w+)/gi
       );
       for (const m of indexMatches) {
         const name = m[1].toLowerCase();
@@ -96,12 +94,8 @@ describe('Migration Chain Verification (700-704)', () => {
 
         if (!tableName.startsWith('tp_')) continue;
 
-        const hasPK =
-          /PRIMARY\s+KEY/i.test(block);
-        expect(
-          hasPK,
-          `Table ${tableName} in ${file} is missing a PRIMARY KEY`,
-        ).toBe(true);
+        const hasPK = /PRIMARY\s+KEY/i.test(block);
+        expect(hasPK, `Table ${tableName} in ${file} is missing a PRIMARY KEY`).toBe(true);
       }
     }
   });

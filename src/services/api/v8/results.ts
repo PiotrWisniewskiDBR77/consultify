@@ -418,20 +418,20 @@ export const V8ResultsApi = {
   getKpiCatalog: (params?: { kpiId?: string }) =>
     v8Get<V8ResultsKpiCatalog>(
       '/results/kpis/catalog',
-      params?.kpiId ? { kpiId: params.kpiId } : undefined,
+      params?.kpiId ? { kpiId: params.kpiId } : undefined
     ),
   getKpiDrawerDetail: (kpiId: string) =>
     v8Get<V8ResultsKpiDrawerDetail>(`/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`),
   createKpiTimeSeriesValue: (kpiId: string, payload: V8ResultsCreateKpiTimeSeriesPayload) =>
     v8Post<V8ResultsCreateKpiTimeSeriesResponse>(
       `/results/kpis/${encodeURIComponent(kpiId)}/time-series`,
-      payload,
+      payload
     ),
   getRoiPortfolioSummary: () =>
     v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary'),
   getRoiInitiativeDetail: (initiativeId: string) =>
     v8Get<V8ResultsRoiInitiativeDetail>(
-      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`,
+      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`
     ),
   createKpi: (payload: V8ResultsCreateKpiPayload) =>
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
@@ -443,58 +443,58 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
   deleteKpiMapping: (mappingId: string) =>
     v8Delete<V8ResultsDeleteKpiMappingResponse>(
-      `/results/kpi-mappings/${encodeURIComponent(mappingId)}`,
+      `/results/kpi-mappings/${encodeURIComponent(mappingId)}`
     ),
   acknowledgeDeviationCase: (caseId: string) =>
     v8Post<V8ResultsAcknowledgeDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/acknowledge`,
-      {},
+      {}
     ),
   updateDeviationCaseRca: (caseId: string, payload: V8ResultsUpdateDeviationCaseRcaPayload) =>
     v8Put<V8ResultsUpdateDeviationCaseRcaResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/rca`,
-      payload,
+      payload
     ),
   createDeviationAction: (caseId: string, payload: V8ResultsCreateDeviationActionPayload) =>
     v8Post<V8ResultsCreateDeviationActionResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/actions`,
-      payload,
+      payload
     ),
   updateDeviationAction: (
     caseId: string,
     actionId: string,
-    payload: V8ResultsUpdateDeviationActionPayload,
+    payload: V8ResultsUpdateDeviationActionPayload
   ) =>
     v8Put<V8ResultsUpdateDeviationActionResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/actions/${encodeURIComponent(actionId)}`,
-      payload,
+      payload
     ),
   resolveDeviationCase: (caseId: string) =>
     v8Post<V8ResultsResolveDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/resolve`,
-      {},
+      {}
     ),
   closeDeviationCase: (caseId: string, payload: V8ResultsCloseDeviationCasePayload) =>
     v8Post<V8ResultsCloseDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/close`,
-      payload,
+      payload
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
   updateRoiInitiativeAssumptions: (
     initiativeId: string,
-    payload: V8ResultsUpdateRoiAssumptionsPayload,
+    payload: V8ResultsUpdateRoiAssumptionsPayload
   ) =>
     v8Put<V8ResultsUpdateRoiAssumptionsResponse>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/assumptions`,
-      payload,
+      payload
     ),
   createRoiInitiativeRealizedEntry: (
     initiativeId: string,
-    payload: V8ResultsCreateRoiRealizedPayload,
+    payload: V8ResultsCreateRoiRealizedPayload
   ) =>
     v8Post<V8ResultsCreateRoiRealizedResponse>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/realized`,
-      payload,
+      payload
     ),
 };

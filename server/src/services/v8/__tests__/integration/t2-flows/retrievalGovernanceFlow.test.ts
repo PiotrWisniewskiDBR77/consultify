@@ -1,10 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  RetrievalRequest,
-  SensitivityLabel,
-} from '../../../../../types/governedRetrieval.js';
 import type { ScopeType } from '../../../../../types/contextSnapshot.js';
+import type { RetrievalRequest, SensitivityLabel } from '../../../../../types/governedRetrieval.js';
 
 // ==========================================
 // MOCK DB LAYER
@@ -29,14 +26,14 @@ vi.mock('../../../../../utils/Logger.js', () => ({
   },
 }));
 
+import type { CandidateSource, SourceACLContext } from '../../../governedRetrievalService.js';
 import {
   checkACL,
   checkFreshness,
-  runPipeline,
-  logRetrievalTrace,
   getTracesBySnapshot,
+  logRetrievalTrace,
+  runPipeline,
 } from '../../../governedRetrievalService.js';
-import type { SourceACLContext, CandidateSource } from '../../../governedRetrievalService.js';
 
 // ==========================================
 // FIXTURES
@@ -160,7 +157,11 @@ describe('Wave 3/4 — Retrieval Governance Integration Proof', () => {
         makeSource({ sourceRef: 'src-valid-1', scopeType: 'organization' }),
         makeSource({ sourceRef: 'src-valid-2', scopeType: 'system' }),
         makeSource({ sourceRef: 'src-foreign', tenantId: ORG_B_ID, scopeType: 'organization' }),
-        makeSource({ sourceRef: 'src-archived', freshnessAt: tenDaysAgo, scopeType: 'organization' }),
+        makeSource({
+          sourceRef: 'src-archived',
+          freshnessAt: tenDaysAgo,
+          scopeType: 'organization',
+        }),
       ];
 
       const output = await runPipeline(request, sources);
@@ -338,7 +339,13 @@ describe('Wave 3/4 — Retrieval Governance Integration Proof', () => {
           privacyMode: false,
         },
         pipelineStages: [
-          { stage: 'tenant_filter' as const, candidatesBefore: 5, candidatesAfter: 4, deniedCount: 1, durationMs: 2 },
+          {
+            stage: 'tenant_filter' as const,
+            candidatesBefore: 5,
+            candidatesAfter: 4,
+            deniedCount: 1,
+            durationMs: 2,
+          },
         ],
         candidatesConsidered: 5,
         resultsReturned: 4,
@@ -357,7 +364,7 @@ describe('Wave 3/4 — Retrieval Governance Integration Proof', () => {
 
       expect(mockDbRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO v8_retrieval_traces'),
-        expect.any(Array),
+        expect.any(Array)
       );
 
       mockDbAll.mockResolvedValueOnce([

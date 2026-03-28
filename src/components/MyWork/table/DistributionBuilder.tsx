@@ -39,7 +39,12 @@ interface DistributionFormState {
   schedule: string;
 }
 
-const CHANNELS: { id: Channel; labelEn: string; labelPl: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+const CHANNELS: {
+  id: Channel;
+  labelEn: string;
+  labelPl: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}[] = [
   { id: 'email', labelEn: 'Email', labelPl: 'Email', icon: Mail },
   { id: 'slack', labelEn: 'Slack', labelPl: 'Slack', icon: MessageSquare },
   { id: 'teams', labelEn: 'Teams', labelPl: 'Teams', icon: MessageSquare },
@@ -255,7 +260,9 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                     return (
                       <button
                         key={ch.id}
-                        onClick={() => setForm((p) => ({ ...p, channel: ch.id, channelConfig: {} }))}
+                        onClick={() =>
+                          setForm((p) => ({ ...p, channel: ch.id, channelConfig: {} }))
+                        }
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
                           form.channel === ch.id
                             ? 'bg-blue-600 text-white'
@@ -275,7 +282,9 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {form.channel === 'email' && (
                   <div>
                     <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                      {isPl ? 'Adresy email (oddzielone przecinkami)' : 'Email addresses (comma-separated)'}
+                      {isPl
+                        ? 'Adresy email (oddzielone przecinkami)'
+                        : 'Email addresses (comma-separated)'}
                     </label>
                     <input
                       type="text"
@@ -396,7 +405,10 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                     key={dist.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
                   >
-                    <ChannelIcon size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                    <ChannelIcon
+                      size={14}
+                      className="text-slate-500 dark:text-slate-400 shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
@@ -409,9 +421,13 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         )}
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                        {dist.format?.toUpperCase()} · {isPl ? channelDef?.labelPl : channelDef?.labelEn}
+                        {dist.format?.toUpperCase()} ·{' '}
+                        {isPl ? channelDef?.labelPl : channelDef?.labelEn}
                         {dist.send_count > 0 && (
-                          <> · {dist.send_count}x {isPl ? 'wysłano' : 'sent'}</>
+                          <>
+                            {' '}
+                            · {dist.send_count}x {isPl ? 'wysłano' : 'sent'}
+                          </>
                         )}
                         {dist.last_sent_at && (
                           <> · {new Date(dist.last_sent_at).toLocaleDateString()}</>
@@ -426,7 +442,11 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
                         title={isPl ? 'Wyślij teraz' : 'Send Now'}
                       >
-                        {isExecuting ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                        {isExecuting ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Play size={12} />
+                        )}
                       </button>
                       <button
                         onClick={() => handleToggle(dist.id)}
@@ -435,7 +455,15 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                             ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
                             : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                         }`}
-                        title={dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : (isPl ? 'Wznów' : 'Resume')}
+                        title={
+                          dist.is_active
+                            ? isPl
+                              ? 'Wstrzymaj'
+                              : 'Pause'
+                            : isPl
+                              ? 'Wznów'
+                              : 'Resume'
+                        }
                       >
                         {dist.is_active ? <Pause size={12} /> : <Power size={12} />}
                       </button>

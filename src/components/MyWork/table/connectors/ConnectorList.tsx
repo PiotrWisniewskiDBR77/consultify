@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
 import {
   Clock,
+  History,
   Loader2,
   MoreHorizontal,
-  Play,
   Pencil,
+  Play,
   Plus,
-  Trash2,
-  History,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -190,7 +190,9 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                <span>{isPl ? 'Ostatni:' : 'Last:'} {formatTime(c.lastRunAt)}</span>
+                <span>
+                  {isPl ? 'Ostatni:' : 'Last:'} {formatTime(c.lastRunAt)}
+                </span>
                 {c.schedule && (
                   <span className="inline-flex items-center gap-1">
                     <Clock size={10} />
@@ -214,10 +216,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
 
               {menuOpen === c.id && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setMenuOpen(null)}
-                  />
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
                   <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
                     <MenuBtn
                       icon={<Play size={13} />}

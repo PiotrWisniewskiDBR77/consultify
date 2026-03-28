@@ -382,8 +382,12 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">{selected.status}</span>
-                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">{selected.currency}</span>
+                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
+                    {selected.status}
+                  </span>
+                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
+                    {selected.currency}
+                  </span>
                   <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
                     {t('finance.analysis.period', 'Period')}: {latestPeriod}
                   </span>
@@ -459,10 +463,7 @@ const RatioBlocksTable: React.FC<{
       if (items.length === 0) return null;
 
       return (
-        <section
-          key={block.key}
-          className="overflow-hidden rounded-2xl bg-white/[0.03]"
-        >
+        <section key={block.key} className="overflow-hidden rounded-2xl bg-white/[0.03]">
           <div className="px-5 py-4">
             <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
               Blok {block.order}

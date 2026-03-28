@@ -4,6 +4,9 @@
  * Interactive graph explorer using React Flow + dagre for auto-layout.
  * Connects to /api/knowledge-graph/* via Api.kg* methods.
  */
+import 'reactflow/dist/style.css';
+
+import dagre from 'dagre';
 import {
   AlertTriangle,
   ChevronRight,
@@ -17,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
   Controls,
@@ -26,9 +30,6 @@ import ReactFlow, {
   useEdgesState,
   useNodesState,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
-import dagre from 'dagre';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -282,10 +283,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                 color: getEntityColor(type),
               }}
             >
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ background: getEntityColor(type) }}
-              />
+              <div className="w-2 h-2 rounded-full" style={{ background: getEntityColor(type) }} />
               {type} ({count})
             </div>
           ))}
@@ -295,15 +293,14 @@ export const KnowledgeGraphExplorer: React.FC = () => {
       {/* Search bar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-md">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder={isPl ? 'Szukaj encji w grafie wiedzy...' : 'Search knowledge graph entities...'}
+            placeholder={
+              isPl ? 'Szukaj encji w grafie wiedzy...' : 'Search knowledge graph entities...'
+            }
             className="w-full h-9 pl-9 pr-3 rounded-xl text-xs bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
           />
         </div>

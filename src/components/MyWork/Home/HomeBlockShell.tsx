@@ -1,5 +1,5 @@
-import { Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Activity } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -69,7 +69,9 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
                 Relevance {Math.round(block.relevanceScore)}
               </span>
             </div>
-            <h3 className="text-lg md:text-xl font-semibold text-white tracking-tight">{block.title}</h3>
+            <h3 className="text-lg md:text-xl font-semibold text-white tracking-tight">
+              {block.title}
+            </h3>
             {block.subtitle ? (
               <p className="mt-1 text-sm text-slate-300/80 max-w-[46ch]">{block.subtitle}</p>
             ) : null}

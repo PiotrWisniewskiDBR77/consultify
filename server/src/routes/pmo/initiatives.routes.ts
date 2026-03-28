@@ -13,15 +13,18 @@ import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
-import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import blueprintService from '../../services/blueprintService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
-import blueprintService from '../../services/blueprintService.js';
-import { getCapacityTimeline, getInitiativeCapacity } from '../../services/workloadCapacityService.js';
+import {
+  getCapacityTimeline,
+  getInitiativeCapacity,
+} from '../../services/workloadCapacityService.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   CreateInitiativeSchema,
@@ -75,7 +78,11 @@ router.get('/portfolio/dependencies', InitiativeController.getPortfolioDependenc
  * POST /api/initiatives/portfolio/dependencies
  * Create initiative dependency
  */
-router.post('/portfolio/dependencies', requireOrgRole('user'), InitiativeController.createPortfolioDependency);
+router.post(
+  '/portfolio/dependencies',
+  requireOrgRole('user'),
+  InitiativeController.createPortfolioDependency
+);
 
 /**
  * DELETE /api/initiatives/portfolio/dependencies/:id
@@ -361,10 +368,10 @@ router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, r
       });
     }
 
-    await queryHelpers.queryRun(
-      `DELETE FROM programs WHERE id = ? AND organization_id = ?`,
-      [String(programId), String(orgId)]
-    );
+    await queryHelpers.queryRun(`DELETE FROM programs WHERE id = ? AND organization_id = ?`, [
+      String(programId),
+      String(orgId),
+    ]);
 
     return res.json({ success: true });
   } catch (err: any) {
@@ -648,14 +655,31 @@ router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: an
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { templateId } = req.params;
-    const { parentId, title, itemType, level, sortOrder, estimatedHours, deliverables, acceptanceCriteria, assignedRole } = req.body;
+    const {
+      parentId,
+      title,
+      itemType,
+      level,
+      sortOrder,
+      estimatedHours,
+      deliverables,
+      acceptanceCriteria,
+      assignedRole,
+    } = req.body;
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ error: 'title is required' });
     }
 
     const item = await blueprintService.addWbsItem(String(templateId), {
-      parentId, title: title.trim(), itemType, level, sortOrder,
-      estimatedHours, deliverables, acceptanceCriteria, assignedRole,
+      parentId,
+      title: title.trim(),
+      itemType,
+      level,
+      sortOrder,
+      estimatedHours,
+      deliverables,
+      acceptanceCriteria,
+      assignedRole,
     });
     return res.status(201).json({ item });
   } catch (err: any) {
@@ -667,59 +691,75 @@ router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: an
  * PUT /api/initiatives/templates/:templateId/wbs/:itemId
  * Update a WBS item
  */
-router.put('/templates/:templateId/wbs/:itemId', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+  '/templates/:templateId/wbs/:itemId',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId, itemId } = req.params;
-    const item = await blueprintService.updateWbsItem(String(templateId), String(itemId), req.body);
-    if (!item) return res.status(404).json({ error: 'WBS item not found' });
-    return res.json({ item });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to update WBS item', message: err.message });
+      const { templateId, itemId } = req.params;
+      const item = await blueprintService.updateWbsItem(
+        String(templateId),
+        String(itemId),
+        req.body
+      );
+      if (!item) return res.status(404).json({ error: 'WBS item not found' });
+      return res.json({ item });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to update WBS item', message: err.message });
+    }
   }
-});
+);
 
 /**
  * DELETE /api/initiatives/templates/:templateId/wbs/:itemId
  * Delete a WBS item (cascades to children)
  */
-router.delete('/templates/:templateId/wbs/:itemId', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.delete(
+  '/templates/:templateId/wbs/:itemId',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId, itemId } = req.params;
-    const deleted = await blueprintService.deleteWbsItem(String(templateId), String(itemId));
-    if (!deleted) return res.status(404).json({ error: 'WBS item not found' });
-    return res.json({ success: true });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to delete WBS item', message: err.message });
+      const { templateId, itemId } = req.params;
+      const deleted = await blueprintService.deleteWbsItem(String(templateId), String(itemId));
+      if (!deleted) return res.status(404).json({ error: 'WBS item not found' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to delete WBS item', message: err.message });
+    }
   }
-});
+);
 
 /**
  * POST /api/initiatives/templates/:templateId/wbs/reorder
  * Reorder WBS items
  */
-router.post('/templates/:templateId/wbs/reorder', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/templates/:templateId/wbs/reorder',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId } = req.params;
-    const { items } = req.body;
-    if (!Array.isArray(items)) {
-      return res.status(400).json({ error: 'items array is required' });
+      const { templateId } = req.params;
+      const { items } = req.body;
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: 'items array is required' });
+      }
+
+      await blueprintService.reorderWbsItems(String(templateId), items);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to reorder WBS items', message: err.message });
     }
-
-    await blueprintService.reorderWbsItems(String(templateId), items);
-    return res.json({ success: true });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to reorder WBS items', message: err.message });
   }
-});
+);
 
 /**
  * GET /api/initiatives/templates/:templateId/validate
@@ -749,7 +789,11 @@ router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: 
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { templateId } = req.params;
-    const result = await blueprintService.cloneBlueprint(String(templateId), String(orgId), String(userId));
+    const result = await blueprintService.cloneBlueprint(
+      String(templateId),
+      String(orgId),
+      String(userId)
+    );
     return res.status(201).json(result);
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to clone blueprint', message: err.message });
@@ -1026,9 +1070,23 @@ router.post('/:id/apply-blueprint', requireOrgRole('user'), async (req: any, res
     const template = await initiativeTemplateService.getTemplateById(String(templateId));
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
-    const wbsResult = await blueprintService.applyWbs(String(templateId), String(id), String(orgId), String(userId));
-    const msResult = await blueprintService.applyMilestoneDependencies(String(templateId), String(id), String(orgId));
-    const roleResult = await blueprintService.applyRoleTemplates(String(templateId), String(id), String(orgId), String(userId));
+    const wbsResult = await blueprintService.applyWbs(
+      String(templateId),
+      String(id),
+      String(orgId),
+      String(userId)
+    );
+    const msResult = await blueprintService.applyMilestoneDependencies(
+      String(templateId),
+      String(id),
+      String(orgId)
+    );
+    const roleResult = await blueprintService.applyRoleTemplates(
+      String(templateId),
+      String(id),
+      String(orgId),
+      String(userId)
+    );
     const dodResult = await blueprintService.applyDoDPerLevel(String(templateId), String(id));
 
     await queryHelpers.queryRun(
@@ -1499,7 +1557,9 @@ router.get('/:id/capacity', async (req: any, res: any) => {
     const capacity = await getInitiativeCapacity(String(orgId), String(req.params.id));
     return res.json(capacity);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch initiative capacity', message: err.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to fetch initiative capacity', message: err.message });
   }
 });
 
@@ -1510,7 +1570,9 @@ router.get('/:id/capacity/timeline', async (req: any, res: any) => {
     const timeline = await getCapacityTimeline(String(orgId), String(req.params.id));
     return res.json({ weeks: timeline });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch capacity timeline', message: err.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to fetch capacity timeline', message: err.message });
   }
 });
 
@@ -1628,15 +1690,39 @@ router.post(
 router.get('/:id/staffing-plans', StaffingPlanController.listPlans);
 router.post('/:id/staffing-plans', requireOrgRole('user'), StaffingPlanController.createPlan);
 router.get('/:id/staffing-plans/:planId', StaffingPlanController.getPlan);
-router.put('/:id/staffing-plans/:planId', requireOrgRole('user'), StaffingPlanController.updatePlan);
-router.delete('/:id/staffing-plans/:planId', requireOrgRole('user'), StaffingPlanController.deletePlan);
+router.put(
+  '/:id/staffing-plans/:planId',
+  requireOrgRole('user'),
+  StaffingPlanController.updatePlan
+);
+router.delete(
+  '/:id/staffing-plans/:planId',
+  requireOrgRole('user'),
+  StaffingPlanController.deletePlan
+);
 
-router.post('/:id/staffing-plans/:planId/roles', requireOrgRole('user'), StaffingPlanController.addRole);
-router.put('/:id/staffing-plans/:planId/roles/:roleId', requireOrgRole('user'), StaffingPlanController.updateRole);
-router.delete('/:id/staffing-plans/:planId/roles/:roleId', requireOrgRole('user'), StaffingPlanController.deleteRole);
+router.post(
+  '/:id/staffing-plans/:planId/roles',
+  requireOrgRole('user'),
+  StaffingPlanController.addRole
+);
+router.put(
+  '/:id/staffing-plans/:planId/roles/:roleId',
+  requireOrgRole('user'),
+  StaffingPlanController.updateRole
+);
+router.delete(
+  '/:id/staffing-plans/:planId/roles/:roleId',
+  requireOrgRole('user'),
+  StaffingPlanController.deleteRole
+);
 
 router.get('/:id/staffing-plans/:planId/gaps', StaffingPlanController.getGaps);
-router.post('/:id/staffing-plans/:planId/sync-capacity', requireOrgRole('user'), StaffingPlanController.syncCapacity);
+router.post(
+  '/:id/staffing-plans/:planId/sync-capacity',
+  requireOrgRole('user'),
+  StaffingPlanController.syncCapacity
+);
 
 // ==========================================
 // ROADMAP MODULE: BUDGET ITEMS ENDPOINTS

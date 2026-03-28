@@ -1,30 +1,30 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
   CreateOutputArtifactParams,
-  RegisterTemplateFamilyParams,
   CreateRecurringProgramParams,
-  SetAIGovernanceConfigParams,
   OutputDeliveryState,
+  RegisterTemplateFamilyParams,
+  SetAIGovernanceConfigParams,
   TemplateFamilyName,
 } from '../../../types/reportsPresOperatingModel.js';
 import {
-  OutputArtifactSchema,
-  TemplateFamilySchema,
-  RecurringOutputProgramSchema,
-  OutputAIGovernanceConfigSchema,
+  CadenceValues,
   CreateOutputArtifactParamsSchema,
-  RegisterTemplateFamilyParamsSchema,
   CreateRecurringProgramParamsSchema,
-  SetAIGovernanceConfigParamsSchema,
-  DELIVERY_VALID_TRANSITIONS,
   DELIVERY_TERMINAL_STATES,
+  DELIVERY_VALID_TRANSITIONS,
+  GovernanceLevelValues,
+  OutputAIGovernanceConfigSchema,
+  OutputArtifactSchema,
   OutputDeliveryStateValues,
   OutputTypeValues,
+  RecurringOutputProgramSchema,
+  RegisterTemplateFamilyParamsSchema,
+  SetAIGovernanceConfigParamsSchema,
   TemplateFamilyNameValues,
-  GovernanceLevelValues,
-  CadenceValues,
+  TemplateFamilySchema,
 } from '../../../types/reportsPresOperatingModel.js';
 
 // ==========================================
@@ -52,14 +52,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 import {
   createOutputArtifact,
-  transitionDeliveryState,
-  getOutputArtifact,
-  registerTemplateFamily,
-  getTemplateFamilies,
   createRecurringProgram,
-  getRecurringPrograms,
-  setAIGovernanceConfig,
   getAIGovernanceConfig,
+  getOutputArtifact,
+  getRecurringPrograms,
+  getTemplateFamilies,
+  registerTemplateFamily,
+  setAIGovernanceConfig,
+  transitionDeliveryState,
 } from '../reportsPresModelService.js';
 
 // ==========================================
@@ -72,7 +72,9 @@ const USER_ID = '00000000-0000-4000-8000-000000000003';
 const ARTIFACT_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 const FAMILY_ID = '00000000-0000-4000-8000-ffffffffffff';
 
-function makeArtifactParams(overrides?: Partial<CreateOutputArtifactParams>): CreateOutputArtifactParams {
+function makeArtifactParams(
+  overrides?: Partial<CreateOutputArtifactParams>
+): CreateOutputArtifactParams {
   return {
     organizationId: ORG_ID,
     outputType: 'report',
@@ -100,7 +102,9 @@ function makeFakeArtifactRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makeTemplateFamilyParams(overrides?: Partial<RegisterTemplateFamilyParams>): RegisterTemplateFamilyParams {
+function makeTemplateFamilyParams(
+  overrides?: Partial<RegisterTemplateFamilyParams>
+): RegisterTemplateFamilyParams {
   return {
     organizationId: ORG_ID,
     familyName: 'executive_steering_pack',
@@ -124,7 +128,9 @@ function makeFakeTemplateFamilyRow(overrides?: Partial<Record<string, unknown>>)
   };
 }
 
-function makeRecurringProgramParams(overrides?: Partial<CreateRecurringProgramParams>): CreateRecurringProgramParams {
+function makeRecurringProgramParams(
+  overrides?: Partial<CreateRecurringProgramParams>
+): CreateRecurringProgramParams {
   return {
     organizationId: ORG_ID,
     outputType: 'report',
@@ -153,7 +159,9 @@ function makeFakeRecurringProgramRow(overrides?: Partial<Record<string, unknown>
   };
 }
 
-function makeGovernanceParams(overrides?: Partial<SetAIGovernanceConfigParams>): SetAIGovernanceConfigParams {
+function makeGovernanceParams(
+  overrides?: Partial<SetAIGovernanceConfigParams>
+): SetAIGovernanceConfigParams {
   return {
     organizationId: ORG_ID,
     outputType: 'report',
@@ -216,11 +224,13 @@ describe('createOutputArtifact', () => {
   });
 
   it('stores optional refs when provided', async () => {
-    const result = await createOutputArtifact(makeArtifactParams({
-      templateFamilyRef: 'fam-1',
-      sourceInitiativeId: 'init-1',
-      aiGovernancePresetRef: 'preset-1',
-    }));
+    const result = await createOutputArtifact(
+      makeArtifactParams({
+        templateFamilyRef: 'fam-1',
+        sourceInitiativeId: 'init-1',
+        aiGovernancePresetRef: 'preset-1',
+      })
+    );
 
     expect(result.templateFamilyRef).toBe('fam-1');
     expect(result.sourceInitiativeId).toBe('init-1');
@@ -228,20 +238,18 @@ describe('createOutputArtifact', () => {
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      createOutputArtifact({ organizationId: ORG_ID } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(createOutputArtifact({ organizationId: ORG_ID } as any)).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      createOutputArtifact(makeArtifactParams({ organizationId: 'not-a-uuid' })),
+      createOutputArtifact(makeArtifactParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid output type via Zod', async () => {
     await expect(
-      createOutputArtifact(makeArtifactParams({ outputType: 'spreadsheet' as any })),
+      createOutputArtifact(makeArtifactParams({ outputType: 'spreadsheet' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -365,7 +373,12 @@ describe('transitionDeliveryState', () => {
 
   it('allows archiving from any non-terminal state', async () => {
     const archivableStates: OutputDeliveryState[] = [
-      'draft', 'generated', 'editing', 'in_review', 'ready', 'shared',
+      'draft',
+      'generated',
+      'editing',
+      'in_review',
+      'ready',
+      'shared',
     ];
 
     for (const state of archivableStates) {
@@ -380,33 +393,33 @@ describe('transitionDeliveryState', () => {
   it('rejects invalid transition: draft → ready', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeArtifactRow({ delivery_state: 'draft' }));
 
-    await expect(
-      transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'ready'),
-    ).rejects.toThrow('Invalid delivery transition: draft → ready');
+    await expect(transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'ready')).rejects.toThrow(
+      'Invalid delivery transition: draft → ready'
+    );
   });
 
   it('rejects invalid transition: draft → shared', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeArtifactRow({ delivery_state: 'draft' }));
 
-    await expect(
-      transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'shared'),
-    ).rejects.toThrow('Invalid delivery transition');
+    await expect(transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'shared')).rejects.toThrow(
+      'Invalid delivery transition'
+    );
   });
 
   it('rejects transition from archived (terminal)', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeArtifactRow({ delivery_state: 'archived' }));
 
-    await expect(
-      transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'editing'),
-    ).rejects.toThrow("current state 'archived' is terminal");
+    await expect(transitionDeliveryState(ARTIFACT_ID, ORG_ID, 'editing')).rejects.toThrow(
+      "current state 'archived' is terminal"
+    );
   });
 
   it('throws when artifact not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    await expect(
-      transitionDeliveryState('nonexistent', ORG_ID, 'generated'),
-    ).rejects.toThrow('Artifact nonexistent not found');
+    await expect(transitionDeliveryState('nonexistent', ORG_ID, 'generated')).rejects.toThrow(
+      'Artifact nonexistent not found'
+    );
   });
 
   it('updates lastTransitionAt on each transition', async () => {
@@ -442,14 +455,14 @@ describe('registerTemplateFamily', () => {
 
   it('registers transformation_status_pack', async () => {
     const result = await registerTemplateFamily(
-      makeTemplateFamilyParams({ familyName: 'transformation_status_pack' }),
+      makeTemplateFamilyParams({ familyName: 'transformation_status_pack' })
     );
     expect(result.familyName).toBe('transformation_status_pack');
   });
 
   it('registers diagnostic_assessment_pack', async () => {
     const result = await registerTemplateFamily(
-      makeTemplateFamilyParams({ familyName: 'diagnostic_assessment_pack' }),
+      makeTemplateFamilyParams({ familyName: 'diagnostic_assessment_pack' })
     );
     expect(result.familyName).toBe('diagnostic_assessment_pack');
   });
@@ -470,14 +483,14 @@ describe('registerTemplateFamily', () => {
 
   it('defaults governedMappingEnabled to false', async () => {
     const result = await registerTemplateFamily(
-      makeTemplateFamilyParams({ governedMappingEnabled: undefined }),
+      makeTemplateFamilyParams({ governedMappingEnabled: undefined })
     );
     expect(result.governedMappingEnabled).toBe(false);
   });
 
   it('defaults form refs to null', async () => {
     const result = await registerTemplateFamily(
-      makeTemplateFamilyParams({ reportFormRef: undefined, presentationFormRef: undefined }),
+      makeTemplateFamilyParams({ reportFormRef: undefined, presentationFormRef: undefined })
     );
     expect(result.reportFormRef).toBeNull();
     expect(result.presentationFormRef).toBeNull();
@@ -485,13 +498,13 @@ describe('registerTemplateFamily', () => {
 
   it('rejects invalid family name via Zod', async () => {
     await expect(
-      registerTemplateFamily(makeTemplateFamilyParams({ familyName: 'custom_pack' as any })),
+      registerTemplateFamily(makeTemplateFamilyParams({ familyName: 'custom_pack' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      registerTemplateFamily(makeTemplateFamilyParams({ organizationId: 'bad' })),
+      registerTemplateFamily(makeTemplateFamilyParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -558,14 +571,14 @@ describe('createRecurringProgram', () => {
 
   it('creates a recurring report program with strict governance', async () => {
     const result = await createRecurringProgram(
-      makeRecurringProgramParams({ governanceLevel: 'strict' }),
+      makeRecurringProgramParams({ governanceLevel: 'strict' })
     );
     expect(result.governanceLevel).toBe('strict');
   });
 
   it('creates a recurring presentation program with strict governance (Decision W6-4)', async () => {
     const result = await createRecurringProgram(
-      makeRecurringProgramParams({ outputType: 'presentation', governanceLevel: 'strict' }),
+      makeRecurringProgramParams({ outputType: 'presentation', governanceLevel: 'strict' })
     );
 
     expect(result.outputType).toBe('presentation');
@@ -575,8 +588,8 @@ describe('createRecurringProgram', () => {
   it('rejects recurring presentation with standard governance (Decision W6-4)', async () => {
     await expect(
       createRecurringProgram(
-        makeRecurringProgramParams({ outputType: 'presentation', governanceLevel: 'standard' }),
-      ),
+        makeRecurringProgramParams({ outputType: 'presentation', governanceLevel: 'standard' })
+      )
     ).rejects.toThrow('Recurring presentation programs require strict governance');
   });
 
@@ -603,7 +616,7 @@ describe('createRecurringProgram', () => {
 
   it('defaults sourceDataBinding to empty object', async () => {
     const result = await createRecurringProgram(
-      makeRecurringProgramParams({ sourceDataBinding: undefined }),
+      makeRecurringProgramParams({ sourceDataBinding: undefined })
     );
     expect(result.sourceDataBinding).toEqual({});
   });
@@ -619,13 +632,13 @@ describe('createRecurringProgram', () => {
 
   it('rejects invalid cadence via Zod', async () => {
     await expect(
-      createRecurringProgram(makeRecurringProgramParams({ cadence: 'yearly' as any })),
+      createRecurringProgram(makeRecurringProgramParams({ cadence: 'yearly' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      createRecurringProgram(makeRecurringProgramParams({ organizationId: 'bad' })),
+      createRecurringProgram(makeRecurringProgramParams({ organizationId: 'bad' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -706,7 +719,7 @@ describe('setAIGovernanceConfig', () => {
         outputType: 'presentation',
         presetRef: 'presentation_builder',
         evalGateRef: 'eval-gate-pres-001',
-      }),
+      })
     );
 
     expect(result.outputType).toBe('presentation');
@@ -720,7 +733,7 @@ describe('setAIGovernanceConfig', () => {
       makeGovernanceParams({
         presetRef: 'report_builder_v2',
         qualityThresholds: { minEvidenceDensity: 0.9 },
-      }),
+      })
     );
 
     expect(result.presetRef).toBe('report_builder_v2');
@@ -740,9 +753,7 @@ describe('setAIGovernanceConfig', () => {
   it('defaults evalGateRef to null', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 
-    const result = await setAIGovernanceConfig(
-      makeGovernanceParams({ evalGateRef: undefined }),
-    );
+    const result = await setAIGovernanceConfig(makeGovernanceParams({ evalGateRef: undefined }));
     expect(result.evalGateRef).toBeNull();
   });
 
@@ -750,20 +761,20 @@ describe('setAIGovernanceConfig', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     const result = await setAIGovernanceConfig(
-      makeGovernanceParams({ qualityThresholds: undefined }),
+      makeGovernanceParams({ qualityThresholds: undefined })
     );
     expect(result.qualityThresholds).toEqual({});
   });
 
   it('rejects empty presetRef via Zod', async () => {
-    await expect(
-      setAIGovernanceConfig(makeGovernanceParams({ presetRef: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(setAIGovernanceConfig(makeGovernanceParams({ presetRef: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid outputType via Zod', async () => {
     await expect(
-      setAIGovernanceConfig(makeGovernanceParams({ outputType: 'chart' as any })),
+      setAIGovernanceConfig(makeGovernanceParams({ outputType: 'chart' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -793,12 +804,16 @@ describe('getAIGovernanceConfig', () => {
   });
 
   it('returns separate configs per output type (Decision W6-2)', async () => {
-    mockDbGet.mockResolvedValueOnce(makeFakeGovernanceRow({ output_type: 'report', preset_ref: 'report_builder' }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeGovernanceRow({ output_type: 'report', preset_ref: 'report_builder' })
+    );
     const reportConfig = await getAIGovernanceConfig('report', ORG_ID);
     expect(reportConfig!.presetRef).toBe('report_builder');
 
     vi.clearAllMocks();
-    mockDbGet.mockResolvedValueOnce(makeFakeGovernanceRow({ output_type: 'presentation', preset_ref: 'presentation_builder' }));
+    mockDbGet.mockResolvedValueOnce(
+      makeFakeGovernanceRow({ output_type: 'presentation', preset_ref: 'presentation_builder' })
+    );
     const presConfig = await getAIGovernanceConfig('presentation', ORG_ID);
     expect(presConfig!.presetRef).toBe('presentation_builder');
   });
@@ -847,115 +862,131 @@ describe('delivery state machine completeness', () => {
 
 describe('Zod schema validation', () => {
   it('validates a correct OutputArtifact', () => {
-    expect(() => OutputArtifactSchema.parse({
-      artifactId: ARTIFACT_ID,
-      organizationId: ORG_ID,
-      outputType: 'report',
-      deliveryState: 'draft',
-      templateFamilyRef: null,
-      sourceInitiativeId: null,
-      aiGovernancePresetRef: null,
-      createdBy: USER_ID,
-      createdAt: '2026-03-23T10:00:00.000Z',
-      lastTransitionAt: '2026-03-23T10:00:00.000Z',
-    })).not.toThrow();
+    expect(() =>
+      OutputArtifactSchema.parse({
+        artifactId: ARTIFACT_ID,
+        organizationId: ORG_ID,
+        outputType: 'report',
+        deliveryState: 'draft',
+        templateFamilyRef: null,
+        sourceInitiativeId: null,
+        aiGovernancePresetRef: null,
+        createdBy: USER_ID,
+        createdAt: '2026-03-23T10:00:00.000Z',
+        lastTransitionAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).not.toThrow();
   });
 
   it('rejects artifact with invalid delivery state', () => {
-    expect(() => OutputArtifactSchema.parse({
-      artifactId: ARTIFACT_ID,
-      organizationId: ORG_ID,
-      outputType: 'report',
-      deliveryState: 'published',
-      templateFamilyRef: null,
-      sourceInitiativeId: null,
-      aiGovernancePresetRef: null,
-      createdBy: USER_ID,
-      createdAt: '2026-03-23T10:00:00.000Z',
-      lastTransitionAt: '2026-03-23T10:00:00.000Z',
-    })).toThrow(ZodError);
+    expect(() =>
+      OutputArtifactSchema.parse({
+        artifactId: ARTIFACT_ID,
+        organizationId: ORG_ID,
+        outputType: 'report',
+        deliveryState: 'published',
+        templateFamilyRef: null,
+        sourceInitiativeId: null,
+        aiGovernancePresetRef: null,
+        createdBy: USER_ID,
+        createdAt: '2026-03-23T10:00:00.000Z',
+        lastTransitionAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).toThrow(ZodError);
   });
 
   it('validates a correct TemplateFamily', () => {
-    expect(() => TemplateFamilySchema.parse({
-      familyId: FAMILY_ID,
-      organizationId: ORG_ID,
-      familyName: 'executive_steering_pack',
-      reportFormRef: 'ref-1',
-      presentationFormRef: 'ref-2',
-      governedMappingEnabled: true,
-      createdAt: '2026-03-23T10:00:00.000Z',
-    })).not.toThrow();
+    expect(() =>
+      TemplateFamilySchema.parse({
+        familyId: FAMILY_ID,
+        organizationId: ORG_ID,
+        familyName: 'executive_steering_pack',
+        reportFormRef: 'ref-1',
+        presentationFormRef: 'ref-2',
+        governedMappingEnabled: true,
+        createdAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).not.toThrow();
   });
 
   it('rejects template family with invalid name', () => {
-    expect(() => TemplateFamilySchema.parse({
-      familyId: FAMILY_ID,
-      organizationId: ORG_ID,
-      familyName: 'custom_pack',
-      reportFormRef: null,
-      presentationFormRef: null,
-      governedMappingEnabled: false,
-      createdAt: '2026-03-23T10:00:00.000Z',
-    })).toThrow(ZodError);
+    expect(() =>
+      TemplateFamilySchema.parse({
+        familyId: FAMILY_ID,
+        organizationId: ORG_ID,
+        familyName: 'custom_pack',
+        reportFormRef: null,
+        presentationFormRef: null,
+        governedMappingEnabled: false,
+        createdAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).toThrow(ZodError);
   });
 
   it('validates a correct RecurringOutputProgram', () => {
-    expect(() => RecurringOutputProgramSchema.parse({
-      programId: '00000000-0000-4000-8000-bbbbbbbbbbbb',
-      organizationId: ORG_ID,
-      outputType: 'report',
-      templateFamilyRef: FAMILY_ID,
-      cadence: 'monthly',
-      sourceDataBinding: {},
-      isActive: true,
-      lastRunAt: null,
-      nextRunAt: null,
-      governanceLevel: 'standard',
-      createdAt: '2026-03-23T10:00:00.000Z',
-    })).not.toThrow();
+    expect(() =>
+      RecurringOutputProgramSchema.parse({
+        programId: '00000000-0000-4000-8000-bbbbbbbbbbbb',
+        organizationId: ORG_ID,
+        outputType: 'report',
+        templateFamilyRef: FAMILY_ID,
+        cadence: 'monthly',
+        sourceDataBinding: {},
+        isActive: true,
+        lastRunAt: null,
+        nextRunAt: null,
+        governanceLevel: 'standard',
+        createdAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).not.toThrow();
   });
 
   it('rejects recurring program with invalid cadence', () => {
-    expect(() => RecurringOutputProgramSchema.parse({
-      programId: '00000000-0000-4000-8000-bbbbbbbbbbbb',
-      organizationId: ORG_ID,
-      outputType: 'report',
-      templateFamilyRef: null,
-      cadence: 'yearly',
-      sourceDataBinding: {},
-      isActive: true,
-      lastRunAt: null,
-      nextRunAt: null,
-      governanceLevel: 'standard',
-      createdAt: '2026-03-23T10:00:00.000Z',
-    })).toThrow(ZodError);
+    expect(() =>
+      RecurringOutputProgramSchema.parse({
+        programId: '00000000-0000-4000-8000-bbbbbbbbbbbb',
+        organizationId: ORG_ID,
+        outputType: 'report',
+        templateFamilyRef: null,
+        cadence: 'yearly',
+        sourceDataBinding: {},
+        isActive: true,
+        lastRunAt: null,
+        nextRunAt: null,
+        governanceLevel: 'standard',
+        createdAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).toThrow(ZodError);
   });
 
   it('validates a correct OutputAIGovernanceConfig', () => {
-    expect(() => OutputAIGovernanceConfigSchema.parse({
-      configId: '00000000-0000-4000-8000-cccccccccccc',
-      organizationId: ORG_ID,
-      outputType: 'report',
-      presetRef: 'report_builder',
-      evalGateRef: 'eval-gate-001',
-      qualityThresholds: { minEvidenceDensity: 0.7 },
-      createdAt: '2026-03-23T10:00:00.000Z',
-      updatedAt: '2026-03-23T10:00:00.000Z',
-    })).not.toThrow();
+    expect(() =>
+      OutputAIGovernanceConfigSchema.parse({
+        configId: '00000000-0000-4000-8000-cccccccccccc',
+        organizationId: ORG_ID,
+        outputType: 'report',
+        presetRef: 'report_builder',
+        evalGateRef: 'eval-gate-001',
+        qualityThresholds: { minEvidenceDensity: 0.7 },
+        createdAt: '2026-03-23T10:00:00.000Z',
+        updatedAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).not.toThrow();
   });
 
   it('rejects governance config with empty presetRef', () => {
-    expect(() => OutputAIGovernanceConfigSchema.parse({
-      configId: '00000000-0000-4000-8000-cccccccccccc',
-      organizationId: ORG_ID,
-      outputType: 'report',
-      presetRef: '',
-      evalGateRef: null,
-      qualityThresholds: {},
-      createdAt: '2026-03-23T10:00:00.000Z',
-      updatedAt: '2026-03-23T10:00:00.000Z',
-    })).toThrow(ZodError);
+    expect(() =>
+      OutputAIGovernanceConfigSchema.parse({
+        configId: '00000000-0000-4000-8000-cccccccccccc',
+        organizationId: ORG_ID,
+        outputType: 'report',
+        presetRef: '',
+        evalGateRef: null,
+        qualityThresholds: {},
+        createdAt: '2026-03-23T10:00:00.000Z',
+        updatedAt: '2026-03-23T10:00:00.000Z',
+      })
+    ).toThrow(ZodError);
   });
 
   it('validates CreateOutputArtifactParams', () => {
@@ -963,11 +994,15 @@ describe('Zod schema validation', () => {
   });
 
   it('validates RegisterTemplateFamilyParams', () => {
-    expect(() => RegisterTemplateFamilyParamsSchema.parse(makeTemplateFamilyParams())).not.toThrow();
+    expect(() =>
+      RegisterTemplateFamilyParamsSchema.parse(makeTemplateFamilyParams())
+    ).not.toThrow();
   });
 
   it('validates CreateRecurringProgramParams', () => {
-    expect(() => CreateRecurringProgramParamsSchema.parse(makeRecurringProgramParams())).not.toThrow();
+    expect(() =>
+      CreateRecurringProgramParamsSchema.parse(makeRecurringProgramParams())
+    ).not.toThrow();
   });
 
   it('validates SetAIGovernanceConfigParams', () => {

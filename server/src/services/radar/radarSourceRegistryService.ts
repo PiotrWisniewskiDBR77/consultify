@@ -212,7 +212,8 @@ function parseJsonArray(input: unknown): string[] {
 }
 
 function parseJsonObject(input: unknown): Record<string, unknown> {
-  if (input && typeof input === 'object' && !Array.isArray(input)) return input as Record<string, unknown>;
+  if (input && typeof input === 'object' && !Array.isArray(input))
+    return input as Record<string, unknown>;
   if (typeof input !== 'string') return {};
   try {
     const parsed = JSON.parse(input);
@@ -299,7 +300,11 @@ class RadarSourceRegistryService {
     return rows.map(mapSourceRow);
   }
 
-  async markRefreshed(sourceId: string, nowIso: string, refreshFrequencyMinutes: number): Promise<void> {
+  async markRefreshed(
+    sourceId: string,
+    nowIso: string,
+    refreshFrequencyMinutes: number
+  ): Promise<void> {
     const nextRefreshAt = new Date(
       new Date(nowIso).getTime() + refreshFrequencyMinutes * 60 * 1000
     ).toISOString();

@@ -162,9 +162,7 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     const selected = (nodes as Node[]).filter((n: Node) => n.selected);
     const frameIds = new Set(
       selected
-        .filter(
-          (n) => (n.type === 'frameNode' || n.type === 'groupNode') && !isNodeLocked(n)
-        )
+        .filter((n) => (n.type === 'frameNode' || n.type === 'groupNode') && !isNodeLocked(n))
         .map((n) => n.id)
     );
     if (frameIds.size === 0) return;

@@ -8,14 +8,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
+  loadPartnerRuntimeSummary,
+  type PartnerRuntimeSummary,
+  PartnerRuntimeSummaryStrip,
+} from '../../components/Partner/PartnerRuntimeSummaryStrip';
+import {
   loadPartnerTrustSnapshot,
   type PartnerTrustSnapshot,
 } from '../../components/Partner/partnerTrustRuntime';
-import {
-  loadPartnerRuntimeSummary,
-  PartnerRuntimeSummaryStrip,
-  type PartnerRuntimeSummary,
-} from '../../components/Partner/PartnerRuntimeSummaryStrip';
 import { TrustProgressionIndicator } from '../../components/Partner/TrustProgressionIndicator';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';

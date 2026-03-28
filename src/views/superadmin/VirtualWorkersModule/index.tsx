@@ -1,9 +1,9 @@
+import { BarChart3, Bot, Brain, MessageSquare, Sparkles, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { Bot, BarChart3, Brain, MessageSquare, Sparkles, Users } from 'lucide-react';
 
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
-import { WorkersList } from './WorkersList';
 import { WorkerDetail } from './WorkerDetail';
+import { WorkersList } from './WorkersList';
 
 export interface VirtualWorkersModuleProps {
   initialTab?: string;
@@ -41,11 +41,7 @@ export const VirtualWorkersModule: React.FC<VirtualWorkersModuleProps> = ({ init
       return <WorkersList onSelectWorker={handleSelectWorker} />;
     }
     return (
-      <WorkerDetail
-        workerId={selectedWorkerId}
-        activeTab={activeTab}
-        onBack={handleBackToList}
-      />
+      <WorkerDetail workerId={selectedWorkerId} activeTab={activeTab} onBack={handleBackToList} />
     );
   };
 

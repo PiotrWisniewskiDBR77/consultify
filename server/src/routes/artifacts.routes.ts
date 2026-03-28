@@ -13,7 +13,11 @@ router.use(verifyToken);
 router.use(requireV8OrgContext);
 router.use(v8OutputsGate);
 
-function getAuthContext(req: any): { userId: string; organizationId: string; roleKey: string | null } {
+function getAuthContext(req: any): {
+  userId: string;
+  organizationId: string;
+  roleKey: string | null;
+} {
   return {
     userId: String(req?.user?.id || req?.userId || ''),
     organizationId: String(req?.user?.organizationId || req?.organizationId || ''),
@@ -28,7 +32,9 @@ function canManageArtifactAccess(params: {
 }): boolean {
   if (params.ownerUserId && params.ownerUserId === params.userId) return true;
   const normalizedRole = String(params.roleKey || '').toUpperCase();
-  return normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER';
+  return (
+    normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER'
+  );
 }
 
 function buildActionTargetPayload(artifact: {
@@ -132,7 +138,7 @@ router.get(
     });
 
     res.json({ data: items, total: items.length, canonicalHome: 'outputs_library' });
-  }),
+  })
 );
 
 router.get(
@@ -146,7 +152,7 @@ router.get(
       limit: typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined,
     });
     res.json(result);
-  }),
+  })
 );
 
 router.get(
@@ -176,7 +182,7 @@ router.get(
       return res.status(404).json({ error: 'Artifact not found' });
     }
     res.json({ data: artifact });
-  }),
+  })
 );
 
 // Legacy compatibility alias. Canonical ArtifactRun contract lives under /api/artifact-runs/*.
@@ -195,7 +201,7 @@ router.post(
       requestedOutputType: req.body?.requestedOutputType,
     });
     res.status(201).json(result);
-  }),
+  })
 );
 
 router.get(
@@ -213,7 +219,7 @@ router.get(
     }
 
     res.json({ data: buildActionTargetPayload(artifact) });
-  }),
+  })
 );
 
 router.get(
@@ -232,7 +238,10 @@ router.get(
 
     const [links, grants] = await Promise.all([
       artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, organizationId),
-      artifactRegistryService.getArtifactAccessGrantsForArtifact(artifact.artifactId, organizationId),
+      artifactRegistryService.getArtifactAccessGrantsForArtifact(
+        artifact.artifactId,
+        organizationId
+      ),
     ]);
     res.json({
       artifactId: artifact.artifactId,
@@ -243,7 +252,7 @@ router.get(
       originLinks: links,
       accessGrants: grants,
     });
-  }),
+  })
 );
 
 router.post(
@@ -273,7 +282,7 @@ router.post(
       createdBy: userId,
     });
     res.status(201).json({ data: grant });
-  }),
+  })
 );
 
 router.post(
@@ -301,7 +310,7 @@ router.post(
     });
 
     res.status(200).json({ data: started });
-  }),
+  })
 );
 
 router.get(
@@ -320,10 +329,10 @@ router.get(
 
     const originLinks = await artifactRegistryService.getArtifactOriginLinks(
       artifact.artifactId,
-      organizationId,
+      organizationId
     );
     res.json({ data: artifact, originLinks });
-  }),
+  })
 );
 
 export default router;

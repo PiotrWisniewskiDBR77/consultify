@@ -77,7 +77,6 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             </div>
           );
         })()}
-
       </div>
     </div>
   );

@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import logger from '../../utils/Logger.js';
 import type { ParsedIntent, ProposalIntent } from './intentParser.js';
 
@@ -41,10 +42,7 @@ export interface SchemaOperation {
 // LLM caller (shared utility extracted from ChatToSchemaService)
 // ---------------------------------------------------------------------------
 
-export async function callLLM(
-  systemPrompt: string,
-  userMessage: string
-): Promise<string> {
+export async function callLLM(systemPrompt: string, userMessage: string): Promise<string> {
   const baseUrl = process.env.AI_API_URL || 'https://api.openai.com/v1';
   const apiKey = process.env.OPENAI_API_KEY || '';
   const model = process.env.AI_MODEL || 'gpt-4o-mini';
@@ -218,7 +216,10 @@ function parseProposalJSON(raw: string): SchemaProposal | null {
 
     const operations = (parsed.operations as SchemaOperation[]).map((op, i) => ({
       id: op.id ?? `op_${i + 1}`,
-      operation_type: op.operation_type ?? (op as unknown as Record<string, unknown>).operationType as string ?? 'unknown',
+      operation_type:
+        op.operation_type ??
+        ((op as unknown as Record<string, unknown>).operationType as string) ??
+        'unknown',
       target: op.target ?? { type: 'unknown' },
       payload: op.payload ?? {},
       dependencies: op.dependencies,
@@ -298,10 +299,10 @@ function applyTokenBudget(
     ...headerLines,
     '(Schema is large. Showing current table details only.)',
     ...currentTableLines,
-    otherTableNames.length > 0
-      ? `Other tables: ${otherTableNames.join(', ')}`
-      : '',
-  ].filter(Boolean).join('\n');
+    otherTableNames.length > 0 ? `Other tables: ${otherTableNames.join(', ')}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return { trimmedContext: trimmed, budgetMode: true };
 }

@@ -38,7 +38,11 @@ export function formatFieldValue(
     case 'linked_record':
       if (Array.isArray(value)) {
         return value
-          .map((v) => (typeof v === 'object' && v !== null ? (v as any).displayName ?? (v as any).id ?? '' : String(v)))
+          .map((v) =>
+            typeof v === 'object' && v !== null
+              ? ((v as any).displayName ?? (v as any).id ?? '')
+              : String(v)
+          )
           .join(', ');
       }
       return String(value);
@@ -46,7 +50,11 @@ export function formatFieldValue(
     case 'attachment':
       if (Array.isArray(value)) {
         return value
-          .map((v) => (typeof v === 'object' && v !== null ? (v as any).filename ?? (v as any).file_name ?? '' : String(v)))
+          .map((v) =>
+            typeof v === 'object' && v !== null
+              ? ((v as any).filename ?? (v as any).file_name ?? '')
+              : String(v)
+          )
           .join(', ');
       }
       return String(value);
@@ -147,9 +155,8 @@ async function streamCsvExport(
 
     for (const record of batch.records) {
       const data = (record as any).data ?? record;
-      const row = fields
-        .map((f) => escapeCsvValue(formatFieldValue(data[f.id], f)))
-        .join(',') + '\n';
+      const row =
+        fields.map((f) => escapeCsvValue(formatFieldValue(data[f.id], f))).join(',') + '\n';
       writer.write(row);
     }
 

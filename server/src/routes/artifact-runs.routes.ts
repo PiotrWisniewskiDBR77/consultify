@@ -35,7 +35,7 @@ router.post(
       requestedOutputType: req.body?.requestedOutputType,
     });
     res.status(201).json({ data: result });
-  }),
+  })
 );
 
 router.get(
@@ -44,13 +44,13 @@ router.get(
     const { organizationId } = getAuthContext(req);
     const run = await artifactRegistryService.getArtifactRun(
       String(req.params.runId || ''),
-      organizationId,
+      organizationId
     );
     if (!run) {
       return res.status(404).json({ error: 'ArtifactRun not found' });
     }
     res.json({ data: run });
-  }),
+  })
 );
 
 router.post(
@@ -64,7 +64,7 @@ router.post(
       actorUserId: userId,
     });
     res.status(200).json({ data: run });
-  }),
+  })
 );
 
 router.post(
@@ -89,7 +89,7 @@ router.post(
           : undefined,
     });
     res.status(200).json({ data: run });
-  }),
+  })
 );
 
 router.post(
@@ -103,7 +103,7 @@ router.post(
       actorUserId: userId,
     });
     res.status(201).json({ data: run });
-  }),
+  })
 );
 
 export default router;

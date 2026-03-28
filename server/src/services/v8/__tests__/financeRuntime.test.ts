@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbRun = vi.fn().mockResolvedValue({ success: true, changes: 1 });
 const mockDbGet = vi.fn().mockResolvedValue(null);
@@ -20,14 +20,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  getIngestionPipeline,
   getFailedIngestions,
-  retryIngestion,
+  getFinanceDashboard,
+  getIngestionPipeline,
   getLinkageHealth,
+  getStaleSourceRefreshes,
   getUnresolvedEscalations,
   resolveEscalation,
-  getStaleSourceRefreshes,
-  getFinanceDashboard,
+  retryIngestion,
 } from '../financeIntegrationService.js';
 
 const ORG_ID = '11111111-1111-4111-8111-111111111111';
@@ -172,7 +172,10 @@ describe('retryIngestion', () => {
 describe('getLinkageHealth', () => {
   it('returns linkage totals, per-type counts, and unlinked initiatives', async () => {
     mockDbAll.mockImplementation(async (sql: string) => {
-      if (sql.includes('v8_initiative_economics_linkages') && sql.includes('GROUP BY linkage_type')) {
+      if (
+        sql.includes('v8_initiative_economics_linkages') &&
+        sql.includes('GROUP BY linkage_type')
+      ) {
         return [
           { linkage_type: 'budget', cnt: 2 },
           { linkage_type: 'forecast', cnt: 1 },
@@ -250,7 +253,7 @@ describe('resolveEscalation', () => {
       ESCALATION_ID,
       ORG_ID,
       'Explained timing variance',
-      RESOLVER_ID,
+      RESOLVER_ID
     );
 
     expect(out?.resolution).toBe('Explained timing variance');
@@ -259,9 +262,9 @@ describe('resolveEscalation', () => {
   });
 
   it('rejects empty resolution', async () => {
-    await expect(
-      resolveEscalation(ESCALATION_ID, ORG_ID, '   ', RESOLVER_ID),
-    ).rejects.toThrow('resolution is required');
+    await expect(resolveEscalation(ESCALATION_ID, ORG_ID, '   ', RESOLVER_ID)).rejects.toThrow(
+      'resolution is required'
+    );
   });
 
   it('returns null when escalation does not exist', async () => {
@@ -304,10 +307,16 @@ describe('getFinanceDashboard', () => {
       if (sql.includes('GROUP BY readiness_state')) {
         return [{ state: 'ready', cnt: 3 }];
       }
-      if (sql.includes('v8_initiative_economics_linkages') && sql.includes('GROUP BY linkage_type')) {
+      if (
+        sql.includes('v8_initiative_economics_linkages') &&
+        sql.includes('GROUP BY linkage_type')
+      ) {
         return [{ linkage_type: 'budget', cnt: 1 }];
       }
-      if (sql.includes('v8_unreconciled_delta_escalations') && sql.includes('resolved_at IS NULL')) {
+      if (
+        sql.includes('v8_unreconciled_delta_escalations') &&
+        sql.includes('resolved_at IS NULL')
+      ) {
         return [
           {
             escalation_id: ESCALATION_ID,

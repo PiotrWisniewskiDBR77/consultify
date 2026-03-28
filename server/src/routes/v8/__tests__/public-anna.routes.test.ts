@@ -6,9 +6,9 @@ import { buildAnnaKnowledgeContext } from '../../../services/ai/annaKnowledgeSer
 import { getWorkerWithProfile } from '../../../services/ai/virtualWorkerService.js';
 import publicAnnaRouter, {
   ANNA_CHAT_RATE_LIMIT_MAX_REQUESTS,
-  resetAnnaFunnelEventRateLimitStoreForTests,
   buildAnnaRuntimeInstruction,
   resetAnnaChatRateLimitStoreForTests,
+  resetAnnaFunnelEventRateLimitStoreForTests,
 } from '../../public-anna.routes.js';
 
 vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
@@ -119,19 +119,25 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body.language).toBe('en');
     expect(res.body.fallbackReason).toBe('unsupported_language');
-    expect(res.body.message).toContain('supports full conversations in English, Polish, Spanish, German, Japanese, and Arabic');
+    expect(res.body.message).toContain(
+      'supports full conversations in English, Polish, Spanish, German, Japanese, and Arabic'
+    );
   });
 
   it('treats Spanish as a supported public Anna language and uses the normal runtime path', async () => {
     const app = createApp();
 
-    const res = await request(app)
-      .post('/api/public/anna/chat')
-      .send({ message: 'Hola, quiero saber mas del producto', sessionId: 'session-es', locale: 'es' });
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Hola, quiero saber mas del producto',
+      sessionId: 'session-es',
+      locale: 'es',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
-    expect(res.body.message).toBe('Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.');
+    expect(res.body.message).toBe(
+      'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.'
+    );
     expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
       expect.objectContaining({
         query: 'Hola, quiero saber mas del producto',
@@ -143,13 +149,17 @@ describe('Public Anna route guardrails', () => {
   it('treats German as a supported public Anna language and uses the normal runtime path', async () => {
     const app = createApp();
 
-    const res = await request(app)
-      .post('/api/public/anna/chat')
-      .send({ message: 'Hallo, ich mochte mehr uber das Produkt wissen', sessionId: 'session-de', locale: 'de' });
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Hallo, ich mochte mehr uber das Produkt wissen',
+      sessionId: 'session-de',
+      locale: 'de',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
-    expect(res.body.message).toBe('Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.');
+    expect(res.body.message).toBe(
+      'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.'
+    );
     expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
       expect.objectContaining({
         query: 'Hallo, ich mochte mehr uber das Produkt wissen',
@@ -161,13 +171,17 @@ describe('Public Anna route guardrails', () => {
   it('treats Japanese as a supported public Anna language and uses the normal runtime path', async () => {
     const app = createApp();
 
-    const res = await request(app)
-      .post('/api/public/anna/chat')
-      .send({ message: 'こんにちは、製品についてもっと知りたいです', sessionId: 'session-jp', locale: 'ja' });
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'こんにちは、製品についてもっと知りたいです',
+      sessionId: 'session-jp',
+      locale: 'ja',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
-    expect(res.body.message).toBe('AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。');
+    expect(res.body.message).toBe(
+      'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。'
+    );
     expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
       expect.objectContaining({
         query: 'こんにちは、製品についてもっと知りたいです',
@@ -179,14 +193,16 @@ describe('Public Anna route guardrails', () => {
   it('treats Arabic as a supported public Anna language and uses the normal runtime path', async () => {
     const app = createApp();
 
-    const res = await request(app)
-      .post('/api/public/anna/chat')
-      .send({ message: 'مرحبا، اريد معرفة المزيد عن المنتج', sessionId: 'session-ar', locale: 'ar' });
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'مرحبا، اريد معرفة المزيد عن المنتج',
+      sessionId: 'session-ar',
+      locale: 'ar',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
     expect(res.body.message).toBe(
-      'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
+      'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.'
     );
     expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -199,13 +215,17 @@ describe('Public Anna route guardrails', () => {
   it('returns the static degraded-state message when Anna providers are unavailable', async () => {
     const app = createApp();
 
-    const res = await request(app)
-      .post('/api/public/anna/chat')
-      .send({ message: 'Tell me about Consultify', sessionId: 'session-unavailable', locale: 'en' });
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Tell me about Consultify',
+      sessionId: 'session-unavailable',
+      locale: 'en',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
-    expect(res.body.message).toBe('Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.');
+    expect(res.body.message).toBe(
+      'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.'
+    );
   });
 
   it('accepts bounded public Anna funnel events for backend analytics continuity', async () => {
@@ -375,7 +395,10 @@ describe('Public Anna route guardrails', () => {
         locale: 'en',
         history: [
           { role: 'user', content: 'Tell me about Consultify for manufacturing transformation' },
-          { role: 'assistant', content: 'Consultify supports structured transformation planning and execution.' },
+          {
+            role: 'assistant',
+            content: 'Consultify supports structured transformation planning and execution.',
+          },
         ],
       });
 
@@ -410,9 +433,15 @@ describe('Public Anna route guardrails', () => {
     });
 
     expect(prompt).toContain('ANSWER SHAPE');
-    expect(prompt).toContain("Start with one direct sentence that answers the user's question in plain language.");
-    expect(prompt).toContain('Keep the answer focused on one primary topic unless the user explicitly asks for a comparison or a broader overview.');
-    expect(prompt).toContain('If public knowledge is insufficient for a precise claim, say that clearly and redirect to a safe public next step instead of guessing.');
+    expect(prompt).toContain(
+      "Start with one direct sentence that answers the user's question in plain language."
+    );
+    expect(prompt).toContain(
+      'Keep the answer focused on one primary topic unless the user explicitly asks for a comparison or a broader overview.'
+    );
+    expect(prompt).toContain(
+      'If public knowledge is insufficient for a precise claim, say that clearly and redirect to a safe public next step instead of guessing.'
+    );
   });
 
   it('adds recent conversation context for short follow-up questions', () => {
@@ -429,8 +458,14 @@ describe('Public Anna route guardrails', () => {
     });
 
     expect(prompt).toContain('RECENT CONVERSATION CONTEXT');
-    expect(prompt).toContain('Latest user topic: Tell me about Consultify for manufacturing transformation');
-    expect(prompt).toContain('Latest Anna reply: Consultify supports structured transformation planning and execution.');
-    expect(prompt).toContain('Answer the new question directly without restarting the conversation from zero.');
+    expect(prompt).toContain(
+      'Latest user topic: Tell me about Consultify for manufacturing transformation'
+    );
+    expect(prompt).toContain(
+      'Latest Anna reply: Consultify supports structured transformation planning and execution.'
+    );
+    expect(prompt).toContain(
+      'Answer the new question directly without restarting the conversation from zero.'
+    );
   });
 });

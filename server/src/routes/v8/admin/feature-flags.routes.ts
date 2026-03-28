@@ -1,9 +1,13 @@
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { type AuthRequest, requireSuperAdmin } from '../../../middleware/auth.middleware.js';
+import {
+  getAllOrgFlags,
+  getV8Flags,
+  setV8OrgFlag,
+} from '../../../services/v8/featureFlagService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { getV8Flags, setV8OrgFlag, getAllOrgFlags } from '../../../services/v8/featureFlagService.js';
 
 const router = Router();
 
@@ -13,7 +17,7 @@ router.get(
     const orgId = req.organizationId!;
     const flags = await getV8Flags(orgId);
     res.json({ data: flags, meta: { version: 'v8', organizationId: orgId } });
-  }),
+  })
 );
 
 router.get(
@@ -22,7 +26,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const allFlags = await getAllOrgFlags();
     res.json({ data: allFlags, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.put(
@@ -41,7 +45,7 @@ router.put(
     await setV8OrgFlag(orgId, module, enabled, req.userId);
     const flags = await getV8Flags(orgId);
     res.json({ data: flags, meta: { version: 'v8', updated: module } });
-  }),
+  })
 );
 
 export default router;

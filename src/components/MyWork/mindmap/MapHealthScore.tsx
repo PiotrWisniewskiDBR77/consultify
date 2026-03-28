@@ -33,7 +33,7 @@ interface BranchHealthResult {
 
 function collectDescendants(
   nodeId: string,
-  edges: Array<{ source: string; target: string; data?: any }>,
+  edges: Array<{ source: string; target: string; data?: any }>
 ): string[] {
   const children = edges
     .filter((e) => e.source === nodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural'))
@@ -46,19 +46,19 @@ function collectDescendants(
 export function computeBranchHealth(
   branchNodeId: string,
   nodes: Array<{ id: string; data: any; type?: string }>,
-  edges: Array<{ source: string; target: string; data?: any }>,
+  edges: Array<{ source: string; target: string; data?: any }>
 ): BranchHealthResult {
   const descendantIds = collectDescendants(branchNodeId, edges);
   const descendants = nodes.filter((n) => descendantIds.includes(n.id));
 
   const directChildren = edges.filter(
-    (e) => e.source === branchNodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural'),
+    (e) => e.source === branchNodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural')
   );
   const childCount = directChildren.length;
 
   const hasNotes = descendants.some((n) => n.data?.notes && String(n.data.notes).trim().length > 0);
   const hasEvidence = descendants.some(
-    (n) => Array.isArray(n.data?.evidenceLinks) && n.data.evidenceLinks.length > 0,
+    (n) => Array.isArray(n.data?.evidenceLinks) && n.data.evidenceLinks.length > 0
   );
 
   function maxDepth(nodeId: string, currentDepth: number): number {
@@ -76,7 +76,7 @@ export function computeBranchHealth(
   const evidenceScore = hasEvidence ? 100 : 0;
 
   const score = Math.round(
-    childScore * 0.3 + notesScore * 0.2 + evidenceScore * 0.2 + depthScore * 0.3,
+    childScore * 0.3 + notesScore * 0.2 + evidenceScore * 0.2 + depthScore * 0.3
   );
 
   const label: BranchHealthResult['label'] =

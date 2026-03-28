@@ -55,7 +55,12 @@ export interface FormsIndexProps {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.location.origin }: FormsIndexProps) {
+export function FormsIndex({
+  tableId,
+  tableFields,
+  locked,
+  baseUrl = window.location.origin,
+}: FormsIndexProps) {
   const { t } = useTranslation();
 
   const [forms, setForms] = useState<FormRecord[]>([]);
@@ -77,7 +82,9 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
     }
   }, [tableId, t]);
 
-  useEffect(() => { loadForms(); }, [loadForms]);
+  useEffect(() => {
+    loadForms();
+  }, [loadForms]);
 
   const handleCreate = useCallback(async () => {
     try {
@@ -95,39 +102,48 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
     }
   }, [tableId, loadForms, t]);
 
-  const handleDelete = useCallback(async (formId: string) => {
-    try {
-      await TablePlatformApi.deleteForm(formId);
-      setForms((prev) => prev.filter((f) => f.id !== formId));
-      setDeleteConfirm(null);
-      toast.success(t('formsIndex.deleted', 'Form deleted'));
-    } catch {
-      toast.error(t('formsIndex.deleteError', 'Failed to delete form'));
-    }
-  }, [t]);
+  const handleDelete = useCallback(
+    async (formId: string) => {
+      try {
+        await TablePlatformApi.deleteForm(formId);
+        setForms((prev) => prev.filter((f) => f.id !== formId));
+        setDeleteConfirm(null);
+        toast.success(t('formsIndex.deleted', 'Form deleted'));
+      } catch {
+        toast.error(t('formsIndex.deleteError', 'Failed to delete form'));
+      }
+    },
+    [t]
+  );
 
-  const handleCopyLink = useCallback((slug: string, formId: string) => {
-    navigator.clipboard.writeText(`${baseUrl}/forms/${slug}`);
-    setCopiedId(formId);
-    setTimeout(() => setCopiedId(null), 2000);
-  }, [baseUrl]);
+  const handleCopyLink = useCallback(
+    (slug: string, formId: string) => {
+      navigator.clipboard.writeText(`${baseUrl}/forms/${slug}`);
+      setCopiedId(formId);
+      setTimeout(() => setCopiedId(null), 2000);
+    },
+    [baseUrl]
+  );
 
-  const handleShareModeChange = useCallback(async (form: FormRecord, mode: ShareMode) => {
-    try {
-      await TablePlatformApi.updateForm(form.id, {
-        is_published: mode !== 'authenticated' || form.is_published,
-        config: {
-          ...form.config,
-          requireAuth: mode === 'authenticated',
-        },
-      });
-      await loadForms();
-      setShareMenuId(null);
-      toast.success(t('formsIndex.shareUpdated', 'Sharing updated'));
-    } catch {
-      toast.error(t('formsIndex.shareError', 'Failed to update sharing'));
-    }
-  }, [loadForms, t]);
+  const handleShareModeChange = useCallback(
+    async (form: FormRecord, mode: ShareMode) => {
+      try {
+        await TablePlatformApi.updateForm(form.id, {
+          is_published: mode !== 'authenticated' || form.is_published,
+          config: {
+            ...form.config,
+            requireAuth: mode === 'authenticated',
+          },
+        });
+        await loadForms();
+        setShareMenuId(null);
+        toast.success(t('formsIndex.shareUpdated', 'Sharing updated'));
+      } catch {
+        toast.error(t('formsIndex.shareError', 'Failed to update sharing'));
+      }
+    },
+    [loadForms, t]
+  );
 
   const getShareMode = (form: FormRecord): ShareMode => {
     if (form.config?.requireAuth) return 'authenticated';
@@ -136,8 +152,15 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
   };
 
   const getStatusLabel = (form: FormRecord) => {
-    if (form.is_published) return { label: t('formsIndex.active', 'Active'), color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
-    return { label: t('formsIndex.draft', 'Draft'), color: 'bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-gray-400' };
+    if (form.is_published)
+      return {
+        label: t('formsIndex.active', 'Active'),
+        color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      };
+    return {
+      label: t('formsIndex.draft', 'Draft'),
+      color: 'bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-gray-400',
+    };
   };
 
   // ── Editing mode ───────────────────────────────────────────────────────────
@@ -147,7 +170,10 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-2 dark:border-navy-700">
           <button
-            onClick={() => { setEditingForm(null); loadForms(); }}
+            onClick={() => {
+              setEditingForm(null);
+              loadForms();
+            }}
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-navy-800"
           >
             &larr; {t('formsIndex.backToList', 'Back to forms')}
@@ -207,7 +233,10 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
           {t('formsIndex.emptyTitle', 'Create a form to collect data')}
         </h3>
         <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('formsIndex.emptyDescription', 'Forms let you collect structured data from anyone — no login required for public forms.')}
+          {t(
+            'formsIndex.emptyDescription',
+            'Forms let you collect structured data from anyone — no login required for public forms.'
+          )}
         </p>
         {!locked && (
           <button
@@ -312,16 +341,30 @@ export function FormsIndex({ tableId, tableFields, locked, baseUrl = window.loca
 
                   {shareMenuId === form.id && (
                     <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-navy-700 dark:bg-navy-800">
-                      {([
-                        { mode: 'public' as ShareMode, icon: Globe, label: t('formsIndex.sharePublic', 'Public') },
-                        { mode: 'organization' as ShareMode, icon: Users, label: t('formsIndex.shareOrg', 'Organization only') },
-                        { mode: 'authenticated' as ShareMode, icon: Lock, label: t('formsIndex.shareAuth', 'Authenticated users') },
-                      ]).map(({ mode, icon: Icon, label }) => (
+                      {[
+                        {
+                          mode: 'public' as ShareMode,
+                          icon: Globe,
+                          label: t('formsIndex.sharePublic', 'Public'),
+                        },
+                        {
+                          mode: 'organization' as ShareMode,
+                          icon: Users,
+                          label: t('formsIndex.shareOrg', 'Organization only'),
+                        },
+                        {
+                          mode: 'authenticated' as ShareMode,
+                          icon: Lock,
+                          label: t('formsIndex.shareAuth', 'Authenticated users'),
+                        },
+                      ].map(({ mode, icon: Icon, label }) => (
                         <button
                           key={mode}
                           onClick={() => handleShareModeChange(form, mode)}
                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-navy-700 ${
-                            shareMode === mode ? 'font-medium text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300'
+                            shareMode === mode
+                              ? 'font-medium text-purple-600 dark:text-purple-400'
+                              : 'text-gray-700 dark:text-gray-300'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />

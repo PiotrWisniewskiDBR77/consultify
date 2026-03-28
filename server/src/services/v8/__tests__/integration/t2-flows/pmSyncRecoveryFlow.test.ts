@@ -9,7 +9,7 @@
  *       → fleet health updated → pause active
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock DB layer ──────────────────────────────────────────────────────────
 
@@ -29,24 +29,10 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 // ── Real service imports ───────────────────────────────────────────────────
 
-import {
-  setConnectorAuthState,
-  getConnectorAuthState,
-} from '../../../pmSyncTruthService.js';
-
-import {
-  classifyFailure,
-  checkEscalationLevel,
-} from '../../../pmSyncAuthService.js';
-
-import {
-  createDeadLetterRecord,
-} from '../../../replayDeadLetterService.js';
-
-import {
-  recordFleetHealth,
-  initiateEmergencyPause,
-} from '../../../operatorAdminService.js';
+import { initiateEmergencyPause, recordFleetHealth } from '../../../operatorAdminService.js';
+import { checkEscalationLevel, classifyFailure } from '../../../pmSyncAuthService.js';
+import { getConnectorAuthState, setConnectorAuthState } from '../../../pmSyncTruthService.js';
+import { createDeadLetterRecord } from '../../../replayDeadLetterService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 

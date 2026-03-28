@@ -4,30 +4,30 @@
  */
 
 import {
+  AlignLeft,
+  Calendar,
   Check,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
   ClipboardCopy,
+  DollarSign,
+  ExternalLink,
   Eye,
   EyeOff,
-  ExternalLink,
+  Globe,
   GripVertical,
   Hash,
-  Calendar,
-  CheckSquare,
   Link2,
-  Mail,
-  Phone,
-  Type,
-  AlignLeft,
   List,
-  Percent,
-  DollarSign,
-  Paperclip,
-  Globe,
   Loader2,
+  Mail,
+  Paperclip,
+  Percent,
+  Phone,
   Save,
   Trash2,
+  Type,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -144,10 +144,7 @@ export default function FormBuilder({
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const fieldMap = useMemo(
-    () => new Map(tableFields.map((f) => [f.id, f])),
-    [tableFields]
-  );
+  const fieldMap = useMemo(() => new Map(tableFields.map((f) => [f.id, f])), [tableFields]);
 
   const publicUrl = `${baseUrl}/forms/${slug}`;
 
@@ -171,7 +168,19 @@ export default function FormBuilder({
     } finally {
       setSaving(false);
     }
-  }, [name, description, slug, isPublished, fieldConfigs, submitMessage, redirectUrl, allowMultiple, requireAuth, notificationEmail, onSave]);
+  }, [
+    name,
+    description,
+    slug,
+    isPublished,
+    fieldConfigs,
+    submitMessage,
+    redirectUrl,
+    allowMultiple,
+    requireAuth,
+    notificationEmail,
+    onSave,
+  ]);
 
   const handleCopyUrl = useCallback(() => {
     navigator.clipboard.writeText(publicUrl);
@@ -179,14 +188,11 @@ export default function FormBuilder({
     setTimeout(() => setCopied(false), 2000);
   }, [publicUrl]);
 
-  const updateFieldConfig = useCallback(
-    (fieldId: string, updates: Partial<FormFieldConfig>) => {
-      setFieldConfigs((prev) =>
-        prev.map((fc) => (fc.fieldId === fieldId ? { ...fc, ...updates } : fc))
-      );
-    },
-    []
-  );
+  const updateFieldConfig = useCallback((fieldId: string, updates: Partial<FormFieldConfig>) => {
+    setFieldConfigs((prev) =>
+      prev.map((fc) => (fc.fieldId === fieldId ? { ...fc, ...updates } : fc))
+    );
+  }, []);
 
   const moveField = useCallback((fromIdx: number, toIdx: number) => {
     setFieldConfigs((prev) => {
@@ -318,8 +324,12 @@ export default function FormBuilder({
             fieldConfigs={fieldConfigs}
             fieldMap={fieldMap}
             onUpdate={updateFieldConfig}
-            onMoveUp={(idx) => { if (idx > 0) moveField(idx, idx - 1); }}
-            onMoveDown={(idx) => { if (idx < fieldConfigs.length - 1) moveField(idx, idx + 1); }}
+            onMoveUp={(idx) => {
+              if (idx > 0) moveField(idx, idx - 1);
+            }}
+            onMoveDown={(idx) => {
+              if (idx < fieldConfigs.length - 1) moveField(idx, idx + 1);
+            }}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -370,8 +380,15 @@ export default function FormBuilder({
 
 function isComputedField(fieldType: FieldType | string): boolean {
   return [
-    'createdTime', 'createdBy', 'lastModifiedTime', 'lastModifiedBy',
-    'autoNumber', 'formula', 'count', 'lookup', 'rollup',
+    'createdTime',
+    'createdBy',
+    'lastModifiedTime',
+    'lastModifiedBy',
+    'autoNumber',
+    'formula',
+    'count',
+    'lookup',
+    'rollup',
   ].includes(fieldType);
 }
 
@@ -408,7 +425,10 @@ function FieldListPanel({
   return (
     <div className="space-y-2">
       <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-        {t('formBuilder.fieldListHint', 'Drag to reorder. Toggle visibility and configure each field.')}
+        {t(
+          'formBuilder.fieldListHint',
+          'Drag to reorder. Toggle visibility and configure each field.'
+        )}
       </p>
       {fieldConfigs.map((fc, idx) => {
         const field = fieldMap.get(fc.fieldId);
@@ -439,7 +459,10 @@ function FieldListPanel({
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="flex shrink-0 flex-col gap-0.5">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onMoveUp(idx); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveUp(idx);
+                  }}
                   disabled={idx === 0}
                   className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
                   title={t('formBuilder.moveUp', 'Move up')}
@@ -447,7 +470,10 @@ function FieldListPanel({
                   <ChevronUp className="h-3 w-3" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onMoveDown(idx); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveDown(idx);
+                  }}
                   disabled={idx === fieldConfigs.length - 1}
                   className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
                   title={t('formBuilder.moveDown', 'Move down')}
@@ -479,7 +505,9 @@ function FieldListPanel({
                 }`}
                 title={t('formBuilder.toggleRequired', 'Toggle required')}
               >
-                {fc.required ? t('formBuilder.required', 'Required') : t('formBuilder.optional', 'Optional')}
+                {fc.required
+                  ? t('formBuilder.required', 'Required')
+                  : t('formBuilder.optional', 'Optional')}
               </button>
 
               {/* Visibility toggle */}
@@ -534,7 +562,10 @@ function FieldListPanel({
                       onChange={(e) =>
                         onUpdate(fc.fieldId, { helpText: e.target.value || undefined })
                       }
-                      placeholder={t('formBuilder.helpTextPlaceholder', 'Instructions for this field...')}
+                      placeholder={t(
+                        'formBuilder.helpTextPlaceholder',
+                        'Instructions for this field...'
+                      )}
                       className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
@@ -582,7 +613,10 @@ function FieldListPanel({
                         value={fc.conditionalVisibility.fieldId}
                         onChange={(e) =>
                           onUpdate(fc.fieldId, {
-                            conditionalVisibility: { ...fc.conditionalVisibility!, fieldId: e.target.value },
+                            conditionalVisibility: {
+                              ...fc.conditionalVisibility!,
+                              fieldId: e.target.value,
+                            },
                           })
                         }
                         className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-navy-600 dark:bg-navy-800 dark:text-white"
@@ -612,9 +646,13 @@ function FieldListPanel({
                         className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-navy-600 dark:bg-navy-800 dark:text-white"
                       >
                         <option value="equals">{t('formBuilder.opEquals', 'equals')}</option>
-                        <option value="not_equals">{t('formBuilder.opNotEquals', 'not equals')}</option>
+                        <option value="not_equals">
+                          {t('formBuilder.opNotEquals', 'not equals')}
+                        </option>
                         <option value="is_empty">{t('formBuilder.opIsEmpty', 'is empty')}</option>
-                        <option value="is_not_empty">{t('formBuilder.opIsNotEmpty', 'is not empty')}</option>
+                        <option value="is_not_empty">
+                          {t('formBuilder.opIsNotEmpty', 'is not empty')}
+                        </option>
                       </select>
                       {fc.conditionalVisibility.operator !== 'is_empty' &&
                         fc.conditionalVisibility.operator !== 'is_not_empty' && (
@@ -775,7 +813,10 @@ function SettingsPanel({
           className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
         />
         <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-          {t('formBuilder.notificationEmailHint', 'Receive an email when a new response is submitted')}
+          {t(
+            'formBuilder.notificationEmailHint',
+            'Receive an email when a new response is submitted'
+          )}
         </p>
       </div>
 
@@ -834,7 +875,13 @@ interface FormPreviewProps {
   submitMessage: string;
 }
 
-function FormPreview({ name, description, fieldConfigs, fieldMap, submitMessage }: FormPreviewProps) {
+function FormPreview({
+  name,
+  description,
+  fieldConfigs,
+  fieldMap,
+  submitMessage,
+}: FormPreviewProps) {
   const { t } = useTranslation();
   const visibleFields = fieldConfigs.filter((fc) => !fc.hidden);
 
@@ -850,13 +897,7 @@ function FormPreview({ name, description, fieldConfigs, fieldMap, submitMessage 
           {visibleFields.map((fc) => {
             const field = fieldMap.get(fc.fieldId);
             if (!field) return null;
-            return (
-              <PreviewField
-                key={fc.fieldId}
-                field={field}
-                config={fc}
-              />
-            );
+            return <PreviewField key={fc.fieldId} field={field} config={fc} />;
           })}
         </div>
 
@@ -871,13 +912,7 @@ function FormPreview({ name, description, fieldConfigs, fieldMap, submitMessage 
   );
 }
 
-function PreviewField({
-  field,
-  config,
-}: {
-  field: TablePlatformField;
-  config: FormFieldConfig;
-}) {
+function PreviewField({ field, config }: { field: TablePlatformField; config: FormFieldConfig }) {
   const label = config.label || field.name;
 
   return (
@@ -886,9 +921,7 @@ function PreviewField({
         {label}
         {config.required && <span className="ml-1 text-red-500">*</span>}
       </label>
-      {config.helpText && (
-        <p className="mb-1 text-xs text-gray-400">{config.helpText}</p>
-      )}
+      {config.helpText && <p className="mb-1 text-xs text-gray-400">{config.helpText}</p>}
       {renderPreviewInput(field.fieldType)}
     </div>
   );
@@ -902,13 +935,7 @@ function renderPreviewInput(fieldType: FieldType | string) {
     case 'longText':
       return <textarea disabled rows={3} className={base} />;
     case 'checkbox':
-      return (
-        <input
-          type="checkbox"
-          disabled
-          className="h-4 w-4 rounded border-gray-300"
-        />
-      );
+      return <input type="checkbox" disabled className="h-4 w-4 rounded border-gray-300" />;
     case 'date':
       return <input type="date" disabled className={base} />;
     case 'number':

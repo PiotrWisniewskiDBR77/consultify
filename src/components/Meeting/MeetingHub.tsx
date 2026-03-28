@@ -22,10 +22,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
-import {
-  PreviewMetaCard,
-  type MetaPill,
-} from '@/components/shared/PreviewPane';
+import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Api } from '@/services/api';
 
@@ -421,7 +418,10 @@ export const MeetingHub: React.FC = () => {
   const handleAddDecision = async () => {
     if (!activeMeeting || !decisionDraft.trim()) return;
     try {
-      const response = await (Api as any).addMeetingDecision?.(activeMeeting.id, decisionDraft.trim());
+      const response = await (Api as any).addMeetingDecision?.(
+        activeMeeting.id,
+        decisionDraft.trim()
+      );
       const meeting = response?.meeting as MeetingItem | undefined;
       if (!meeting) throw new Error('Decision was not created');
       setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
@@ -450,9 +450,7 @@ export const MeetingHub: React.FC = () => {
       setMeetings((prev) => prev.map((item) => (item.id === meetingId ? updated : item)));
     } catch (error) {
       console.error('Failed to update follow-up status:', error);
-      toast.error(
-        t('meeting.followUp.errors.statusFailed', 'Failed to update follow-up status')
-      );
+      toast.error(t('meeting.followUp.errors.statusFailed', 'Failed to update follow-up status'));
     }
   };
 
@@ -512,9 +510,7 @@ export const MeetingHub: React.FC = () => {
           <MeetingDetailView
             meeting={activeMeeting}
             isPolish={isPolish}
-            operatorBrief={
-              operatorBrief?.meetingId === activeMeeting.id ? operatorBrief : null
-            }
+            operatorBrief={operatorBrief?.meetingId === activeMeeting.id ? operatorBrief : null}
             operatorBriefLoading={operatorBriefLoading}
             onBack={() => setActiveDocumentId(null)}
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
@@ -937,17 +933,17 @@ const MeetingPreview: React.FC<{
   isPolish: boolean;
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
-}> = ({
-  meeting,
-  isPolish,
-  operatorBrief,
-  operatorBriefLoading,
-}) => {
+}> = ({ meeting, isPolish, operatorBrief, operatorBriefLoading }) => {
   const pills: MetaPill[] = [
     {
-      label: meeting.status === 'completed'
-        ? isPolish ? 'Zamknięte' : 'Completed'
-        : isPolish ? 'Zaplanowane' : 'Scheduled',
+      label:
+        meeting.status === 'completed'
+          ? isPolish
+            ? 'Zamknięte'
+            : 'Completed'
+          : isPolish
+            ? 'Zaplanowane'
+            : 'Scheduled',
       className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     },
     {
@@ -1037,7 +1033,9 @@ const MeetingOperatorBriefCard: React.FC<{
       </div>
     ) : (
       <div className="text-sm text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Brak briefingu operatora dla tego spotkania.' : 'No operator brief for this meeting.'}
+        {isPolish
+          ? 'Brak briefingu operatora dla tego spotkania.'
+          : 'No operator brief for this meeting.'}
       </div>
     )}
   </div>

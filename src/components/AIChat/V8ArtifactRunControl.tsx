@@ -4,26 +4,27 @@ import {
   GitBranch,
   Loader2,
   RefreshCw,
-  Sparkles,
   ShieldCheck,
+  Sparkles,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  useV8AcceptArtifactRunPlan,
-  useV8CreateArtifactRunFromChat,
-  useV8MaterializeArtifactRun,
-  useV8RetryArtifactRun,
-} from '@/hooks/useV8ArtifactRuns';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
   ArtifactRunPlan,
   ArtifactRunRecord,
 } from '@/hooks/useV8ArtifactRuns';
+import {
+  useV8AcceptArtifactRunPlan,
+  useV8CreateArtifactRunFromChat,
+  useV8MaterializeArtifactRun,
+  useV8RetryArtifactRun,
+} from '@/hooks/useV8ArtifactRuns';
+import { useV8CaptureSnapshot, useV8Snapshots } from '@/hooks/useV8Chat';
 import {
   useV8ApproveExecutionRun,
   useV8ExecutionProposals,
@@ -33,7 +34,6 @@ import {
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
-import { useV8CaptureSnapshot, useV8Snapshots } from '@/hooks/useV8Chat';
 
 interface V8ArtifactRunControlProps {
   conversationId: string | null;
@@ -90,7 +90,7 @@ export function V8ArtifactRunControl({
   const { t } = useTranslation();
   const { showV8Chat } = useV8Gate();
   const { data: snapshots, isLoading: snapshotsLoading } = useV8Snapshots(
-    showV8Chat && conversationId ? conversationId : undefined,
+    showV8Chat && conversationId ? conversationId : undefined
   );
   const captureSnapshot = useV8CaptureSnapshot();
   const createRun = useV8CreateArtifactRunFromChat();
@@ -123,8 +123,10 @@ export function V8ArtifactRunControl({
   }, [conversationId, defaultGoal]);
 
   const selectedOutput = useMemo(
-    () => OUTPUT_OPTIONS.find((option) => option.outputType === selectedOutputType) ?? OUTPUT_OPTIONS[0],
-    [selectedOutputType],
+    () =>
+      OUTPUT_OPTIONS.find((option) => option.outputType === selectedOutputType) ??
+      OUTPUT_OPTIONS[0],
+    [selectedOutputType]
   );
 
   if (!showV8Chat || !conversationId) return null;
@@ -142,8 +144,7 @@ export function V8ArtifactRunControl({
   const canPlan = Boolean(latestSnapshot?.snapshotId) && goal.trim().length > 0 && !isBusy;
   const canAccept =
     currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
-  const requiresSheetTableTarget =
-    (currentRun?.plan.outputType ?? selectedOutputType) === 'sheet';
+  const requiresSheetTableTarget = (currentRun?.plan.outputType ?? selectedOutputType) === 'sheet';
   const hasSheetTableTarget = sheetTableId.trim().length > 0;
   const canMaterialize =
     currentRun?.runStatus === 'proposal_created' &&
@@ -173,14 +174,12 @@ export function V8ArtifactRunControl({
       });
       setCurrentRun(result.run);
       setCurrentPlan(result.artifactPlan);
-      toast.success(
-        t('v8.artifactRun.planCreated', 'Artifact plan created from governed chat'),
-      );
+      toast.success(t('v8.artifactRun.planCreated', 'Artifact plan created from governed chat'));
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.planFailed', 'Failed to create artifact plan'),
+          : t('v8.artifactRun.planFailed', 'Failed to create artifact plan')
       );
     }
   };
@@ -201,13 +200,13 @@ export function V8ArtifactRunControl({
         sourceContextRefs: [],
       });
       toast.success(
-        t('v8.artifactRun.snapshotCaptured', 'Governed V8 snapshot captured for this conversation'),
+        t('v8.artifactRun.snapshotCaptured', 'Governed V8 snapshot captured for this conversation')
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.snapshotCaptureFailed', 'Failed to capture governed V8 snapshot'),
+          : t('v8.artifactRun.snapshotCaptureFailed', 'Failed to capture governed V8 snapshot')
       );
     }
   };
@@ -218,14 +217,12 @@ export function V8ArtifactRunControl({
       const updated = await acceptPlan.mutateAsync(currentRun.runId);
       setCurrentRun(updated);
       setCurrentPlan(updated.plan);
-      toast.success(
-        t('v8.artifactRun.accepted', 'Artifact plan accepted and proposal created'),
-      );
+      toast.success(t('v8.artifactRun.accepted', 'Artifact plan accepted and proposal created'));
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.acceptFailed', 'Failed to accept artifact plan'),
+          : t('v8.artifactRun.acceptFailed', 'Failed to accept artifact plan')
       );
     }
   };
@@ -241,7 +238,7 @@ export function V8ArtifactRunControl({
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.retryFailed', 'Failed to retry artifact plan'),
+          : t('v8.artifactRun.retryFailed', 'Failed to retry artifact plan')
       );
     }
   };
@@ -264,13 +261,13 @@ export function V8ArtifactRunControl({
       setCurrentRun(completed);
       setCurrentPlan(completed.plan);
       toast.success(
-        t('v8.artifactRun.materialized', 'Artifact run materialized into a canonical output'),
+        t('v8.artifactRun.materialized', 'Artifact run materialized into a canonical output')
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.materializeFailed', 'Failed to materialize artifact run'),
+          : t('v8.artifactRun.materializeFailed', 'Failed to materialize artifact run')
       );
     }
   };
@@ -279,14 +276,12 @@ export function V8ArtifactRunControl({
     if (!currentRun?.executionRunId) return;
     try {
       await submitExecutionReview.mutateAsync(currentRun.executionRunId);
-      toast.success(
-        t('v8.artifactRun.reviewSubmitted', 'Governed execution submitted for review'),
-      );
+      toast.success(t('v8.artifactRun.reviewSubmitted', 'Governed execution submitted for review'));
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.reviewSubmitFailed', 'Failed to submit governed execution review'),
+          : t('v8.artifactRun.reviewSubmitFailed', 'Failed to submit governed execution review')
       );
     }
   };
@@ -303,7 +298,7 @@ export function V8ArtifactRunControl({
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.reviewApproveFailed', 'Failed to approve governed execution'),
+          : t('v8.artifactRun.reviewApproveFailed', 'Failed to approve governed execution')
       );
     }
   };
@@ -320,7 +315,7 @@ export function V8ArtifactRunControl({
       toast.error(
         error instanceof Error
           ? error.message
-          : t('v8.artifactRun.reviewRejectFailed', 'Failed to reject governed execution'),
+          : t('v8.artifactRun.reviewRejectFailed', 'Failed to reject governed execution')
       );
     }
   };
@@ -343,7 +338,7 @@ export function V8ArtifactRunControl({
             : canCaptureSnapshot
               ? t(
                   'v8.artifactRun.captureFirst',
-                  'Capture a V8 snapshot to start governed output planning',
+                  'Capture a V8 snapshot to start governed output planning'
                 )
               : t('v8.artifactRun.noSnapshot', 'Capture a V8 snapshot before planning an output')
         }
@@ -367,15 +362,18 @@ export function V8ArtifactRunControl({
               </div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {latestSnapshot?.snapshotId
-                  ? t('v8.artifactRun.snapshotReady', 'Uses the latest V8 context snapshot from this conversation.')
+                  ? t(
+                      'v8.artifactRun.snapshotReady',
+                      'Uses the latest V8 context snapshot from this conversation.'
+                    )
                   : canCaptureSnapshot
                     ? t(
                         'v8.artifactRun.snapshotMissingButCapturable',
-                        'This conversation needs one governed V8 snapshot before output planning can start.',
+                        'This conversation needs one governed V8 snapshot before output planning can start.'
                       )
                     : t(
                         'v8.artifactRun.snapshotMissing',
-                        'This conversation needs a V8 snapshot before output planning can start.',
+                        'This conversation needs a V8 snapshot before output planning can start.'
                       )}
               </div>
             </div>
@@ -419,7 +417,9 @@ export function V8ArtifactRunControl({
           <select
             data-testid="v8-artifact-run-output-type"
             value={selectedOutputType}
-            onChange={(event) => setSelectedOutputType(event.target.value as ArtifactPlanOutputType)}
+            onChange={(event) =>
+              setSelectedOutputType(event.target.value as ArtifactPlanOutputType)
+            }
             className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
             {OUTPUT_OPTIONS.map((option) => (
@@ -440,14 +440,14 @@ export function V8ArtifactRunControl({
                 onChange={(event) => setSheetTableId(event.target.value)}
                 placeholder={t(
                   'v8.artifactRun.sheetTableIdPlaceholder',
-                  'Enter the governed table ID to register/materialize',
+                  'Enter the governed table ID to register/materialize'
                 )}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                 {t(
                   'v8.artifactRun.sheetTableIdHint',
-                  'This bounded sheet path materializes into an existing governed table artifact.',
+                  'This bounded sheet path materializes into an existing governed table artifact.'
                 )}
               </div>
             </>
@@ -463,7 +463,7 @@ export function V8ArtifactRunControl({
             rows={4}
             placeholder={t(
               'v8.artifactRun.goalPlaceholder',
-              'Describe what output should be generated from this conversation.',
+              'Describe what output should be generated from this conversation.'
             )}
             className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />

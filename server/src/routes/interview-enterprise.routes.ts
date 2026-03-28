@@ -7,13 +7,13 @@
  * Base interview CRUD remains in interview.routes.ts via InterviewController.
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { interviewEnterpriseService } from '../services/interviewEnterpriseService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -42,10 +42,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ segmentName: z.string().min(1).max(200), criteria: z.record(z.string(), z.unknown()).optional() });
+    const schema = z.object({
+      segmentName: z.string().min(1).max(200),
+      criteria: z.record(z.string(), z.unknown()).optional(),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const segment = await interviewEnterpriseService.createSegment(identity.orgId, req.params.sessionId, { ...parsed.data, criteria: parsed.data.criteria || {} });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const segment = await interviewEnterpriseService.createSegment(
+      identity.orgId,
+      req.params.sessionId,
+      { ...parsed.data, criteria: parsed.data.criteria || {} }
+    );
     res.status(201).json(segment);
   })
 );
@@ -55,7 +65,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const segments = await interviewEnterpriseService.getSegments(identity.orgId, req.params.sessionId);
+    const segments = await interviewEnterpriseService.getSegments(
+      identity.orgId,
+      req.params.sessionId
+    );
     res.json({ segments });
   })
 );
@@ -65,10 +78,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ segmentId: z.string().optional(), targetCount: z.number().int().min(1) });
+    const schema = z.object({
+      segmentId: z.string().optional(),
+      targetCount: z.number().int().min(1),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const quota = await interviewEnterpriseService.createQuota(identity.orgId, req.params.sessionId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const quota = await interviewEnterpriseService.createQuota(
+      identity.orgId,
+      req.params.sessionId,
+      parsed.data
+    );
     res.status(201).json(quota);
   })
 );
@@ -99,8 +122,15 @@ router.post(
       anonymityMode: z.enum(['identified', 'anonymous', 'pseudonymous']).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const dist = await interviewEnterpriseService.createDistribution(identity.orgId, req.params.sessionId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const dist = await interviewEnterpriseService.createDistribution(
+      identity.orgId,
+      req.params.sessionId,
+      parsed.data
+    );
     res.status(201).json(dist);
   })
 );
@@ -110,7 +140,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const distributions = await interviewEnterpriseService.getDistributions(identity.orgId, req.params.sessionId);
+    const distributions = await interviewEnterpriseService.getDistributions(
+      identity.orgId,
+      req.params.sessionId
+    );
     res.json({ distributions });
   })
 );
@@ -120,7 +153,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const stats = await interviewEnterpriseService.getDistributionStats(identity.orgId, req.params.sessionId);
+    const stats = await interviewEnterpriseService.getDistributionStats(
+      identity.orgId,
+      req.params.sessionId
+    );
     res.json(stats);
   })
 );
@@ -130,8 +166,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await interviewEnterpriseService.markDistributionSent(identity.orgId, req.params.distributionId);
-    if (!ok) { res.status(404).json({ error: 'Distribution not found' }); return; }
+    const ok = await interviewEnterpriseService.markDistributionSent(
+      identity.orgId,
+      req.params.distributionId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Distribution not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -147,8 +189,15 @@ router.post(
       maxReminders: z.number().int().min(1).max(10).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const schedule = await interviewEnterpriseService.createReminderSchedule(identity.orgId, req.params.sessionId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const schedule = await interviewEnterpriseService.createReminderSchedule(
+      identity.orgId,
+      req.params.sessionId,
+      parsed.data
+    );
     res.status(201).json(schedule);
   })
 );
@@ -163,7 +212,11 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
-    const logs = await interviewEnterpriseService.getEvidenceAccessLog(identity.orgId, req.params.evidenceId, limit);
+    const logs = await interviewEnterpriseService.getEvidenceAccessLog(
+      identity.orgId,
+      req.params.evidenceId,
+      limit
+    );
     res.json({ logs });
   })
 );
@@ -183,8 +236,15 @@ router.post(
       generatedBy: z.string().optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const snapshot = await interviewEnterpriseService.createDiagnosticsSnapshot(identity.orgId, req.params.sessionId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const snapshot = await interviewEnterpriseService.createDiagnosticsSnapshot(
+      identity.orgId,
+      req.params.sessionId,
+      parsed.data
+    );
     res.status(201).json(snapshot);
   })
 );
@@ -195,7 +255,11 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const snapshotType = req.query.type ? String(req.query.type) : undefined;
-    const snapshots = await interviewEnterpriseService.getDiagnosticsSnapshots(identity.orgId, req.params.sessionId, snapshotType);
+    const snapshots = await interviewEnterpriseService.getDiagnosticsSnapshots(
+      identity.orgId,
+      req.params.sessionId,
+      snapshotType
+    );
     res.json({ snapshots });
   })
 );
@@ -218,8 +282,15 @@ router.post(
       evidenceRefs: z.array(z.string()).optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const finding = await interviewEnterpriseService.createFinding(identity.orgId, req.params.sessionId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const finding = await interviewEnterpriseService.createFinding(
+      identity.orgId,
+      req.params.sessionId,
+      parsed.data
+    );
     res.status(201).json(finding);
   })
 );
@@ -230,7 +301,11 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const status = req.query.status ? String(req.query.status) : undefined;
-    const findings = await interviewEnterpriseService.getFindings(identity.orgId, req.params.sessionId, status);
+    const findings = await interviewEnterpriseService.getFindings(
+      identity.orgId,
+      req.params.sessionId,
+      status
+    );
     res.json({ findings });
   })
 );
@@ -242,9 +317,19 @@ router.post(
     if (!identity) return;
     const schema = z.object({ initiativeId: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const ok = await interviewEnterpriseService.promoteFindingToInitiative(identity.orgId, req.params.findingId, parsed.data.initiativeId);
-    if (!ok) { res.status(404).json({ error: 'Finding not found' }); return; }
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const ok = await interviewEnterpriseService.promoteFindingToInitiative(
+      identity.orgId,
+      req.params.findingId,
+      parsed.data.initiativeId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Finding not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -254,11 +339,23 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const schema = z.object({ status: z.enum(['identified', 'recommended', 'initiative_created', 'dismissed']) });
+    const schema = z.object({
+      status: z.enum(['identified', 'recommended', 'initiative_created', 'dismissed']),
+    });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const ok = await interviewEnterpriseService.updateFindingStatus(identity.orgId, req.params.findingId, parsed.data.status);
-    if (!ok) { res.status(404).json({ error: 'Finding not found' }); return; }
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const ok = await interviewEnterpriseService.updateFindingStatus(
+      identity.orgId,
+      req.params.findingId,
+      parsed.data.status
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Finding not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -273,7 +370,11 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const segmentId = req.query.segmentId ? String(req.query.segmentId) : undefined;
-    const result = await interviewEnterpriseService.checkCohortSize(identity.orgId, req.params.sessionId, segmentId);
+    const result = await interviewEnterpriseService.checkCohortSize(
+      identity.orgId,
+      req.params.sessionId,
+      segmentId
+    );
     res.json(result);
   })
 );
@@ -283,7 +384,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const result = await interviewEnterpriseService.checkExportGating(identity.orgId, req.params.sessionId);
+    const result = await interviewEnterpriseService.checkExportGating(
+      identity.orgId,
+      req.params.sessionId
+    );
     res.json(result);
   })
 );
@@ -300,15 +404,26 @@ router.post(
     const schema = z.object({
       contextData: z.record(z.string(), z.unknown()),
       confidenceScores: z.record(z.string(), z.number()).optional(),
-      sourceCitations: z.array(z.object({
-        sessionId: z.string(),
-        questionId: z.string().optional(),
-        snippet: z.string(),
-      })).optional(),
+      sourceCitations: z
+        .array(
+          z.object({
+            sessionId: z.string(),
+            questionId: z.string().optional(),
+            snippet: z.string(),
+          })
+        )
+        .optional(),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-    const version = await interviewEnterpriseService.createContextVersion(identity.orgId, identity.userId, parsed.data);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const version = await interviewEnterpriseService.createContextVersion(
+      identity.orgId,
+      identity.userId,
+      parsed.data
+    );
     res.status(201).json(version);
   })
 );
@@ -329,8 +444,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const version = await interviewEnterpriseService.getContextVersion(identity.orgId, Number(req.params.version));
-    if (!version) { res.status(404).json({ error: 'Version not found' }); return; }
+    const version = await interviewEnterpriseService.getContextVersion(
+      identity.orgId,
+      Number(req.params.version)
+    );
+    if (!version) {
+      res.status(404).json({ error: 'Version not found' });
+      return;
+    }
     res.json(version);
   })
 );
@@ -340,8 +461,15 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await interviewEnterpriseService.signOffContextVersion(identity.orgId, req.params.versionId, identity.userId);
-    if (!ok) { res.status(404).json({ error: 'Version not found' }); return; }
+    const ok = await interviewEnterpriseService.signOffContextVersion(
+      identity.orgId,
+      req.params.versionId,
+      identity.userId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Version not found' });
+      return;
+    }
     res.json({ ok: true });
   })
 );
@@ -352,7 +480,9 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const diff = await interviewEnterpriseService.diffContextVersions(
-      identity.orgId, Number(req.params.fromVersion), Number(req.params.toVersion)
+      identity.orgId,
+      Number(req.params.fromVersion),
+      Number(req.params.toVersion)
     );
     res.json(diff);
   })

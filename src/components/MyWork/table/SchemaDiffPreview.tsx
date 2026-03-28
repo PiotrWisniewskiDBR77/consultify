@@ -3,7 +3,6 @@
  * Shows current schema vs proposed schema with color-coded additions,
  * modifications, and deletions. Collapsible per table.
  */
-import React, { useMemo, useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -14,6 +13,7 @@ import {
   Table2,
   X,
 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
@@ -158,7 +158,9 @@ const FieldRow: React.FC<{
   const icon = change ? getChangeIcon(change.type) : null;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent ${bgClass} transition-colors`}>
+    <div
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent ${bgClass} transition-colors`}
+    >
       <Columns3 size={12} className="text-slate-400 dark:text-zinc-500 flex-shrink-0" />
       <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 min-w-[100px]">
         {field.name}
@@ -167,7 +169,9 @@ const FieldRow: React.FC<{
         {field.type}
       </span>
       {field.required && (
-        <span className="text-[9px] text-red-500 font-semibold">{isPl ? 'wymagane' : 'required'}</span>
+        <span className="text-[9px] text-red-500 font-semibold">
+          {isPl ? 'wymagane' : 'required'}
+        </span>
       )}
       {field.options && Object.keys(field.options).length > 0 && (
         <span className="text-[9px] text-slate-400 dark:text-zinc-500">
@@ -176,7 +180,12 @@ const FieldRow: React.FC<{
       )}
       {change?.type === 'update_field' && change.oldField && (
         <span className="text-[10px] text-amber-600 dark:text-amber-400 ml-auto">
-          ← {change.oldField.type !== field.type ? `${change.oldField.type} → ${field.type}` : (isPl ? 'zmienione' : 'modified')}
+          ←{' '}
+          {change.oldField.type !== field.type
+            ? `${change.oldField.type} → ${field.type}`
+            : isPl
+              ? 'zmienione'
+              : 'modified'}
         </span>
       )}
       {icon && <span className="ml-auto flex-shrink-0">{icon}</span>}
@@ -187,8 +196,12 @@ const FieldRow: React.FC<{
 const DeletedFieldRow: React.FC<{ field: DiffField }> = ({ field }) => (
   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent bg-red-500/10 dark:bg-red-500/15 border-red-500/30 line-through opacity-60">
     <Columns3 size={12} className="text-red-400 flex-shrink-0" />
-    <span className="text-xs font-medium text-red-700 dark:text-red-300 min-w-[100px]">{field.name}</span>
-    <span className="text-[10px] text-red-500 font-mono px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30">{field.type}</span>
+    <span className="text-xs font-medium text-red-700 dark:text-red-300 min-w-[100px]">
+      {field.name}
+    </span>
+    <span className="text-[10px] text-red-500 font-mono px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30">
+      {field.type}
+    </span>
     <Minus size={10} className="text-red-600 dark:text-red-400 ml-auto" />
   </div>
 );
@@ -215,9 +228,24 @@ const TableSection: React.FC<{
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors"
       >
-        {expanded ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
-        <Table2 size={14} className={isNew ? 'text-emerald-600 dark:text-emerald-400' : isDeleted ? 'text-red-600 dark:text-red-400' : 'text-violet-600 dark:text-violet-400'} />
-        <span className={`text-xs font-semibold ${isDeleted ? 'text-red-700 dark:text-red-300 line-through' : 'text-slate-700 dark:text-zinc-200'}`}>
+        {expanded ? (
+          <ChevronDown size={14} className="text-slate-400" />
+        ) : (
+          <ChevronRight size={14} className="text-slate-400" />
+        )}
+        <Table2
+          size={14}
+          className={
+            isNew
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : isDeleted
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-violet-600 dark:text-violet-400'
+          }
+        />
+        <span
+          className={`text-xs font-semibold ${isDeleted ? 'text-red-700 dark:text-red-300 line-through' : 'text-slate-700 dark:text-zinc-200'}`}
+        >
           {table.name}
         </span>
         <span className="text-[10px] text-slate-400 dark:text-zinc-500 ml-auto">
@@ -229,7 +257,9 @@ const TableSection: React.FC<{
           </span>
         )}
       </button>
-      <div className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+      >
         <div className="px-3 pb-3 space-y-1">
           {table.fields.map((field) => (
             <FieldRow
@@ -275,9 +305,13 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
     [proposedChanges]
   );
 
-  const addCount = proposedChanges.filter((c) => c.type === 'add_table' || c.type === 'add_field').length;
+  const addCount = proposedChanges.filter(
+    (c) => c.type === 'add_table' || c.type === 'add_field'
+  ).length;
   const modCount = proposedChanges.filter((c) => c.type === 'update_field').length;
-  const delCount = proposedChanges.filter((c) => c.type === 'delete_field' || c.type === 'delete_table').length;
+  const delCount = proposedChanges.filter(
+    (c) => c.type === 'delete_field' || c.type === 'delete_table'
+  ).length;
 
   return (
     <div className="rounded-2xl border border-sky-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">

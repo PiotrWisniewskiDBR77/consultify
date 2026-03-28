@@ -39,7 +39,7 @@ const FACTUAL_RE =
   /\d+%?|\b(is|are|was|were|has|have|shows?|indicates?|according|based on|results?|data|evidence|analysis)\b/i;
 
 export function extractClaims(
-  text: string,
+  text: string
 ): Omit<Claim, 'citations' | 'verified' | 'verificationStatus'>[] {
   const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
   const claims: Omit<Claim, 'citations' | 'verified' | 'verificationStatus'>[] = [];
@@ -75,7 +75,7 @@ export function matchClaimsToCitations(
     startOffset?: number;
     endOffset?: number;
   }>,
-  _fullText: string,
+  _fullText: string
 ): Claim[] {
   return claims.map((claim) => {
     const matched: Array<{ citationId: string; relevance: number }> = [];
@@ -129,7 +129,7 @@ export function matchClaimsToCitations(
 
 export function validateClaimCitations(
   claims: Claim[],
-  policy: ClaimCitationPolicy,
+  policy: ClaimCitationPolicy
 ): ClaimValidationResult {
   const totalClaims = claims.length;
   const citedClaims = claims.filter((c) => c.citations.length > 0).length;
@@ -141,7 +141,7 @@ export function validateClaimCitations(
 
   if (policy.minCoverageScore && coverageScore < policy.minCoverageScore) {
     policyViolations.push(
-      `Citation coverage ${(coverageScore * 100).toFixed(0)}% below minimum ${(policy.minCoverageScore * 100).toFixed(0)}%`,
+      `Citation coverage ${(coverageScore * 100).toFixed(0)}% below minimum ${(policy.minCoverageScore * 100).toFixed(0)}%`
     );
   }
   if (policy.requireAllFactualCited && uncitedClaims > 0) {
@@ -149,12 +149,12 @@ export function validateClaimCitations(
   }
   if (policy.maxUncitedClaims !== undefined && uncitedClaims > policy.maxUncitedClaims) {
     policyViolations.push(
-      `${uncitedClaims} uncited claims exceeds maximum ${policy.maxUncitedClaims}`,
+      `${uncitedClaims} uncited claims exceeds maximum ${policy.maxUncitedClaims}`
     );
   }
 
   logger.debug(
-    `[ClaimCitationValidator] ${totalClaims} claims, ${citedClaims} cited, coverage=${(coverageScore * 100).toFixed(0)}%, violations=${policyViolations.length}`,
+    `[ClaimCitationValidator] ${totalClaims} claims, ${citedClaims} cited, coverage=${(coverageScore * 100).toFixed(0)}%, violations=${policyViolations.length}`
   );
 
   return {

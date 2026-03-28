@@ -60,10 +60,26 @@ const MAPPING_STATUS_CONFIG: Record<
   { label: { en: string; pl: string }; icon: React.ReactNode; dotColor: string }
 > = {
   auto: { label: { en: 'Auto', pl: 'Auto' }, icon: <Zap size={10} />, dotColor: 'bg-slate-400' },
-  manual: { label: { en: 'Manual', pl: 'Ręczne' }, icon: <PenLine size={10} />, dotColor: 'bg-cyan-400' },
-  computed: { label: { en: 'Computed', pl: 'Obliczone' }, icon: <Sparkles size={10} />, dotColor: 'bg-violet-400' },
-  unmapped: { label: { en: 'Unmapped', pl: 'Brak' }, icon: <Minus size={10} />, dotColor: 'bg-amber-400' },
-  mapped: { label: { en: 'Mapped', pl: 'Zmapowane' }, icon: <Link2 size={10} />, dotColor: 'bg-emerald-400' },
+  manual: {
+    label: { en: 'Manual', pl: 'Ręczne' },
+    icon: <PenLine size={10} />,
+    dotColor: 'bg-cyan-400',
+  },
+  computed: {
+    label: { en: 'Computed', pl: 'Obliczone' },
+    icon: <Sparkles size={10} />,
+    dotColor: 'bg-violet-400',
+  },
+  unmapped: {
+    label: { en: 'Unmapped', pl: 'Brak' },
+    icon: <Minus size={10} />,
+    dotColor: 'bg-amber-400',
+  },
+  mapped: {
+    label: { en: 'Mapped', pl: 'Zmapowane' },
+    icon: <Link2 size={10} />,
+    dotColor: 'bg-emerald-400',
+  },
 };
 
 function ConfidenceBar({ value }: { value: number }) {
@@ -248,7 +264,10 @@ export const StatementExplainPanel: React.FC<Props> = ({
             {/* Line item name + value */}
             <div>
               <div className="flex items-start gap-2">
-                <BookOpen size={14} className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500" />
+                <BookOpen
+                  size={14}
+                  className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold leading-snug text-slate-900 dark:text-white">
                     {explain.originalLabel}
@@ -315,7 +334,8 @@ export const StatementExplainPanel: React.FC<Props> = ({
                       }`}
                     >
                       <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        {pv.periodLabel || (i === 0 ? (isPl ? 'Poprzedni' : 'Prior') : (isPl ? 'Bieżący' : 'Current'))}
+                        {pv.periodLabel ||
+                          (i === 0 ? (isPl ? 'Poprzedni' : 'Prior') : isPl ? 'Bieżący' : 'Current')}
                       </div>
                       <div
                         className={`font-mono text-[13px] tabular-nums ${
@@ -393,9 +413,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         {isPl ? mappingCfg.label.pl : mappingCfg.label.en}
                       </span>
                     </MetaRow>
-                    <MetaRow label={originLabel}>
-                      {explain.valueOrigin || 'source'}
-                    </MetaRow>
+                    <MetaRow label={originLabel}>{explain.valueOrigin || 'source'}</MetaRow>
                     {explain.lineCode && (
                       <MetaRow label={isPl ? 'Kod linii' : 'Line code'}>
                         <span className="inline-flex items-center gap-1 font-mono text-[10px]">

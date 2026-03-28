@@ -403,9 +403,7 @@ const STATUS_DISPLAY: Record<string, { en: string; pl: string; bg: string }> = {
 const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const statusOptions = column.options?.length
-    ? column.options
-    : Object.keys(STATUS_DISPLAY);
+  const statusOptions = column.options?.length ? column.options : Object.keys(STATUS_DISPLAY);
 
   useEffect(() => {
     if (!open) return;
@@ -439,7 +437,10 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
             return (
               <button
                 key={opt}
-                onClick={() => { onChange(opt); setOpen(false); }}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
                 className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
               >
                 <span
@@ -461,7 +462,15 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
   if (!value) return <span className="text-[10px] text-slate-400">—</span>;
   const d = new Date(value);
-  const str = isNaN(d.getTime()) ? String(value) : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const str = isNaN(d.getTime())
+    ? String(value)
+    : d.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
   return <span className="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">{str}</span>;
 };
 

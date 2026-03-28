@@ -201,7 +201,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   }, []);
 
   const isUnavailable = !isNetworkOnline || availabilityState === 'unavailable';
-  const isDegraded = isNetworkOnline && (availabilityState === 'degraded' || availabilityState === 'unknown');
+  const isDegraded =
+    isNetworkOnline && (availabilityState === 'degraded' || availabilityState === 'unknown');
   const buttonTitle = !isNetworkOnline
     ? 'AI unavailable - network offline'
     : availabilityState === 'available'
@@ -223,9 +224,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
-            : isOpen
-              ? 'bg-slate-100/70 dark:bg-white/[0.06] border-slate-200/70 dark:border-white/[0.10]'
-              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+              : isOpen
+                ? 'bg-slate-100/70 dark:bg-white/[0.06] border-slate-200/70 dark:border-white/[0.10]'
+                : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
         } text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}

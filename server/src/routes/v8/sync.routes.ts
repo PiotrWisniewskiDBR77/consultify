@@ -3,34 +3,16 @@
  * Namespace: /api/v8/sync (mounted by v8/index).
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
-  getActiveEscalations,
-  getCredential,
-  getCredentialHealth,
-  getRefreshTimingPolicy,
-  recordAuthEscalation,
-  recordRefreshResult,
-  resolveAuthEscalationsForConnector,
-  resolveAuthEscalation,
-  setRefreshTimingPolicy,
-  storeCredential,
-} from '../../services/v8/pmSyncAuthService.js';
-import {
-  getConnectorHealth,
-  setConnectorAuthState,
-  getUnresolvedConflicts,
-  resolveConflict,
-} from '../../services/v8/pmSyncTruthService.js';
-import {
   CONNECTORS,
-  getConnectedIntegrations,
   disconnectIntegration,
+  getConnectedIntegrations,
   syncIntegration,
   updateIntegrationStatus,
 } from '../../services/integrationHubService.js';
@@ -42,17 +24,35 @@ import {
   recordRequest,
   resolveError,
 } from '../../services/syncGuardrailsService.js';
-import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
-import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
+import {
+  getActiveEscalations,
+  getCredential,
+  getCredentialHealth,
+  getRefreshTimingPolicy,
+  recordAuthEscalation,
+  recordRefreshResult,
+  resolveAuthEscalation,
+  resolveAuthEscalationsForConnector,
+  setRefreshTimingPolicy,
+  storeCredential,
+} from '../../services/v8/pmSyncAuthService.js';
+import {
+  buildGovernedExternalAuthSession,
+  getGovernedExternalAuthConfigFields,
+} from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import {
   executeRefreshExecution,
   storeRefreshExecutionSecret,
 } from '../../services/v8/pmSyncRefreshExecutionService.js';
 import {
-  buildGovernedExternalAuthSession,
-  getGovernedExternalAuthConfigFields,
-} from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
+  getConnectorHealth,
+  getUnresolvedConflicts,
+  resolveConflict,
+  setConnectorAuthState,
+} from '../../services/v8/pmSyncTruthService.js';
+import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
+import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -84,7 +84,9 @@ const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<
   monday: 'monday',
 };
 
-const DEFAULT_REFRESH_WINDOW_MINUTES: Partial<Record<(typeof ProviderFamilyValues)[number], number>> = {
+const DEFAULT_REFRESH_WINDOW_MINUTES: Partial<
+  Record<(typeof ProviderFamilyValues)[number], number>
+> = {
   google_workspace: 10,
   microsoft_365: 10,
   atlassian: 15,
@@ -101,7 +103,9 @@ const DEFAULT_REFRESH_TOKEN_ENDPOINTS: Partial<Record<string, string>> = {
   asana: 'https://app.asana.com/-/oauth_token',
 };
 
-function getProviderFamilyForConnector(connectorId: string): (typeof ProviderFamilyValues)[number] | null {
+function getProviderFamilyForConnector(
+  connectorId: string
+): (typeof ProviderFamilyValues)[number] | null {
   return CONNECTOR_PROVIDER_FAMILY_MAP[connectorId.trim().toLowerCase()] ?? null;
 }
 
@@ -115,12 +119,12 @@ async function logIntegrationAudit(
   action: string,
   actorId: string,
   actorName: string,
-  details: Record<string, unknown> = {},
+  details: Record<string, unknown> = {}
 ) {
   await dbRun(
     `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
      VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?::JSONB)`,
-    [organizationId, integrationId, action, actorId, actorName, JSON.stringify(details)],
+    [organizationId, integrationId, action, actorId, actorName, JSON.stringify(details)]
   );
 }
 
@@ -197,13 +201,12 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
-function getConfiguredFields(
-  configFields: string[],
-  config: Record<string, unknown>,
-): string[] {
+function getConfiguredFields(configFields: string[], config: Record<string, unknown>): string[] {
   return configFields.filter((field) => {
     const value = config[field];
-    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+    return typeof value === 'string'
+      ? value.trim().length > 0
+      : value !== undefined && value !== null;
   });
 }
 
@@ -214,7 +217,7 @@ function getConnectorConfigFields(connectorId: string, baseFields: string[]): st
 function getPendingOnboardingStatus(
   authType: string,
   configFields: string[],
-  configuredFields: string[],
+  configuredFields: string[]
 ) {
   const hasAllRequiredFields =
     configFields.length === 0 || configuredFields.length >= configFields.length;
@@ -249,8 +252,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
   refreshWindowMinutes: number | null;
   tokenExpired: boolean;
 }): Promise<
-  | { kind: 'continue' }
-  | { kind: 'response'; status: number; body: Record<string, unknown> }
+  { kind: 'continue' } | { kind: 'response'; status: number; body: Record<string, unknown> }
 > {
   const refreshExecution = await executeRefreshExecution(connectorId, organizationId);
 
@@ -291,7 +293,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
         previousTokenExpiresAt: credential?.tokenExpiresAt ?? null,
         tokenExpiresAt: refreshedCredential.tokenExpiresAt,
         rotatedRefreshToken: refreshExecution.rotatedRefreshToken,
-      },
+      }
     );
     return { kind: 'continue' };
   }
@@ -303,7 +305,11 @@ async function handleGovernedRefreshExecutionBeforeSync({
         organizationId,
         result: 'credential_expired',
       });
-      const escalation = await recordAuthEscalation(connectorId, organizationId, 'credential_expired');
+      const escalation = await recordAuthEscalation(
+        connectorId,
+        organizationId,
+        'credential_expired'
+      );
       const connectorHealth = await getConnectorHealth(connectorId, organizationId);
       if (connectorHealth.authState !== 'degraded_reauth_needed') {
         await setConnectorAuthState({
@@ -325,7 +331,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
           credentialId: refreshedCredential.credentialId,
           escalationId: escalation.escalationId,
           tokenExpiresAt: refreshedCredential.tokenExpiresAt,
-        },
+        }
       );
 
       return {
@@ -351,7 +357,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
         providerFamily,
         tokenExpiresAt: credential?.tokenExpiresAt ?? null,
         refreshWindowMinutes,
-      },
+      }
     );
 
     return {
@@ -384,7 +390,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
         connectorId,
         tokenEndpoint: refreshExecution.tokenEndpoint,
         error: refreshExecution.error,
-      },
+      }
     );
 
     return {
@@ -405,7 +411,11 @@ async function handleGovernedRefreshExecutionBeforeSync({
     organizationId,
     result: refreshExecution.status,
   });
-  const escalation = await recordAuthEscalation(connectorId, organizationId, refreshExecution.status);
+  const escalation = await recordAuthEscalation(
+    connectorId,
+    organizationId,
+    refreshExecution.status
+  );
   const connectorHealth = await getConnectorHealth(connectorId, organizationId);
   if (connectorHealth.authState !== 'degraded_reauth_needed') {
     await setConnectorAuthState({
@@ -428,7 +438,7 @@ async function handleGovernedRefreshExecutionBeforeSync({
       escalationId: escalation.escalationId,
       tokenEndpoint: refreshExecution.tokenEndpoint,
       error: refreshExecution.error,
-    },
+    }
   );
 
   return {
@@ -452,7 +462,7 @@ router.get(
       data: { integrations, count: integrations.length },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -479,7 +489,7 @@ router.get(
       data: { connectors: catalog, count: catalog.length },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -535,13 +545,20 @@ router.post(
         JSON.stringify(parsedBody.data.config ?? {}),
         JSON.stringify(scopes),
         connector.authType,
-      ],
+      ]
     );
 
-    await logIntegrationAudit(organizationId, integrationId, 'connect_initiated', actorId, actorId, {
-      connectorId: connector.id,
-      authType: connector.authType,
-    });
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'connect_initiated',
+      actorId,
+      actorId,
+      {
+        connectorId: connector.id,
+        authType: connector.authType,
+      }
+    );
 
     return res.status(201).json({
       data: {
@@ -560,7 +577,7 @@ router.post(
       },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -601,11 +618,13 @@ router.post(
        FROM integrations
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     const integration = rows[0];
     if (!integration) {
-      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
     }
 
     const connector = CONNECTORS[integration.connector_id];
@@ -626,20 +645,27 @@ router.post(
     const onboardingStatus = getPendingOnboardingStatus(
       connector.authType,
       connectorConfigFields,
-      configuredFields,
+      configuredFields
     );
 
     await dbRun(
       `UPDATE integrations
        SET config = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(nextConfig), integrationId, organizationId],
+      [JSON.stringify(nextConfig), integrationId, organizationId]
     );
-    await logIntegrationAudit(organizationId, integrationId, 'configuration_updated', actorId, actorId, {
-      connectorId: connector.id,
-      configuredFields,
-      status: integration.status,
-    });
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'configuration_updated',
+      actorId,
+      actorId,
+      {
+        connectorId: connector.id,
+        configuredFields,
+        status: integration.status,
+      }
+    );
 
     let externalAuth:
       | {
@@ -680,7 +706,7 @@ router.post(
       },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -709,7 +735,7 @@ router.post(
       data: { success: true as const },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -736,11 +762,13 @@ router.post(
        FROM integrations
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     const integration = integrationRows[0];
     if (!integration) {
-      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
     }
 
     const connector = CONNECTORS[integration.connector_id];
@@ -754,7 +782,7 @@ router.post(
     const onboardingStatus = getPendingOnboardingStatus(
       connector.authType,
       connectorConfigFields,
-      configuredFields,
+      configuredFields
     );
 
     await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {
@@ -796,7 +824,7 @@ router.post(
       },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -836,11 +864,13 @@ router.post(
        FROM integrations
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     const integration = rows[0];
     if (!integration) {
-      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
     }
 
     const connector = CONNECTORS[integration.connector_id];
@@ -863,12 +893,19 @@ router.post(
       tokenExpiresAt: parsedBody.data.tokenExpiresAt ?? null,
     });
 
-    await logIntegrationAudit(organizationId, integrationId, 'credential_materialized', actorId, actorId, {
-      connectorId: connector.id,
-      providerAccountId: credential.providerAccountId,
-      workspaceOrTenantId: credential.workspaceOrTenantId,
-      scopesGranted: credential.scopesGranted,
-    });
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'credential_materialized',
+      actorId,
+      actorId,
+      {
+        connectorId: connector.id,
+        providerAccountId: credential.providerAccountId,
+        workspaceOrTenantId: credential.workspaceOrTenantId,
+        scopesGranted: credential.scopesGranted,
+      }
+    );
 
     const refreshedCredential = await getCredential(connector.id, organizationId);
 
@@ -878,7 +915,7 @@ router.post(
       },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -918,11 +955,13 @@ router.post(
        FROM integrations
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     const integration = rows[0];
     if (!integration) {
-      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
     }
 
     const connector = CONNECTORS[integration.connector_id];
@@ -943,12 +982,10 @@ router.post(
     });
 
     const connectorHealth = await getConnectorHealth(connector.id, organizationId);
-    let authTransition:
-      | {
-          targetState: 'healthy' | 'degraded_reauth_needed';
-          reason: string;
-        }
-      | null = null;
+    let authTransition: {
+      targetState: 'healthy' | 'degraded_reauth_needed';
+      reason: string;
+    } | null = null;
 
     if (parsedBody.data.result === 'success' && connectorHealth.authState !== 'healthy') {
       authTransition = {
@@ -978,24 +1015,35 @@ router.post(
     let escalationId: string | null = null;
     let resolvedEscalationCount = 0;
     if (['credential_expired', 'scope_revoked'].includes(parsedBody.data.result)) {
-      const escalation = await recordAuthEscalation(connector.id, organizationId, parsedBody.data.result);
+      const escalation = await recordAuthEscalation(
+        connector.id,
+        organizationId,
+        parsedBody.data.result
+      );
       escalationId = escalation.escalationId;
     } else if (parsedBody.data.result === 'success') {
       const resolvedEscalations = await resolveAuthEscalationsForConnector(
         connector.id,
         actorId,
-        organizationId,
+        organizationId
       );
       resolvedEscalationCount = resolvedEscalations.length;
     }
 
-    await logIntegrationAudit(organizationId, integrationId, 'refresh_result_recorded', actorId, actorId, {
-      connectorId: connector.id,
-      result: parsedBody.data.result,
-      authTransition: authTransition?.targetState ?? null,
-      escalationId,
-      resolvedEscalationCount,
-    });
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'refresh_result_recorded',
+      actorId,
+      actorId,
+      {
+        connectorId: connector.id,
+        result: parsedBody.data.result,
+        authTransition: authTransition?.targetState ?? null,
+        escalationId,
+        resolvedEscalationCount,
+      }
+    );
 
     return res.json({
       data: {
@@ -1004,7 +1052,7 @@ router.post(
       },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1029,7 +1077,7 @@ router.post(
     await dbRun(
       `UPDATE integrations SET is_paused = TRUE, paused_at = NOW(), updated_at = NOW()
        WHERE id = ? AND organization_id = ?`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     await logIntegrationAudit(organizationId, integrationId, 'paused', actorId, actorId, {});
 
@@ -1037,7 +1085,7 @@ router.post(
       data: { success: true as const },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1062,7 +1110,7 @@ router.post(
     await dbRun(
       `UPDATE integrations SET is_paused = FALSE, paused_at = NULL, updated_at = NOW()
        WHERE id = ? AND organization_id = ?`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     await logIntegrationAudit(organizationId, integrationId, 'resumed', actorId, actorId, {});
 
@@ -1070,7 +1118,7 @@ router.post(
       data: { success: true as const },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1110,11 +1158,13 @@ router.post(
        FROM integrations
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     );
     const integration = rows[0];
     if (!integration) {
-      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
     }
 
     const connector = CONNECTORS[integration.connector_id];
@@ -1158,7 +1208,7 @@ router.post(
           tokenEndpoint: storedSecret.tokenEndpoint,
           clientIdPresent: true,
           refreshTokenPresent: true,
-        },
+        }
       );
 
       return res.json({
@@ -1181,7 +1231,7 @@ router.post(
         : 'REFRESH_SECRET_MATERIALIZATION_FAILED';
       return res.status(409).json({ error: message, code });
     }
-  }),
+  })
 );
 
 router.post(
@@ -1205,16 +1255,14 @@ router.post(
 
     const integration = ((await dbAll(
       `SELECT connector_id, is_paused, status FROM integrations WHERE id = ? AND organization_id = ?`,
-      [integrationId, organizationId],
+      [integrationId, organizationId]
     )) || []) as Array<{ connector_id: string; is_paused: boolean; status: string }>;
 
     if (!integration.length) {
       return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
     }
     if (integration[0].is_paused) {
-      return res
-        .status(400)
-        .json({ error: 'Integration is paused', code: 'INTEGRATION_PAUSED' });
+      return res.status(400).json({ error: 'Integration is paused', code: 'INTEGRATION_PAUSED' });
     }
     if (integration[0].status === 'disconnected') {
       return res
@@ -1229,15 +1277,19 @@ router.post(
 
     if (connector.authType === 'oauth2') {
       const credential = await getCredential(connector.id, organizationId);
-      const tokenExpiresAtMs = credential?.tokenExpiresAt ? Date.parse(credential.tokenExpiresAt) : NaN;
+      const tokenExpiresAtMs = credential?.tokenExpiresAt
+        ? Date.parse(credential.tokenExpiresAt)
+        : NaN;
 
       if (Number.isFinite(tokenExpiresAtMs)) {
         const now = Date.now();
         const providerFamily = getProviderFamilyForConnector(connector.id);
-        const policy = providerFamily ? await getRefreshTimingPolicy(providerFamily, organizationId) : null;
+        const policy = providerFamily
+          ? await getRefreshTimingPolicy(providerFamily, organizationId)
+          : null;
         const refreshWindowMinutes =
           policy?.refreshWindowMinutes ??
-          (providerFamily ? DEFAULT_REFRESH_WINDOW_MINUTES[providerFamily] ?? null : null);
+          (providerFamily ? (DEFAULT_REFRESH_WINDOW_MINUTES[providerFamily] ?? null) : null);
         const tokenExpired = tokenExpiresAtMs <= now;
         let insideRefreshWindow =
           typeof refreshWindowMinutes === 'number' &&
@@ -1262,10 +1314,7 @@ router.post(
           insideRefreshWindow = false;
         }
 
-        if (
-          typeof refreshWindowMinutes === 'number' &&
-          insideRefreshWindow
-        ) {
+        if (typeof refreshWindowMinutes === 'number' && insideRefreshWindow) {
           await logIntegrationAudit(
             organizationId,
             integrationId,
@@ -1277,7 +1326,7 @@ router.post(
               providerFamily,
               tokenExpiresAt: credential?.tokenExpiresAt ?? null,
               refreshWindowMinutes,
-            },
+            }
           );
 
           return res.status(409).json({
@@ -1292,7 +1341,11 @@ router.post(
       }
     }
 
-    const rateCheck = await checkRateLimit(organizationId, integrationId, integration[0].connector_id);
+    const rateCheck = await checkRateLimit(
+      organizationId,
+      integrationId,
+      integration[0].connector_id
+    );
     if (!rateCheck.allowed) {
       return res.status(429).json({
         error: 'Rate limited',
@@ -1309,7 +1362,7 @@ router.post(
       `INSERT INTO integration_sync_runs
          (id, organization_id, integration_id, provider, direction, status, started_at, triggered_by)
        VALUES (?, ?, ?, ?, 'pull', 'running', NOW(), 'manual')`,
-      [runId, organizationId, integrationId, integration[0].connector_id],
+      [runId, organizationId, integrationId, integration[0].connector_id]
     );
 
     await recordRequest(organizationId, integrationId, integration[0].connector_id);
@@ -1320,7 +1373,7 @@ router.post(
         `UPDATE integration_sync_runs
          SET status = 'completed', items_processed = ?, duration_ms = ?, completed_at = NOW()
          WHERE id = ?`,
-        [result.recordsSynced, result.duration, runId],
+        [result.recordsSynced, result.duration, runId]
       );
       await dbRun(`UPDATE integrations SET last_healthy_at = NOW(), error_count = 0 WHERE id = ?`, [
         integrationId,
@@ -1350,13 +1403,13 @@ router.post(
         `UPDATE integration_sync_runs
          SET status = 'failed', error_summary = ?, duration_ms = ?, completed_at = NOW()
          WHERE id = ?`,
-        [errorMessage, Date.now() - startedAt.getTime(), runId],
+        [errorMessage, Date.now() - startedAt.getTime(), runId]
       );
       await logSyncError(organizationId, integrationId, error as Error, runId);
 
       return res.status(500).json({ error: errorMessage, syncRunId: runId, code: 'SYNC_FAILED' });
     }
-  }),
+  })
 );
 
 router.get(
@@ -1364,7 +1417,9 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const integrations = await getConnectedIntegrations(organizationId);
-    const healthChecks = await Promise.all(integrations.map((int) => getIntegrationHealth(organizationId, int.id)));
+    const healthChecks = await Promise.all(
+      integrations.map((int) => getIntegrationHealth(organizationId, int.id))
+    );
     const summary = {
       total: healthChecks.length,
       healthy: healthChecks.filter((h) => h.status === 'healthy').length,
@@ -1376,7 +1431,7 @@ router.get(
       data: { summary },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1401,7 +1456,7 @@ router.get(
       },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1420,7 +1475,7 @@ router.post(
       data: { success: true as const },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1450,7 +1505,7 @@ router.get(
       data: { entries, count: entries.length },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1462,7 +1517,7 @@ router.get(
       data: { summary },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.get(
@@ -1474,14 +1529,15 @@ router.get(
       data: { escalations, count: escalations.length },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
   '/auth/escalations/:escalationId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const escalationId = typeof req.params.escalationId === 'string' ? req.params.escalationId.trim() : '';
+    const escalationId =
+      typeof req.params.escalationId === 'string' ? req.params.escalationId.trim() : '';
     const resolvedBy =
       typeof req.user?.id === 'string' && req.user.id.trim()
         ? req.user.id.trim()
@@ -1519,7 +1575,7 @@ router.post(
       }
       throw error;
     }
-  }),
+  })
 );
 
 router.get(
@@ -1539,7 +1595,7 @@ router.get(
       data: { policy },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
@@ -1574,14 +1630,15 @@ router.post(
       data: { policy },
       meta: syncMutationMeta(),
     });
-  }),
+  })
 );
 
 router.get(
   '/connectors/:connectorId/health',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const connectorId = typeof req.params.connectorId === 'string' ? req.params.connectorId.trim() : '';
+    const connectorId =
+      typeof req.params.connectorId === 'string' ? req.params.connectorId.trim() : '';
     if (!connectorId) {
       return res.status(400).json({
         error: 'connectorId is required',
@@ -1593,14 +1650,15 @@ router.get(
       data: { connectorId, health },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
   '/connectors/:connectorId/auth-state',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const connectorId = typeof req.params.connectorId === 'string' ? req.params.connectorId.trim() : '';
+    const connectorId =
+      typeof req.params.connectorId === 'string' ? req.params.connectorId.trim() : '';
     const transitionedBy =
       typeof req.user?.id === 'string' && req.user.id.trim()
         ? req.user.id.trim()
@@ -1652,7 +1710,7 @@ router.post(
       }
       throw error;
     }
-  }),
+  })
 );
 
 router.get(
@@ -1665,14 +1723,15 @@ router.get(
       data: { conflicts, count: conflicts.length },
       meta: syncReadMeta(),
     });
-  }),
+  })
 );
 
 router.post(
   '/conflicts/:conflictId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const conflictId = typeof req.params.conflictId === 'string' ? req.params.conflictId.trim() : '';
+    const conflictId =
+      typeof req.params.conflictId === 'string' ? req.params.conflictId.trim() : '';
     const resolvedBy =
       typeof req.user?.id === 'string' && req.user.id.trim()
         ? req.user.id.trim()
@@ -1707,7 +1766,7 @@ router.post(
         conflictId,
         parsed.data.resolutionPath,
         resolvedBy,
-        organizationId,
+        organizationId
       );
       return res.json({
         data: { conflict },
@@ -1723,7 +1782,7 @@ router.post(
       }
       throw error;
     }
-  }),
+  })
 );
 
 export default router;

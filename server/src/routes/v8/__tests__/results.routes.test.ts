@@ -269,7 +269,7 @@ describe('V8 results read-only routes', () => {
     expect(mockDbRun).toHaveBeenCalledTimes(1);
     expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain('INSERT INTO initiative_kpis');
     expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
-      expect.arrayContaining([ORG, 'Revenue Growth', 100, 'MONTHLY', 'HIGHER_IS_BETTER']),
+      expect.arrayContaining([ORG, 'Revenue Growth', 100, 'MONTHLY', 'HIGHER_IS_BETTER'])
     );
   });
 
@@ -293,10 +293,7 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT k.id'),
-      ['kpi-1', ORG],
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('SELECT k.id'), ['kpi-1', ORG]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE initiative_kpis'),
       expect.arrayContaining([
@@ -311,7 +308,7 @@ describe('V8 results read-only routes', () => {
         5,
         10,
         'kpi-1',
-      ]),
+      ])
     );
   });
 
@@ -325,17 +322,14 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT k.id'),
-      ['kpi-1', ORG],
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('SELECT k.id'), ['kpi-1', ORG]);
     expect(mockDbRun).toHaveBeenCalledWith(
       'DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?',
-      ['kpi-1', ORG],
+      ['kpi-1', ORG]
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('DELETE FROM kpi_deviation_actions WHERE case_id IN'),
-      ['case-1'],
+      ['case-1']
     );
     expect(mockDbRun).toHaveBeenCalledWith('DELETE FROM initiative_kpis WHERE id = ?', ['kpi-1']);
   });
@@ -356,14 +350,14 @@ describe('V8 results read-only routes', () => {
       expect.objectContaining({
         initiativeId: 'init-1',
         kpiId: 'kpi-1',
-      }),
+      })
     );
     expect(mockDbRun).toHaveBeenCalledTimes(1);
     expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain(
-      'INSERT INTO initiative_kpi_mappings',
+      'INSERT INTO initiative_kpi_mappings'
     );
     expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
-      expect.arrayContaining(['init-1', 'kpi-1', ORG, 'increase', 'medium', UID]),
+      expect.arrayContaining(['init-1', 'kpi-1', ORG, 'increase', 'medium', UID])
     );
   });
 
@@ -376,7 +370,7 @@ describe('V8 results read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('DELETE FROM initiative_kpi_mappings'),
-      ['map-1', ORG],
+      ['map-1', ORG]
     );
   });
 
@@ -384,19 +378,21 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/acknowledge').send({});
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/acknowledge')
+      .send({});
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining("SET status = 'ACKNOWLEDGED'"),
-      ['case-1', ORG],
-    );
+    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining("SET status = 'ACKNOWLEDGED'"), [
+      'case-1',
+      ORG,
+    ]);
   });
 
   it('PUT /api/v8/results/deviation-cases/:caseId/rca saves governed deviation RCA', async () => {
@@ -412,11 +408,13 @@ describe('V8 results read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('SET rca_text = ?, status = CASE WHEN status = \'OPEN\' THEN \'IN_PROGRESS\' ELSE status END'),
-      ['Root cause analysis details', 'case-1', ORG],
+      expect.stringContaining(
+        "SET rca_text = ?, status = CASE WHEN status = 'OPEN' THEN 'IN_PROGRESS' ELSE status END"
+      ),
+      ['Root cause analysis details', 'case-1', ORG]
     );
   });
 
@@ -435,11 +433,11 @@ describe('V8 results read-only routes', () => {
     expect(res.body.data?.caseId).toBe('case-1');
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO kpi_deviation_actions'),
-      [expect.any(String), 'case-1', 'Create mitigation plan', null, '2026-03-31'],
+      [expect.any(String), 'case-1', 'Create mitigation plan', null, '2026-03-31']
     );
   });
 
@@ -456,13 +454,14 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockDbGet).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT a.id'),
-      ['action-1', 'case-1', ORG],
-    );
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('SELECT a.id'), [
+      'action-1',
+      'case-1',
+      ORG,
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE kpi_deviation_actions a'),
-      [null, null, null, 'DONE', 'action-1', 'case-1', ORG],
+      [null, null, null, 'DONE', 'action-1', 'case-1', ORG]
     );
   });
 
@@ -477,11 +476,11 @@ describe('V8 results read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP"),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
   });
 
@@ -499,7 +498,7 @@ describe('V8 results read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
-      ['case-1', ORG],
+      ['case-1', ORG]
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP"),
@@ -512,18 +511,20 @@ describe('V8 results read-only routes', () => {
         null,
         'case-1',
         ORG,
-      ],
+      ]
     );
   });
 
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/kpi-reports').send({
-      periodStart: '2026-02-01',
-      periodEnd: '2026-02-28',
-      title: 'Monthly KPI Review',
-      kpiIds: ['kpi-1'],
-    });
+    const res = await request(app)
+      .post('/api/v8/results/kpi-reports')
+      .send({
+        periodStart: '2026-02-01',
+        periodEnd: '2026-02-28',
+        title: 'Monthly KPI Review',
+        kpiIds: ['kpi-1'],
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -547,7 +548,7 @@ describe('V8 results read-only routes', () => {
         sourceId: 'snap-1',
         title: 'Monthly KPI Review',
         createdBy: UID,
-      }),
+      })
     );
     expect(mockUpdateSectionContent).toHaveBeenCalledTimes(5);
     expect(mockUpdateReportStatus).toHaveBeenCalledWith('report-1', 'GENERATED', UID);
@@ -570,15 +571,15 @@ describe('V8 results read-only routes', () => {
         measuredAt: '2026-03-01',
         periodStart: '2026-03-01',
         periodKey: '2026-03',
-      }),
+      })
     );
     expect(mockDbGet).toHaveBeenCalledWith(
       `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      ['kpi-1'],
+      ['kpi-1']
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO kpi_time_series'),
-      expect.arrayContaining(['kpi-1', ORG, 24, '2026-03-01', 'manual', 'March value', UID]),
+      expect.arrayContaining(['kpi-1', ORG, 24, '2026-03-01', 'manual', 'March value', UID])
     );
     expect(mockHandleTimeSeriesRecorded).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -587,7 +588,7 @@ describe('V8 results read-only routes', () => {
         value: 24,
         periodStart: '2026-03-01',
         recordedByUserId: UID,
-      }),
+      })
     );
   });
 
@@ -622,7 +623,7 @@ describe('V8 results read-only routes', () => {
         'owner-1',
         'medium',
         UID,
-      ]),
+      ])
     );
   });
 
@@ -649,7 +650,7 @@ describe('V8 results read-only routes', () => {
         'manual',
         'March realized benefit',
         UID,
-      ]),
+      ])
     );
   });
 });

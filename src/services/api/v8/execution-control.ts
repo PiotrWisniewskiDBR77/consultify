@@ -198,7 +198,11 @@ export const V8ExecutionControlApi = {
     entityType: 'INITIATIVE' | 'TASK';
     entityId: string;
     deviationType: string;
-  }) => v8Post<{ success: boolean; signalId: string }>('/execution-control/delay-signals/dismiss', payload),
+  }) =>
+    v8Post<{ success: boolean; signalId: string }>(
+      '/execution-control/delay-signals/dismiss',
+      payload
+    ),
 
   updateTimeline: (payload: V8ExecutionTimelineUpdatePayload) =>
     v8Post<{

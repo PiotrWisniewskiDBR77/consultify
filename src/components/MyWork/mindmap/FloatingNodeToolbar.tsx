@@ -1,11 +1,11 @@
 import {
   Bold,
+  CheckSquare,
   CircleDot,
   GitBranch,
   GitPullRequest,
   Hash,
   Link2,
-  CheckSquare,
   ListChecks,
   Lock,
   MoreVertical,
@@ -15,8 +15,8 @@ import {
   Sparkles,
   Star,
   StickyNote,
-  ToggleRight,
   Tags,
+  ToggleRight,
   Unlock,
   Waypoints,
 } from 'lucide-react';
@@ -30,12 +30,29 @@ import { BranchThemeDropdown } from './floating-toolbar/BranchThemeDropdown';
 import { ColorPickerPopover } from './floating-toolbar/ColorPickerPopover';
 import { FloatingAIPopover } from './floating-toolbar/FloatingAIPopover';
 import { FontSizeDropdown } from './floating-toolbar/FontSizeDropdown';
+import {
+  QuickLinkPopover,
+  QuickNotesPopover,
+  QuickTagsPopover,
+} from './floating-toolbar/QuickEditPopovers';
+import { QuickTaskPopover } from './floating-toolbar/QuickTaskPopover';
 import { SemanticControlsPopover } from './floating-toolbar/SemanticControlsPopover';
 import { SemanticTypeDropdown } from './floating-toolbar/SemanticTypeDropdown';
-import { QuickLinkPopover, QuickNotesPopover, QuickTagsPopover } from './floating-toolbar/QuickEditPopovers';
-import { QuickTaskPopover } from './floating-toolbar/QuickTaskPopover';
 
-type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'convertBranch' | 'ai' | 'quickNotes' | 'quickTags' | 'quickLink' | null;
+type DropdownId =
+  | 'semanticType'
+  | 'semantic'
+  | 'branchTheme'
+  | 'color'
+  | 'fontSize'
+  | 'artifacts'
+  | 'task'
+  | 'convertBranch'
+  | 'ai'
+  | 'quickNotes'
+  | 'quickTags'
+  | 'quickLink'
+  | null;
 
 export interface FloatingNodeToolbarProps {
   nodeId: string;
@@ -371,16 +388,37 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                 <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>
-                {([
-                  { id: 'ctx_subtree_convert_decision', label: isPl ? 'Decyzja' : 'Decision', icon: Star },
-                  { id: 'ctx_subtree_convert_tasks', label: isPl ? 'Zadania' : 'Tasks', icon: ListChecks },
-                  { id: 'ctx_subtree_convert_task_set', label: isPl ? 'Zestaw zadań' : 'Task set', icon: ListChecks },
-                  { id: 'ctx_subtree_convert_initiative', label: isPl ? 'Inicjatywa' : 'Initiative', icon: Rocket },
-                ] as const).map((item) => (
+                {(
+                  [
+                    {
+                      id: 'ctx_subtree_convert_decision',
+                      label: isPl ? 'Decyzja' : 'Decision',
+                      icon: Star,
+                    },
+                    {
+                      id: 'ctx_subtree_convert_tasks',
+                      label: isPl ? 'Zadania' : 'Tasks',
+                      icon: ListChecks,
+                    },
+                    {
+                      id: 'ctx_subtree_convert_task_set',
+                      label: isPl ? 'Zestaw zadań' : 'Task set',
+                      icon: ListChecks,
+                    },
+                    {
+                      id: 'ctx_subtree_convert_initiative',
+                      label: isPl ? 'Inicjatywa' : 'Initiative',
+                      icon: Rocket,
+                    },
+                  ] as const
+                ).map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => { onAction(item.id); closeDD(); }}
+                    onClick={() => {
+                      onAction(item.id);
+                      closeDD();
+                    }}
                     className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md transition-colors"
                   >
                     <item.icon size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
@@ -395,8 +433,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {/* 9. Lock */}
         <button
           onClick={() => onUpdate({ locked: !style.locked })}
-          title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}
-          aria-label={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}
+          title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : style.locked ? 'Unlock' : 'Lock'}
+          aria-label={
+            isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : style.locked ? 'Unlock' : 'Lock'
+          }
           className={btnClass(!!style.locked)}
         >
           {style.locked ? <Lock size={13} /> : <Unlock size={13} />}

@@ -50,7 +50,12 @@ export class VoiceService {
     for (const p of allProviders) {
       const key = p.api_key || '';
       const endpoint = (p as any).endpoint || '';
-      if (key && !key.startsWith('sk-or-') && !key.startsWith('sk-test') && !endpoint.includes('openrouter')) {
+      if (
+        key &&
+        !key.startsWith('sk-or-') &&
+        !key.startsWith('sk-test') &&
+        !endpoint.includes('openrouter')
+      ) {
         this.openai = new OpenAI({ apiKey: key, ...(endpoint ? { baseURL: endpoint } : {}) });
         logger.info(`[VoiceService] Using provider ${p.provider || p.name} for STT`);
         return { client: this.openai, model: 'whisper-1' };

@@ -46,7 +46,8 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         language: isPl ? 'pl' : 'en',
         onEvent: (data) => {
           if (data.type === 'stage') setStageLabel(String(data.label || ''));
-          if (data.type === 'actions') setItems(Array.isArray(data.items) ? (data.items as ActionItem[]) : []);
+          if (data.type === 'actions')
+            setItems(Array.isArray(data.items) ? (data.items as ActionItem[]) : []);
           if (data.type === 'done') setLoading(false);
           if (data.type === 'error') {
             toast.error(String(data.message || 'Error'));

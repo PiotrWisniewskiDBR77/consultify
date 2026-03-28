@@ -1,7 +1,14 @@
 import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { SWOTData, SWOTItem, SWOTSignal, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  ProposalCardType,
+  SWOTData,
+  SWOTItem,
+  SWOTSignal,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 type StreamId = SWOTItem['quadrant'];
 type StreamActionMode = 'comment' | 'deepen';
@@ -27,7 +34,8 @@ const STREAM_META: Record<
     badge: '1/4',
     headerTone: 'text-emerald-700 dark:text-emerald-300',
     surface: 'border-emerald-200/70 bg-emerald-500/5 dark:border-emerald-900/40',
-    proposalTone: 'border-emerald-200/70 bg-white/85 dark:border-emerald-900/30 dark:bg-navy-950/40',
+    proposalTone:
+      'border-emerald-200/70 bg-white/85 dark:border-emerald-900/30 dark:bg-navy-950/40',
   },
   weaknesses: {
     title: { en: 'Weaknesses', pl: 'Słabe strony' },
@@ -67,68 +75,104 @@ const DEEPEN_OPTIONS: Record<
     {
       id: 'evidence',
       label: { pl: 'Dowód przewagi', en: 'Evidence of advantage' },
-      description: { pl: 'Pokaż, z czego realnie wynika ta siła.', en: 'Show what this strength is concretely built on.' },
+      description: {
+        pl: 'Pokaż, z czego realnie wynika ta siła.',
+        en: 'Show what this strength is concretely built on.',
+      },
     },
     {
       id: 'repeatability',
       label: { pl: 'Powtarzalność', en: 'Repeatability' },
-      description: { pl: 'Wyjaśnij, czy tę przewagę da się skalować i powtarzać.', en: 'Explain whether this advantage can be scaled and repeated.' },
+      description: {
+        pl: 'Wyjaśnij, czy tę przewagę da się skalować i powtarzać.',
+        en: 'Explain whether this advantage can be scaled and repeated.',
+      },
     },
     {
       id: 'strategic-value',
       label: { pl: 'Znaczenie strategiczne', en: 'Strategic importance' },
-      description: { pl: 'Doprecyzuj, dlaczego ta siła ma znaczenie dla kierunku firmy.', en: 'Clarify why this strength matters for the company direction.' },
+      description: {
+        pl: 'Doprecyzuj, dlaczego ta siła ma znaczenie dla kierunku firmy.',
+        en: 'Clarify why this strength matters for the company direction.',
+      },
     },
   ],
   weaknesses: [
     {
       id: 'root-cause',
       label: { pl: 'Przyczyna źródłowa', en: 'Root cause' },
-      description: { pl: 'Nazwij, skąd naprawdę bierze się to ograniczenie.', en: 'Name what truly drives this constraint.' },
+      description: {
+        pl: 'Nazwij, skąd naprawdę bierze się to ograniczenie.',
+        en: 'Name what truly drives this constraint.',
+      },
     },
     {
       id: 'business-impact',
       label: { pl: 'Wpływ biznesowy', en: 'Business impact' },
-      description: { pl: 'Pokaż, gdzie ta słabość uderza najmocniej.', en: 'Show where this weakness hurts the business the most.' },
+      description: {
+        pl: 'Pokaż, gdzie ta słabość uderza najmocniej.',
+        en: 'Show where this weakness hurts the business the most.',
+      },
     },
     {
       id: 'repair-priority',
       label: { pl: 'Priorytet naprawy', en: 'Repair priority' },
-      description: { pl: 'Doprecyzuj, czy to ograniczenie trzeba naprawić teraz.', en: 'Clarify whether this constraint must be repaired now.' },
+      description: {
+        pl: 'Doprecyzuj, czy to ograniczenie trzeba naprawić teraz.',
+        en: 'Clarify whether this constraint must be repaired now.',
+      },
     },
   ],
   opportunities: [
     {
       id: 'market-window',
       label: { pl: 'Okno rynkowe', en: 'Market window' },
-      description: { pl: 'Wyjaśnij, dlaczego właśnie teraz ta szansa jest realna.', en: 'Explain why this opportunity is real right now.' },
+      description: {
+        pl: 'Wyjaśnij, dlaczego właśnie teraz ta szansa jest realna.',
+        en: 'Explain why this opportunity is real right now.',
+      },
     },
     {
       id: 'fit-to-company',
       label: { pl: 'Dopasowanie do firmy', en: 'Fit to company' },
-      description: { pl: 'Pokaż, dlaczego ta szansa pasuje do obecnego kierunku organizacji.', en: 'Show why this opportunity fits the current organization direction.' },
+      description: {
+        pl: 'Pokaż, dlaczego ta szansa pasuje do obecnego kierunku organizacji.',
+        en: 'Show why this opportunity fits the current organization direction.',
+      },
     },
     {
       id: 'upside-scale',
       label: { pl: 'Skala upside', en: 'Upside scale' },
-      description: { pl: 'Doprecyzuj, jak duża może być korzyść z tej szansy.', en: 'Clarify how meaningful the upside could be.' },
+      description: {
+        pl: 'Doprecyzuj, jak duża może być korzyść z tej szansy.',
+        en: 'Clarify how meaningful the upside could be.',
+      },
     },
   ],
   threats: [
     {
       id: 'threat-mechanism',
       label: { pl: 'Mechanizm zagrożenia', en: 'Threat mechanism' },
-      description: { pl: 'Pokaż, w jaki sposób to ryzyko może uderzyć w firmę.', en: 'Show how this threat could hit the company.' },
+      description: {
+        pl: 'Pokaż, w jaki sposób to ryzyko może uderzyć w firmę.',
+        en: 'Show how this threat could hit the company.',
+      },
     },
     {
       id: 'likelihood',
       label: { pl: 'Prawdopodobieństwo', en: 'Likelihood' },
-      description: { pl: 'Doprecyzuj, czy to ryzyko jest bliskie czy bardziej odległe.', en: 'Clarify whether this risk is near-term or more distant.' },
+      description: {
+        pl: 'Doprecyzuj, czy to ryzyko jest bliskie czy bardziej odległe.',
+        en: 'Clarify whether this risk is near-term or more distant.',
+      },
     },
     {
       id: 'defense-readiness',
       label: { pl: 'Gotowość obrony', en: 'Defense readiness' },
-      description: { pl: 'Wyjaśnij, czy organizacja jest gotowa się przed tym bronić.', en: 'Explain whether the organization is ready to defend against it.' },
+      description: {
+        pl: 'Wyjaśnij, czy organizacja jest gotowa się przed tym bronić.',
+        en: 'Explain whether the organization is ready to defend against it.',
+      },
     },
   ],
 };
@@ -391,16 +435,22 @@ const PROPOSAL_BANK: Record<
 };
 
 const createInitialPointers = () =>
-  STREAM_ORDER.reduce<Record<StreamId, number>>((acc, streamId) => {
-    acc[streamId] = 0;
-    return acc;
-  }, {} as Record<StreamId, number>);
+  STREAM_ORDER.reduce<Record<StreamId, number>>(
+    (acc, streamId) => {
+      acc[streamId] = 0;
+      return acc;
+    },
+    {} as Record<StreamId, number>
+  );
 
 const createInitialAttempts = () =>
-  STREAM_ORDER.reduce<Record<StreamId, number>>((acc, streamId) => {
-    acc[streamId] = 1;
-    return acc;
-  }, {} as Record<StreamId, number>);
+  STREAM_ORDER.reduce<Record<StreamId, number>>(
+    (acc, streamId) => {
+      acc[streamId] = 1;
+      return acc;
+    },
+    {} as Record<StreamId, number>
+  );
 
 const sanitizeGeneratedSentence = (value: string) =>
   value
@@ -411,7 +461,11 @@ const sanitizeGeneratedSentence = (value: string) =>
     .replace(/\s{2,}/g, ' ')
     .trim();
 
-const getLocalizedProposal = (streamId: StreamId, pointer: number, isPolish: boolean): LocalizedProposal => {
+const getLocalizedProposal = (
+  streamId: StreamId,
+  pointer: number,
+  isPolish: boolean
+): LocalizedProposal => {
   const bank = PROPOSAL_BANK[streamId];
   const proposal = bank[pointer % bank.length];
   return {
@@ -484,26 +538,34 @@ const applyContextToProposal = (
 export function SWOTInputExplorationPhase({
   session,
   isPolish,
+  onAcceptCard: _onAcceptCard,
+  onRejectCard: _onRejectCard,
+  onRethinkCard: _onRethinkCard,
 }: {
   session: ToolSession;
   isPolish: boolean;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
   const { addSWOTSignal, removeSWOTSignal, updateSWOTSignal } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const signals = React.useMemo(() => swotData.signals || [], [swotData.signals]);
 
-  const [proposalPointerByStream, setProposalPointerByStream] = React.useState<Record<StreamId, number>>(
-    createInitialPointers
-  );
-  const [attemptCountByStream, setAttemptCountByStream] = React.useState<Record<StreamId, number>>(
-    createInitialAttempts
-  );
-  const [workingProposalByStream, setWorkingProposalByStream] = React.useState<Record<StreamId, LocalizedProposal>>(
-    () =>
-      STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>((acc, streamId) => {
+  const [proposalPointerByStream, setProposalPointerByStream] =
+    React.useState<Record<StreamId, number>>(createInitialPointers);
+  const [attemptCountByStream, setAttemptCountByStream] =
+    React.useState<Record<StreamId, number>>(createInitialAttempts);
+  const [workingProposalByStream, setWorkingProposalByStream] = React.useState<
+    Record<StreamId, LocalizedProposal>
+  >(() =>
+    STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>(
+      (acc, streamId) => {
         acc[streamId] = getLocalizedProposal(streamId, 0, isPolish);
         return acc;
-      }, {} as Record<StreamId, LocalizedProposal>)
+      },
+      {} as Record<StreamId, LocalizedProposal>
+    )
   );
   const [activeAction, setActiveAction] = React.useState<{
     streamId: StreamId;
@@ -513,19 +575,28 @@ export function SWOTInputExplorationPhase({
   } | null>(null);
   const [feedbackInput, setFeedbackInput] = React.useState('');
   const [selectedDeepen, setSelectedDeepen] = React.useState('');
-  const [expandedAcceptedById, setExpandedAcceptedById] = React.useState<Record<string, boolean>>({});
+  const [expandedAcceptedById, setExpandedAcceptedById] = React.useState<Record<string, boolean>>(
+    {}
+  );
 
   React.useEffect(() => {
     setWorkingProposalByStream((current) =>
-      STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>((acc, streamId) => {
-        const existing = current[streamId];
-        if (!existing) {
-          acc[streamId] = getLocalizedProposal(streamId, proposalPointerByStream[streamId] || 0, isPolish);
+      STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>(
+        (acc, streamId) => {
+          const existing = current[streamId];
+          if (!existing) {
+            acc[streamId] = getLocalizedProposal(
+              streamId,
+              proposalPointerByStream[streamId] || 0,
+              isPolish
+            );
+            return acc;
+          }
+          acc[streamId] = existing;
           return acc;
-        }
-        acc[streamId] = existing;
-        return acc;
-      }, {} as Record<StreamId, LocalizedProposal>)
+        },
+        {} as Record<StreamId, LocalizedProposal>
+      )
     );
   }, [isPolish, proposalPointerByStream]);
 
@@ -537,7 +608,9 @@ export function SWOTInputExplorationPhase({
     activeDialogue: isPolish ? 'Aktywne dialogi' : 'Active dialogues',
     maxTarget: isPolish ? 'Maksymalny target' : 'Maximum target',
     aiProposal: isPolish ? 'Aktualna propozycja AI' : 'Current AI proposal',
-    acceptedList: isPolish ? 'Zaakceptowane punkty dla tego obszaru' : 'Accepted points for this area',
+    acceptedList: isPolish
+      ? 'Zaakceptowane punkty dla tego obszaru'
+      : 'Accepted points for this area',
     accept: isPolish ? 'Akceptuj ten punkt' : 'Accept this point',
     nextProposal: isPolish ? 'Kolejna propozycja' : 'Another proposal',
     comment: isPolish ? 'Komentarz' : 'Comment',
@@ -550,12 +623,16 @@ export function SWOTInputExplorationPhase({
     attempts: isPolish ? 'Próby' : 'Attempts',
     accepted: isPolish ? 'Zaakceptowane' : 'Accepted',
     confirmed: isPolish ? 'Potwierdzone' : 'Confirmed',
-    confirmedToMatrix: isPolish ? 'Ten zestaw jest już potwierdzony do macierzy.' : 'This set is already confirmed for the matrix.',
+    confirmedToMatrix: isPolish
+      ? 'Ten zestaw jest już potwierdzony do macierzy.'
+      : 'This set is already confirmed for the matrix.',
     confirmedButOpen: isPolish
       ? 'Ten zestaw jest już potwierdzony do macierzy, ale możesz dalej dodawać kolejne punkty do limitu 5.'
       : 'This set is already confirmed for the matrix, but you can still add more points up to the limit of 5.',
     continueAdding: isPolish ? 'Dodawaj dalej' : 'Continue adding',
-    emptyAccepted: isPolish ? 'Na razie nie masz jeszcze zaakceptowanych punktów w tym obszarze.' : 'You do not have any accepted points in this area yet.',
+    emptyAccepted: isPolish
+      ? 'Na razie nie masz jeszcze zaakceptowanych punktów w tym obszarze.'
+      : 'You do not have any accepted points in this area yet.',
     showExplanation: isPolish ? 'Pokaż wyjaśnienie' : 'Show explanation',
     hideExplanation: isPolish ? 'Ukryj wyjaśnienie' : 'Hide explanation',
     remove: isPolish ? 'Usuń' : 'Remove',
@@ -563,12 +640,15 @@ export function SWOTInputExplorationPhase({
 
   const acceptedSignalsByStream = React.useMemo(
     () =>
-      STREAM_ORDER.reduce<Record<StreamId, SWOTSignal[]>>((acc, streamId) => {
-        acc[streamId] = signals.filter(
-          (signal) => signal.tags?.includes(streamId) && signal.tags?.includes('input-proposal')
-        );
-        return acc;
-      }, {} as Record<StreamId, SWOTSignal[]>),
+      STREAM_ORDER.reduce<Record<StreamId, SWOTSignal[]>>(
+        (acc, streamId) => {
+          acc[streamId] = signals.filter(
+            (signal) => signal.tags?.includes(streamId) && signal.tags?.includes('input-proposal')
+          );
+          return acc;
+        },
+        {} as Record<StreamId, SWOTSignal[]>
+      ),
     [signals]
   );
 
@@ -576,9 +656,12 @@ export function SWOTInputExplorationPhase({
     (sum, streamId) => sum + acceptedSignalsByStream[streamId].length,
     0
   );
-  const confirmedAreasCount = STREAM_ORDER.filter((streamId) =>
-    acceptedSignalsByStream[streamId].length >= 2 &&
-    acceptedSignalsByStream[streamId].every((signal) => signal.tags?.includes('confirmed-for-matrix'))
+  const confirmedAreasCount = STREAM_ORDER.filter(
+    (streamId) =>
+      acceptedSignalsByStream[streamId].length >= 2 &&
+      acceptedSignalsByStream[streamId].every((signal) =>
+        signal.tags?.includes('confirmed-for-matrix')
+      )
   ).length;
 
   const buildRewrittenProposal = (
@@ -612,7 +695,9 @@ export function SWOTInputExplorationPhase({
   };
 
   const getNextUniqueProposal = (streamId: StreamId, startPointer: number) => {
-    const usedTitles = new Set(acceptedSignalsByStream[streamId].map((signal) => signal.sourceLabel));
+    const usedTitles = new Set(
+      acceptedSignalsByStream[streamId].map((signal) => signal.sourceLabel)
+    );
     const bank = PROPOSAL_BANK[streamId];
 
     for (let offset = 0; offset < bank.length; offset += 1) {
@@ -655,7 +740,9 @@ export function SWOTInputExplorationPhase({
     }
 
     if (activeAction.target === 'accepted' && activeAction.signalId) {
-      const acceptedSignal = acceptedSignalsByStream[streamId].find((signal) => signal.id === activeAction.signalId);
+      const acceptedSignal = acceptedSignalsByStream[streamId].find(
+        (signal) => signal.id === activeAction.signalId
+      );
       if (acceptedSignal) {
         const rewritten = buildRewrittenProposal(
           { title: acceptedSignal.sourceLabel, explanation: acceptedSignal.content },
@@ -693,7 +780,9 @@ export function SWOTInputExplorationPhase({
       tags: [streamId, 'input-proposal'],
       evidenceType: 'observation',
       state: 'accepted',
-      provenance: isPolish ? `AI proposal for ${STREAM_META[streamId].title.pl}` : `AI proposal for ${STREAM_META[streamId].title.en}`,
+      provenance: isPolish
+        ? `AI proposal for ${STREAM_META[streamId].title.pl}`
+        : `AI proposal for ${STREAM_META[streamId].title.en}`,
       proposalStatus: 'accepted',
     });
 
@@ -749,19 +838,33 @@ export function SWOTInputExplorationPhase({
 
         <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
           <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{labels.totalAccepted}</div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{totalAcceptedPoints}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {labels.totalAccepted}
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+              {totalAcceptedPoints}
+            </div>
           </div>
           <div className="rounded-[24px] border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">{labels.confirmedAreas}</div>
-            <div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">{confirmedAreasCount}/4</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+              {labels.confirmedAreas}
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">
+              {confirmedAreasCount}/4
+            </div>
           </div>
           <div className="rounded-[24px] border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">{labels.activeDialogue}</div>
-            <div className="mt-2 text-2xl font-semibold text-violet-700 dark:text-violet-200">4</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+              {labels.activeDialogue}
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-violet-700 dark:text-violet-200">
+              4
+            </div>
           </div>
           <div className="rounded-[24px] border border-sky-200/70 bg-sky-500/5 p-4 dark:border-sky-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">{labels.maxTarget}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+              {labels.maxTarget}
+            </div>
             <div className="mt-2 text-2xl font-semibold text-sky-700 dark:text-sky-200">5</div>
           </div>
         </div>
@@ -771,8 +874,14 @@ export function SWOTInputExplorationPhase({
             const meta = STREAM_META[streamId];
             const acceptedSignals = acceptedSignalsByStream[streamId];
             const acceptedCount = acceptedSignals.length;
-            const isConfirmed = acceptedCount >= 2 && acceptedSignals.every((signal) => signal.tags?.includes('confirmed-for-matrix'));
-            const shouldSuggestEnough = attemptCountByStream[streamId] >= 10 && acceptedCount >= 3 && acceptedCount < 5 && !isConfirmed;
+            const isConfirmed =
+              acceptedCount >= 2 &&
+              acceptedSignals.every((signal) => signal.tags?.includes('confirmed-for-matrix'));
+            const shouldSuggestEnough =
+              attemptCountByStream[streamId] >= 10 &&
+              acceptedCount >= 3 &&
+              acceptedCount < 5 &&
+              !isConfirmed;
             const currentProposal = applyContextToProposal(
               workingProposalByStream[streamId],
               buildContextHint(swotData, streamId, acceptedSignals, isPolish),
@@ -793,7 +902,9 @@ export function SWOTInputExplorationPhase({
               <section key={streamId} className={`rounded-[26px] border p-5 ${meta.surface}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.headerTone}`}>
+                    <div
+                      className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.headerTone}`}
+                    >
                       {isPolish ? meta.title.pl : meta.title.en}
                     </div>
                     <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -824,7 +935,9 @@ export function SWOTInputExplorationPhase({
                     {labels.acceptedList}
                   </div>
                   {acceptedSignals.length === 0 ? (
-                    <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">{labels.emptyAccepted}</div>
+                    <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                      {labels.emptyAccepted}
+                    </div>
                   ) : (
                     <div className="mt-4 space-y-3">
                       {acceptedSignals.map((signal) => (
@@ -844,7 +957,9 @@ export function SWOTInputExplorationPhase({
                               )}
                             </div>
                             <div className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                              {signal.tags?.includes('confirmed-for-matrix') ? labels.confirmed : labels.accepted}
+                              {signal.tags?.includes('confirmed-for-matrix')
+                                ? labels.confirmed
+                                : labels.accepted}
                             </div>
                           </div>
 
@@ -860,7 +975,9 @@ export function SWOTInputExplorationPhase({
                                     expandedAcceptedById[signal.id] ? 'rotate-180' : ''
                                   }`}
                                 />
-                                {expandedAcceptedById[signal.id] ? labels.hideExplanation : labels.showExplanation}
+                                {expandedAcceptedById[signal.id]
+                                  ? labels.hideExplanation
+                                  : labels.showExplanation}
                               </button>
                               <button
                                 type="button"
@@ -930,12 +1047,18 @@ export function SWOTInputExplorationPhase({
                                 ) : (
                                   <div className="mt-3 grid gap-2">
                                     {DEEPEN_OPTIONS[streamId].map((option) => {
-                                      const active = selectedDeepen === (isPolish ? option.label.pl : option.label.en);
+                                      const active =
+                                        selectedDeepen ===
+                                        (isPolish ? option.label.pl : option.label.en);
                                       return (
                                         <button
                                           key={option.id}
                                           type="button"
-                                          onClick={() => setSelectedDeepen(isPolish ? option.label.pl : option.label.en)}
+                                          onClick={() =>
+                                            setSelectedDeepen(
+                                              isPolish ? option.label.pl : option.label.en
+                                            )
+                                          }
                                           className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                             active
                                               ? 'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100'
@@ -946,7 +1069,9 @@ export function SWOTInputExplorationPhase({
                                             {isPolish ? option.label.pl : option.label.en}
                                           </div>
                                           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                            {isPolish ? option.description.pl : option.description.en}
+                                            {isPolish
+                                              ? option.description.pl
+                                              : option.description.en}
                                           </div>
                                         </button>
                                       );
@@ -957,7 +1082,11 @@ export function SWOTInputExplorationPhase({
                                   <button
                                     type="button"
                                     onClick={() => applyAction(streamId)}
-                                    disabled={activeAction.mode === 'comment' ? !feedbackInput.trim() : !selectedDeepen}
+                                    disabled={
+                                      activeAction.mode === 'comment'
+                                        ? !feedbackInput.trim()
+                                        : !selectedDeepen
+                                    }
                                     className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
                                   >
                                     {labels.apply}
@@ -1010,7 +1139,9 @@ export function SWOTInputExplorationPhase({
                               {labels.continueAdding}
                             </button>
                           ) : null}
-                          <div className="text-sm text-slate-500 dark:text-slate-400">{labels.keepGoing}</div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                            {labels.keepGoing}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1107,12 +1238,15 @@ export function SWOTInputExplorationPhase({
                         ) : (
                           <div className="mt-3 grid gap-2">
                             {DEEPEN_OPTIONS[streamId].map((option) => {
-                              const active = selectedDeepen === (isPolish ? option.label.pl : option.label.en);
+                              const active =
+                                selectedDeepen === (isPolish ? option.label.pl : option.label.en);
                               return (
                                 <button
                                   key={option.id}
                                   type="button"
-                                  onClick={() => setSelectedDeepen(isPolish ? option.label.pl : option.label.en)}
+                                  onClick={() =>
+                                    setSelectedDeepen(isPolish ? option.label.pl : option.label.en)
+                                  }
                                   className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                     active
                                       ? 'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100'
@@ -1134,7 +1268,11 @@ export function SWOTInputExplorationPhase({
                           <button
                             type="button"
                             onClick={() => applyAction(streamId)}
-                            disabled={activeAction.mode === 'comment' ? !feedbackInput.trim() : !selectedDeepen}
+                            disabled={
+                              activeAction.mode === 'comment'
+                                ? !feedbackInput.trim()
+                                : !selectedDeepen
+                            }
                             className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
                           >
                             {labels.apply}

@@ -17,5 +17,5 @@ const TABLE_INTENT_PATTERNS = [
 ];
 
 export function detectTableIntent(message: string): boolean {
-  return TABLE_INTENT_PATTERNS.some(pattern => pattern.test(message));
+  return TABLE_INTENT_PATTERNS.some((pattern) => pattern.test(message));
 }

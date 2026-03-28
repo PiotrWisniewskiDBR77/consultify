@@ -30,10 +30,7 @@ export interface CriticalPathResult {
   tasks: CriticalPathResultTask[];
 }
 
-function topologicalSort(
-  ids: string[],
-  adjList: Map<string, string[]>
-): string[] | null {
+function topologicalSort(ids: string[], adjList: Map<string, string[]>): string[] | null {
   const inDegree = new Map<string, number>();
   for (const id of ids) inDegree.set(id, 0);
 

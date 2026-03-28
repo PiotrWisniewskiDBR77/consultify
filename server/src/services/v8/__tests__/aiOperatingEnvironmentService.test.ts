@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // MOCK DB LAYER
@@ -66,10 +66,10 @@ vi.mock('../executionSpineService.js', () => ({
 }));
 
 import {
-  processChatTurn,
-  selectPromptPreset,
   executeGovernedRetrieval,
   getOperatingEnvironmentStatus,
+  processChatTurn,
+  selectPromptPreset,
 } from '../aiOperatingEnvironmentService.js';
 
 // ==========================================
@@ -165,13 +165,9 @@ describe('processChatTurn', () => {
         conversationId: CONVERSATION_ID,
         organizationId: ORG_ID,
         initiatorUserId: USER_ID,
-      }),
+      })
     );
-    expect(mockClassifyIntent).toHaveBeenCalledWith(
-      BASE_CHAT_PARAMS.message,
-      SNAPSHOT_ID,
-      ORG_ID,
-    );
+    expect(mockClassifyIntent).toHaveBeenCalledWith(BASE_CHAT_PARAMS.message, SNAPSHOT_ID, ORG_ID);
   });
 
   it('returns ambiguous result for ambiguous intent', async () => {
@@ -233,13 +229,13 @@ describe('processChatTurn', () => {
         contextSnapshotId: SNAPSHOT_ID,
         organizationId: ORG_ID,
         userId: USER_ID,
-      }),
+      })
     );
     expect(mockCaptureForExecution).toHaveBeenCalledWith(
       expect.objectContaining({
         chatSnapshotId: SNAPSHOT_ID,
         executionRunId: RUN_ID,
-      }),
+      })
     );
   });
 
@@ -256,9 +252,7 @@ describe('processChatTurn', () => {
 
     await processChatTurn({ ...BASE_CHAT_PARAMS, projectId });
 
-    expect(mockCaptureForChat).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId }),
-    );
+    expect(mockCaptureForChat).toHaveBeenCalledWith(expect.objectContaining({ projectId }));
   });
 });
 
@@ -327,7 +321,7 @@ describe('selectPromptPreset', () => {
     expect(mockDbAll).toHaveBeenCalledWith(
       expect.stringContaining('v8_prompt_presets'),
       [ORG_ID, 'governed_proposal'],
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });
@@ -365,14 +359,14 @@ describe('executeGovernedRetrieval', () => {
       expect.objectContaining({
         activeSnapshotId: SNAPSHOT_ID,
         organizationId: ORG_ID,
-      }),
+      })
     );
     expect(mockCreateRetrievalRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         contextSnapshotId: RETRIEVAL_SNAPSHOT_ID,
         query: 'find related docs',
         searchPreset: 'workspace_broad',
-      }),
+      })
     );
   });
 
@@ -399,7 +393,7 @@ describe('executeGovernedRetrieval', () => {
     });
 
     expect(mockCreateRetrievalRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ searchPreset: 'artifact_deep' }),
+      expect.objectContaining({ searchPreset: 'artifact_deep' })
     );
   });
 
@@ -427,7 +421,7 @@ describe('executeGovernedRetrieval', () => {
     expect(mockCaptureForRetrieval).toHaveBeenCalledWith(
       expect.objectContaining({
         activeSnapshotId: SNAPSHOT_ID,
-      }),
+      })
     );
   });
 });

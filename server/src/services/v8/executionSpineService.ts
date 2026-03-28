@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { V8ArtifactRef } from '../../types/contextSnapshot.js';
 import type {
   ActionProposal,
   CreateProposalParams,
@@ -25,7 +26,6 @@ import {
   TERMINAL_STATES,
   VALID_TRANSITIONS,
 } from '../../types/executionSpine.js';
-import type { V8ArtifactRef } from '../../types/contextSnapshot.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -214,7 +214,7 @@ export async function createRun(params: CreateRunParams): Promise<ExecutionAgent
       run.resolvedAt,
       run.expiresAt,
       JSON.stringify(run.metadata),
-    ],
+    ]
   );
 
   await recordTransition(runId, 'drafting' as RunState, 'drafting', 'system', 'Run created');
@@ -228,13 +228,13 @@ export async function createRun(params: CreateRunParams): Promise<ExecutionAgent
  */
 export async function getRun(
   runId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ExecutionAgentRun | null> {
   const row = await dbGet<RunRow>(
     `SELECT * FROM v8_execution_runs
      WHERE run_id = ? AND organization_id = ?`,
     [runId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -250,7 +250,7 @@ export async function transitionRunState(
   organizationId: string,
   toState: RunState,
   triggeredBy: string,
-  reason?: string,
+  reason?: string
 ): Promise<ExecutionAgentRun> {
   const run = await getRun(runId, organizationId);
   if (!run) {
@@ -262,7 +262,7 @@ export async function transitionRunState(
   if (!isValidTransition(fromState, toState)) {
     throw new Error(
       `Invalid state transition: ${fromState} → ${toState}. ` +
-      `Allowed from ${fromState}: [${VALID_TRANSITIONS[fromState].join(', ')}]`,
+        `Allowed from ${fromState}: [${VALID_TRANSITIONS[fromState].join(', ')}]`
     );
   }
 
@@ -271,15 +271,13 @@ export async function transitionRunState(
   const resolvedAt = isTerminal ? now : run.resolvedAt;
 
   const planVersion =
-    fromState === 'rejected' && toState === 'planning'
-      ? run.planVersion + 1
-      : run.planVersion;
+    fromState === 'rejected' && toState === 'planning' ? run.planVersion + 1 : run.planVersion;
 
   await dbRun(
     `UPDATE v8_execution_runs
      SET state = ?, plan_version = ?, updated_at = ?, resolved_at = ?
      WHERE run_id = ? AND organization_id = ?`,
-    [toState, planVersion, now, resolvedAt, runId, organizationId],
+    [toState, planVersion, now, resolvedAt, runId, organizationId]
   );
 
   await recordTransition(runId, fromState, toState, triggeredBy, reason ?? null);
@@ -348,7 +346,7 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
       proposal.createdAt,
       proposal.resolvedAt,
       proposal.resolvedBy,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created proposal ${proposalId} for run ${validated.executionRunId}`);
@@ -360,7 +358,7 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
  */
 export async function getProposalsByRun(
   runId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ActionProposal[]> {
   const rows = await dbAll<ProposalRow>(
     `SELECT p.* FROM v8_action_proposals p
@@ -368,7 +366,7 @@ export async function getProposalsByRun(
      WHERE p.execution_run_id = ? AND r.organization_id = ?
      ORDER BY p.created_at ASC`,
     [runId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToProposal);
@@ -380,12 +378,11 @@ export async function getProposalsByRun(
 export async function resolveProposal(
   proposalId: string,
   status: ProposalStatus,
-  resolvedBy: string,
+  resolvedBy: string
 ): Promise<ActionProposal> {
-  const row = await dbGet<ProposalRow>(
-    `SELECT * FROM v8_action_proposals WHERE proposal_id = ?`,
-    [proposalId],
-  );
+  const row = await dbGet<ProposalRow>(`SELECT * FROM v8_action_proposals WHERE proposal_id = ?`, [
+    proposalId,
+  ]);
 
   if (!row) {
     throw new Error(`Proposal ${proposalId} not found`);
@@ -396,19 +393,14 @@ export async function resolveProposal(
   if (current.status !== 'draft' && current.status !== 'pending_review') {
     throw new Error(
       `Cannot resolve proposal ${proposalId}: current status is ${current.status}, ` +
-      `expected draft or pending_review`,
+        `expected draft or pending_review`
     );
   }
 
-  const validResolutions: ProposalStatus[] = [
-    'approved',
-    'rejected',
-    'expired',
-    'policy_allowed',
-  ];
+  const validResolutions: ProposalStatus[] = ['approved', 'rejected', 'expired', 'policy_allowed'];
   if (!validResolutions.includes(status)) {
     throw new Error(
-      `Invalid resolution status: ${status}. Must be one of: ${validResolutions.join(', ')}`,
+      `Invalid resolution status: ${status}. Must be one of: ${validResolutions.join(', ')}`
     );
   }
 
@@ -418,7 +410,7 @@ export async function resolveProposal(
     `UPDATE v8_action_proposals
      SET status = ?, resolved_at = ?, resolved_by = ?
      WHERE proposal_id = ?`,
-    [status, now, resolvedBy, proposalId],
+    [status, now, resolvedBy, proposalId]
   );
 
   logger.info(`${LOG_PREFIX} Proposal ${proposalId} resolved as ${status} by ${resolvedBy}`);
@@ -440,7 +432,7 @@ export async function getRunTransitions(runId: string): Promise<RunStateTransiti
      WHERE run_id = ?
      ORDER BY transitioned_at ASC`,
     [runId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToTransition);
@@ -450,10 +442,7 @@ export async function getRunTransitions(runId: string): Promise<RunStateTransiti
  * Check if a run in `waiting_for_review` state has expired.
  * If expired, transitions to `expired` and returns true.
  */
-export async function checkRunExpiration(
-  runId: string,
-  organizationId: string,
-): Promise<boolean> {
+export async function checkRunExpiration(runId: string, organizationId: string): Promise<boolean> {
   const run = await getRun(runId, organizationId);
   if (!run) return false;
 
@@ -484,14 +473,14 @@ const REVIEW_WAIT_SLA_HOURS = 72;
 export async function submitForReview(
   runId: string,
   organizationId: string,
-  triggeredBy: string,
+  triggeredBy: string
 ): Promise<ExecutionAgentRun> {
   const updatedRun = await transitionRunState(
     runId,
     organizationId,
     'waiting_for_review',
     triggeredBy,
-    'Submitted for review',
+    'Submitted for review'
   );
 
   const now = new Date();
@@ -502,14 +491,14 @@ export async function submitForReview(
     `UPDATE v8_execution_runs
      SET expires_at = ?, review_submitted_at = ?
      WHERE run_id = ? AND organization_id = ?`,
-    [expiresAt, reviewSubmittedAt, runId, organizationId],
+    [expiresAt, reviewSubmittedAt, runId, organizationId]
   );
 
   await dbRun(
     `UPDATE v8_action_proposals
      SET status = 'pending_review'
      WHERE execution_run_id = ? AND status = 'draft'`,
-    [runId],
+    [runId]
   );
 
   logger.info(`${LOG_PREFIX} Run ${runId} submitted for review, expires at ${expiresAt}`);
@@ -528,14 +517,14 @@ export async function approveRun(
   runId: string,
   organizationId: string,
   approvedBy: string,
-  reason?: string,
+  reason?: string
 ): Promise<ExecutionAgentRun> {
   const updatedRun = await transitionRunState(
     runId,
     organizationId,
     'approved_for_apply',
     approvedBy,
-    reason ?? 'Run approved',
+    reason ?? 'Run approved'
   );
 
   const now = new Date().toISOString();
@@ -544,14 +533,14 @@ export async function approveRun(
     `UPDATE v8_action_proposals
      SET status = 'approved', resolved_at = ?, resolved_by = ?
      WHERE execution_run_id = ? AND status = 'pending_review'`,
-    [now, approvedBy, runId],
+    [now, approvedBy, runId]
   );
 
   await dbRun(
     `UPDATE v8_execution_runs
      SET review_completed_at = ?, review_completed_by = ?
      WHERE run_id = ? AND organization_id = ?`,
-    [now, approvedBy, runId, organizationId],
+    [now, approvedBy, runId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Run ${runId} approved by ${approvedBy}`);
@@ -566,14 +555,14 @@ export async function rejectRun(
   runId: string,
   organizationId: string,
   rejectedBy: string,
-  reason: string,
+  reason: string
 ): Promise<ExecutionAgentRun> {
   const updatedRun = await transitionRunState(
     runId,
     organizationId,
     'rejected',
     rejectedBy,
-    reason,
+    reason
   );
 
   const now = new Date().toISOString();
@@ -582,14 +571,14 @@ export async function rejectRun(
     `UPDATE v8_action_proposals
      SET status = 'rejected', resolved_at = ?, resolved_by = ?
      WHERE execution_run_id = ? AND status = 'pending_review'`,
-    [now, rejectedBy, runId],
+    [now, rejectedBy, runId]
   );
 
   await dbRun(
     `UPDATE v8_execution_runs
      SET review_completed_at = ?, review_completed_by = ?
      WHERE run_id = ? AND organization_id = ?`,
-    [now, rejectedBy, runId, organizationId],
+    [now, rejectedBy, runId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Run ${runId} rejected by ${rejectedBy}: ${reason}`);
@@ -602,14 +591,14 @@ export async function rejectRun(
 export async function applyRun(
   runId: string,
   organizationId: string,
-  triggeredBy: string,
+  triggeredBy: string
 ): Promise<ExecutionAgentRun> {
   return transitionRunState(
     runId,
     organizationId,
     'applying',
     triggeredBy,
-    'Applying approved mutations',
+    'Applying approved mutations'
   );
 }
 
@@ -619,14 +608,14 @@ export async function applyRun(
 export async function completeRun(
   runId: string,
   organizationId: string,
-  triggeredBy: string,
+  triggeredBy: string
 ): Promise<ExecutionAgentRun> {
   return transitionRunState(
     runId,
     organizationId,
     'completed',
     triggeredBy,
-    'All mutations applied successfully',
+    'All mutations applied successfully'
   );
 }
 
@@ -642,7 +631,7 @@ export async function completeRun(
 export async function replanFromRejection(
   runId: string,
   organizationId: string,
-  triggeredBy: string,
+  triggeredBy: string
 ): Promise<ExecutionAgentRun> {
   const now = new Date().toISOString();
 
@@ -650,7 +639,7 @@ export async function replanFromRejection(
     `UPDATE v8_action_proposals
      SET status = 'expired', resolved_at = ?, resolved_by = 'system'
      WHERE execution_run_id = ? AND status IN ('draft', 'pending_review', 'rejected')`,
-    [now, runId],
+    [now, runId]
   );
 
   const updatedRun = await transitionRunState(
@@ -658,11 +647,11 @@ export async function replanFromRejection(
     organizationId,
     'planning',
     triggeredBy,
-    'Re-planning after rejection',
+    'Re-planning after rejection'
   );
 
   logger.info(
-    `${LOG_PREFIX} Run ${runId} re-planning (v${updatedRun.planVersion}) by ${triggeredBy}`,
+    `${LOG_PREFIX} Run ${runId} re-planning (v${updatedRun.planVersion}) by ${triggeredBy}`
   );
   return updatedRun;
 }
@@ -673,7 +662,7 @@ export async function replanFromRejection(
 export async function getRunsByOrg(
   organizationId: string,
   stateFilter?: RunState,
-  limit: number = 50,
+  limit: number = 50
 ): Promise<ExecutionAgentRun[]> {
   let sql: string;
   let params: unknown[];
@@ -706,7 +695,7 @@ export async function getActiveRuns(organizationId: string): Promise<ExecutionAg
        AND state NOT IN ('completed', 'cancelled', 'expired')
      ORDER BY created_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRun);
@@ -723,7 +712,7 @@ export async function getActiveRuns(organizationId: string): Promise<ExecutionAg
 export async function resolveProposalsBatch(
   proposalIds: string[],
   status: ProposalStatus,
-  resolvedBy: string,
+  resolvedBy: string
 ): Promise<ActionProposal[]> {
   const results: ActionProposal[] = [];
 
@@ -733,7 +722,7 @@ export async function resolveProposalsBatch(
   }
 
   logger.info(
-    `${LOG_PREFIX} Batch-resolved ${results.length} proposals as ${status} by ${resolvedBy}`,
+    `${LOG_PREFIX} Batch-resolved ${results.length} proposals as ${status} by ${resolvedBy}`
   );
   return results;
 }
@@ -747,7 +736,7 @@ async function recordTransition(
   fromState: RunState | string,
   toState: RunState | string,
   triggeredBy: string,
-  reason: string | null,
+  reason: string | null
 ): Promise<void> {
   const transitionId = uuidv4();
   const now = new Date().toISOString();
@@ -757,6 +746,6 @@ async function recordTransition(
       transition_id, run_id, from_state, to_state,
       triggered_by, reason, transitioned_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [transitionId, runId, fromState, toState, triggeredBy, reason, now],
+    [transitionId, runId, fromState, toState, triggeredBy, reason, now]
   );
 }

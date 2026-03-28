@@ -26,9 +26,19 @@ export const getHeaders = (): Record<string, string> => {
 /**
  * Wrapper for fetch that handles 401 with automatic token refresh
  */
-export const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
-  let res = await fetch(url, { ...options, headers });
+export interface ApiRequestInit extends RequestInit {
+  skipDefaultHeaders?: boolean;
+}
+
+export const fetchWithRetry = async (
+  url: string,
+  options: ApiRequestInit = {}
+): Promise<Response> => {
+  const { skipDefaultHeaders = false, ...requestOptions } = options;
+  const headers = skipDefaultHeaders
+    ? { ...((requestOptions.headers as Record<string, string>) || {}) }
+    : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
+  let res = await fetch(url, { ...requestOptions, headers });
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
@@ -37,7 +47,7 @@ export const fetchWithRetry = async (url: string, options: RequestInit = {}): Pr
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...options, headers });
+      res = await fetch(url, { ...requestOptions, headers });
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));

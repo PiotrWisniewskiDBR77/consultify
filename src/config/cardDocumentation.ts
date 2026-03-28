@@ -1,8 +1,4 @@
-import {
-  getHelpDocument,
-  getLocalizedText,
-  type SupportedHelpLanguage,
-} from './helpExperience';
+import { getHelpDocument, getLocalizedText, type SupportedHelpLanguage } from './helpExperience';
 
 export interface CardDocumentation {
   title: string;

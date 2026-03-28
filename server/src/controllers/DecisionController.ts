@@ -10,14 +10,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import {
-  validateRequiredFields,
   type DecisionPlaybook,
+  validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
-import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import {
-  validateDecisionWorkflowTransition,
   type DecisionWorkflowStatus,
+  validateDecisionWorkflowTransition,
 } from '../services/decisionWorkflowService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -891,8 +891,17 @@ export class DecisionController {
           action: 'DECISION_CREATE',
           resourceType: 'decision',
           resourceId: id,
-          after: { title, type: normalizedType, status: 'pending', decisionMakerId: decisionOwnerId || userId },
-          metadata: { initiativeId: initiativeIdValue, taskId: taskIdValue, projectId: projectIdValue },
+          after: {
+            title,
+            type: normalizedType,
+            status: 'pending',
+            decisionMakerId: decisionOwnerId || userId,
+          },
+          metadata: {
+            initiativeId: initiativeIdValue,
+            taskId: taskIdValue,
+            projectId: projectIdValue,
+          },
           organizationId: orgId,
         })
         .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
@@ -1015,7 +1024,9 @@ export class DecisionController {
             metadata: {},
             organizationId: orgId,
           })
-          .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+          .catch((err: any) =>
+            logger.error('[DecisionController] Audit log failed:', err?.message)
+          );
       }
 
       // If decision is resolved, refresh blocks on impacted items
@@ -1061,8 +1072,16 @@ export class DecisionController {
         return;
       }
 
-      const { decisionOwnerId, dueDate, priority, impact, status, title, description, delegationNote } =
-        req.body;
+      const {
+        decisionOwnerId,
+        dueDate,
+        priority,
+        impact,
+        status,
+        title,
+        description,
+        delegationNote,
+      } = req.body;
 
       if (status && !isDecisionStatusInput(status)) {
         res.status(400).json({ error: 'Invalid decision status' });
@@ -1176,7 +1195,9 @@ export class DecisionController {
             metadata: {},
             organizationId: orgId,
           })
-          .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+          .catch((err: any) =>
+            logger.error('[DecisionController] Audit log failed:', err?.message)
+          );
       }
 
       res.json({ id, message: 'Decision updated' });
@@ -1473,7 +1494,9 @@ export class DecisionController {
 
       const currentWorkflow = String(decision.workflow_status || 'proposed').toLowerCase();
       const targetWorkflow: DecisionWorkflowStatus =
-        String(toStatus).toLowerCase() === 'publish' ? 'published' : (String(toStatus).toLowerCase() as DecisionWorkflowStatus);
+        String(toStatus).toLowerCase() === 'publish'
+          ? 'published'
+          : (String(toStatus).toLowerCase() as DecisionWorkflowStatus);
 
       const validation = validateDecisionWorkflowTransition(currentWorkflow, targetWorkflow);
       if (!validation.allowed) {
@@ -1505,7 +1528,9 @@ export class DecisionController {
             decisionType: playbookRow.decision_type,
             requiredFields: JSON.parse(playbookRow.required_fields_json || '[]'),
             workflowStages: JSON.parse(playbookRow.workflow_stages_json || '[]'),
-            approvalConfig: playbookRow.approval_config_json ? JSON.parse(playbookRow.approval_config_json) : undefined,
+            approvalConfig: playbookRow.approval_config_json
+              ? JSON.parse(playbookRow.approval_config_json)
+              : undefined,
             isDefault: Boolean(playbookRow.is_default),
             isActive: Boolean(playbookRow.is_active),
           };
@@ -1529,7 +1554,10 @@ export class DecisionController {
           }
         }
       } catch (err: any) {
-        logger.warn('[DecisionController.transitionWorkflow] Playbook check failed (continuing):', err?.message);
+        logger.warn(
+          '[DecisionController.transitionWorkflow] Playbook check failed (continuing):',
+          err?.message
+        );
       }
 
       const hasWorkflowCol = (await getTableColumns('decisions'))?.has?.('workflow_status') ?? true;
@@ -1548,17 +1576,22 @@ export class DecisionController {
         try {
           parsedOptions = JSON.parse(decision.options || '[]');
           if (!Array.isArray(parsedOptions)) parsedOptions = [];
-        } catch { parsedOptions = []; }
+        } catch {
+          parsedOptions = [];
+        }
 
-        const taskSources = parsedOptions.length > 0
-          ? parsedOptions.map(opt => ({
-              title: `Implement: ${String(opt.label || opt.id || 'Option').slice(0, 200)}`,
-              description: opt.description || null,
-            }))
-          : [{
-              title: `Implement: ${String(decision.title || 'Decision').slice(0, 200)}`,
-              description: decision.description || null,
-            }];
+        const taskSources =
+          parsedOptions.length > 0
+            ? parsedOptions.map((opt) => ({
+                title: `Implement: ${String(opt.label || opt.id || 'Option').slice(0, 200)}`,
+                description: opt.description || null,
+              }))
+            : [
+                {
+                  title: `Implement: ${String(decision.title || 'Decision').slice(0, 200)}`,
+                  description: decision.description || null,
+                },
+              ];
 
         const hasLinkGraph = (await getTableColumns('link_graph_edges'))?.size > 0;
 
@@ -1569,13 +1602,34 @@ export class DecisionController {
               await queryHelpers.queryRun(
                 `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at, source_type, source_id)
                  VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?, 'decision', ?)`,
-                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now, id]
+                [
+                  taskId,
+                  orgId,
+                  decision.initiative_id ?? null,
+                  decision.project_id ?? null,
+                  src.title,
+                  src.description,
+                  userId,
+                  now,
+                  now,
+                  id,
+                ]
               );
             } catch (_e) {
               await queryHelpers.queryRun(
                 `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at)
                  VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?)`,
-                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now]
+                [
+                  taskId,
+                  orgId,
+                  decision.initiative_id ?? null,
+                  decision.project_id ?? null,
+                  src.title,
+                  src.description,
+                  userId,
+                  now,
+                  now,
+                ]
               );
             }
             createdTaskIds.push(taskId);
@@ -1589,37 +1643,49 @@ export class DecisionController {
                   [edgeId, orgId, userId, id, taskId, now]
                 );
               } catch (linkErr: any) {
-                logger.warn('[DecisionController.transitionWorkflow] LinkGraph edge failed:', linkErr?.message);
+                logger.warn(
+                  '[DecisionController.transitionWorkflow] LinkGraph edge failed:',
+                  linkErr?.message
+                );
               }
             }
 
-            auditEventsService.log({
-              actorId: userId,
-              actorType: 'USER',
-              action: 'TASK_CREATE',
-              resourceType: 'task',
-              resourceId: taskId,
-              after: { title: src.title, status: 'todo', sourceType: 'decision', sourceId: id },
-              metadata: { decisionId: id },
-              organizationId: orgId,
-            }).catch((e: any) => logger.warn('[DecisionController] Task audit log failed:', e?.message));
+            auditEventsService
+              .log({
+                actorId: userId,
+                actorType: 'USER',
+                action: 'TASK_CREATE',
+                resourceType: 'task',
+                resourceId: taskId,
+                after: { title: src.title, status: 'todo', sourceType: 'decision', sourceId: id },
+                metadata: { decisionId: id },
+                organizationId: orgId,
+              })
+              .catch((e: any) =>
+                logger.warn('[DecisionController] Task audit log failed:', e?.message)
+              );
           } catch (err: any) {
-            logger.warn('[DecisionController.transitionWorkflow] Auto-create task failed:', err?.message);
+            logger.warn(
+              '[DecisionController.transitionWorkflow] Auto-create task failed:',
+              err?.message
+            );
           }
         }
       }
 
-      await auditEventsService.log({
-        actorId: userId,
-        actorType: 'USER',
-        action: 'DECISION_WORKFLOW_TRANSITION',
-        resourceType: 'decision',
-        resourceId: id,
-        before: { workflowStatus: currentWorkflow },
-        after: { workflowStatus: targetWorkflow, createdTaskIds },
-        metadata: {},
-        organizationId: orgId,
-      }).catch((e: any) => logger.warn('[DecisionController] Audit log failed:', e?.message));
+      await auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_WORKFLOW_TRANSITION',
+          resourceType: 'decision',
+          resourceId: id,
+          before: { workflowStatus: currentWorkflow },
+          after: { workflowStatus: targetWorkflow, createdTaskIds },
+          metadata: {},
+          organizationId: orgId,
+        })
+        .catch((e: any) => logger.warn('[DecisionController] Audit log failed:', e?.message));
 
       res.json({
         id,

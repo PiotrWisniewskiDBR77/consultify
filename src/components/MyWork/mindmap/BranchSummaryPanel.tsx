@@ -17,7 +17,11 @@ interface BranchSummaryPanelProps {
   edges: Edge[];
 }
 
-interface BranchSummary { narrative: string; keyPoints: string[]; recommendations: string[] }
+interface BranchSummary {
+  narrative: string;
+  keyPoints: string[];
+  recommendations: string[];
+}
 
 function collectDescendants(rootId: string, nodes: Node[], edges: Edge[]): Node[] {
   const childMap = new Map<string, string[]>();
@@ -46,23 +50,35 @@ function parseSummary(raw: string): BranchSummary {
   const recommendations: string[] = [];
   for (const section of sections) {
     const lower = section.toLowerCase();
-    const bullets = section.split('\n')
+    const bullets = section
+      .split('\n')
       .filter((l) => /^[\s]*[-*•]\s/.test(l))
       .map((l) => l.replace(/^[\s]*[-*•]\s*/, '').trim());
     if (lower.includes('key point') || lower.includes('kluczow')) keyPoints.push(...bullets);
-    else if (lower.includes('recommend') || lower.includes('rekomend')) recommendations.push(...bullets);
+    else if (lower.includes('recommend') || lower.includes('rekomend'))
+      recommendations.push(...bullets);
     else if (!narrative) {
-      narrative = section.split('\n').filter((l) => l.trim() && !/^#/.test(l.trim())).join(' ').trim();
+      narrative = section
+        .split('\n')
+        .filter((l) => l.trim() && !/^#/.test(l.trim()))
+        .join(' ')
+        .trim();
     }
   }
   if (!narrative) narrative = raw.trim();
   return { narrative, keyPoints, recommendations };
 }
 
-const BulletList: React.FC<{ items: string[]; color: string; label: string }> = ({ items, color, label }) =>
+const BulletList: React.FC<{ items: string[]; color: string; label: string }> = ({
+  items,
+  color,
+  label,
+}) =>
   items.length > 0 ? (
     <section>
-      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{label}</h4>
+      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+        {label}
+      </h4>
       <ul className="space-y-1">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
@@ -75,7 +91,14 @@ const BulletList: React.FC<{ items: string[]; color: string; label: string }> = 
   ) : null;
 
 export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
-  open, onClose, ideaId, ideaTitle, branchNodeId, branchLabel, nodes, edges,
+  open,
+  onClose,
+  ideaId,
+  ideaTitle,
+  branchNodeId,
+  branchLabel,
+  nodes,
+  edges,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -85,7 +108,9 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
 
   const fetchSummary = useCallback(async () => {
     if (!branchNodeId) return;
-    setLoading(true); setError(null); setSummary(null);
+    setLoading(true);
+    setError(null);
+    setSummary(null);
     try {
       const descendants = collectDescendants(branchNodeId, nodes, edges);
       const labels = descendants.map((n) => n.data?.label).filter(Boolean);
@@ -98,23 +123,48 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         activeTool: 'mindmap',
         language: i18n.language || 'en',
       });
-      const raw = typeof res === 'string' ? res : res?.summary || res?.text || res?.narrative || JSON.stringify(res);
+      const raw =
+        typeof res === 'string'
+          ? res
+          : res?.summary || res?.text || res?.narrative || JSON.stringify(res);
       setSummary(parseSummary(raw));
     } catch (err: any) {
-      setError(err?.message || (isPl ? 'Nie udało się pobrać podsumowania' : 'Failed to fetch summary'));
-    } finally { setLoading(false); }
+      setError(
+        err?.message || (isPl ? 'Nie udało się pobrać podsumowania' : 'Failed to fetch summary')
+      );
+    } finally {
+      setLoading(false);
+    }
   }, [branchNodeId, branchLabel, nodes, edges, ideaId, i18n.language, isPl]);
 
-  useEffect(() => { if (open && branchNodeId) fetchSummary(); }, [open, branchNodeId, fetchSummary]);
+  useEffect(() => {
+    if (open && branchNodeId) fetchSummary();
+  }, [open, branchNodeId, fetchSummary]);
 
   const copyToClipboard = useCallback(() => {
     if (!summary) return;
     const md = [
-      `## ${branchLabel}`, '', summary.narrative, '',
-      ...(summary.keyPoints.length ? [`### ${isPl ? 'Kluczowe punkty' : 'Key Points'}`, ...summary.keyPoints.map((p) => `- ${p}`), ''] : []),
-      ...(summary.recommendations.length ? [`### ${isPl ? 'Rekomendacje' : 'Recommendations'}`, ...summary.recommendations.map((r) => `- ${r}`)] : []),
+      `## ${branchLabel}`,
+      '',
+      summary.narrative,
+      '',
+      ...(summary.keyPoints.length
+        ? [
+            `### ${isPl ? 'Kluczowe punkty' : 'Key Points'}`,
+            ...summary.keyPoints.map((p) => `- ${p}`),
+            '',
+          ]
+        : []),
+      ...(summary.recommendations.length
+        ? [
+            `### ${isPl ? 'Rekomendacje' : 'Recommendations'}`,
+            ...summary.recommendations.map((r) => `- ${r}`),
+          ]
+        : []),
     ].join('\n');
-    navigator.clipboard.writeText(md).then(() => toast.success(isPl ? 'Skopiowano do schowka' : 'Copied to clipboard'));
+    navigator.clipboard
+      .writeText(md)
+      .then(() => toast.success(isPl ? 'Skopiowano do schowka' : 'Copied to clipboard'));
   }, [summary, branchLabel, isPl]);
 
   if (!open) return null;
@@ -127,7 +177,11 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white truncate flex-1">
             {branchLabel || (isPl ? 'Podsumowanie gałęzi' : 'Branch Summary')}
           </h3>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+          >
             <X size={16} className="text-slate-500" />
           </button>
         </div>
@@ -152,18 +206,31 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
                 <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                   {isPl ? 'Podsumowanie' : 'Summary'}
                 </h4>
-                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{summary.narrative}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                  {summary.narrative}
+                </p>
               </section>
-              <BulletList items={summary.keyPoints} color="bg-violet-500" label={isPl ? 'Kluczowe punkty' : 'Key Points'} />
-              <BulletList items={summary.recommendations} color="bg-emerald-500" label={isPl ? 'Rekomendacje' : 'Recommendations'} />
+              <BulletList
+                items={summary.keyPoints}
+                color="bg-violet-500"
+                label={isPl ? 'Kluczowe punkty' : 'Key Points'}
+              />
+              <BulletList
+                items={summary.recommendations}
+                color="bg-emerald-500"
+                label={isPl ? 'Rekomendacje' : 'Recommendations'}
+              />
             </>
           )}
         </div>
 
         {summary && !loading && (
           <div className="px-4 py-3 border-t border-slate-200 dark:border-white/10">
-            <button type="button" onClick={copyToClipboard}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors">
+            <button
+              type="button"
+              onClick={copyToClipboard}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors"
+            >
               <Clipboard size={14} />
               {isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
             </button>

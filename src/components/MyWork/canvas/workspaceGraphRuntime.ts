@@ -6,10 +6,10 @@ import { Api } from '@/services/api';
 import type { CanvasToolType } from '../ideaSelectionTypes';
 import {
   formatIdeaMapSyncLabel,
-  resolveIdeaMapHydration,
   type IdeaMapHydrationPayload,
   type IdeaMapSyncPayload,
   type IdeaMapSyncState,
+  resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './useIdeaMapSync';
 
@@ -59,7 +59,7 @@ export function mergeWorkspaceExtensions(
     if (isPlainObject(existing[key]) && isPlainObject(value)) {
       next[key] = mergeWorkspaceExtensions(
         existing[key] as Record<string, unknown>,
-        value as Record<string, unknown>,
+        value as Record<string, unknown>
       );
       continue;
     }
@@ -70,7 +70,9 @@ export function mergeWorkspaceExtensions(
 
 function sanitizeNodes(nodes: Node[]) {
   return nodes.map((node: any) => {
-    const data = isPlainObject(node?.data) ? { ...(node.data as Record<string, unknown>) } : undefined;
+    const data = isPlainObject(node?.data)
+      ? { ...(node.data as Record<string, unknown>) }
+      : undefined;
     if (data) {
       delete data._interactionMode;
       delete data._canAddSibling;
@@ -87,9 +89,11 @@ function stableSerialize(value: unknown): string {
   }
 }
 
-function buildComparableGraph(
-  state: Pick<WorkspaceGraphState, 'nodes' | 'edges' | 'extensions'>
-): { nodes: Node[]; edges: Edge[]; extensions: Record<string, unknown> } {
+function buildComparableGraph(state: Pick<WorkspaceGraphState, 'nodes' | 'edges' | 'extensions'>): {
+  nodes: Node[];
+  edges: Edge[];
+  extensions: Record<string, unknown>;
+} {
   return {
     nodes: sanitizeNodes(state.nodes || []),
     edges: state.edges || [],
@@ -198,28 +202,30 @@ export function useWorkspaceGraphRuntime({
     void refresh();
   }, [open, refresh]);
 
-  const replaceGraph = useCallback(
-    (next: Partial<WorkspaceGraphState>) => {
-      setGraph((prev) => {
-        const nextNodes = Array.isArray(next.nodes) ? (next.nodes as Node[]) : prev.nodes;
-        const nextEdges = Array.isArray(next.edges) ? (next.edges as Edge[]) : prev.edges;
-        const nextExtensions = isPlainObject(next.extensions)
-          ? mergeWorkspaceExtensions(prev.extensions || {}, next.extensions)
-          : prev.extensions;
-        const nextVersion = typeof next.version === 'number' ? next.version : prev.version;
-        if (
-          nextNodes === prev.nodes &&
-          nextEdges === prev.edges &&
-          nextExtensions === prev.extensions &&
-          nextVersion === prev.version
-        ) {
-          return prev;
-        }
-        return { nodes: nextNodes, edges: nextEdges, extensions: nextExtensions, version: nextVersion };
-      });
-    },
-    []
-  );
+  const replaceGraph = useCallback((next: Partial<WorkspaceGraphState>) => {
+    setGraph((prev) => {
+      const nextNodes = Array.isArray(next.nodes) ? (next.nodes as Node[]) : prev.nodes;
+      const nextEdges = Array.isArray(next.edges) ? (next.edges as Edge[]) : prev.edges;
+      const nextExtensions = isPlainObject(next.extensions)
+        ? mergeWorkspaceExtensions(prev.extensions || {}, next.extensions)
+        : prev.extensions;
+      const nextVersion = typeof next.version === 'number' ? next.version : prev.version;
+      if (
+        nextNodes === prev.nodes &&
+        nextEdges === prev.edges &&
+        nextExtensions === prev.extensions &&
+        nextVersion === prev.version
+      ) {
+        return prev;
+      }
+      return {
+        nodes: nextNodes,
+        edges: nextEdges,
+        extensions: nextExtensions,
+        version: nextVersion,
+      };
+    });
+  }, []);
 
   const applyGraphMutation = useCallback(
     (
@@ -244,7 +250,8 @@ export function useWorkspaceGraphRuntime({
           extensions: mergeWorkspaceExtensions(prev.extensions || {}, patch),
         };
         if (
-          stableSerialize(buildComparableGraph(prev)) === stableSerialize(buildComparableGraph(next))
+          stableSerialize(buildComparableGraph(prev)) ===
+          stableSerialize(buildComparableGraph(next))
         ) {
           return prev;
         }
@@ -275,7 +282,8 @@ export function useWorkspaceGraphRuntime({
           version: prev.version,
         };
         if (
-          stableSerialize(buildComparableGraph(prev)) === stableSerialize(buildComparableGraph(merged))
+          stableSerialize(buildComparableGraph(prev)) ===
+          stableSerialize(buildComparableGraph(merged))
         ) {
           return prev;
         }

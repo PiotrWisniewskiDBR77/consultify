@@ -41,6 +41,8 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
+import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { NModeCanvas } from '@/components/shared/NModeLayout/NModeCanvas';
 import { NModeHeader } from '@/components/shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '@/components/shared/NModeLayout/NModeLeftNav';
@@ -59,8 +61,6 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
-import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
-import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -331,9 +331,17 @@ const STATUS_CONFIG: Record<
 
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
-  { id: 'consulting-readout', icon: Sparkles, label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' } },
+  {
+    id: 'consulting-readout',
+    icon: Sparkles,
+    label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
+  },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
-  { id: 'issues-risks', icon: ShieldAlert, label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' } },
+  {
+    id: 'issues-risks',
+    icon: ShieldAlert,
+    label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
+  },
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
   { id: 'evidence-map', icon: Map, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
@@ -420,7 +428,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   useEffect(() => {
     const loadInsight = async () => {
-      const useDemoInsight = (id: string) => {
+      const applyDemoInsight = (id: string) => {
         const demoInsight = interviewDemoData.insightDetailsById[id];
         if (!demoInsight) return false;
 
@@ -431,12 +439,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           .filter(Boolean);
         setSourceSessions(demoSessions as SourceSession[]);
         setSourceSessionSummaries(
-          demoInsight.sourceSessionIds.reduce<Record<string, SourceSessionSummary>>((acc, sessionId) => {
-            acc[sessionId] =
-              (interviewDemoData.sessionDetailsById[sessionId]?.summary as SourceSessionSummary) ||
-              DEFAULT_SESSION_SUMMARY;
-            return acc;
-          }, {})
+          demoInsight.sourceSessionIds.reduce<Record<string, SourceSessionSummary>>(
+            (acc, sessionId) => {
+              acc[sessionId] =
+                (interviewDemoData.sessionDetailsById[sessionId]
+                  ?.summary as SourceSessionSummary) || DEFAULT_SESSION_SUMMARY;
+              return acc;
+            },
+            {}
+          )
         );
         setActivityEntries(
           (interviewDemoData.insightActivityById[id] || []) as NModeActivityLogEntry[]
@@ -448,11 +459,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsLoading(true);
       setError(null);
       try {
-        if (isInterviewDemoId(insightId) && useDemoInsight(insightId)) return;
+        if (isInterviewDemoId(insightId) && applyDemoInsight(insightId)) return;
 
         const data = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
         if (!data) {
-          if (useDemoInsight(insightId)) return;
+          if (applyDemoInsight(insightId)) return;
           throw new Error('Failed to load insight');
         }
         setInsight(data);
@@ -478,17 +489,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             );
 
             setSourceSessionSummaries(
-              summaryEntries.reduce<Record<string, SourceSessionSummary>>((acc, [sessionId, summary]) => {
-                acc[sessionId] = summary
-                  ? {
-                      facts: Array.isArray(summary.facts) ? summary.facts : [],
-                      gaps: Array.isArray(summary.gaps) ? summary.gaps : [],
-                      constraints: Array.isArray(summary.constraints) ? summary.constraints : [],
-                      painPoints: Array.isArray(summary.painPoints) ? summary.painPoints : [],
-                    }
-                  : DEFAULT_SESSION_SUMMARY;
-                return acc;
-              }, {})
+              summaryEntries.reduce<Record<string, SourceSessionSummary>>(
+                (acc, [sessionId, summary]) => {
+                  acc[sessionId] = summary
+                    ? {
+                        facts: Array.isArray(summary.facts) ? summary.facts : [],
+                        gaps: Array.isArray(summary.gaps) ? summary.gaps : [],
+                        constraints: Array.isArray(summary.constraints) ? summary.constraints : [],
+                        painPoints: Array.isArray(summary.painPoints) ? summary.painPoints : [],
+                      }
+                    : DEFAULT_SESSION_SUMMARY;
+                  return acc;
+                },
+                {}
+              )
             );
           } catch {
             // sessions are optional
@@ -505,7 +519,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
       } catch (err: any) {
-        if (useDemoInsight(insightId)) return;
+        if (applyDemoInsight(insightId)) return;
         setError(err?.message || 'Failed to load insight');
         console.error('[InsightViewer] Failed to load insight:', err);
       } finally {
@@ -582,9 +596,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
     const fromNarrative = parsedInsightSections
       .filter((section) =>
-        /(issue|problem|risk|gap|constraint|challenge|pain|blocker|critical)/i.test(
-          section.heading
-        )
+        /(issue|problem|risk|gap|constraint|challenge|pain|blocker|critical)/i.test(section.heading)
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
@@ -615,7 +627,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return uniqueNonEmpty(fromNarrative).slice(0, 8);
   }, [parsedInsightSections]);
 
-  const evidenceQuotes = useMemo(() => extractQuotedLines(insight?.content).slice(0, 6), [insight?.content]);
+  const evidenceQuotes = useMemo(
+    () => extractQuotedLines(insight?.content).slice(0, 6),
+    [insight?.content]
+  );
 
   const traceabilityRows = useMemo(
     () =>
@@ -629,9 +644,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // V6 three-layer structured data
   const v6Themes = useMemo<InsightTheme[]>(() => insight?.themes ?? [], [insight?.themes]);
   const v6Issues = useMemo<InsightIssue[]>(() => insight?.issues ?? [], [insight?.issues]);
-  const v6Opportunities = useMemo<InsightOpportunity[]>(() => insight?.opportunities ?? [], [insight?.opportunities]);
+  const v6Opportunities = useMemo<InsightOpportunity[]>(
+    () => insight?.opportunities ?? [],
+    [insight?.opportunities]
+  );
   const v6Signals = useMemo<InsightSignal[]>(() => insight?.signals ?? [], [insight?.signals]);
-  const v6EvidenceMap = useMemo<InsightEvidenceMapEntry[]>(() => insight?.evidenceMap ?? [], [insight?.evidenceMap]);
+  const v6EvidenceMap = useMemo<InsightEvidenceMapEntry[]>(
+    () => insight?.evidenceMap ?? [],
+    [insight?.evidenceMap]
+  );
   const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
 
   // Evidence drilldown state
@@ -643,9 +664,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const findEvidenceForRef = useCallback(
     (ref: string): InsightEvidenceMapEntry | undefined =>
-      v6EvidenceMap.find(
-        (entry) => entry.answer_id === ref || entry.question_text === ref
-      ),
+      v6EvidenceMap.find((entry) => entry.answer_id === ref || entry.question_text === ref),
     [v6EvidenceMap]
   );
 
@@ -868,7 +887,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
       }
     })();
-  }, [commentDraft, currentUser?.displayName, currentUser?.id, draftPriority, insightId, isPolish, (currentUser as any)?.name]);
+  }, [
+    commentDraft,
+    currentUser?.displayName,
+    currentUser?.id,
+    draftPriority,
+    insightId,
+    isPolish,
+    (currentUser as any)?.name,
+  ]);
 
   const handleDeleteComment = useCallback(
     (commentId: string) => {
@@ -1111,7 +1138,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-4">
               <Callout
                 variant="purple"
-                title={isPolish ? 'Czytaj jak brief konsultingowy' : 'Read this as a consulting brief'}
+                title={
+                  isPolish ? 'Czytaj jak brief konsultingowy' : 'Read this as a consulting brief'
+                }
               >
                 {executiveSummary || (isPolish ? 'Brak podsumowania.' : 'No summary available.')}
               </Callout>
@@ -1188,7 +1217,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ) : (
                     <EmptyStateInline
                       icon={FileText}
-                      message={isPolish ? 'Brak zebranych faktów źródłowych' : 'No source facts available'}
+                      message={
+                        isPolish ? 'Brak zebranych faktów źródłowych' : 'No source facts available'
+                      }
                     />
                   )}
                 </div>
@@ -1209,7 +1240,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ) : (
                     <EmptyStateInline
                       icon={AlertTriangle}
-                      message={isPolish ? 'Brak wyraźnych issue do pokazania' : 'No clear issues to surface'}
+                      message={
+                        isPolish
+                          ? 'Brak wyraźnych issue do pokazania'
+                          : 'No clear issues to surface'
+                      }
                     />
                   )}
                 </div>
@@ -1231,7 +1266,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <EmptyStateInline
                       icon={Sparkles}
                       message={
-                        isPolish ? 'Brak sygnałów i opportunities do pokazania' : 'No signals or opportunities yet'
+                        isPolish
+                          ? 'Brak sygnałów i opportunities do pokazania'
+                          : 'No signals or opportunities yet'
                       }
                     />
                   )}
@@ -1245,7 +1282,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-4">
               {v6MissingData.length > 0 && (
-                <Callout variant="warning" title={isPolish ? 'Brakujące dane' : 'Missing Data'} compact>
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Brakujące dane' : 'Missing Data'}
+                  compact
+                >
                   <ul className="list-disc list-inside space-y-0.5">
                     {v6MissingData.map((item, idx) => (
                       <li key={idx}>{item}</li>
@@ -1257,12 +1298,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Layers}
                   message={isPolish ? 'Brak zidentyfikowanych tematów' : 'No themes identified yet'}
-                  hint={isPolish ? 'Tematy pojawią się po wygenerowaniu analizy V6.' : 'Themes will appear after V6 analysis generation.'}
+                  hint={
+                    isPolish
+                      ? 'Tematy pojawią się po wygenerowaniu analizy V6.'
+                      : 'Themes will appear after V6 analysis generation.'
+                  }
                 />
               ) : (
                 <div className="space-y-3">
                   {v6Themes.map((theme, idx) => (
-                    <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                    <div
+                      key={idx}
+                      className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                           {theme.title}
@@ -1277,10 +1325,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           }`}
                         >
                           {theme.strength === 'strong'
-                            ? isPolish ? 'Silny' : 'Strong'
+                            ? isPolish
+                              ? 'Silny'
+                              : 'Strong'
                             : theme.strength === 'moderate'
-                              ? isPolish ? 'Umiarkowany' : 'Moderate'
-                              : isPolish ? 'Słaby' : 'Weak'}
+                              ? isPolish
+                                ? 'Umiarkowany'
+                                : 'Moderate'
+                              : isPolish
+                                ? 'Słaby'
+                                : 'Weak'}
                         </span>
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1299,7 +1353,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 >
                                   <Zap size={10} />
                                   {evidence?.question_text
-                                    ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                    ? evidence.question_text.slice(0, 40) +
+                                      (evidence.question_text.length > 40 ? '…' : '')
                                     : ref.slice(0, 20)}
                                   {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                                 </button>
@@ -1314,7 +1369,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     {evidence.linked_themes?.length > 0 && (
                                       <div className="flex flex-wrap gap-1 pt-0.5">
                                         {evidence.linked_themes.map((t) => (
-                                          <span key={t} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400">
+                                          <span
+                                            key={t}
+                                            className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400"
+                                          >
                                             {t}
                                           </span>
                                         ))}
@@ -1341,8 +1399,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {v6Issues.length === 0 ? (
                 <EmptyStateInline
                   icon={ShieldAlert}
-                  message={isPolish ? 'Brak zidentyfikowanych problemów' : 'No issues identified yet'}
-                  hint={isPolish ? 'Problemy pojawią się po analizie V6.' : 'Issues will appear after V6 analysis.'}
+                  message={
+                    isPolish ? 'Brak zidentyfikowanych problemów' : 'No issues identified yet'
+                  }
+                  hint={
+                    isPolish
+                      ? 'Problemy pojawią się po analizie V6.'
+                      : 'Issues will appear after V6 analysis.'
+                  }
                 />
               ) : (
                 <div className="space-y-3">
@@ -1360,17 +1424,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
                     return (
-                      <div key={idx} className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}>
+                      <div
+                        key={idx}
+                        className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {issue.title}
                           </div>
-                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}>
+                          <span
+                            className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}
+                          >
                             {issue.severity === 'high'
-                              ? isPolish ? 'Wysoki' : 'High'
+                              ? isPolish
+                                ? 'Wysoki'
+                                : 'High'
                               : issue.severity === 'medium'
-                                ? isPolish ? 'Średni' : 'Medium'
-                                : isPolish ? 'Niski' : 'Low'}
+                                ? isPolish
+                                  ? 'Średni'
+                                  : 'Medium'
+                                : isPolish
+                                  ? 'Niski'
+                                  : 'Low'}
                           </span>
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1389,9 +1464,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   >
                                     <Zap size={10} />
                                     {evidence?.question_text
-                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      ? evidence.question_text.slice(0, 40) +
+                                        (evidence.question_text.length > 40 ? '…' : '')
                                       : ref.slice(0, 20)}
-                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                    {isExpanded ? (
+                                      <ChevronUp size={10} />
+                                    ) : (
+                                      <ChevronDown size={10} />
+                                    )}
                                   </button>
                                   {isExpanded && evidence && (
                                     <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
@@ -1423,8 +1503,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {v6Opportunities.length === 0 ? (
                 <EmptyStateInline
                   icon={TrendingUp}
-                  message={isPolish ? 'Brak zidentyfikowanych szans' : 'No opportunities identified yet'}
-                  hint={isPolish ? 'Szanse pojawią się po analizie V6.' : 'Opportunities will appear after V6 analysis.'}
+                  message={
+                    isPolish ? 'Brak zidentyfikowanych szans' : 'No opportunities identified yet'
+                  }
+                  hint={
+                    isPolish
+                      ? 'Szanse pojawią się po analizie V6.'
+                      : 'Opportunities will appear after V6 analysis.'
+                  }
                 />
               ) : (
                 <div className="space-y-3">
@@ -1436,17 +1522,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
                     return (
-                      <div key={idx} className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2">
+                      <div
+                        key={idx}
+                        className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2"
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {opp.title}
                           </div>
-                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}>
+                          <span
+                            className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}
+                          >
                             {opp.impact === 'high'
-                              ? isPolish ? 'Wysoki wpływ' : 'High impact'
+                              ? isPolish
+                                ? 'Wysoki wpływ'
+                                : 'High impact'
                               : opp.impact === 'medium'
-                                ? isPolish ? 'Średni wpływ' : 'Medium impact'
-                                : isPolish ? 'Niski wpływ' : 'Low impact'}
+                                ? isPolish
+                                  ? 'Średni wpływ'
+                                  : 'Medium impact'
+                                : isPolish
+                                  ? 'Niski wpływ'
+                                  : 'Low impact'}
                           </span>
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1465,9 +1562,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   >
                                     <Zap size={10} />
                                     {evidence?.question_text
-                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      ? evidence.question_text.slice(0, 40) +
+                                        (evidence.question_text.length > 40 ? '…' : '')
                                       : ref.slice(0, 20)}
-                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                    {isExpanded ? (
+                                      <ChevronUp size={10} />
+                                    ) : (
+                                      <ChevronDown size={10} />
+                                    )}
                                   </button>
                                   {isExpanded && evidence && (
                                     <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
@@ -1500,25 +1602,57 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Radio}
                   message={isPolish ? 'Brak wykrytych sygnałów' : 'No signals detected yet'}
-                  hint={isPolish ? 'Sygnały pojawią się po analizie V6.' : 'Signals will appear after V6 analysis.'}
+                  hint={
+                    isPolish
+                      ? 'Sygnały pojawią się po analizie V6.'
+                      : 'Signals will appear after V6 analysis.'
+                  }
                 />
               ) : (
                 <div className="space-y-3">
                   {v6Signals.map((signal, idx) => {
-                    const typeConfig: Record<string, { bg: string; label: string; labelPl: string; icon: React.ReactNode }> = {
-                      tension: { bg: 'bg-red-500/10 text-red-600 dark:text-red-400', label: 'Tension', labelPl: 'Napięcie', icon: <Flame size={10} /> },
-                      gap: { bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', label: 'Gap', labelPl: 'Luka', icon: <Target size={10} /> },
-                      contradiction: { bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400', label: 'Contradiction', labelPl: 'Sprzeczność', icon: <AlertCircle size={10} /> },
-                      emerging_pattern: { bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', label: 'Emerging Pattern', labelPl: 'Wzorzec', icon: <Sparkles size={10} /> },
+                    const typeConfig: Record<
+                      string,
+                      { bg: string; label: string; labelPl: string; icon: React.ReactNode }
+                    > = {
+                      tension: {
+                        bg: 'bg-red-500/10 text-red-600 dark:text-red-400',
+                        label: 'Tension',
+                        labelPl: 'Napięcie',
+                        icon: <Flame size={10} />,
+                      },
+                      gap: {
+                        bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                        label: 'Gap',
+                        labelPl: 'Luka',
+                        icon: <Target size={10} />,
+                      },
+                      contradiction: {
+                        bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                        icon: <AlertCircle size={10} />,
+                      },
+                      emerging_pattern: {
+                        bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+                        label: 'Emerging Pattern',
+                        labelPl: 'Wzorzec',
+                        icon: <Sparkles size={10} />,
+                      },
                     };
                     const cfg = typeConfig[signal.type] || typeConfig.emerging_pattern;
                     return (
-                      <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                      <div
+                        key={idx}
+                        className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {signal.title}
                           </div>
-                          <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>
+                          <span
+                            className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}
+                          >
                             {cfg.icon}
                             {isPolish ? cfg.labelPl : cfg.label}
                           </span>
@@ -1538,11 +1672,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'evidence-map':
           component = (
             <div className="space-y-4">
-              <Callout
-                variant="purple"
-                title={isPolish ? 'Mapa dowodów' : 'Evidence Map'}
-                compact
-              >
+              <Callout variant="purple" title={isPolish ? 'Mapa dowodów' : 'Evidence Map'} compact>
                 {isPolish
                   ? 'Tabela łączy odpowiedzi źródłowe z tematami i problemami. Kliknij wiersz, aby zobaczyć pełny cytat.'
                   : 'This table links source answers to themes and issues. Click a row to see the full quote.'}
@@ -1551,52 +1681,64 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Map}
                   message={isPolish ? 'Brak mapy dowodów' : 'No evidence map available'}
-                  hint={isPolish ? 'Mapa pojawi się po analizie V6.' : 'Map will appear after V6 analysis.'}
+                  hint={
+                    isPolish
+                      ? 'Mapa pojawi się po analizie V6.'
+                      : 'Map will appear after V6 analysis.'
+                  }
                 />
               ) : (
                 <InlineTable<InsightEvidenceMapEntry & Record<string, unknown>>
-                  columns={[
-                    {
-                      key: 'question',
-                      header: isPolish ? 'Pytanie' : 'Question',
-                      width: 'w-1/3',
-                      render: (row) => (
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                          {row.question_text}
-                        </span>
-                      ),
-                    },
-                    {
-                      key: 'answer',
-                      header: isPolish ? 'Odpowiedź' : 'Answer',
-                      width: 'w-1/3',
-                      render: (row) => (
-                        <span className="text-xs text-slate-500 dark:text-slate-400 italic">
-                          {row.answer_snippet?.length > 120
-                            ? row.answer_snippet.slice(0, 120) + '…'
-                            : row.answer_snippet}
-                        </span>
-                      ),
-                    },
-                    {
-                      key: 'linked',
-                      header: isPolish ? 'Powiązania' : 'Links',
-                      render: (row) => (
-                        <div className="flex flex-wrap gap-1">
-                          {row.linked_themes?.map((t: string) => (
-                            <span key={`t-${t}`} className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
-                              {t}
-                            </span>
-                          ))}
-                          {row.linked_issues?.map((i: string) => (
-                            <span key={`i-${i}`} className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]">
-                              {i}
-                            </span>
-                          ))}
-                        </div>
-                      ),
-                    },
-                  ] as InlineTableColumn<InsightEvidenceMapEntry & Record<string, unknown>>[]}
+                  columns={
+                    [
+                      {
+                        key: 'question',
+                        header: isPolish ? 'Pytanie' : 'Question',
+                        width: 'w-1/3',
+                        render: (row) => (
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                            {row.question_text}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: 'answer',
+                        header: isPolish ? 'Odpowiedź' : 'Answer',
+                        width: 'w-1/3',
+                        render: (row) => (
+                          <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                            {row.answer_snippet?.length > 120
+                              ? row.answer_snippet.slice(0, 120) + '…'
+                              : row.answer_snippet}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: 'linked',
+                        header: isPolish ? 'Powiązania' : 'Links',
+                        render: (row) => (
+                          <div className="flex flex-wrap gap-1">
+                            {row.linked_themes?.map((t: string) => (
+                              <span
+                                key={`t-${t}`}
+                                className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {row.linked_issues?.map((i: string) => (
+                              <span
+                                key={`i-${i}`}
+                                className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]"
+                              >
+                                {i}
+                              </span>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ] as InlineTableColumn<InsightEvidenceMapEntry & Record<string, unknown>>[]
+                  }
                   data={v6EvidenceMap as (InsightEvidenceMapEntry & Record<string, unknown>)[]}
                   rowKey={(row, idx) => row.answer_id || String(idx)}
                   emptyMessage={isPolish ? 'Brak danych.' : 'No data.'}
@@ -1612,7 +1754,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-4">
               <Callout
                 variant="success"
-                title={isPolish ? 'Traceability do odpowiedzi źródłowych' : 'Traceability to source answers'}
+                title={
+                  isPolish
+                    ? 'Traceability do odpowiedzi źródłowych'
+                    : 'Traceability to source answers'
+                }
               >
                 {isPolish
                   ? 'Każda karta poniżej pokazuje, z których oficjalnych odpowiedzi i luk informacyjnych zbudowano insight.'
@@ -1642,7 +1788,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {session.name}
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {session.templateName || (isPolish ? 'Sesja źródłowa' : 'Source session')}
+                            {session.templateName ||
+                              (isPolish ? 'Sesja źródłowa' : 'Source session')}
                           </div>
                         </div>
                         <button
@@ -1660,7 +1807,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                           {summary.facts.length > 0 ? (
                             summary.facts.slice(0, 4).map((fact) => (
-                              <div key={fact} className="text-sm text-slate-700 dark:text-slate-300">
+                              <div
+                                key={fact}
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
                                 {fact}
                               </div>
                             ))
@@ -1675,8 +1825,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Gaps / constraints' : 'Gaps / constraints'}
                           </div>
-                          {uniqueNonEmpty([...summary.gaps, ...summary.constraints, ...summary.painPoints]).length >
-                          0 ? (
+                          {uniqueNonEmpty([
+                            ...summary.gaps,
+                            ...summary.constraints,
+                            ...summary.painPoints,
+                          ]).length > 0 ? (
                             uniqueNonEmpty([
                               ...summary.gaps,
                               ...summary.constraints,
@@ -1684,7 +1837,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             ])
                               .slice(0, 4)
                               .map((item) => (
-                                <div key={item} className="text-sm text-slate-700 dark:text-slate-300">
+                                <div
+                                  key={item}
+                                  className="text-sm text-slate-700 dark:text-slate-300"
+                                >
                                   {item}
                                 </div>
                               ))
@@ -1787,8 +1943,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </div>
           );
           break;
-
-
 
         case 'source-sessions':
           component = (

@@ -98,7 +98,8 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   const userCapMap = new Map<string, { name: string; capacityHours: number }>();
   for (const m of members) {
     const existing = userCapMap.get(m.user_id);
-    const addedCap = (Math.min(100, Math.max(0, Number(m.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS;
+    const addedCap =
+      (Math.min(100, Math.max(0, Number(m.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS;
     if (existing) {
       existing.capacityHours += addedCap;
     } else {
@@ -121,7 +122,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
      GROUP BY assignee_id`,
     [...userIds, orgId]
   );
-  const allocMap = new Map(allocRows.map(r => [r.user_id, Number(r.allocated_hours)]));
+  const allocMap = new Map(allocRows.map((r) => [r.user_id, Number(r.allocated_hours)]));
 
   let actualMap = new Map<string, number>();
   try {
@@ -133,7 +134,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
        GROUP BY user_id`,
       [...userIds, orgId]
     );
-    actualMap = new Map(actualRows.map(r => [r.user_id, Number(r.actual_hours)]));
+    actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.actual_hours)]));
   } catch {
     // time_entries table may not exist yet
   }
@@ -174,10 +175,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   };
 }
 
-export async function getUserForecast(
-  orgId: string,
-  userId: string
-): Promise<WeekForecast[]> {
+export async function getUserForecast(orgId: string, userId: string): Promise<WeekForecast[]> {
   const allocRows = await DbPromise.all<{ allocation_percent: number }>(
     `SELECT COALESCE(allocation_percent, 100) as allocation_percent
      FROM project_members
@@ -188,7 +186,10 @@ export async function getUserForecast(
   let weeklyCapacity = DEFAULT_WEEKLY_HOURS;
   if (allocRows.length > 0) {
     weeklyCapacity = allocRows.reduce(
-      (sum, r) => sum + (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS,
+      (sum, r) =>
+        sum +
+        (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) *
+          DEFAULT_WEEKLY_HOURS,
       0
     );
   }
@@ -248,9 +249,10 @@ export async function getOverloadAlerts(orgId: string): Promise<OverloadAlert[]>
     if (user.allocatedHours > user.capacityHours * 1.1) {
       const overloadHours = round1(user.allocatedHours - user.capacityHours);
       const severity = user.allocatedHours > user.capacityHours * 1.3 ? 'critical' : 'warning';
-      const suggestion = severity === 'critical'
-        ? `Reassign ${overloadHours}h of work or extend deadlines`
-        : `Review task priorities — ${overloadHours}h over capacity`;
+      const suggestion =
+        severity === 'critical'
+          ? `Reassign ${overloadHours}h of work or extend deadlines`
+          : `Review task priorities — ${overloadHours}h over capacity`;
 
       alerts.push({
         userId: user.userId,

@@ -13,16 +13,18 @@ import { useTranslation } from 'react-i18next';
 import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
+  type V8ExecutionRaidMitigationPayload,
 } from '@/services/api/v8/execution-control';
+
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 interface MitigationPanelProps {
   raidItemId: string;
   initialPlan?: string;
-  initialStrategy?: string;
+  initialStrategy?: V8ExecutionRaidMitigationPayload['responseStrategy'] | '';
   initialOwnerId?: string;
   initialDueDate?: string;
-  initialStatus?: string;
+  initialStatus?: V8ExecutionRaidMitigationPayload['mitigationStatus'] | '';
   onSaved?: () => void;
 }
 
@@ -48,10 +50,14 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const [plan, setPlan] = useState(initialPlan);
-  const [strategy, setStrategy] = useState(initialStrategy);
+  const [strategy, setStrategy] = useState<
+    V8ExecutionRaidMitigationPayload['responseStrategy'] | ''
+  >(initialStrategy);
   const [ownerId, setOwnerId] = useState(initialOwnerId);
   const [dueDate, setDueDate] = useState(initialDueDate);
-  const [status, setStatus] = useState(initialStatus);
+  const [status, setStatus] = useState<V8ExecutionRaidMitigationPayload['mitigationStatus'] | ''>(
+    initialStatus
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -63,7 +69,7 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
       const token = getAuthToken();
       if (!token) return;
 
-      const body: Record<string, string> = { raidItemId };
+      const body: V8ExecutionRaidMitigationPayload = { raidItemId };
       if (plan) body.mitigationPlan = plan;
       if (strategy) body.responseStrategy = strategy;
       if (ownerId) body.mitigationOwnerId = ownerId;
@@ -157,7 +163,9 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
           </label>
           <select
             value={strategy}
-            onChange={(e) => setStrategy(e.target.value)}
+            onChange={(e) =>
+              setStrategy(e.target.value as V8ExecutionRaidMitigationPayload['responseStrategy'])
+            }
             className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
           >
             <option value="">—</option>
@@ -174,7 +182,9 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
           </label>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) =>
+              setStatus(e.target.value as V8ExecutionRaidMitigationPayload['mitigationStatus'])
+            }
             className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
           >
             {MITIGATION_STATUSES.map((s) => (

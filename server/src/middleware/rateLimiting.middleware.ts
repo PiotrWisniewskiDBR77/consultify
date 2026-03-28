@@ -38,7 +38,8 @@ function increment(key: string, windowMs: number): { count: number; resetAt: num
 
 function extractToken(req: Request): string | null {
   const authHeader = req.headers['authorization'];
-  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) return authHeader.slice(7);
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer '))
+    return authHeader.slice(7);
   if (typeof authHeader === 'string' && authHeader.length > 0) return authHeader;
 
   const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;

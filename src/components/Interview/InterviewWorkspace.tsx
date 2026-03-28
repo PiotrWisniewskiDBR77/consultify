@@ -74,8 +74,8 @@ import {
 } from './CategorySidebar';
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
-import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
+import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
 import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
@@ -221,9 +221,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   useEffect(() => {
     if (!isReviewerMode) return;
     const items: { key: string; label: string; checked: boolean }[] = [];
-    const unansweredRequired = questions.filter(
-      (q) => q.isRequired && q.status !== 'answered'
-    );
+    const unansweredRequired = questions.filter((q) => q.isRequired && q.status !== 'answered');
     for (const q of unansweredRequired) {
       items.push({
         key: `q_${q.id}`,
@@ -234,9 +232,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (items.length === 0) {
       items.push({
         key: 'quality_gaps',
-        label: isPolish
-          ? 'Doprecyzuj kluczowe odpowiedzi'
-          : 'Clarify key answers',
+        label: isPolish ? 'Doprecyzuj kluczowe odpowiedzi' : 'Clarify key answers',
         checked: false,
       });
     }
@@ -395,7 +391,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setRuntimeMode('single_question');
       }
     } catch {
-      setRuntimeMode(session?.assignmentId ? 'single_question' : session?.runtimeModeDefault || 'single_question');
+      setRuntimeMode(
+        session?.assignmentId ? 'single_question' : session?.runtimeModeDefault || 'single_question'
+      );
     }
   }, [initialSessionId, session?.assignmentId, session?.id, session?.runtimeModeDefault]);
 
@@ -411,7 +409,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Load session data
   useEffect(() => {
     const loadSession = async () => {
-      const useDemoSession = (sessionId: string) => {
+      const applyDemoSession = (sessionId: string) => {
         const demoDetail = interviewDemoData.sessionDetailsById[sessionId];
         if (!demoDetail) return false;
 
@@ -443,7 +441,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         let currentSession: InterviewSession | null = null;
 
         if (initialSessionId && isInterviewDemoId(initialSessionId)) {
-          if (useDemoSession(initialSessionId)) return;
+          if (applyDemoSession(initialSessionId)) return;
         }
 
         if (initialSessionId) {
@@ -451,7 +449,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             .then((res) => res.session)
             .catch(() => Api.get(`/interview/sessions/${initialSessionId}`))
             .catch(() => null);
-          if (!sessionRes && useDemoSession(initialSessionId)) return;
+          if (!sessionRes && applyDemoSession(initialSessionId)) return;
           currentSession = sessionRes as InterviewSession | null;
         } else {
           const sessionsRes = await V8InterviewApi.getSessions('active')
@@ -465,7 +463,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           } else {
             const firstDemoSession = Object.values(interviewDemoData.sessionDetailsById)[0];
             if (firstDemoSession) {
-              useDemoSession(firstDemoSession.session.id);
+              applyDemoSession(firstDemoSession.session.id);
               return;
             }
             const newSession = await Api.post('/interview/sessions', { projectId });
@@ -505,22 +503,22 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           setQuestions(
             Array.isArray(questionsRes) && questionsRes.length > 0
               ? questionsRes
-              : ((demoFallback?.questions as InterviewQuestion[]) || [])
+              : (demoFallback?.questions as InterviewQuestion[]) || []
           );
           setNotes(
             Array.isArray(notesRes) && notesRes.length > 0
               ? notesRes
-              : ((demoFallback?.notes as InterviewNote[]) || [])
+              : (demoFallback?.notes as InterviewNote[]) || []
           );
           setEvidence(
             Array.isArray(evidenceRes) && evidenceRes.length > 0
               ? evidenceRes
-              : ((demoFallback?.evidence as InterviewEvidence[]) || [])
+              : (demoFallback?.evidence as InterviewEvidence[]) || []
           );
           setLinkedItems(
             Array.isArray(linkedItemsRes) && linkedItemsRes.length > 0
               ? (linkedItemsRes as PersistedLinkedItem[])
-              : ((demoFallback?.linkedItems as PersistedLinkedItem[]) || [])
+              : (demoFallback?.linkedItems as PersistedLinkedItem[]) || []
           );
 
           if (currentSession.assignmentId) {
@@ -563,7 +561,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         }
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to load session:', error);
-        if (initialSessionId && useDemoSession(initialSessionId)) return;
+        if (initialSessionId && applyDemoSession(initialSessionId)) return;
         toast.error(isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session');
       } finally {
         setIsLoading(false);
@@ -1342,7 +1340,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onChange={(e) => setSendBackReason(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-              placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'}
+              placeholder={
+                isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
+              }
             />
             {sendBackMissingItems.length > 0 && (
               <div className="space-y-1">
@@ -1350,7 +1350,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {isPolish ? 'Brakujące elementy:' : 'Missing items:'}
                 </p>
                 {sendBackMissingItems.map((item, idx) => (
-                  <label key={item.key} className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+                  <label
+                    key={item.key}
+                    className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300"
+                  >
                     <input
                       type="checkbox"
                       checked={item.checked}
@@ -1373,12 +1376,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 disabled={!sendBackReason.trim() || isSendingBack}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
-                {isSendingBack ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                {isSendingBack ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Send size={12} />
+                )}
                 {isPolish ? 'Odeślij' : 'Send back'}
               </button>
               <button
                 type="button"
-                onClick={() => { setShowSendBackForm(false); setSendBackReason(''); }}
+                onClick={() => {
+                  setShowSendBackForm(false);
+                  setSendBackReason('');
+                }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
@@ -1465,64 +1475,67 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           )
         ) : (
           <>
-        <div className="mb-4 inline-flex items-center gap-2">
-          <button
-            onClick={handleNextMissing}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
-          >
-            <ArrowRight size={14} />
-            {isPolish ? 'Następne brakujące' : 'Next missing'}
-          </button>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {answeredQuestions}/{totalQuestions}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {CATEGORY_ORDER.map((cat) => {
-            const cfg = CATEGORY_CONFIG[cat];
-            const isActive = cat === activeCategory;
-            return (
+            <div className="mb-4 inline-flex items-center gap-2">
               <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                  isActive
-                    ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-primary-500/30'
-                    : 'bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
-                }`}
+                onClick={handleNextMissing}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
-                <cfg.icon size={14} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
-                {isPolish ? cfg.labelPl : cfg.labelEn}
+                <ArrowRight size={14} />
+                {isPolish ? 'Następne brakujące' : 'Next missing'}
               </button>
-            );
-          })}
-        </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {answeredQuestions}/{totalQuestions}
+              </span>
+            </div>
 
-        {activeCategory ? (
-          <QuestionsList
-            questions={questions}
-            category={activeCategory}
-            runtimeMode={runtimeMode}
-            onUpdateQuestion={handleUpdateQuestion}
-            onAddQuestion={handleAddQuestion}
-            readOnly={isLocked}
-          />
-        ) : (
-          <Callout
-            variant="info"
-            title={isPolish ? 'Wybierz sekcję' : 'Pick a section'}
-            compact
-            action={{
-              label: isPolish ? 'Następne brakujące' : 'Next missing',
-              onClick: handleNextMissing,
-            }}
-          >
-            {isPolish
-              ? 'Zacznij od pierwszej brakującej odpowiedzi — poprowadzę Cię przez flow.'
-              : 'Start with the next missing answer — we’ll guide you through the flow.'}
-          </Callout>
-        )}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {CATEGORY_ORDER.map((cat) => {
+                const cfg = CATEGORY_CONFIG[cat];
+                const isActive = cat === activeCategory;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                      isActive
+                        ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-primary-500/30'
+                        : 'bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                    }`}
+                  >
+                    <cfg.icon
+                      size={14}
+                      className={isActive ? 'text-primary-500' : 'text-slate-400'}
+                    />
+                    {isPolish ? cfg.labelPl : cfg.labelEn}
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeCategory ? (
+              <QuestionsList
+                questions={questions}
+                category={activeCategory}
+                runtimeMode={runtimeMode}
+                onUpdateQuestion={handleUpdateQuestion}
+                onAddQuestion={handleAddQuestion}
+                readOnly={isLocked}
+              />
+            ) : (
+              <Callout
+                variant="info"
+                title={isPolish ? 'Wybierz sekcję' : 'Pick a section'}
+                compact
+                action={{
+                  label: isPolish ? 'Następne brakujące' : 'Next missing',
+                  onClick: handleNextMissing,
+                }}
+              >
+                {isPolish
+                  ? 'Zacznij od pierwszej brakującej odpowiedzi — poprowadzę Cię przez flow.'
+                  : 'Start with the next missing answer — we’ll guide you through the flow.'}
+              </Callout>
+            )}
           </>
         )}
       </NModeSectionWrapper>
@@ -1817,7 +1830,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return base;
   })();
 
-
   // ── Immersive single-question mode: bypass NModeShell entirely ──
   if (runtimeMode === 'single_question') {
     const answeredCount = questions.filter((q) => q.status === 'answered').length;
@@ -1858,7 +1870,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">{progressPct}%</span>
+          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            {progressPct}%
+          </span>
           <div className="h-4 w-px bg-white/[0.08]" />
           {isReviewerMode ? (
             <>
@@ -1872,7 +1886,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 disabled={isApproving}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
               >
-                {isApproving ? <Loader2 size={13} className="animate-spin" /> : <ThumbsUp size={13} />}
+                {isApproving ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <ThumbsUp size={13} />
+                )}
                 {isPolish ? 'Zatwierdź' : 'Approve'}
               </button>
               <button
@@ -1919,12 +1937,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 onChange={(e) => setSendBackReason(e.target.value)}
                 rows={2}
                 className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'}
+                placeholder={
+                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
+                }
               />
               {sendBackMissingItems.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {sendBackMissingItems.map((item, idx) => (
-                    <label key={item.key} className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
+                    <label
+                      key={item.key}
+                      className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300"
+                    >
                       <input
                         type="checkbox"
                         checked={item.checked}
@@ -1947,12 +1970,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   disabled={!sendBackReason.trim() || isSendingBack}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
                 >
-                  {isSendingBack ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                  {isSendingBack ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Send size={12} />
+                  )}
                   {isPolish ? 'Odeślij' : 'Send back'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowSendBackForm(false); setSendBackReason(''); }}
+                  onClick={() => {
+                    setShowSendBackForm(false);
+                    setSendBackReason('');
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors"
                 >
                   {isPolish ? 'Anuluj' : 'Cancel'}

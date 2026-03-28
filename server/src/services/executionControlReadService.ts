@@ -33,7 +33,7 @@ interface InitiativeWarningRow {
  */
 export async function getTimelineWarningsSnapshot(
   organizationId: string,
-  projectId?: string,
+  projectId?: string
 ): Promise<{ warnings: TimelineWarning[]; total: number }> {
   let query = `
       SELECT id, name, status, priority, planned_end_date, sla_deadline,
@@ -55,7 +55,7 @@ export async function getTimelineWarningsSnapshot(
   for (const row of rows) {
     if (row.planned_end_date && new Date(row.planned_end_date) < now && row.status !== 'DONE') {
       const days = Math.floor(
-        (now.getTime() - new Date(row.planned_end_date).getTime()) / 86400000,
+        (now.getTime() - new Date(row.planned_end_date).getTime()) / 86400000
       );
       warnings.push({
         initiativeId: row.id,

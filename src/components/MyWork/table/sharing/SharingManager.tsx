@@ -78,11 +78,7 @@ function formatDate(iso: string | null | undefined, isPl: boolean): string {
 
 // ─── Component ───────────────────────────────────────────────────
 
-export const SharingManager: React.FC<SharingManagerProps> = ({
-  baseId,
-  views = [],
-  onClose,
-}) => {
+export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = [], onClose }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -146,7 +142,11 @@ export const SharingManager: React.FC<SharingManagerProps> = ({
     }
     setInviting(true);
     try {
-      const result = await TablePlatformApi.inviteCollaborator(baseId, inviteEmail.trim(), inviteRole);
+      const result = await TablePlatformApi.inviteCollaborator(
+        baseId,
+        inviteEmail.trim(),
+        inviteRole
+      );
       setCollaborators((prev) => [...prev, result]);
       toast.success(isPl ? 'Zaproszenie wysłane' : 'Invitation sent');
       setInviteEmail('');
@@ -200,11 +200,11 @@ export const SharingManager: React.FC<SharingManagerProps> = ({
 
       {/* Tab bar */}
       <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5 mb-4">
-        {([
+        {[
           { key: 'views' as const, icon: Globe, en: 'Views', pl: 'Widoki' },
           { key: 'collaborators' as const, icon: Users, en: 'People', pl: 'Osoby' },
           { key: 'api' as const, icon: Key, en: 'API', pl: 'API' },
-        ]).map(({ key, icon: Icon, en, pl }) => (
+        ].map(({ key, icon: Icon, en, pl }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -329,7 +329,10 @@ export const SharingManager: React.FC<SharingManagerProps> = ({
                   {isPl ? 'Zaproś' : 'Invite'}
                 </button>
                 <button
-                  onClick={() => { setShowInvite(false); setInviteEmail(''); }}
+                  onClick={() => {
+                    setShowInvite(false);
+                    setInviteEmail('');
+                  }}
                   className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
@@ -384,7 +387,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({
                     {/* Role selector */}
                     <div className="relative">
                       <button
-                        onClick={() => !isOwner && setRoleMenuOpen(roleMenuOpen === collab.id ? null : collab.id)}
+                        onClick={() =>
+                          !isOwner && setRoleMenuOpen(roleMenuOpen === collab.id ? null : collab.id)
+                        }
                         disabled={isOwner}
                         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
                           isOwner
@@ -398,7 +403,10 @@ export const SharingManager: React.FC<SharingManagerProps> = ({
 
                       {roleMenuOpen === collab.id && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(null)} />
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setRoleMenuOpen(null)}
+                          />
                           <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
                             {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                               <button

@@ -37,7 +37,13 @@ export type {
   PostCheckResult,
 };
 
-export { buildDiscoursePlan, extractFacts, realizeLinguistically, runPostChecks, selectObservations };
+export {
+  buildDiscoursePlan,
+  extractFacts,
+  realizeLinguistically,
+  runPostChecks,
+  selectObservations,
+};
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -100,12 +106,16 @@ export async function generateNarrative(
     // L2: Observation Selection
     const l2Start = process.hrtime();
     observations = selectObservations(facts, input);
-    logger.info(`${tag} L2 Observation Selection: ${observations.length} observations in ${elapsed(l2Start)}`);
+    logger.info(
+      `${tag} L2 Observation Selection: ${observations.length} observations in ${elapsed(l2Start)}`
+    );
 
     // L3: Discourse Planning
     const l3Start = process.hrtime();
     plan = buildDiscoursePlan(observations, facts, input);
-    logger.info(`${tag} L3 Discourse Planning: ${plan.segments.length} segments in ${elapsed(l3Start)}`);
+    logger.info(
+      `${tag} L3 Discourse Planning: ${plan.segments.length} segments in ${elapsed(l3Start)}`
+    );
 
     // L4: Linguistic Realization
     const l4Start = process.hrtime();
@@ -117,7 +127,7 @@ export async function generateNarrative(
     const postCheck = runPostChecks(content, plan, facts, input);
     logger.info(
       `${tag} L5 Post-Checks: passed=${postCheck.passed}, ` +
-      `${postCheck.warnings.length} warnings, ${postCheck.errors.length} errors in ${elapsed(l5Start)}`
+        `${postCheck.warnings.length} warnings, ${postCheck.errors.length} errors in ${elapsed(l5Start)}`
     );
 
     logger.info(`${tag} Pipeline complete in ${elapsed(pipelineStart)}`);

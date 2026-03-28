@@ -12,12 +12,12 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
+import logger from '../utils/Logger.js';
 import {
   assertNoLocalDatabaseOutsideTests,
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from './databaseTargetResolver.js';
-import logger from '../utils/Logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

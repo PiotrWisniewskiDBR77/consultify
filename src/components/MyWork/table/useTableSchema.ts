@@ -42,8 +42,20 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'effort', header: 'Effort', type: 'rating', visible: false, width: 120 },
   { key: 'created_time', header: 'Created', type: 'created_time', visible: false, width: 150 },
   { key: 'created_by', header: 'Created by', type: 'created_by', visible: false, width: 130 },
-  { key: 'last_edited_time', header: 'Last edited', type: 'last_edited_time', visible: false, width: 150 },
-  { key: 'last_edited_by', header: 'Last edited by', type: 'last_edited_by', visible: false, width: 130 },
+  {
+    key: 'last_edited_time',
+    header: 'Last edited',
+    type: 'last_edited_time',
+    visible: false,
+    width: 150,
+  },
+  {
+    key: 'last_edited_by',
+    header: 'Last edited by',
+    type: 'last_edited_by',
+    visible: false,
+    width: 130,
+  },
 ];
 
 export { DEFAULT_COLUMNS };
@@ -101,7 +113,9 @@ export function useTableSchema(isPl: boolean, ideaId: string): UseTableSchemaRet
   const renameColumn = useCallback(
     (key: string, newHeader: string) => {
       if (!newHeader.trim()) return;
-      setColumns((prev) => prev.map((c) => (c.key === key ? { ...c, header: newHeader.trim() } : c)));
+      setColumns((prev) =>
+        prev.map((c) => (c.key === key ? { ...c, header: newHeader.trim() } : c))
+      );
       trackFunnelEvent('ideas_table_column_renamed', { key, ideaId });
     },
     [ideaId]

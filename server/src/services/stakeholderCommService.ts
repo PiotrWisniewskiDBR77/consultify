@@ -677,10 +677,10 @@ export async function getSteercoPacks(
 }
 
 export async function getSteercoPack(orgId: string, packId: string): Promise<SteercoPack | null> {
-  const row = await dbGet(
-    `SELECT * FROM steerco_packs WHERE id = $1 AND organization_id = $2`,
-    [packId, orgId]
-  );
+  const row = await dbGet(`SELECT * FROM steerco_packs WHERE id = $1 AND organization_id = $2`, [
+    packId,
+    orgId,
+  ]);
   return row ? mapPack(row) : null;
 }
 
@@ -712,12 +712,30 @@ export async function updateSteercoPack(
   const sets: string[] = [];
   const params: unknown[] = [];
   let idx = 1;
-  if (data.title !== undefined) { sets.push(`title = $${idx++}`); params.push(data.title); }
-  if (data.packType !== undefined) { sets.push(`pack_type = $${idx++}`); params.push(data.packType); }
-  if (data.contentJson !== undefined) { sets.push(`content_json = $${idx++}`); params.push(JSON.stringify(data.contentJson)); }
-  if (data.status !== undefined) { sets.push(`status = $${idx++}`); params.push(data.status); }
-  if (data.scheduledDate !== undefined) { sets.push(`scheduled_date = $${idx++}`); params.push(data.scheduledDate); }
-  if (data.distributionChannels !== undefined) { sets.push(`distribution_channels = $${idx++}`); params.push(data.distributionChannels); }
+  if (data.title !== undefined) {
+    sets.push(`title = $${idx++}`);
+    params.push(data.title);
+  }
+  if (data.packType !== undefined) {
+    sets.push(`pack_type = $${idx++}`);
+    params.push(data.packType);
+  }
+  if (data.contentJson !== undefined) {
+    sets.push(`content_json = $${idx++}`);
+    params.push(JSON.stringify(data.contentJson));
+  }
+  if (data.status !== undefined) {
+    sets.push(`status = $${idx++}`);
+    params.push(data.status);
+  }
+  if (data.scheduledDate !== undefined) {
+    sets.push(`scheduled_date = $${idx++}`);
+    params.push(data.scheduledDate);
+  }
+  if (data.distributionChannels !== undefined) {
+    sets.push(`distribution_channels = $${idx++}`);
+    params.push(data.distributionChannels);
+  }
   if (sets.length === 0) return getSteercoPack(orgId, packId);
   sets.push(`updated_at = NOW()`);
   params.push(packId, orgId);
@@ -754,7 +772,16 @@ export async function distributeSteercoPack(
            VALUES ($1, $2, $3, $4, $5)`,
           [id, packId, userId, ch, now]
         );
-        recipients.push({ id, packId, userId, segmentId: null, channel: ch, sentAt: now, readAt: null, acknowledgedAt: null });
+        recipients.push({
+          id,
+          packId,
+          userId,
+          segmentId: null,
+          channel: ch,
+          sentAt: now,
+          readAt: null,
+          acknowledgedAt: null,
+        });
       }
     }
   }
@@ -768,7 +795,16 @@ export async function distributeSteercoPack(
            VALUES ($1, $2, $3, $4, $5)`,
           [id, packId, segmentId, ch, now]
         );
-        recipients.push({ id, packId, userId: null, segmentId, channel: ch, sentAt: now, readAt: null, acknowledgedAt: null });
+        recipients.push({
+          id,
+          packId,
+          userId: null,
+          segmentId,
+          channel: ch,
+          sentAt: now,
+          readAt: null,
+          acknowledgedAt: null,
+        });
       }
     }
   }
@@ -797,10 +833,10 @@ export async function acknowledgeRecipient(
     `UPDATE steerco_pack_recipients SET acknowledged_at = NOW() WHERE id = $1 AND pack_id = $2`,
     [recipientId, packId]
   );
-  const row = await dbGet(
-    `SELECT * FROM steerco_pack_recipients WHERE id = $1 AND pack_id = $2`,
-    [recipientId, packId]
-  );
+  const row = await dbGet(`SELECT * FROM steerco_pack_recipients WHERE id = $1 AND pack_id = $2`, [
+    recipientId,
+    packId,
+  ]);
   return row ? mapRecipient(row) : null;
 }
 
@@ -817,10 +853,7 @@ export async function getDistributionTracking(
   const pack = await getSteercoPack(orgId, packId);
   if (!pack) return null;
 
-  const rows = await dbAll(
-    `SELECT * FROM steerco_pack_recipients WHERE pack_id = $1`,
-    [packId]
-  );
+  const rows = await dbAll(`SELECT * FROM steerco_pack_recipients WHERE pack_id = $1`, [packId]);
 
   const channels: Record<string, number> = {};
   let sent = 0;
@@ -855,7 +888,9 @@ export async function generateStatusPackContent(
       `SELECT name, unit, target_value, current_value FROM initiative_kpis WHERE initiative_id = $1 AND organization_id = $2`,
       [initiativeId, orgId]
     );
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   let risks: any[] = [];
   try {
@@ -863,7 +898,9 @@ export async function generateStatusPackContent(
       `SELECT title, severity, status FROM raid_items WHERE initiative_id = $1 AND organization_id = $2 AND type = 'RISK' AND status != 'RESOLVED' ORDER BY severity DESC LIMIT 5`,
       [initiativeId, orgId]
     );
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   let milestones: any[] = [];
   try {
@@ -871,7 +908,9 @@ export async function generateStatusPackContent(
       `SELECT name, status, due_date FROM initiative_milestones WHERE initiative_id = $1 AND organization_id = $2 ORDER BY order_index LIMIT 10`,
       [initiativeId, orgId]
     );
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   let decisions: any[] = [];
   try {
@@ -879,7 +918,9 @@ export async function generateStatusPackContent(
       `SELECT title, status, priority FROM decisions WHERE initiative_id = $1 AND organization_id = $2 AND status NOT IN ('approved','rejected') ORDER BY created_at DESC LIMIT 5`,
       [initiativeId, orgId]
     );
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   return {
     sections: {

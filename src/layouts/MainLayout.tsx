@@ -153,7 +153,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <div
         data-testid="global-fab-rail"
         className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-2' : 'right-0 top-[70%]'}`}
-        style={mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined}
+        style={
+          mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined
+        }
       >
         <div className="pointer-events-auto">
           <HelpToggleButton />

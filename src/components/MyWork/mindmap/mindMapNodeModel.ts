@@ -85,7 +85,8 @@ export function sanitizeTags(input: unknown): string[] {
 export function getNodeArtifactLinks(node: Node | null | undefined): ArtifactLink[] {
   if (!node) return [];
   if (Array.isArray(node.data?.artifactLinks)) return node.data.artifactLinks as ArtifactLink[];
-  if (Array.isArray((node as any).artifactLinks)) return (node as any).artifactLinks as ArtifactLink[];
+  if (Array.isArray((node as any).artifactLinks))
+    return (node as any).artifactLinks as ArtifactLink[];
   return [];
 }
 
@@ -181,10 +182,15 @@ export function copyNodeStyle(node: Node | null | undefined): MindMapNodeStyle {
     priority: typeof d?.priority === 'number' ? d.priority : undefined,
     color: typeof d?.color === 'string' ? d.color : undefined,
     fillOpacity: typeof d?.fillOpacity === 'number' ? d.fillOpacity : undefined,
-    lineStyle: (['solid', 'dashed', 'dotted'] as const).includes(d?.lineStyle) ? d.lineStyle : undefined,
+    lineStyle: (['solid', 'dashed', 'dotted'] as const).includes(d?.lineStyle)
+      ? d.lineStyle
+      : undefined,
     fontSize: typeof d?.fontSize === 'number' ? d.fontSize : undefined,
     bold: typeof d?.bold === 'boolean' ? d.bold : undefined,
-    semanticType: typeof d?.semanticType === 'string' ? d.semanticType as MindMapNodeStyle['semanticType'] : undefined,
+    semanticType:
+      typeof d?.semanticType === 'string'
+        ? (d.semanticType as MindMapNodeStyle['semanticType'])
+        : undefined,
     locked: typeof d?.locked === 'boolean' ? d.locked : undefined,
     branchTheme: typeof d?.branchTheme === 'string' ? d.branchTheme : undefined,
     autoLayout: typeof d?.autoLayout === 'boolean' ? d.autoLayout : undefined,

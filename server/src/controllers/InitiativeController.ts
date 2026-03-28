@@ -18,10 +18,14 @@ import {
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
-import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import notificationService from '../services/notificationService.js';
-import { calculateRiskScore, categorizeScore, DEFAULT_THRESHOLDS } from '../services/raidScoringService.js';
+import {
+  calculateRiskScore,
+  categorizeScore,
+  DEFAULT_THRESHOLDS,
+} from '../services/raidScoringService.js';
 import { syncInitiativeCapacity } from '../services/staffingPlanService.js';
 import {
   getInitiativeDetailRead,
@@ -927,7 +931,10 @@ export class InitiativeController {
           action: 'initiative.updated',
           resourceType: 'initiative',
           resourceId: id,
-          before: { status: currentStatus, ...Object.fromEntries(changes.map((c) => [c.field, c.oldValue])) },
+          before: {
+            status: currentStatus,
+            ...Object.fromEntries(changes.map((c) => [c.field, c.oldValue])),
+          },
           after: updated as Record<string, unknown>,
           metadata: { changesCount: changes.length },
           organizationId: orgId,
@@ -2085,7 +2092,10 @@ export class InitiativeController {
 
       const rows = await queryHelpers.queryAll(rollupSql, rollupParams);
 
-      let childProgramsMap: Record<string, Array<{ id: string; name: string; status: string }>> = {};
+      let childProgramsMap: Record<
+        string,
+        Array<{ id: string; name: string; status: string }>
+      > = {};
       try {
         const allPrograms = await queryHelpers.queryAll(
           `SELECT id, name, status, parent_program_id FROM programs WHERE organization_id = ?`,
@@ -2120,7 +2130,7 @@ export class InitiativeController {
             amber: Number(r.health_amber) || 0,
             red: Number(r.health_red) || 0,
           },
-          childPrograms: pid ? (childProgramsMap[pid] || []) : [],
+          childPrograms: pid ? childProgramsMap[pid] || [] : [],
         };
       });
 
@@ -3733,7 +3743,11 @@ export class InitiativeController {
         ]
       );
 
-      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+      try {
+        await syncInitiativeCapacity(initiativeId, orgId);
+      } catch {
+        /* best-effort */
+      }
 
       res.status(201).json({
         success: true,
@@ -3770,7 +3784,11 @@ export class InitiativeController {
         [resourceId, initiativeId, orgId]
       );
 
-      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+      try {
+        await syncInitiativeCapacity(initiativeId, orgId);
+      } catch {
+        /* best-effort */
+      }
 
       res.json({ success: true });
     }
@@ -3815,7 +3833,11 @@ export class InitiativeController {
         ]
       );
 
-      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+      try {
+        await syncInitiativeCapacity(initiativeId, orgId);
+      } catch {
+        /* best-effort */
+      }
 
       res.json({ success: true });
     }
@@ -4782,7 +4804,8 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId, raidId } = req.params as any;
-      const { title, description, status, severity, probability, dueDate, ownerId } = req.body || {};
+      const { title, description, status, severity, probability, dueDate, ownerId } =
+        req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -4799,8 +4822,10 @@ export class InitiativeController {
         return;
       }
 
-      const finalImpact = severity ? String(severity).toUpperCase() : (existing.impact || 'LOW');
-      const finalProb = probability ? String(probability).toUpperCase() : (existing.probability || 'LOW');
+      const finalImpact = severity ? String(severity).toUpperCase() : existing.impact || 'LOW';
+      const finalProb = probability
+        ? String(probability).toUpperCase()
+        : existing.probability || 'LOW';
       const riskScore = calculateRiskScore(finalProb, finalImpact);
       const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
 

@@ -18,9 +18,24 @@ interface AddNodePopoverProps {
 }
 
 const STRUCTURE_ACTIONS = [
-  { action: 'mm_add_child', iconEl: Plus, labelPl: 'Gałąź dziecko (Tab)', labelEn: 'Add child (Tab)' },
-  { action: 'mm_add_sibling', iconEl: Plus, labelPl: 'Gałąź sąsiad (Enter)', labelEn: 'Add sibling (Enter)' },
-  { action: 'mm_add_root', iconEl: GitBranch, labelPl: 'Nowy root topic', labelEn: 'New root topic' },
+  {
+    action: 'mm_add_child',
+    iconEl: Plus,
+    labelPl: 'Gałąź dziecko (Tab)',
+    labelEn: 'Add child (Tab)',
+  },
+  {
+    action: 'mm_add_sibling',
+    iconEl: Plus,
+    labelPl: 'Gałąź sąsiad (Enter)',
+    labelEn: 'Add sibling (Enter)',
+  },
+  {
+    action: 'mm_add_root',
+    iconEl: GitBranch,
+    labelPl: 'Nowy root topic',
+    labelEn: 'New root topic',
+  },
 ];
 
 const SEMANTIC_TYPES = [
@@ -28,7 +43,12 @@ const SEMANTIC_TYPES = [
   { action: 'mm_insert_hypothesis', iconEl: Lightbulb, labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
   { action: 'mm_insert_risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk' },
   { action: 'mm_insert_action', iconEl: CheckSquare, labelPl: 'Akcja', labelEn: 'Action' },
-  { action: 'mm_insert_decision', iconEl: Diamond, labelPl: 'Punkt decyzyjny', labelEn: 'Decision point' },
+  {
+    action: 'mm_insert_decision',
+    iconEl: Diamond,
+    labelPl: 'Punkt decyzyjny',
+    labelEn: 'Decision point',
+  },
   { action: 'mm_insert_option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option' },
 ];
 
@@ -51,7 +71,8 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
         </div>
         {STRUCTURE_ACTIONS.map((a) => {
           const Icon = a.iconEl;
-          const disabled = (a.action === 'mm_add_child' || a.action === 'mm_add_sibling') && !hasSelection;
+          const disabled =
+            (a.action === 'mm_add_child' || a.action === 'mm_add_sibling') && !hasSelection;
           return (
             <button
               key={a.action}

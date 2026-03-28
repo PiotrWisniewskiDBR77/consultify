@@ -10,8 +10,8 @@
  * V4-INTV-07: Company context versioning, confidence scoring, source citations, reviewer sign-off
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
@@ -23,11 +23,23 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 // ============================================================
 
 export type ExtendedAnswerType =
-  | 'open' | 'number' | 'select' | 'scale' | 'boolean'
-  | 'matrix' | 'ranking' | 'multi_select' | 'date' | 'file_upload';
+  | 'open'
+  | 'number'
+  | 'select'
+  | 'scale'
+  | 'boolean'
+  | 'matrix'
+  | 'ranking'
+  | 'multi_select'
+  | 'date'
+  | 'file_upload';
 
 export interface BranchingRule {
-  condition: { questionId: string; operator: 'eq' | 'neq' | 'gt' | 'lt' | 'contains'; value: unknown };
+  condition: {
+    questionId: string;
+    operator: 'eq' | 'neq' | 'gt' | 'lt' | 'contains';
+    value: unknown;
+  };
   action: 'show' | 'hide' | 'skip_to';
   targetQuestionId?: string;
 }
@@ -130,14 +142,21 @@ class InterviewEnterpriseService {
        VALUES (?, ?, ?, ?, ?)`,
       [id, orgId, sessionId, data.segmentName, JSON.stringify(data.criteria)]
     );
-    return { id, sessionId, segmentName: data.segmentName, criteria: data.criteria, respondentCount: 0 };
+    return {
+      id,
+      sessionId,
+      segmentName: data.segmentName,
+      criteria: data.criteria,
+      respondentCount: 0,
+    };
   }
 
   async getSegments(orgId: string, sessionId: string): Promise<RespondentSegment[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_respondent_segments WHERE organization_id = ? AND session_id = ? ORDER BY created_at`,
-      [orgId, sessionId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_respondent_segments WHERE organization_id = ? AND session_id = ? ORDER BY created_at`,
+        [orgId, sessionId]
+      )) || [];
     return rows.map((r: any) => ({
       id: r.id,
       sessionId: r.session_id,
@@ -162,10 +181,11 @@ class InterviewEnterpriseService {
   }
 
   async getQuotas(orgId: string, sessionId: string) {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_quotas WHERE organization_id = ? AND session_id = ? ORDER BY created_at`,
-      [orgId, sessionId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_quotas WHERE organization_id = ? AND session_id = ? ORDER BY created_at`,
+        [orgId, sessionId]
+      )) || [];
     return rows.map((r: any) => ({
       id: r.id,
       segmentId: r.segment_id,
@@ -196,24 +216,41 @@ class InterviewEnterpriseService {
       `INSERT INTO interview_distributions
        (id, organization_id, session_id, channel, recipient_email, recipient_name, public_token, anonymity_mode, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [id, orgId, sessionId, data.channel, data.recipientEmail || null, data.recipientName || null, publicToken, data.anonymityMode || 'identified']
+      [
+        id,
+        orgId,
+        sessionId,
+        data.channel,
+        data.recipientEmail || null,
+        data.recipientName || null,
+        publicToken,
+        data.anonymityMode || 'identified',
+      ]
     );
 
     return {
-      id, sessionId, channel: data.channel,
+      id,
+      sessionId,
+      channel: data.channel,
       recipientEmail: data.recipientEmail || null,
       recipientName: data.recipientName || null,
-      publicToken, status: 'pending',
+      publicToken,
+      status: 'pending',
       anonymityMode: data.anonymityMode || 'identified',
-      sentAt: null, openedAt: null, startedAt: null, completedAt: null, reminderCount: 0,
+      sentAt: null,
+      openedAt: null,
+      startedAt: null,
+      completedAt: null,
+      reminderCount: 0,
     };
   }
 
   async getDistributions(orgId: string, sessionId: string): Promise<Distribution[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_distributions WHERE organization_id = ? AND session_id = ? ORDER BY created_at DESC`,
-      [orgId, sessionId]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_distributions WHERE organization_id = ? AND session_id = ? ORDER BY created_at DESC`,
+        [orgId, sessionId]
+      )) || [];
     return rows.map(mapDistributionRow);
   }
 
@@ -258,7 +295,14 @@ class InterviewEnterpriseService {
     await queryHelpers.queryRun(
       `INSERT INTO interview_reminder_schedules (id, organization_id, session_id, reminder_type, send_after_hours, max_reminders)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, orgId, sessionId, data.reminderType || 'email', data.sendAfterHours || 48, data.maxReminders || 3]
+      [
+        id,
+        orgId,
+        sessionId,
+        data.reminderType || 'email',
+        data.sendAfterHours || 48,
+        data.maxReminders || 3,
+      ]
     );
     return { id };
   }
@@ -281,7 +325,7 @@ class InterviewEnterpriseService {
       opened: row?.opened || 0,
       started: row?.started || 0,
       completed: row?.completed || 0,
-      completionRate: row?.total ? ((row?.completed || 0) / row.total * 100).toFixed(1) : '0.0',
+      completionRate: row?.total ? (((row?.completed || 0) / row.total) * 100).toFixed(1) : '0.0',
     };
   }
 
@@ -304,15 +348,19 @@ class InterviewEnterpriseService {
   }
 
   async getEvidenceAccessLog(orgId: string, evidenceId: string, limit: number = 50) {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_evidence_access_log
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_evidence_access_log
        WHERE organization_id = ? AND evidence_id = ?
        ORDER BY created_at DESC LIMIT ?`,
-      [orgId, evidenceId, limit]
-    )) || [];
+        [orgId, evidenceId, limit]
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, actorId: r.actor_id, action: r.action,
-      ipAddress: r.ip_address, createdAt: r.created_at,
+      id: r.id,
+      actorId: r.actor_id,
+      action: r.action,
+      ipAddress: r.ip_address,
+      createdAt: r.created_at,
     }));
   }
 
@@ -323,16 +371,35 @@ class InterviewEnterpriseService {
   async createDiagnosticsSnapshot(
     orgId: string,
     sessionId: string,
-    data: { snapshotType: DiagnosticsSnapshot['snapshotType']; data: Record<string, unknown>; generatedBy?: string }
+    data: {
+      snapshotType: DiagnosticsSnapshot['snapshotType'];
+      data: Record<string, unknown>;
+      generatedBy?: string;
+    }
   ): Promise<DiagnosticsSnapshot> {
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
       `INSERT INTO interview_diagnostics_snapshots (id, organization_id, session_id, snapshot_type, data, generated_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, sessionId, data.snapshotType, JSON.stringify(data.data), data.generatedBy || 'system', now]
+      [
+        id,
+        orgId,
+        sessionId,
+        data.snapshotType,
+        JSON.stringify(data.data),
+        data.generatedBy || 'system',
+        now,
+      ]
     );
-    return { id, sessionId, snapshotType: data.snapshotType, data: data.data, generatedBy: data.generatedBy || 'system', createdAt: now };
+    return {
+      id,
+      sessionId,
+      snapshotType: data.snapshotType,
+      data: data.data,
+      generatedBy: data.generatedBy || 'system',
+      createdAt: now,
+    };
   }
 
   async getDiagnosticsSnapshots(
@@ -346,13 +413,18 @@ class InterviewEnterpriseService {
       conditions.push('snapshot_type = ?');
       params.push(snapshotType);
     }
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_diagnostics_snapshots WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
-      params
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_diagnostics_snapshots WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+        params
+      )) || [];
     return rows.map((r: any) => ({
-      id: r.id, sessionId: r.session_id, snapshotType: r.snapshot_type,
-      data: safeJson(r.data), generatedBy: r.generated_by, createdAt: r.created_at,
+      id: r.id,
+      sessionId: r.session_id,
+      snapshotType: r.snapshot_type,
+      data: safeJson(r.data),
+      generatedBy: r.generated_by,
+      createdAt: r.created_at,
     }));
   }
 
@@ -378,15 +450,32 @@ class InterviewEnterpriseService {
       `INSERT INTO interview_findings
        (id, organization_id, session_id, insight_id, finding_type, title, description, severity, evidence_refs, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'identified', ?, ?)`,
-      [id, orgId, sessionId, data.insightId || null, data.findingType, data.title,
-       data.description || null, data.severity || 'medium', JSON.stringify(data.evidenceRefs || []), now, now]
+      [
+        id,
+        orgId,
+        sessionId,
+        data.insightId || null,
+        data.findingType,
+        data.title,
+        data.description || null,
+        data.severity || 'medium',
+        JSON.stringify(data.evidenceRefs || []),
+        now,
+        now,
+      ]
     );
     return {
-      id, sessionId, insightId: data.insightId || null,
-      findingType: data.findingType, title: data.title,
-      description: data.description || null, severity: data.severity || 'medium',
-      evidenceRefs: data.evidenceRefs || [], status: 'identified',
-      recommendationId: null, initiativeId: null,
+      id,
+      sessionId,
+      insightId: data.insightId || null,
+      findingType: data.findingType,
+      title: data.title,
+      description: data.description || null,
+      severity: data.severity || 'medium',
+      evidenceRefs: data.evidenceRefs || [],
+      status: 'identified',
+      recommendationId: null,
+      initiativeId: null,
     };
   }
 
@@ -397,10 +486,11 @@ class InterviewEnterpriseService {
       conditions.push('status = ?');
       params.push(status);
     }
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM interview_findings WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
-      params
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM interview_findings WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+        params
+      )) || [];
     return rows.map(mapFindingRow);
   }
 
@@ -428,7 +518,11 @@ class InterviewEnterpriseService {
   // V4-INTV-06: Anonymity — aggregation check
   // ──────────────────────────────────────────────
 
-  async checkCohortSize(orgId: string, sessionId: string, segmentId?: string): Promise<{
+  async checkCohortSize(
+    orgId: string,
+    sessionId: string,
+    segmentId?: string
+  ): Promise<{
     cohortSize: number;
     minRequired: number;
     suppressed: boolean;
@@ -457,7 +551,10 @@ class InterviewEnterpriseService {
     return { cohortSize, minRequired, suppressed: cohortSize < minRequired };
   }
 
-  async checkExportGating(orgId: string, sessionId: string): Promise<{
+  async checkExportGating(
+    orgId: string,
+    sessionId: string
+  ): Promise<{
     canExport: boolean;
     reason: string | null;
   }> {
@@ -474,7 +571,10 @@ class InterviewEnterpriseService {
     if (session.anonymity_mode === 'anonymous') {
       const cohort = await this.checkCohortSize(orgId, sessionId);
       if (cohort.suppressed) {
-        return { canExport: false, reason: `Cohort size (${cohort.cohortSize}) below minimum (${cohort.minRequired})` };
+        return {
+          canExport: false,
+          reason: `Cohort size (${cohort.cohortSize}) below minimum (${cohort.minRequired})`,
+        };
       }
     }
 
@@ -508,27 +608,38 @@ class InterviewEnterpriseService {
       `INSERT INTO organization_context_versions
        (id, organization_id, version, context_data, confidence_scores, source_citations, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orgId, version, JSON.stringify(data.contextData),
-       JSON.stringify(data.confidenceScores || {}),
-       JSON.stringify(data.sourceCitations || []),
-       userId, now]
+      [
+        id,
+        orgId,
+        version,
+        JSON.stringify(data.contextData),
+        JSON.stringify(data.confidenceScores || {}),
+        JSON.stringify(data.sourceCitations || []),
+        userId,
+        now,
+      ]
     );
 
     return {
-      id, organizationId: orgId, version,
+      id,
+      organizationId: orgId,
+      version,
       contextData: data.contextData,
       confidenceScores: data.confidenceScores || {},
       sourceCitations: data.sourceCitations || [],
-      reviewerId: null, reviewerSignOffAt: null,
-      createdBy: userId, createdAt: now,
+      reviewerId: null,
+      reviewerSignOffAt: null,
+      createdBy: userId,
+      createdAt: now,
     };
   }
 
   async getContextVersions(orgId: string, limit: number = 20): Promise<ContextVersion[]> {
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM organization_context_versions WHERE organization_id = ? ORDER BY version DESC LIMIT ?`,
-      [orgId, limit]
-    )) || [];
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT * FROM organization_context_versions WHERE organization_id = ? ORDER BY version DESC LIMIT ?`,
+        [orgId, limit]
+      )) || [];
     return rows.map(mapContextVersionRow);
   }
 
@@ -540,7 +651,11 @@ class InterviewEnterpriseService {
     return row ? mapContextVersionRow(row) : null;
   }
 
-  async signOffContextVersion(orgId: string, versionId: string, reviewerId: string): Promise<boolean> {
+  async signOffContextVersion(
+    orgId: string,
+    versionId: string,
+    reviewerId: string
+  ): Promise<boolean> {
     const result = await queryHelpers.queryRun(
       `UPDATE organization_context_versions SET reviewer_id = ?, reviewer_sign_off_at = ? WHERE id = ? AND organization_id = ?`,
       [reviewerId, new Date().toISOString(), versionId, orgId]
@@ -548,7 +663,11 @@ class InterviewEnterpriseService {
     return (result?.changes || 0) > 0;
   }
 
-  async diffContextVersions(orgId: string, fromVersion: number, toVersion: number): Promise<{
+  async diffContextVersions(
+    orgId: string,
+    fromVersion: number,
+    toVersion: number
+  ): Promise<{
     added: string[];
     removed: string[];
     changed: Array<{ key: string; from: unknown; to: unknown }>;
@@ -560,12 +679,15 @@ class InterviewEnterpriseService {
     const fromKeys = new Set(Object.keys(from.contextData));
     const toKeys = new Set(Object.keys(to.contextData));
 
-    const added = [...toKeys].filter(k => !fromKeys.has(k));
-    const removed = [...fromKeys].filter(k => !toKeys.has(k));
+    const added = [...toKeys].filter((k) => !fromKeys.has(k));
+    const removed = [...fromKeys].filter((k) => !toKeys.has(k));
     const changed: Array<{ key: string; from: unknown; to: unknown }> = [];
 
     for (const key of fromKeys) {
-      if (toKeys.has(key) && JSON.stringify(from.contextData[key]) !== JSON.stringify(to.contextData[key])) {
+      if (
+        toKeys.has(key) &&
+        JSON.stringify(from.contextData[key]) !== JSON.stringify(to.contextData[key])
+      ) {
         changed.push({ key, from: from.contextData[key], to: to.contextData[key] });
       }
     }
@@ -580,47 +702,68 @@ class InterviewEnterpriseService {
 
 function safeJson(val: unknown): Record<string, unknown> {
   if (!val) return {};
-  try { return typeof val === 'string' ? JSON.parse(val) : (val as Record<string, unknown>); }
-  catch { return {}; }
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : (val as Record<string, unknown>);
+  } catch {
+    return {};
+  }
 }
 
 function safeJsonArray(val: unknown): unknown[] {
   if (!val) return [];
-  try { return typeof val === 'string' ? JSON.parse(val) : (val as unknown[]); }
-  catch { return []; }
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : (val as unknown[]);
+  } catch {
+    return [];
+  }
 }
 
 function mapDistributionRow(r: any): Distribution {
   return {
-    id: r.id, sessionId: r.session_id, channel: r.channel,
-    recipientEmail: r.recipient_email, recipientName: r.recipient_name,
-    publicToken: r.public_token, status: r.status,
+    id: r.id,
+    sessionId: r.session_id,
+    channel: r.channel,
+    recipientEmail: r.recipient_email,
+    recipientName: r.recipient_name,
+    publicToken: r.public_token,
+    status: r.status,
     anonymityMode: r.anonymity_mode || 'identified',
-    sentAt: r.sent_at, openedAt: r.opened_at,
-    startedAt: r.started_at, completedAt: r.completed_at,
+    sentAt: r.sent_at,
+    openedAt: r.opened_at,
+    startedAt: r.started_at,
+    completedAt: r.completed_at,
     reminderCount: r.reminder_count || 0,
   };
 }
 
 function mapFindingRow(r: any): Finding {
   return {
-    id: r.id, sessionId: r.session_id, insightId: r.insight_id,
-    findingType: r.finding_type, title: r.title,
-    description: r.description, severity: r.severity || 'medium',
+    id: r.id,
+    sessionId: r.session_id,
+    insightId: r.insight_id,
+    findingType: r.finding_type,
+    title: r.title,
+    description: r.description,
+    severity: r.severity || 'medium',
     evidenceRefs: safeJsonArray(r.evidence_refs) as string[],
-    status: r.status, recommendationId: r.recommendation_id,
+    status: r.status,
+    recommendationId: r.recommendation_id,
     initiativeId: r.initiative_id,
   };
 }
 
 function mapContextVersionRow(r: any): ContextVersion {
   return {
-    id: r.id, organizationId: r.organization_id, version: r.version,
+    id: r.id,
+    organizationId: r.organization_id,
+    version: r.version,
     contextData: safeJson(r.context_data),
     confidenceScores: safeJson(r.confidence_scores) as Record<string, number>,
     sourceCitations: safeJsonArray(r.source_citations) as ContextVersion['sourceCitations'],
-    reviewerId: r.reviewer_id, reviewerSignOffAt: r.reviewer_sign_off_at,
-    createdBy: r.created_by, createdAt: r.created_at,
+    reviewerId: r.reviewer_id,
+    reviewerSignOffAt: r.reviewer_sign_off_at,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
   };
 }
 

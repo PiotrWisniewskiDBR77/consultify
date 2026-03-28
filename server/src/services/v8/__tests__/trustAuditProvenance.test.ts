@@ -1,13 +1,13 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
-  EvidenceRef,
   CitationBinding,
-  TrustSummary,
-  RoutingExplanation,
   DegradedCondition,
-  ProvenanceLedgerEntry,
+  EvidenceRef,
   HealthSignal,
+  ProvenanceLedgerEntry,
+  RoutingExplanation,
+  TrustSummary,
 } from '../../../types/trustAudit.js';
 
 // ==========================================
@@ -34,14 +34,14 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  buildProvenanceLedger,
   assessTrustClass,
-  getProvenanceByOrg,
-  buildUserExplanation,
   buildOperatorExplanation,
+  buildProvenanceLedger,
+  buildUserExplanation,
   getActiveDegradedConditions,
-  resolveDegradedCondition,
   getHealthDashboard,
+  getProvenanceByOrg,
+  resolveDegradedCondition,
 } from '../trustAuditService.js';
 
 // ==========================================
@@ -224,9 +224,7 @@ describe('buildProvenanceLedger', () => {
   });
 
   it('returns entries without explanation when no execution run is linked', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeProvenanceRow({ execution_run_id: null }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow({ execution_run_id: null })]);
 
     const result = await buildProvenanceLedger(OUTPUT_ID, ORG_ID);
 
@@ -298,7 +296,10 @@ describe('assessTrustClass', () => {
         citation_bindings: JSON.stringify([
           makeCitationBinding({
             evidenceRefs: [
-              makeEvidenceRef({ bindingStrength: 'moderate', verificationState: 'partially_verified' }),
+              makeEvidenceRef({
+                bindingStrength: 'moderate',
+                verificationState: 'partially_verified',
+              }),
             ],
           }),
         ]),
@@ -317,9 +318,7 @@ describe('assessTrustClass', () => {
   });
 
   it('returns uncertain_inference when entries have no citation bindings', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeProvenanceRow({ citation_bindings: '[]' }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow({ citation_bindings: '[]' })]);
 
     const result = await assessTrustClass(OUTPUT_ID, ORG_ID);
     expect(result).toBe('uncertain_inference');
@@ -331,7 +330,9 @@ describe('assessTrustClass', () => {
         entry_id: '00000000-0000-4000-8000-aaaaaaaaaaaa',
         citation_bindings: JSON.stringify([
           makeCitationBinding({
-            evidenceRefs: [makeEvidenceRef({ bindingStrength: 'strong', verificationState: 'verified' })],
+            evidenceRefs: [
+              makeEvidenceRef({ bindingStrength: 'strong', verificationState: 'verified' }),
+            ],
           }),
         ]),
       }),
@@ -340,11 +341,13 @@ describe('assessTrustClass', () => {
         citation_bindings: JSON.stringify([
           makeCitationBinding({
             citationBindingId: '00000000-0000-4000-8000-cccccccccc02',
-            evidenceRefs: [makeEvidenceRef({
-              evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02',
-              bindingStrength: 'none',
-              verificationState: 'verified',
-            })],
+            evidenceRefs: [
+              makeEvidenceRef({
+                evidenceRefId: '00000000-0000-4000-8000-eeeeeeeeee02',
+                bindingStrength: 'none',
+                verificationState: 'verified',
+              }),
+            ],
           }),
         ]),
       }),
@@ -366,7 +369,7 @@ describe('getProvenanceByOrg', () => {
     const results = await getProvenanceByOrg(
       ORG_ID,
       '2026-03-01T00:00:00.000Z',
-      '2026-03-31T23:59:59.000Z',
+      '2026-03-31T23:59:59.000Z'
     );
 
     expect(results).toHaveLength(1);
@@ -381,12 +384,7 @@ describe('getProvenanceByOrg', () => {
   it('applies limit when provided', async () => {
     mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow()]);
 
-    await getProvenanceByOrg(
-      ORG_ID,
-      '2026-03-01T00:00:00.000Z',
-      '2026-03-31T23:59:59.000Z',
-      10,
-    );
+    await getProvenanceByOrg(ORG_ID, '2026-03-01T00:00:00.000Z', '2026-03-31T23:59:59.000Z', 10);
 
     const sql = mockDbAll.mock.calls[0][0] as string;
     expect(sql).toContain('LIMIT');
@@ -400,7 +398,7 @@ describe('getProvenanceByOrg', () => {
     const results = await getProvenanceByOrg(
       ORG_ID,
       '2026-01-01T00:00:00.000Z',
-      '2026-01-31T23:59:59.000Z',
+      '2026-01-31T23:59:59.000Z'
     );
 
     expect(results).toEqual([]);
@@ -468,9 +466,7 @@ describe('buildUserExplanation', () => {
     mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow()]);
     mockDbAll.mockResolvedValueOnce([
       makeFakeSupportTraceRow({
-        routing_explanation: JSON.stringify(
-          makeRoutingExplanation({ fallbackOccurred: true }),
-        ),
+        routing_explanation: JSON.stringify(makeRoutingExplanation({ fallbackOccurred: true })),
       }),
     ]);
     mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow()]);
@@ -546,7 +542,7 @@ describe('buildOperatorExplanation', () => {
             fallbackReason: 'Provider timeout',
             fallbackFrom: 'gpt-4o',
             modelSelected: 'gpt-4o-mini',
-          }),
+          })
         ),
       }),
     ]);
@@ -560,12 +556,8 @@ describe('buildOperatorExplanation', () => {
   });
 
   it('works with no support trace or health signals', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeProvenanceRow({ execution_run_id: null }),
-    ]);
-    mockDbAll.mockResolvedValueOnce([
-      makeFakeProvenanceRow({ execution_run_id: null }),
-    ]);
+    mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow({ execution_run_id: null })]);
+    mockDbAll.mockResolvedValueOnce([makeFakeProvenanceRow({ execution_run_id: null })]);
     mockDbAll.mockResolvedValueOnce([]);
 
     const result = await buildOperatorExplanation(OUTPUT_ID, ORG_ID);
@@ -632,13 +624,13 @@ describe('resolveDegradedCondition', () => {
         resolved_at: '2026-03-23T12:00:00.000Z',
         resolved_by: USER_ID,
         resolution_note: 'Provider restored, fallback no longer needed.',
-      }),
+      })
     );
 
     const result = await resolveDegradedCondition(
       CONDITION_ID,
       USER_ID,
-      'Provider restored, fallback no longer needed.',
+      'Provider restored, fallback no longer needed.'
     );
 
     expect(result).not.toBeNull();
@@ -661,7 +653,7 @@ describe('resolveDegradedCondition', () => {
     const result = await resolveDegradedCondition(
       '00000000-0000-4000-8000-000000000099',
       USER_ID,
-      'Resolved.',
+      'Resolved.'
     );
 
     expect(result).toBeNull();
@@ -673,7 +665,7 @@ describe('resolveDegradedCondition', () => {
         resolved_at: '2026-03-23T12:00:00.000Z',
         resolved_by: USER_ID,
         resolution_note: 'Fixed.',
-      }),
+      })
     );
 
     const result = await resolveDegradedCondition(CONDITION_ID, USER_ID, 'Fixed.');

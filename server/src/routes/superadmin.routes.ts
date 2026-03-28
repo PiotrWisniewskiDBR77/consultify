@@ -15,16 +15,16 @@ import { Response, Router } from 'express';
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
   getAllOrgPolicies,
   getOrgPolicy,
   requireNoLegalHold,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
-import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
-import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
@@ -104,10 +104,13 @@ router.put(
     const before = await getOrgPolicy(req.params.orgId);
     const policy = await upsertOrgPolicy(req.params.orgId, {
       retentionDays: retentionDays != null ? Number(retentionDays) : undefined,
-      legalHoldEnabled:
-        legalHoldEnabled !== undefined ? Boolean(legalHoldEnabled) : undefined,
+      legalHoldEnabled: legalHoldEnabled !== undefined ? Boolean(legalHoldEnabled) : undefined,
       residencyRegion:
-        residencyRegion !== undefined ? (residencyRegion === null ? null : String(residencyRegion)) : undefined,
+        residencyRegion !== undefined
+          ? residencyRegion === null
+            ? null
+            : String(residencyRegion)
+          : undefined,
     });
     await req.emitAuditEvent?.({
       actorType: 'USER',
@@ -374,15 +377,17 @@ router.post(
       return res.status(400).json({ error: 'organizationId is required' });
     }
     try {
-      const { createInvoice } = await import('../services/InvoiceService.js') as any;
-      const items = Array.isArray(lineItems) && lineItems.length > 0
-        ? lineItems
-        : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
+      const { createInvoice } = (await import('../services/InvoiceService.js')) as any;
+      const items =
+        Array.isArray(lineItems) && lineItems.length > 0
+          ? lineItems
+          : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
       const invoice = await createInvoice({
         organizationId,
         items,
         currency: currency || 'USD',
-        dueDate: dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        dueDate:
+          dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       });
       return res.status(201).json(invoice);
     } catch (error: any) {
@@ -567,18 +572,114 @@ router.get(
   '/integrations/catalog',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const catalog = [
-      { id: 'slack', name: 'Slack', description: 'Team communication & notifications', category: 'Communication', icon: '💬', auth_type: 'oauth', status: 'available' },
-      { id: 'microsoft_teams', name: 'Microsoft Teams', description: 'Team collaboration & meetings', category: 'Communication', icon: '👥', auth_type: 'oauth', status: 'available' },
-      { id: 'jira', name: 'Jira', description: 'Project & issue tracking', category: 'Project Management', icon: '📋', auth_type: 'oauth', status: 'available' },
-      { id: 'asana', name: 'Asana', description: 'Work management platform', category: 'Project Management', icon: '✅', auth_type: 'oauth', status: 'available' },
-      { id: 'google_calendar', name: 'Google Calendar', description: 'Calendar integration', category: 'Productivity', icon: '📅', auth_type: 'oauth', status: 'available' },
-      { id: 'salesforce', name: 'Salesforce', description: 'CRM integration', category: 'CRM', icon: '☁️', auth_type: 'oauth', status: 'available' },
-      { id: 'hubspot', name: 'HubSpot', description: 'Marketing & sales platform', category: 'CRM', icon: '🧲', auth_type: 'oauth', status: 'available' },
-      { id: 'zapier', name: 'Zapier', description: 'Automation workflows', category: 'Automation', icon: '⚡', auth_type: 'api_key', status: 'available' },
-      { id: 'power_automate', name: 'Power Automate', description: 'Microsoft automation', category: 'Automation', icon: '🔄', auth_type: 'oauth', status: 'beta' },
-      { id: 'github', name: 'GitHub', description: 'Code repository', category: 'Development', icon: '🐙', auth_type: 'oauth', status: 'available' },
-      { id: 'azure_devops', name: 'Azure DevOps', description: 'Development lifecycle', category: 'Development', icon: '🔷', auth_type: 'oauth', status: 'coming_soon' },
-      { id: 'aws_s3', name: 'AWS S3', description: 'Cloud storage', category: 'Storage', icon: '📦', auth_type: 'api_key', status: 'available' },
+      {
+        id: 'slack',
+        name: 'Slack',
+        description: 'Team communication & notifications',
+        category: 'Communication',
+        icon: '💬',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'microsoft_teams',
+        name: 'Microsoft Teams',
+        description: 'Team collaboration & meetings',
+        category: 'Communication',
+        icon: '👥',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'jira',
+        name: 'Jira',
+        description: 'Project & issue tracking',
+        category: 'Project Management',
+        icon: '📋',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'asana',
+        name: 'Asana',
+        description: 'Work management platform',
+        category: 'Project Management',
+        icon: '✅',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'google_calendar',
+        name: 'Google Calendar',
+        description: 'Calendar integration',
+        category: 'Productivity',
+        icon: '📅',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'salesforce',
+        name: 'Salesforce',
+        description: 'CRM integration',
+        category: 'CRM',
+        icon: '☁️',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'hubspot',
+        name: 'HubSpot',
+        description: 'Marketing & sales platform',
+        category: 'CRM',
+        icon: '🧲',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'zapier',
+        name: 'Zapier',
+        description: 'Automation workflows',
+        category: 'Automation',
+        icon: '⚡',
+        auth_type: 'api_key',
+        status: 'available',
+      },
+      {
+        id: 'power_automate',
+        name: 'Power Automate',
+        description: 'Microsoft automation',
+        category: 'Automation',
+        icon: '🔄',
+        auth_type: 'oauth',
+        status: 'beta',
+      },
+      {
+        id: 'github',
+        name: 'GitHub',
+        description: 'Code repository',
+        category: 'Development',
+        icon: '🐙',
+        auth_type: 'oauth',
+        status: 'available',
+      },
+      {
+        id: 'azure_devops',
+        name: 'Azure DevOps',
+        description: 'Development lifecycle',
+        category: 'Development',
+        icon: '🔷',
+        auth_type: 'oauth',
+        status: 'coming_soon',
+      },
+      {
+        id: 'aws_s3',
+        name: 'AWS S3',
+        description: 'Cloud storage',
+        category: 'Storage',
+        icon: '📦',
+        auth_type: 'api_key',
+        status: 'available',
+      },
     ];
     return res.json({ connectors: catalog });
   })
@@ -693,11 +794,10 @@ router.get(
   '/system-health/alerts',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     await ensureAlertsTable();
-    const rows = (await dbAll(
-      `SELECT * FROM system_health_alerts ORDER BY created_at DESC`,
-      [],
-      { fallback: false }
-    )) || [];
+    const rows =
+      (await dbAll(`SELECT * FROM system_health_alerts ORDER BY created_at DESC`, [], {
+        fallback: false,
+      })) || [];
     const alerts = rows.map((r: any) => ({
       id: r.id,
       name: r.name,
@@ -705,7 +805,13 @@ router.get(
       operator: r.condition,
       threshold: r.threshold,
       severity: r.severity || 'warning',
-      channels: (() => { try { return JSON.parse(r.channels || '[]'); } catch { return []; } })(),
+      channels: (() => {
+        try {
+          return JSON.parse(r.channels || '[]');
+        } catch {
+          return [];
+        }
+      })(),
       enabled: !!r.is_enabled,
       lastTriggeredAt: r.last_triggered_at || null,
       createdAt: r.created_at,
@@ -745,7 +851,9 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureAlertsTable();
     const { id } = req.params;
-    const existing = await dbGet(`SELECT id FROM system_health_alerts WHERE id = ?`, [id], { fallback: false });
+    const existing = await dbGet(`SELECT id FROM system_health_alerts WHERE id = ?`, [id], {
+      fallback: false,
+    });
     if (!existing) return res.status(404).json({ error: 'Alert not found' });
     const { name, metric, operator, threshold, severity, channels } = req.body;
     await dbRun(
@@ -851,7 +959,11 @@ router.post(
     if (!key) return res.status(400).json({ error: 'key is required' });
     const k = String(key).trim();
     const v =
-      typeof value === 'object' ? JSON.stringify(value) : value === null || value === undefined ? '' : String(value);
+      typeof value === 'object'
+        ? JSON.stringify(value)
+        : value === null || value === undefined
+          ? ''
+          : String(value);
     const desc = description ? String(description) : '';
     const cat = category ? String(category) : 'general';
     const sensitive = is_sensitive ? 1 : 0;
@@ -917,11 +1029,14 @@ router.put(
       typeof value === 'object'
         ? JSON.stringify(value)
         : value === null || value === undefined
-          ? (existing as any).value ?? ''
+          ? ((existing as any).value ?? '')
           : String(value);
-    const nextDesc = description !== undefined ? String(description) : (existing as any).description ?? '';
-    const nextCat = category !== undefined ? String(category) : (existing as any).category ?? 'general';
-    const nextSensitive = is_sensitive !== undefined ? (is_sensitive ? 1 : 0) : (existing as any).is_sensitive ? 1 : 0;
+    const nextDesc =
+      description !== undefined ? String(description) : ((existing as any).description ?? '');
+    const nextCat =
+      category !== undefined ? String(category) : ((existing as any).category ?? 'general');
+    const nextSensitive =
+      is_sensitive !== undefined ? (is_sensitive ? 1 : 0) : (existing as any).is_sensitive ? 1 : 0;
 
     await dbRun(
       `UPDATE settings
@@ -993,7 +1108,9 @@ router.get(
   '/system-configs/:id/versions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const existing = await dbGet(`SELECT id, key FROM settings WHERE id = ?`, [id], { fallback: false });
+    const existing = await dbGet(`SELECT id, key FROM settings WHERE id = ?`, [id], {
+      fallback: false,
+    });
     if (!existing) return res.status(404).json({ error: 'Config not found' });
     const key = (existing as any).key;
 
@@ -1028,7 +1145,9 @@ router.post(
     const { versionId, reason } = req.body || {};
     if (!versionId) return res.status(400).json({ error: 'versionId is required' });
 
-    const existing = await dbGet(`SELECT id, key, value FROM settings WHERE id = ?`, [id], { fallback: false });
+    const existing = await dbGet(`SELECT id, key, value FROM settings WHERE id = ?`, [id], {
+      fallback: false,
+    });
     if (!existing) return res.status(404).json({ error: 'Config not found' });
     const key = (existing as any).key;
 
@@ -1046,7 +1165,10 @@ router.post(
     let rolledValue = '';
     try {
       const parsed = rawOld ? JSON.parse(String(rawOld)) : null;
-      rolledValue = parsed && typeof parsed === 'object' && 'value' in parsed ? String((parsed as any).value ?? '') : String(rawOld ?? '');
+      rolledValue =
+        parsed && typeof parsed === 'object' && 'value' in parsed
+          ? String((parsed as any).value ?? '')
+          : String(rawOld ?? '');
     } catch {
       rolledValue = String(rawOld ?? '');
     }
@@ -1374,7 +1496,8 @@ router.get(
 router.get(
   '/security/threats/stats',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const raw = (await dbGet<Record<string, any>>(`
+    const raw =
+      (await dbGet<Record<string, any>>(`
             SELECT 
                 COUNT(*) as "totalThreats",
                 SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as "blockedCount",
@@ -1850,7 +1973,9 @@ router.get('/admin/sessions/stats', SuperAdminController.getAdminSessionStats);
 router.post(
   '/admin/sessions/revoke-all',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const exceptSessionId = (req.body as any)?.exceptSessionId ? String((req.body as any).exceptSessionId) : null;
+    const exceptSessionId = (req.body as any)?.exceptSessionId
+      ? String((req.body as any).exceptSessionId)
+      : null;
     try {
       const params: any[] = [];
       let sql = `UPDATE admin_sessions SET is_active = 0 WHERE is_active = 1`;

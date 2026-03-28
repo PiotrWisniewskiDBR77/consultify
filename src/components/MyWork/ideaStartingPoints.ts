@@ -46,16 +46,20 @@ export const IDEA_STARTING_POINTS: IdeaStartingPoint[] = [
     id: 'turn_notes_into_structure',
     labelEn: 'Turn notes into structure',
     labelPl: 'Zamień notatki w strukturę',
-    promptEn: 'Turn these notes into a clear structure with themes, clusters, and recommended next steps.',
-    promptPl: 'Zamień te notatki w klarowną strukturę z tematami, klastrami i rekomendowanymi następnymi krokami.',
+    promptEn:
+      'Turn these notes into a clear structure with themes, clusters, and recommended next steps.',
+    promptPl:
+      'Zamień te notatki w klarowną strukturę z tematami, klastrami i rekomendowanymi następnymi krokami.',
     preferredSystem: 'whiteboard',
   },
   {
     id: 'simplify_financial_statement',
     labelEn: 'Simplify a financial statement',
     labelPl: 'Uprość sprawozdanie finansowe',
-    promptEn: 'Simplify this financial statement into a working analysis table with the most useful fields.',
-    promptPl: 'Uprość to sprawozdanie finansowe do roboczej tabeli analitycznej z najważniejszymi polami.',
+    promptEn:
+      'Simplify this financial statement into a working analysis table with the most useful fields.',
+    promptPl:
+      'Uprość to sprawozdanie finansowe do roboczej tabeli analitycznej z najważniejszymi polami.',
     preferredSystem: 'table',
   },
 ];

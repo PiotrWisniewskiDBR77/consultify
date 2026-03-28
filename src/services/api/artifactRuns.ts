@@ -1,4 +1,4 @@
-import { getHeaders, fetchWithRetry, handleResponse } from './baseClient';
+import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export type ArtifactPlanOutputType = 'report' | 'presentation' | 'sheet';
 export type ArtifactFamily = 'document' | 'presentation' | 'sheet';
@@ -73,7 +73,7 @@ const ARTIFACT_RUNS_BASE = '/api/artifact-runs';
 
 export const ArtifactRunsApi = {
   createFromChat: async (
-    params: CreateArtifactRunFromChatParams,
+    params: CreateArtifactRunFromChatParams
   ): Promise<ArtifactRunPlanningEnvelope> => {
     const res = await fetchWithRetry(`${ARTIFACT_RUNS_BASE}/from-chat`, {
       method: 'POST',
@@ -82,7 +82,7 @@ export const ArtifactRunsApi = {
     });
     const json = await handleResponse<{ data: ArtifactRunPlanningEnvelope }>(
       res,
-      'Failed to create artifact run from chat',
+      'Failed to create artifact run from chat'
     );
     return json.data;
   },
@@ -94,7 +94,7 @@ export const ArtifactRunsApi = {
     });
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
-      'Failed to fetch artifact run',
+      'Failed to fetch artifact run'
     );
     return json.data;
   },
@@ -106,18 +106,18 @@ export const ArtifactRunsApi = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({}),
-      },
+      }
     );
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
-      'Failed to accept artifact run plan',
+      'Failed to accept artifact run plan'
     );
     return json.data;
   },
 
   materialize: async (
     runId: string,
-    params: MaterializeArtifactRunParams,
+    params: MaterializeArtifactRunParams
   ): Promise<ArtifactRunRecord> => {
     const res = await fetchWithRetry(
       `${ARTIFACT_RUNS_BASE}/${encodeURIComponent(runId)}/materialize`,
@@ -125,11 +125,11 @@ export const ArtifactRunsApi = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(params),
-      },
+      }
     );
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
-      'Failed to materialize artifact run',
+      'Failed to materialize artifact run'
     );
     return json.data;
   },
@@ -142,7 +142,7 @@ export const ArtifactRunsApi = {
     });
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
-      'Failed to retry artifact run',
+      'Failed to retry artifact run'
     );
     return json.data;
   },

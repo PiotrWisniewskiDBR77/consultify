@@ -14,13 +14,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
 import {
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
-import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 
 // ─── Recent attachments (localStorage) ───────────────────────────────────────
 
@@ -210,7 +210,9 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     };
   }, []);
 
-  const connectedCloudProviders = PROVIDERS.filter((provider) => connectedProviders.includes(provider.id));
+  const connectedCloudProviders = PROVIDERS.filter((provider) =>
+    connectedProviders.includes(provider.id)
+  );
 
   const handleRecentEnter = () => {
     if (recentTimeoutRef.current) clearTimeout(recentTimeoutRef.current);
@@ -275,7 +277,9 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         return;
       }
       onUrlAdd?.(u.toString());
-      toast.success(t('aiChat.menu.toast.urlAdded', 'Link added to attachments'), { duration: 1500 });
+      toast.success(t('aiChat.menu.toast.urlAdded', 'Link added to attachments'), {
+        duration: 1500,
+      });
       setUrlValue('');
       setUrlModalOpen(false);
       setIsOpen(false);
@@ -322,11 +326,9 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
-            description={t(
-              'aiChat.menu.supportedLocalTypes',
-              'Supported: {{types}}',
-              { types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
-            )}
+            description={t('aiChat.menu.supportedLocalTypes', 'Supported: {{types}}', {
+              types: SUPPORTED_CHAT_ATTACHMENT_LABEL,
+            })}
           />
 
           {/* Add URL */}
@@ -343,7 +345,12 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             <>
               <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
               {connectedCloudProviders.map((p) => (
-                <CloudMenuItem key={p.id} provider={p} connected={true} onClick={() => handleCloudClick(p)} />
+                <CloudMenuItem
+                  key={p.id}
+                  provider={p}
+                  connected={true}
+                  onClick={() => handleCloudClick(p)}
+                />
               ))}
             </>
           ) : (
@@ -430,7 +437,10 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           setUrlValue('');
         }}
         title={t('aiChat.menu.addLink', 'Add link')}
-        description={t('aiChat.menu.addLinkModalDesc', 'We will fetch and attach the page content to this chat.')}
+        description={t(
+          'aiChat.menu.addLinkModalDesc',
+          'We will fetch and attach the page content to this chat.'
+        )}
         size="md"
         footer={
           <div className="flex items-center justify-end gap-2">

@@ -1,26 +1,26 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RecordMaterializationParams,
   AddSyncedSourceRefParams,
-  ValidatePromotionParams,
+  RecordMaterializationParams,
   SourceMaterializationRecord,
   SyncedSourceRef,
+  ValidatePromotionParams,
 } from '../../../types/sourceTruthPreservation.js';
 import {
-  SourceMaterializationRecordSchema,
-  SyncedSourceRefSchema,
+  AddSyncedSourceRefParamsSchema,
+  ENTRYPOINT_CLASS_MAP,
+  EntrypointClassValues,
+  EvidenceClassValues,
+  InitiativeEntrypointValues,
+  MaterializationModeValues,
   PromotionValidationSchema,
   RecordMaterializationParamsSchema,
-  AddSyncedSourceRefParamsSchema,
-  ValidatePromotionParamsSchema,
-  ENTRYPOINT_CLASS_MAP,
-  InitiativeEntrypointValues,
-  EntrypointClassValues,
-  MaterializationModeValues,
-  EvidenceClassValues,
+  SourceMaterializationRecordSchema,
+  SyncedSourceRefSchema,
   SyncStatusValues,
+  ValidatePromotionParamsSchema,
 } from '../../../types/sourceTruthPreservation.js';
 
 // ==========================================
@@ -47,13 +47,13 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  recordSourceMaterialization,
-  getSourcesByInitiative,
-  getMaterializationRecord,
-  validatePromotion,
   addSyncedSourceRef,
+  getMaterializationRecord,
+  getSourcesByInitiative,
   getSyncedSourceRefs,
+  recordSourceMaterialization,
   updateSyncStatus,
+  validatePromotion,
 } from '../sourceTruthService.js';
 
 // ==========================================
@@ -68,7 +68,9 @@ const USER_ID = '00000000-0000-4000-8000-000000000020';
 const SNAPSHOT_ID = '00000000-0000-4000-8000-000000000030';
 const ARTIFACT_ID = 'tool-session-001';
 
-function makeMatParams(overrides?: Partial<RecordMaterializationParams>): RecordMaterializationParams {
+function makeMatParams(
+  overrides?: Partial<RecordMaterializationParams>
+): RecordMaterializationParams {
   return {
     initiativeId: INITIATIVE_ID,
     organizationId: ORG_A,
@@ -164,14 +166,14 @@ describe('recordSourceMaterialization', () => {
 
   it('defaults materializationMode to invisible (Decision W3-1)', async () => {
     const result = await recordSourceMaterialization(
-      makeMatParams({ materializationMode: undefined }),
+      makeMatParams({ materializationMode: undefined })
     );
     expect(result.materializationMode).toBe('invisible');
   });
 
   it('accepts explicit_confirmation mode when truth risk increases', async () => {
     const result = await recordSourceMaterialization(
-      makeMatParams({ materializationMode: 'explicit_confirmation' }),
+      makeMatParams({ materializationMode: 'explicit_confirmation' })
     );
     expect(result.materializationMode).toBe('explicit_confirmation');
   });
@@ -197,38 +199,38 @@ describe('recordSourceMaterialization', () => {
   });
 
   it('derives entrypointClass=native_source for tools_assessment entrypoint', async () => {
-    const result = await recordSourceMaterialization(makeMatParams({ entrypoint: 'tools_assessment' }));
+    const result = await recordSourceMaterialization(
+      makeMatParams({ entrypoint: 'tools_assessment' })
+    );
     expect(result.entrypointClass).toBe('native_source');
   });
 
   it('allows null contextSnapshotId', async () => {
-    const result = await recordSourceMaterialization(
-      makeMatParams({ contextSnapshotId: null }),
-    );
+    const result = await recordSourceMaterialization(makeMatParams({ contextSnapshotId: null }));
     expect(result.contextSnapshotId).toBeNull();
   });
 
   it('rejects invalid entrypoint via Zod', async () => {
     await expect(
-      recordSourceMaterialization(makeMatParams({ entrypoint: 'invalid' as any })),
+      recordSourceMaterialization(makeMatParams({ entrypoint: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid evidenceClass via Zod', async () => {
     await expect(
-      recordSourceMaterialization(makeMatParams({ evidenceClass: 'unknown' as any })),
+      recordSourceMaterialization(makeMatParams({ evidenceClass: 'unknown' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects missing required fields via Zod', async () => {
-    await expect(
-      recordSourceMaterialization({ organizationId: ORG_A } as any),
-    ).rejects.toThrow(ZodError);
+    await expect(recordSourceMaterialization({ organizationId: ORG_A } as any)).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects empty sourceArtifactId via Zod', async () => {
     await expect(
-      recordSourceMaterialization(makeMatParams({ sourceArtifactId: '' })),
+      recordSourceMaterialization(makeMatParams({ sourceArtifactId: '' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -304,7 +306,9 @@ describe('getMaterializationRecord', () => {
 // ------------------------------------------
 
 describe('validatePromotion', () => {
-  function makeValidateParams(overrides?: Partial<ValidatePromotionParams>): ValidatePromotionParams {
+  function makeValidateParams(
+    overrides?: Partial<ValidatePromotionParams>
+  ): ValidatePromotionParams {
     return {
       organizationId: ORG_A,
       promotedBy: USER_ID,
@@ -345,7 +349,9 @@ describe('validatePromotion', () => {
 
     expect(result.evidenceSufficient).toBe(false);
     expect(result.requiresReview).toBe(true);
-    expect(result.reasons).toContain("Evidence class 'weak' is below threshold (requires strong or moderate)");
+    expect(result.reasons).toContain(
+      "Evidence class 'weak' is below threshold (requires strong or moderate)"
+    );
     expect(result.reasons).toContain('Weak evidence requires review before promotion');
   });
 
@@ -354,8 +360,12 @@ describe('validatePromotion', () => {
 
     expect(result.evidenceSufficient).toBe(false);
     expect(result.requiresReview).toBe(true);
-    expect(result.reasons).toContain("Evidence class 'mixed' is below threshold (requires strong or moderate)");
-    expect(result.reasons).toContain('Mixed/contradictory evidence requires review before promotion');
+    expect(result.reasons).toContain(
+      "Evidence class 'mixed' is below threshold (requires strong or moderate)"
+    );
+    expect(result.reasons).toContain(
+      'Mixed/contradictory evidence requires review before promotion'
+    );
   });
 
   it('requires review for high-impact promotions even with strong evidence', () => {
@@ -369,7 +379,7 @@ describe('validatePromotion', () => {
 
   it('accumulates multiple reasons when both gates fail', () => {
     const result = validatePromotion(
-      makeValidateParams({ hasPermission: false, evidenceClass: 'weak', isHighImpact: true }),
+      makeValidateParams({ hasPermission: false, evidenceClass: 'weak', isHighImpact: true })
     );
 
     expect(result.isAllowed).toBe(false);
@@ -380,14 +390,14 @@ describe('validatePromotion', () => {
 
   it('rejects invalid evidenceClass via Zod', () => {
     expect(() =>
-      validatePromotion(makeValidateParams({ evidenceClass: 'invalid' as any })),
+      validatePromotion(makeValidateParams({ evidenceClass: 'invalid' as any }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid entrypoint via Zod', () => {
-    expect(() =>
-      validatePromotion(makeValidateParams({ entrypoint: 'invalid' as any })),
-    ).toThrow(ZodError);
+    expect(() => validatePromotion(makeValidateParams({ entrypoint: 'invalid' as any }))).toThrow(
+      ZodError
+    );
   });
 
   it('defaults isHighImpact to false', () => {
@@ -428,14 +438,14 @@ describe('addSyncedSourceRef', () => {
   });
 
   it('rejects empty externalSourceId via Zod', async () => {
-    await expect(
-      addSyncedSourceRef(makeSyncParams({ externalSourceId: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(addSyncedSourceRef(makeSyncParams({ externalSourceId: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects invalid syncStatus via Zod', async () => {
     await expect(
-      addSyncedSourceRef(makeSyncParams({ syncStatus: 'invalid' as any })),
+      addSyncedSourceRef(makeSyncParams({ syncStatus: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -448,7 +458,11 @@ describe('getSyncedSourceRefs', () => {
   it('returns synced refs ordered by created_at', async () => {
     mockDbAll.mockResolvedValueOnce([
       makeSyncRow({ created_at: '2026-03-23T10:00:00.000Z' }),
-      makeSyncRow({ ref_id: 'ref-2', created_at: '2026-03-23T11:00:00.000Z', external_system: 'confluence' }),
+      makeSyncRow({
+        ref_id: 'ref-2',
+        created_at: '2026-03-23T11:00:00.000Z',
+        external_system: 'confluence',
+      }),
     ]);
 
     const results = await getSyncedSourceRefs(INITIATIVE_ID, ORG_A);
@@ -485,7 +499,7 @@ describe('updateSyncStatus', () => {
       '00000000-0000-4000-8000-cccccccccccc',
       ORG_A,
       'stale',
-      '2026-03-23T12:00:00.000Z',
+      '2026-03-23T12:00:00.000Z'
     );
 
     expect(result).not.toBeNull();
@@ -508,11 +522,7 @@ describe('updateSyncStatus', () => {
   it('preserves existing lastSyncedAt when not provided', async () => {
     mockDbGet.mockResolvedValueOnce(makeSyncRow({ last_synced_at: '2026-03-23T10:00:00.000Z' }));
 
-    const result = await updateSyncStatus(
-      '00000000-0000-4000-8000-cccccccccccc',
-      ORG_A,
-      'error',
-    );
+    const result = await updateSyncStatus('00000000-0000-4000-8000-cccccccccccc', ORG_A, 'error');
 
     expect(result!.lastSyncedAt).toBe('2026-03-23T10:00:00.000Z');
   });
@@ -657,7 +667,7 @@ describe('Zod schema validation', () => {
         promotedBy: USER_ID,
         promotedAt: '2026-03-23T10:00:00.000Z',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -672,7 +682,7 @@ describe('Zod schema validation', () => {
         syncStatus: 'invalid_status',
         lastSyncedAt: null,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 

@@ -14,7 +14,7 @@ export interface ExportMarkdownOptions {
 export function exportToMarkdown(
   nodes: Node[],
   edges: Edge[],
-  options?: ExportMarkdownOptions,
+  options?: ExportMarkdownOptions
 ): string {
   const includeMetadata = options?.includeMetadata ?? false;
 
@@ -29,9 +29,7 @@ export function exportToMarkdown(
   const nodeMap = new Map<string, Node>();
   for (const node of nodes) nodeMap.set(node.id, node);
 
-  const rootNode =
-    nodes.find((n) => n.id === 'root') ??
-    nodes.find((n) => n.type === 'center');
+  const rootNode = nodes.find((n) => n.id === 'root') ?? nodes.find((n) => n.type === 'center');
   if (!rootNode) return '';
 
   const lines: string[] = [];
@@ -125,12 +123,7 @@ export function useMapExport() {
   );
 
   const exportAsMarkdown = useCallback(
-    (
-      nodes: Node[],
-      edges: Edge[],
-      options?: ExportMarkdownOptions,
-      filename = 'mindmap.md'
-    ) => {
+    (nodes: Node[], edges: Edge[], options?: ExportMarkdownOptions, filename = 'mindmap.md') => {
       const md = exportToMarkdown(nodes, edges, options);
       navigator.clipboard?.writeText(md).catch(() => {});
       downloadBlob(new Blob([md], { type: 'text/markdown;charset=utf-8' }), filename);

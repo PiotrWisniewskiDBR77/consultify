@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 const mockClientQuery = vi.fn();
@@ -60,7 +60,7 @@ describe('ExtensionService', () => {
       expect(result.name).toBe('My Extension');
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tp_extensions'),
-        expect.arrayContaining(['My Extension']),
+        expect.arrayContaining(['My Extension'])
       );
     });
   });
@@ -110,10 +110,10 @@ describe('ExtensionService', () => {
         created_at: '2025-01-01',
       };
       mockClientQuery
-        .mockResolvedValueOnce({ rows: [] })                // BEGIN
-        .mockResolvedValueOnce({ rows: [installRow] })      // INSERT install
-        .mockResolvedValueOnce({ rows: [] })                // UPDATE install_count
-        .mockResolvedValueOnce({ rows: [] });               // COMMIT
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [installRow] }) // INSERT install
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE install_count
+        .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       const result = await service.installExtension('ext-1', 'b-1', 'user-1');
 
@@ -122,7 +122,7 @@ describe('ExtensionService', () => {
       expect(result!.base_id).toBe('b-1');
 
       const incrementCall = mockClientQuery.mock.calls.find(
-        (c) => typeof c[0] === 'string' && c[0].includes('install_count = install_count + 1'),
+        (c) => typeof c[0] === 'string' && c[0].includes('install_count = install_count + 1')
       );
       expect(incrementCall).toBeDefined();
       expect(mockClientRelease).toHaveBeenCalled();
@@ -130,16 +130,16 @@ describe('ExtensionService', () => {
 
     it('rolls back on error', async () => {
       mockClientQuery
-        .mockResolvedValueOnce({ rows: [] })                         // BEGIN
-        .mockRejectedValueOnce(new Error('constraint violation'))    // INSERT fails
-        .mockResolvedValueOnce({ rows: [] });                        // ROLLBACK
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockRejectedValueOnce(new Error('constraint violation')) // INSERT fails
+        .mockResolvedValueOnce({ rows: [] }); // ROLLBACK
 
-      await expect(
-        service.installExtension('ext-bad', 'b-1'),
-      ).rejects.toThrow('constraint violation');
+      await expect(service.installExtension('ext-bad', 'b-1')).rejects.toThrow(
+        'constraint violation'
+      );
 
       const rollbackCall = mockClientQuery.mock.calls.find(
-        (c) => typeof c[0] === 'string' && c[0] === 'ROLLBACK',
+        (c) => typeof c[0] === 'string' && c[0] === 'ROLLBACK'
       );
       expect(rollbackCall).toBeDefined();
       expect(mockClientRelease).toHaveBeenCalled();
@@ -153,15 +153,15 @@ describe('ExtensionService', () => {
   describe('uninstallExtension', () => {
     it('removes install record', async () => {
       mockQuery
-        .mockResolvedValueOnce({ rows: [{ id: 'inst-1' }] })  // DELETE RETURNING
-        .mockResolvedValueOnce({ rows: [] });                  // UPDATE install_count
+        .mockResolvedValueOnce({ rows: [{ id: 'inst-1' }] }) // DELETE RETURNING
+        .mockResolvedValueOnce({ rows: [] }); // UPDATE install_count
 
       const result = await service.uninstallExtension('ext-1', 'b-1');
 
       expect(result).toBe(true);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM tp_extension_installs'),
-        ['ext-1', 'b-1'],
+        ['ext-1', 'b-1']
       );
     });
 
@@ -184,10 +184,9 @@ describe('ExtensionService', () => {
 
       await service.publishExtension('ext-1');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining("status = 'published'"),
-        ['ext-1'],
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining("status = 'published'"), [
+        'ext-1',
+      ]);
     });
   });
 

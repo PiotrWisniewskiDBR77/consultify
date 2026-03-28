@@ -9,7 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,9 +25,7 @@ interface MigrationFile {
 
 function loadMigrationFiles(): MigrationFile[] {
   const allFiles = fs.readdirSync(MIGRATIONS_DIR).sort();
-  const v8Files = allFiles.filter(
-    (f) => MIGRATION_FILE_PATTERN.test(f),
-  );
+  const v8Files = allFiles.filter((f) => MIGRATION_FILE_PATTERN.test(f));
   return v8Files.map((filename) => ({
     filename,
     sql: fs.readFileSync(path.join(MIGRATIONS_DIR, filename), 'utf-8'),
@@ -45,8 +43,7 @@ function extractCreateTableNames(sql: string): string[] {
 }
 
 function extractIndexNames(sql: string): string[] {
-  const regex =
-    /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi;
+  const regex = /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi;
   const names: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = regex.exec(sql)) !== null) {
@@ -189,10 +186,10 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       if (crossFileRefs.length > 0) {
         console.log(
           `\n=== Cross-file FK forward references (${crossFileRefs.length}) ===\n` +
-          `These FKs reference tables defined in later migration files.\n` +
-          `Safe with SQLite (FK enforcement is deferred), but note for Postgres migration order.\n` +
-          crossFileRefs.map((r) => `  ${r.file}: → ${r.fk_table}(${r.fk_column})`).join('\n') +
-          '\n',
+            `These FKs reference tables defined in later migration files.\n` +
+            `Safe with SQLite (FK enforcement is deferred), but note for Postgres migration order.\n` +
+            crossFileRefs.map((r) => `  ${r.file}: → ${r.fk_table}(${r.fk_column})`).join('\n') +
+            '\n'
         );
       }
 
@@ -239,9 +236,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
         const report = Array.from(duplicates.entries())
           .map(([table, files]) => `  ${table}: ${files.join(', ')}`)
           .join('\n');
-        expect.fail(
-          `Found ${duplicates.size} duplicate table name(s):\n${report}`,
-        );
+        expect.fail(`Found ${duplicates.size} duplicate table name(s):\n${report}`);
       }
 
       expect(duplicates.size).toBe(0);
@@ -259,12 +254,8 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
 
       expect(allTables.length).toBeGreaterThan(0);
 
-      const inventory = allTables
-        .map((t) => `${t.table} (${t.file})`)
-        .join('\n');
-      console.log(
-        `\n=== V8 Table Inventory (${allTables.length} tables) ===\n${inventory}\n`,
-      );
+      const inventory = allTables.map((t) => `${t.table} (${t.file})`).join('\n');
+      console.log(`\n=== V8 Table Inventory (${allTables.length} tables) ===\n${inventory}\n`);
     });
   });
 
@@ -297,9 +288,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
         const report = Array.from(duplicates.entries())
           .map(([idx, files]) => `  ${idx}: ${files.join(', ')}`)
           .join('\n');
-        expect.fail(
-          `Found ${duplicates.size} duplicate index name(s):\n${report}`,
-        );
+        expect.fail(`Found ${duplicates.size} duplicate index name(s):\n${report}`);
       }
 
       expect(duplicates.size).toBe(0);
@@ -345,13 +334,10 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       if (danglingRefs.length > 0) {
         const report = danglingRefs
           .map(
-            (r) =>
-              `  ${r.file}: REFERENCES ${r.target_table}(${r.target_column}) — table not found`,
+            (r) => `  ${r.file}: REFERENCES ${r.target_table}(${r.target_column}) — table not found`
           )
           .join('\n');
-        expect.fail(
-          `Found ${danglingRefs.length} dangling FK reference(s):\n${report}`,
-        );
+        expect.fail(`Found ${danglingRefs.length} dangling FK reference(s):\n${report}`);
       }
 
       expect(danglingRefs.length).toBe(0);
@@ -371,7 +357,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       console.log(
-        `\n=== V8 FK References (${allRefs.length} total) ===\n${allRefs.map((r) => `  ${r.file} → ${r.target}`).join('\n')}\n`,
+        `\n=== V8 FK References (${allRefs.length} total) ===\n${allRefs.map((r) => `  ${r.file} → ${r.target}`).join('\n')}\n`
       );
     });
   });
@@ -393,12 +379,8 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       if (violations.length > 0) {
-        const report = violations
-          .map((v) => `  ${v.file}: ${v.table}`)
-          .join('\n');
-        expect.fail(
-          `Found ${violations.length} table(s) without v8_ prefix:\n${report}`,
-        );
+        const report = violations.map((v) => `  ${v.file}: ${v.table}`).join('\n');
+        expect.fail(`Found ${violations.length} table(s) without v8_ prefix:\n${report}`);
       }
 
       expect(violations.length).toBe(0);
@@ -425,11 +407,9 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       if (violations.length > 0) {
-        const report = violations
-          .map((v) => `  ${v.file}: ${v.statement}`)
-          .join('\n');
+        const report = violations.map((v) => `  ${v.file}: ${v.statement}`).join('\n');
         expect.fail(
-          `Found ${violations.length} CREATE TABLE without IF NOT EXISTS (not idempotent):\n${report}`,
+          `Found ${violations.length} CREATE TABLE without IF NOT EXISTS (not idempotent):\n${report}`
         );
       }
 
@@ -442,10 +422,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       for (const mig of migrations) {
         const lines = mig.sql.split('\n');
         for (const line of lines) {
-          if (
-            /CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(line) &&
-            !/IF\s+NOT\s+EXISTS/i.test(line)
-          ) {
+          if (/CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(line) && !/IF\s+NOT\s+EXISTS/i.test(line)) {
             violations.push({
               file: mig.filename,
               line: line.trim().substring(0, 120),
@@ -455,11 +432,9 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       if (violations.length > 0) {
-        const report = violations
-          .map((v) => `  ${v.file}: ${v.line}`)
-          .join('\n');
+        const report = violations.map((v) => `  ${v.file}: ${v.line}`).join('\n');
         expect.fail(
-          `Found ${violations.length} CREATE INDEX without IF NOT EXISTS (not idempotent):\n${report}`,
+          `Found ${violations.length} CREATE INDEX without IF NOT EXISTS (not idempotent):\n${report}`
         );
       }
 
@@ -484,12 +459,8 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       if (violations.length > 0) {
-        const report = violations
-          .map((v) => `  ${v.file}: ${v.line}`)
-          .join('\n');
-        expect.fail(
-          `Found ${violations.length} destructive DROP statement(s):\n${report}`,
-        );
+        const report = violations.map((v) => `  ${v.file}: ${v.line}`).join('\n');
+        expect.fail(`Found ${violations.length} destructive DROP statement(s):\n${report}`);
       }
 
       expect(violations.length).toBe(0);
@@ -513,11 +484,9 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
 
       if (violations.length > 0) {
-        const report = violations
-          .map((v) => `  ${v.file}: ${v.line}`)
-          .join('\n');
+        const report = violations.map((v) => `  ${v.file}: ${v.line}`).join('\n');
         expect.fail(
-          `Found ${violations.length} ALTER TABLE statement(s) (not idempotent):\n${report}`,
+          `Found ${violations.length} ALTER TABLE statement(s) (not idempotent):\n${report}`
         );
       }
 

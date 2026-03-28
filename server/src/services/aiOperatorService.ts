@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import * as queryHelpers from '../utils/queryHelpers.js';
+import { finalBatchService } from './finalBatchService.js';
 import { ensureMeetingTables, getMeeting } from './meetingService.js';
 import { addMeetingFollowUp } from './meetingService.js';
-import { finalBatchService } from './finalBatchService.js';
 import * as NotificationService from './notificationService.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 
 type OperatorPriority = 'critical' | 'high' | 'medium';
 type WorkstreamStatus = 'ready' | 'partial' | 'blocked';
@@ -227,68 +227,79 @@ class AIOperatorService {
   async getFoundationOverview(organizationId: string, userId?: string | null) {
     await this.ensureSchema();
     const profile = await this.getProfile(organizationId, userId);
-    const [orgRow, convoStats, meetingStats, initiativeStats, taskStats, decisionStats, reportStats] =
-      await Promise.all([
-        this.safeFirst<any>(
-          `SELECT id, name, industry, size, updated_at
+    const [
+      orgRow,
+      convoStats,
+      meetingStats,
+      initiativeStats,
+      taskStats,
+      decisionStats,
+      reportStats,
+    ] = await Promise.all([
+      this.safeFirst<any>(
+        `SELECT id, name, industry, size, updated_at
            FROM organizations
            WHERE id = ?
            LIMIT 1`,
-          [organizationId],
-          {}
-        ),
-        this.safeFirst<any>(
-          `SELECT COUNT(*) as total, MAX(updated_at) as last_touch
+        [organizationId],
+        {}
+      ),
+      this.safeFirst<any>(
+        `SELECT COUNT(*) as total, MAX(updated_at) as last_touch
            FROM conversations
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0, last_touch: null }
-        ),
-        this.safeFirst<any>(
-          `SELECT COUNT(*) as total, MAX(start_at) as last_touch
+        [organizationId],
+        { total: 0, last_touch: null }
+      ),
+      this.safeFirst<any>(
+        `SELECT COUNT(*) as total, MAX(start_at) as last_touch
            FROM meetings
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0, last_touch: null }
-        ),
-        this.safeFirst<any>(
-          `SELECT
+        [organizationId],
+        { total: 0, last_touch: null }
+      ),
+      this.safeFirst<any>(
+        `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN status IN ('ACTIVE', 'IN_PROGRESS', 'AT_RISK', 'BLOCKED', 'PLANNING') THEN 1 ELSE 0 END) as active_count
            FROM initiatives
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0, active_count: 0 }
-        ),
-        this.safeFirst<any>(
-          `SELECT
+        [organizationId],
+        { total: 0, active_count: 0 }
+      ),
+      this.safeFirst<any>(
+        `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('completed', 'done', 'validated') THEN 1 ELSE 0 END) as completed_count,
              SUM(CASE WHEN due_date IS NOT NULL AND due_date < ${currentDateSql()} AND LOWER(COALESCE(status, '')) NOT IN ('completed', 'done', 'validated') THEN 1 ELSE 0 END) as overdue_count
            FROM tasks
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0, completed_count: 0, overdue_count: 0 }
-        ),
-        this.safeFirst<any>(
-          `SELECT
+        [organizationId],
+        { total: 0, completed_count: 0, overdue_count: 0 }
+      ),
+      this.safeFirst<any>(
+        `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('pending', 'escalated') THEN 1 ELSE 0 END) as pending_count
            FROM decisions
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0, pending_count: 0 }
-        ),
-        this.safeFirst<any>(
-          `SELECT COUNT(*) as total
+        [organizationId],
+        { total: 0, pending_count: 0 }
+      ),
+      this.safeFirst<any>(
+        `SELECT COUNT(*) as total
            FROM reports
            WHERE organization_id = ?`,
-          [organizationId],
-          { total: 0 }
-        ),
-      ]);
+        [organizationId],
+        { total: 0 }
+      ),
+    ]);
 
-    const lastTouchCandidates = [convoStats?.last_touch, meetingStats?.last_touch, orgRow?.updated_at]
+    const lastTouchCandidates = [
+      convoStats?.last_touch,
+      meetingStats?.last_touch,
+      orgRow?.updated_at,
+    ]
       .filter(Boolean)
       .map((value) => new Date(String(value)).getTime())
       .filter((value) => Number.isFinite(value));
@@ -334,10 +345,14 @@ class AIOperatorService {
     const clientDna = {
       communicationStyle:
         String(storedClientDna.communicationStyle || '').trim() ||
-        (Number(decisionStats?.pending_count || 0) >= 3 ? 'structured_executive' : 'collaborative_adaptive'),
+        (Number(decisionStats?.pending_count || 0) >= 3
+          ? 'structured_executive'
+          : 'collaborative_adaptive'),
       decisionStyle:
         String(storedClientDna.decisionStyle || '').trim() ||
-        (Number(initiativeStats?.active_count || 0) >= 4 ? 'portfolio_driven' : 'guided_single_thread'),
+        (Number(initiativeStats?.active_count || 0) >= 4
+          ? 'portfolio_driven'
+          : 'guided_single_thread'),
       executionPace:
         String(storedClientDna.executionPace || '').trim() ||
         (Number(taskStats?.overdue_count || 0) > 4 ? 'needs_pressure' : 'cadenced'),
@@ -647,8 +662,10 @@ class AIOperatorService {
 
     const agendaGaps: string[] = [];
     if (meeting.preRead.length === 0) agendaGaps.push('Add pre-read materials before the meeting.');
-    if (meeting.agenda.length < 3) agendaGaps.push('Expand the agenda to cover decisions, risks, and next steps.');
-    if (meeting.attendees.length < 2) agendaGaps.push('Confirm the right decision-makers are invited.');
+    if (meeting.agenda.length < 3)
+      agendaGaps.push('Expand the agenda to cover decisions, risks, and next steps.');
+    if (meeting.attendees.length < 2)
+      agendaGaps.push('Confirm the right decision-makers are invited.');
 
     const followUpSuggestions = [
       ...projectTasks
@@ -656,7 +673,9 @@ class AIOperatorService {
         .slice(0, 3)
         .map((task: any) => `Review task: ${task.title}`),
       ...projectDecisions
-        .filter((decision: any) => ['pending', 'escalated'].includes(String(decision.status || '').toLowerCase()))
+        .filter((decision: any) =>
+          ['pending', 'escalated'].includes(String(decision.status || '').toLowerCase())
+        )
         .slice(0, 2)
         .map((decision: any) => `Force decision closure: ${decision.title}`),
     ];
@@ -743,13 +762,7 @@ class AIOperatorService {
       `INSERT INTO ai_operator_plans (
          id, organization_id, current_stage, status, plan_json, created_by, created_at, updated_at
        ) VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      [
-        `operator-plan-${uuidv4()}`,
-        organizationId,
-        stage,
-        JSON.stringify(plan),
-        userId || null,
-      ]
+      [`operator-plan-${uuidv4()}`, organizationId, stage, JSON.stringify(plan), userId || null]
     );
 
     return plan;
@@ -840,7 +853,11 @@ class AIOperatorService {
       ]
     );
 
-    return (await this.listInterventions(organizationId)).find((item) => item.actionId === proposed.id) || null;
+    return (
+      (await this.listInterventions(organizationId)).find(
+        (item) => item.actionId === proposed.id
+      ) || null
+    );
   }
 
   async acceptIntervention(
@@ -849,7 +866,12 @@ class AIOperatorService {
     acceptedBy: string,
     actorRole?: string
   ) {
-    const result = await finalBatchService.acceptAction(organizationId, actionId, acceptedBy, actorRole);
+    const result = await finalBatchService.acceptAction(
+      organizationId,
+      actionId,
+      acceptedBy,
+      actorRole
+    );
     if (result.ok) {
       await this.updateInterventionStatus(organizationId, actionId, 'accepted');
     }
@@ -876,7 +898,8 @@ class AIOperatorService {
     let executionResult: Record<string, unknown> = {};
 
     if (actionType === 'operator_create_meeting_follow_up') {
-      if (!targetEntityId || !proposedChanges.followUpTitle) return { ok: false, reason: 'invalid_payload' };
+      if (!targetEntityId || !proposedChanges.followUpTitle)
+        return { ok: false, reason: 'invalid_payload' };
       const meeting = await addMeetingFollowUp({
         organizationId,
         meetingId: targetEntityId,
@@ -890,7 +913,11 @@ class AIOperatorService {
         meetingTitle: meeting?.title || null,
       };
     } else if (actionType === 'operator_send_execution_escalation') {
-      const recipients = await this.getOrganizationRecipients(organizationId, ['ADMIN', 'SUPERADMIN', 'OWNER']);
+      const recipients = await this.getOrganizationRecipients(organizationId, [
+        'ADMIN',
+        'SUPERADMIN',
+        'OWNER',
+      ]);
       await Promise.all(
         recipients.map((recipient) =>
           NotificationService.send({
@@ -899,7 +926,8 @@ class AIOperatorService {
             type: 'operator_execution_escalation',
             title: String(proposedChanges.title || 'Execution escalation'),
             body: String(
-              proposedChanges.message || 'AI Operator detected execution drift and requests attention.'
+              proposedChanges.message ||
+                'AI Operator detected execution drift and requests attention.'
             ),
             actionUrl: String(proposedChanges.actionUrl || '/execution'),
             priority: 'high',
@@ -1005,11 +1033,17 @@ class AIOperatorService {
     const trackedKpis = Number(kpiStats?.total || 0);
     const activeInitiatives = Number(initiativeStats?.total || 0);
     const atRiskInitiatives = Number(initiativeStats?.at_risk_count || 0);
-    const valueCoveragePct = clamp(activeInitiatives * 12 + trackedKpis * 18 + Number(reportStats?.total || 0) * 8);
+    const valueCoveragePct = clamp(
+      activeInitiatives * 12 + trackedKpis * 18 + Number(reportStats?.total || 0) * 8
+    );
 
     return {
       status:
-        trackedKpis === 0 ? 'needs_instrumentation' : atRiskInitiatives > 2 ? 'at_risk' : 'tracking',
+        trackedKpis === 0
+          ? 'needs_instrumentation'
+          : atRiskInitiatives > 2
+            ? 'at_risk'
+            : 'tracking',
       coveragePct: valueCoveragePct,
       activeInitiatives,
       atRiskInitiatives,
@@ -1039,9 +1073,11 @@ class AIOperatorService {
   ) {
     const foundation = data?.foundation || (await this.getFoundationOverview(organizationId));
     const execution = data?.execution || (await this.getExecutionOverview(organizationId));
-    const communication = data?.communication || (await this.getCommunicationOverview(organizationId));
+    const communication =
+      data?.communication || (await this.getCommunicationOverview(organizationId));
     const value = data?.value || (await this.getValueOverview(organizationId));
-    const interventions = data?.interventions || (await this.getInterventionsOverview(organizationId));
+    const interventions =
+      data?.interventions || (await this.getInterventionsOverview(organizationId));
     const releaseStats = await this.safeFirst<any>(
       `SELECT
          COUNT(*) as total,
@@ -1072,7 +1108,10 @@ class AIOperatorService {
       {
         key: 'foundation',
         label: 'Relationship + Navigator',
-        status: this.toStatus(foundation?.navigator?.progressPct || 0, foundation?.profile?.relationshipHealth === 'stale'),
+        status: this.toStatus(
+          foundation?.navigator?.progressPct || 0,
+          foundation?.profile?.relationshipHealth === 'stale'
+        ),
         coveragePct: Number(foundation?.navigator?.progressPct || 0),
       },
       {
@@ -1084,7 +1123,11 @@ class AIOperatorService {
             : execution?.pulse === 'attention'
               ? 'partial'
               : 'ready',
-        coveragePct: clamp(100 - Number(execution?.backlog?.overdueTasks || 0) * 8 - Number(execution?.signals?.openRisks || 0) * 5),
+        coveragePct: clamp(
+          100 -
+            Number(execution?.backlog?.overdueTasks || 0) * 8 -
+            Number(execution?.signals?.openRisks || 0) * 5
+        ),
       },
       {
         key: 'communication',
@@ -1099,7 +1142,10 @@ class AIOperatorService {
       {
         key: 'value',
         label: 'Value And Ops',
-        status: this.toStatus(Number(value?.coveragePct || 0), value?.status === 'needs_instrumentation'),
+        status: this.toStatus(
+          Number(value?.coveragePct || 0),
+          value?.status === 'needs_instrumentation'
+        ),
         coveragePct: Number(value?.coveragePct || 0),
       },
     ] as Array<{ key: string; label: string; status: WorkstreamStatus; coveragePct: number }>;
@@ -1108,7 +1154,10 @@ class AIOperatorService {
       workstreams.reduce((sum, item) => sum + Number(item.coveragePct || 0), 0) / workstreams.length
     );
     const autonomyScore = clamp(
-      readinessScore - (100 - releaseCoveragePct) * 0.2 - (100 - promptTracePct) * 0.15 - (100 - policyTracePct) * 0.1
+      readinessScore -
+        (100 - releaseCoveragePct) * 0.2 -
+        (100 - promptTracePct) * 0.15 -
+        (100 - policyTracePct) * 0.1
     );
 
     return {
@@ -1176,7 +1225,8 @@ class AIOperatorService {
         entrypoint: '/chat?context=discovery',
         priority: 'high',
         sourceType: 'foundation',
-        recommendedPrompt: 'Run a discovery interview and map business goals, blockers, and stakeholders.',
+        recommendedPrompt:
+          'Run a discovery interview and map business goals, blockers, and stakeholders.',
       });
     }
     if (input.activeInitiatives === 0) {
@@ -1305,7 +1355,8 @@ class AIOperatorService {
       {
         key: 'discovery',
         title: 'Discovery evidence capture',
-        description: 'Collect meetings, conversations, reports, and pains into one grounded context.',
+        description:
+          'Collect meetings, conversations, reports, and pains into one grounded context.',
         status:
           Number(input.foundation?.discovery?.coveragePct || 0) >= 70
             ? 'done'
@@ -1335,7 +1386,8 @@ class AIOperatorService {
       {
         key: 'execution_recovery',
         title: 'Execution recovery',
-        description: 'Reduce overdue work, unblock delivery, and make the delivery pulse predictable.',
+        description:
+          'Reduce overdue work, unblock delivery, and make the delivery pulse predictable.',
         status:
           input.execution?.pulse === 'on_track'
             ? 'done'
@@ -1392,7 +1444,9 @@ class AIOperatorService {
       nextMilestone: nextNode?.title || 'Maintain operator cadence',
       blockers: [
         ...(input.foundation?.navigator?.journeyRisks || []),
-        ...(input.execution?.signals?.openRisks > 0 ? ['Open execution risks require mitigation.'] : []),
+        ...(input.execution?.signals?.openRisks > 0
+          ? ['Open execution risks require mitigation.']
+          : []),
       ].slice(0, 4),
       nodes: nodes.map((node) => ({
         ...node,
@@ -1638,16 +1692,19 @@ class AIOperatorService {
     );
   }
 
-  private async recordCommunication(inputOrganizationId: string, input: {
-    communicationType: string;
-    audience: string;
-    title: string;
-    summary: string;
-    payload: Record<string, unknown>;
-    sourceEntityType?: string | null;
-    sourceEntityId?: string | null;
-    createdBy?: string | null;
-  }) {
+  private async recordCommunication(
+    inputOrganizationId: string,
+    input: {
+      communicationType: string;
+      audience: string;
+      title: string;
+      summary: string;
+      payload: Record<string, unknown>;
+      sourceEntityType?: string | null;
+      sourceEntityId?: string | null;
+      createdBy?: string | null;
+    }
+  ) {
     const id = `operator-comm-${uuidv4()}`;
     await queryHelpers.queryRun(
       `INSERT INTO ai_operator_communications (

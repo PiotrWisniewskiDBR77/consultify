@@ -36,7 +36,11 @@ export class FieldPermissionService {
     const field = await db.query('SELECT options FROM tp_fields WHERE id = $1', [fieldId]);
     if (!field.rows[0]) return false;
 
-    const perms = (field.rows[0] as { options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } }).options?.permissions;
+    const perms = (
+      field.rows[0] as {
+        options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } };
+      }
+    ).options?.permissions;
     if (!perms || !perms.readRoles) return true;
 
     return perms.readRoles.includes(userRole) || perms.readRoles.includes('*');
@@ -50,7 +54,11 @@ export class FieldPermissionService {
     const field = await db.query('SELECT options FROM tp_fields WHERE id = $1', [fieldId]);
     if (!field.rows[0]) return false;
 
-    const perms = (field.rows[0] as { options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } }).options?.permissions;
+    const perms = (
+      field.rows[0] as {
+        options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } };
+      }
+    ).options?.permissions;
     if (!perms || !perms.writeRoles) return true;
 
     return perms.writeRoles.includes(userRole) || perms.writeRoles.includes('*');
@@ -65,12 +73,14 @@ export class FieldPermissionService {
     userRole: string
   ): Promise<Record<string, unknown>> {
     const db = getDatabase();
-    const fields = await db.query(
-      'SELECT id, options FROM tp_fields WHERE table_id = $1',
-      [tableId]
-    );
+    const fields = await db.query('SELECT id, options FROM tp_fields WHERE table_id = $1', [
+      tableId,
+    ]);
 
-    type FieldRow = { id: string; options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } };
+    type FieldRow = {
+      id: string;
+      options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } };
+    };
     const filtered: Record<string, unknown> = {};
     for (const field of fields.rows as FieldRow[]) {
       const perms = field.options?.permissions;
@@ -96,10 +106,9 @@ export class FieldPermissionService {
     userRole: string
   ): Promise<{ allowed: boolean; deniedFields: string[] }> {
     const db = getDatabase();
-    const fields = await db.query(
-      'SELECT id, name, options FROM tp_fields WHERE table_id = $1',
-      [tableId]
-    );
+    const fields = await db.query('SELECT id, name, options FROM tp_fields WHERE table_id = $1', [
+      tableId,
+    ]);
 
     const deniedFields: string[] = [];
     for (const fieldId of Object.keys(data)) {

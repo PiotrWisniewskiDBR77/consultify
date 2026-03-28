@@ -91,9 +91,17 @@ export class AlertingService {
     ).toLowerCase();
     // Default: only enable AI infra alerting in production unless explicitly enabled.
     // This prevents noisy spam during local development and staging.
-    if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'true') {
+    if (
+      String(process.env.AI_ALERTING_ENABLED || '')
+        .trim()
+        .toLowerCase() === 'true'
+    ) {
       this.enabled = true;
-    } else if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'false') {
+    } else if (
+      String(process.env.AI_ALERTING_ENABLED || '')
+        .trim()
+        .toLowerCase() === 'false'
+    ) {
       this.enabled = false;
     } else {
       this.enabled = env === 'production';

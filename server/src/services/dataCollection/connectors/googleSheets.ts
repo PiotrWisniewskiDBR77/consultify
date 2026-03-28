@@ -3,14 +3,14 @@
  * Uses native fetch (Node 18+); no googleapis package required.
  */
 
+import logger from '../../../utils/Logger.js';
 import type {
-  IConnector,
-  ExternalSchema,
   ExternalRecord,
+  ExternalSchema,
   FetchOptions,
+  IConnector,
 } from '../connectorFramework.js';
 import { inferFieldType } from '../schemaMappingEngine.js';
-import logger from '../../../utils/Logger.js';
 
 const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets';
 const SAMPLE_SIZE = 100;
@@ -142,9 +142,7 @@ export const googleSheetsConnector: IConnector = {
       sheets: Array<{ properties: { title: string; sheetId: number } }>;
     };
 
-    const sheetNames = cfg.sheetName
-      ? [cfg.sheetName]
-      : meta.sheets.map((s) => s.properties.title);
+    const sheetNames = cfg.sheetName ? [cfg.sheetName] : meta.sheets.map((s) => s.properties.title);
 
     const tables: ExternalSchema['tables'] = [];
 
@@ -203,8 +201,7 @@ export const googleSheetsConnector: IConnector = {
       sheets: Array<{ properties: { title: string } }>;
     };
 
-    const sheetName =
-      cfg.sheetName ?? meta.sheets[0]?.properties.title ?? 'Sheet1';
+    const sheetName = cfg.sheetName ?? meta.sheets[0]?.properties.title ?? 'Sheet1';
 
     const data = (await sheetsGet(
       `${SHEETS_API}/${cfg.spreadsheetId}/values/${encodeURIComponent(sheetName)}`,

@@ -1,33 +1,33 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RecordDecompositionParams,
+  AffectedDimension,
   CheckMaterialChangeParams,
   CreateCrossInitiativeDependencyParams,
   CreateDecisionChainParams,
-  AffectedDimension,
+  RecordDecompositionParams,
 } from '../../../types/planningContinuity.js';
 import {
-  InitiativeDecompositionSchema,
-  CrossInitiativeDependencySchema,
-  DecisionChainSchema,
-  MaterialChangeCheckSchema,
-  RecordDecompositionParamsSchema,
+  AffectedDimensionValues,
   CheckMaterialChangeParamsSchema,
   CreateCrossInitiativeDependencyParamsSchema,
   CreateDecisionChainParamsSchema,
+  CrossDependencyStatusValues,
+  CrossDependencyTypeValues,
+  CrossInitiativeDependencySchema,
+  DecisionChainSchema,
+  DecisionChainStatusValues,
+  DecisionChainTypeValues,
+  DecompositionObjectTypeValues,
+  HIGH_IMPACT_DIMENSIONS,
+  InitiativeDecompositionSchema,
+  MaterialChangeCheckSchema,
+  MATERIALITY_MIN_DIMENSIONS,
+  RecordDecompositionParamsSchema,
   WBS_DEPTH_MAP,
   WBS_MAX_DEPTH,
-  HIGH_IMPACT_DIMENSIONS,
-  MATERIALITY_MIN_DIMENSIONS,
   WBSLevelValues,
-  DecompositionObjectTypeValues,
-  AffectedDimensionValues,
-  CrossDependencyTypeValues,
-  CrossDependencyStatusValues,
-  DecisionChainTypeValues,
-  DecisionChainStatusValues,
 } from '../../../types/planningContinuity.js';
 
 // ==========================================
@@ -54,16 +54,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  recordDecomposition,
-  getDecompositionTree,
-  getDecomposition,
   checkMaterialChange,
   createCrossInitiativeDependency,
-  getCrossInitiativeDependencies,
-  updateCrossInitiativeDependencyStatus,
   createDecisionChain,
+  getCrossInitiativeDependencies,
   getDecisionChain,
   getDecisionChainsByInitiative,
+  getDecomposition,
+  getDecompositionTree,
+  recordDecomposition,
+  updateCrossInitiativeDependencyStatus,
 } from '../planningContinuityService.js';
 
 // ==========================================
@@ -76,7 +76,9 @@ const INITIATIVE_ID = '00000000-0000-4000-8000-000000000010';
 const INITIATIVE_ID_B = '00000000-0000-4000-8000-000000000011';
 const PARENT_DECOMP_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
 
-function makeDecompParams(overrides?: Partial<RecordDecompositionParams>): RecordDecompositionParams {
+function makeDecompParams(
+  overrides?: Partial<RecordDecompositionParams>
+): RecordDecompositionParams {
   return {
     organizationId: ORG_ID,
     initiativeId: INITIATIVE_ID,
@@ -108,7 +110,7 @@ function makeFakeDecompRow(overrides?: Partial<Record<string, unknown>>) {
 }
 
 function makeCrossDepParams(
-  overrides?: Partial<CreateCrossInitiativeDependencyParams>,
+  overrides?: Partial<CreateCrossInitiativeDependencyParams>
 ): CreateCrossInitiativeDependencyParams {
   return {
     organizationId: ORG_ID,
@@ -137,7 +139,9 @@ function makeFakeCrossDepRow(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
-function makeChainParams(overrides?: Partial<CreateDecisionChainParams>): CreateDecisionChainParams {
+function makeChainParams(
+  overrides?: Partial<CreateDecisionChainParams>
+): CreateDecisionChainParams {
   return {
     organizationId: ORG_ID,
     initiativeId: INITIATIVE_ID,
@@ -203,12 +207,14 @@ describe('recordDecomposition', () => {
   it('records a task decomposition with parent validation', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecompRow({ wbs_level: 'workstream_phase' }));
 
-    const result = await recordDecomposition(makeDecompParams({
-      parentId: PARENT_DECOMP_ID,
-      wbsLevel: 'task',
-      objectType: 'task',
-      objectId: 'task-001',
-    }));
+    const result = await recordDecomposition(
+      makeDecompParams({
+        parentId: PARENT_DECOMP_ID,
+        wbsLevel: 'task',
+        objectType: 'task',
+        objectId: 'task-001',
+      })
+    );
 
     expect(result.wbsLevel).toBe('task');
     expect(result.parentId).toBe(PARENT_DECOMP_ID);
@@ -217,12 +223,14 @@ describe('recordDecomposition', () => {
   it('records a subtask decomposition (max depth)', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecompRow({ wbs_level: 'task' }));
 
-    const result = await recordDecomposition(makeDecompParams({
-      parentId: PARENT_DECOMP_ID,
-      wbsLevel: 'subtask',
-      objectType: 'subtask',
-      objectId: 'sub-001',
-    }));
+    const result = await recordDecomposition(
+      makeDecompParams({
+        parentId: PARENT_DECOMP_ID,
+        wbsLevel: 'subtask',
+        objectType: 'subtask',
+        objectId: 'sub-001',
+      })
+    );
 
     expect(result.wbsLevel).toBe('subtask');
   });
@@ -231,12 +239,14 @@ describe('recordDecomposition', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecompRow({ wbs_level: 'task' }));
 
     await expect(
-      recordDecomposition(makeDecompParams({
-        parentId: PARENT_DECOMP_ID,
-        wbsLevel: 'task',
-        objectType: 'task',
-        objectId: 'task-dup',
-      })),
+      recordDecomposition(
+        makeDecompParams({
+          parentId: PARENT_DECOMP_ID,
+          wbsLevel: 'task',
+          objectType: 'task',
+          objectId: 'task-dup',
+        })
+      )
     ).rejects.toThrow('WBS hierarchy violation');
   });
 
@@ -244,12 +254,14 @@ describe('recordDecomposition', () => {
     mockDbGet.mockResolvedValueOnce(makeFakeDecompRow({ wbs_level: 'task' }));
 
     await expect(
-      recordDecomposition(makeDecompParams({
-        parentId: PARENT_DECOMP_ID,
-        wbsLevel: 'workstream_phase',
-        objectType: 'workstream',
-        objectId: 'ws-bad',
-      })),
+      recordDecomposition(
+        makeDecompParams({
+          parentId: PARENT_DECOMP_ID,
+          wbsLevel: 'workstream_phase',
+          objectType: 'workstream',
+          objectId: 'ws-bad',
+        })
+      )
     ).rejects.toThrow('WBS hierarchy violation');
   });
 
@@ -257,12 +269,14 @@ describe('recordDecomposition', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     await expect(
-      recordDecomposition(makeDecompParams({
-        parentId: '00000000-0000-4000-8000-ffffffffffff',
-        wbsLevel: 'task',
-        objectType: 'task',
-        objectId: 'task-orphan',
-      })),
+      recordDecomposition(
+        makeDecompParams({
+          parentId: '00000000-0000-4000-8000-ffffffffffff',
+          wbsLevel: 'task',
+          objectType: 'task',
+          objectId: 'task-orphan',
+        })
+      )
     ).rejects.toThrow('Parent decomposition');
   });
 
@@ -278,20 +292,18 @@ describe('recordDecomposition', () => {
 
   it('rejects invalid UUID for organizationId', async () => {
     await expect(
-      recordDecomposition(makeDecompParams({ organizationId: 'not-a-uuid' })),
+      recordDecomposition(makeDecompParams({ organizationId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid wbsLevel', async () => {
     await expect(
-      recordDecomposition(makeDecompParams({ wbsLevel: 'epic' as any })),
+      recordDecomposition(makeDecompParams({ wbsLevel: 'epic' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty objectId', async () => {
-    await expect(
-      recordDecomposition(makeDecompParams({ objectId: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(recordDecomposition(makeDecompParams({ objectId: '' }))).rejects.toThrow(ZodError);
   });
 });
 
@@ -428,7 +440,7 @@ describe('checkMaterialChange', () => {
     expect(() =>
       CheckMaterialChangeParamsSchema.parse({
         affectedDimensions: ['invalid_dimension'],
-      }),
+      })
     ).toThrow(ZodError);
   });
 });
@@ -456,14 +468,23 @@ describe('createCrossInitiativeDependency', () => {
 
   it('rejects self-referencing dependency', async () => {
     await expect(
-      createCrossInitiativeDependency(makeCrossDepParams({
-        targetInitiativeId: INITIATIVE_ID,
-      })),
+      createCrossInitiativeDependency(
+        makeCrossDepParams({
+          targetInitiativeId: INITIATIVE_ID,
+        })
+      )
     ).rejects.toThrow('different source and target');
   });
 
   it('supports all dependency types', async () => {
-    const types = ['blocks', 'blocked_by', 'depends_on', 'enables', 'shares_resource', 'shares_milestone'] as const;
+    const types = [
+      'blocks',
+      'blocked_by',
+      'depends_on',
+      'enables',
+      'shares_resource',
+      'shares_milestone',
+    ] as const;
 
     for (const dependencyType of types) {
       vi.clearAllMocks();
@@ -474,12 +495,14 @@ describe('createCrossInitiativeDependency', () => {
 
   it('rejects invalid dependency type via Zod', async () => {
     await expect(
-      createCrossInitiativeDependency(makeCrossDepParams({ dependencyType: 'invalid' as any })),
+      createCrossInitiativeDependency(makeCrossDepParams({ dependencyType: 'invalid' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('defaults description to null', async () => {
-    const result = await createCrossInitiativeDependency(makeCrossDepParams({ description: undefined }));
+    const result = await createCrossInitiativeDependency(
+      makeCrossDepParams({ description: undefined })
+    );
     expect(result.description).toBeNull();
   });
 });
@@ -526,7 +549,7 @@ describe('updateCrossInitiativeDependencyStatus', () => {
     const result = await updateCrossInitiativeDependencyStatus(
       '00000000-0000-4000-8000-dddddddddddd',
       ORG_ID,
-      'resolved',
+      'resolved'
     );
 
     expect(result.status).toBe('resolved');
@@ -537,7 +560,7 @@ describe('updateCrossInitiativeDependencyStatus', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     await expect(
-      updateCrossInitiativeDependencyStatus('nonexistent', ORG_ID, 'resolved'),
+      updateCrossInitiativeDependencyStatus('nonexistent', ORG_ID, 'resolved')
     ).rejects.toThrow('not found');
   });
 });
@@ -576,20 +599,18 @@ describe('createDecisionChain', () => {
   });
 
   it('rejects empty decisions array', async () => {
-    await expect(
-      createDecisionChain(makeChainParams({ decisions: [] })),
-    ).rejects.toThrow(ZodError);
+    await expect(createDecisionChain(makeChainParams({ decisions: [] }))).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid chain type via Zod', async () => {
     await expect(
-      createDecisionChain(makeChainParams({ chainType: 'workflow' as any })),
+      createDecisionChain(makeChainParams({ chainType: 'workflow' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid UUID for initiativeId', async () => {
     await expect(
-      createDecisionChain(makeChainParams({ initiativeId: 'not-a-uuid' })),
+      createDecisionChain(makeChainParams({ initiativeId: 'not-a-uuid' }))
     ).rejects.toThrow(ZodError);
   });
 });
@@ -678,7 +699,7 @@ describe('Zod schema validation', () => {
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
         metadata: {},
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -705,7 +726,13 @@ describe('Zod schema validation', () => {
       initiativeId: INITIATIVE_ID,
       chainType: 'sequential' as const,
       decisions: [
-        { decisionId: 'dec-1', order: 0, status: 'pending' as const, decidedBy: null, decidedAt: null },
+        {
+          decisionId: 'dec-1',
+          order: 0,
+          status: 'pending' as const,
+          decidedBy: null,
+          decidedAt: null,
+        },
       ],
       status: 'open' as const,
       createdAt: '2026-03-23T10:00:00.000Z',
@@ -720,7 +747,9 @@ describe('Zod schema validation', () => {
   });
 
   it('validates CreateCrossInitiativeDependencyParams', () => {
-    expect(() => CreateCrossInitiativeDependencyParamsSchema.parse(makeCrossDepParams())).not.toThrow();
+    expect(() =>
+      CreateCrossInitiativeDependencyParamsSchema.parse(makeCrossDepParams())
+    ).not.toThrow();
   });
 
   it('validates CreateDecisionChainParams', () => {

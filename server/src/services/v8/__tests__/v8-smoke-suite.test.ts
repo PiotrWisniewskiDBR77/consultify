@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   default: (req: any, _res: any, next: () => void) => {
@@ -245,16 +245,14 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
     });
 
     it('POST /api/v8/chat/snapshots → 201', async () => {
-      const res = await request(app)
-        .post('/api/v8/chat/snapshots')
-        .send({
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-          consumerClass: 'chat',
-          sourceContextRefs: [],
-        });
+      const res = await request(app).post('/api/v8/chat/snapshots').send({
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+        consumerClass: 'chat',
+        sourceContextRefs: [],
+      });
       expect(res.status).toBe(201);
     });
 
@@ -279,40 +277,34 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
     });
 
     it('POST /api/v8/chat/bindings/chat → 201', async () => {
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/chat')
-        .send({
-          conversationId: 'conv-1',
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/chat').send({
+        conversationId: 'conv-1',
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+      });
       expect(res.status).toBe(201);
     });
 
     it('POST /api/v8/chat/bindings/execution → 201', async () => {
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/execution')
-        .send({
-          chatSnapshotId: 'snap-1',
-          workspaceId: 'ws-1',
-          artifactRefs: [],
-          effectiveScopeRef: 'default',
-          resolvedRoleRef: 'user',
-          executionRunId: 'run-1',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/execution').send({
+        chatSnapshotId: 'snap-1',
+        workspaceId: 'ws-1',
+        artifactRefs: [],
+        effectiveScopeRef: 'default',
+        resolvedRoleRef: 'user',
+        executionRunId: 'run-1',
+      });
       expect(res.status).toBe(201);
     });
 
     it('POST /api/v8/chat/bindings/retrieval → 201', async () => {
-      const res = await request(app)
-        .post('/api/v8/chat/bindings/retrieval')
-        .send({
-          activeSnapshotId: 'snap-1',
-          workspaceId: 'ws-1',
-          effectiveScopeRef: 'retrieval',
-        });
+      const res = await request(app).post('/api/v8/chat/bindings/retrieval').send({
+        activeSnapshotId: 'snap-1',
+        workspaceId: 'ws-1',
+        effectiveScopeRef: 'retrieval',
+      });
       expect(res.status).toBe(201);
     });
   });
@@ -419,7 +411,7 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
 
     it('GET /api/v8/multiplayer/room-binding → 200', async () => {
       const res = await request(app).get(
-        `/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=${smokeRoomId}`,
+        `/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=${smokeRoomId}`
       );
       expect(res.status).toBe(200);
       expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
@@ -434,7 +426,7 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
 
     it('GET /api/v8/multiplayer/rooms/:roomId/presence/by-surface → 200', async () => {
       const res = await request(app).get(
-        `/api/v8/multiplayer/rooms/${smokeRoomId}/presence/by-surface?surface=whiteboard`,
+        `/api/v8/multiplayer/rooms/${smokeRoomId}/presence/by-surface?surface=whiteboard`
       );
       expect(res.status).toBe(200);
       expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');

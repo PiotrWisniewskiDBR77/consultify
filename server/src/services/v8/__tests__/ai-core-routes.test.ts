@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetOperatingEnvironmentStatus = vi.fn();
 const mockProcessChatTurn = vi.fn();
@@ -86,7 +86,10 @@ let mockUser: any = null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   default: (req: any, _res: any, next: () => void) => {
-    if (!mockUser) { _res.status(401).json({ error: 'No token provided' }); return; }
+    if (!mockUser) {
+      _res.status(401).json({ error: 'No token provided' });
+      return;
+    }
     req.userId = mockUser.id;
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
@@ -95,7 +98,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     next();
   },
   verifyToken: (req: any, _res: any, next: () => void) => {
-    if (!mockUser) { _res.status(401).json({ error: 'No token provided' }); return; }
+    if (!mockUser) {
+      _res.status(401).json({ error: 'No token provided' });
+      return;
+    }
     req.userId = mockUser.id;
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
@@ -104,7 +110,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     next();
   },
   requireSuperAdmin: (req: any, res: any, next: () => void) => {
-    if (!req.user?.isSuperAdmin) { res.status(403).json({ error: 'Super admin access required' }); return; }
+    if (!req.user?.isSuperAdmin) {
+      res.status(403).json({ error: 'Super admin access required' });
+      return;
+    }
     next();
   },
   requireRole: () => (_req: any, _res: any, next: () => void) => next(),
@@ -127,12 +136,27 @@ const UID = 'user-test-2';
 describe('AI Core Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUser = { id: UID, email: 'test@example.com', name: 'Test User', role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+    mockUser = {
+      id: UID,
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'ADMIN',
+      organizationId: ORG,
+      isSuperAdmin: false,
+    };
   });
 
   describe('GET /ai-core/environment', () => {
     it('returns operating environment status', async () => {
-      const status = { healthy: true, layers: { context: 'healthy', retrieval: 'healthy', execution: 'healthy', trust: 'healthy' } };
+      const status = {
+        healthy: true,
+        layers: {
+          context: 'healthy',
+          retrieval: 'healthy',
+          execution: 'healthy',
+          trust: 'healthy',
+        },
+      };
       mockGetOperatingEnvironmentStatus.mockResolvedValue(status);
       const res = await request(createApp()).get('/api/v8/ai-core/environment');
       expect(res.status).toBe(200);
@@ -144,26 +168,42 @@ describe('AI Core Routes', () => {
 
   describe('POST /ai-core/chat-turn', () => {
     it('processes a chat turn', async () => {
-      const result = { type: 'chat', snapshot: { snapshotId: 'snap-1' }, intent: { intentType: 'conversational' } };
+      const result = {
+        type: 'chat',
+        snapshot: { snapshotId: 'snap-1' },
+        intent: { intentType: 'conversational' },
+      };
       mockProcessChatTurn.mockResolvedValue(result);
       const res = await request(createApp()).post('/api/v8/ai-core/chat-turn').send({
-        conversationId: 'conv-1', workspaceId: 'ws-1', message: 'What is the status?', artifactRefs: [],
+        conversationId: 'conv-1',
+        workspaceId: 'ws-1',
+        message: 'What is the status?',
+        artifactRefs: [],
       });
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual(result);
-      expect(mockProcessChatTurn).toHaveBeenCalledWith(expect.objectContaining({
-        conversationId: 'conv-1', organizationId: ORG, userId: UID, message: 'What is the status?',
-      }));
+      expect(mockProcessChatTurn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          conversationId: 'conv-1',
+          organizationId: ORG,
+          userId: UID,
+          message: 'What is the status?',
+        })
+      );
     });
 
     it('returns 400 when required fields are missing', async () => {
-      const res = await request(createApp()).post('/api/v8/ai-core/chat-turn').send({ conversationId: 'conv-1' });
+      const res = await request(createApp())
+        .post('/api/v8/ai-core/chat-turn')
+        .send({ conversationId: 'conv-1' });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');
     });
 
     it('returns 400 when message is missing', async () => {
-      const res = await request(createApp()).post('/api/v8/ai-core/chat-turn').send({ conversationId: 'conv-1', workspaceId: 'ws-1' });
+      const res = await request(createApp())
+        .post('/api/v8/ai-core/chat-turn')
+        .send({ conversationId: 'conv-1', workspaceId: 'ws-1' });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');
     });
@@ -173,7 +213,9 @@ describe('AI Core Routes', () => {
     it('returns audit trail for a snapshotId', async () => {
       mockGetSupportTracesByRun.mockResolvedValue([{ traceId: 'trace-1' }]);
       mockGetProvenanceByOutput.mockResolvedValue([{ entryId: 'entry-1' }]);
-      const res = await request(createApp()).get('/api/v8/ai-core/trust/audit-trail?snapshotId=snap-1');
+      const res = await request(createApp()).get(
+        '/api/v8/ai-core/trust/audit-trail?snapshotId=snap-1'
+      );
       expect(res.status).toBe(200);
       expect(res.body.data.supportTraces).toEqual([{ traceId: 'trace-1' }]);
       expect(res.body.data.provenanceEntries).toEqual([{ entryId: 'entry-1' }]);
@@ -192,7 +234,9 @@ describe('AI Core Routes', () => {
     it('returns provenance ledger', async () => {
       const ledger = { entries: [], explanation: null, supportTrace: null };
       mockBuildProvenanceLedger.mockResolvedValue(ledger);
-      const res = await request(createApp()).get('/api/v8/ai-core/trust/provenance?snapshotId=snap-1');
+      const res = await request(createApp()).get(
+        '/api/v8/ai-core/trust/provenance?snapshotId=snap-1'
+      );
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual(ledger);
       expect(mockBuildProvenanceLedger).toHaveBeenCalledWith('snap-1', ORG);
@@ -222,7 +266,9 @@ describe('AI Core Routes', () => {
       const policy = { state: 'allowed', approvalClass: 'auto_executable' };
       mockGetTool.mockResolvedValue(tool);
       mockGetEffectivePolicy.mockResolvedValue(policy);
-      const res = await request(createApp()).get('/api/v8/ai-core/tools/tool-1/policy?consumerClass=chat');
+      const res = await request(createApp()).get(
+        '/api/v8/ai-core/tools/tool-1/policy?consumerClass=chat'
+      );
       expect(res.status).toBe(200);
       expect(res.body.data.tool).toEqual(tool);
       expect(res.body.data.effectivePolicy).toEqual(policy);
@@ -259,7 +305,14 @@ describe('AI Core Routes', () => {
     });
 
     it('returns 403 when org context is missing', async () => {
-      mockUser = { id: UID, email: 'test@example.com', name: 'Test', role: 'ADMIN', organizationId: undefined, isSuperAdmin: false };
+      mockUser = {
+        id: UID,
+        email: 'test@example.com',
+        name: 'Test',
+        role: 'ADMIN',
+        organizationId: undefined,
+        isSuperAdmin: false,
+      };
       const res = await request(createApp()).get('/api/v8/ai-core/environment');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('V8_MISSING_ORG_CONTEXT');

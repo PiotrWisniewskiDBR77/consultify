@@ -62,7 +62,15 @@ const rowPolicyService = {
         `INSERT INTO tp_row_policies (table_id, name, role, condition_field_id, condition_operator, condition_value, permission)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [tableId, name, role, conditionFieldId ?? null, conditionOperator, conditionValue ?? null, permission]
+        [
+          tableId,
+          name,
+          role,
+          conditionFieldId ?? null,
+          conditionOperator,
+          conditionValue ?? null,
+          permission,
+        ]
       );
       return result.rows[0] as RowPolicy;
     } catch (e) {
@@ -93,7 +101,18 @@ const rowPolicyService = {
 
   async updatePolicy(
     policyId: string,
-    updates: Partial<Pick<RowPolicy, 'name' | 'role' | 'condition_field_id' | 'condition_operator' | 'condition_value' | 'permission' | 'is_active'>>
+    updates: Partial<
+      Pick<
+        RowPolicy,
+        | 'name'
+        | 'role'
+        | 'condition_field_id'
+        | 'condition_operator'
+        | 'condition_value'
+        | 'permission'
+        | 'is_active'
+      >
+    >
   ): Promise<RowPolicy | null> {
     const db = getDatabase();
     try {
@@ -156,10 +175,7 @@ const rowPolicyService = {
   async deletePolicy(policyId: string): Promise<boolean> {
     const db = getDatabase();
     try {
-      const result = await db.query(
-        'DELETE FROM tp_row_policies WHERE id = $1',
-        [policyId]
-      );
+      const result = await db.query('DELETE FROM tp_row_policies WHERE id = $1', [policyId]);
       return (result as any).rowCount > 0;
     } catch (e) {
       logger.error('[RowPolicyService] deletePolicy failed', {
@@ -210,10 +226,7 @@ const rowPolicyService = {
     }
   },
 
-  _evaluateCondition(
-    policy: RowPolicy,
-    recordData: Record<string, unknown>
-  ): boolean {
+  _evaluateCondition(policy: RowPolicy, recordData: Record<string, unknown>): boolean {
     if (!policy.condition_field_id) return true;
 
     const fieldValue = String(recordData[policy.condition_field_id] ?? '');

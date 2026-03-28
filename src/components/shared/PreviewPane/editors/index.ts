@@ -1,8 +1,12 @@
-export { StatusPillEditor, type StatusOption, type StatusPillEditorProps } from './StatusPillEditor';
+export { DatePillEditor, type DatePillEditorProps } from './DatePillEditor';
+export { type OwnerOption, OwnerPillEditor, type OwnerPillEditorProps } from './OwnerPillEditor';
 export {
-  PriorityPillEditor,
   type PriorityOption,
+  PriorityPillEditor,
   type PriorityPillEditorProps,
 } from './PriorityPillEditor';
-export { DatePillEditor, type DatePillEditorProps } from './DatePillEditor';
-export { OwnerPillEditor, type OwnerOption, type OwnerPillEditorProps } from './OwnerPillEditor';
+export {
+  type StatusOption,
+  StatusPillEditor,
+  type StatusPillEditorProps,
+} from './StatusPillEditor';

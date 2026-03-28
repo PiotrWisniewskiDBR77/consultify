@@ -150,7 +150,9 @@ export class ExtensionService {
     return false;
   }
 
-  async getInstalledExtensions(baseId: string): Promise<(Extension & { install_config: Record<string, unknown>; installed_at: string })[]> {
+  async getInstalledExtensions(
+    baseId: string
+  ): Promise<(Extension & { install_config: Record<string, unknown>; installed_at: string })[]> {
     const db = getDatabase();
     const result = await db.query(
       `SELECT e.*, ei.config as install_config, ei.created_at as installed_at
@@ -160,7 +162,10 @@ export class ExtensionService {
        ORDER BY ei.created_at DESC`,
       [baseId]
     );
-    return result.rows as (Extension & { install_config: Record<string, unknown>; installed_at: string })[];
+    return result.rows as (Extension & {
+      install_config: Record<string, unknown>;
+      installed_at: string;
+    })[];
   }
 
   async updateExtensionConfig(

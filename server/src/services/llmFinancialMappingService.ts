@@ -13,8 +13,8 @@ import OpenAI from 'openai';
 
 import { llmConfigService } from './ai/llmConfigService.js';
 import {
-  getCanonicalLinesByStatementType,
   type CanonicalLineDefinition,
+  getCanonicalLinesByStatementType,
 } from './financeCanonicalRegistry.js';
 import { logFinanceError, logFinanceEvent } from './financeDiagnosticsService.js';
 import type { ExtractedLine } from './financialStatementService.js';
@@ -42,7 +42,12 @@ function normalizeBaseUrl(endpoint?: string | null): string | undefined {
   if (!endpoint) return undefined;
   let base = String(endpoint).trim().replace(/\/+$/, '');
   if (!base) return undefined;
-  const suffixes = ['/chat/completions', '/v1/chat/completions', '/v1/completions', '/v1/responses'];
+  const suffixes = [
+    '/chat/completions',
+    '/v1/chat/completions',
+    '/v1/completions',
+    '/v1/responses',
+  ];
   const lower = base.toLowerCase();
   for (const suffix of suffixes) {
     if (lower.endsWith(suffix)) {
@@ -63,7 +68,9 @@ function extractJsonArray(raw: string): unknown[] | null {
   if (startBracket !== -1 && endBracket > startBracket) {
     try {
       return JSON.parse(candidate.slice(startBracket, endBracket + 1));
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
   const startBrace = candidate.indexOf('{');
   const endBrace = candidate.lastIndexOf('}');
@@ -74,7 +81,9 @@ function extractJsonArray(raw: string): unknown[] | null {
       if (Array.isArray(obj?.proposals)) return obj.proposals;
       if (Array.isArray(obj?.lines)) return obj.lines;
       return [obj];
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
   return null;
 }
@@ -106,9 +115,10 @@ function buildMappingPrompt(
     })
     .join('\n');
 
-  const usedIdsList = alreadyUsedIds.size > 0
-    ? `\nALREADY ASSIGNED IDs (DO NOT USE THESE):\n${[...alreadyUsedIds].join(', ')}\n`
-    : '';
+  const usedIdsList =
+    alreadyUsedIds.size > 0
+      ? `\nALREADY ASSIGNED IDs (DO NOT USE THESE):\n${[...alreadyUsedIds].join(', ')}\n`
+      : '';
 
   return `You are a financial statement mapping expert.
 
@@ -154,14 +164,10 @@ async function mapWithOpenAI(
   const baseURL = normalizeBaseUrl(providerConfig?.endpoint);
   if (!apiKey) return null;
 
-  const isOpenRouter = apiKey.startsWith('sk-or-v1') ||
-    (baseURL || '').toLowerCase().includes('openrouter.ai');
-  const model = isOpenRouter
-    ? 'openai/gpt-4o'
-    : 'gpt-4o';
-  const effectiveBaseURL = isOpenRouter && !baseURL
-    ? 'https://openrouter.ai/api/v1'
-    : baseURL;
+  const isOpenRouter =
+    apiKey.startsWith('sk-or-v1') || (baseURL || '').toLowerCase().includes('openrouter.ai');
+  const model = isOpenRouter ? 'openai/gpt-4o' : 'gpt-4o';
+  const effectiveBaseURL = isOpenRouter && !baseURL ? 'https://openrouter.ai/api/v1' : baseURL;
   const client = new OpenAI({ apiKey, ...(effectiveBaseURL ? { baseURL: effectiveBaseURL } : {}) });
 
   try {
@@ -205,8 +211,8 @@ async function mapWithAnthropic(
   const baseURL = normalizeBaseUrl(providerConfig?.endpoint);
   if (!apiKey) return null;
 
-  const isOpenRouter = apiKey.startsWith('sk-or-v1') ||
-    (baseURL || '').toLowerCase().includes('openrouter.ai');
+  const isOpenRouter =
+    apiKey.startsWith('sk-or-v1') || (baseURL || '').toLowerCase().includes('openrouter.ai');
 
   if (isOpenRouter) {
     const model = 'anthropic/claude-sonnet-4-6';
@@ -222,10 +228,19 @@ async function mapWithAnthropic(
       const outputText = response.choices?.[0]?.message?.content || '';
       const parsed = extractJsonArray(outputText);
       if (!parsed) throw new Error('Anthropic (via OpenRouter) did not return valid mapping JSON');
-      logFinanceEvent('statement.mapping.llm_completed', { traceId, provider: 'anthropic', model, proposalCount: parsed.length });
+      logFinanceEvent('statement.mapping.llm_completed', {
+        traceId,
+        provider: 'anthropic',
+        model,
+        proposalCount: parsed.length,
+      });
       return { proposals: parsed, model };
     } catch (error) {
-      logFinanceError('statement.mapping.llm_failed', error, { traceId, provider: 'anthropic', model });
+      logFinanceError('statement.mapping.llm_failed', error, {
+        traceId,
+        provider: 'anthropic',
+        model,
+      });
       return null;
     }
   }
@@ -291,9 +306,7 @@ export async function mapUnmappedLinesWithLLM(params: {
   const catalog = buildCanonicalCatalog(statementType);
 
   const alreadyUsedIds = new Set<string>(
-    allLines
-      .filter((l) => l.suggestedCanonicalId)
-      .map((l) => l.suggestedCanonicalId!)
+    allLines.filter((l) => l.suggestedCanonicalId).map((l) => l.suggestedCanonicalId!)
   );
 
   const unmappedWithContext = unmapped.map((line) => {
@@ -373,8 +386,10 @@ export async function mapUnmappedLinesWithLLM(params: {
     provider,
     model: rawResult.model,
     totalProposals: proposals.length,
-    autoAccepted: proposals.filter((p) => p.confidence >= CONFIDENCE_AUTO_ACCEPT && p.canonicalId).length,
-    lowConfidence: proposals.filter((p) => p.confidence < CONFIDENCE_AUTO_ACCEPT && p.canonicalId).length,
+    autoAccepted: proposals.filter((p) => p.confidence >= CONFIDENCE_AUTO_ACCEPT && p.canonicalId)
+      .length,
+    lowConfidence: proposals.filter((p) => p.confidence < CONFIDENCE_AUTO_ACCEPT && p.canonicalId)
+      .length,
     noMatch: proposals.filter((p) => !p.canonicalId).length,
     durationMs: Date.now() - t0,
   });
@@ -408,9 +423,7 @@ export function applyLlmProposals(
 
     const target = lines.find(
       (l) =>
-        l.originalLabel === proposal.originalLabel &&
-        !l.suggestedCanonicalId &&
-        !l.isNonFinancial
+        l.originalLabel === proposal.originalLabel && !l.suggestedCanonicalId && !l.isNonFinancial
     );
 
     if (!target) {
@@ -462,9 +475,7 @@ export async function mapDuplicateConflictLinesWithLLM(params: {
   const catalog = buildCanonicalCatalog(statementType);
 
   const alreadyUsedIds = new Set<string>(
-    allLines
-      .filter((l) => l.suggestedCanonicalId)
-      .map((l) => l.suggestedCanonicalId!)
+    allLines.filter((l) => l.suggestedCanonicalId).map((l) => l.suggestedCanonicalId!)
   );
 
   const conflictWithContext = conflictLines.map((line) => {
@@ -541,7 +552,8 @@ export async function mapDuplicateConflictLinesWithLLM(params: {
     provider,
     model: rawResult.model,
     totalProposals: proposals.length,
-    autoAccepted: proposals.filter((p) => p.confidence >= CONFIDENCE_AUTO_ACCEPT && p.canonicalId).length,
+    autoAccepted: proposals.filter((p) => p.confidence >= CONFIDENCE_AUTO_ACCEPT && p.canonicalId)
+      .length,
     durationMs: Date.now() - t0,
   });
 

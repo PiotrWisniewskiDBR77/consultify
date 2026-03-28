@@ -6,24 +6,24 @@
  * @module routes/v8/results.routes
  */
 
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import * as ReportBuilderService from '../../services/reportBuilderService.js';
+import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
+import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
 import {
   getResultsDashboard,
-  getResultsKpiDrawerDetail,
   getResultsKpiCatalog,
-  getROIPortfolioSummary,
+  getResultsKpiDrawerDetail,
   getROIInitiativeDetail,
+  getROIPortfolioSummary,
 } from '../../services/v8/resultsROIService.js';
-import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
-import * as ReportBuilderService from '../../services/reportBuilderService.js';
-import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -39,7 +39,10 @@ function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
 }
 
-function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: string | null): string | null {
+function deriveKpiPeriodKey(
+  periodStart?: string | null,
+  measurementFrequency?: string | null
+): string | null {
   const start = String(periodStart || '').slice(0, 10);
   if (!start) return null;
   const [year, month = '01', day = '01'] = start.split('-');
@@ -49,7 +52,8 @@ function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: 
   if (frequency === 'WEEKLY') {
     return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
   }
-  if (frequency === 'QUARTERLY') return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
+  if (frequency === 'QUARTERLY')
+    return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
   return `${year}-${month}`;
 }
 
@@ -67,7 +71,7 @@ router.get(
       data: { snapshot },
       meta: resultsMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -84,7 +88,7 @@ router.get(
       data: catalog,
       meta: resultsMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -154,14 +158,14 @@ router.post(
         redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
         amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
         redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
-      ],
+      ]
     );
 
     return res.json({
       data: { id },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -205,7 +209,7 @@ router.put(
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
       `,
-      [kpiId, organizationId],
+      [kpiId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -253,14 +257,14 @@ router.put(
         amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
         redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
         kpiId,
-      ],
+      ]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -286,7 +290,7 @@ router.delete(
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
       `,
-      [kpiId, organizationId],
+      [kpiId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -307,13 +311,13 @@ router.delete(
 
     const cases = await dbAll<any>(
       `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
-      [organizationId, kpiId],
+      [organizationId, kpiId]
     ).catch(() => []);
     const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
     if (caseIds.length) {
       await dbRun(
         `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
-        caseIds,
+        caseIds
       ).catch(() => null);
     }
 
@@ -328,7 +332,7 @@ router.delete(
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -376,14 +380,14 @@ router.post(
         confidence || 'medium',
         notes || null,
         userId || null,
-      ],
+      ]
     );
 
     return res.json({
       data: { id, initiativeId, kpiId },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -411,7 +415,7 @@ router.delete(
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -432,7 +436,7 @@ router.post(
 
     const row = await dbGet<any>(
       `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -447,14 +451,14 @@ router.post(
       SET status = 'ACKNOWLEDGED', acknowledged_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND organization_id = ?
       `,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -476,7 +480,7 @@ router.put(
 
     const row = await dbGet<any>(
       `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -492,14 +496,14 @@ router.put(
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND organization_id = ?
       `,
-      [rcaText != null ? String(rcaText) : null, caseId, organizationId],
+      [rcaText != null ? String(rcaText) : null, caseId, organizationId]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -529,7 +533,7 @@ router.post(
 
     const row = await dbGet<any>(
       `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -544,14 +548,14 @@ router.post(
       INSERT INTO kpi_deviation_actions (id, case_id, title, owner_user_id, due_date)
       VALUES (?, ?, ?, ?, ?)
       `,
-      [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null],
+      [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null]
     );
 
     return res.json({
       data: { id, caseId },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -580,7 +584,7 @@ router.put(
       INNER JOIN kpi_deviation_cases c ON c.id = a.case_id
       WHERE a.id = ? AND a.case_id = ? AND c.organization_id = ?
       `,
-      [actionId, caseId, organizationId],
+      [actionId, caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -610,14 +614,14 @@ router.put(
         actionId,
         caseId,
         organizationId,
-      ],
+      ]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -638,7 +642,7 @@ router.post(
 
     const row = await dbGet<any>(
       `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -653,14 +657,14 @@ router.post(
       SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND organization_id = ?
       `,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -684,8 +688,7 @@ router.post(
 
     const safeEvidenceText = typeof evidenceText === 'string' ? evidenceText.trim() : '';
     const safeEvidenceRef = typeof evidenceRef === 'string' ? evidenceRef.trim() : '';
-    const safeResolutionNotes =
-      typeof resolutionNotes === 'string' ? resolutionNotes.trim() : '';
+    const safeResolutionNotes = typeof resolutionNotes === 'string' ? resolutionNotes.trim() : '';
 
     if (!safeEvidenceText && !safeEvidenceRef) {
       return res.status(400).json({
@@ -696,7 +699,7 @@ router.post(
 
     const row = await dbGet<any>(
       `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, organizationId],
+      [caseId, organizationId]
     );
     if (!row?.id) {
       return res.status(404).json({
@@ -721,7 +724,7 @@ router.post(
           linkedTaskId || null,
           caseId,
           organizationId,
-        ],
+        ]
       );
     } catch {
       await dbRun(
@@ -735,7 +738,7 @@ router.post(
           safeResolutionNotes || null,
           caseId,
           organizationId,
-        ],
+        ]
       );
     }
 
@@ -743,7 +746,7 @@ router.post(
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -766,7 +769,7 @@ router.get(
       data: detail,
       meta: resultsMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -780,7 +783,8 @@ router.post(
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     const body = req.body || {};
     const value = body.value;
-    const periodStartRaw = body.periodStart || body.period_start || body.measuredAt || body.measured_at;
+    const periodStartRaw =
+      body.periodStart || body.period_start || body.measuredAt || body.measured_at;
     const periodEndRaw = body.periodEnd || body.period_end;
     const source = body.source;
     const notes = body.notes;
@@ -809,7 +813,7 @@ router.post(
 
     const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
       `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      [kpiId],
+      [kpiId]
     ).catch(() => null);
     const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
 
@@ -827,15 +831,17 @@ router.post(
         source || 'manual',
         notes ? String(notes) : null,
         userId || null,
-      ],
+      ]
     );
 
-    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(() => []);
+    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
+      () => []
+    );
     const hasCurrentValue = (kpiCols || []).some((column) => column?.name === 'current_value');
     if (hasCurrentValue) {
       await dbRun(
         `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [Number(value), kpiId],
+        [Number(value), kpiId]
       ).catch(() => null);
     }
 
@@ -869,7 +875,7 @@ router.post(
       },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -885,7 +891,7 @@ router.get(
       data: portfolio,
       meta: resultsMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -906,9 +912,7 @@ router.post(
     }
 
     const selectedKpiIds: string[] | null = Array.isArray(kpiIds)
-      ? (kpiIds as unknown[])
-          .map((entry) => String(entry || '').trim())
-          .filter(Boolean)
+      ? (kpiIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
       : null;
 
     const created = await createKpiReportSnapshot({
@@ -936,31 +940,31 @@ router.post(
         report.report.id,
         'executive_summary',
         created.markdown.executive_summary,
-        userId,
+        userId
       ),
       ReportBuilderService.updateSectionContent(
         report.report.id,
         'kpi_overview',
         created.markdown.kpi_overview,
-        userId,
+        userId
       ),
       ReportBuilderService.updateSectionContent(
         report.report.id,
         'deviation_cases',
         created.markdown.deviation_cases,
-        userId,
+        userId
       ),
       ReportBuilderService.updateSectionContent(
         report.report.id,
         'action_plan',
         created.markdown.action_plan,
-        userId,
+        userId
       ),
       ReportBuilderService.updateSectionContent(
         report.report.id,
         'appendix',
         created.markdown.appendix,
-        userId,
+        userId
       ),
     ]);
     await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
@@ -969,7 +973,7 @@ router.post(
       data: { snapshotId: created.snapshotId, reportId: report.report.id },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -993,7 +997,7 @@ router.get(
       data: detail,
       meta: resultsMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -1061,14 +1065,14 @@ router.put(
         assumptionsOwner || null,
         confidence || 'medium',
         userId || null,
-      ],
+      ]
     );
 
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 /**
@@ -1120,14 +1124,14 @@ router.post(
         source || 'manual',
         varianceNotes || null,
         userId || null,
-      ],
+      ]
     );
 
     return res.json({
       data: { id },
       meta: resultsWriteMeta(),
     });
-  }),
+  })
 );
 
 export default router;

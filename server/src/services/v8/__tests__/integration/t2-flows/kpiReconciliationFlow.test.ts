@@ -8,7 +8,7 @@
  *       → verify KPI → deviation → reconciliation → escalation → review pack chain
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock DB layer ──────────────────────────────────────────────────────────
 
@@ -28,16 +28,13 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 // ── Real service imports ───────────────────────────────────────────────────
 
+import { recordDeltaEscalation } from '../../../financeIntegrationService.js';
 import {
-  createKPI,
-  recordDeviation,
-  initiateReconciliation,
   createExecutiveReviewPack,
+  createKPI,
+  initiateReconciliation,
+  recordDeviation,
 } from '../../../resultsROIService.js';
-
-import {
-  recordDeltaEscalation,
-} from '../../../financeIntegrationService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 

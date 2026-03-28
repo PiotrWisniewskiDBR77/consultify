@@ -267,7 +267,10 @@ const ProposalItem: React.FC<{
               </div>
             ))}
             {proposal.patch.moveNodes?.map((move) => (
-              <div key={`${move.nodeId}-${move.parentId || 'free'}`} className="text-sky-600 dark:text-sky-400">
+              <div
+                key={`${move.nodeId}-${move.parentId || 'free'}`}
+                className="text-sky-600 dark:text-sky-400"
+              >
                 ↔ {move.nodeId}
                 {move.parentId ? ` → ${move.parentId}` : ''}
               </div>
@@ -289,7 +292,10 @@ const ProposalItem: React.FC<{
             ) : null}
           </div>
 
-          {(proposal.citations?.length || proposal.maturity || statusLabel || proposal.resultSummary) && (
+          {(proposal.citations?.length ||
+            proposal.maturity ||
+            statusLabel ||
+            proposal.resultSummary) && (
             <div className="mb-2 space-y-1">
               {statusLabel ? (
                 <div className="flex flex-wrap gap-1">

@@ -11,10 +11,16 @@ class AssessmentEvidenceController {
     const organizationId = req.user?.organizationId || req.user?.organization_id;
     if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const context = await AssessmentEvidenceService.getAssessmentContext(assessmentId, organizationId);
+    const context = await AssessmentEvidenceService.getAssessmentContext(
+      assessmentId,
+      organizationId
+    );
     if (!context) return res.status(404).json({ error: 'Assessment not found' });
 
-    const items = await AssessmentEvidenceService.getEvidenceForAssessment(assessmentId, organizationId);
+    const items = await AssessmentEvidenceService.getEvidenceForAssessment(
+      assessmentId,
+      organizationId
+    );
     res.json({ evidence: items });
   });
 
@@ -86,7 +92,10 @@ class AssessmentEvidenceController {
     if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const report = await AssessmentEvidenceService.getEvidenceReport(assessmentId, organizationId);
+      const report = await AssessmentEvidenceService.getEvidenceReport(
+        assessmentId,
+        organizationId
+      );
       res.json(report);
     } catch (error: any) {
       if (error?.message === 'ASSESSMENT_NOT_FOUND') {

@@ -30,7 +30,9 @@ const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
 };
 
 export function normalizeTaskStatus(s: string | null | undefined): TaskStatus {
-  const v = String(s || 'todo').toLowerCase().replace(/[\s-]/g, '_');
+  const v = String(s || 'todo')
+    .toLowerCase()
+    .replace(/[\s-]/g, '_');
   if (TASK_STATUSES.includes(v as TaskStatus)) return v as TaskStatus;
   // Common aliases
   if (['completed', 'complete'].includes(v)) return 'done';

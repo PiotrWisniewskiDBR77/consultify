@@ -12,10 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const STORE_PATH = path.resolve(
-  process.cwd(),
-  'server/scripts/pipeline-learnings.json'
-);
+const STORE_PATH = path.resolve(process.cwd(), 'server/scripts/pipeline-learnings.json');
 
 export interface MappingLesson {
   originalLabel: string;
@@ -109,13 +106,13 @@ export function buildLearningContext(
   const parts: string[] = [];
 
   // Mapping lessons for this statement type
-  const mappings = store.mappingLessons.filter(
-    (l) => l.statementType === statementType
-  );
+  const mappings = store.mappingLessons.filter((l) => l.statementType === statementType);
   if (mappings.length > 0) {
     parts.push('LEARNED MAPPING RULES (from previous iterations):');
     for (const m of mappings.slice(-30)) {
-      parts.push(`  - "${m.originalLabel}" → ${m.correctCanonicalId} (conf=${m.confidence.toFixed(2)})`);
+      parts.push(
+        `  - "${m.originalLabel}" → ${m.correctCanonicalId} (conf=${m.confidence.toFixed(2)})`
+      );
     }
   }
 
@@ -131,9 +128,7 @@ export function buildLearningContext(
   }
 
   // Value corrections for this document
-  const corrections = store.valueCorrections.filter(
-    (v) => v.documentName === documentName
-  );
+  const corrections = store.valueCorrections.filter((v) => v.documentName === documentName);
   if (corrections.length > 0) {
     parts.push('\nPREVIOUS VALUE ERRORS (avoid repeating):');
     for (const c of corrections) {

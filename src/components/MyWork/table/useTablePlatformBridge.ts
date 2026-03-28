@@ -5,19 +5,21 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
-  TablePlatformBase,
-  TablePlatformTable,
-  TablePlatformField,
-  TablePlatformView,
-  TablePlatformRecord,
   FilterGroup as TPFilterGroup,
   SortRule as TPSortRule,
+  TablePlatformBase,
+  TablePlatformField,
+  TablePlatformRecord,
+  TablePlatformTable,
+  TablePlatformView,
 } from '@/types/tablePlatform';
-import type { ColumnDef, TableNode } from './tableTypes';
+
 import { fieldToColumn, recordToNode } from './tablePlatformMappers';
+import type { ColumnDef, TableNode } from './tableTypes';
 
 const PAGE_SIZE = 50;
 /** When false, `tablePlatformMetadataFirst` feature flag controls metadata-first mode. */
@@ -29,7 +31,10 @@ function normalizeField(raw: Record<string, unknown>): TablePlatformField {
     id: String(raw.id ?? ''),
     tableId: String(raw.table_id ?? raw.tableId ?? ''),
     name: String(raw.name ?? ''),
-    fieldType: String(raw.field_type ?? raw.fieldType ?? 'singleLineText').replace(/_/g, '') as TablePlatformField['fieldType'],
+    fieldType: String(raw.field_type ?? raw.fieldType ?? 'singleLineText').replace(
+      /_/g,
+      ''
+    ) as TablePlatformField['fieldType'],
     options: (raw.options ?? {}) as TablePlatformField['options'],
     isComputed: Boolean(raw.is_computed ?? raw.isComputed ?? false),
     order: Number(raw.field_order ?? raw.order ?? 0),
@@ -49,11 +54,15 @@ function normalizeRecord(raw: Record<string, unknown>): TablePlatformRecord {
 }
 
 /** Convert TP filters/sorts to backend API format */
-function toBackendFilters(tp: TPFilterGroup): Array<{ field: string; op: string; value?: unknown }> {
+function toBackendFilters(
+  tp: TPFilterGroup
+): Array<{ field: string; op: string; value?: unknown }> {
   return tp.rules.map((r) => ({ field: r.fieldId, op: r.operator, value: r.value }));
 }
 
-function toBackendSorts(sorts: TPSortRule[]): Array<{ fieldId: string; direction: 'asc' | 'desc' }> {
+function toBackendSorts(
+  sorts: TPSortRule[]
+): Array<{ fieldId: string; direction: 'asc' | 'desc' }> {
   return sorts.map((s) => ({ fieldId: s.fieldId, direction: s.direction }));
 }
 
@@ -83,11 +92,25 @@ export interface UseTablePlatformBridgeReturn {
   nodes: TableNode[];
 
   createRecord: (data: Record<string, unknown>) => Promise<TablePlatformRecord | null>;
-  updateRecord: (recordId: string, data: Record<string, unknown>) => Promise<TablePlatformRecord | null>;
+  updateRecord: (
+    recordId: string,
+    data: Record<string, unknown>
+  ) => Promise<TablePlatformRecord | null>;
   deleteRecord: (recordId: string) => Promise<boolean>;
-  addField: (name: string, fieldType: string, options?: Record<string, unknown>) => Promise<TablePlatformField | null>;
-  updateField: (fieldId: string, updates: { name?: string; options?: Record<string, unknown> }) => Promise<void>;
-  createView: (name: string, viewType?: string, config?: Record<string, unknown>) => Promise<TablePlatformView | null>;
+  addField: (
+    name: string,
+    fieldType: string,
+    options?: Record<string, unknown>
+  ) => Promise<TablePlatformField | null>;
+  updateField: (
+    fieldId: string,
+    updates: { name?: string; options?: Record<string, unknown> }
+  ) => Promise<void>;
+  createView: (
+    name: string,
+    viewType?: string,
+    config?: Record<string, unknown>
+  ) => Promise<TablePlatformView | null>;
   updateView: (viewId: string, updates: Record<string, unknown>) => Promise<void>;
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -116,7 +139,9 @@ async function resolveTargetTableForIdea(
   }
 }
 
-export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTablePlatformBridgeReturn {
+export function useTablePlatformBridge(
+  opts: UseTablePlatformBridgeOpts
+): UseTablePlatformBridgeReturn {
   const { ideaId, enabled, preferredTableId } = opts;
   const { isEnabled } = useFeatureFlags();
   const isNewPlatform =
@@ -141,38 +166,42 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
   const columns = fields.map(fieldToColumn);
   const nodes = records.map((r) => recordToNode(r, fields));
 
-  const ensureBaseAndTable = useCallback(
-    async (): Promise<{ baseId: string; tableId: string; base?: Record<string, unknown> } | null> => {
-      try {
-        const bases = await TablePlatformApi.listBases(ideaId);
-        let baseRow = Array.isArray(bases) ? bases[0] : null;
+  const ensureBaseAndTable = useCallback(async (): Promise<{
+    baseId: string;
+    tableId: string;
+    base?: Record<string, unknown>;
+  } | null> => {
+    try {
+      const bases = await TablePlatformApi.listBases(ideaId);
+      let baseRow = Array.isArray(bases) ? bases[0] : null;
 
-        if (!baseRow) {
-          baseRow = await TablePlatformApi.createBase(ideaId, 'Default');
-          if (!baseRow) return null;
-        }
-
-        const baseId = String((baseRow as Record<string, unknown>).id ?? '');
-        const fullBase = await TablePlatformApi.getBase(baseId);
-        const baseData = fullBase as Record<string, unknown>;
-        const tables = (baseData?.tables ?? []) as Record<string, unknown>[];
-        let tableRow = tables[0] ?? null;
-
-        if (!tableRow) {
-          tableRow = await TablePlatformApi.createTable(baseId, 'Table', undefined);
-          if (!tableRow) return null;
-        }
-
-        const tableId = String((tableRow as Record<string, unknown>).id ?? '');
-        return { baseId, tableId, base: baseData };
-      } catch (err) {
-        console.error('[TablePlatformBridge] ensureBaseAndTable failed, falling back to legacy:', err);
-        setPlatformFailed(true);
-        return null;
+      if (!baseRow) {
+        baseRow = await TablePlatformApi.createBase(ideaId, 'Default');
+        if (!baseRow) return null;
       }
-    },
-    [ideaId]
-  );
+
+      const baseId = String((baseRow as Record<string, unknown>).id ?? '');
+      const fullBase = await TablePlatformApi.getBase(baseId);
+      const baseData = fullBase as Record<string, unknown>;
+      const tables = (baseData?.tables ?? []) as Record<string, unknown>[];
+      let tableRow = tables[0] ?? null;
+
+      if (!tableRow) {
+        tableRow = await TablePlatformApi.createTable(baseId, 'Table', undefined);
+        if (!tableRow) return null;
+      }
+
+      const tableId = String((tableRow as Record<string, unknown>).id ?? '');
+      return { baseId, tableId, base: baseData };
+    } catch (err) {
+      console.error(
+        '[TablePlatformBridge] ensureBaseAndTable failed, falling back to legacy:',
+        err
+      );
+      setPlatformFailed(true);
+      return null;
+    }
+  }, [ideaId]);
 
   const loadData = useCallback(
     async (filtersOverride?: TPFilterGroup, sortsOverride?: TPSortRule[]) => {
@@ -192,11 +221,10 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
         }
 
         const { baseId: ensuredBaseId, tableId: ensuredTableId } = result;
-        const { baseId, tableId } = await resolveTargetTableForIdea(
-          ideaId,
-          preferredTableId,
-          { baseId: ensuredBaseId, tableId: ensuredTableId }
-        );
+        const { baseId, tableId } = await resolveTargetTableForIdea(ideaId, preferredTableId, {
+          baseId: ensuredBaseId,
+          tableId: ensuredTableId,
+        });
         tableIdRef.current = tableId;
         cursorRef.current = undefined;
 
@@ -216,7 +244,9 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
           tableId: String(v.table_id ?? v.tableId ?? ''),
           name: String(v.name ?? ''),
           viewType: (v.view_type ?? v.viewType ?? 'grid') as TablePlatformView['viewType'],
-          visibleFieldIds: Array.isArray(v.visible_field_ids ?? v.visibleFieldIds) ? (v.visible_field_ids ?? v.visibleFieldIds) : [],
+          visibleFieldIds: Array.isArray(v.visible_field_ids ?? v.visibleFieldIds)
+            ? (v.visible_field_ids ?? v.visibleFieldIds)
+            : [],
           config: (v.config ?? {}) as TablePlatformView['config'],
           createdAt: String(v.created_at ?? v.createdAt ?? ''),
           updatedAt: String(v.updated_at ?? v.updatedAt ?? ''),
@@ -233,21 +263,28 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
           sorts: toBackendSorts(effectiveSorts),
         });
 
-      const listData = listRes as { records?: unknown[]; total?: number; cursor?: string; hasMore?: boolean };
-      const rawRecords = (listData.records ?? []) as Record<string, unknown>[];
-      setRecords(rawRecords.map(normalizeRecord));
-      setTotalRecords(Number(listData.total ?? rawRecords.length));
-      setHasMore(Boolean(listData.hasMore ?? false));
-      cursorRef.current = listData.cursor;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load table data');
-      setRecords([]);
-      setTotalRecords(0);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [isNewPlatform, enabled, ensureBaseAndTable, filters, sorts, ideaId, preferredTableId]);
+        const listData = listRes as {
+          records?: unknown[];
+          total?: number;
+          cursor?: string;
+          hasMore?: boolean;
+        };
+        const rawRecords = (listData.records ?? []) as Record<string, unknown>[];
+        setRecords(rawRecords.map(normalizeRecord));
+        setTotalRecords(Number(listData.total ?? rawRecords.length));
+        setHasMore(Boolean(listData.hasMore ?? false));
+        cursorRef.current = listData.cursor;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load table data');
+        setRecords([]);
+        setTotalRecords(0);
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isNewPlatform, enabled, ensureBaseAndTable, filters, sorts, ideaId, preferredTableId]
+  );
 
   const loadMore = useCallback(async () => {
     const tableId = tableIdRef.current;
@@ -263,7 +300,12 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
         sorts: toBackendSorts(sorts),
       });
 
-      const listData = listRes as { records?: unknown[]; total?: number; cursor?: string; hasMore?: boolean };
+      const listData = listRes as {
+        records?: unknown[];
+        total?: number;
+        cursor?: string;
+        hasMore?: boolean;
+      };
       const rawRecords = (listData.records ?? []) as Record<string, unknown>[];
       const newRecords = rawRecords.map(normalizeRecord);
       setRecords((prev) => [...prev, ...newRecords]);
@@ -299,7 +341,10 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
   );
 
   const updateRecord = useCallback(
-    async (recordId: string, data: Record<string, unknown>): Promise<TablePlatformRecord | null> => {
+    async (
+      recordId: string,
+      data: Record<string, unknown>
+    ): Promise<TablePlatformRecord | null> => {
       try {
         const updated = await TablePlatformApi.updateRecord(recordId, data);
         const norm = normalizeRecord(updated as Record<string, unknown>);
@@ -324,7 +369,11 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
   }, []);
 
   const addField = useCallback(
-    async (name: string, fieldType: string, options?: Record<string, unknown>): Promise<TablePlatformField | null> => {
+    async (
+      name: string,
+      fieldType: string,
+      options?: Record<string, unknown>
+    ): Promise<TablePlatformField | null> => {
       const tableId = tableIdRef.current;
       if (!tableId) return null;
 
@@ -341,13 +390,20 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
   );
 
   const updateField = useCallback(
-    async (fieldId: string, updates: { name?: string; options?: Record<string, unknown> }): Promise<void> => {
+    async (
+      fieldId: string,
+      updates: { name?: string; options?: Record<string, unknown> }
+    ): Promise<void> => {
       try {
         await TablePlatformApi.updateField(fieldId, updates);
         setFields((prev) =>
           prev.map((f) =>
             f.id === fieldId
-              ? { ...f, ...(updates.name && { name: updates.name }), ...(updates.options && { options: updates.options }) }
+              ? {
+                  ...f,
+                  ...(updates.name && { name: updates.name }),
+                  ...(updates.options && { options: updates.options }),
+                }
               : f
           )
         );
@@ -359,12 +415,21 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
   );
 
   const createView = useCallback(
-    async (name: string, viewType?: string, config?: Record<string, unknown>): Promise<TablePlatformView | null> => {
+    async (
+      name: string,
+      viewType?: string,
+      config?: Record<string, unknown>
+    ): Promise<TablePlatformView | null> => {
       const tableId = tableIdRef.current;
       if (!tableId) return null;
 
       try {
-        const created = await TablePlatformApi.createView(tableId, name, viewType ?? 'grid', config);
+        const created = await TablePlatformApi.createView(
+          tableId,
+          name,
+          viewType ?? 'grid',
+          config
+        );
         setViews((prev) => [...prev, created as TablePlatformView]);
         return created as TablePlatformView;
       } catch {
@@ -374,16 +439,17 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
     []
   );
 
-  const updateView = useCallback(async (viewId: string, updates: Record<string, unknown>): Promise<void> => {
-    try {
-      await TablePlatformApi.updateView(viewId, updates);
-      setViews((prev) =>
-        prev.map((v) => (v.id === viewId ? { ...v, ...updates } : v))
-      );
-    } catch {
-      // ignore
-    }
-  }, []);
+  const updateView = useCallback(
+    async (viewId: string, updates: Record<string, unknown>): Promise<void> => {
+      try {
+        await TablePlatformApi.updateView(viewId, updates);
+        setViews((prev) => prev.map((v) => (v.id === viewId ? { ...v, ...updates } : v)));
+      } catch {
+        // ignore
+      }
+    },
+    []
+  );
 
   const applyFilters = useCallback(
     async (newFilters: TPFilterGroup) => {

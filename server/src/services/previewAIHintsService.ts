@@ -68,7 +68,7 @@ export function generateContextualHints(state: EntityState): HintResult {
   if (!state.hasOwner) {
     dynamicHints.push('Who should own this?');
     if (!suggestedAction) {
-      suggestedAction = { label: 'Assign owner', confidence: 0.70 };
+      suggestedAction = { label: 'Assign owner', confidence: 0.7 };
     }
   }
 

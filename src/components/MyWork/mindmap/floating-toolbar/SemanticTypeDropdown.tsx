@@ -18,12 +18,36 @@ interface SemanticTypeDropdownProps {
 
 export const SEMANTIC_TYPE_OPTIONS = [
   { id: 'topic', iconEl: CircleDot, labelPl: 'Temat', labelEn: 'Topic', color: 'text-blue-500' },
-  { id: 'hypothesis', iconEl: Lightbulb, labelPl: 'Hipoteza', labelEn: 'Hypothesis', color: 'text-amber-500' },
+  {
+    id: 'hypothesis',
+    iconEl: Lightbulb,
+    labelPl: 'Hipoteza',
+    labelEn: 'Hypothesis',
+    color: 'text-amber-500',
+  },
   { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-red-500' },
-  { id: 'action', iconEl: CheckSquare, labelPl: 'Akcja', labelEn: 'Action', color: 'text-green-500' },
-  { id: 'decision', iconEl: Diamond, labelPl: 'Punkt decyzyjny', labelEn: 'Decision point', color: 'text-purple-500' },
+  {
+    id: 'action',
+    iconEl: CheckSquare,
+    labelPl: 'Akcja',
+    labelEn: 'Action',
+    color: 'text-green-500',
+  },
+  {
+    id: 'decision',
+    iconEl: Diamond,
+    labelPl: 'Punkt decyzyjny',
+    labelEn: 'Decision point',
+    color: 'text-purple-500',
+  },
   { id: 'option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option', color: 'text-cyan-500' },
-  { id: 'subtopic', iconEl: GitBranch, labelPl: 'Podtemat', labelEn: 'Subtopic', color: 'text-slate-500' },
+  {
+    id: 'subtopic',
+    iconEl: GitBranch,
+    labelPl: 'Podtemat',
+    labelEn: 'Subtopic',
+    color: 'text-slate-500',
+  },
 ];
 
 export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
@@ -43,7 +67,10 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
         return (
           <button
             key={t.id}
-            onClick={() => { onSelect(t.id); onClose(); }}
+            onClick={() => {
+              onSelect(t.id);
+              onClose();
+            }}
             className={`w-full flex items-center gap-2 px-2 py-1.5 text-[11px] transition-colors ${
               isActive
                 ? 'bg-primary-500/8 text-primary-600 dark:text-primary-400 font-semibold'

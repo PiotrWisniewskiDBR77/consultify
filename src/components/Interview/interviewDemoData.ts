@@ -248,17 +248,20 @@ const TEMPLATE_BLUEPRINTS: DemoTemplateBlueprint[] = [
     questions: [
       {
         category: 'strategy',
-        questionText: 'What outcomes does leadership expect from the digital roadmap over the next 12 months?',
+        questionText:
+          'What outcomes does leadership expect from the digital roadmap over the next 12 months?',
         expectedAnswerShape: 'Outcome list with timelines and business owners.',
       },
       {
         category: 'digital',
-        questionText: 'Which customer journeys are most critical today, and where does digital friction appear?',
+        questionText:
+          'Which customer journeys are most critical today, and where does digital friction appear?',
         expectedAnswerShape: 'Journey, pain point, impact, current workaround.',
       },
       {
         category: 'operations',
-        questionText: 'How long does it currently take to move a digital idea from request to release?',
+        questionText:
+          'How long does it currently take to move a digital idea from request to release?',
         answerType: 'number',
         expectedAnswerShape: 'Lead time in weeks plus major blockers.',
       },
@@ -298,17 +301,20 @@ const TEMPLATE_BLUEPRINTS: DemoTemplateBlueprint[] = [
     questions: [
       {
         category: 'operations',
-        questionText: 'Which process is in scope, and where does work most often wait or loop back?',
+        questionText:
+          'Which process is in scope, and where does work most often wait or loop back?',
         expectedAnswerShape: 'Process map with wait points and rework examples.',
       },
       {
         category: 'operations',
-        questionText: 'Which KPI best describes throughput, quality, and service reliability today?',
+        questionText:
+          'Which KPI best describes throughput, quality, and service reliability today?',
         expectedAnswerShape: 'Three metrics with baseline values and owner.',
       },
       {
         category: 'people',
-        questionText: 'Where do frontline teams rely on tribal knowledge instead of a documented standard?',
+        questionText:
+          'Where do frontline teams rely on tribal knowledge instead of a documented standard?',
         expectedAnswerShape: 'Examples of undocumented work and resulting risk.',
       },
       {
@@ -318,7 +324,8 @@ const TEMPLATE_BLUEPRINTS: DemoTemplateBlueprint[] = [
       },
       {
         category: 'digital',
-        questionText: 'Which tools are most involved in the workflow, and where is data re-entered manually?',
+        questionText:
+          'Which tools are most involved in the workflow, and where is data re-entered manually?',
         expectedAnswerShape: 'System list plus manual re-entry points.',
       },
       {
@@ -351,7 +358,8 @@ const TEMPLATE_BLUEPRINTS: DemoTemplateBlueprint[] = [
       },
       {
         category: 'people',
-        questionText: 'Which stakeholder groups are most likely to support or resist the initiative?',
+        questionText:
+          'Which stakeholder groups are most likely to support or resist the initiative?',
       },
       {
         category: 'operations',
@@ -610,7 +618,8 @@ const TEMPLATE_BLUEPRINTS: DemoTemplateBlueprint[] = [
       },
       {
         category: 'operations',
-        questionText: 'What operational pattern most often drives excess inventory or slow billing?',
+        questionText:
+          'What operational pattern most often drives excess inventory or slow billing?',
       },
       {
         category: 'people',
@@ -721,7 +730,8 @@ const buildTemplateQuestions = (template: DemoTemplateBlueprint) =>
     allowUrl: true,
     allowContextNote: true,
     evidencePrompt:
-      question.evidencePrompt || 'Attach evidence, comments, or a source that validates the answer.',
+      question.evidencePrompt ||
+      'Attach evidence, comments, or a source that validates the answer.',
     description: question.expectedAnswerShape,
   }));
 
@@ -904,9 +914,7 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'No common definition of what counts as order ready.',
         'Escalation path for repeat exceptions is informal.',
       ],
-      constraints: [
-        'ERP customization is frozen through the current quarter.',
-      ],
+      constraints: ['ERP customization is frozen through the current quarter.'],
       painPoints: [
         'Customer service manually consolidates data from ERP, email, and plant trackers.',
       ],
@@ -1019,15 +1027,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'Manual spreadsheet adjustments happen before every monthly review pack.',
         'Data ownership exists at domain level but issue triage is still slow.',
       ],
-      gaps: [
-        'No shared definition for referral conversion across clinics.',
-      ],
-      constraints: [
-        'Legacy scheduling platform exports data overnight only.',
-      ],
-      painPoints: [
-        'Analysts spend more time reconciling definitions than producing insight.',
-      ],
+      gaps: ['No shared definition for referral conversion across clinics.'],
+      constraints: ['Legacy scheduling platform exports data overnight only.'],
+      painPoints: ['Analysts spend more time reconciling definitions than producing insight.'],
     },
     notes: [
       {
@@ -1135,9 +1137,7 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'Customers often resend requirements because intake details are incomplete at contract handoff.',
         'Revenue recognition is delayed when data integration tasks slip beyond week two.',
       ],
-      gaps: [
-        'No consistent handoff checklist between sales and implementation.',
-      ],
+      gaps: ['No consistent handoff checklist between sales and implementation.'],
       constraints: [
         'Implementation tooling does not expose customer task completion in one shared view.',
       ],
@@ -1251,15 +1251,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'The sales operations team is the leading candidate for a first AI copilot use case.',
         'Teams want stronger prompt guidance before they trust AI-generated drafts.',
       ],
-      gaps: [
-        'No agreed quality control checklist yet.',
-      ],
-      constraints: [
-        'Policy review must approve any customer-facing usage.',
-      ],
-      painPoints: [
-        'Managers are unsure how to separate time saved from work shifted.',
-      ],
+      gaps: ['No agreed quality control checklist yet.'],
+      constraints: ['Policy review must approve any customer-facing usage.'],
+      painPoints: ['Managers are unsure how to separate time saved from work shifted.'],
     },
     notes: [
       {
@@ -1366,12 +1360,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'Commercial leaders agree pipeline hygiene is a problem but disagree on where accountability sits.',
         'Weekly reporting focuses on volume, not conversion friction or decision cycle time.',
       ],
-      gaps: [
-        'No shared view of stalled-deal reasons by segment.',
-      ],
-      constraints: [
-        'CRM governance is light and field usage varies by region.',
-      ],
+      gaps: ['No shared view of stalled-deal reasons by segment.'],
+      constraints: ['CRM governance is light and field usage varies by region.'],
       painPoints: [
         'The sponsor wants a recommendation quickly but evidence is still thin on pipeline quality.',
       ],
@@ -1420,7 +1410,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         fileSize: 186000,
         fileType: 'application/pdf',
         mimeType: 'application/pdf',
-        description: 'Working summary of stalled deals, exception causes, and current reporting gaps.',
+        description:
+          'Working summary of stalled deals, exception causes, and current reporting gaps.',
         uploadedBy: 'Current user',
         uploadedAt: isoDaysAgo(7),
       },
@@ -1534,15 +1525,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       facts: [
         'Dispatch changes and unclear materials availability are the biggest daily disruptions.',
       ],
-      gaps: [
-        'Need clearer evidence on team-level absence drivers.',
-      ],
-      constraints: [
-        'The workforce scheduling system is not integrated with local issue logs.',
-      ],
-      painPoints: [
-        'Supervisors spend a lot of time re-prioritizing work after late changes.',
-      ],
+      gaps: ['Need clearer evidence on team-level absence drivers.'],
+      constraints: ['The workforce scheduling system is not integrated with local issue logs.'],
+      painPoints: ['Supervisors spend a lot of time re-prioritizing work after late changes.'],
     },
     notes: [
       {
@@ -1594,8 +1579,7 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         tags: ['gap'],
       },
       {
-        answerText:
-          'Coaching on exception handling would help supervisors reset the day faster.',
+        answerText: 'Coaching on exception handling would help supervisors reset the day faster.',
         status: 'answered',
         confidenceScore: 3,
         tags: ['people'],
@@ -1640,15 +1624,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'Receivables reviews focus on aging buckets but not on root cause by account type.',
         'Inventory exceptions are discussed locally before finance sees the impact.',
       ],
-      gaps: [
-        'No leading indicator for overdue billing risk.',
-      ],
-      constraints: [
-        'Cross-functional ownership is weak between finance and supply chain.',
-      ],
-      painPoints: [
-        'Teams debate numbers instead of focusing on specific release actions.',
-      ],
+      gaps: ['No leading indicator for overdue billing risk.'],
+      constraints: ['Cross-functional ownership is weak between finance and supply chain.'],
+      painPoints: ['Teams debate numbers instead of focusing on specific release actions.'],
     },
     notes: [
       {
@@ -1755,12 +1733,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       facts: [
         'The automation workstream has momentum, but reporting quality lags behind delivery progress.',
       ],
-      gaps: [
-        'Benefits evidence is not consistent across sites.',
-      ],
-      constraints: [
-        'Program manager is covering two workstreams temporarily.',
-      ],
+      gaps: ['Benefits evidence is not consistent across sites.'],
+      constraints: ['Program manager is covering two workstreams temporarily.'],
       painPoints: [
         'Escalations arrive late because local issues are reworded before they hit the steering forum.',
       ],
@@ -1810,8 +1784,7 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(7),
       },
       {
-        answerText:
-          'Site rollout readiness is the workstream most likely to slip this month.',
+        answerText: 'Site rollout readiness is the workstream most likely to slip this month.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['priority'],
@@ -1866,15 +1839,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         'Store reporting and campaign coordination create significant central workload.',
         'Vendor tooling overlap is visible across commercial and design teams.',
       ],
-      gaps: [
-        'Savings validation still depends on one finance analyst.',
-      ],
-      constraints: [
-        'Store managers are resistant to reducing local reporting flexibility.',
-      ],
-      painPoints: [
-        'Teams do not share a single view of low-value coordination work.',
-      ],
+      gaps: ['Savings validation still depends on one finance analyst.'],
+      constraints: ['Store managers are resistant to reducing local reporting flexibility.'],
+      painPoints: ['Teams do not share a single view of low-value coordination work.'],
     },
     notes: [],
     evidence: [],
@@ -1960,7 +1927,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       ],
       gaps: ['No agreed metric for first-time-right provisioning.'],
       constraints: ['Legacy workflow tooling limits automated routing.'],
-      painPoints: ['Operations managers still reconcile service issues manually before the weekly review.'],
+      painPoints: [
+        'Operations managers still reconcile service issues manually before the weekly review.',
+      ],
     },
     notes: [
       {
@@ -1976,7 +1945,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
     evidence: [],
     answers: [
       {
-        answerText: 'Provisioning loops back most often on pricing exceptions and custom install requirements.',
+        answerText:
+          'Provisioning loops back most often on pricing exceptions and custom install requirements.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['risk'],
@@ -1984,7 +1954,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(18),
       },
       {
-        answerText: 'Cycle time, first-time-right, and on-time activation are the three service metrics leaders watch.',
+        answerText:
+          'Cycle time, first-time-right, and on-time activation are the three service metrics leaders watch.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['priority'],
@@ -1992,7 +1963,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(18),
       },
       {
-        answerText: 'Teams use local notes for unusual orders because the documented workflow is too generic.',
+        answerText:
+          'Teams use local notes for unusual orders because the documented workflow is too generic.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['constraint'],
@@ -2000,7 +1972,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(18),
       },
       {
-        answerText: 'The service team estimates a meaningful cost from technician reschedules and repeated customer updates.',
+        answerText:
+          'The service team estimates a meaningful cost from technician reschedules and repeated customer updates.',
         status: 'answered',
         confidenceScore: 3,
         tags: ['priority'],
@@ -2008,7 +1981,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(18),
       },
       {
-        answerText: 'The CRM and service workflow board both require manual updates in exception cases.',
+        answerText:
+          'The CRM and service workflow board both require manual updates in exception cases.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['risk'],
@@ -2016,7 +1990,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(18),
       },
       {
-        answerText: 'A 15 percent reduction in avoidable provisioning delays would be enough to trigger a focused improvement sprint.',
+        answerText:
+          'A 15 percent reduction in avoidable provisioning delays would be enough to trigger a focused improvement sprint.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['opportunity'],
@@ -2050,13 +2025,16 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       ],
       gaps: ['Need a cleaner view of cross-region decision dependencies.'],
       constraints: ['Field teams have limited time for additional reporting.'],
-      painPoints: ['Regional leaders feel that HQ decisions arrive without enough implementation context.'],
+      painPoints: [
+        'Regional leaders feel that HQ decisions arrive without enough implementation context.',
+      ],
     },
     notes: [],
     evidence: [],
     answers: [
       {
-        answerText: 'Success means faster decision cycles and clearer trade-off visibility between regional priorities.',
+        answerText:
+          'Success means faster decision cycles and clearer trade-off visibility between regional priorities.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['priority'],
@@ -2064,7 +2042,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(15),
       },
       {
-        answerText: 'Regional leaders are supportive but cautious, while field managers worry about extra coordination overhead.',
+        answerText:
+          'Regional leaders are supportive but cautious, while field managers worry about extra coordination overhead.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['risk'],
@@ -2072,7 +2051,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(15),
       },
       {
-        answerText: 'Teams need stronger evidence on where decisions are currently delayed and why.',
+        answerText:
+          'Teams need stronger evidence on where decisions are currently delayed and why.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['gap'],
@@ -2080,7 +2060,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(15),
       },
       {
-        answerText: 'A weekly steering view of decisions, dependencies, and resource conflicts would help most.',
+        answerText:
+          'A weekly steering view of decisions, dependencies, and resource conflicts would help most.',
         status: 'answered',
         confidenceScore: 5,
         tags: ['opportunity'],
@@ -2088,7 +2069,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(15),
       },
       {
-        answerText: 'The strongest value case comes from faster site-level execution and fewer priority reversals.',
+        answerText:
+          'The strongest value case comes from faster site-level execution and fewer priority reversals.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['priority'],
@@ -2096,7 +2078,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(15),
       },
       {
-        answerText: 'The sponsor prefers direct written updates with a small number of clear options.',
+        answerText:
+          'The sponsor prefers direct written updates with a small number of clear options.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['people'],
@@ -2129,14 +2112,17 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       ],
       gaps: ['No strong example yet for measuring manager-side time saved.'],
       constraints: ['Policy and knowledge-source constraints are only partially documented.'],
-      painPoints: ['The current submission is directionally right but still too vague for approval.'],
+      painPoints: [
+        'The current submission is directionally right but still too vague for approval.',
+      ],
     },
     notes: [
       {
         id: makeDemoId('note-orbit-1'),
         category: 'people',
         title: 'Needs stronger evidence',
-        content: 'The workflow is understandable, but two answers still read like hypotheses rather than evidence-backed statements.',
+        content:
+          'The workflow is understandable, but two answers still read like hypotheses rather than evidence-backed statements.',
         createdAt: isoDaysAgo(1),
         updatedAt: isoDaysAgo(1),
         createdBy: 'Rachel Ong',
@@ -2149,14 +2135,16 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         category: 'people',
         evidenceType: 'comment',
         name: 'Pilot workshop comment',
-        description: 'Managers want a visible review checklist before they allow AI-generated drafts into client-facing work.',
+        description:
+          'Managers want a visible review checklist before they allow AI-generated drafts into client-facing work.',
         uploadedBy: 'Rachel Ong',
         uploadedAt: isoDaysAgo(1),
       },
     ],
     answers: [
       {
-        answerText: 'Leadership expects faster proposal preparation and more consistent follow-up summaries.',
+        answerText:
+          'Leadership expects faster proposal preparation and more consistent follow-up summaries.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['opportunity'],
@@ -2164,7 +2152,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(3),
       },
       {
-        answerText: 'Campaign operations looks like the best first use case because requests are high-volume and repetitive.',
+        answerText:
+          'Campaign operations looks like the best first use case because requests are high-volume and repetitive.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['priority'],
@@ -2193,7 +2182,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         tags: [],
       },
       {
-        answerText: 'The policy team still needs a tighter definition of approved knowledge sources.',
+        answerText:
+          'The policy team still needs a tighter definition of approved knowledge sources.',
         status: 'answered',
         confidenceScore: 3,
         tags: ['constraint'],
@@ -2224,7 +2214,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       facts: ['The handoff issue is clear, but evidence quality is uneven across teams.'],
       gaps: ['The submission still lacks a concrete revenue-delay example from finance.'],
       constraints: ['Customer task visibility is split across two tools.'],
-      painPoints: ['The assignee answered quickly, but not all examples are specific enough for review.'],
+      painPoints: [
+        'The assignee answered quickly, but not all examples are specific enough for review.',
+      ],
     },
     notes: [],
     evidence: [
@@ -2243,7 +2235,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
     ],
     answers: [
       {
-        answerText: 'Different teams use different start points for onboarding, which hides the real elapsed time.',
+        answerText:
+          'Different teams use different start points for onboarding, which hides the real elapsed time.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['risk'],
@@ -2308,7 +2301,9 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
       revenue: '$190M',
     },
     summary: {
-      facts: ['The team knows which metrics are contested, but the current draft is still incomplete.'],
+      facts: [
+        'The team knows which metrics are contested, but the current draft is still incomplete.',
+      ],
       gaps: ['Definitions and ownership are only partially captured.'],
       constraints: ['Reporting requests are queued behind other analytics work.'],
       painPoints: ['The assignee has started the work, but the review pack is not yet ready.'],
@@ -2317,7 +2312,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
     evidence: [],
     answers: [
       {
-        answerText: 'Demand planning and route allocation would improve first if operational data quality were trusted.',
+        answerText:
+          'Demand planning and route allocation would improve first if operational data quality were trusted.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['opportunity'],
@@ -2325,7 +2321,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         answeredAt: isoDaysAgo(5),
       },
       {
-        answerText: 'Specimen routing data is the most contested source because local teams correct it outside the system.',
+        answerText:
+          'Specimen routing data is the most contested source because local teams correct it outside the system.',
         status: 'answered',
         confidenceScore: 4,
         tags: ['risk'],
@@ -2345,7 +2342,8 @@ const SESSION_BLUEPRINTS: DemoSessionDetailBlueprint[] = [
         tags: [],
       },
       {
-        answerText: 'Domain ownership exists informally, but there is no visible issue-triage cadence.',
+        answerText:
+          'Domain ownership exists informally, but there is no visible issue-triage cadence.',
         status: 'answered',
         confidenceScore: 3,
         tags: ['gap'],
@@ -2552,7 +2550,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
     evidenceMap: [
       {
         answer_id: makeDemoId('northstar-evidence-value-narrative'),
-        question_text: 'What outcomes does leadership expect from the digital roadmap over the next 12 months?',
+        question_text:
+          'What outcomes does leadership expect from the digital roadmap over the next 12 months?',
         answer_snippet:
           'Leadership expects faster exception resolution, more self-service on customer issues, and one portfolio narrative for digital investment decisions.',
         linked_themes: ['Portfolio coherence'],
@@ -2560,7 +2559,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
       },
       {
         answer_id: makeDemoId('northstar-evidence-customer-friction'),
-        question_text: 'Which customer journeys are most critical today, and where does digital friction appear?',
+        question_text:
+          'Which customer journeys are most critical today, and where does digital friction appear?',
         answer_snippet:
           'Shipment tracking works well, but claims, delayed delivery updates, and appointment changes still require phone calls or email escalation.',
         linked_themes: ['Operational workaround culture'],
@@ -2568,7 +2568,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
       },
       {
         answer_id: makeDemoId('northstar-evidence-release-lead-time'),
-        question_text: 'How long does it currently take to move a digital idea from request to release?',
+        question_text:
+          'How long does it currently take to move a digital idea from request to release?',
         answer_snippet:
           'Average lead time is about 11 weeks. Security review, data validation, and branch sign-off happen one after another rather than in parallel.',
         linked_themes: ['Execution speed'],
@@ -2675,7 +2676,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
       {
         id: makeDemoId('activity-northstar-6'),
         type: 'regenerated',
-        description: 'Insight regenerated after adding stronger evidence references and opportunity framing.',
+        description:
+          'Insight regenerated after adding stronger evidence references and opportunity framing.',
         timestamp: isoDaysAgo(21),
         userName: 'Consultify AI',
       },
@@ -2801,9 +2803,7 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
         'A simple handoff checklist could eliminate repeated customer clarification.',
         'A visible customer task board would create earlier warning signals.',
       ],
-      [
-        'If handoff rules remain informal, improvements will depend on individual diligence.',
-      ],
+      ['If handoff rules remain informal, improvements will depend on individual diligence.'],
       [
         'Standardize onboarding start and finish definitions.',
         'Introduce a contract-to-kickoff handoff checklist.',
@@ -3007,7 +3007,10 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
         answer_snippet:
           'Operational planning, staffing, and clinic referral routing would improve fastest if data were trusted end to end.',
         linked_themes: ['Trust gap in operational data'],
-        linked_issues: ['Contested operational metric definitions', 'Benefits story is not anchored'],
+        linked_issues: [
+          'Contested operational metric definitions',
+          'Benefits story is not anchored',
+        ],
       },
       {
         answer_id: makeDemoId('meridian-evidence-contested-source'),
@@ -3116,7 +3119,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
       {
         id: makeDemoId('activity-meridian-4'),
         type: 'comment',
-        description: 'Reviewer added a note about linking the risk to workforce planning decisions.',
+        description:
+          'Reviewer added a note about linking the risk to workforce planning decisions.',
         timestamp: isoDaysAgo(14),
         userName: 'Lena Meyer',
       },
@@ -3130,7 +3134,8 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
       {
         id: makeDemoId('activity-meridian-6'),
         type: 'regenerated',
-        description: 'Insight regenerated after adding structured evidence references and hidden signals.',
+        description:
+          'Insight regenerated after adding structured evidence references and hidden signals.',
         timestamp: isoDaysAgo(13),
         userName: 'Consultify AI',
       },
@@ -3155,9 +3160,7 @@ const INSIGHT_BLUEPRINTS: DemoInsightBlueprint[] = [
         'Regional sales managers will support clearer forecast visibility.',
         'Account executives are worried about additional admin burden.',
       ],
-      [
-        'Change could be framed as extra reporting rather than better deal decisions.',
-      ],
+      ['Change could be framed as extra reporting rather than better deal decisions.'],
       [
         'Show how CRM discipline reduces chasing and rework.',
         'Use regional managers as early advocates.',
@@ -3251,7 +3254,9 @@ export function createInterviewDemoDataset(context: DemoInterviewContext = {}) {
         };
       });
 
-      const answeredQuestions = questions.filter((question) => question.status === 'answered').length;
+      const answeredQuestions = questions.filter(
+        (question) => question.status === 'answered'
+      ).length;
       const summaryFacts = sessionBlueprint.summary.facts;
       const summaryGaps = sessionBlueprint.summary.gaps;
       const summaryConstraints = sessionBlueprint.summary.constraints;
@@ -3469,9 +3474,10 @@ export function createInterviewDemoDataset(context: DemoInterviewContext = {}) {
       sessionId: assignment.sessionId,
       dueAt: assignment.dueAt,
       startedAt: session?.startedAt,
-      submittedAt: assignment.status === 'submitted' || assignment.status === 'approved'
-        ? session?.completedAt || session?.lastActivityAt
-        : undefined,
+      submittedAt:
+        assignment.status === 'submitted' || assignment.status === 'approved'
+          ? session?.completedAt || session?.lastActivityAt
+          : undefined,
       sentBackAt: assignment.status === 'sent_back' ? assignment.updatedAt : undefined,
       sentBackReason: assignment.sentBackReason,
       priority: assignment.priority,
@@ -3504,7 +3510,8 @@ export function createInterviewDemoDataset(context: DemoInterviewContext = {}) {
   const myAssignments = myAssignmentsBlueprints.map(makeAssignment);
   const managedAssignments = managedAssignmentsBlueprints.map(makeAssignment);
   const overdueAssignments = managedAssignments.filter(
-    (assignment) => new Date(assignment.dueAt || 0).getTime() < Date.now() && assignment.status !== 'approved'
+    (assignment) =>
+      new Date(assignment.dueAt || 0).getTime() < Date.now() && assignment.status !== 'approved'
   );
 
   const insightDetailsById = Object.fromEntries(

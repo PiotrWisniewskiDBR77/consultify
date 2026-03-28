@@ -1,6 +1,6 @@
 import express from 'express';
 import supertest from 'supertest';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8Enabled: vi.fn(),
@@ -63,9 +63,9 @@ vi.mock('../../../utils/v8MetricsStore.js', () => ({
   }),
 }));
 
-import { isV8Enabled } from '../../../services/v8/featureFlagService.js';
 import { v8FeatureGate } from '../../../middleware/v8FeatureGate.middleware.js';
 import v8Router from '../../../routes/v8/index.js';
+import { isV8Enabled } from '../../../services/v8/featureFlagService.js';
 
 function createTestApp(globalEnabled: boolean) {
   const app = express();

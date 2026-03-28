@@ -31,9 +31,9 @@ import type { Edge, Node } from 'reactflow';
 
 import { Api } from '@/services/api';
 
-import type { CanvasToolType } from '../ideaSelectionTypes';
 import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
 import { mergeWorkspaceExtensions } from '../canvas/workspaceGraphRuntime';
+import type { CanvasToolType } from '../ideaSelectionTypes';
 import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
@@ -278,14 +278,18 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     // MM-02: On version conflict, reload the latest graph from the server.
     // The workspace-level onConflict handler shows the toast; here we trigger
     // the actual data refresh so ReactFlow state gets the server version.
-    if (
-      runtimeSyncState === 'conflict' &&
-      prevSyncStateRef.current !== 'conflict'
-    ) {
+    if (runtimeSyncState === 'conflict' && prevSyncStateRef.current !== 'conflict') {
       externalRuntime?.refresh?.();
     }
     prevSyncStateRef.current = runtimeSyncState;
-  }, [runtimeLastSavedAt, runtimeLoading, runtimeSaving, runtimeSyncState, runtimeVersion, externalRuntime]);
+  }, [
+    runtimeLastSavedAt,
+    runtimeLoading,
+    runtimeSaving,
+    runtimeSyncState,
+    runtimeVersion,
+    externalRuntime,
+  ]);
 
   // Keep a stable ref to runtime data so `hydrate` doesn't get a new identity
   // on every save cycle (which would cascade into effect re-runs).
@@ -295,7 +299,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion]);
 
   const hydrate = useCallback(async () => {
-    const { runtimeNodes: rtNodes, runtimeEdges: rtEdges, runtimeExtensions: rtExt, runtimeVersion: rtVer } = runtimeDataRef.current;
+    const {
+      runtimeNodes: rtNodes,
+      runtimeEdges: rtEdges,
+      runtimeExtensions: rtExt,
+      runtimeVersion: rtVer,
+    } = runtimeDataRef.current;
     if (externalRuntime) {
       localVersionRef.current = Math.max(1, Number(rtVer || 1));
       const runtimeNodesSafe = Array.isArray(rtNodes) ? rtNodes : [];
@@ -309,8 +318,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         : null;
       const nextNodes = defaultGraph ? defaultGraph.nodes : runtimeNodesSafe;
       const nextEdges = defaultGraph ? defaultGraph.edges : runtimeEdgesSafe;
-      const safeRuntimeExtensions =
-        rtExt && typeof rtExt === 'object' ? rtExt : {};
+      const safeRuntimeExtensions = rtExt && typeof rtExt === 'object' ? rtExt : {};
       const viewState = (safeRuntimeExtensions as any)?.mindmap?.viewState;
       const savedCollapsed = viewState?.collapsedNodeIds;
       if (Array.isArray(savedCollapsed)) setCollapsedNodeIds(new Set(savedCollapsed));
@@ -320,7 +328,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         try {
           const local = localStorage.getItem(`mm-viewport-${ideaId}`);
           if (local) savedViewport = JSON.parse(local);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       const patchedNodes = nextNodes.map((n: any) => {
         if (String(n?.id) !== 'root') return n;
@@ -411,7 +421,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         try {
           const local = localStorage.getItem(`mm-viewport-${ideaId}`);
           if (local) savedViewport = JSON.parse(local);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       const depthPatchedNodes = normalizeMindMapNodes(
@@ -611,11 +623,19 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         };
         const ext = mergeWorkspaceExtensions(
           (latestExtensions || {}) as Record<string, unknown>,
-          mindmapViewStatePatch,
+          mindmapViewStatePatch
         );
         const cleanNodes = nextNodes.map((n: any) => {
           const { selected: _sel, dragging: _drag, ...rest } = n;
-          const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+          const {
+            _interactionMode,
+            _canAddSibling,
+            _startEditing,
+            _collapsed,
+            _dropTarget,
+            count,
+            ...cleanData
+          } = rest.data || {};
           return { ...rest, data: cleanData };
         });
         const payloadKey = stableSerialize({
@@ -627,7 +647,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           (latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
             ? latestRuntimeExtensions
             : {}) as Record<string, unknown>,
-          mindmapViewStatePatch,
+          mindmapViewStatePatch
         );
         if (
           stableSerialize(cleanNodes) === stableSerialize(latestRuntimeNodes || []) &&
@@ -667,11 +687,19 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
                   viewport: currentViewport,
                 },
               },
-            },
+            }
           );
           const cleanNodes = nextNodes.map((n: any) => {
             const { selected: _sel, dragging: _drag, ...rest } = n;
-            const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+            const {
+              _interactionMode,
+              _canAddSibling,
+              _startEditing,
+              _collapsed,
+              _dropTarget,
+              count,
+              ...cleanData
+            } = rest.data || {};
             return { ...rest, data: cleanData };
           });
           const payloadKey = stableSerialize({
@@ -692,7 +720,10 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             extensions: ext,
             reason: 'draft',
           });
-          localVersionRef.current = Math.max(1, Number(response?.version || localVersionRef.current || 1));
+          localVersionRef.current = Math.max(
+            1,
+            Number(response?.version || localVersionRef.current || 1)
+          );
           setLastSavedAt(Date.now());
         } catch (err: any) {
           if (err?.status === 409) {
@@ -750,24 +781,36 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       if (latestExternalRuntime && latestRuntimeCaptureGraph) {
         const ext = mergeWorkspaceExtensions(
           (latestExtensions || {}) as Record<string, unknown>,
-          mindmapViewStatePatch,
+          mindmapViewStatePatch
         );
         const runtimeExt = mergeWorkspaceExtensions(
           (latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
             ? latestRuntimeExtensions
             : {}) as Record<string, unknown>,
-          mindmapViewStatePatch,
+          mindmapViewStatePatch
         );
         if (stableSerialize(ext) === stableSerialize(runtimeExt)) return;
         const { runtimeNodes: rtNodes, runtimeEdges: rtEdges } = runtimeDataRef.current;
         const cleanNodes = (Array.isArray(rtNodes) ? rtNodes : []).map((n: any) => {
           const { selected: _sel, dragging: _drag, ...rest } = n;
-          const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+          const {
+            _interactionMode,
+            _canAddSibling,
+            _startEditing,
+            _collapsed,
+            _dropTarget,
+            count,
+            ...cleanData
+          } = rest.data || {};
           return { ...rest, data: cleanData };
         });
         latestRuntimeCaptureGraph(
-          { nodes: cleanNodes as Node[], edges: (Array.isArray(rtEdges) ? rtEdges : []) as Edge[], extensions: ext },
-          { reason: 'draft' },
+          {
+            nodes: cleanNodes as Node[],
+            edges: (Array.isArray(rtEdges) ? rtEdges : []) as Edge[],
+            extensions: ext,
+          },
+          { reason: 'draft' }
         );
       }
     }, 1500);

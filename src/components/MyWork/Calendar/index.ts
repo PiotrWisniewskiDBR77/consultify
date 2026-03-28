@@ -1,7 +1,5 @@
-export { CalendarView } from './CalendarView';
 export { CalendarGrid } from './CalendarGrid';
 export { CalendarSidebar } from './CalendarSidebar';
-export { useCalendarData } from './useCalendarData';
 export type {
   CalendarEvent,
   CalendarEventSource,
@@ -9,3 +7,5 @@ export type {
   CalendarViewMode,
 } from './calendarTypes';
 export { SOURCE_COLORS, SOURCE_LABELS } from './calendarTypes';
+export { CalendarView } from './CalendarView';
+export { useCalendarData } from './useCalendarData';

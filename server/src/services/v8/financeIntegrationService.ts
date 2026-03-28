@@ -10,33 +10,33 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  FinanceDocumentIngestion,
-  InitiativeEconomicsLinkage,
-  PromotionGate,
-  UnreconciledDeltaEscalation,
   CloudLinkedSourceRefresh,
-  IngestionReadinessState,
-  RecordIngestionParams,
-  TransitionIngestionStateParams,
   CreateEconomicsLinkageParams,
   EvaluatePromotionGateParams,
-  RecordDeltaEscalationParams,
-  RecordSourceRefreshParams,
-  LinkageType,
+  FinanceDocumentIngestion,
   FinanceIngestionPipelineSummary,
-  LinkageHealthSummary,
   FinanceRuntimeDashboard,
+  IngestionReadinessState,
+  InitiativeEconomicsLinkage,
+  LinkageHealthSummary,
+  LinkageType,
+  PromotionGate,
+  RecordDeltaEscalationParams,
+  RecordIngestionParams,
+  RecordSourceRefreshParams,
+  TransitionIngestionStateParams,
+  UnreconciledDeltaEscalation,
 } from '../../types/financeIntegrationPromotion.js';
 import {
-  INGESTION_STATE_TRANSITIONS,
-  RecordIngestionParamsSchema,
-  TransitionIngestionStateParamsSchema,
-  CreateEconomicsLinkageParamsSchema,
-  EvaluatePromotionGateParamsSchema,
-  RecordDeltaEscalationParamsSchema,
-  RecordSourceRefreshParamsSchema,
   computeOverallGateResult,
+  CreateEconomicsLinkageParamsSchema,
   evaluateEscalationThreshold,
+  EvaluatePromotionGateParamsSchema,
+  INGESTION_STATE_TRANSITIONS,
+  RecordDeltaEscalationParamsSchema,
+  RecordIngestionParamsSchema,
+  RecordSourceRefreshParamsSchema,
+  TransitionIngestionStateParamsSchema,
 } from '../../types/financeIntegrationPromotion.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -191,14 +191,14 @@ function rowToSourceRefresh(row: SourceRefreshRow): CloudLinkedSourceRefresh {
 
 export function isValidIngestionTransition(
   current: IngestionReadinessState,
-  target: IngestionReadinessState,
+  target: IngestionReadinessState
 ): boolean {
   const allowed = INGESTION_STATE_TRANSITIONS[current];
   return (allowed as readonly string[]).includes(target);
 }
 
 export async function recordIngestion(
-  params: RecordIngestionParams,
+  params: RecordIngestionParams
 ): Promise<FinanceDocumentIngestion> {
   const validated = RecordIngestionParamsSchema.parse(params);
 
@@ -220,7 +220,7 @@ export async function recordIngestion(
       validated.firstModelRef ?? null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Recorded ingestion ${ingestionId} for doc ${validated.documentRef}`);
@@ -239,13 +239,13 @@ export async function recordIngestion(
 
 export async function getIngestion(
   ingestionId: string,
-  orgId: string,
+  orgId: string
 ): Promise<FinanceDocumentIngestion | null> {
   const row = await dbGet<IngestionRow>(
     `SELECT * FROM v8_finance_document_ingestions
      WHERE ingestion_id = ? AND organization_id = ?`,
     [ingestionId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -253,7 +253,7 @@ export async function getIngestion(
 }
 
 export async function transitionIngestionState(
-  params: TransitionIngestionStateParams,
+  params: TransitionIngestionStateParams
 ): Promise<FinanceDocumentIngestion> {
   const validated = TransitionIngestionStateParamsSchema.parse(params);
 
@@ -261,7 +261,7 @@ export async function transitionIngestionState(
     `SELECT * FROM v8_finance_document_ingestions
      WHERE ingestion_id = ? AND organization_id = ?`,
     [validated.ingestionId, validated.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -271,9 +271,7 @@ export async function transitionIngestionState(
   const currentState = row.readiness_state as IngestionReadinessState;
 
   if (!isValidIngestionTransition(currentState, validated.newState)) {
-    throw new Error(
-      `Invalid ingestion state transition: ${currentState} → ${validated.newState}`,
-    );
+    throw new Error(`Invalid ingestion state transition: ${currentState} → ${validated.newState}`);
   }
 
   const now = new Date().toISOString();
@@ -282,11 +280,11 @@ export async function transitionIngestionState(
     `UPDATE v8_finance_document_ingestions
      SET readiness_state = ?, updated_at = ?
      WHERE ingestion_id = ?`,
-    [validated.newState, now, validated.ingestionId],
+    [validated.newState, now, validated.ingestionId]
   );
 
   logger.info(
-    `${LOG_PREFIX} Ingestion ${validated.ingestionId}: ${currentState} → ${validated.newState}`,
+    `${LOG_PREFIX} Ingestion ${validated.ingestionId}: ${currentState} → ${validated.newState}`
   );
 
   return {
@@ -301,7 +299,7 @@ export async function transitionIngestionState(
 // ==========================================
 
 export async function createEconomicsLinkage(
-  params: CreateEconomicsLinkageParams,
+  params: CreateEconomicsLinkageParams
 ): Promise<InitiativeEconomicsLinkage> {
   const validated = CreateEconomicsLinkageParamsSchema.parse(params);
 
@@ -323,11 +321,11 @@ export async function createEconomicsLinkage(
       status,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Created economics linkage ${linkageId}: ${validated.linkageType} for initiative ${validated.initiativeId}`,
+    `${LOG_PREFIX} Created economics linkage ${linkageId}: ${validated.linkageType} for initiative ${validated.initiativeId}`
   );
 
   return {
@@ -344,14 +342,14 @@ export async function createEconomicsLinkage(
 
 export async function getLinkagesByInitiative(
   initiativeId: string,
-  orgId: string,
+  orgId: string
 ): Promise<InitiativeEconomicsLinkage[]> {
   const rows = await dbAll<LinkageRow>(
     `SELECT * FROM v8_initiative_economics_linkages
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [initiativeId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToLinkage);
@@ -362,7 +360,7 @@ export async function getLinkagesByInitiative(
 // ==========================================
 
 export async function evaluatePromotionGate(
-  params: EvaluatePromotionGateParams,
+  params: EvaluatePromotionGateParams
 ): Promise<PromotionGate> {
   const validated = EvaluatePromotionGateParamsSchema.parse(params);
 
@@ -370,7 +368,7 @@ export async function evaluatePromotionGate(
     validated.permissionGateResult,
     validated.qualityGateResult,
     validated.provenancePreserved,
-    validated.staleStateChecked,
+    validated.staleStateChecked
   );
 
   const gateId = uuidv4();
@@ -394,11 +392,11 @@ export async function evaluatePromotionGate(
       validated.staleStateChecked ? 1 : 0,
       overallResult,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Promotion gate ${gateId}: ${overallResult} (perm=${validated.permissionGateResult}, qual=${validated.qualityGateResult})`,
+    `${LOG_PREFIX} Promotion gate ${gateId}: ${overallResult} (perm=${validated.permissionGateResult}, qual=${validated.qualityGateResult})`
   );
 
   return {
@@ -420,14 +418,14 @@ export async function evaluatePromotionGate(
 // ==========================================
 
 export async function recordDeltaEscalation(
-  params: RecordDeltaEscalationParams,
+  params: RecordDeltaEscalationParams
 ): Promise<UnreconciledDeltaEscalation> {
   const validated = RecordDeltaEscalationParamsSchema.parse(params);
 
   const { thresholdBreached, escalatedToCFO } = evaluateEscalationThreshold(
     validated.deltaMagnitude,
     validated.deltaDuration,
-    validated.materialityLevel,
+    validated.materialityLevel
   );
 
   const escalationId = uuidv4();
@@ -450,11 +448,11 @@ export async function recordDeltaEscalation(
       escalatedToCFO ? 1 : 0,
       thresholdBreached ? 1 : 0,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Delta escalation ${escalationId}: magnitude=${validated.deltaMagnitude}, duration=${validated.deltaDuration}, cfo=${escalatedToCFO}`,
+    `${LOG_PREFIX} Delta escalation ${escalationId}: magnitude=${validated.deltaMagnitude}, duration=${validated.deltaDuration}, cfo=${escalatedToCFO}`
   );
 
   return {
@@ -473,14 +471,14 @@ export async function recordDeltaEscalation(
 
 export async function getEscalationsByInitiative(
   initiativeId: string,
-  orgId: string,
+  orgId: string
 ): Promise<UnreconciledDeltaEscalation[]> {
   const rows = await dbAll<EscalationRow>(
     `SELECT * FROM v8_unreconciled_delta_escalations
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [initiativeId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToEscalation);
@@ -491,7 +489,7 @@ export async function getEscalationsByInitiative(
 // ==========================================
 
 export async function recordSourceRefresh(
-  params: RecordSourceRefreshParams,
+  params: RecordSourceRefreshParams
 ): Promise<CloudLinkedSourceRefresh> {
   const validated = RecordSourceRefreshParamsSchema.parse(params);
 
@@ -512,11 +510,11 @@ export async function recordSourceRefresh(
       1,
       validated.reReviewPath ?? null,
       now,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Source refresh ${refreshId}: artifact=${validated.promotedArtifactRef}, stale warning shown`,
+    `${LOG_PREFIX} Source refresh ${refreshId}: artifact=${validated.promotedArtifactRef}, stale warning shown`
   );
 
   return {
@@ -533,14 +531,14 @@ export async function recordSourceRefresh(
 
 export async function getSourceRefreshes(
   promotedArtifactRef: string,
-  orgId: string,
+  orgId: string
 ): Promise<CloudLinkedSourceRefresh[]> {
   const rows = await dbAll<SourceRefreshRow>(
     `SELECT * FROM v8_cloud_linked_source_refreshes
      WHERE promoted_artifact_ref = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [promotedArtifactRef, orgId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSourceRefresh);
@@ -579,7 +577,7 @@ interface PromotionGateAggRow {
 
 /** Summary of document ingestions: counts by readiness state and confidence band, plus average confidence. */
 export async function getIngestionPipeline(
-  organizationId: string,
+  organizationId: string
 ): Promise<FinanceIngestionPipelineSummary> {
   const stateRows = await dbAll<IngestionStateCountRow>(
     `SELECT readiness_state AS state, COUNT(*) AS cnt
@@ -587,7 +585,7 @@ export async function getIngestionPipeline(
      WHERE organization_id = ?
      GROUP BY readiness_state`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const agg = await dbGet<IngestionConfidenceAggRow>(
@@ -604,7 +602,7 @@ export async function getIngestionPipeline(
      FROM v8_finance_document_ingestions
      WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const byState: Partial<Record<IngestionReadinessState, number>> = {};
@@ -631,7 +629,7 @@ export async function getIngestionPipeline(
 /** Ingestions in terminal failure states (`failed`, `rejected`). */
 export async function getFailedIngestions(
   organizationId: string,
-  limit: number = DEFAULT_FAILED_INGESTION_LIMIT,
+  limit: number = DEFAULT_FAILED_INGESTION_LIMIT
 ): Promise<FinanceDocumentIngestion[]> {
   const cap = Math.max(1, Math.min(limit, 500));
   const rows = await dbAll<IngestionRow>(
@@ -641,7 +639,7 @@ export async function getFailedIngestions(
      ORDER BY updated_at DESC
      LIMIT ?`,
     [organizationId, cap],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToIngestion);
@@ -652,13 +650,13 @@ export async function getFailedIngestions(
  */
 export async function retryIngestion(
   ingestionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<FinanceDocumentIngestion> {
   const row = await dbGet<IngestionRow>(
     `SELECT * FROM v8_finance_document_ingestions
      WHERE ingestion_id = ? AND organization_id = ?`,
     [ingestionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -675,7 +673,7 @@ export async function retryIngestion(
     `UPDATE v8_finance_document_ingestions
      SET readiness_state = 'uploaded', updated_at = ?
      WHERE ingestion_id = ? AND organization_id = ?`,
-    [now, ingestionId, organizationId],
+    [now, ingestionId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Retry ingestion ${ingestionId}: ${state} → uploaded`);
@@ -695,7 +693,7 @@ export async function getLinkageHealth(organizationId: string): Promise<LinkageH
      WHERE organization_id = ?
      GROUP BY linkage_type`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const byLinkageType: Partial<Record<LinkageType, number>> = {};
@@ -716,7 +714,7 @@ export async function getLinkageHealth(organizationId: string): Promise<LinkageH
            AND l.initiative_id = i.id
        )`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {
@@ -728,7 +726,7 @@ export async function getLinkageHealth(organizationId: string): Promise<LinkageH
 
 /** Delta escalations that are not yet resolved. */
 export async function getUnresolvedEscalations(
-  organizationId: string,
+  organizationId: string
 ): Promise<UnreconciledDeltaEscalation[]> {
   const rows = await dbAll<EscalationRow>(
     `SELECT * FROM v8_unreconciled_delta_escalations
@@ -736,7 +734,7 @@ export async function getUnresolvedEscalations(
        AND resolved_at IS NULL
      ORDER BY created_at DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToEscalation);
@@ -747,7 +745,7 @@ export async function resolveEscalation(
   escalationId: string,
   organizationId: string,
   resolution: string,
-  resolvedBy: string,
+  resolvedBy: string
 ): Promise<UnreconciledDeltaEscalation | null> {
   if (!resolution.trim()) {
     throw new Error('resolution is required');
@@ -761,7 +759,7 @@ export async function resolveEscalation(
     `UPDATE v8_unreconciled_delta_escalations
      SET resolved_at = ?, resolved_by = ?, resolution = ?
      WHERE escalation_id = ? AND organization_id = ? AND resolved_at IS NULL`,
-    [now, resolvedBy, resolution, escalationId, organizationId],
+    [now, resolvedBy, resolution, escalationId, organizationId]
   );
 
   if (!result.success || (result.changes ?? 0) < 1) {
@@ -769,7 +767,7 @@ export async function resolveEscalation(
       `SELECT * FROM v8_unreconciled_delta_escalations
        WHERE escalation_id = ? AND organization_id = ?`,
       [escalationId, organizationId],
-      { fallback: true },
+      { fallback: true }
     );
     if (!existing) {
       return null;
@@ -781,7 +779,7 @@ export async function resolveEscalation(
     `SELECT * FROM v8_unreconciled_delta_escalations
      WHERE escalation_id = ? AND organization_id = ?`,
     [escalationId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) return null;
@@ -793,7 +791,7 @@ export async function resolveEscalation(
 /** Source refresh records whose `created_at` is older than the age threshold (stale tracking). */
 export async function getStaleSourceRefreshes(
   organizationId: string,
-  maxAgeHours: number = DEFAULT_STALE_REFRESH_MAX_AGE_HOURS,
+  maxAgeHours: number = DEFAULT_STALE_REFRESH_MAX_AGE_HOURS
 ): Promise<CloudLinkedSourceRefresh[]> {
   const hours = Math.max(1, Math.min(maxAgeHours, 24 * 365));
   const cutoff = new Date(Date.now() - hours * 3600 * 1000).toISOString();
@@ -804,7 +802,7 @@ export async function getStaleSourceRefreshes(
        AND created_at < ?
      ORDER BY created_at ASC`,
     [organizationId, cutoff],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSourceRefresh);
@@ -818,7 +816,7 @@ async function getPromotionGatePassRate(organizationId: string): Promise<number 
      FROM v8_promotion_gates
      WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const total = row?.total ?? 0;
@@ -829,7 +827,7 @@ async function getPromotionGatePassRate(organizationId: string): Promise<number 
 
 /** Aggregated finance runtime view for dashboards. */
 export async function getFinanceDashboard(
-  organizationId: string,
+  organizationId: string
 ): Promise<FinanceRuntimeDashboard> {
   const [
     ingestionPipeline,

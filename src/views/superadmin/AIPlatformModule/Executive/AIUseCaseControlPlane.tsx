@@ -231,7 +231,8 @@ export const AIUseCaseControlPlane: React.FC = () => {
                 {operatorOps.readinessScore || 0}%
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t('aiPlatform.controlPlane.operator.autonomy', 'Autonomy')} {operatorOps.autonomyScore || 0}%
+                {t('aiPlatform.controlPlane.operator.autonomy', 'Autonomy')}{' '}
+                {operatorOps.autonomyScore || 0}%
               </div>
             </div>
           </div>
@@ -369,7 +370,8 @@ export const AIUseCaseControlPlane: React.FC = () => {
                   {t('aiPlatform.controlPlane.owner', 'Owner')}: {useCase.businessOwner}
                 </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {t('aiPlatform.controlPlane.entrypoint', 'Entrypoint')}: {useCase.entrypoint || 'n/a'}
+                  {t('aiPlatform.controlPlane.entrypoint', 'Entrypoint')}:{' '}
+                  {useCase.entrypoint || 'n/a'}
                 </p>
               </div>
               <div className="text-right text-xs text-slate-500 dark:text-slate-400">
@@ -377,7 +379,8 @@ export const AIUseCaseControlPlane: React.FC = () => {
                   {t('aiPlatform.controlPlane.coverage', 'Coverage')}: {useCase.coveragePct}%
                 </div>
                 <div>
-                  {t('aiPlatform.controlPlane.releaseCoverage', 'Release')}: {useCase.releaseCoveragePct || 0}%
+                  {t('aiPlatform.controlPlane.releaseCoverage', 'Release')}:{' '}
+                  {useCase.releaseCoveragePct || 0}%
                 </div>
                 <div>
                   {t('aiPlatform.controlPlane.completeness', 'Completeness')}:{' '}
@@ -424,7 +427,8 @@ export const AIUseCaseControlPlane: React.FC = () => {
               <span
                 className={`rounded-full px-2 py-1 text-[10px] font-medium ${STATUS_STYLES[useCase.completenessStatus || 'unknown'] || STATUS_STYLES.unknown}`}
               >
-                {t('aiPlatform.controlPlane.readiness', 'Readiness')}: {useCase.completenessStatus || 'unknown'}
+                {t('aiPlatform.controlPlane.readiness', 'Readiness')}:{' '}
+                {useCase.completenessStatus || 'unknown'}
               </span>
               <span
                 className={`rounded-full px-2 py-1 text-[10px] font-medium ${STATUS_STYLES[useCase.uxStatus || 'unknown'] || STATUS_STYLES.unknown}`}
@@ -484,7 +488,9 @@ export const AIUseCaseControlPlane: React.FC = () => {
                     </span>
                     <span>
                       {t('aiPlatform.controlPlane.trace', 'Trace')}:{' '}
-                      {purpose.promptKey ? `${purpose.promptKey}@${purpose.promptVersion || 'latest'}` : 'missing'}
+                      {purpose.promptKey
+                        ? `${purpose.promptKey}@${purpose.promptVersion || 'latest'}`
+                        : 'missing'}
                     </span>
                   </div>
 
@@ -531,7 +537,8 @@ export const AIUseCaseControlPlane: React.FC = () => {
                   ) : null}
                   {purpose.blockers && purpose.blockers.length > 0 ? (
                     <div className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">
-                      {t('aiPlatform.controlPlane.blockers', 'Blockers')}: {purpose.blockers.join(', ')}
+                      {t('aiPlatform.controlPlane.blockers', 'Blockers')}:{' '}
+                      {purpose.blockers.join(', ')}
                     </div>
                   ) : null}
                 </div>

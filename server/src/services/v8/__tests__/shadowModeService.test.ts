@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ==========================================
 // HOISTED MOCKS
@@ -32,10 +32,10 @@ vi.mock('uuid', () => ({
 }));
 
 import {
-  recordShadowComparison,
-  getShadowStats,
   getRecentComparisons,
   getShadowPromotionReadiness,
+  getShadowStats,
+  recordShadowComparison,
 } from '../shadowModeService.js';
 
 // ==========================================
@@ -86,7 +86,7 @@ describe('shadowModeService', () => {
 
       expect(mockDbRun).toHaveBeenCalledTimes(1);
       const [sql, params] = mockDbRun.mock.calls[0];
-      expect(sql).toContain('INSERT INTO v8_shadow_comparisons');
+      expect(sql).toContain('INSERT INTO v8.v8_shadow_comparisons');
       expect(params[0]).toBe('test-uuid-1234');
       expect(params[1]).toBe(ORG_ID);
       expect(params[8]).toBe(1); // responses_match = true → 1
@@ -131,13 +131,13 @@ describe('shadowModeService', () => {
       mockTableExists.mockResolvedValue(false);
 
       await expect(recordShadowComparison(BASE_COMPARISON_PARAMS)).rejects.toThrow(
-        /v8_shadow_comparisons table does not exist/,
+        /v8_shadow_comparisons table does not exist/
       );
     });
 
     it('rejects empty organizationId', async () => {
       await expect(
-        recordShadowComparison({ ...BASE_COMPARISON_PARAMS, organizationId: '' }),
+        recordShadowComparison({ ...BASE_COMPARISON_PARAMS, organizationId: '' })
       ).rejects.toThrow();
     });
 
@@ -150,6 +150,32 @@ describe('shadowModeService', () => {
         v8StatusCode: 200,
         legacyResponseTimeMs: 10,
         v8ResponseTimeMs: 12,
+      });
+
+      expect(result.responsesMatch).toBe(true);
+      expect(result.diffSummary).toBeNull();
+    });
+
+    it('supports status-only comparison for coarse-grained shadow routes', async () => {
+      const result = await recordShadowComparison({
+        ...BASE_COMPARISON_PARAMS,
+        endpoint: '/context',
+        comparisonMode: 'status-only',
+        legacyResponseBody: { context: 'legacy-shape' },
+        v8ResponseBody: { data: { healthy: true }, meta: { version: 'v8' } },
+      });
+
+      expect(result.responsesMatch).toBe(true);
+      expect(result.diffSummary).toBeNull();
+    });
+
+    it('supports normalized health-status comparison across legacy and v8 envelopes', async () => {
+      const result = await recordShadowComparison({
+        ...BASE_COMPARISON_PARAMS,
+        endpoint: '/health',
+        comparisonMode: 'health-status',
+        legacyResponseBody: { status: 'healthy' },
+        v8ResponseBody: { data: { overall: 'ready' }, meta: { version: 'v8' } },
       });
 
       expect(result.responsesMatch).toBe(true);
@@ -198,10 +224,26 @@ describe('shadowModeService', () => {
       expect(stats.recentMismatches).toBe(2);
     });
 
-    it('handles null DB results gracefully', async () => {
+    it('excludes legacy rate-limited rows from readiness aggregates', async () => {
       mockDbGet
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
+        .mockResolvedValueOnce({
+          total: '36',
+          matches: '36',
+          avg_legacy: '12',
+          avg_v8: '42',
+          v8_errors: '0',
+        })
+        .mockResolvedValueOnce({ count: '0' });
+
+      const stats = await getShadowStats(ORG_ID);
+
+      expect(stats.totalComparisons).toBe(36);
+      expect(stats.matchRate).toBe(1);
+      expect(stats.recentMismatches).toBe(0);
+    });
+
+    it('handles null DB results gracefully', async () => {
+      mockDbGet.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
       const stats = await getShadowStats(ORG_ID);
 
@@ -269,6 +311,29 @@ describe('shadowModeService', () => {
       expect(result[1].comparisonId).toBe('cmp-2');
       expect(result[1].responsesMatch).toBe(false);
       expect(result[1].diffSummary).toBe('status: 200 vs 500');
+    });
+
+    it('marks legacy 429 rows as excluded from readiness in readback', async () => {
+      mockDbAll.mockResolvedValue([
+        {
+          comparison_id: 'cmp-rate-limit',
+          organization_id: ORG_ID,
+          endpoint: '/health',
+          method: 'GET',
+          legacy_status_code: 429,
+          v8_status_code: 200,
+          legacy_response_time_ms: 1,
+          v8_response_time_ms: 25,
+          responses_match: 0,
+          diff_summary: 'status: 429 vs 200; health state: unknown vs ok',
+          created_at: '2026-03-24T09:00:00Z',
+        },
+      ]);
+
+      const result = await getRecentComparisons(ORG_ID, 10);
+
+      expect(result[0].responsesMatch).toBe(false);
+      expect(result[0].diffSummary).toContain('[excluded-from-readiness]');
     });
 
     it('passes limit to query', async () => {

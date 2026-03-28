@@ -10,12 +10,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
-  type ActionRow,
-  type MetaPill,
 } from '@/components/shared/PreviewPane';
 
 import { TEMPLATE_TYPE_META, type TemplateItem } from '../types';
@@ -41,9 +41,14 @@ function useTemplatePreviewData(template: TemplateItem) {
       className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300',
     },
     {
-      label: template.scope === 'application'
-        ? isPolish ? 'System' : 'Application'
-        : isPolish ? 'Organizacja' : 'Organization',
+      label:
+        template.scope === 'application'
+          ? isPolish
+            ? 'System'
+            : 'Application'
+          : isPolish
+            ? 'Organizacja'
+            : 'Organization',
       className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400',
     },
   ];
@@ -51,8 +56,12 @@ function useTemplatePreviewData(template: TemplateItem) {
   const detailParts = [
     `${isPolish ? 'Autor' : 'Author'}: ${template.createdBy}`,
     `${isPolish ? 'Ostatnia zmiana' : 'Last updated'}: ${new Date(template.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-    ...(template.sectionCount != null ? [`${isPolish ? 'Sekcje' : 'Sections'}: ${template.sectionCount}`] : []),
-    ...(template.slideCount != null ? [`${isPolish ? 'Slajdy' : 'Slides'}: ${template.slideCount}`] : []),
+    ...(template.sectionCount != null
+      ? [`${isPolish ? 'Sekcje' : 'Sections'}: ${template.sectionCount}`]
+      : []),
+    ...(template.slideCount != null
+      ? [`${isPolish ? 'Slajdy' : 'Slides'}: ${template.slideCount}`]
+      : []),
   ];
 
   return { isPolish, t, navigate, typeMeta, pills, detailParts };
@@ -81,7 +90,10 @@ export const TemplatePreviewBody: React.FC<TemplatePreviewProps> = ({ template }
         </div>
       </div>
 
-      <PreviewDetailsSection text={detailParts.join('\n')} label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'} />
+      <PreviewDetailsSection
+        text={detailParts.join('\n')}
+        label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'}
+      />
     </div>
   );
 };

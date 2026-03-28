@@ -138,58 +138,61 @@ router.get(
       []
     )) as PolicyRow[];
 
-    const settings = rows.reduce((acc: any, r) => {
-      const s = safeParseJson(r.settings_json, {}) as any;
-      if (r.id === 'password-policy') {
-        acc.passwordMinLength = s.minLength || 8;
-        acc.passwordRequireUppercase = !!s.requireUppercase;
-        acc.passwordRequireLowercase = s.requireLowercase !== false;
-        acc.passwordRequireNumbers = !!s.requireNumber;
-        acc.passwordRequireSpecial = !!s.requireSpecial;
-        acc.passwordExpiryDays = s.expiryDays || 0;
-        acc.passwordHistoryCount = s.historyCount || 0;
+    const settings = rows.reduce(
+      (acc: any, r) => {
+        const s = safeParseJson(r.settings_json, {}) as any;
+        if (r.id === 'password-policy') {
+          acc.passwordMinLength = s.minLength || 8;
+          acc.passwordRequireUppercase = !!s.requireUppercase;
+          acc.passwordRequireLowercase = s.requireLowercase !== false;
+          acc.passwordRequireNumbers = !!s.requireNumber;
+          acc.passwordRequireSpecial = !!s.requireSpecial;
+          acc.passwordExpiryDays = s.expiryDays || 0;
+          acc.passwordHistoryCount = s.historyCount || 0;
+        }
+        if (r.id === 'session-timeout') {
+          acc.sessionTimeoutMinutes = s.timeoutMinutes || 480;
+          acc.concurrentSessionsLimit = s.concurrentLimit || 5;
+          acc.requireSessionBinding = !!s.requireBinding;
+          acc.lockoutDurationMinutes = s.lockoutMinutes || 15;
+          acc.maxLoginAttempts = s.maxAttempts || 5;
+        }
+        if (r.id === 'mfa-required') {
+          acc.mfaRequired = !!s.required;
+          acc.mfaMethods = s.methods || ['totp'];
+          acc.mfaRememberDeviceDays = s.rememberDays || 30;
+        }
+        if (r.id === 'ip-allowlist') {
+          acc.ipAllowlist = s.cidr || [];
+          acc.ipBlocklist = s.blocklist || [];
+          acc.geoRestrictions = s.geoRestrictions || [];
+        }
+        return acc;
+      },
+      {
+        id: '__global__',
+        organizationId: null,
+        passwordMinLength: 8,
+        passwordRequireUppercase: true,
+        passwordRequireLowercase: true,
+        passwordRequireNumbers: true,
+        passwordRequireSpecial: false,
+        passwordExpiryDays: 0,
+        passwordHistoryCount: 0,
+        maxLoginAttempts: 5,
+        lockoutDurationMinutes: 15,
+        sessionTimeoutMinutes: 480,
+        concurrentSessionsLimit: 5,
+        requireSessionBinding: false,
+        ipAllowlist: [],
+        ipBlocklist: [],
+        geoRestrictions: [],
+        mfaRequired: false,
+        mfaMethods: ['totp'],
+        mfaRememberDeviceDays: 30,
+        compliancePreset: 'none',
       }
-      if (r.id === 'session-timeout') {
-        acc.sessionTimeoutMinutes = s.timeoutMinutes || 480;
-        acc.concurrentSessionsLimit = s.concurrentLimit || 5;
-        acc.requireSessionBinding = !!s.requireBinding;
-        acc.lockoutDurationMinutes = s.lockoutMinutes || 15;
-        acc.maxLoginAttempts = s.maxAttempts || 5;
-      }
-      if (r.id === 'mfa-required') {
-        acc.mfaRequired = !!s.required;
-        acc.mfaMethods = s.methods || ['totp'];
-        acc.mfaRememberDeviceDays = s.rememberDays || 30;
-      }
-      if (r.id === 'ip-allowlist') {
-        acc.ipAllowlist = s.cidr || [];
-        acc.ipBlocklist = s.blocklist || [];
-        acc.geoRestrictions = s.geoRestrictions || [];
-      }
-      return acc;
-    }, {
-      id: '__global__',
-      organizationId: null,
-      passwordMinLength: 8,
-      passwordRequireUppercase: true,
-      passwordRequireLowercase: true,
-      passwordRequireNumbers: true,
-      passwordRequireSpecial: false,
-      passwordExpiryDays: 0,
-      passwordHistoryCount: 0,
-      maxLoginAttempts: 5,
-      lockoutDurationMinutes: 15,
-      sessionTimeoutMinutes: 480,
-      concurrentSessionsLimit: 5,
-      requireSessionBinding: false,
-      ipAllowlist: [],
-      ipBlocklist: [],
-      geoRestrictions: [],
-      mfaRequired: false,
-      mfaMethods: ['totp'],
-      mfaRememberDeviceDays: 30,
-      compliancePreset: 'none',
-    });
+    );
 
     return res.json({ policy: settings });
   })
@@ -207,52 +210,64 @@ router.put(
     if (body.passwordMinLength !== undefined || body.compliancePreset !== undefined) {
       await dbRun(
         `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = '__global__' AND id = 'password-policy'`,
-        [JSON.stringify({
-          minLength: body.passwordMinLength || 8,
-          requireUppercase: body.passwordRequireUppercase !== false,
-          requireLowercase: body.passwordRequireLowercase !== false,
-          requireNumber: body.passwordRequireNumbers !== false,
-          requireSpecial: !!body.passwordRequireSpecial,
-          expiryDays: body.passwordExpiryDays || 0,
-          historyCount: body.passwordHistoryCount || 0,
-        }), now]
+        [
+          JSON.stringify({
+            minLength: body.passwordMinLength || 8,
+            requireUppercase: body.passwordRequireUppercase !== false,
+            requireLowercase: body.passwordRequireLowercase !== false,
+            requireNumber: body.passwordRequireNumbers !== false,
+            requireSpecial: !!body.passwordRequireSpecial,
+            expiryDays: body.passwordExpiryDays || 0,
+            historyCount: body.passwordHistoryCount || 0,
+          }),
+          now,
+        ]
       );
     }
 
     if (body.sessionTimeoutMinutes !== undefined) {
       await dbRun(
         `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = '__global__' AND id = 'session-timeout'`,
-        [JSON.stringify({
-          timeoutMinutes: body.sessionTimeoutMinutes || 480,
-          concurrentLimit: body.concurrentSessionsLimit || 5,
-          requireBinding: !!body.requireSessionBinding,
-          lockoutMinutes: body.lockoutDurationMinutes || 15,
-          maxAttempts: body.maxLoginAttempts || 5,
-          extendOnActivity: true,
-        }), now]
+        [
+          JSON.stringify({
+            timeoutMinutes: body.sessionTimeoutMinutes || 480,
+            concurrentLimit: body.concurrentSessionsLimit || 5,
+            requireBinding: !!body.requireSessionBinding,
+            lockoutMinutes: body.lockoutDurationMinutes || 15,
+            maxAttempts: body.maxLoginAttempts || 5,
+            extendOnActivity: true,
+          }),
+          now,
+        ]
       );
     }
 
     if (body.mfaRequired !== undefined) {
       await dbRun(
         `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = '__global__' AND id = 'mfa-required'`,
-        [JSON.stringify({
-          required: !!body.mfaRequired,
-          methods: body.mfaMethods || ['totp'],
-          rememberDays: body.mfaRememberDeviceDays || 30,
-        }), now]
+        [
+          JSON.stringify({
+            required: !!body.mfaRequired,
+            methods: body.mfaMethods || ['totp'],
+            rememberDays: body.mfaRememberDeviceDays || 30,
+          }),
+          now,
+        ]
       );
     }
 
     if (body.ipAllowlist !== undefined || body.ipBlocklist !== undefined) {
       await dbRun(
         `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = '__global__' AND id = 'ip-allowlist'`,
-        [JSON.stringify({
-          enabled: true,
-          cidr: body.ipAllowlist || [],
-          blocklist: body.ipBlocklist || [],
-          geoRestrictions: body.geoRestrictions || [],
-        }), now]
+        [
+          JSON.stringify({
+            enabled: true,
+            cidr: body.ipAllowlist || [],
+            blocklist: body.ipBlocklist || [],
+            geoRestrictions: body.geoRestrictions || [],
+          }),
+          now,
+        ]
       );
     }
 
@@ -296,15 +311,43 @@ router.post(
 
     await dbRun(
       `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = ? AND id = 'password-policy'`,
-      [JSON.stringify({ minLength: cfg.minLength, requireUppercase: true, requireLowercase: true, requireNumber: true, requireSpecial: preset !== 'none', expiryDays: cfg.expiryDays, historyCount: 0 }), now, orgId]
+      [
+        JSON.stringify({
+          minLength: cfg.minLength,
+          requireUppercase: true,
+          requireLowercase: true,
+          requireNumber: true,
+          requireSpecial: preset !== 'none',
+          expiryDays: cfg.expiryDays,
+          historyCount: 0,
+        }),
+        now,
+        orgId,
+      ]
     );
     await dbRun(
       `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = ? AND id = 'session-timeout'`,
-      [JSON.stringify({ timeoutMinutes: cfg.timeout, concurrentLimit: cfg.concurrent || 5, extendOnActivity: true }), now, orgId]
+      [
+        JSON.stringify({
+          timeoutMinutes: cfg.timeout,
+          concurrentLimit: cfg.concurrent || 5,
+          extendOnActivity: true,
+        }),
+        now,
+        orgId,
+      ]
     );
     await dbRun(
       `UPDATE security_policies SET settings_json = ?, last_updated = ? WHERE organization_id = ? AND id = 'mfa-required'`,
-      [JSON.stringify({ required: cfg.mfaRequired, methods: ['totp', 'webauthn'], rememberDays: 30 }), now, orgId]
+      [
+        JSON.stringify({
+          required: cfg.mfaRequired,
+          methods: ['totp', 'webauthn'],
+          rememberDays: 30,
+        }),
+        now,
+        orgId,
+      ]
     );
 
     return res.json({ success: true });

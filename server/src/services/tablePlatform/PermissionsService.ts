@@ -3,10 +3,11 @@
  * Simple base/table access checks and Express middleware.
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+
 import { getDatabase } from '../../database/Database.js';
-import logger from '../../utils/Logger.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import logger from '../../utils/Logger.js';
 
 const permissionsService = {
   /**
@@ -43,10 +44,7 @@ const permissionsService = {
   async canAccessTable(userId: string, orgId: string, tableId: string): Promise<boolean> {
     const db = getDatabase();
     try {
-      const result = await db.query(
-        'SELECT t.base_id FROM tp_tables t WHERE t.id = $1',
-        [tableId]
-      );
+      const result = await db.query('SELECT t.base_id FROM tp_tables t WHERE t.id = $1', [tableId]);
       const table = result.rows[0] as { base_id: string } | undefined;
       if (!table) return false;
       return permissionsService.canAccessBase(userId, orgId, table.base_id);
@@ -73,7 +71,8 @@ const permissionsService = {
       res.status(400).json({ error: 'baseId required' });
       return;
     }
-    permissionsService.canAccessBase(userId, orgId, baseId)
+    permissionsService
+      .canAccessBase(userId, orgId, baseId)
       .then((allowed) => {
         if (!allowed) {
           res.status(403).json({ error: 'Access denied to this base' });
@@ -101,7 +100,8 @@ const permissionsService = {
       res.status(400).json({ error: 'tableId required' });
       return;
     }
-    permissionsService.canAccessTable(userId, orgId, tableId)
+    permissionsService
+      .canAccessTable(userId, orgId, tableId)
       .then((allowed) => {
         if (!allowed) {
           res.status(403).json({ error: 'Access denied to this table' });

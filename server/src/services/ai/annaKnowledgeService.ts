@@ -89,7 +89,9 @@ function safeSlice(text: string, maxChars: number): string {
 }
 
 function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) return null;
   if (normalized.startsWith('pl')) return 'pl';
   if (normalized.startsWith('en')) return 'en';
@@ -135,7 +137,10 @@ function scoreLanguagePreference(language: string | null, preferredLanguage: 'pl
   return 2;
 }
 
-function detectRequestedProducts(query: string): { matchedProducts: string[]; primaryProducts: string[] } {
+function detectRequestedProducts(query: string): {
+  matchedProducts: string[];
+  primaryProducts: string[];
+} {
   const matchedProducts: string[] = [];
   for (const product of PRODUCT_ORDER) {
     const matchers = PRODUCT_MATCHERS[product] || [];
@@ -321,13 +326,18 @@ export async function buildAnnaKnowledgeContext(opts: {
   const limit = Math.min(Math.max(opts.limit || 6, 2), 10);
 
   const detected = detectRequestedProducts(query);
-  const explicitCrossProductRequest = detected.matchedProducts.some((product) => product !== 'consultify');
+  const explicitCrossProductRequest = detected.matchedProducts.some(
+    (product) => product !== 'consultify'
+  );
   const preferredCrossProductRequest = Boolean(
     opts.preferredProducts?.some((product) => product !== 'consultify')
   );
   const primaryProducts =
     opts.preferredProducts && opts.preferredProducts.length > 0
-      ? uniq([...opts.preferredProducts.filter((product) => product !== 'consultify'), 'consultify'])
+      ? uniq([
+          ...opts.preferredProducts.filter((product) => product !== 'consultify'),
+          'consultify',
+        ])
       : detected.primaryProducts;
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
 
@@ -409,11 +419,14 @@ export async function buildAnnaKnowledgeContext(opts: {
   }
 }
 
-export async function buildAnnaVoiceBootstrap(locale?: string): Promise<AnnaKnowledgeContextResult> {
-  const bootstrapQuery =
-    String(locale || '').toLowerCase().startsWith('pl')
-      ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector ekosystem'
-      : 'Consultify overview business value demo trial ROI security DBR77 Vector ecosystem';
+export async function buildAnnaVoiceBootstrap(
+  locale?: string
+): Promise<AnnaKnowledgeContextResult> {
+  const bootstrapQuery = String(locale || '')
+    .toLowerCase()
+    .startsWith('pl')
+    ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector ekosystem'
+    : 'Consultify overview business value demo trial ROI security DBR77 Vector ecosystem';
 
   return buildAnnaKnowledgeContext({
     query: bootstrapQuery,

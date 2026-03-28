@@ -33,7 +33,13 @@ import logger from '../../utils/Logger.js';
 const LOG_PREFIX = '[V8:WorkspaceGovernance]';
 
 /** Lowest → highest privilege (index = rank). */
-const ROLE_RANK_ORDER: readonly WorkspaceRole[] = ['guest', 'viewer', 'editor', 'admin', 'owner'] as const;
+const ROLE_RANK_ORDER: readonly WorkspaceRole[] = [
+  'guest',
+  'viewer',
+  'editor',
+  'admin',
+  'owner',
+] as const;
 
 function roleRank(role: WorkspaceRole): number {
   return ROLE_RANK_ORDER.indexOf(role);
@@ -200,7 +206,7 @@ export async function grantPermission(params: GrantPermissionParams): Promise<Wo
       validated.grantedBy,
       now,
       null,
-    ],
+    ]
   );
 
   const created: WorkspacePermission = {
@@ -215,7 +221,7 @@ export async function grantPermission(params: GrantPermissionParams): Promise<Wo
   };
 
   logger.info(
-    `${LOG_PREFIX} Granted role ${validated.role} to user ${validated.userId} workspace ${validated.workspaceId}`,
+    `${LOG_PREFIX} Granted role ${validated.role} to user ${validated.userId} workspace ${validated.workspaceId}`
   );
   return created;
 }
@@ -223,12 +229,15 @@ export async function grantPermission(params: GrantPermissionParams): Promise<Wo
 /**
  * Revoke a permission by setting revokedAt (org-scoped).
  */
-export async function revokePermission(permissionId: string, organizationId: string): Promise<WorkspacePermission> {
+export async function revokePermission(
+  permissionId: string,
+  organizationId: string
+): Promise<WorkspacePermission> {
   const existing = await dbGet<PermissionRow>(
     `SELECT * FROM v8_workspace_permissions
      WHERE permission_id = ? AND organization_id = ?`,
     [permissionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!existing) {
@@ -244,7 +253,7 @@ export async function revokePermission(permissionId: string, organizationId: str
     `UPDATE v8_workspace_permissions
      SET revoked_at = ?
      WHERE permission_id = ? AND organization_id = ? AND revoked_at IS NULL`,
-    [now, permissionId, organizationId],
+    [now, permissionId, organizationId]
   );
 
   if (!result.success || (result.changes ?? 0) < 1) {
@@ -255,7 +264,7 @@ export async function revokePermission(permissionId: string, organizationId: str
     `SELECT * FROM v8_workspace_permissions
      WHERE permission_id = ? AND organization_id = ?`,
     [permissionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!updated) {
@@ -271,14 +280,14 @@ export async function revokePermission(permissionId: string, organizationId: str
  */
 export async function getPermissions(
   workspaceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspacePermission[]> {
   const rows = await dbAll<PermissionRow>(
     `SELECT * FROM v8_workspace_permissions
      WHERE workspace_id = ? AND organization_id = ? AND revoked_at IS NULL
      ORDER BY granted_at ASC`,
     [workspaceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return rows.map(rowToPermission);
@@ -290,13 +299,13 @@ export async function getPermissions(
 export async function getUserRole(
   workspaceId: string,
   userId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceRole | null> {
   const rows = await dbAll<PermissionRow>(
     `SELECT role FROM v8_workspace_permissions
      WHERE workspace_id = ? AND user_id = ? AND organization_id = ? AND revoked_at IS NULL`,
     [workspaceId, userId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (rows.length === 0) return null;
@@ -315,7 +324,7 @@ export async function checkPermission(
   workspaceId: string,
   userId: string,
   action: PermissionAction,
-  organizationId: string,
+  organizationId: string
 ): Promise<boolean> {
   const userRole = await getUserRole(workspaceId, userId, organizationId);
   if (!userRole) return false;
@@ -327,7 +336,9 @@ export async function checkPermission(
 /**
  * Record content classification for a session resource.
  */
-export async function classifyContent(params: ClassifyContentParams): Promise<ContentGovernanceRecord> {
+export async function classifyContent(
+  params: ClassifyContentParams
+): Promise<ContentGovernanceRecord> {
   const validated = ClassifyContentParamsSchema.parse(params);
   const recordId = uuidv4();
   const now = new Date().toISOString();
@@ -346,7 +357,7 @@ export async function classifyContent(params: ClassifyContentParams): Promise<Co
       validated.retentionDays,
       validated.classifiedBy,
       now,
-    ],
+    ]
   );
 
   const record: ContentGovernanceRecord = {
@@ -361,7 +372,7 @@ export async function classifyContent(params: ClassifyContentParams): Promise<Co
   };
 
   logger.info(
-    `${LOG_PREFIX} Classified resource ${validated.resourceRef} as ${validated.classification} session ${validated.sessionId}`,
+    `${LOG_PREFIX} Classified resource ${validated.resourceRef} as ${validated.classification} session ${validated.sessionId}`
   );
   return record;
 }
@@ -371,14 +382,14 @@ export async function classifyContent(params: ClassifyContentParams): Promise<Co
  */
 export async function getContentClassifications(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ContentGovernanceRecord[]> {
   const rows = await dbAll<ContentGovRow>(
     `SELECT * FROM v8_content_governance
      WHERE session_id = ? AND organization_id = ?
      ORDER BY classified_at ASC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return rows.map(rowToContentGov);
@@ -389,7 +400,7 @@ async function getSessionWorkspaceId(sessionId: string, organizationId: string):
     `SELECT workspace_id FROM v8_workspace_sessions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) {
     throw new Error(`Session ${sessionId} not found in organization ${organizationId}`);
@@ -401,14 +412,14 @@ async function evaluateComplianceRule(
   sessionId: string,
   organizationId: string,
   workspaceId: string,
-  checkType: string,
+  checkType: string
 ): Promise<{ passed: boolean; details: string }> {
   if (checkType === 'content.classification.present') {
     const row = await dbGet<CountRow>(
       `SELECT COUNT(*) AS cnt FROM v8_content_governance
        WHERE session_id = ? AND organization_id = ?`,
       [sessionId, organizationId],
-      { fallback: true },
+      { fallback: true }
     );
     const cnt = row?.cnt ?? 0;
     const passed = cnt > 0;
@@ -425,7 +436,7 @@ async function evaluateComplianceRule(
       `SELECT COUNT(*) AS cnt FROM v8_workspace_permissions
        WHERE workspace_id = ? AND organization_id = ? AND revoked_at IS NULL`,
       [workspaceId, organizationId],
-      { fallback: true },
+      { fallback: true }
     );
     const cnt = row?.cnt ?? 0;
     const passed = cnt > 0;
@@ -449,14 +460,14 @@ async function evaluateComplianceRule(
 export async function runComplianceCheck(
   sessionId: string,
   organizationId: string,
-  checkType: string,
+  checkType: string
 ): Promise<ComplianceCheckResult> {
   const workspaceId = await getSessionWorkspaceId(sessionId, organizationId);
   const { passed, details } = await evaluateComplianceRule(
     sessionId,
     organizationId,
     workspaceId,
-    checkType,
+    checkType
   );
 
   const checkId = uuidv4();
@@ -466,7 +477,7 @@ export async function runComplianceCheck(
     `INSERT INTO v8_compliance_checks (
       check_id, session_id, organization_id, check_type, passed, details, checked_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [checkId, sessionId, organizationId, checkType, passed ? 1 : 0, details, now],
+    [checkId, sessionId, organizationId, checkType, passed ? 1 : 0, details, now]
   );
 
   const result: ComplianceCheckResult = {
@@ -480,7 +491,7 @@ export async function runComplianceCheck(
   };
 
   logger.info(
-    `${LOG_PREFIX} Compliance check ${checkType} session ${sessionId}: ${passed ? 'PASS' : 'FAIL'}`,
+    `${LOG_PREFIX} Compliance check ${checkType} session ${sessionId}: ${passed ? 'PASS' : 'FAIL'}`
   );
   return result;
 }
@@ -490,14 +501,14 @@ export async function runComplianceCheck(
  */
 export async function getComplianceHistory(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ComplianceCheckResult[]> {
   const rows = await dbAll<ComplianceRow>(
     `SELECT * FROM v8_compliance_checks
      WHERE session_id = ? AND organization_id = ?
      ORDER BY checked_at ASC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return rows.map(rowToCompliance);
@@ -508,14 +519,14 @@ export async function getComplianceHistory(
  */
 export async function getGovernanceDashboard(
   workspaceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<GovernanceDashboard> {
   const permRows = await dbAll<RoleCountRow>(
     `SELECT role, COUNT(*) AS cnt FROM v8_workspace_permissions
      WHERE workspace_id = ? AND organization_id = ? AND revoked_at IS NULL
      GROUP BY role`,
     [workspaceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const permissionCountByRole = emptyRoleCounts();
@@ -534,12 +545,15 @@ export async function getGovernanceDashboard(
      WHERE s.workspace_id = ? AND s.organization_id = ?
      GROUP BY cg.classification`,
     [workspaceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
-  const contentClassificationCounts: Partial<Record<ContentGovernanceRecord['classification'], number>> = {};
+  const contentClassificationCounts: Partial<
+    Record<ContentGovernanceRecord['classification'], number>
+  > = {};
   for (const r of classRows) {
-    contentClassificationCounts[r.classification as ContentGovernanceRecord['classification']] = r.cnt;
+    contentClassificationCounts[r.classification as ContentGovernanceRecord['classification']] =
+      r.cnt;
   }
 
   const rateRow = await dbGet<RateRow>(
@@ -551,13 +565,12 @@ export async function getGovernanceDashboard(
        ON s.session_id = c.session_id AND s.organization_id = c.organization_id
      WHERE s.workspace_id = ? AND s.organization_id = ?`,
     [workspaceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const totalComplianceChecks = rateRow?.total ?? 0;
   const passedSum = rateRow?.passed_sum ?? 0;
-  const compliancePassRate =
-    totalComplianceChecks > 0 ? passedSum / totalComplianceChecks : null;
+  const compliancePassRate = totalComplianceChecks > 0 ? passedSum / totalComplianceChecks : null;
 
   return {
     permissionCountByRole,

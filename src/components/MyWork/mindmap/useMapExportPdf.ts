@@ -36,7 +36,7 @@ export function useMapExportPdf() {
     <h1>${safeTitle}</h1>
     <img src="${dataUrl}" />
   </div>
-  <script>window.onload = () => { window.print(); }<\/script>
+  <script>window.onload = () => { window.print(); }</script>
 </body>
 </html>`
       );

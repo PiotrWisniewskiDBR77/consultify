@@ -38,6 +38,7 @@ import type {
   IdeaWorkspaceCreationPayload,
   IdeaWorkspaceSeedIntent,
 } from '@/components/MyWork/ideaEntryTypes';
+import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
@@ -77,7 +78,6 @@ import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { detectTableIntent } from './tableIntentDetector';
-import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 
@@ -132,9 +132,7 @@ const extractSlashPayload = (raw: string, commands: string[]): string | null => 
 
 const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value.trim(),
-  );
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 
 const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   const raw = String(rawContent || '').trim();
@@ -1134,7 +1132,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const latestUserGoalHint = useMemo(() => {
     const latestUserMessage = [...displayMessages]
       .reverse()
-      .find((message) => message.role === 'user' && String(message.content || '').trim().length > 0);
+      .find(
+        (message) => message.role === 'user' && String(message.content || '').trim().length > 0
+      );
     return String(latestUserMessage?.content || '').trim();
   }, [displayMessages]);
 
@@ -1160,7 +1160,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       resolvedRoleRef,
       privacyMode: isPrivateMode,
     };
-  }, [currentOrganization?.id, currentUser?.role, isPrivateMode, workspaceContext?.entityId, workspaceContext?.projectId]);
+  }, [
+    currentOrganization?.id,
+    currentUser?.role,
+    isPrivateMode,
+    workspaceContext?.entityId,
+    workspaceContext?.projectId,
+  ]);
 
   // ========================================================================
   // V3-B01: Contextual smart suggestions (shown below input after first exchange)
@@ -1299,16 +1305,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               content,
               messageType: 'text',
             });
-          } catch { /* best-effort persist */ }
+          } catch {
+            /* best-effort persist */
+          }
         }
 
         const uiLang = (i18n.language || 'en').split('-')[0];
         addChatMessage({
           id: `table-builder-${Date.now()}`,
           role: 'ai',
-          content: uiLang === 'pl'
-            ? 'Otwieram AI Kreator Tabel \u2014 zaraz przygotuję propozycję struktury.'
-            : 'Opening AI Table Builder \u2014 I\'ll prepare a structure proposal for you.',
+          content:
+            uiLang === 'pl'
+              ? 'Otwieram AI Kreator Tabel \u2014 zaraz przygotuję propozycję struktury.'
+              : "Opening AI Table Builder \u2014 I'll prepare a structure proposal for you.",
           timestamp: new Date(),
         });
 
@@ -1500,15 +1509,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           const resp = await Api.ingestChatUrlAttachment(url, { title: urlAtt.title });
           const docId = String((resp as any)?.docId || '');
           if (!docId) {
-            toast.error(t('aiChat.attachments.urlIngestFailed', 'Nie udało się przetworzyć linku.'), {
-              duration: 4000,
-            });
+            toast.error(
+              t('aiChat.attachments.urlIngestFailed', 'Nie udało się przetworzyć linku.'),
+              {
+                duration: 4000,
+              }
+            );
             continue;
           }
-          const filename =
-            String((resp as any)?.filename || '').trim() ||
-            urlAtt.name ||
-            url;
+          const filename = String((resp as any)?.filename || '').trim() || urlAtt.name || url;
           uploadedAttachments.push({
             docId,
             filename,
@@ -2357,7 +2366,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (!activeConversationId) return;
       setContextSaveBusyMessageId(messageId);
       try {
-        const response = await Api.saveConversationMessageToContext(activeConversationId, messageId);
+        const response = await Api.saveConversationMessageToContext(
+          activeConversationId,
+          messageId
+        );
         setContextSavedMessageIds((prev) => {
           const next = new Set(prev);
           next.add(messageId);
@@ -3076,9 +3088,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             addChatMessage({
               id: `table-created-${Date.now()}`,
               role: 'ai',
-              content: uiLang === 'pl'
-                ? 'Tabela została utworzona pomyślnie! Możesz ją teraz znaleźć w zakładce My Work.'
-                : 'Table created successfully! You can find it in the My Work tab.',
+              content:
+                uiLang === 'pl'
+                  ? 'Tabela została utworzona pomyślnie! Możesz ją teraz znaleźć w zakładce My Work.'
+                  : 'Table created successfully! You can find it in the My Work tab.',
               timestamp: new Date(),
             });
             setTableBuilderOpen(false);

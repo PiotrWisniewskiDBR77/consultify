@@ -90,6 +90,13 @@ CREATE TABLE IF NOT EXISTS ai_contexts (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general';
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1;
+ALTER TABLE ai_contexts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_ai_contexts_org ON ai_contexts(organization_id);
 
 CREATE TABLE IF NOT EXISTS assessment_initiative_batches (
@@ -105,5 +112,11 @@ CREATE TABLE IF NOT EXISTS assessment_initiative_batches (
     FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS batch_name TEXT;
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS initiatives_count INTEGER DEFAULT 0;
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS created_by TEXT;
+ALTER TABLE assessment_initiative_batches ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_aib_assessment ON assessment_initiative_batches(assessment_id);
 CREATE INDEX IF NOT EXISTS idx_aib_org ON assessment_initiative_batches(organization_id);

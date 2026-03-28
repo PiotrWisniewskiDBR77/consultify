@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
@@ -8,14 +8,14 @@ import type {
   ScopeResolutionSummary,
 } from '../../../types/governedRetrieval.js';
 import {
-  CreateRetrievalRequestParamsSchema,
-  LogRetrievalTraceParamsSchema,
-  BudgetHintSchema,
   ACLCheckResultSchema,
+  BudgetHintSchema,
+  CreateRetrievalRequestParamsSchema,
   DeniedEntrySchema,
+  LogRetrievalTraceParamsSchema,
   PipelineStageTraceSchema,
-  ScopeResolutionSummarySchema,
   RetrievalResultSchema,
+  ScopeResolutionSummarySchema,
 } from '../../../types/governedRetrieval.js';
 
 // ==========================================
@@ -42,11 +42,11 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  createRetrievalRequest,
   checkACL,
-  logRetrievalTrace,
-  getTracesByRequest,
+  createRetrievalRequest,
   getTracesByConversation,
+  getTracesByRequest,
+  logRetrievalTrace,
 } from '../governedRetrievalService.js';
 
 // ==========================================
@@ -60,7 +60,7 @@ const CONV_ID = '00000000-0000-4000-8000-000000000020';
 const REQUEST_ID = '00000000-0000-4000-8000-000000000030';
 
 function makeRequestParams(
-  overrides?: Partial<CreateRetrievalRequestParams>,
+  overrides?: Partial<CreateRetrievalRequestParams>
 ): CreateRetrievalRequestParams {
   return {
     organizationId: ORG_ID,
@@ -90,8 +90,20 @@ function makeTraceParams(overrides?: Partial<LogRetrievalTraceParams>): LogRetri
       privacyMode: false,
     },
     pipelineStages: [
-      { stage: 'tenant_filter', candidatesBefore: 100, candidatesAfter: 80, deniedCount: 20, durationMs: 5 },
-      { stage: 'acl_filter', candidatesBefore: 80, candidatesAfter: 60, deniedCount: 20, durationMs: 12 },
+      {
+        stage: 'tenant_filter',
+        candidatesBefore: 100,
+        candidatesAfter: 80,
+        deniedCount: 20,
+        durationMs: 5,
+      },
+      {
+        stage: 'acl_filter',
+        candidatesBefore: 80,
+        candidatesAfter: 60,
+        deniedCount: 20,
+        durationMs: 12,
+      },
     ],
     candidatesConsidered: 100,
     resultsReturned: 5,
@@ -175,7 +187,7 @@ describe('createRetrievalRequest', () => {
     const result = await createRetrievalRequest(
       makeRequestParams({
         budgetHint: { maxLatencyMs: 500, maxResults: 10 },
-      }),
+      })
     );
 
     expect(result.budgetHint).toEqual({ maxLatencyMs: 500, maxResults: 10 });
@@ -185,14 +197,19 @@ describe('createRetrievalRequest', () => {
     const result = await createRetrievalRequest(
       makeRequestParams({
         workingMemoryContextRef: 'wm:session:abc123',
-      }),
+      })
     );
 
     expect(result.workingMemoryContextRef).toBe('wm:session:abc123');
   });
 
   it('accepts all four canonical search presets', async () => {
-    for (const preset of ['workspace_broad', 'project_focused', 'artifact_deep', 'cross_org_federated'] as const) {
+    for (const preset of [
+      'workspace_broad',
+      'project_focused',
+      'artifact_deep',
+      'cross_org_federated',
+    ] as const) {
       const result = await createRetrievalRequest(makeRequestParams({ searchPreset: preset }));
       expect(result.searchPreset).toBe(preset);
     }
@@ -200,21 +217,19 @@ describe('createRetrievalRequest', () => {
 
   it('rejects interactive consumer without contextSnapshotId (Decision 2)', async () => {
     await expect(
-      createRetrievalRequest(
-        makeRequestParams({ consumerClass: 'chat', contextSnapshotId: null }),
-      ),
+      createRetrievalRequest(makeRequestParams({ consumerClass: 'chat', contextSnapshotId: null }))
     ).rejects.toThrow(ZodError);
 
     await expect(
       createRetrievalRequest(
-        makeRequestParams({ consumerClass: 'execution', contextSnapshotId: null }),
-      ),
+        makeRequestParams({ consumerClass: 'execution', contextSnapshotId: null })
+      )
     ).rejects.toThrow(ZodError);
 
     await expect(
       createRetrievalRequest(
-        makeRequestParams({ consumerClass: 'worker', contextSnapshotId: null }),
-      ),
+        makeRequestParams({ consumerClass: 'worker', contextSnapshotId: null })
+      )
     ).rejects.toThrow(ZodError);
   });
 
@@ -230,7 +245,7 @@ describe('createRetrievalRequest', () => {
           privacyMode: false,
           sourceContextRefs: [],
         },
-      }),
+      })
     );
 
     expect(result.consumerClass).toBe('background');
@@ -245,23 +260,21 @@ describe('createRetrievalRequest', () => {
           consumerClass: 'background',
           contextSnapshotId: null,
           retrievalScopeToken: null,
-        }),
-      ),
+        })
+      )
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects invalid search preset via Zod', async () => {
     await expect(
-      createRetrievalRequest(
-        makeRequestParams({ searchPreset: 'invalid_preset' as any }),
-      ),
+      createRetrievalRequest(makeRequestParams({ searchPreset: 'invalid_preset' as any }))
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty query', async () => {
-    await expect(
-      createRetrievalRequest(makeRequestParams({ query: '' })),
-    ).rejects.toThrow(ZodError);
+    await expect(createRetrievalRequest(makeRequestParams({ query: '' }))).rejects.toThrow(
+      ZodError
+    );
   });
 });
 
@@ -373,8 +386,8 @@ describe('logRetrievalTrace', () => {
               sensitivityLabel: null,
             },
           ],
-        }),
-      ),
+        })
+      )
     ).rejects.toThrow(ZodError);
   });
 
@@ -383,10 +396,16 @@ describe('logRetrievalTrace', () => {
       logRetrievalTrace(
         makeTraceParams({
           pipelineStages: [
-            { stage: 'nonexistent_stage' as any, candidatesBefore: 10, candidatesAfter: 5, deniedCount: 5, durationMs: 1 },
+            {
+              stage: 'nonexistent_stage' as any,
+              candidatesBefore: 10,
+              candidatesAfter: 5,
+              deniedCount: 5,
+              durationMs: 1,
+            },
           ],
-        }),
-      ),
+        })
+      )
     ).rejects.toThrow(ZodError);
   });
 });
@@ -467,9 +486,15 @@ describe('Zod schema validation', () => {
 
   it('validates DeniedEntry with all 9 denial reasons', () => {
     const reasons = [
-      'TENANT_BOUNDARY', 'ACL_DENIED', 'SCOPE_MISMATCH', 'SENSITIVITY_BLOCKED',
-      'CONNECTOR_DISCONNECTED', 'CONNECTOR_ARCHIVED', 'FRESHNESS_EXCLUDED',
-      'PRIVACY_MODE', 'POLICY_BLOCKED',
+      'TENANT_BOUNDARY',
+      'ACL_DENIED',
+      'SCOPE_MISMATCH',
+      'SENSITIVITY_BLOCKED',
+      'CONNECTOR_DISCONNECTED',
+      'CONNECTOR_ARCHIVED',
+      'FRESHNESS_EXCLUDED',
+      'PRIVACY_MODE',
+      'POLICY_BLOCKED',
     ] as const;
 
     for (const reason of reasons) {
@@ -481,15 +506,20 @@ describe('Zod schema validation', () => {
           denialDetail: null,
           freshnessStateAtDenial: null,
           sensitivityLabel: null,
-        }),
+        })
       ).not.toThrow();
     }
   });
 
   it('validates PipelineStageTrace for all 7 stages', () => {
     const stages = [
-      'tenant_filter', 'scope_type_filter', 'acl_filter', 'sensitivity_filter',
-      'freshness_filter', 'privacy_mode_filter', 'connector_health_filter',
+      'tenant_filter',
+      'scope_type_filter',
+      'acl_filter',
+      'sensitivity_filter',
+      'freshness_filter',
+      'privacy_mode_filter',
+      'connector_health_filter',
     ] as const;
 
     for (const stage of stages) {
@@ -500,7 +530,7 @@ describe('Zod schema validation', () => {
           candidatesAfter: 80,
           deniedCount: 20,
           durationMs: 5,
-        }),
+        })
       ).not.toThrow();
     }
   });
@@ -538,7 +568,7 @@ describe('Zod schema validation', () => {
         },
         rankPosition: 0,
         citationBindingRef: null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -560,7 +590,7 @@ describe('Zod schema validation', () => {
         },
         rankPosition: 0,
         citationBindingRef: null,
-      }),
+      })
     ).toThrow(ZodError);
   });
 
@@ -569,7 +599,7 @@ describe('Zod schema validation', () => {
       CreateRetrievalRequestParamsSchema.parse({
         ...makeRequestParams(),
         consumerClass: 'invalid_class',
-      }),
+      })
     ).toThrow(ZodError);
   });
 

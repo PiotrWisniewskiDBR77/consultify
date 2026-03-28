@@ -3,18 +3,18 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewMetaCard,
-  PreviewDetailsSection,
-  PreviewAIHintStrip,
-  PreviewRelations,
-  PreviewActionBar,
-  type MetaPill,
-  type RelationItem,
   type ActionRow,
   type ExtraCopyFormat,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Api } from '@/services/api';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 type KnownToolListItem = {
   id: string;
@@ -163,14 +163,21 @@ export const KnownToolPreviewV3Body: React.FC<{
   const [detailsText, setDetailsText] = useState<string>('');
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  type PreviewSnippet = { goal: string; outcome: string; team: string; aiRole: string; duration: string };
+  type PreviewSnippet = {
+    goal: string;
+    outcome: string;
+    team: string;
+    aiRole: string;
+    duration: string;
+  };
 
   const previewSnippet = useMemo((): PreviewSnippet => {
     if (tool.toolType === 'dynamic-swot') {
       return isPolish
         ? {
             goal: 'Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.',
-            outcome: 'Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.',
+            outcome:
+              'Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.',
             team: 'C-level / właściciele, lider strategii lub dyrektor operacyjny',
             aiRole: 'Moderator sesji, analityk evidence, generator napięć i rekomendacji',
             duration: '60-90 min',
@@ -187,8 +194,7 @@ export const KnownToolPreviewV3Body: React.FC<{
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
     const fallbackOutcome =
-      (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') ||
-      (isPolish ? '—' : '—');
+      (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') || (isPolish ? '—' : '—');
 
     return {
       goal: fallbackGoal,
@@ -292,19 +298,34 @@ export const KnownToolPreviewV3Body: React.FC<{
       className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
     },
     {
-      label: tool.isActive ? (isPolish ? 'Aktywny' : 'Active') : isPolish ? 'Nieaktywny' : 'Inactive',
+      label: tool.isActive
+        ? isPolish
+          ? 'Aktywny'
+          : 'Active'
+        : isPolish
+          ? 'Nieaktywny'
+          : 'Inactive',
       className: tool.isActive
         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
         : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300',
     },
     ...(tool.isComingSoon
-      ? [{ label: t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon'), className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300' }]
+      ? [
+          {
+            label: t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon'),
+            className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+          },
+        ]
       : []),
   ];
 
   const snippetRows: { label: string; value: string; minH: string }[] = [
     { label: isPolish ? 'Cel' : 'Goal', value: previewSnippet.goal, minH: 'min-h-[40px]' },
-    { label: isPolish ? 'Rezultat' : 'Outcome', value: previewSnippet.outcome, minH: 'min-h-[40px]' },
+    {
+      label: isPolish ? 'Rezultat' : 'Outcome',
+      value: previewSnippet.outcome,
+      minH: 'min-h-[40px]',
+    },
     { label: 'Team', value: previewSnippet.team, minH: 'min-h-[28px]' },
     { label: isPolish ? 'Rola AI' : 'AI Role', value: previewSnippet.aiRole, minH: 'min-h-[28px]' },
     { label: isPolish ? 'Czas' : 'Duration', value: previewSnippet.duration, minH: 'min-h-[20px]' },
@@ -446,7 +467,9 @@ export const KnownToolPreviewV3Footer: React.FC<{
           label: clampText(tag, 40),
           tone: 'text-slate-700 dark:text-slate-200',
         })),
-        ...(overflowCount > 0 ? [{ label: `+${overflowCount}`, tone: 'text-slate-500 dark:text-slate-400' }] : []),
+        ...(overflowCount > 0
+          ? [{ label: `+${overflowCount}`, tone: 'text-slate-500 dark:text-slate-400' }]
+          : []),
       ];
 
   const actionRows: ActionRow[] = [
@@ -511,7 +534,15 @@ export const KnownToolPreviewV3Footer: React.FC<{
 
       <PreviewRelations
         items={relationItems}
-        emptyLabel={fullLoading ? (isPolish ? 'Ładowanie…' : 'Loading…') : (isPolish ? 'Brak powiązań' : 'No relations')}
+        emptyLabel={
+          fullLoading
+            ? isPolish
+              ? 'Ładowanie…'
+              : 'Loading…'
+            : isPolish
+              ? 'Brak powiązań'
+              : 'No relations'
+        }
       />
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-2" />

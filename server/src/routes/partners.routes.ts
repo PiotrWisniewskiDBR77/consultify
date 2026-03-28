@@ -579,7 +579,10 @@ router.get('/payout-settings', async (req: Request, res: Response, next: NextFun
   } catch (error: any) {
     logger.error('Error fetching partner payout settings:', error);
     if (isSchemaMissingError(error)) {
-      return featureUnavailable(res, 'Partner payout settings unavailable (database schema missing)');
+      return featureUnavailable(
+        res,
+        'Partner payout settings unavailable (database schema missing)'
+      );
     }
     next(error);
   }
@@ -599,7 +602,10 @@ router.put('/payout-settings', async (req: Request, res: Response, next: NextFun
   } catch (error: any) {
     logger.error('Error updating partner payout settings:', error);
     if (isSchemaMissingError(error)) {
-      return featureUnavailable(res, 'Partner payout settings unavailable (database schema missing)');
+      return featureUnavailable(
+        res,
+        'Partner payout settings unavailable (database schema missing)'
+      );
     }
     next(error);
   }

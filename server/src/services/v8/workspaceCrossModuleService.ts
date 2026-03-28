@@ -27,7 +27,6 @@ import {
 } from '../../types/workspaceCrossModule.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-
 import { getSessionsByWorkspace } from './workspaceCollaborationService.js';
 
 // ==========================================
@@ -141,7 +140,7 @@ async function assertSessionInOrg(sessionId: string, organizationId: string): Pr
      FROM v8_workspace_sessions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) {
     throw new Error(`Session ${sessionId} not found in organization ${organizationId}`);
@@ -172,12 +171,12 @@ export async function linkModule(params: LinkModuleParams): Promise<SessionModul
       validated.moduleType,
       validated.moduleResourceId,
     ],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (existing) {
     logger.info(
-      `${LOG_PREFIX} Active link already exists ${existing.link_id} for session ${validated.sessionId}`,
+      `${LOG_PREFIX} Active link already exists ${existing.link_id} for session ${validated.sessionId}`
     );
     return rowToModuleLink(existing);
   }
@@ -210,12 +209,12 @@ export async function linkModule(params: LinkModuleParams): Promise<SessionModul
       link.linkedBy,
       link.linkedAt,
       link.unlinkedAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Linked module ${validated.moduleType}:${validated.moduleResourceId} ` +
-    `to session ${validated.sessionId}`,
+      `to session ${validated.sessionId}`
   );
 
   return link;
@@ -224,12 +223,15 @@ export async function linkModule(params: LinkModuleParams): Promise<SessionModul
 /**
  * Soft-unlink a module attachment by setting unlinkedAt.
  */
-export async function unlinkModule(linkId: string, organizationId: string): Promise<SessionModuleLink> {
+export async function unlinkModule(
+  linkId: string,
+  organizationId: string
+): Promise<SessionModuleLink> {
   const row = await dbGet<ModuleLinkRow>(
     `SELECT * FROM v8_session_module_links
      WHERE link_id = ? AND organization_id = ?`,
     [linkId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -246,7 +248,7 @@ export async function unlinkModule(linkId: string, organizationId: string): Prom
     `UPDATE v8_session_module_links
      SET unlinked_at = ?
      WHERE link_id = ? AND organization_id = ?`,
-    [now, linkId, organizationId],
+    [now, linkId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Unlinked module link ${linkId}`);
@@ -260,7 +262,7 @@ export async function unlinkModule(linkId: string, organizationId: string): Prom
 export async function getModuleLinks(
   sessionId: string,
   organizationId: string,
-  moduleType?: ModuleLinkType,
+  moduleType?: ModuleLinkType
 ): Promise<SessionModuleLink[]> {
   await assertSessionInOrg(sessionId, organizationId);
 
@@ -271,7 +273,7 @@ export async function getModuleLinks(
          AND unlinked_at IS NULL AND module_type = ?
        ORDER BY linked_at DESC`,
       [sessionId, organizationId, moduleType],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToModuleLink);
   }
@@ -281,7 +283,7 @@ export async function getModuleLinks(
      WHERE session_id = ? AND organization_id = ? AND unlinked_at IS NULL
      ORDER BY linked_at DESC`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToModuleLink);
 }
@@ -294,7 +296,7 @@ export async function getModuleLinks(
  * Append a cross-module activity row for analytics and audit trails.
  */
 export async function recordCrossModuleActivity(
-  params: RecordCrossModuleActivityParams,
+  params: RecordCrossModuleActivityParams
 ): Promise<CrossModuleActivity> {
   const validated = RecordCrossModuleActivityParamsSchema.parse(params);
   await assertSessionInOrg(validated.sessionId, validated.organizationId);
@@ -329,12 +331,12 @@ export async function recordCrossModuleActivity(
       activity.actorId,
       activity.summary,
       activity.createdAt,
-    ],
+    ]
   );
 
   logger.info(
     `${LOG_PREFIX} Recorded cross-module activity ${activityId} (${validated.activityType}) ` +
-    `session ${validated.sessionId}`,
+      `session ${validated.sessionId}`
   );
 
   return activity;
@@ -347,7 +349,7 @@ export async function getCrossModuleActivity(
   sessionId: string,
   organizationId: string,
   moduleType?: ModuleLinkType,
-  limit: number = 100,
+  limit: number = 100
 ): Promise<CrossModuleActivity[]> {
   await assertSessionInOrg(sessionId, organizationId);
 
@@ -358,7 +360,7 @@ export async function getCrossModuleActivity(
        ORDER BY created_at DESC
        LIMIT ?`,
       [sessionId, organizationId, moduleType, limit],
-      { fallback: true },
+      { fallback: true }
     );
     return (rows || []).map(rowToCrossModuleActivity);
   }
@@ -369,7 +371,7 @@ export async function getCrossModuleActivity(
      ORDER BY created_at DESC
      LIMIT ?`,
     [sessionId, organizationId, limit],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(rowToCrossModuleActivity);
 }
@@ -383,7 +385,7 @@ async function countFeedActivities(sessionId: string, organizationId: string): P
     `SELECT COUNT(*) AS cnt FROM v8_activity_feed
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return row?.cnt ?? 0;
 }
@@ -393,7 +395,7 @@ async function countDistinctFeedActors(sessionId: string, organizationId: string
     `SELECT COUNT(DISTINCT actor_id) AS cnt FROM v8_activity_feed
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return row?.cnt ?? 0;
 }
@@ -403,7 +405,7 @@ async function countSuggestions(sessionId: string, organizationId: string): Prom
     `SELECT COUNT(*) AS cnt FROM v8_ai_suggestions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return row?.cnt ?? 0;
 }
@@ -413,7 +415,7 @@ async function countDecisions(sessionId: string, organizationId: string): Promis
     `SELECT COUNT(*) AS cnt FROM v8_collaborative_decisions
      WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return row?.cnt ?? 0;
 }
@@ -423,7 +425,7 @@ async function countActiveModuleLinks(sessionId: string, organizationId: string)
     `SELECT COUNT(*) AS cnt FROM v8_session_module_links
      WHERE session_id = ? AND organization_id = ? AND unlinked_at IS NULL`,
     [sessionId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return row?.cnt ?? 0;
 }
@@ -442,23 +444,18 @@ function sessionDurationMs(session: SessionRow): number | null {
  */
 export async function getSessionAnalytics(
   sessionId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SessionAnalytics> {
   const session = await assertSessionInOrg(sessionId, organizationId);
 
-  const [
-    totalActivities,
-    totalParticipants,
-    totalSuggestions,
-    totalDecisions,
-    totalModuleLinks,
-  ] = await Promise.all([
-    countFeedActivities(sessionId, organizationId),
-    countDistinctFeedActors(sessionId, organizationId),
-    countSuggestions(sessionId, organizationId),
-    countDecisions(sessionId, organizationId),
-    countActiveModuleLinks(sessionId, organizationId),
-  ]);
+  const [totalActivities, totalParticipants, totalSuggestions, totalDecisions, totalModuleLinks] =
+    await Promise.all([
+      countFeedActivities(sessionId, organizationId),
+      countDistinctFeedActors(sessionId, organizationId),
+      countSuggestions(sessionId, organizationId),
+      countDecisions(sessionId, organizationId),
+      countActiveModuleLinks(sessionId, organizationId),
+    ]);
 
   const durationMs = sessionDurationMs(session);
 
@@ -483,10 +480,7 @@ export async function getSessionAnalytics(
   };
 }
 
-function emptyWorkspaceAnalytics(
-  workspaceId: string,
-  organizationId: string,
-): WorkspaceAnalytics {
+function emptyWorkspaceAnalytics(workspaceId: string, organizationId: string): WorkspaceAnalytics {
   return {
     workspaceId,
     organizationId,
@@ -506,7 +500,7 @@ function emptyWorkspaceAnalytics(
  */
 export async function getWorkspaceAnalytics(
   workspaceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<WorkspaceAnalytics> {
   const sessions = await getSessionsByWorkspace(workspaceId, organizationId, true);
   if (sessions.length === 0) {
@@ -514,7 +508,7 @@ export async function getWorkspaceAnalytics(
   }
 
   const perSession = await Promise.all(
-    sessions.map((s) => getSessionAnalytics(s.sessionId, organizationId)),
+    sessions.map((s) => getSessionAnalytics(s.sessionId, organizationId))
   );
 
   let cumulativeDurationMs = 0;
@@ -537,9 +531,7 @@ export async function getWorkspaceAnalytics(
     totalModuleLinks: perSession.reduce((acc, a) => acc + a.totalModuleLinks, 0),
     avgEngagementScore:
       perSession.length > 0
-        ? Math.round(
-          perSession.reduce((acc, a) => acc + a.engagementScore, 0) / perSession.length,
-        )
+        ? Math.round(perSession.reduce((acc, a) => acc + a.engagementScore, 0) / perSession.length)
         : 0,
     cumulativeDurationMs: anyDuration ? cumulativeDurationMs : null,
   };
@@ -551,7 +543,7 @@ export async function getWorkspaceAnalytics(
 export async function findSessionsByModule(
   moduleType: ModuleLinkType,
   moduleResourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<string[]> {
   const rows = await dbAll<{ session_id: string }>(
     `SELECT DISTINCT session_id FROM v8_session_module_links
@@ -559,7 +551,7 @@ export async function findSessionsByModule(
        AND unlinked_at IS NULL
      ORDER BY session_id`,
     [organizationId, moduleType, moduleResourceId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map((r) => r.session_id);
 }
@@ -571,21 +563,21 @@ export async function findSessionsByModule(
 export async function getModuleImpact(
   moduleType: ModuleLinkType,
   moduleResourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ModuleImpactSummary> {
   const linkedSessionCountRow = await dbGet<CountRow>(
     `SELECT COUNT(DISTINCT session_id) AS cnt FROM v8_session_module_links
      WHERE organization_id = ? AND module_type = ? AND module_resource_id = ?
        AND unlinked_at IS NULL`,
     [organizationId, moduleType, moduleResourceId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const crossModuleActivityCountRow = await dbGet<CountRow>(
     `SELECT COUNT(*) AS cnt FROM v8_cross_module_activity
      WHERE organization_id = ? AND module_type = ? AND module_resource_id = ?`,
     [organizationId, moduleType, moduleResourceId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const referencedDecisionsCountRow = await dbGet<CountRow>(
@@ -600,7 +592,7 @@ export async function getModuleImpact(
            AND l.unlinked_at IS NULL
        )`,
     [organizationId, moduleType, moduleResourceId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {
@@ -619,7 +611,7 @@ export async function getModuleImpact(
 export async function getRecentCrossModuleActivity(
   organizationId: string,
   days: number = 7,
-  limit: number = 50,
+  limit: number = 50
 ): Promise<CrossModuleActivity[]> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -629,7 +621,7 @@ export async function getRecentCrossModuleActivity(
      ORDER BY created_at DESC
      LIMIT ?`,
     [organizationId, since, limit],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToCrossModuleActivity);

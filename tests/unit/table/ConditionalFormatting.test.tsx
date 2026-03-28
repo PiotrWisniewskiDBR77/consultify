@@ -24,45 +24,45 @@ describe('getConditionalStyle', () => {
   const rules: FormatRule[] = [
     {
       id: 'r1',
-      column: 'status',
-      condition: 'equals',
+      fieldId: 'status',
+      operator: 'equals',
       value: 'Done',
-      style: { backgroundColor: '#dcfce7', textColor: '#166534', fontWeight: 'bold' },
+      style: { backgroundColor: '#dcfce7', color: '#166534', fontWeight: 'bold' },
     },
     {
       id: 'r2',
-      column: 'name',
-      condition: 'contains',
+      fieldId: 'name',
+      operator: 'contains',
       value: 'urgent',
-      style: { backgroundColor: '#fef2f2', textColor: '#991b1b', fontWeight: 'normal' },
+      style: { backgroundColor: '#fef2f2', color: '#991b1b', fontWeight: 'normal' },
     },
     {
       id: 'r3',
-      column: 'score',
-      condition: 'gt',
+      fieldId: 'score',
+      operator: 'greater_than',
       value: '80',
-      style: { backgroundColor: '#eff6ff', textColor: '#1e40af', fontWeight: 'bold' },
+      style: { backgroundColor: '#eff6ff', color: '#1e40af', fontWeight: 'bold' },
     },
     {
       id: 'r4',
-      column: 'score',
-      condition: 'lt',
+      fieldId: 'score',
+      operator: 'less_than',
       value: '20',
-      style: { backgroundColor: '#fef9c3', textColor: '#854d0e', fontWeight: 'normal' },
+      style: { backgroundColor: '#fef9c3', color: '#854d0e', fontWeight: 'normal' },
     },
     {
       id: 'r5',
-      column: 'notes',
-      condition: 'is_empty',
+      fieldId: 'notes',
+      operator: 'is_empty',
       value: '',
-      style: { backgroundColor: '#f1f5f9', textColor: '#64748b', fontWeight: 'normal' },
+      style: { backgroundColor: '#f1f5f9', color: '#64748b', fontWeight: 'normal' },
     },
     {
       id: 'r6',
-      column: 'description',
-      condition: 'not_empty',
+      fieldId: 'description',
+      operator: 'is_not_empty',
       value: '',
-      style: { backgroundColor: '#f0fdf4', textColor: '#15803d', fontWeight: 'normal' },
+      style: { backgroundColor: '#f0fdf4', color: '#15803d', fontWeight: 'normal' },
     },
   ];
 
@@ -158,27 +158,30 @@ describe('getConditionalStyle', () => {
     const multiRules: FormatRule[] = [
       {
         id: 'first',
-        column: 'x',
-        condition: 'equals',
+        fieldId: 'x',
+        operator: 'equals',
         value: 'a',
-        style: { backgroundColor: '#111', textColor: '#222', fontWeight: 'bold' },
+        style: { backgroundColor: '#111', color: '#222', fontWeight: 'bold' },
       },
       {
         id: 'second',
-        column: 'x',
-        condition: 'equals',
+        fieldId: 'x',
+        operator: 'equals',
         value: 'a',
-        style: { backgroundColor: '#333', textColor: '#444', fontWeight: 'normal' },
+        style: { backgroundColor: '#333', color: '#444', fontWeight: 'normal' },
       },
     ];
     const style = getConditionalStyle(multiRules, 'x', 'a');
     expect(style?.backgroundColor).toBe('#111');
   });
 
-  it('style includes borderRadius and padding', () => {
+  it('style returns the configured presentation properties only', () => {
     const style = getConditionalStyle(rules, 'status', 'Done');
-    expect(style?.borderRadius).toBe('6px');
-    expect(style?.padding).toBe('0 4px');
+    expect(style).toMatchObject({
+      backgroundColor: '#dcfce7',
+      color: '#166534',
+      fontWeight: 'bold',
+    });
   });
 });
 
@@ -192,10 +195,10 @@ describe('ConditionalFormatting component', () => {
     render(
       <ConditionalFormatting
         open={true}
-        onClose={vi.fn()}
         rules={[]}
-        onRulesChange={vi.fn()}
-        columns={columns}
+        onChange={vi.fn()}
+        fields={columns}
+        onClose={vi.fn()}
       />
     );
     expect(document.body.textContent).toBeTruthy();
@@ -205,10 +208,10 @@ describe('ConditionalFormatting component', () => {
     const { container } = render(
       <ConditionalFormatting
         open={false}
-        onClose={vi.fn()}
         rules={[]}
-        onRulesChange={vi.fn()}
-        columns={columns}
+        onChange={vi.fn()}
+        fields={columns}
+        onClose={vi.fn()}
       />
     );
     expect(container.firstChild).toBeFalsy();

@@ -1,9 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import * as chatExecutionService from './chatExecutionService.js';
-import * as contextSnapshotService from './contextSnapshotService.js';
-import * as executionSpineService from './executionSpineService.js';
-import * as publishReviewService from './publishReviewService.js';
 import type {
   ArtifactAccessGrant,
   ArtifactFamily,
@@ -22,14 +18,18 @@ import type {
   RegisterArtifactOriginParams,
 } from '../../types/artifactRegistry.js';
 import {
-  ArtifactRunReportSourceTypeValues,
   ArtifactPlanningRequestSchema,
+  ArtifactRunReportSourceTypeValues,
   CreateArtifactAccessGrantParamsSchema,
   MaterializeArtifactRunParamsSchema,
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import * as chatExecutionService from './chatExecutionService.js';
+import * as contextSnapshotService from './contextSnapshotService.js';
+import * as executionSpineService from './executionSpineService.js';
+import * as publishReviewService from './publishReviewService.js';
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
@@ -265,7 +265,9 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
 }
 
 export function mapReportStatusToDeliveryState(status: string | null | undefined): string {
-  const normalized = String(status || 'draft').trim().toLowerCase();
+  const normalized = String(status || 'draft')
+    .trim()
+    .toLowerCase();
   if (!normalized || normalized === 'draft') return 'draft';
   if (normalized.includes('configur')) return 'draft';
   if (normalized.includes('archive')) return 'archived';
@@ -280,7 +282,9 @@ export function mapReportStatusToDeliveryState(status: string | null | undefined
 }
 
 export function mapPresentationStatusToDeliveryState(status: string | null | undefined): string {
-  const normalized = String(status || 'draft').trim().toLowerCase();
+  const normalized = String(status || 'draft')
+    .trim()
+    .toLowerCase();
   if (!normalized || normalized === 'draft') return 'draft';
   if (normalized === 'generated') return 'generated';
   if (normalized === 'failed') return 'editing';
@@ -338,43 +342,43 @@ export async function registerGovernedTableSheetArtifact(params: {
 async function getOriginLinkByOrigin(
   organizationId: string,
   originRuntime: string,
-  originRecordId: string,
+  originRecordId: string
 ): Promise<ArtifactOriginLink | null> {
   const row = await dbGet<OriginLinkRow>(
     `SELECT * FROM v8_artifact_origin_links
      WHERE organization_id = ? AND origin_runtime = ? AND origin_record_id = ?`,
     [organizationId, originRuntime, originRecordId],
-    { fallback: true },
+    { fallback: true }
   );
   return row ? mapOriginLinkRow(row) : null;
 }
 
 async function getArtifactRow(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactRow | null> {
   return dbGet<ArtifactRow>(
     `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 }
 
 async function getArtifactRunRow(
   runId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactRunRow | null> {
   return dbGet<ArtifactRunRow>(
     `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
     [runId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 }
 
 async function updateArtifactMetadata(
   artifactId: string,
   organizationId: string,
-  patch: Partial<RegisterArtifactOriginParams>,
+  patch: Partial<RegisterArtifactOriginParams>
 ): Promise<void> {
   const now = new Date().toISOString();
   await dbRun(
@@ -407,19 +411,19 @@ async function updateArtifactMetadata(
       now,
       artifactId,
       organizationId,
-    ],
+    ]
   );
 }
 
 export async function registerArtifactOrigin(
-  params: RegisterArtifactOriginParams,
+  params: RegisterArtifactOriginParams
 ): Promise<ArtifactRecord> {
   const validated = RegisterArtifactOriginParamsSchema.parse(params);
 
   const existingLink = await getOriginLinkByOrigin(
     validated.organizationId,
     validated.originRuntime,
-    validated.originRecordId,
+    validated.originRecordId
   );
 
   if (existingLink) {
@@ -462,18 +466,26 @@ export async function registerArtifactOrigin(
       validated.createdBy,
       now,
       now,
-    ],
+    ]
   );
 
   await dbRun(
     `INSERT INTO v8_artifact_origin_links (
       link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [linkId, artifactId, validated.organizationId, validated.originRuntime, validated.originRecordId, 1, now],
+    [
+      linkId,
+      artifactId,
+      validated.organizationId,
+      validated.originRuntime,
+      validated.originRecordId,
+      1,
+      now,
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Registered ${validated.originRuntime}:${validated.originRecordId} as artifact ${artifactId}`,
+    `${LOG_PREFIX} Registered ${validated.originRuntime}:${validated.originRecordId} as artifact ${artifactId}`
   );
 
   const row = await getArtifactRow(artifactId, validated.organizationId);
@@ -484,7 +496,7 @@ export async function registerArtifactOrigin(
 }
 
 export async function createArtifactAccessGrant(
-  params: CreateArtifactAccessGrantParams,
+  params: CreateArtifactAccessGrantParams
 ): Promise<ArtifactAccessGrant> {
   const validated = CreateArtifactAccessGrantParamsSchema.parse(params);
   const grantId = uuidv4();
@@ -503,13 +515,13 @@ export async function createArtifactAccessGrant(
       validated.roleKey,
       validated.createdBy,
       now,
-    ],
+    ]
   );
 
   const row = await dbGet<AccessGrantRow>(
     `SELECT * FROM v8_artifact_access_grants WHERE grant_id = ?`,
     [grantId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) throw new Error(`Access grant ${grantId} not found after creation`);
   return mapAccessGrantRow(row);
@@ -528,10 +540,15 @@ export async function startArtifactReview(params: {
 }> {
   const artifact = await getArtifactRow(params.artifactId, params.organizationId);
   if (!artifact) {
-    throw new Error(`Artifact ${params.artifactId} not found in organization ${params.organizationId}`);
+    throw new Error(
+      `Artifact ${params.artifactId} not found in organization ${params.organizationId}`
+    );
   }
 
-  let record = await publishReviewService.getPublishRecord(params.artifactId, params.organizationId);
+  let record = await publishReviewService.getPublishRecord(
+    params.artifactId,
+    params.organizationId
+  );
   if (!record) {
     record = await publishReviewService.createPublishRecord({
       artifactId: params.artifactId,
@@ -556,7 +573,7 @@ export async function startArtifactReview(params: {
   });
 
   logger.info(
-    `${LOG_PREFIX} Started review for artifact ${params.artifactId} (state=${record.currentState})`,
+    `${LOG_PREFIX} Started review for artifact ${params.artifactId} (state=${record.currentState})`
   );
 
   return {
@@ -569,28 +586,28 @@ export async function startArtifactReview(params: {
 
 export async function getArtifactOriginLinks(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactOriginLink[]> {
   const rows = await dbAll<OriginLinkRow>(
     `SELECT * FROM v8_artifact_origin_links
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(mapOriginLinkRow);
 }
 
 export async function getArtifactAccessGrantsForArtifact(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactAccessGrant[]> {
   const rows = await dbAll<AccessGrantRow>(
     `SELECT * FROM v8_artifact_access_grants
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [artifactId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return (rows || []).map(mapAccessGrantRow);
 }
@@ -607,7 +624,7 @@ async function backfillReportsForOrg(organizationId: string): Promise<number> {
      WHERE r.organization_id = ?
        AND l.link_id IS NULL`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   let inserted = 0;
@@ -655,7 +672,7 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
      WHERE d.organization_id = ?
        AND l.link_id IS NULL`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   let inserted = 0;
@@ -703,14 +720,14 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   backfillWatermark.set(organizationId, now);
   if (reportsInserted || presentationsInserted) {
     logger.info(
-      `${LOG_PREFIX} Backfilled ${reportsInserted} reports and ${presentationsInserted} presentations for org ${organizationId}`,
+      `${LOG_PREFIX} Backfilled ${reportsInserted} reports and ${presentationsInserted} presentations for org ${organizationId}`
     );
   }
 }
 
 async function getProjectMembershipSet(
   organizationId: string,
-  userId: string,
+  userId: string
 ): Promise<Set<string>> {
   const rows = await dbAll<{ project_id: string }>(
     `SELECT pm.project_id
@@ -721,14 +738,14 @@ async function getProjectMembershipSet(
        AND pm.project_id IS NOT NULL
        AND p.organization_id = ?`,
     [userId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   return new Set((rows || []).map((row) => String(row.project_id)));
 }
 
 async function getArtifactAccessGrants(
   organizationId: string,
-  artifactIds: string[],
+  artifactIds: string[]
 ): Promise<Map<string, ArtifactAccessGrant[]>> {
   if (artifactIds.length === 0) return new Map();
   const placeholders = artifactIds.map(() => '?').join(', ');
@@ -738,7 +755,7 @@ async function getArtifactAccessGrants(
      WHERE organization_id = ?
        AND artifact_id IN (${placeholders})`,
     [organizationId, ...artifactIds],
-    { fallback: true },
+    { fallback: true }
   );
 
   const map = new Map<string, ArtifactAccessGrant[]>();
@@ -822,12 +839,17 @@ function matchesSearch(item: ArtifactListItem, search?: string): boolean {
     .some((value) => String(value).toLowerCase().includes(q));
 }
 
-function matchesViewFilters(item: ArtifactListItem, filters: ArtifactListFilters, currentUserId: string): boolean {
+function matchesViewFilters(
+  item: ArtifactListItem,
+  filters: ArtifactListFilters,
+  currentUserId: string
+): boolean {
   if (filters.outputType && item.outputType !== filters.outputType) return false;
   if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
   if (filters.visibilityScope && item.visibilityScope !== filters.visibilityScope) return false;
   if (filters.ownerUserId && item.ownerUserId !== filters.ownerUserId) return false;
-  if (filters.sourceInitiativeId && item.sourceInitiativeId !== filters.sourceInitiativeId) return false;
+  if (filters.sourceInitiativeId && item.sourceInitiativeId !== filters.sourceInitiativeId)
+    return false;
   if (filters.onlyMine && item.ownerUserId !== currentUserId) return false;
   if (filters.reviewSharedForUserId) {
     const isReviewer = item.publishReviewers.includes(filters.reviewSharedForUserId);
@@ -842,7 +864,7 @@ function hasArtifactAccess(
   projectMemberships: Set<string>,
   userId: string,
   roleKey: string | null,
-  allowDemo: boolean,
+  allowDemo: boolean
 ): boolean {
   if (item.ownerUserId && item.ownerUserId === userId) return true;
 
@@ -868,7 +890,7 @@ function hasArtifactAccess(
 
 async function getArtifactListItemRow(
   artifactId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactListRow | null> {
   return dbGet<ArtifactListRow>(
     `SELECT a.*,
@@ -910,7 +932,7 @@ async function getArtifactListItemRow(
      WHERE a.organization_id = ?
        AND a.artifact_id = ?`,
     [organizationId, artifactId],
-    { fallback: true },
+    { fallback: true }
   );
 }
 
@@ -964,13 +986,13 @@ export async function listArtifactsForUser(params: {
      WHERE a.organization_id = ?
      ORDER BY COALESCE(a.last_transition_at, a.created_at) DESC`,
     [organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const items = (rows || []).map(rowToListItem);
   const accessMap = await getArtifactAccessGrants(
     organizationId,
-    items.map((item) => item.artifactId),
+    items.map((item) => item.artifactId)
   );
   const projectMemberships = await getProjectMembershipSet(organizationId, userId);
 
@@ -982,8 +1004,8 @@ export async function listArtifactsForUser(params: {
         projectMemberships,
         userId,
         roleKey,
-        allowDemo,
-      ),
+        allowDemo
+      )
     )
     .filter((item) => matchesViewFilters(item, filters, userId))
     .slice(0, Math.max(1, Math.min(filters.limit || 100, 200)));
@@ -1012,7 +1034,7 @@ export async function getArtifactForUser(params: {
     projectMemberships,
     params.userId,
     params.roleKey || null,
-    params.allowDemo || false,
+    params.allowDemo || false
   )
     ? item
     : null;
@@ -1030,7 +1052,7 @@ export async function getArtifactByOrigin(params: {
   const link = await getOriginLinkByOrigin(
     params.organizationId,
     params.originRuntime,
-    params.originRecordId,
+    params.originRecordId
   );
   if (!link) return null;
   return getArtifactForUser({
@@ -1083,7 +1105,7 @@ export async function listMyWorkArtifacts(params: {
 }
 
 function inferArtifactPlan(
-  request: ArtifactPlanningRequest,
+  request: ArtifactPlanningRequest
 ): ArtifactPlanningResult['artifactPlan'] {
   const goal = request.goal.toLowerCase();
   const explicitFamily = request.requestedArtifactFamily;
@@ -1123,7 +1145,7 @@ function inferArtifactPlan(
 }
 
 function mapSnapshotSourceKindToReportSourceType(
-  sourceKind: string | null | undefined,
+  sourceKind: string | null | undefined
 ): ArtifactRunReportSourceType | null {
   const normalized = String(sourceKind || '')
     .trim()
@@ -1144,7 +1166,7 @@ function normalizePresentationSourceArtifactType(sourceKind: string | null | und
 
 async function resolveMaterializedReportParams(
   current: ArtifactRunRecord,
-  params: MaterializeArtifactRunParams,
+  params: MaterializeArtifactRunParams
 ): Promise<{
   sourceType: ArtifactRunReportSourceType;
   sourceId: string;
@@ -1157,9 +1179,10 @@ async function resolveMaterializedReportParams(
   const title = String(params.title || current.plan.titleHint || 'Output draft').trim();
   const description = params.description?.trim() || undefined;
   const normalizedSourceType = params.sourceType?.trim().toUpperCase();
-  const sourceType = normalizedSourceType && VALID_REPORT_SOURCE_TYPES.has(normalizedSourceType)
-    ? (normalizedSourceType as ArtifactRunReportSourceType)
-    : undefined;
+  const sourceType =
+    normalizedSourceType && VALID_REPORT_SOURCE_TYPES.has(normalizedSourceType)
+      ? (normalizedSourceType as ArtifactRunReportSourceType)
+      : undefined;
   const sourceId = params.sourceId?.trim();
 
   if ((params.sourceType && !sourceId) || (!params.sourceType && sourceId)) {
@@ -1184,14 +1207,15 @@ async function resolveMaterializedReportParams(
 
   const snapshot = await contextSnapshotService.getSnapshot(
     current.contextSnapshotId,
-    params.organizationId,
+    params.organizationId
   );
   const derivedSource = (snapshot?.sourceContextRefs || []).find(
-    (ref) => mapSnapshotSourceKindToReportSourceType(ref.sourceKind) && String(ref.sourceId || '').trim(),
+    (ref) =>
+      mapSnapshotSourceKindToReportSourceType(ref.sourceKind) && String(ref.sourceId || '').trim()
   );
   if (!derivedSource) {
     throw new Error(
-      'ArtifactRun report materialization requires sourceType/sourceId or a resolvable snapshot source context',
+      'ArtifactRun report materialization requires sourceType/sourceId or a resolvable snapshot source context'
     );
   }
 
@@ -1208,7 +1232,7 @@ async function resolveMaterializedReportParams(
 
 async function resolveMaterializedPresentationParams(
   current: ArtifactRunRecord,
-  params: MaterializeArtifactRunParams,
+  params: MaterializeArtifactRunParams
 ): Promise<{
   title: string;
   setup: {
@@ -1230,7 +1254,9 @@ async function resolveMaterializedPresentationParams(
   };
   originSummary: Record<string, unknown>;
 }> {
-  const title = String(params.title || current.plan.titleHint || 'Executive presentation draft').trim();
+  const title = String(
+    params.title || current.plan.titleHint || 'Executive presentation draft'
+  ).trim();
   const cfg = params.config || {};
   const audience =
     cfg.audience === 'sponsor' || cfg.audience === 'executive' || cfg.audience === 'investor'
@@ -1249,7 +1275,9 @@ async function resolveMaterializedPresentationParams(
   const directSourceId = params.sourceId?.trim() || undefined;
   const directSourceName = params.sourceName?.trim() || undefined;
   if ((directSourceType && !directSourceId) || (!directSourceType && directSourceId)) {
-    throw new Error('ArtifactRun presentation materialization requires both sourceType and sourceId');
+    throw new Error(
+      'ArtifactRun presentation materialization requires both sourceType and sourceId'
+    );
   }
 
   let sourceArtifacts: Array<{ type: string; id?: string; label: string }> = [];
@@ -1267,10 +1295,10 @@ async function resolveMaterializedPresentationParams(
   } else {
     const snapshot = await contextSnapshotService.getSnapshot(
       current.contextSnapshotId,
-      params.organizationId,
+      params.organizationId
     );
     const derivedSource = (snapshot?.sourceContextRefs || []).find((ref) =>
-      String(ref.sourceId || '').trim(),
+      String(ref.sourceId || '').trim()
     );
     if (derivedSource) {
       resolvedSourceType = String(derivedSource.sourceKind || '').trim() || undefined;
@@ -1373,7 +1401,7 @@ async function createArtifactRunRecord(params: {
       null,
       now,
       now,
-    ],
+    ]
   );
   const row = await getArtifactRunRow(runId, params.organizationId);
   if (!row) throw new Error(`ArtifactRun ${runId} was not persisted`);
@@ -1381,7 +1409,7 @@ async function createArtifactRunRecord(params: {
 }
 
 export async function createArtifactRunFromChat(
-  request: ArtifactPlanningRequest,
+  request: ArtifactPlanningRequest
 ): Promise<ArtifactPlanningResult & { run: ArtifactRunRecord }> {
   const validated = ArtifactPlanningRequestSchema.parse(request);
   const artifactPlan = inferArtifactPlan(validated);
@@ -1398,7 +1426,7 @@ export async function createArtifactRunFromChat(
     validated.organizationId,
     'planning',
     validated.userId,
-    'ArtifactRun planning started from chat',
+    'ArtifactRun planning started from chat'
   );
 
   const run = await createArtifactRunRecord({
@@ -1420,7 +1448,7 @@ export async function createArtifactRunFromChat(
 }
 
 export async function planArtifactFromChat(
-  request: ArtifactPlanningRequest,
+  request: ArtifactPlanningRequest
 ): Promise<ArtifactPlanningResult> {
   const planned = await createArtifactRunFromChat(request);
   return {
@@ -1432,7 +1460,7 @@ export async function planArtifactFromChat(
 
 export async function getArtifactRun(
   runId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ArtifactRunRecord | null> {
   const row = await getArtifactRunRow(runId, organizationId);
   return row ? mapArtifactRunRow(row) : null;
@@ -1497,7 +1525,7 @@ export async function acceptArtifactRunPlan(params: {
     params.organizationId,
     'proposals_ready',
     params.actorUserId,
-    'ArtifactRun proposal created',
+    'ArtifactRun proposal created'
   );
 
   const now = new Date().toISOString();
@@ -1505,7 +1533,7 @@ export async function acceptArtifactRunPlan(params: {
     `UPDATE v8_artifact_runs
      SET proposal_id = ?, run_status = ?, updated_at = ?
      WHERE run_id = ? AND organization_id = ?`,
-    [proposal.proposalId, 'proposal_created', now, params.runId, params.organizationId],
+    [proposal.proposalId, 'proposal_created', now, params.runId, params.organizationId]
   );
 
   const updated = await getArtifactRun(params.runId, params.organizationId);
@@ -1527,7 +1555,7 @@ export async function retryArtifactRun(params: {
     `UPDATE v8_artifact_runs
      SET run_status = ?, updated_at = ?
      WHERE run_id = ? AND organization_id = ?`,
-    ['retry_requested', new Date().toISOString(), params.runId, params.organizationId],
+    ['retry_requested', new Date().toISOString(), params.runId, params.organizationId]
   );
 
   const handoff = await chatExecutionService.initiateHandoff({
@@ -1543,7 +1571,7 @@ export async function retryArtifactRun(params: {
     params.organizationId,
     'planning',
     params.actorUserId,
-    'ArtifactRun retry requested',
+    'ArtifactRun retry requested'
   );
 
   return createArtifactRunRecord({
@@ -1559,7 +1587,7 @@ export async function retryArtifactRun(params: {
 }
 
 export async function materializeArtifactRun(
-  params: MaterializeArtifactRunParams,
+  params: MaterializeArtifactRunParams
 ): Promise<ArtifactRunRecord> {
   const validated = MaterializeArtifactRunParamsSchema.parse(params);
   const current = await getArtifactRun(validated.runId, validated.organizationId);
@@ -1572,20 +1600,23 @@ export async function materializeArtifactRun(
     current.plan.outputType !== 'sheet'
   ) {
     throw new Error(
-      `ArtifactRun ${validated.runId} only supports report, presentation, or sheet materialization currently`,
+      `ArtifactRun ${validated.runId} only supports report, presentation, or sheet materialization currently`
     );
   }
   if (current.runStatus !== 'proposal_created') {
     throw new Error(
-      `ArtifactRun ${validated.runId} must be in proposal_created before materialization`,
+      `ArtifactRun ${validated.runId} must be in proposal_created before materialization`
     );
   }
 
   try {
-    const spineRun = await executionSpineService.getRun(current.executionRunId, validated.organizationId);
+    const spineRun = await executionSpineService.getRun(
+      current.executionRunId,
+      validated.organizationId
+    );
     if (!spineRun) {
       throw new Error(
-        `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`,
+        `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`
       );
     }
 
@@ -1593,40 +1624,40 @@ export async function materializeArtifactRun(
       await executionSpineService.submitForReview(
         current.executionRunId,
         validated.organizationId,
-        validated.actorUserId,
+        validated.actorUserId
       );
       await executionSpineService.approveRun(
         current.executionRunId,
         validated.organizationId,
         validated.actorUserId,
-        'ArtifactRun materialization approved',
+        'ArtifactRun materialization approved'
       );
       await executionSpineService.applyRun(
         current.executionRunId,
         validated.organizationId,
-        validated.actorUserId,
+        validated.actorUserId
       );
     } else if (spineRun.state === 'waiting_for_review') {
       await executionSpineService.approveRun(
         current.executionRunId,
         validated.organizationId,
         validated.actorUserId,
-        'ArtifactRun materialization approved',
+        'ArtifactRun materialization approved'
       );
       await executionSpineService.applyRun(
         current.executionRunId,
         validated.organizationId,
-        validated.actorUserId,
+        validated.actorUserId
       );
     } else if (spineRun.state === 'approved_for_apply') {
       await executionSpineService.applyRun(
         current.executionRunId,
         validated.organizationId,
-        validated.actorUserId,
+        validated.actorUserId
       );
     } else if (spineRun.state !== 'applying') {
       throw new Error(
-        `Execution run ${current.executionRunId} must be proposals_ready, waiting_for_review, approved_for_apply or applying before materialization`,
+        `Execution run ${current.executionRunId} must be proposals_ready, waiting_for_review, approved_for_apply or applying before materialization`
       );
     }
 
@@ -1661,7 +1692,7 @@ export async function materializeArtifactRun(
         const link = await getOriginLinkByOrigin(
           validated.organizationId,
           'report',
-          created.report.id,
+          created.report.id
         );
         resolvedArtifactId = link?.artifactId || null;
       }
@@ -1670,7 +1701,7 @@ export async function materializeArtifactRun(
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
         presentationParams.setup as any,
-        validated.organizationId,
+        validated.organizationId
       );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,
@@ -1702,7 +1733,7 @@ export async function materializeArtifactRun(
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
       if (!tableId) {
         throw new Error(
-          `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization`,
+          `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization`
         );
       }
 
@@ -1716,14 +1747,14 @@ export async function materializeArtifactRun(
     }
     if (!resolvedArtifactId) {
       throw new Error(
-        `Canonical artifact missing for ${current.plan.outputType} materialization ${validated.runId}`,
+        `Canonical artifact missing for ${current.plan.outputType} materialization ${validated.runId}`
       );
     }
 
     await executionSpineService.completeRun(
       current.executionRunId,
       validated.organizationId,
-      validated.actorUserId,
+      validated.actorUserId
     );
 
     const now = new Date().toISOString();
@@ -1731,14 +1762,7 @@ export async function materializeArtifactRun(
       `UPDATE v8_artifact_runs
        SET artifact_id = ?, run_status = ?, failure_reason = NULL, completed_at = ?, updated_at = ?
        WHERE run_id = ? AND organization_id = ?`,
-      [
-        resolvedArtifactId,
-        'completed',
-        now,
-        now,
-        validated.runId,
-        validated.organizationId,
-      ],
+      [resolvedArtifactId, 'completed', now, now, validated.runId, validated.organizationId]
     );
 
     const completed = await getArtifactRun(validated.runId, validated.organizationId);
@@ -1757,7 +1781,7 @@ export async function materializeArtifactRun(
         validated.organizationId,
         'failed',
         validated.actorUserId,
-        failureReason,
+        failureReason
       );
     } catch (spineError) {
       logger.warn(`${LOG_PREFIX} Failed to mark execution run as failed after ArtifactRun error`, {
@@ -1771,7 +1795,7 @@ export async function materializeArtifactRun(
       `UPDATE v8_artifact_runs
        SET run_status = ?, failure_reason = ?, completed_at = ?, updated_at = ?
        WHERE run_id = ? AND organization_id = ?`,
-      ['failed', failureReason, now, now, validated.runId, validated.organizationId],
+      ['failed', failureReason, now, now, validated.runId, validated.organizationId]
     );
 
     throw error;

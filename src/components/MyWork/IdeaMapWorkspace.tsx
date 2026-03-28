@@ -26,12 +26,13 @@ import {
   getArtifactLabel,
 } from '../../utils/artifactLinks';
 import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
+import { applyAIProposalRuntime } from './aiProposalRuntime';
+import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
+import { mergeWorkspaceExtensions, useWorkspaceGraphRuntime } from './canvas/workspaceGraphRuntime';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
-import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
-import { IdeaExportMenu } from './IdeaExportMenu';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
@@ -42,6 +43,7 @@ import {
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
+import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
@@ -55,8 +57,8 @@ import {
   type CanvasGovernanceStatus,
   EMPTY_SELECTION,
   IDEA_WORKSPACE_IMPORT_EVENT,
-  type IdeaWorkspaceSelection,
   type IdeaWorkspaceImportPayload,
+  type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
 import { IdeaTableTool } from './IdeaTableTool';
 import { applyIdeaTemplate, findIdeaTemplate, IdeaTemplateGallery } from './IdeaTemplateGallery';
@@ -65,18 +67,13 @@ import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
-import type { MyIdea } from './MyIdeasListContent';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
-import { applyAIProposalRuntime } from './aiProposalRuntime';
+import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
+import type { MyIdea } from './MyIdeasListContent';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
-import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
-import {
-  mergeWorkspaceExtensions,
-  useWorkspaceGraphRuntime,
-} from './canvas/workspaceGraphRuntime';
 
 // React StrictMode can remount brand-new workspaces in development.
 // Keep one creation request per temporary draft id to avoid duplicate ideas.
@@ -111,7 +108,8 @@ class CanvasToolErrorBoundary extends React.Component<
               {this.props.toolName} {isPl ? 'nie załadował się' : 'failed to load'}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-              {this.state.error?.message || (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
+              {this.state.error?.message ||
+                (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
             </div>
           </div>
           {this.props.onRetry && (
@@ -133,10 +131,7 @@ class CanvasToolErrorBoundary extends React.Component<
   }
 }
 
-function isSameSelection(
-  left: IdeaWorkspaceSelection,
-  right: IdeaWorkspaceSelection
-) {
+function isSameSelection(left: IdeaWorkspaceSelection, right: IdeaWorkspaceSelection) {
   if (left.type !== right.type) return false;
   if (left.count !== right.count) return false;
   if ((left.primaryId || null) !== (right.primaryId || null)) return false;
@@ -315,9 +310,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const toggleWorkspaceFullscreen = useCallback(() => {
     if (!workspaceRootRef.current) return;
     if (!document.fullscreenElement) {
-      workspaceRootRef.current.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+      workspaceRootRef.current
+        .requestFullscreen?.()
+        .then(() => setIsFullscreen(true))
+        .catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+      document
+        .exitFullscreen?.()
+        .then(() => setIsFullscreen(false))
+        .catch(() => {});
     }
   }, []);
 
@@ -375,7 +376,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const handleSelectionChange = useCallback(
     (next: IdeaWorkspaceSelection) => {
-      console.log(`%c[Workspace] selectionChange: type=${next.type} count=${next.count} ids=[${(next.ids || []).slice(0, 3).join(',')}]`, 'color: #3b82f6');
+      console.log(
+        `%c[Workspace] selectionChange: type=${next.type} count=${next.count} ids=[${(next.ids || []).slice(0, 3).join(',')}]`,
+        'color: #3b82f6'
+      );
       if (isSameSelection(selectionRef.current, next)) return;
       selectionRef.current = next;
       setSelection(next);
@@ -577,12 +581,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, []);
 
   // ── Quick tool actions ──────────────────────────────────────────────────────
-  const handleConvertRef = useRef<(target: IdeaConvertTarget, nodeIds?: string[]) => void>(() => {});
+  const handleConvertRef = useRef<(target: IdeaConvertTarget, nodeIds?: string[]) => void>(
+    () => {}
+  );
   const handleAcceptChallengeRef = useRef<() => void>(() => {});
 
   const handleQuickAction = useCallback(
     async (action: string, eventDetail?: Record<string, any>) => {
-      console.log(`%c[Workspace] handleQuickAction: "${action}"`, 'color: #3b82f6; font-weight: bold');
+      console.log(
+        `%c[Workspace] handleQuickAction: "${action}"`,
+        'color: #3b82f6; font-weight: bold'
+      );
       // V5-IDEA-26: Cross-system transforms
       const XFORM_MAP: Record<string, CanvasToolType> = {
         xform_to_mindmap: 'mindmap',
@@ -735,7 +744,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (CONVERT_PREFIX_MAP[action]) {
         const target = CONVERT_PREFIX_MAP[action];
         trackFunnelEvent('ideas_convert_selection', { tool: activeTool, target, action });
-        const explicitNodeIds = Array.isArray(eventDetail?.nodeIds) ? eventDetail.nodeIds : undefined;
+        const explicitNodeIds = Array.isArray(eventDetail?.nodeIds)
+          ? eventDetail.nodeIds
+          : undefined;
         handleConvertRef.current(target, explicitNodeIds);
         return;
       }
@@ -838,7 +849,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [handleQuickAction, realId]);
 
   const dispatchWorkspaceInsert = useCallback(
-    (items: Array<{ label?: string; text?: string; type?: string; data?: Record<string, unknown> }>) => {
+    (
+      items: Array<{ label?: string; text?: string; type?: string; data?: Record<string, unknown> }>
+    ) => {
       window.dispatchEvent(
         new CustomEvent('idea-workspace-insert', {
           detail: { items, ideaId: realId },
@@ -906,7 +919,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           );
           setMapRefreshToken((v) => v + 1);
         } else {
-          toast.error(error?.message || (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template'));
+          toast.error(
+            error?.message ||
+              (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
+          );
         }
       }
     },
@@ -940,12 +956,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           setProposalBatch(batch);
           setActivePanel('tools');
         } else {
-          toast(isPolish ? 'AI nie zwróciło propozycji do review' : 'AI returned no proposals to review', {
-            icon: '🤖',
-          });
+          toast(
+            isPolish
+              ? 'AI nie zwróciło propozycji do review'
+              : 'AI returned no proposals to review',
+            {
+              icon: '🤖',
+            }
+          );
         }
       } catch (error: any) {
-        toast.error(error?.message || (isPolish ? 'Nie udało się uruchomić AI' : 'Failed to run AI'));
+        toast.error(
+          error?.message || (isPolish ? 'Nie udało się uruchomić AI' : 'Failed to run AI')
+        );
       }
     },
     [
@@ -1042,9 +1065,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         await graphRuntime.flushGraph({ reason: 'manual' });
         setMapRefreshToken((v) => v + 1);
         toast.success(
-          isPolish
-            ? `Zapisano status review: ${nextStatus}`
-            : `Saved review status: ${nextStatus}`
+          isPolish ? `Zapisano status review: ${nextStatus}` : `Saved review status: ${nextStatus}`
         );
       } catch (err: any) {
         toast.error(
@@ -1360,14 +1381,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // ── V5-IDEA-16: Persist surface state on unmount ───────────────────────────
   const lastViewportRef = React.useRef<{ x: number; y: number; zoom: number } | null>(null);
   const latestSurfaceStateRef = useRef<Record<string, unknown>>({});
-  const handleViewportReport = useCallback((vp: { x: number; y: number; zoom: number }) => {
-    const prev = lastViewportRef.current;
-    if (prev && prev.x === vp.x && prev.y === vp.y && prev.zoom === vp.zoom) {
-      return;
-    }
-    lastViewportRef.current = vp;
-    setRuntimeViewport(vp);
-  }, [setRuntimeViewport]);
+  const handleViewportReport = useCallback(
+    (vp: { x: number; y: number; zoom: number }) => {
+      const prev = lastViewportRef.current;
+      if (prev && prev.x === vp.x && prev.y === vp.y && prev.zoom === vp.zoom) {
+        return;
+      }
+      lastViewportRef.current = vp;
+      setRuntimeViewport(vp);
+    },
+    [setRuntimeViewport]
+  );
 
   useEffect(() => {
     graphNodesRef.current = graphNodes;
@@ -1396,14 +1420,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       { reason: 'draft' }
     );
-  }, [
-    activeTool,
-    applyRuntimeExtensionsPatch,
-    focusMode,
-    focusObjectId,
-    isDraft,
-    realId,
-  ]);
+  }, [activeTool, applyRuntimeExtensionsPatch, focusMode, focusObjectId, isDraft, realId]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const openChat = useCallback(
@@ -1906,7 +1923,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             nodes: updatedNodes as any[],
             edges: edges as any[],
             extensions:
-              map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+              map?.extensions &&
+              typeof map.extensions === 'object' &&
+              !Array.isArray(map.extensions)
                 ? map.extensions
                 : {},
           },
@@ -2034,7 +2053,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (detail.ideaId && detail.ideaId !== realId) return;
       setWhiteboardFacilitation({
         timerEndsAt:
-          typeof detail?.sessionState?.timerEndsAt === 'number' ? detail.sessionState.timerEndsAt : null,
+          typeof detail?.sessionState?.timerEndsAt === 'number'
+            ? detail.sessionState.timerEndsAt
+            : null,
         voteSummary:
           detail.voteSummary && typeof detail.voteSummary === 'object' ? detail.voteSummary : {},
         myVoteCounts:
@@ -2049,7 +2070,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     setDrillDownStack((prev) => prev.slice(0, toIndex));
     setMapRefreshToken((v) => v + 1);
   }, []);
-
 
   // ── Draft saved label ───────────────────────────────────────────────────────
   const draftSavedLabel = useMemo(() => {
@@ -2167,12 +2187,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           currentUserId={currentUserId}
           nodes={graphNodes}
           voteCounts={activeTool === 'whiteboard' ? whiteboardFacilitation.voteSummary : undefined}
-          myVoteCounts={activeTool === 'whiteboard' ? whiteboardFacilitation.myVoteCounts : undefined}
+          myVoteCounts={
+            activeTool === 'whiteboard' ? whiteboardFacilitation.myVoteCounts : undefined
+          }
           persistent={activeTool === 'whiteboard'}
           onVotesChange={(votes) => {
             if (activeTool !== 'whiteboard') {
               window.dispatchEvent(
-                new CustomEvent('idea-workspace-votes-update', { detail: { votes, ideaId: realId } })
+                new CustomEvent('idea-workspace-votes-update', {
+                  detail: { votes, ideaId: realId },
+                })
               );
             }
           }}
@@ -2334,7 +2358,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           isAccepted={isAccepted}
           ideaId={realId}
           onAction={(action) => handleQuickAction(action)}
-          onOpenChat={() => { setChatKickoffMessage(''); if (isChatCollapsed) toggleChatCollapse(); }}
+          onOpenChat={() => {
+            setChatKickoffMessage('');
+            if (isChatCollapsed) toggleChatCollapse();
+          }}
           onApplyTemplate={handleApplyTemplate}
           onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
         />

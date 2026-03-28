@@ -50,11 +50,14 @@ export class AuditRetentionJob {
       logger.error('[AuditRetention] Error on initial run', { error: (err as Error).message })
     );
 
-    this.intervalId = setInterval(() => {
-      this.runAll().catch((err) =>
-        logger.error('[AuditRetention] Error on scheduled run', { error: (err as Error).message })
-      );
-    }, 24 * 60 * 60 * 1000);
+    this.intervalId = setInterval(
+      () => {
+        this.runAll().catch((err) =>
+          logger.error('[AuditRetention] Error on scheduled run', { error: (err as Error).message })
+        );
+      },
+      24 * 60 * 60 * 1000
+    );
   }
 
   stop(): void {

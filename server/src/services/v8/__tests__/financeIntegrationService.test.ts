@@ -1,33 +1,33 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 
 import type {
-  RecordIngestionParams,
   CreateEconomicsLinkageParams,
   EvaluatePromotionGateParams,
   RecordDeltaEscalationParams,
+  RecordIngestionParams,
   RecordSourceRefreshParams,
 } from '../../../types/financeIntegrationPromotion.js';
 import {
-  IngestionReadinessStateValues,
-  LinkageTypeValues,
-  LinkageStatusValues,
-  PromotionGateResultValues,
-  MaterialityLevelValues,
-  FinanceDocumentIngestionSchema,
-  InitiativeEconomicsLinkageSchema,
-  PromotionGateSchema,
-  UnreconciledDeltaEscalationSchema,
   CloudLinkedSourceRefreshSchema,
-  RecordIngestionParamsSchema,
-  CreateEconomicsLinkageParamsSchema,
-  EvaluatePromotionGateParamsSchema,
-  RecordDeltaEscalationParamsSchema,
-  RecordSourceRefreshParamsSchema,
-  INGESTION_STATE_TRANSITIONS,
   computeOverallGateResult,
-  evaluateEscalationThreshold,
+  CreateEconomicsLinkageParamsSchema,
   DEFAULT_ESCALATION_THRESHOLDS,
+  evaluateEscalationThreshold,
+  EvaluatePromotionGateParamsSchema,
+  FinanceDocumentIngestionSchema,
+  INGESTION_STATE_TRANSITIONS,
+  IngestionReadinessStateValues,
+  InitiativeEconomicsLinkageSchema,
+  LinkageStatusValues,
+  LinkageTypeValues,
+  MaterialityLevelValues,
+  PromotionGateResultValues,
+  PromotionGateSchema,
+  RecordDeltaEscalationParamsSchema,
+  RecordIngestionParamsSchema,
+  RecordSourceRefreshParamsSchema,
+  UnreconciledDeltaEscalationSchema,
 } from '../../../types/financeIntegrationPromotion.js';
 
 // ==========================================
@@ -54,17 +54,17 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  isValidIngestionTransition,
-  recordIngestion,
-  getIngestion,
-  transitionIngestionState,
   createEconomicsLinkage,
-  getLinkagesByInitiative,
   evaluatePromotionGate,
-  recordDeltaEscalation,
   getEscalationsByInitiative,
-  recordSourceRefresh,
+  getIngestion,
+  getLinkagesByInitiative,
   getSourceRefreshes,
+  isValidIngestionTransition,
+  recordDeltaEscalation,
+  recordIngestion,
+  recordSourceRefresh,
+  transitionIngestionState,
 } from '../financeIntegrationService.js';
 
 // ==========================================
@@ -92,7 +92,9 @@ function makeIngestionParams(overrides?: Partial<RecordIngestionParams>): Record
   };
 }
 
-function makeLinkageParams(overrides?: Partial<CreateEconomicsLinkageParams>): CreateEconomicsLinkageParams {
+function makeLinkageParams(
+  overrides?: Partial<CreateEconomicsLinkageParams>
+): CreateEconomicsLinkageParams {
   return {
     organizationId: ORG_ID,
     financeModelRef: FINANCE_MODEL_REF,
@@ -102,7 +104,9 @@ function makeLinkageParams(overrides?: Partial<CreateEconomicsLinkageParams>): C
   };
 }
 
-function makePromotionGateParams(overrides?: Partial<EvaluatePromotionGateParams>): EvaluatePromotionGateParams {
+function makePromotionGateParams(
+  overrides?: Partial<EvaluatePromotionGateParams>
+): EvaluatePromotionGateParams {
   return {
     organizationId: ORG_ID,
     sourceArtifactRef: SOURCE_ARTIFACT_REF,
@@ -115,7 +119,9 @@ function makePromotionGateParams(overrides?: Partial<EvaluatePromotionGateParams
   };
 }
 
-function makeEscalationParams(overrides?: Partial<RecordDeltaEscalationParams>): RecordDeltaEscalationParams {
+function makeEscalationParams(
+  overrides?: Partial<RecordDeltaEscalationParams>
+): RecordDeltaEscalationParams {
   return {
     organizationId: ORG_ID,
     initiativeId: INITIATIVE_ID,
@@ -127,7 +133,9 @@ function makeEscalationParams(overrides?: Partial<RecordDeltaEscalationParams>):
   };
 }
 
-function makeSourceRefreshParams(overrides?: Partial<RecordSourceRefreshParams>): RecordSourceRefreshParams {
+function makeSourceRefreshParams(
+  overrides?: Partial<RecordSourceRefreshParams>
+): RecordSourceRefreshParams {
   return {
     organizationId: ORG_ID,
     promotedArtifactRef: PROMOTED_ARTIFACT_REF,
@@ -302,42 +310,38 @@ describe('recordIngestion', () => {
   });
 
   it('accepts optional recognitionConfidence', async () => {
-    const result = await recordIngestion(
-      makeIngestionParams({ recognitionConfidence: 0.85 }),
-    );
+    const result = await recordIngestion(makeIngestionParams({ recognitionConfidence: 0.85 }));
 
     expect(result.recognitionConfidence).toBe(0.85);
   });
 
   it('accepts optional firstModelRef', async () => {
-    const result = await recordIngestion(
-      makeIngestionParams({ firstModelRef: 'model-ref-1' }),
-    );
+    const result = await recordIngestion(makeIngestionParams({ firstModelRef: 'model-ref-1' }));
 
     expect(result.firstModelRef).toBe('model-ref-1');
   });
 
   it('rejects invalid organizationId via Zod', async () => {
     await expect(
-      recordIngestion({ organizationId: 'not-uuid', documentRef: 'doc.pdf' }),
+      recordIngestion({ organizationId: 'not-uuid', documentRef: 'doc.pdf' })
     ).rejects.toThrow(ZodError);
   });
 
   it('rejects empty documentRef via Zod', async () => {
-    await expect(
-      recordIngestion({ organizationId: ORG_ID, documentRef: '' }),
-    ).rejects.toThrow(ZodError);
+    await expect(recordIngestion({ organizationId: ORG_ID, documentRef: '' })).rejects.toThrow(
+      ZodError
+    );
   });
 
   it('rejects recognitionConfidence > 1 via Zod', () => {
     expect(() =>
-      RecordIngestionParamsSchema.parse(makeIngestionParams({ recognitionConfidence: 1.5 })),
+      RecordIngestionParamsSchema.parse(makeIngestionParams({ recognitionConfidence: 1.5 }))
     ).toThrow(ZodError);
   });
 
   it('rejects recognitionConfidence < 0 via Zod', () => {
     expect(() =>
-      RecordIngestionParamsSchema.parse(makeIngestionParams({ recognitionConfidence: -0.1 })),
+      RecordIngestionParamsSchema.parse(makeIngestionParams({ recognitionConfidence: -0.1 }))
     ).toThrow(ZodError);
   });
 });
@@ -401,7 +405,7 @@ describe('transitionIngestionState', () => {
         ingestionId: INGESTION_ID,
         organizationId: ORG_ID,
         newState: 'ready',
-      }),
+      })
     ).rejects.toThrow('Invalid ingestion state transition');
   });
 
@@ -413,7 +417,7 @@ describe('transitionIngestionState', () => {
         ingestionId: '00000000-0000-4000-8000-ffffffffffff',
         organizationId: ORG_ID,
         newState: 'recognized',
-      }),
+      })
     ).rejects.toThrow('not found');
   });
 
@@ -423,7 +427,7 @@ describe('transitionIngestionState', () => {
         ingestionId: 'not-uuid',
         organizationId: ORG_ID,
         newState: 'invalid_state' as any,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 });
@@ -446,7 +450,7 @@ describe('createEconomicsLinkage', () => {
 
   it('accepts explicit status override', async () => {
     const result = await createEconomicsLinkage(
-      makeLinkageParams({ status: 'linked_to_finance_model' }),
+      makeLinkageParams({ status: 'linked_to_finance_model' })
     );
 
     expect(result.status).toBe('linked_to_finance_model');
@@ -455,7 +459,7 @@ describe('createEconomicsLinkage', () => {
   it('supports all 4 linkage types', () => {
     for (const type of LinkageTypeValues) {
       expect(() =>
-        CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ linkageType: type })),
+        CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ linkageType: type }))
       ).not.toThrow();
     }
   });
@@ -463,24 +467,20 @@ describe('createEconomicsLinkage', () => {
   it('supports all 6 linkage statuses', () => {
     for (const status of LinkageStatusValues) {
       expect(() =>
-        CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ status })),
+        CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ status }))
       ).not.toThrow();
     }
   });
 
   it('rejects invalid linkageType via Zod', () => {
     expect(() =>
-      CreateEconomicsLinkageParamsSchema.parse(
-        makeLinkageParams({ linkageType: 'invalid' as any }),
-      ),
+      CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ linkageType: 'invalid' as any }))
     ).toThrow(ZodError);
   });
 
   it('rejects empty initiativeId via Zod', () => {
     expect(() =>
-      CreateEconomicsLinkageParamsSchema.parse(
-        makeLinkageParams({ initiativeId: '' }),
-      ),
+      CreateEconomicsLinkageParamsSchema.parse(makeLinkageParams({ initiativeId: '' }))
     ).toThrow(ZodError);
   });
 });
@@ -549,11 +549,15 @@ describe('computeOverallGateResult', () => {
   });
 
   it('returns review_required when permission is review_required', () => {
-    expect(computeOverallGateResult('review_required', 'approved', true, true)).toBe('review_required');
+    expect(computeOverallGateResult('review_required', 'approved', true, true)).toBe(
+      'review_required'
+    );
   });
 
   it('returns review_required when quality is review_required', () => {
-    expect(computeOverallGateResult('approved', 'review_required', true, true)).toBe('review_required');
+    expect(computeOverallGateResult('approved', 'review_required', true, true)).toBe(
+      'review_required'
+    );
   });
 
   it('rejects over review_required when one gate rejects', () => {
@@ -576,7 +580,7 @@ describe('evaluatePromotionGate', () => {
 
   it('creates a rejected gate record when quality fails', async () => {
     const result = await evaluatePromotionGate(
-      makePromotionGateParams({ qualityGateResult: 'rejected' }),
+      makePromotionGateParams({ qualityGateResult: 'rejected' })
     );
 
     expect(result.overallResult).toBe('rejected');
@@ -584,7 +588,7 @@ describe('evaluatePromotionGate', () => {
 
   it('creates review_required when provenance not preserved', async () => {
     const result = await evaluatePromotionGate(
-      makePromotionGateParams({ provenancePreserved: false }),
+      makePromotionGateParams({ provenancePreserved: false })
     );
 
     expect(result.overallResult).toBe('review_required');
@@ -610,7 +614,7 @@ describe('evaluatePromotionGate', () => {
         qualityGateResult: 'approved',
         provenancePreserved: true,
         staleStateChecked: true,
-      }),
+      })
     ).rejects.toThrow(ZodError);
   });
 
@@ -618,8 +622,8 @@ describe('evaluatePromotionGate', () => {
     for (const result of PromotionGateResultValues) {
       expect(() =>
         EvaluatePromotionGateParamsSchema.parse(
-          makePromotionGateParams({ permissionGateResult: result }),
-        ),
+          makePromotionGateParams({ permissionGateResult: result })
+        )
       ).not.toThrow();
     }
   });
@@ -680,7 +684,7 @@ describe('evaluateEscalationThreshold', () => {
     const result = evaluateEscalationThreshold(
       DEFAULT_ESCALATION_THRESHOLDS.deltaMagnitude,
       DEFAULT_ESCALATION_THRESHOLDS.deltaDuration,
-      'high',
+      'high'
     );
     expect(result.thresholdBreached).toBe(true);
   });
@@ -701,7 +705,7 @@ describe('recordDeltaEscalation', () => {
 
   it('records non-escalated delta for low magnitude', async () => {
     const result = await recordDeltaEscalation(
-      makeEscalationParams({ deltaMagnitude: 0.01, deltaDuration: 5 }),
+      makeEscalationParams({ deltaMagnitude: 0.01, deltaDuration: 5 })
     );
 
     expect(result.thresholdBreached).toBe(false);
@@ -711,42 +715,34 @@ describe('recordDeltaEscalation', () => {
   it('supports all 4 materiality levels', () => {
     for (const level of MaterialityLevelValues) {
       expect(() =>
-        RecordDeltaEscalationParamsSchema.parse(
-          makeEscalationParams({ materialityLevel: level }),
-        ),
+        RecordDeltaEscalationParamsSchema.parse(makeEscalationParams({ materialityLevel: level }))
       ).not.toThrow();
     }
   });
 
   it('rejects negative deltaMagnitude via Zod', () => {
     expect(() =>
-      RecordDeltaEscalationParamsSchema.parse(
-        makeEscalationParams({ deltaMagnitude: -1 }),
-      ),
+      RecordDeltaEscalationParamsSchema.parse(makeEscalationParams({ deltaMagnitude: -1 }))
     ).toThrow(ZodError);
   });
 
   it('rejects negative deltaDuration via Zod', () => {
     expect(() =>
-      RecordDeltaEscalationParamsSchema.parse(
-        makeEscalationParams({ deltaDuration: -1 }),
-      ),
+      RecordDeltaEscalationParamsSchema.parse(makeEscalationParams({ deltaDuration: -1 }))
     ).toThrow(ZodError);
   });
 
   it('rejects non-integer deltaDuration via Zod', () => {
     expect(() =>
-      RecordDeltaEscalationParamsSchema.parse(
-        makeEscalationParams({ deltaDuration: 1.5 }),
-      ),
+      RecordDeltaEscalationParamsSchema.parse(makeEscalationParams({ deltaDuration: 1.5 }))
     ).toThrow(ZodError);
   });
 
   it('rejects invalid materialityLevel via Zod', () => {
     expect(() =>
       RecordDeltaEscalationParamsSchema.parse(
-        makeEscalationParams({ materialityLevel: 'extreme' as any }),
-      ),
+        makeEscalationParams({ materialityLevel: 'extreme' as any })
+      )
     ).toThrow(ZodError);
   });
 });
@@ -799,7 +795,7 @@ describe('recordSourceRefresh', () => {
 
   it('accepts optional reReviewPath', async () => {
     const result = await recordSourceRefresh(
-      makeSourceRefreshParams({ reReviewPath: '/review/finance/123' }),
+      makeSourceRefreshParams({ reReviewPath: '/review/finance/123' })
     );
 
     expect(result.reReviewPath).toBe('/review/finance/123');
@@ -807,25 +803,19 @@ describe('recordSourceRefresh', () => {
 
   it('rejects invalid organizationId via Zod', () => {
     expect(() =>
-      RecordSourceRefreshParamsSchema.parse(
-        makeSourceRefreshParams({ organizationId: 'not-uuid' }),
-      ),
+      RecordSourceRefreshParamsSchema.parse(makeSourceRefreshParams({ organizationId: 'not-uuid' }))
     ).toThrow(ZodError);
   });
 
   it('rejects empty promotedArtifactRef via Zod', () => {
     expect(() =>
-      RecordSourceRefreshParamsSchema.parse(
-        makeSourceRefreshParams({ promotedArtifactRef: '' }),
-      ),
+      RecordSourceRefreshParamsSchema.parse(makeSourceRefreshParams({ promotedArtifactRef: '' }))
     ).toThrow(ZodError);
   });
 
   it('rejects empty sourceModelRef via Zod', () => {
     expect(() =>
-      RecordSourceRefreshParamsSchema.parse(
-        makeSourceRefreshParams({ sourceModelRef: '' }),
-      ),
+      RecordSourceRefreshParamsSchema.parse(makeSourceRefreshParams({ sourceModelRef: '' }))
     ).toThrow(ZodError);
   });
 });
@@ -928,7 +918,7 @@ describe('Zod schema validation', () => {
         firstModelRef: 'model-1',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -943,7 +933,7 @@ describe('Zod schema validation', () => {
         status: 'linked_to_finance_model',
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -960,7 +950,7 @@ describe('Zod schema validation', () => {
         staleStateChecked: true,
         overallResult: 'approved',
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -977,7 +967,7 @@ describe('Zod schema validation', () => {
         escalatedToCFO: true,
         thresholdBreached: true,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -992,7 +982,7 @@ describe('Zod schema validation', () => {
         staleWarningShown: true,
         reReviewPath: null,
         createdAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -1007,7 +997,7 @@ describe('Zod schema validation', () => {
         firstModelRef: null,
         createdAt: '2026-03-23T10:00:00.000Z',
         updatedAt: '2026-03-23T10:00:00.000Z',
-      }),
+      })
     ).toThrow(ZodError);
   });
 

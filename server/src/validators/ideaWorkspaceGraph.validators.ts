@@ -135,39 +135,43 @@ export const ObjectAttachmentSchema = z.object({
 export type ObjectAttachment = z.infer<typeof ObjectAttachmentSchema>;
 
 // ── Node schema (V5-extended, backward-compatible) ──────────────────────────
-export const CanonicalNodeSchema = z.object({
-  id: z.string().min(1),
-  kind: NodeKindEnum,
-  system: NodeSystemEnum.optional(),
-  label: z.string().optional(),
-  position: z.object({ x: z.number(), y: z.number() }).optional(),
-  parentId: z.string().optional(),
-  artifactRef: z
-    .object({
-      type: z.string(),
-      id: z.string(),
-    })
-    .optional(),
-  artifactLinks: z.array(ArtifactLinkSchema).optional(),
-  payload: z.record(z.string(), z.unknown()).optional(),
-  style: z.record(z.string(), z.unknown()).optional(),
-  aiMeta: z.record(z.string(), z.unknown()).optional(),
-  extensions: z.record(z.string(), z.unknown()).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).passthrough();
+export const CanonicalNodeSchema = z
+  .object({
+    id: z.string().min(1),
+    kind: NodeKindEnum,
+    system: NodeSystemEnum.optional(),
+    label: z.string().optional(),
+    position: z.object({ x: z.number(), y: z.number() }).optional(),
+    parentId: z.string().optional(),
+    artifactRef: z
+      .object({
+        type: z.string(),
+        id: z.string(),
+      })
+      .optional(),
+    artifactLinks: z.array(ArtifactLinkSchema).optional(),
+    payload: z.record(z.string(), z.unknown()).optional(),
+    style: z.record(z.string(), z.unknown()).optional(),
+    aiMeta: z.record(z.string(), z.unknown()).optional(),
+    extensions: z.record(z.string(), z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
 
 // ── Edge schema ─────────────────────────────────────────────────────────────
-export const CanonicalEdgeSchema = z.object({
-  id: z.string().min(1),
-  fromNodeId: z.string(),
-  toNodeId: z.string(),
-  relationType: RelationTypeEnum.optional(),
-  label: z.string().optional(),
-  extensions: z.record(z.string(), z.unknown()).optional(),
-  source: z.string().optional(),
-  target: z.string().optional(),
-  type: z.string().optional(),
-}).passthrough();
+export const CanonicalEdgeSchema = z
+  .object({
+    id: z.string().min(1),
+    fromNodeId: z.string(),
+    toNodeId: z.string(),
+    relationType: RelationTypeEnum.optional(),
+    label: z.string().optional(),
+    extensions: z.record(z.string(), z.unknown()).optional(),
+    source: z.string().optional(),
+    target: z.string().optional(),
+    type: z.string().optional(),
+  })
+  .passthrough();
 
 // ── Graph schema (v2/v3 compatible) ─────────────────────────────────────────
 export const IdeaWorkspaceGraphSchema = z.object({
@@ -257,11 +261,12 @@ export function normalizeNodeForStorage(node: any): CanonicalNode {
   const system = node.system ?? node.data?.system;
   if (system && NodeSystemEnum.safeParse(system).success) result.system = system;
 
-  const resolvedArtifactLinks = Array.isArray(node.artifactLinks) && node.artifactLinks.length > 0
-    ? node.artifactLinks
-    : Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0
-      ? node.data.artifactLinks
-      : null;
+  const resolvedArtifactLinks =
+    Array.isArray(node.artifactLinks) && node.artifactLinks.length > 0
+      ? node.artifactLinks
+      : Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0
+        ? node.data.artifactLinks
+        : null;
   if (resolvedArtifactLinks) {
     result.artifactLinks = resolvedArtifactLinks;
   }

@@ -57,10 +57,9 @@ const templateService = {
       }
     }
 
-    await db.query(
-      'UPDATE tp_base_templates SET usage_count = usage_count + 1 WHERE id = $1',
-      [templateId]
-    );
+    await db.query('UPDATE tp_base_templates SET usage_count = usage_count + 1 WHERE id = $1', [
+      templateId,
+    ]);
 
     return base;
   },
@@ -414,7 +413,13 @@ const templateService = {
     for (const tpl of defaults) {
       await db.query(
         'INSERT INTO tp_base_templates (name, description, category, is_featured, schema_snapshot) VALUES ($1, $2, $3, $4, $5)',
-        [tpl.name, tpl.description, tpl.category, tpl.is_featured, JSON.stringify(tpl.schema_snapshot)]
+        [
+          tpl.name,
+          tpl.description,
+          tpl.category,
+          tpl.is_featured,
+          JSON.stringify(tpl.schema_snapshot),
+        ]
       );
     }
     logger.info('[TemplateService] Seeded 6 default templates');

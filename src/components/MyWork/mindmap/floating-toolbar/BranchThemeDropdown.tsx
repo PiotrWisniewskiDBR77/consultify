@@ -8,10 +8,25 @@ interface BranchThemeDropdownProps {
 }
 
 const LINE_STYLES = [
-  { id: 'curved', labelPl: 'Łuk (domyślny)', labelEn: 'Curved (default)', preview: 'M 4 12 Q 16 4 28 12' },
-  { id: 'orthogonal', labelPl: 'Kątowy', labelEn: 'Orthogonal', preview: 'M 4 12 L 16 12 L 16 6 L 28 6' },
+  {
+    id: 'curved',
+    labelPl: 'Łuk (domyślny)',
+    labelEn: 'Curved (default)',
+    preview: 'M 4 12 Q 16 4 28 12',
+  },
+  {
+    id: 'orthogonal',
+    labelPl: 'Kątowy',
+    labelEn: 'Orthogonal',
+    preview: 'M 4 12 L 16 12 L 16 6 L 28 6',
+  },
   { id: 'straight', labelPl: 'Prosty', labelEn: 'Straight', preview: 'M 4 12 L 28 6' },
-  { id: 'step', labelPl: 'Schodkowy', labelEn: 'Step', preview: 'M 4 12 L 12 12 L 12 6 L 20 6 L 20 12 L 28 12' },
+  {
+    id: 'step',
+    labelPl: 'Schodkowy',
+    labelEn: 'Step',
+    preview: 'M 4 12 L 12 12 L 12 6 L 20 6 L 20 12 L 28 12',
+  },
 ];
 
 export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
@@ -30,7 +45,10 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
         return (
           <button
             key={s.id}
-            onClick={() => { onSelect(s.id); onClose(); }}
+            onClick={() => {
+              onSelect(s.id);
+              onClose();
+            }}
             className={`w-full flex items-center gap-3 px-2 py-2 text-[11px] transition-colors ${
               isActive
                 ? 'bg-primary-500/8 text-primary-600 dark:text-primary-400 font-semibold'

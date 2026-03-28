@@ -1,19 +1,15 @@
 import type { NextFunction, Response } from 'express';
 
-import type { AuthRequest } from './auth.middleware.js';
-import Logger from '../utils/Logger.js';
 import { getV8Flags, isV8Enabled, isV8ShadowMode } from '../services/v8/featureFlagService.js';
+import Logger from '../utils/Logger.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 /**
  * Pre-auth gate: checks only the global V8 toggle.
  * Runs BEFORE verifyToken so it can short-circuit without auth overhead.
  * Org-level checks happen later via `v8OrgGate` (after auth sets organizationId).
  */
-export const v8FeatureGate = (
-  _req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-): void => {
+export const v8FeatureGate = (_req: AuthRequest, res: Response, next: NextFunction): void => {
   const globalEnabled = process.env.ENABLE_V8_GLOBAL === 'true';
   if (!globalEnabled) {
     res.status(404).json({ error: 'V8 features not available', code: 'V8_DISABLED' });
@@ -29,7 +25,7 @@ export const v8FeatureGate = (
 export const v8OrgGate = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   const orgId = req.organizationId;
   if (!orgId) {
@@ -75,7 +71,9 @@ export const createV8ModuleGate =
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const orgId = req.organizationId;
     if (!orgId) {
-      res.status(400).json({ error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
+      res
+        .status(400)
+        .json({ error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
       return;
     }
 

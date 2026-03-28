@@ -14,24 +14,24 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
-  ExecutionSignal,
-  SignalAggregation,
-  ResultsHandoffEvent,
-  RebaselineProposal,
-  ForecastConfidence,
-  EmitSignalParams,
-  EmitResultsHandoffEventParams,
-  CreateRebaselineProposalParams,
   AssessForecastConfidenceParams,
-  SignalSeverity,
+  CreateRebaselineProposalParams,
+  EmitResultsHandoffEventParams,
+  EmitSignalParams,
+  ExecutionSignal,
+  ForecastConfidence,
   ForecastConfidenceLevel,
+  RebaselineProposal,
+  ResultsHandoffEvent,
+  SignalAggregation,
+  SignalSeverity,
   SourceObjectType,
 } from '../../types/executionVisibility.js';
 import {
-  EmitSignalParamsSchema,
-  EmitResultsHandoffEventParamsSchema,
-  CreateRebaselineProposalParamsSchema,
   AssessForecastConfidenceParamsSchema,
+  CreateRebaselineProposalParamsSchema,
+  EmitResultsHandoffEventParamsSchema,
+  EmitSignalParamsSchema,
   SIGNAL_SEVERITY_RANK,
 } from '../../types/executionVisibility.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
@@ -210,11 +210,11 @@ export async function emitSignal(params: EmitSignalParams): Promise<ExecutionSig
       signal.severity,
       JSON.stringify(signal.payload),
       signal.timestamp,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Emitted signal ${signal.signalType} [${signal.severity}] for ${signal.sourceObjectType}:${signal.sourceObjectId}`,
+    `${LOG_PREFIX} Emitted signal ${signal.signalType} [${signal.severity}] for ${signal.sourceObjectType}:${signal.sourceObjectId}`
   );
   return signal;
 }
@@ -225,14 +225,14 @@ export async function emitSignal(params: EmitSignalParams): Promise<ExecutionSig
 export async function getSignalsBySource(
   sourceObjectType: SourceObjectType,
   sourceObjectId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ExecutionSignal[]> {
   const rows = await dbAll<SignalRow>(
     `SELECT * FROM v8_execution_signals
      WHERE source_object_type = ? AND source_object_id = ? AND organization_id = ?
      ORDER BY timestamp ASC`,
     [sourceObjectType, sourceObjectId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToSignal);
@@ -247,7 +247,7 @@ export async function getSignalsBySource(
 export async function aggregateSignals(
   level: SignalAggregation['level'],
   sourceObjectId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SignalAggregation> {
   const sourceTypeForLevel: Record<string, SourceObjectType> = {
     task: 'task',
@@ -263,7 +263,7 @@ export async function aggregateSignals(
      WHERE source_object_type = ? AND source_object_id = ? AND organization_id = ?
      ORDER BY timestamp ASC`,
     [sourceObjectType, sourceObjectId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const signals = (rows || []).map(rowToSignal);
@@ -299,11 +299,11 @@ export async function aggregateSignals(
       aggregation.aggregatedSeverity,
       aggregation.preservesLineage ? 1 : 0,
       aggregation.timestamp,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Aggregated ${signals.length} signals at ${level} level → ${aggregatedSeverity}`,
+    `${LOG_PREFIX} Aggregated ${signals.length} signals at ${level} level → ${aggregatedSeverity}`
   );
   return aggregation;
 }
@@ -312,7 +312,7 @@ export async function aggregateSignals(
  * Decision W3-9: Emit a canonical results handoff event.
  */
 export async function emitResultsHandoffEvent(
-  params: EmitResultsHandoffEventParams,
+  params: EmitResultsHandoffEventParams
 ): Promise<ResultsHandoffEvent> {
   const validated = EmitResultsHandoffEventParamsSchema.parse(params);
 
@@ -339,11 +339,11 @@ export async function emitResultsHandoffEvent(
       event.organizationId,
       JSON.stringify(event.payload),
       event.timestamp,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Emitted handoff event ${event.eventType} for initiative ${event.initiativeId}`,
+    `${LOG_PREFIX} Emitted handoff event ${event.eventType} for initiative ${event.initiativeId}`
   );
   return event;
 }
@@ -353,14 +353,14 @@ export async function emitResultsHandoffEvent(
  */
 export async function getHandoffEventsByInitiative(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ResultsHandoffEvent[]> {
   const rows = await dbAll<HandoffEventRow>(
     `SELECT * FROM v8_results_handoff_events
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY timestamp ASC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToHandoffEvent);
@@ -371,7 +371,7 @@ export async function getHandoffEventsByInitiative(
  * Status starts as 'draft' — follows the same governance lifecycle as ActionProposal.
  */
 export async function createRebaselineProposal(
-  params: CreateRebaselineProposalParams,
+  params: CreateRebaselineProposalParams
 ): Promise<RebaselineProposal> {
   const validated = CreateRebaselineProposalParamsSchema.parse(params);
 
@@ -407,11 +407,11 @@ export async function createRebaselineProposal(
       proposal.status,
       proposal.createdAt,
       proposal.resolvedAt,
-    ],
+    ]
   );
 
   logger.info(
-    `${LOG_PREFIX} Created rebaseline proposal ${proposalId} for initiative ${validated.initiativeId}`,
+    `${LOG_PREFIX} Created rebaseline proposal ${proposalId} for initiative ${validated.initiativeId}`
   );
   return proposal;
 }
@@ -421,14 +421,14 @@ export async function createRebaselineProposal(
  */
 export async function getRebaselineProposalsByInitiative(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RebaselineProposal[]> {
   const rows = await dbAll<RebaselineRow>(
     `SELECT * FROM v8_rebaseline_proposals
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at ASC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRebaseline);
@@ -446,7 +446,7 @@ export async function getRebaselineProposalsByInitiative(
  * - Otherwise: score >= 0.8 → high, >= 0.6 → medium
  */
 export async function assessForecastConfidence(
-  params: AssessForecastConfidenceParams,
+  params: AssessForecastConfidenceParams
 ): Promise<ForecastConfidence> {
   const validated = AssessForecastConfidenceParamsSchema.parse(params);
 
@@ -518,9 +518,7 @@ export interface ExecutionBlockerItem {
   message: string;
 }
 
-function deriveAssessParamsFromSignals(
-  signals: ExecutionSignal[],
-): AssessForecastConfidenceParams {
+function deriveAssessParamsFromSignals(signals: ExecutionSignal[]): AssessForecastConfidenceParams {
   let dataReliabilityScore = 0.92;
   for (const s of signals) {
     if (s.severity === 'blocker') {
@@ -540,15 +538,13 @@ function deriveAssessParamsFromSignals(
   dataReliabilityScore = Math.max(0, Math.min(1, dataReliabilityScore));
 
   const hasCapacityGap = signals.some(
-    (s) =>
-      s.signalType === 'owners_over_capacity_count' &&
-      s.severity !== 'info',
+    (s) => s.signalType === 'owners_over_capacity_count' && s.severity !== 'info'
   );
 
   const criticalPathKnown = !signals.some(
     (s) =>
       s.signalType === 'critical_path_slip_count' &&
-      (s.severity === 'critical' || s.severity === 'blocker'),
+      (s.severity === 'critical' || s.severity === 'blocker')
   );
 
   return { dataReliabilityScore, hasCapacityGap, criticalPathKnown };
@@ -556,7 +552,7 @@ function deriveAssessParamsFromSignals(
 
 function overallHealthFromSignalsAndForecast(
   signals: ExecutionSignal[],
-  forecast: ForecastConfidence,
+  forecast: ForecastConfidence
 ): ExecutionDashboardHealth {
   if (signals.some((s) => s.severity === 'blocker')) {
     return 'blocked';
@@ -578,7 +574,7 @@ function overallHealthFromSignalsAndForecast(
  */
 export async function getExecutionDashboard(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ExecutionDashboardView> {
   const signalRows = await dbAll<SignalRow>(
     `SELECT * FROM v8_execution_signals
@@ -587,7 +583,7 @@ export async function getExecutionDashboard(
        AND source_object_id = ?
      ORDER BY timestamp DESC`,
     [organizationId, initiativeId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const signals = (signalRows || []).map(rowToSignal);
@@ -597,7 +593,7 @@ export async function getExecutionDashboard(
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY timestamp DESC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   const handoffs = (handoffRows || []).map(rowToHandoffEvent);
@@ -621,7 +617,7 @@ export async function getExecutionDashboard(
  */
 export async function detectBlockers(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ExecutionBlockerItem[]> {
   const dashboard = await getExecutionDashboard(initiativeId, organizationId);
   const out: ExecutionBlockerItem[] = [];
@@ -652,14 +648,14 @@ export async function detectBlockers(
  */
 export async function getRebaselineHistory(
   initiativeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RebaselineProposal[]> {
   const rows = await dbAll<RebaselineRow>(
     `SELECT * FROM v8_rebaseline_proposals
      WHERE initiative_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [initiativeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   return (rows || []).map(rowToRebaseline);
@@ -678,7 +674,7 @@ export interface SignalRollupResult {
 export async function rollupSignals(
   organizationId: string,
   fromDate: string,
-  toDate: string,
+  toDate: string
 ): Promise<SignalRollupResult> {
   const rows = await dbAll<SignalRow>(
     `SELECT * FROM v8_execution_signals
@@ -687,7 +683,7 @@ export async function rollupSignals(
        AND timestamp <= ?
      ORDER BY timestamp ASC`,
     [organizationId, fromDate, toDate],
-    { fallback: true },
+    { fallback: true }
   );
 
   const signals = (rows || []).map(rowToSignal);

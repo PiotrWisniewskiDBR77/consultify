@@ -15,5 +15,5 @@ CREATE TABLE IF NOT EXISTS tp_distributions (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_tp_distributions_base ON tp_distributions(base_id);
-CREATE INDEX idx_tp_distributions_active ON tp_distributions(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_tp_distributions_base ON tp_distributions(base_id);
+CREATE INDEX IF NOT EXISTS idx_tp_distributions_active ON tp_distributions(is_active) WHERE is_active = true;

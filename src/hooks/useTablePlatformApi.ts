@@ -139,8 +139,7 @@ export function useUpdateView(viewId: string) {
 export function useCreateRecord(tableId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      tablePlatformApi.createRecord(tableId, data),
+    mutationFn: (data: Record<string, unknown>) => tablePlatformApi.createRecord(tableId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tablePlatform', 'records', tableId] });
     },
@@ -150,8 +149,7 @@ export function useCreateRecord(tableId: string) {
 export function useUpdateRecord(recordId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      tablePlatformApi.updateRecord(recordId, data),
+    mutationFn: (data: Record<string, unknown>) => tablePlatformApi.updateRecord(recordId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tablePlatform', 'record', recordId] });
       queryClient.invalidateQueries({ queryKey: ['tablePlatform', 'records'] });

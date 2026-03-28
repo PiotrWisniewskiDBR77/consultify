@@ -8,21 +8,22 @@
  *          period-over-period deviation analysis, correction loop
  */
 import OpenAI from 'openai';
+
+import { llmConfigService } from './ai/llmConfigService.js';
 import {
-  getCanonicalLinesByStatementType,
   type CanonicalLineDefinition,
   type CanonicalStatementType,
+  getCanonicalLinesByStatementType,
 } from './financeCanonicalRegistry.js';
+import { logFinanceError, logFinanceEvent } from './financeDiagnosticsService.js';
 import {
   autoMapLines,
+  type ExtractedLine,
   extractFinancialLines,
   locateStatementSections,
-  resolveStatementColumnSelection,
   resolveDuplicateSuggestedMappings,
-  type ExtractedLine,
+  resolveStatementColumnSelection,
 } from './financialStatementService.js';
-import { logFinanceEvent, logFinanceError } from './financeDiagnosticsService.js';
-import { llmConfigService } from './ai/llmConfigService.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -159,7 +160,8 @@ async function runPhase1(
   });
 
   const currentPeriod = columnSelection.selectedPeriodLabel || options.periodLabel || 'Current';
-  const comparisonPeriod = columnSelection.comparisonPeriodLabel || options.comparisonPeriodLabel || null;
+  const comparisonPeriod =
+    columnSelection.comparisonPeriodLabel || options.comparisonPeriodLabel || null;
 
   const extraction = extractFinancialLines(scopedText, stType, {
     selectedPeriodLabel: currentPeriod,
@@ -230,10 +232,13 @@ function buildPhase2Prompt(
   comparisonPeriod: string | null,
   currency: string,
   scaling: string,
-  options?: { learningContext?: string },
+  options?: { learningContext?: string }
 ): string {
   const acceptedSummary = phase1Accepted
-    .map((l, i) => `  ${i + 1}. "${l.originalLabel}" → ${l.canonicalId} = ${l.value} (conf=${l.confidence.toFixed(2)})`)
+    .map(
+      (l, i) =>
+        `  ${i + 1}. "${l.originalLabel}" → ${l.canonicalId} = ${l.value} (conf=${l.confidence.toFixed(2)})`
+    )
     .join('\n');
 
   const rejectedSummary = phase1Rejected
@@ -343,7 +348,10 @@ async function runPhase2(
   const stType = normalizeStatementType(statementType);
   const openai = getOpenAIClient();
   if (!openai) {
-    logFinanceEvent('pipeline.phase2.skipped', { traceId: options.traceId, reason: 'no_openai_key' });
+    logFinanceEvent('pipeline.phase2.skipped', {
+      traceId: options.traceId,
+      reason: 'no_openai_key',
+    });
     return {
       lines: phase1.acceptedLines,
       corrections: 0,
@@ -364,7 +372,7 @@ async function runPhase2(
     phase1.comparisonPeriod,
     options.currency || 'PLN',
     options.scaling || 'thousands',
-    { learningContext: options.learningContext },
+    { learningContext: options.learningContext }
   );
 
   logFinanceEvent('pipeline.phase2.started', {
@@ -448,9 +456,10 @@ async function runPhase2(
       const phase1Match = phase1.acceptedLines.find((p) => p.canonicalId === llmLine.canonicalId);
       const correction = correctionMap.get(llmLine.canonicalId);
 
-      let finalValue = typeof llmLine.value === 'number' && Number.isFinite(llmLine.value)
-        ? llmLine.value
-        : phase1Match?.value ?? 0;
+      let finalValue =
+        typeof llmLine.value === 'number' && Number.isFinite(llmLine.value)
+          ? llmLine.value
+          : (phase1Match?.value ?? 0);
       let source: PipelineLine['source'] = 'llm_phase2';
       let reason = llmLine.reason || 'LLM Phase 2 mapping';
 
@@ -505,7 +514,10 @@ async function runPhase2(
       warnings: parsed.warnings || [],
     };
   } catch (error) {
-    logFinanceError('pipeline.phase2.failed', error, { traceId: options.traceId, statementType: stType });
+    logFinanceError('pipeline.phase2.failed', error, {
+      traceId: options.traceId,
+      statementType: stType,
+    });
     return {
       lines: phase1.acceptedLines,
       corrections: 0,
@@ -526,7 +538,7 @@ function buildPhase3Prompt(
   documentName: string,
   currentPeriod: string,
   comparisonPeriod: string | null,
-  learningContext?: string,
+  learningContext?: string
 ): string {
   const linesSummary = lines
     .map((l) => {
@@ -535,21 +547,22 @@ function buildPhase3Prompt(
     })
     .join('\n');
 
-  const checksDescription = statementType === 'BS'
-    ? `- Total Assets = Total Liabilities + Total Equity (MUST balance, tolerance ≤ 1% of Total Assets)
+  const checksDescription =
+    statementType === 'BS'
+      ? `- Total Assets = Total Liabilities + Total Equity (MUST balance, tolerance ≤ 1% of Total Assets)
 - Current Assets + Fixed Assets ≈ Total Assets
 - Current Liabilities + Long-term Debt + Other Non-current Liabilities ≈ Total Liabilities
 - Total Equity components should sum to Total Equity
 - All asset values should be positive
 - Total Assets should be > 0`
-    : statementType === 'P&L'
-    ? `- Revenue - COGS ≈ Gross Profit (if all three present)
+      : statementType === 'P&L'
+        ? `- Revenue - COGS ≈ Gross Profit (if all three present)
 - Gross Profit - OPEX ≈ EBIT (approximately)
 - EBIT - Interest - Tax ≈ Net Income (approximately)
 - Revenue should be the largest positive number
 - Net Income should be smaller than Revenue
 - Signs: Revenue positive, costs typically shown as positive (display_absolute) or negative`
-    : `- Operating CF + Investing CF + Financing CF ≈ Net Change in Cash
+        : `- Operating CF + Investing CF + Financing CF ≈ Net Change in Cash
 - Opening Cash + Net Change = Closing Cash (if both present)
 - Operating CF should typically be positive for healthy companies
 - CAPEX should typically be negative (cash outflow)
@@ -650,13 +663,15 @@ async function runPhase3(
   lines: PipelineLine[],
   options: LlmPipelineOptions,
   currentPeriod: string,
-  comparisonPeriod: string | null,
+  comparisonPeriod: string | null
 ): Promise<Phase3Result> {
   const stType = normalizeStatementType(statementType);
   const openai = getOpenAIClient();
   if (!openai) {
     return {
-      checks: [{ code: 'CFO_SKIPPED', severity: 'warning', message: 'Phase 3 skipped: no OpenAI API key' }],
+      checks: [
+        { code: 'CFO_SKIPPED', severity: 'warning', message: 'Phase 3 skipped: no OpenAI API key' },
+      ],
       corrections: [],
       missingLines: [],
       qualityScore: 50,
@@ -674,7 +689,7 @@ async function runPhase3(
     options.documentName || 'Unknown',
     currentPeriod,
     comparisonPeriod,
-    options.learningContext,
+    options.learningContext
   );
 
   logFinanceEvent('pipeline.phase3.started', {
@@ -703,9 +718,17 @@ async function runPhase3(
     } | null;
 
     if (!parsed) {
-      logFinanceError('pipeline.phase3.parse_failed', new Error('Invalid JSON'), { traceId: options.traceId });
+      logFinanceError('pipeline.phase3.parse_failed', new Error('Invalid JSON'), {
+        traceId: options.traceId,
+      });
       return {
-        checks: [{ code: 'CFO_PARSE_ERROR', severity: 'error', message: 'Phase 3 LLM returned invalid JSON' }],
+        checks: [
+          {
+            code: 'CFO_PARSE_ERROR',
+            severity: 'error',
+            message: 'Phase 3 LLM returned invalid JSON',
+          },
+        ],
         corrections: [],
         missingLines: [],
         qualityScore: 40,
@@ -717,7 +740,9 @@ async function runPhase3(
 
     const checks: PipelineCheckResult[] = (parsed.checks || []).map((c) => ({
       code: c.code || 'UNKNOWN',
-      severity: (['pass', 'warning', 'error', 'info'].includes(c.severity) ? c.severity : 'info') as PipelineCheckResult['severity'],
+      severity: (['pass', 'warning', 'error', 'info'].includes(c.severity)
+        ? c.severity
+        : 'info') as PipelineCheckResult['severity'],
       message: c.message || '',
       details: c.details || undefined,
     }));
@@ -740,7 +765,10 @@ async function runPhase3(
     } else if (qualityScore >= 75 && errorCount === 0) {
       verdict = 'APPROVED_WITH_NOTES';
     } else if (qualityScore >= 60 || errorCount <= 1) {
-      verdict = rawVerdict === 'REJECTED' ? 'NEEDS_REVIEW' : (rawVerdict as Phase3Result['verdict']) || 'NEEDS_REVIEW';
+      verdict =
+        rawVerdict === 'REJECTED'
+          ? 'NEEDS_REVIEW'
+          : (rawVerdict as Phase3Result['verdict']) || 'NEEDS_REVIEW';
     } else {
       verdict = 'REJECTED';
     }
@@ -767,7 +795,13 @@ async function runPhase3(
   } catch (error) {
     logFinanceError('pipeline.phase3.failed', error, { traceId: options.traceId });
     return {
-      checks: [{ code: 'CFO_ERROR', severity: 'error', message: `Phase 3 failed: ${(error as Error).message?.slice(0, 80)}` }],
+      checks: [
+        {
+          code: 'CFO_ERROR',
+          severity: 'error',
+          message: `Phase 3 failed: ${(error as Error).message?.slice(0, 80)}`,
+        },
+      ],
       corrections: [],
       missingLines: [],
       qualityScore: 30,
@@ -801,7 +835,7 @@ export async function runLlmFinancialPipeline(
 
   console.log(
     `  [Phase1] ${stType}: extracted=${phase1.allExtracted.filter((l) => !l.isNonFinancial).length}, ` +
-    `accepted(≥0.95)=${phase1.acceptedLines.length}, rejected=${phase1.rejectedLines.length}`
+      `accepted(≥0.95)=${phase1.acceptedLines.length}, rejected=${phase1.rejectedLines.length}`
   );
 
   // ── Phase 2 ──
@@ -809,19 +843,25 @@ export async function runLlmFinancialPipeline(
 
   console.log(
     `  [Phase2] ${stType}: total=${phase2.lines.length}, confirmed=${phase2.confirmed}, ` +
-    `newlyMapped=${phase2.newlyMapped}, corrections=${phase2.corrections}`
+      `newlyMapped=${phase2.newlyMapped}, corrections=${phase2.corrections}`
   );
 
   // ── Phase 3 ──
-  const phase3 = await runPhase3(stType, phase2.lines, opts, phase1.currentPeriod, phase1.comparisonPeriod);
+  const phase3 = await runPhase3(
+    stType,
+    phase2.lines,
+    opts,
+    phase1.currentPeriod,
+    phase1.comparisonPeriod
+  );
 
   console.log(
     `  [Phase3] ${stType}: score=${phase3.qualityScore}, verdict=${phase3.verdict}, ` +
-    `corrections=${phase3.corrections.length}, missing=${phase3.missingLines.length}`
+      `corrections=${phase3.corrections.length}, missing=${phase3.missingLines.length}`
   );
 
   // Apply Phase 3 corrections
-  let finalLines = [...phase2.lines];
+  const finalLines = [...phase2.lines];
   let phase3Corrections = 0;
 
   for (const corr of phase3.corrections) {
@@ -899,7 +939,8 @@ export async function runLlmFinancialPipeline(
       },
       phase3: {
         checksRun: phase3.checks.length,
-        issuesFound: phase3.checks.filter((c) => c.severity === 'error' || c.severity === 'warning').length,
+        issuesFound: phase3.checks.filter((c) => c.severity === 'error' || c.severity === 'warning')
+          .length,
         corrections: phase3Corrections,
       },
     },
@@ -949,18 +990,17 @@ export async function runDocumentPipeline(
   }
 
   const scores = [...results.values()].map((r) => r.qualityScore);
-  const overallScore = scores.length > 0
-    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-    : 0;
+  const overallScore =
+    scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   const verdicts = [...results.values()].map((r) => r.verdict);
   const overallVerdict = verdicts.includes('REJECTED')
     ? 'REJECTED'
     : verdicts.includes('NEEDS_REVIEW')
-    ? 'NEEDS_REVIEW'
-    : verdicts.includes('APPROVED_WITH_NOTES')
-    ? 'APPROVED_WITH_NOTES'
-    : 'APPROVED';
+      ? 'NEEDS_REVIEW'
+      : verdicts.includes('APPROVED_WITH_NOTES')
+        ? 'APPROVED_WITH_NOTES'
+        : 'APPROVED';
 
   return { documentName, results, overallScore, overallVerdict };
 }
