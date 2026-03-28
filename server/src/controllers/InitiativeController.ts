@@ -5468,11 +5468,16 @@ export class InitiativeController {
 
       // Capabilities contract (v1) — backend is source of truth for UI enablement
       const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-      const hasEditRole = userRoles.some((r: string) =>
-        ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-          String(r || '').toUpperCase()
-        )
+      const isAdmin = userRoles.some((r: string) =>
+        ['ADMIN', 'SUPERADMIN'].includes(String(r || '').toUpperCase())
       );
+      const hasEditRole =
+        isAdmin ||
+        userRoles.some((r: string) =>
+          ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
+            String(r || '').toUpperCase()
+          )
+        );
 
       const topBar = {
         canEditPriority: hasEditRole && !isTerminal,

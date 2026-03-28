@@ -1,24 +1,33 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryAllMock } = vi.hoisted(() => ({
+const {
+  getBlockingReadinessItemsMock,
+  queryAllMock,
+  queryOneMock,
+  resolveInitiativeAccessContextMock,
+} = vi.hoisted(() => ({
+  getBlockingReadinessItemsMock: vi.fn(),
   queryAllMock: vi.fn(),
+  queryOneMock: vi.fn(),
+  resolveInitiativeAccessContextMock: vi.fn(),
 }));
 
 vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: queryAllMock,
-  queryOne: vi.fn(),
+  queryOne: queryOneMock,
 }));
 
 vi.mock('../../initiative/initiativeAccessResolver.js', () => ({
-  resolveInitiativeAccessContext: vi.fn(),
+  resolveInitiativeAccessContext: resolveInitiativeAccessContextMock,
 }));
 
 vi.mock('../../initiative/initiativeGateReadinessService.js', () => ({
-  getBlockingReadinessItems: vi.fn(),
+  getBlockingReadinessItems: getBlockingReadinessItemsMock,
 }));
 
 import {
   getInitiativeCommentsRead,
+  getInitiativeGateReadinessRead,
   getInitiativeHistoryRead,
   getInitiativeStakeholdersRead,
   getInitiativeWatchersRead,
@@ -26,7 +35,10 @@ import {
 
 describe('planningPortfolioReadService support tables', () => {
   beforeEach(() => {
+    getBlockingReadinessItemsMock.mockReset();
     queryAllMock.mockReset();
+    queryOneMock.mockReset();
+    resolveInitiativeAccessContextMock.mockReset();
   });
 
   it('returns empty watchers when the support table is missing', async () => {
@@ -53,5 +65,37 @@ describe('planningPortfolioReadService support tables', () => {
     queryAllMock.mockRejectedValueOnce(new Error('relation "initiative_comments" does not exist'));
 
     await expect(getInitiativeCommentsRead('init-1', 'org-1')).resolves.toEqual([]);
+  });
+
+  it('lets superadmin edit gated top-bar fields in V8 readiness truth', async () => {
+    queryOneMock.mockResolvedValue({
+      id: 'init-1',
+      organization_id: 'org-1',
+      status: 'DRAFT',
+      name: 'Wave 1',
+      owner_business_id: null,
+      owner_execution_id: null,
+    });
+    resolveInitiativeAccessContextMock.mockResolvedValue({
+      effectiveRoles: ['SUPERADMIN'],
+      steeringBoard: { enabled: false, memberType: null },
+      roleAssignments: [],
+      projectId: null,
+    });
+    getBlockingReadinessItemsMock.mockResolvedValue([]);
+
+    const result = await getInitiativeGateReadinessRead('init-1', 'org-1', 'user-1');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        capabilities: expect.objectContaining({
+          topBar: expect.objectContaining({
+            canEditPriority: true,
+            canEditOwner: true,
+            canEditTargetDate: true,
+          }),
+        }),
+      })
+    );
   });
 });

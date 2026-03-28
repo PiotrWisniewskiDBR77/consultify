@@ -1140,11 +1140,16 @@ export async function getInitiativeGateReadinessRead(
   }
 
   const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-  const hasEditRole = userRoles.some((role: string) =>
-    ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-      String(role || '').toUpperCase()
-    )
+  const isAdmin = userRoles.some((role: string) =>
+    ['ADMIN', 'SUPERADMIN'].includes(String(role || '').toUpperCase())
   );
+  const hasEditRole =
+    isAdmin ||
+    userRoles.some((role: string) =>
+      ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
+        String(role || '').toUpperCase()
+      )
+    );
 
   const topBar = {
     canEditPriority: hasEditRole && !isTerminal,

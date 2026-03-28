@@ -392,6 +392,37 @@ describe('InitiativeController', () => {
         })
       );
     });
+
+    it('should allow superadmin to edit gated top-bar fields', async () => {
+      mockReq.params.id = 'i1';
+      mockQueryOne.mockResolvedValueOnce({
+        id: 'i1',
+        organization_id: 'org-123',
+        status: 'DRAFT',
+        owner_business_id: null,
+        owner_execution_id: null,
+        sponsor_id: null,
+      });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['SUPERADMIN'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.getGateReadinessCheck(mockReq, mockRes, mockNext);
+
+      const payload = mockRes.json.mock.calls.at(-1)?.[0];
+      expect(payload.capabilities?.topBar).toEqual(
+        expect.objectContaining({
+          canEditPriority: true,
+          canEditOwner: true,
+          canEditTargetDate: true,
+        })
+      );
+    });
   });
 
   describe('quickUpdateInitiative enforcement', () => {
