@@ -452,10 +452,10 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     await waitFor(() => {
       expect(
-        screen.getAllByText(
+        screen.getByText(
           'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
-        ).length,
-      ).toBeGreaterThan(1);
+        ),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Anna' }));
@@ -1155,7 +1155,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+          'Live voice is currently unavailable. You can still chat with Anna by text.',
         ),
       ).toBeInTheDocument();
     });
@@ -1165,7 +1165,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     expect(mockLiveConnect).not.toHaveBeenCalled();
     expect(
       screen.getByText(
-        'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+        'Live voice is currently unavailable. You can still chat with Anna by text.',
       ),
     ).toBeInTheDocument();
   });
@@ -1372,7 +1372,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+          'Live voice ran into an issue. You can continue with Anna by text.',
         ),
       ).toBeInTheDocument();
     });
@@ -1395,7 +1395,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     expect(
       screen.getByText(
-        'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+        'Live voice is currently unavailable. You can still chat with Anna by text.',
       ),
     ).toBeInTheDocument();
     expect(

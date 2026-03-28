@@ -77,10 +77,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceReady: 'Tap the microphone to start a live voice conversation.',
     voiceConnecting: 'Connecting voice mode...',
     voiceListening: 'Anna is listening live. Start typing anytime to switch back to text.',
-    voiceUnavailable:
-      'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
-    voiceError:
-      'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
+    voiceUnavailable: 'Live voice is currently unavailable. You can still chat with Anna by text.',
+    voiceError: 'Live voice ran into an issue. You can continue with Anna by text.',
     voiceStart: 'Start voice conversation',
     voiceStop: 'Stop voice conversation',
     handoffLabel: 'Quick next steps',
@@ -110,10 +108,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceReady: 'Kliknij mikrofon, aby uruchomic rozmowe glosowa na zywo.',
     voiceConnecting: 'Lacze tryb glosowy...',
     voiceListening: 'Anna slucha na zywo. Zacznij pisac w dowolnym momencie, aby wrocic do tekstu.',
-    voiceUnavailable:
-      'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
-    voiceError:
-      'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
+    voiceUnavailable: 'Tryb glosowy jest tymczasowo niedostepny. Nadal mozesz pisac z Anna.',
+    voiceError: 'Wystapil problem z trybem glosowym. Mozesz kontynuowac rozmowe w tekscie.',
     voiceStart: 'Uruchom rozmowe glosowa',
     voiceStop: 'Zatrzymaj rozmowe glosowa',
     handoffLabel: 'Szybkie kolejne kroki',
@@ -144,10 +140,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceConnecting: 'Conectando modo de voz...',
     voiceListening:
       'Anna esta escuchando en vivo. Empieza a escribir en cualquier momento para volver al texto.',
-    voiceUnavailable:
-      'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
-    voiceError:
-      'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
+    voiceUnavailable: 'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
+    voiceError: 'La voz en vivo tuvo un problema. Puedes continuar por texto.',
     voiceStart: 'Iniciar conversacion de voz',
     voiceStop: 'Detener conversacion de voz',
     handoffLabel: 'Siguientes pasos rapidos',
@@ -177,10 +171,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceReady: 'Tippe auf das Mikrofon, um ein Live-Sprachgesprach zu starten.',
     voiceConnecting: 'Sprachmodus wird verbunden...',
     voiceListening: 'Anna hort live zu. Du kannst jederzeit tippen, um zum Text zuruckzukehren.',
-    voiceUnavailable:
-      'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.',
-    voiceError:
-      'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.',
+    voiceUnavailable: 'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
+    voiceError: 'Live-Sprachmodus hatte ein Problem. Du kannst per Text fortfahren.',
     voiceStart: 'Sprachgesprach starten',
     voiceStop: 'Sprachgesprach stoppen',
     handoffLabel: 'Schnelle nachste Schritte',
@@ -210,10 +202,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceReady: 'マイクをタップするとライブ音声会話を開始できます。',
     voiceConnecting: '音声モードに接続中...',
     voiceListening: 'Annaがライブで聞いています。いつでも入力してテキストに戻れます。',
-    voiceUnavailable:
-      'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。',
-    voiceError:
-      'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。',
+    voiceUnavailable: 'ライブ音声は現在利用できません。テキストでチャットできます。',
+    voiceError: 'ライブ音声で問題が発生しました。テキストで続けられます。',
     voiceStart: '音声会話を開始',
     voiceStop: '音声会話を停止',
     handoffLabel: '次のおすすめステップ',
@@ -243,10 +233,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceReady: 'اضغط على الميكروفون لبدء محادثة صوتية مباشرة.',
     voiceConnecting: 'جار الاتصال بوضع الصوت...',
     voiceListening: 'Anna تستمع الآن مباشرة. يمكنك البدء بالكتابة في أي وقت للعودة إلى النص.',
-    voiceUnavailable:
-      'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
-    voiceError:
-      'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
+    voiceUnavailable: 'المحادثة الصوتية المباشرة غير متاحة حاليا. يمكنك المتابعة بالكتابة.',
+    voiceError: 'حدثت مشكلة في المحادثة الصوتية. يمكنك المتابعة بالكتابة.',
     voiceStart: 'بدء المحادثة الصوتية',
     voiceStop: 'إيقاف المحادثة الصوتية',
     handoffLabel: 'الخطوات التالية السريعة',
