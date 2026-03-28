@@ -339,7 +339,7 @@ export async function buildAnnaKnowledgeContext(opts: {
   preferredProducts?: string[];
 }): Promise<AnnaKnowledgeContextResult> {
   const originalQuery = String(opts.query || '').trim();
-  const limit = Math.min(Math.max(opts.limit || 6, 2), 10);
+  const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
 
   const detected = detectRequestedProducts(originalQuery);
   const explicitCrossProductRequest = detected.matchedProducts.some(
@@ -349,6 +349,7 @@ export async function buildAnnaKnowledgeContext(opts: {
     opts.preferredProducts?.some((product) => product !== 'consultify')
   );
   const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
   const primaryProducts = portfolioMode
     ? uniq(['dbr77', 'consultify', 'vector', 'iris', 'digital-twin', 'iiot', 'marketplace'])
     : opts.preferredProducts && opts.preferredProducts.length > 0
@@ -366,22 +367,51 @@ export async function buildAnnaKnowledgeContext(opts: {
     const docs = await loadIndexedProductDocs();
     const docsByProduct = groupDocsByProduct(docs);
 
+    const productQueryHints: Record<string, string> = {
+      consultify: 'consultify consultinity',
+      vector: 'vector',
+      iris: 'iris',
+      'digital-twin': 'digital twin',
+      iiot: 'iiot industrial iot',
+      marketplace: 'marketplace',
+    };
+
+    const portfolioHits = portfolioMode
+      ? (
+          await Promise.all(
+            primaryProducts
+              .filter((product) => product !== 'dbr77')
+              .map(async (product) => {
+                const productDocs = docsByProduct[product] || [];
+                const scoped = splitDocsByLanguagePreference(productDocs, opts.locale);
+                const hint = productQueryHints[product] || product;
+                const preferred = await searchScopedKnowledge(
+                  `${hint} ${originalQuery}`,
+                  scoped.preferredDocs,
+                  1
+                );
+                if (preferred.length > 0) return preferred;
+                return await searchScopedKnowledge(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
+              })
+          )
+        ).flat()
+      : [];
+
     const primaryDocs = primaryProducts.flatMap((product) => docsByProduct[product] || []);
     const allDocs = PRODUCT_ORDER.flatMap((product) => docsByProduct[product] || []);
     const preferredPrimaryDocs = splitDocsByLanguagePreference(primaryDocs, opts.locale);
     const preferredAllDocs = splitDocsByLanguagePreference(allDocs, opts.locale);
 
-    const primaryHits = await searchScopedKnowledge(
-      query,
-      preferredPrimaryDocs.preferredDocs,
-      Math.min(limit, 4)
-    );
+    const primaryHits = portfolioMode
+      ? []
+      : await searchScopedKnowledge(query, preferredPrimaryDocs.preferredDocs, Math.min(limit, 4));
     const shouldExpandBeyondPrimary =
       explicitCrossProductRequest || preferredCrossProductRequest || primaryHits.length === 0;
     const secondaryHits =
       primaryHits.length >= limit ||
       preferredAllDocs.preferredDocs.length === 0 ||
-      !shouldExpandBeyondPrimary
+      !shouldExpandBeyondPrimary ||
+      portfolioMode
         ? []
         : await searchScopedKnowledge(query, preferredAllDocs.preferredDocs, limit);
     const shouldFallbackAcrossLanguages = primaryHits.length === 0 && secondaryHits.length === 0;
@@ -392,11 +422,13 @@ export async function buildAnnaKnowledgeContext(opts: {
       !shouldFallbackAcrossLanguages ||
       fallbackPrimaryHits.length >= limit ||
       preferredAllDocs.fallbackDocs.length === 0 ||
-      !shouldExpandBeyondPrimary
+      !shouldExpandBeyondPrimary ||
+      portfolioMode
         ? []
         : await searchScopedKnowledge(query, preferredAllDocs.fallbackDocs, limit);
 
     const hits = dedupeHits([
+      ...portfolioHits,
       ...primaryHits,
       ...secondaryHits,
       ...fallbackPrimaryHits,
