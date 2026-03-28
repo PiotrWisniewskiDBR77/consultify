@@ -51,7 +51,11 @@ RUN mkdir -p /tmp/knowledge-runtime/product-pills /tmp/knowledge-runtime/tool-kb
     fi && \
     if [ -d "knowledge/tool-kb" ]; then \
       cp -R knowledge/tool-kb/. /tmp/knowledge-runtime/tool-kb/; \
-    fi
+    fi && \
+    echo "Knowledge runtime bundle stats:" && \
+    echo " - product-pills md:" && find /tmp/knowledge-runtime/product-pills -type f -name "*.md" | wc -l && \
+    echo " - tool-kb md:" && find /tmp/knowledge-runtime/tool-kb -type f -name "*.md" | wc -l && \
+    test "$(find /tmp/knowledge-runtime -type f -name '*.md' | wc -l)" -gt 0
 # Railway snapshots can (rarely) omit some tracked folders; ensure critical frontend util exists.
 RUN if [ ! -f src/lib/utils.ts ]; then \
       echo "Recreating missing src/lib/utils.ts" && \

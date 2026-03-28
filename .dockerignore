@@ -40,8 +40,22 @@ Thumbs.db
 docs
 *.md
 !README.md
+# Keep runtime knowledge packs (Anna product pills, tool packs).
+# Some Docker ignore implementations are inconsistent with `**`, so we whitelist a few depths.
 !knowledge/**/*.md
 !knowledge/**/*.markdown
+!knowledge/*/*.md
+!knowledge/*/*/*.md
+!knowledge/*/*/*/*.md
+!knowledge/*/*/*/*/*.md
+!knowledge/*/*/*/*/*/*.md
+!knowledge/*/*/*/*/*/*/*.md
+!knowledge/*/*.markdown
+!knowledge/*/*/*.markdown
+!knowledge/*/*/*/*.markdown
+!knowledge/*/*/*/*/*.markdown
+!knowledge/*/*/*/*/*/*.markdown
+!knowledge/*/*/*/*/*/*/*.markdown
 
 # Tests (not needed in production)
 tests
