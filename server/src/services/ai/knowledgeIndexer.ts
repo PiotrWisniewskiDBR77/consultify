@@ -6,7 +6,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
@@ -168,15 +167,9 @@ export class KnowledgeIndexer {
   private isPg: boolean;
 
   constructor() {
-    const cwd = process.cwd();
-    const cwdHasKnowledge =
-      fs.existsSync(path.join(cwd, 'knowledge')) || fs.existsSync(path.join(cwd, '..', 'knowledge'));
-    if (cwdHasKnowledge) {
-      this.projectRoot = path.resolve(cwd);
-    } else {
-      const rootUrl = new URL('../../../', import.meta.url);
-      this.projectRoot = path.resolve(fileURLToPath(rootUrl));
-    }
+    // Runtime and local scripts run with a stable CWD (typically repo root or `server/`).
+    // Using CWD makes path resolution robust for both TS source and compiled dist layouts.
+    this.projectRoot = path.resolve(process.cwd());
     this.embeddingService = null;
     this.isPg = process.env.DB_TYPE === 'postgres';
   }
