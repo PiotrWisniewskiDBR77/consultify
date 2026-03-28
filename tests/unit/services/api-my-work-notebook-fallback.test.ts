@@ -279,6 +279,59 @@ describe('Api notebook V8 fallback guard', () => {
     );
   });
 
+  it('does not retry notebook source-file download on transient errors', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 429,
+      headers: { get: vi.fn(() => null) },
+    } as unknown as Response);
+
+    await expect(Api.downloadNotebookSourceFile('note-42')).rejects.toMatchObject({
+      status: 429,
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/v8/my-work/notebook/pages/note-42/source-file',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+  });
+
+  it('falls back to legacy notebook source-file download only for non-supported V8 statuses', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        headers: { get: vi.fn(() => null) },
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['source file'], { type: 'text/plain' }),
+        headers: {
+          get: vi.fn((name: string) =>
+            name === 'Content-Disposition' ? 'attachment; filename="source-note.txt"' : null
+          ),
+        },
+      } as unknown as Response);
+
+    await expect(Api.downloadNotebookSourceFile('note-42')).resolves.toMatchObject({
+      filename: 'source-note.txt',
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      '/api/v8/my-work/notebook/pages/note-42/source-file',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/my-work/notebook/pages/note-42/source-file',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+  });
+
   it('appends a converted notebook output without duplicating the same target', async () => {
     vi.mocked(V8MyWorkApi.getNotebookPage).mockResolvedValue({
       id: 'note-converted-1',

@@ -12340,6 +12340,34 @@ export const Api = {
     }
   },
 
+  downloadNotebookSourceFile: async (id: string): Promise<{ blob: Blob; filename: string }> => {
+    const downloadFrom = async (url: string) => {
+      const res = await fetch(url, { headers: getHeaders() });
+      if (!res.ok) {
+        const error: any = new Error('Failed to download notebook source file');
+        error.status = res.status;
+        throw error;
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('Content-Disposition') || '';
+      const encodedMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+      const plainMatch = contentDisposition.match(/filename="([^"]+)"/i);
+      const filename = encodedMatch?.[1]
+        ? decodeURIComponent(encodedMatch[1])
+        : plainMatch?.[1] || `notebook-source-${id}`;
+      return { blob, filename };
+    };
+
+    try {
+      return await downloadFrom(`${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      return downloadFrom(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+    }
+  },
+
   /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
   uploadNotebookFile: async (file: File): Promise<any> => {
     let capture: any;

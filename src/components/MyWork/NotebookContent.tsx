@@ -23,6 +23,7 @@ import {
   Filter,
   Inbox,
   Lightbulb,
+  Paperclip,
   Pen,
   Pin,
   Play,
@@ -641,6 +642,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [pendingAIProposals, setPendingAIProposals] = useState<NotebookAIProposal[]>([]);
   const [selectedEmbedPreview, setSelectedEmbedPreview] = useState<EmbeddedRefPreview | null>(null);
   const [outlineDraft, setOutlineDraft] = useState<OutlineDraft | null>(null);
+  const [isDownloadingSourceFile, setIsDownloadingSourceFile] = useState(false);
 
   // Auto-summary
   const summaryTimer = useRef<number | null>(null);
@@ -1256,6 +1258,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       toast.error(t('myWork.errors.deleteFailed', 'Failed to delete'));
     }
   };
+
+  const handleDownloadSourceFile = useCallback(async () => {
+    if (!activePage?.id || isDownloadingSourceFile) return;
+    setIsDownloadingSourceFile(true);
+    try {
+      const { blob, filename } = await Api.downloadNotebookSourceFile(activePage.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się pobrać pliku źródłowego' : 'Failed to download source file');
+    } finally {
+      setIsDownloadingSourceFile(false);
+    }
+  }, [activePage?.id, isDownloadingSourceFile, isPolish]);
 
   const refreshAIProposals = useCallback(async (pageId: string) => {
     try {
@@ -2054,13 +2076,35 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               isPolish
                             );
                             if (!uploadSource) return null;
+                            const hasStoredSourceFile = Boolean(
+                              activePage.captureMetadata?.storedSourceFile &&
+                                activePage.captureMetadata?.fileOriginalname
+                            );
                             return (
-                              <span
-                                className="inline-flex items-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 text-[11px] font-medium"
-                                title={uploadSource.title}
-                              >
-                                {uploadSource.label}
-                              </span>
+                              <>
+                                <span
+                                  className="inline-flex items-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 text-[11px] font-medium"
+                                  title={uploadSource.title}
+                                >
+                                  {uploadSource.label}
+                                </span>
+                                {hasStoredSourceFile ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleDownloadSourceFile()}
+                                    disabled={isDownloadingSourceFile}
+                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 transition-colors hover:border-sky-200 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-sky-400/30 dark:hover:text-sky-300"
+                                    title={
+                                      isPolish
+                                        ? 'Pobierz oryginalny plik źródłowy'
+                                        : 'Download original source file'
+                                    }
+                                  >
+                                    <Paperclip size={11} />
+                                    {isPolish ? 'Pobierz źródło' : 'Download source'}
+                                  </button>
+                                ) : null}
+                              </>
                             );
                           })()}
                         </div>

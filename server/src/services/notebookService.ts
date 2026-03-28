@@ -9,14 +9,15 @@
  * V4-NOTE-07: Embed chips + preview shell contract
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import { embeddingService } from './ai/embeddingService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { embeddingService } from './ai/embeddingService.js';
+import { persistNotebookSourceFile } from './notebookSourceFileService.js';
 
 // ============================================================
 // Types
@@ -99,18 +100,18 @@ class NotebookService {
   // V4-NOTE-01: Capture connectors
   // ──────────────────────────────────────────────
 
-  async capture(
-    orgId: string,
-    userId: string,
-    request: CaptureRequest
-  ): Promise<IngestionResult> {
+  async capture(orgId: string, userId: string, request: CaptureRequest): Promise<IngestionResult> {
     let contentText = '';
     let title = request.title || 'Untitled';
 
     switch (request.source) {
       case 'upload': {
         if (request.fileBuffer && request.fileMimetype && request.fileOriginalname) {
-          contentText = await this.extractText(request.fileBuffer, request.fileMimetype, request.fileOriginalname);
+          contentText = await this.extractText(
+            request.fileBuffer,
+            request.fileMimetype,
+            request.fileOriginalname
+          );
           if (!request.title) {
             title = path.basename(request.fileOriginalname, path.extname(request.fileOriginalname));
           }
@@ -130,8 +131,12 @@ class NotebookService {
         const emailHeader = [
           request.emailFrom ? `From: ${request.emailFrom}` : '',
           request.emailSubject ? `Subject: ${request.emailSubject}` : '',
-        ].filter(Boolean).join('\n');
-        contentText = emailHeader ? `${emailHeader}\n\n${request.content || ''}` : (request.content || '');
+        ]
+          .filter(Boolean)
+          .join('\n');
+        contentText = emailHeader
+          ? `${emailHeader}\n\n${request.content || ''}`
+          : request.content || '';
         break;
       }
       case 'api_import': {
@@ -146,6 +151,17 @@ class NotebookService {
       source: request.source,
       tags: request.tags || [],
       projectId: request.projectId,
+      sourceFile:
+        request.source === 'upload' &&
+        request.fileBuffer &&
+        request.fileOriginalname &&
+        request.fileMimetype
+          ? {
+              buffer: request.fileBuffer,
+              originalname: request.fileOriginalname,
+              mimetype: request.fileMimetype,
+            }
+          : undefined,
       metadata: {
         ...request.metadata,
         captureSource: request.source,
@@ -170,11 +186,26 @@ class NotebookService {
       source: CaptureSource;
       tags?: string[];
       projectId?: string;
+      sourceFile?: {
+        buffer: Buffer;
+        originalname: string;
+        mimetype: string;
+      };
       metadata?: Record<string, unknown>;
     }
   ): Promise<IngestionResult> {
     const id = uuidv4();
     const now = new Date().toISOString();
+    const persistedSourceMetadata =
+      data.source === 'upload' && data.sourceFile
+        ? await persistNotebookSourceFile({
+            organizationId: orgId,
+            pageId: id,
+            fileBuffer: data.sourceFile.buffer,
+            fileOriginalname: data.sourceFile.originalname,
+            fileMimetype: data.sourceFile.mimetype,
+          })
+        : {};
 
     const contentJson = JSON.stringify({
       type: 'doc',
@@ -189,10 +220,18 @@ class NotebookService {
         content_json, content_text, tags_json, status, capture_source, capture_metadata, created_at, updated_at)
        VALUES (?, ?, ?, ?, 'private', ?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
       [
-        id, userId, orgId, data.projectId || null, data.title,
-        contentJson, data.contentText, JSON.stringify(data.tags || []),
-        data.source, JSON.stringify(data.metadata || {}),
-        now, now,
+        id,
+        userId,
+        orgId,
+        data.projectId || null,
+        data.title,
+        contentJson,
+        data.contentText,
+        JSON.stringify(data.tags || []),
+        data.source,
+        JSON.stringify({ ...(data.metadata || {}), ...persistedSourceMetadata }),
+        now,
+        now,
       ]
     );
 
@@ -244,14 +283,20 @@ class NotebookService {
     const limit = Math.min(options?.limit || 20, 100);
     const results: SemanticSearchResult[] = [];
 
-    const ftsResults = await this.ftsSearch(orgId, userId, query, { limit, projectId: options?.projectId });
+    const ftsResults = await this.ftsSearch(orgId, userId, query, {
+      limit,
+      projectId: options?.projectId,
+    });
     for (const r of ftsResults) {
       results.push({ ...r, matchType: 'fts' });
     }
 
-    const embeddingResults = await this.embeddingSearch(orgId, userId, query, { limit, projectId: options?.projectId });
+    const embeddingResults = await this.embeddingSearch(orgId, userId, query, {
+      limit,
+      projectId: options?.projectId,
+    });
     for (const r of embeddingResults) {
-      const existing = results.find(e => e.pageId === r.pageId);
+      const existing = results.find((e) => e.pageId === r.pageId);
       if (existing) {
         existing.score = Math.max(existing.score, r.score);
         existing.matchType = 'hybrid';
@@ -263,7 +308,7 @@ class NotebookService {
     results.sort((a, b) => b.score - a.score);
 
     const minScore = options?.minScore || 0;
-    return results.filter(r => r.score >= minScore).slice(0, limit);
+    return results.filter((r) => r.score >= minScore).slice(0, limit);
   }
 
   async buildRAGContext(
@@ -271,9 +316,14 @@ class NotebookService {
     userId: string,
     query: string,
     options?: { maxTokens?: number; limit?: number }
-  ): Promise<{ context: string; citations: Array<{ pageId: string; title: string; snippet: string }> }> {
+  ): Promise<{
+    context: string;
+    citations: Array<{ pageId: string; title: string; snippet: string }>;
+  }> {
     const maxTokens = options?.maxTokens || 4000;
-    const results = await this.semanticSearch(orgId, userId, query, { limit: options?.limit || 10 });
+    const results = await this.semanticSearch(orgId, userId, query, {
+      limit: options?.limit || 10,
+    });
 
     const citations: Array<{ pageId: string; title: string; snippet: string }> = [];
     const contextParts: string[] = [];
@@ -319,7 +369,16 @@ class NotebookService {
       `INSERT INTO notebook_ai_proposals
        (id, organization_id, page_id, actor_id, proposal_type, block_content, rationale, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', ?)`,
-      [id, orgId, pageId, actorId, proposal.proposalType, JSON.stringify(proposal.blockContent), proposal.rationale, now]
+      [
+        id,
+        orgId,
+        pageId,
+        actorId,
+        proposal.proposalType,
+        JSON.stringify(proposal.blockContent),
+        proposal.rationale,
+        now,
+      ]
     );
 
     return {
@@ -389,10 +448,11 @@ class NotebookService {
     const limit = Math.min(options?.limit || 50, 200);
     params.push(limit);
 
-    const rows = (await db.all(
-      `SELECT * FROM notebook_ai_proposals WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT ?`,
-      params
-    )) || [];
+    const rows =
+      (await db.all(
+        `SELECT * FROM notebook_ai_proposals WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT ?`,
+        params
+      )) || [];
 
     return rows.map(mapProposalRow);
   }
@@ -429,7 +489,12 @@ class NotebookService {
         statusCol: 'status',
         snippetCols: ['summary', 'description'],
       },
-      task: { table: 'tasks', titleCol: 'title', statusCol: 'status', snippetCols: ['description'] },
+      task: {
+        table: 'tasks',
+        titleCol: 'title',
+        statusCol: 'status',
+        snippetCols: ['description'],
+      },
       decision: {
         table: 'decisions',
         titleCol: 'title',
@@ -497,7 +562,10 @@ class NotebookService {
         artifactType,
         artifactId,
         title: row.title || artifactId,
-        snippet: String(row.snippet || '').replace(/\s+/g, ' ').trim().slice(0, 220),
+        snippet: String(row.snippet || '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 220),
         status: row.status,
         updatedAt: row.updatedAt,
         permissionOk: true,
@@ -530,10 +598,16 @@ class NotebookService {
   // Internal helpers
   // ──────────────────────────────────────────────
 
-  private async extractText(buffer: Buffer, mimetype: string, originalname: string): Promise<string> {
+  private async extractText(
+    buffer: Buffer,
+    mimetype: string,
+    originalname: string
+  ): Promise<string> {
     const ext = path.extname(originalname || '').toLowerCase();
     if (ext === '.pdf' || mimetype === 'application/pdf') {
-      const pdfParse = (await import('pdf-parse')).default as (buf: Buffer) => Promise<{ text: string }>;
+      const pdfParse = (await import('pdf-parse')).default as (
+        buf: Buffer
+      ) => Promise<{ text: string }>;
       const data = await pdfParse(buffer);
       return String(data?.text || '');
     }
@@ -558,14 +632,18 @@ class NotebookService {
       }
     }
     if (ext === '.html' || ext === '.htm' || mimetype?.includes('html')) {
-      return buffer.toString('utf-8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      return buffer
+        .toString('utf-8')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
     }
     return buffer.toString('utf-8');
   }
 
   private textToBlocks(text: string): Array<Record<string, unknown>> {
     const paragraphs = text.split(/\n{2,}/).filter(Boolean);
-    return paragraphs.slice(0, 200).map(p => ({
+    return paragraphs.slice(0, 200).map((p) => ({
       type: 'paragraph',
       content: [{ type: 'text', text: p.trim().slice(0, 10000) }],
     }));
@@ -608,14 +686,15 @@ class NotebookService {
       ? `ts_rank(np.search_vector, plainto_tsquery('simple', '${query.replace(/'/g, "''")}'))`
       : '1.0';
 
-    const rows = (await queryHelpers.queryAll<any>(
-      `SELECT np.id, np.title, SUBSTR(np.content_text, 1, 300) as snippet, ${rankExpr} as score
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT np.id, np.title, SUBSTR(np.content_text, 1, 300) as snippet, ${rankExpr} as score
        FROM notebook_pages np
        WHERE ${conditions.join(' AND ')}
        ORDER BY ${isPg ? 'score DESC,' : ''} np.updated_at DESC
        LIMIT ?`,
-      params
-    )) || [];
+        params
+      )) || [];
 
     return rows.map((r: any) => ({
       pageId: r.id,
@@ -657,15 +736,16 @@ class NotebookService {
 
     params.push(options.limit);
 
-    const rows = (await db.all(
-      `SELECT ne.page_id, np.title, SUBSTR(ne.chunk_text, 1, 300) as snippet, ne.embedding_vector
+    const rows =
+      (await db.all(
+        `SELECT ne.page_id, np.title, SUBSTR(ne.chunk_text, 1, 300) as snippet, ne.embedding_vector
        FROM notebook_embeddings ne
        JOIN notebook_pages np ON np.id = ne.page_id
        WHERE ${conditions.join(' AND ')}
        ORDER BY ne.updated_at DESC
        LIMIT ?`,
-      params
-    )) || [];
+        params
+      )) || [];
 
     if (rows.length === 0) return [];
 
@@ -679,9 +759,10 @@ class NotebookService {
     const scored = rows.map((r: any) => {
       const snippet = r.snippet || '';
       const storedEmbedding = parseEmbeddingVector(r.embedding_vector);
-      const score = queryEmbedding && storedEmbedding
-        ? cosineSimilarity(queryEmbedding, storedEmbedding)
-        : lexicalSimilarity(query, snippet);
+      const score =
+        queryEmbedding && storedEmbedding
+          ? cosineSimilarity(queryEmbedding, storedEmbedding)
+          : lexicalSimilarity(query, snippet);
       return {
         pageId: r.page_id,
         title: r.title || '',
@@ -705,7 +786,10 @@ class NotebookService {
     const chunks = this.chunkText(text, 1000);
     const now = new Date().toISOString();
 
-    await db.run(`DELETE FROM notebook_embeddings WHERE page_id = ? AND organization_id = ?`, [pageId, orgId]);
+    await db.run(`DELETE FROM notebook_embeddings WHERE page_id = ? AND organization_id = ?`, [
+      pageId,
+      orgId,
+    ]);
 
     for (let i = 0; i < chunks.length && i < 50; i++) {
       let embeddingVector: string | null = null;
@@ -752,8 +836,12 @@ class NotebookService {
         embedding_vector TEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
-      await db.run(`CREATE INDEX IF NOT EXISTS idx_nb_embed_page ON notebook_embeddings(organization_id, page_id)`);
-    } catch { /* may exist */ }
+      await db.run(
+        `CREATE INDEX IF NOT EXISTS idx_nb_embed_page ON notebook_embeddings(organization_id, page_id)`
+      );
+    } catch {
+      /* may exist */
+    }
   }
 
   private async ensureProposalTable(db: IDatabase): Promise<void> {
@@ -771,11 +859,19 @@ class NotebookService {
         resolved_at TIMESTAMP,
         resolved_by TEXT
       )`);
-      await db.run(`CREATE INDEX IF NOT EXISTS idx_nb_proposals_page ON notebook_ai_proposals(organization_id, page_id, status)`);
-    } catch { /* may exist */ }
+      await db.run(
+        `CREATE INDEX IF NOT EXISTS idx_nb_proposals_page ON notebook_ai_proposals(organization_id, page_id, status)`
+      );
+    } catch {
+      /* may exist */
+    }
   }
 
-  private async applyAcceptedProposal(db: IDatabase, orgId: string, proposalRow: any): Promise<void> {
+  private async applyAcceptedProposal(
+    db: IDatabase,
+    orgId: string,
+    proposalRow: any
+  ): Promise<void> {
     const page = (await db.get(
       `SELECT id, content_json, content_text FROM notebook_pages WHERE id = ? AND organization_id = ?`,
       [proposalRow.page_id, orgId]
@@ -783,7 +879,10 @@ class NotebookService {
     if (!page) return;
 
     const currentDoc = safeParseDocument(page.content_json);
-    const proposalType = String(proposalRow.proposal_type || 'insert') as 'insert' | 'replace' | 'append';
+    const proposalType = String(proposalRow.proposal_type || 'insert') as
+      | 'insert'
+      | 'replace'
+      | 'append';
     const nextBlock = normalizeNotebookBlock(safeParseJson(proposalRow.block_content));
     const existingBlocks = Array.isArray(currentDoc.content) ? currentDoc.content : [];
 
@@ -836,7 +935,10 @@ function safeParseJson(val: unknown): Record<string, unknown> {
   }
 }
 
-function safeParseDocument(val: unknown): { type: string; content: Array<Record<string, unknown>> } {
+function safeParseDocument(val: unknown): {
+  type: string;
+  content: Array<Record<string, unknown>>;
+} {
   if (!val) return { type: 'doc', content: [] };
   try {
     const parsed = typeof val === 'string' ? JSON.parse(val) : val;

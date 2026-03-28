@@ -1,3 +1,6 @@
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +14,7 @@ const mockGetProposalsForPage = vi.fn();
 const mockResolveAIProposal = vi.fn();
 const mockConvertNotebookPage = vi.fn();
 const mockNotebookCapture = vi.fn();
+const mockResolveStoredNotebookSourceFile = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -41,6 +45,16 @@ vi.mock('../../../services/notebookConversionService.js', () => ({
       this.status = status;
       this.code = code;
     }
+  },
+}));
+
+vi.mock('../../../services/notebookSourceFileService.js', () => ({
+  resolveStoredNotebookSourceFile: (...args: unknown[]) => mockResolveStoredNotebookSourceFile(...args),
+  toPublicNotebookCaptureMetadata: (raw: string | null | undefined) => {
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const { sourceFileStorageKey: _internal, ...publicMetadata } = parsed;
+    return publicMetadata;
   },
 }));
 
@@ -92,6 +106,13 @@ describe('V8 My Work notebook routes', () => {
         reviewCadence: 'monthly',
         staleAt: null,
         lastReviewedAt: null,
+        captureSource: 'upload',
+        captureMetadataJson: JSON.stringify({
+          fileOriginalname: 'board-notes.pdf',
+          fileMimetype: 'application/pdf',
+          storedSourceFile: true,
+          sourceFileStorageKey: 'org-hidden/note.pdf',
+        }),
         convertedToJson: null,
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-26T10:00:00.000Z',
@@ -110,7 +131,14 @@ describe('V8 My Work notebook routes', () => {
       title: 'Notebook item',
       tags: ['alpha'],
       pinned: false,
+      captureSource: 'upload',
+      captureMetadata: {
+        fileOriginalname: 'board-notes.pdf',
+        fileMimetype: 'application/pdf',
+        storedSourceFile: true,
+      },
     });
+    expect(res.body.data[0].captureMetadata.sourceFileStorageKey).toBeUndefined();
   });
 
   it('creates a notebook page through the V8 namespace', async () => {
@@ -180,6 +208,39 @@ describe('V8 My Work notebook routes', () => {
       tags: [],
       projectId: undefined,
     });
+  });
+
+  it('downloads stored notebook source files through the V8 namespace', async () => {
+    const tmpFile = path.join(os.tmpdir(), `notebook-source-${Date.now()}.txt`);
+    await fs.writeFile(tmpFile, 'hello world', 'utf8');
+    mockQueryOne.mockResolvedValue({
+      id: 'note-download-1',
+      ownerUserId: USER_ID,
+      organizationId: ORG,
+      projectId: null,
+      visibility: 'private',
+      captureSource: 'upload',
+      captureMetadataJson: JSON.stringify({
+        fileOriginalname: 'note.txt',
+        fileMimetype: 'text/plain',
+        storedSourceFile: true,
+        sourceFileStorageKey: 'org/note.txt',
+      }),
+    });
+    mockResolveStoredNotebookSourceFile.mockResolvedValue({
+      filePath: tmpFile,
+      fileName: 'note.txt',
+      mimeType: 'text/plain',
+      sizeBytes: 11,
+    });
+
+    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages/note-download-1/source-file');
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.text).toBe('hello world');
+
+    await fs.unlink(tmpFile).catch(() => undefined);
   });
 
   it('updates an owned notebook page through the V8 namespace', async () => {

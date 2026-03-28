@@ -17,6 +17,10 @@ import {
   convertNotebookPage,
   NotebookConversionError,
 } from '../../services/notebookConversionService.js';
+import {
+  resolveStoredNotebookSourceFile,
+  toPublicNotebookCaptureMetadata,
+} from '../../services/notebookSourceFileService.js';
 import notebookService from '../../services/notebookService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
 import type {
@@ -232,14 +236,7 @@ const parseConvertedTo = (raw: string | null | undefined) => {
   }
 };
 
-const parseCaptureMetadata = (raw: string | null | undefined) => {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-};
+const parseCaptureMetadata = (raw: string | null | undefined) => toPublicNotebookCaptureMetadata(raw);
 
 const parseNotebookContent = (raw: string | null | undefined) => {
   try {
@@ -1029,6 +1026,52 @@ router.get(
       data: formatNotebookRow(row),
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
+  })
+);
+
+router.get(
+  '/notebook/pages/:id/source-file',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson"
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!row) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (!(await canAccessNotebookRow(userId, organizationId, row))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(row.captureSource || '').toLowerCase() !== 'upload') {
+      return res
+        .status(404)
+        .json({ error: 'Source file not found', code: 'NOTEBOOK_SOURCE_FILE_NOT_FOUND' });
+    }
+
+    const storedFile = await resolveStoredNotebookSourceFile(row.captureMetadataJson);
+    if (!storedFile) {
+      return res
+        .status(404)
+        .json({ error: 'Source file not found', code: 'NOTEBOOK_SOURCE_FILE_NOT_FOUND' });
+    }
+
+    res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
+    return res.download(storedFile.filePath, storedFile.fileName);
   })
 );
 

@@ -140,7 +140,16 @@ export interface V8NotebookPage {
   staleAt?: string | null;
   lastReviewedAt?: string | null;
   captureSource?: string | null;
-  captureMetadata?: Record<string, unknown> | null;
+  captureMetadata?: {
+    captureSource?: string | null;
+    url?: string | null;
+    emailFrom?: string | null;
+    fileOriginalname?: string | null;
+    fileMimetype?: string | null;
+    storedSourceFile?: boolean;
+    sourceFileSizeBytes?: number | null;
+    [key: string]: unknown;
+  } | null;
   convertedTo?: Record<string, unknown> | null;
   createdAt?: string;
   updatedAt?: string;

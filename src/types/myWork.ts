@@ -646,6 +646,8 @@ export interface NotebookPage {
     emailFrom?: string | null;
     fileOriginalname?: string | null;
     fileMimetype?: string | null;
+    storedSourceFile?: boolean;
+    sourceFileSizeBytes?: number | null;
   } | null;
   createdAt: string;
   updatedAt: string;

@@ -29,6 +29,10 @@ import { createOutcomeFromCluster, materializeClusters } from '../services/ideaC
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
 import notebookService from '../services/notebookService.js';
+import {
+  resolveStoredNotebookSourceFile,
+  toPublicNotebookCaptureMetadata,
+} from '../services/notebookSourceFileService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { radarActionService } from '../services/radar/radarActionService.js';
@@ -7410,6 +7414,8 @@ const canAccessNotebookRow = async (
   return Boolean((pm as any)?.ok);
 };
 
+const parseCaptureMetadata = (raw: string | null | undefined) => toPublicNotebookCaptureMetadata(raw);
+
 /**
  * GET /api/my-work/notebook/pages?projectId?&q?&status?&pinned?&sort?&limit?&offset?
  */
@@ -7525,15 +7531,6 @@ router.get(
         return null;
       }
     };
-    const parseCaptureMetadata = (raw: string | null) => {
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    };
-
     res.json(
       rows.map((r: any) => ({
         ...r,
@@ -7663,15 +7660,6 @@ router.post(
         return null;
       }
     };
-    const parseCaptureMetadata = (raw: string | null) => {
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    };
-
     res.status(201).json({
       ...row,
       tags: parseTagsArray((row as any)?.tags),
@@ -7754,14 +7742,6 @@ router.post(
             }
           })()
         : null;
-    const parseCaptureMetadata = (raw: string | null) => {
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    };
     res.status(201).json({
       ...row,
       tags: parseTagsArray((row as any)?.tags),
@@ -7835,15 +7815,6 @@ router.get(
         return null;
       }
     };
-    const parseCaptureMetadata = (raw: string | null) => {
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    };
-
     res.json({
       id: row.id,
       projectId: row.project_id || null,
@@ -7873,6 +7844,46 @@ router.get(
         }
       })(),
     });
+  })
+);
+
+router.get(
+  '/notebook/pages/:id/source-file',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id,
+        organization_id,
+        project_id,
+        visibility,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson"
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!(await canAccessNotebookRow(userId, orgId, row)))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(row.captureSource || '').toLowerCase() !== 'upload') {
+      return res.status(404).json({ error: 'Source file not found' });
+    }
+
+    const storedFile = await resolveStoredNotebookSourceFile(row.captureMetadataJson);
+    if (!storedFile) {
+      return res.status(404).json({ error: 'Source file not found' });
+    }
+
+    res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
+    return res.download(storedFile.filePath, storedFile.fileName);
   })
 );
 
@@ -7983,14 +7994,6 @@ router.put(
 
     const formatNotebookRow = (r: any) => {
       const parseCT = (raw: string | null) => {
-        if (!raw) return null;
-        try {
-          return JSON.parse(raw);
-        } catch {
-          return null;
-        }
-      };
-      const parseCaptureMetadata = (raw: string | null) => {
         if (!raw) return null;
         try {
           return JSON.parse(raw);
