@@ -57,23 +57,23 @@ Only one major lane should be `active` at a time unless independence is proven.
 ### Bounded work already complete
 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the promoted scopes
-- bounded `T4` work is complete through the Anna reopen / voice continuity plateau
-- two additional Phase A themes are now accepted under this final plan
+- all earlier promoted `T4` lanes through broader `Multiplayer / collaboration` breadth are now accepted
+- the only remaining promoted lane is broader `Notes` adjunct / object-linked outputs breadth
 
 ### Current planning truth
 
 - the program is no longer blocked by micro residue
 - what remains is broad residual breadth that must be closed intentionally
-- the first two lanes under this plan are now accepted: `Landing Anna prompt-quality / retrieval-quality` and `Landing Anna multilingual expansion`
+- all `Phase A` and `Phase B` lanes under this plan are now accepted
 - broader `Sync` completion is now accepted in bounded form
 - broader `Multiplayer / collaboration` breadth is now accepted in bounded form
 - broader `Notes` adjunct / object-linked outputs breadth is now the active lane
 
 ### Current success metric
 
-- completed remaining themes: `10 / 13`
+- completed remaining themes: `12 / 13`
 - active lane: broader `Notes` adjunct / object-linked outputs breadth
-- landed packets in the current active lane: `4`
+- landed packets in the current active lane: `6`
 - last accepted lane: broader `Multiplayer / collaboration` breadth
 
 ---
@@ -168,18 +168,18 @@ No lane should jump directly from `queued` to `done`.
 ### Current lane
 
 - status: `active`
-- lane: broader `Sync` completion
-- latest evidence: settings logs readback continuity landed in `evidence/483-v81-broader-sync-settings-logs-readback-continuity-seam.md`
-- reason: the user-level settings integrations surface no longer hardcodes `{ logs: [] }` for governed providers, so another settings readback seam now runs on the same effective integration truth as the canonical org-level sync path
+- lane: broader `Notes` adjunct / object-linked outputs breadth
+- latest evidence: post-assessment-output residual reassessment recorded in `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`
+- reason: the tiny notebook direct-readback seams are now closed through upload provenance plus direct report, presentation, and assessment output continuity, so the next honest broader-notes step must now come from notebook attachment breadth or wider output propagation
 
 ### Next three lanes
 
-1. broader `Multiplayer / collaboration` breadth
-2. broader `Notes` adjunct / object-linked outputs breadth
+- none; keep the broader `Notes` lane active until it is either accepted or explicitly blocked
 
 ### Active blockers
 
-- none yet at plan level
+- none at plan-lane level
+- separate rollout residual still exists outside this lane: production credential hygiene cleanup remains required before wider production promotion is honest `GO`
 
 ### Decision rule
 
@@ -414,10 +414,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`
 - split-brain map: `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`
-- current packet: `notebook list output summary continuity seam`
-- last accepted packet: `none`
+- current packet: `none`
+- last accepted packet: `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`
 - blocker: `none`
-- next action: `assess the post-list-output-summary residual and choose the next honest broader-notes packet`
+- next action: `choose the next broader-notes packet from notebook attachment breadth or wider output propagation now that the tiny direct-readback seams are closed`
 - acceptance evidence: `none`
 
 ---

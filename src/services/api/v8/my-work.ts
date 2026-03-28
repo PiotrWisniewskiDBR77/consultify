@@ -139,6 +139,8 @@ export interface V8NotebookPage {
   reviewCadence?: string;
   staleAt?: string | null;
   lastReviewedAt?: string | null;
+  captureSource?: string | null;
+  captureMetadata?: Record<string, unknown> | null;
   convertedTo?: Record<string, unknown> | null;
   createdAt?: string;
   updatedAt?: string;

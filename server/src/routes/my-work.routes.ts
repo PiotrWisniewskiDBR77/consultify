@@ -7501,6 +7501,8 @@ router.get(
           coalesce(np.review_cadence, 'monthly') as reviewCadence,
           np.stale_at as staleAt,
           np.last_reviewed_at as lastReviewedAt,
+          np.capture_source as "captureSource",
+          np.capture_metadata as "captureMetadataJson",
           np.converted_to_json as "convertedToJson",
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
@@ -7523,14 +7525,25 @@ router.get(
         return null;
       }
     };
+    const parseCaptureMetadata = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
 
     res.json(
       rows.map((r: any) => ({
         ...r,
         tags: parseTagsArray(r.tags),
         pinned: Boolean(r.pinned),
+        captureSource: r.captureSource ?? null,
+        captureMetadata: parseCaptureMetadata(r.captureMetadataJson),
         convertedTo: parseConvertedTo(r.convertedToJson),
         convertedToJson: undefined,
+        captureMetadataJson: undefined,
         contentJson: (() => {
           try {
             return r.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };
@@ -7632,6 +7645,8 @@ router.post(
         summary,
         coalesce(status, 'active') as status,
         coalesce(pinned, 0) as pinned,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -7648,13 +7663,24 @@ router.post(
         return null;
       }
     };
+    const parseCaptureMetadata = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
 
     res.status(201).json({
       ...row,
       tags: parseTagsArray((row as any)?.tags),
       pinned: Boolean(row?.pinned),
+      captureSource: row?.captureSource ?? null,
+      captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
       convertedTo: parseConvertedTo(row?.convertedToJson),
       convertedToJson: undefined,
+      captureMetadataJson: undefined,
       contentJson: (() => {
         try {
           return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
@@ -7713,6 +7739,7 @@ router.post(
       `SELECT id, owner_user_id as "ownerUserId", organization_id as "organizationId", project_id as "projectId",
         visibility, title, content_json as "contentJson", content_text as "contentText", tags_json as tags,
         maturity, icon, summary, coalesce(status, 'active') as status, coalesce(pinned, 0) as pinned,
+        capture_source as "captureSource", capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson", created_at as "createdAt", updated_at as "updatedAt"
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [captureResult.pageId]
@@ -7727,11 +7754,22 @@ router.post(
             }
           })()
         : null;
+    const parseCaptureMetadata = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
     res.status(201).json({
       ...row,
       tags: parseTagsArray((row as any)?.tags),
       pinned: false,
+      captureSource: row?.captureSource ?? null,
+      captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
       convertedTo: parseCT(row),
+      captureMetadataJson: undefined,
       contentJson: (() => {
         try {
           return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
@@ -7775,6 +7813,8 @@ router.get(
         coalesce(review_cadence, 'monthly') as reviewCadence,
         stale_at as staleAt,
         last_reviewed_at as lastReviewedAt,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -7788,6 +7828,14 @@ router.get(
       return res.status(403).json({ error: 'Forbidden' });
 
     const parseConvertedTo = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
+    const parseCaptureMetadata = (raw: string | null) => {
       if (!raw) return null;
       try {
         return JSON.parse(raw);
@@ -7812,6 +7860,8 @@ router.get(
       reviewCadence: row.reviewCadence ?? 'monthly',
       staleAt: row.staleAt ?? null,
       lastReviewedAt: row.lastReviewedAt ?? null,
+      captureSource: row.captureSource ?? null,
+      captureMetadata: parseCaptureMetadata(row.captureMetadataJson),
       convertedTo: parseConvertedTo(row.convertedToJson),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -7924,6 +7974,8 @@ router.put(
         coalesce(review_cadence, 'monthly') as reviewCadence,
         stale_at as staleAt,
         last_reviewed_at as lastReviewedAt,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -7931,6 +7983,14 @@ router.put(
 
     const formatNotebookRow = (r: any) => {
       const parseCT = (raw: string | null) => {
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      };
+      const parseCaptureMetadata = (raw: string | null) => {
         if (!raw) return null;
         try {
           return JSON.parse(raw);
@@ -7946,8 +8006,11 @@ router.put(
         reviewCadence: r?.reviewCadence ?? 'monthly',
         staleAt: r?.staleAt ?? null,
         lastReviewedAt: r?.lastReviewedAt ?? null,
+        captureSource: r?.captureSource ?? null,
+        captureMetadata: parseCaptureMetadata(r?.captureMetadataJson),
         convertedTo: parseCT(r?.convertedToJson),
         convertedToJson: undefined,
+        captureMetadataJson: undefined,
         contentJson: (() => {
           try {
             return r?.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };

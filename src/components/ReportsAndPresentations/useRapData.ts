@@ -31,6 +31,18 @@ export type PresentationActionTarget =
 
 type ArtifactOriginActionTarget = ReportActionTarget | PresentationActionTarget;
 
+export interface AssessmentOriginOutputRow {
+  kind: 'assessment';
+  originRecordId: string;
+  title: string;
+  statusKey: string;
+  owner: string;
+  updatedAt: string;
+  governance?: {
+    visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
+  };
+}
+
 type ArtifactActionTargetPayload = {
   artifactId: string;
   originRuntime: string | null;
@@ -840,6 +852,85 @@ export function useArtifactOutputsForOrigins(
     } catch {
       setRows([]);
       setError('Canonical artifact registry failed to load notebook outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [originsKey, limit]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { rows, loading, error, refetch: fetchOutputs };
+}
+
+export function useAssessmentOutputsForOrigins(
+  origins: Array<{ type?: string | null; id?: string | null }> | null | undefined,
+  limit = 8
+) {
+  const [rows, setRows] = useState<AssessmentOriginOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedOrigins = Array.from(
+    new Map(
+      (origins || [])
+        .map((origin) => {
+          const type = String(origin?.type || '')
+            .trim()
+            .toLowerCase();
+          const id = String(origin?.id || '').trim();
+          if (type !== 'assessment' || !id) return null;
+          return [`assessment:${id}`, { id }] as const;
+        })
+        .filter(Boolean)
+    ).values()
+  ).slice(0, Math.max(1, limit));
+
+  const originsKey = normalizedOrigins.map((origin) => origin.id).join('|');
+
+  const fetchOutputs = useCallback(async () => {
+    if (!normalizedOrigins.length) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const responses = await Promise.all(
+        normalizedOrigins.map(async ({ id }) => {
+          const res = await fetch(`${API_URL}/assessments/${encodeURIComponent(id)}`, {
+            headers: getHeaders(),
+          });
+          if (!res.ok) {
+            throw new Error('Assessment outputs failed to load.');
+          }
+          const data = await res.json();
+          const assessment = data?.assessment || null;
+          if (!assessment) return null;
+          return {
+            kind: 'assessment' as const,
+            originRecordId: String(assessment.id || id),
+            title: String(assessment.name || 'Assessment'),
+            statusKey: String(assessment.status || 'draft').trim().toLowerCase() || 'draft',
+            owner: String(assessment.organizationId || ''),
+            updatedAt: String(assessment.updatedAt || assessment.createdAt || ''),
+            governance: { visibilityScope: 'private' as const },
+          };
+        })
+      );
+
+      setRows(
+        responses.filter(
+          (item: AssessmentOriginOutputRow | null): item is AssessmentOriginOutputRow => !!item
+        )
+      );
+      setError(null);
+    } catch {
+      setRows([]);
+      setError('Assessment outputs failed to load.');
     } finally {
       setLoading(false);
     }

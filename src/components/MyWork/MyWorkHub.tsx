@@ -1012,6 +1012,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         [
           'initiative',
           'report',
+          'assessment',
           'presentation',
           'meeting',
           'financial_model',

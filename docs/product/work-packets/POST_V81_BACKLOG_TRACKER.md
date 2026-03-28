@@ -84,7 +84,7 @@ Status vocabulary:
 | broader `Partner Program` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`; split-brain map recorded in `evidence/155-v81-partner-program-split-brain-map.md`; landed packets through `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`; accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` |
 | broader `Sync` completion | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`; residual assessment recorded in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`; no further packet inside the accepted bounded lane |
 | broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`; no further packet inside the accepted bounded lane |
-| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md` |
+| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md` |
 
 ---
 
@@ -548,7 +548,12 @@ Current status: `active`
 - [x] focused regression added for notebook output-menu persistence continuity
 - [x] fourth real bounded packet landed around notebook list output summary continuity on the active notebook surface
 - [x] focused regression added for notebook list output summary continuity
-- [ ] assess the post-list-output-summary residual before selecting the next broader-notes packet
+- [x] fifth real bounded packet landed around upload source readback continuity on the active notebook surface
+- [x] focused regression added for upload source readback continuity
+- [x] sixth real bounded packet landed around direct assessment output readback continuity on the active notebook surface
+- [x] focused regression extended for direct assessment output readback continuity
+- [x] assessed the post-assessment-output-readback residual before selecting the next broader-notes packet
+- [ ] choose the next broader-notes packet from notebook attachment breadth or wider output propagation
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1368,6 +1373,9 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: landed the sixth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, so the notebook linked outputs surface now resolves direct assessment outputs created from the same note instead of ignoring them while only reading direct reports/presentations
+- 2026-03-28: recorded `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, concluding again that one more tiny notebook direct-readback patch is no longer the honest next step and the lane should now move to notebook attachment breadth or wider output propagation
+- 2026-03-28: landed the fifth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, so uploaded notebook pages now retain visible source-file provenance on live notebook surfaces instead of losing it after extraction
 - 2026-03-28: landed the fourth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, so notebook rows now summarize multiple persisted converted outputs instead of flattening notebook output truth to the first converted target only
 - 2026-03-28: landed the third bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, so notebook outputs created from the row-level notebook output menu now persist back onto the source note instead of disappearing from notebook readback after refresh
 - 2026-03-28: landed the second bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, so the active notebook context panel now reads back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs

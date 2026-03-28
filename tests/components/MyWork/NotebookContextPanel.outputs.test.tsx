@@ -10,9 +10,11 @@ import { NotebookContextPanel } from '../../../src/components/MyWork/notebook/No
 const {
   apiMock,
   trackFunnelEventMock,
+  useAssessmentOutputsForOriginsMock,
   useArtifactOutputsForInitiativesMock,
   useArtifactOutputsForOriginsMock,
 } = vi.hoisted(() => ({
+  useAssessmentOutputsForOriginsMock: vi.fn(),
   useArtifactOutputsForInitiativesMock: vi.fn(),
   useArtifactOutputsForOriginsMock: vi.fn(),
   trackFunnelEventMock: vi.fn(),
@@ -45,6 +47,7 @@ vi.mock('../../../src/components/MyWork/notebook/PulseItemPickerModal', () => ({
 }));
 
 vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
+  useAssessmentOutputsForOrigins: (...args: unknown[]) => useAssessmentOutputsForOriginsMock(...args),
   useArtifactOutputsForInitiatives: (...args: unknown[]) => useArtifactOutputsForInitiativesMock(...args),
   useArtifactOutputsForOrigins: (...args: unknown[]) => useArtifactOutputsForOriginsMock(...args),
 }));
@@ -98,6 +101,12 @@ describe('NotebookContextPanel linked outputs', () => {
       refetch: vi.fn(),
     });
     useArtifactOutputsForOriginsMock.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useAssessmentOutputsForOriginsMock.mockReturnValue({
       rows: [],
       loading: false,
       error: null,
@@ -191,6 +200,69 @@ describe('NotebookContextPanel linked outputs', () => {
           type: 'report',
           id: 'report-1',
           name: 'Notebook source report',
+        },
+      })
+    );
+  });
+
+  it('renders direct converted assessments from the active note on the linked outputs surface', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    apiMock.getLinkGraphBacklinks.mockResolvedValue([]);
+    apiMock.notebookResolveEmbedChips.mockResolvedValue({ chips: [] });
+    useArtifactOutputsForInitiativesMock.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useArtifactOutputsForOriginsMock.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useAssessmentOutputsForOriginsMock.mockReturnValue({
+      rows: [
+        {
+          kind: 'assessment',
+          originRecordId: 'assessment-1',
+          title: 'Digital readiness assessment',
+          statusKey: 'draft',
+          owner: 'org-1',
+          updatedAt: '2026-03-24T07:00:00.000Z',
+          governance: { visibilityScope: 'private' },
+        },
+      ],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <NotebookContextPanel
+        open
+        onClose={vi.fn()}
+        editor={null}
+        noteId="note-1"
+        noteTitle="Q1 planning"
+        noteTags={['board']}
+        allNotes={[]}
+        noteConvertedTo={[{ type: 'assessment', id: 'assessment-1' }]}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Digital readiness assessment')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Open'));
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: {
+          type: 'assessment',
+          id: 'assessment-1',
+          name: 'Digital readiness assessment',
         },
       })
     );

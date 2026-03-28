@@ -608,6 +608,7 @@ export type NotebookPageStatus = 'inbox' | 'active' | 'converted' | 'archived';
 /** V4-NOTE-05: Knowledge lifecycle governance */
 export type NotebookVerificationStatus = 'unverified' | 'verified' | 'disputed';
 export type NotebookReviewCadence = 'weekly' | 'monthly' | 'quarterly' | 'never';
+export type NotebookCaptureSource = 'upload' | 'web_clipper' | 'email_forward' | 'api_import';
 
 export interface NotebookPage {
   id: string;
@@ -638,6 +639,14 @@ export interface NotebookPage {
   staleAt?: string | null;
   /** V4-NOTE-05: Last verification/review timestamp */
   lastReviewedAt?: string | null;
+  captureSource?: NotebookCaptureSource | null;
+  captureMetadata?: {
+    captureSource?: NotebookCaptureSource | string | null;
+    url?: string | null;
+    emailFrom?: string | null;
+    fileOriginalname?: string | null;
+    fileMimetype?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

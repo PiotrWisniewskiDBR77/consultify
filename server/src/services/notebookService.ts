@@ -151,6 +151,8 @@ class NotebookService {
         captureSource: request.source,
         url: request.url,
         emailFrom: request.emailFrom,
+        fileOriginalname: request.fileOriginalname,
+        fileMimetype: request.fileMimetype,
       },
     });
   }

@@ -67,6 +67,7 @@ import {
   EmbeddedRefNode,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
+import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
@@ -1750,6 +1751,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               </span>
                             )}
                             {(() => {
+                              const uploadSource = getNotebookUploadSourceSummary(
+                                (p as any).captureSource,
+                                (p as any).captureMetadata,
+                                isPolish
+                              );
+                              if (!uploadSource) return null;
+                              return (
+                                <span
+                                  className="rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  title={uploadSource.title}
+                                >
+                                  {uploadSource.label}
+                                </span>
+                              );
+                            })()}
+                            {(() => {
                               const convertedSummary = getNotebookConvertedOutputSummary(p.convertedTo);
                               if (convertedSummary.total === 0) return null;
                               return (
@@ -2030,6 +2047,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             placeholder={isPolish ? '+ tag' : '+ tag'}
                             className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-slate-400 dark:text-slate-500 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
+                          {(() => {
+                            const uploadSource = getNotebookUploadSourceSummary(
+                              activePage.captureSource,
+                              activePage.captureMetadata,
+                              isPolish
+                            );
+                            if (!uploadSource) return null;
+                            return (
+                              <span
+                                className="inline-flex items-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 text-[11px] font-medium"
+                                title={uploadSource.title}
+                              >
+                                {uploadSource.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>

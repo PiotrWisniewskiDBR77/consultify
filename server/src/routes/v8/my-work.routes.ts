@@ -232,6 +232,15 @@ const parseConvertedTo = (raw: string | null | undefined) => {
   }
 };
 
+const parseCaptureMetadata = (raw: string | null | undefined) => {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 const parseNotebookContent = (raw: string | null | undefined) => {
   try {
     return raw ? JSON.parse(raw) : { type: 'doc', content: [] };
@@ -248,8 +257,11 @@ const formatNotebookRow = (row: any) => ({
   reviewCadence: row?.reviewCadence ?? 'monthly',
   staleAt: row?.staleAt ?? null,
   lastReviewedAt: row?.lastReviewedAt ?? null,
+  captureSource: row?.captureSource ?? null,
+  captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
   convertedTo: parseConvertedTo(row?.convertedToJson),
   convertedToJson: undefined,
+  captureMetadataJson: undefined,
   contentJson: parseNotebookContent(row?.contentJson),
 });
 
@@ -807,6 +819,8 @@ router.get(
           coalesce(np.review_cadence, 'monthly') as "reviewCadence",
           np.stale_at as "staleAt",
           np.last_reviewed_at as "lastReviewedAt",
+          np.capture_source as "captureSource",
+          np.capture_metadata as "captureMetadataJson",
           np.converted_to_json as "convertedToJson",
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
@@ -950,6 +964,8 @@ router.post(
         coalesce(review_cadence, 'monthly') as "reviewCadence",
         stale_at as "staleAt",
         last_reviewed_at as "lastReviewedAt",
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -991,6 +1007,8 @@ router.get(
         coalesce(review_cadence, 'monthly') as "reviewCadence",
         stale_at as "staleAt",
         last_reviewed_at as "lastReviewedAt",
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -1123,6 +1141,8 @@ router.put(
         coalesce(review_cadence, 'monthly') as "reviewCadence",
         stale_at as "staleAt",
         last_reviewed_at as "lastReviewedAt",
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"

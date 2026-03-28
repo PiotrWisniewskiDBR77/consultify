@@ -18,9 +18,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  useAssessmentOutputsForOrigins,
   useArtifactOutputsForInitiatives,
   useArtifactOutputsForOrigins,
+  type AssessmentOriginOutputRow,
 } from '@/components/ReportsAndPresentations/useRapData';
+import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -125,6 +128,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   allNotes,
   noteConvertedTo = [],
 }) => {
+  type LinkedOutputRow = UnifiedOutputRow | AssessmentOriginOutputRow;
   const { i18n } = useTranslation();
   const pl = i18n.language === 'pl';
 
@@ -211,17 +215,22 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     loading: directOutputsLoading,
     error: directOutputsError,
   } = useArtifactOutputsForOrigins(noteConvertedTo, 8);
-  const allLinkedOutputRows = useMemo(() => {
+  const {
+    rows: directAssessmentRows,
+    loading: directAssessmentsLoading,
+    error: directAssessmentsError,
+  } = useAssessmentOutputsForOrigins(noteConvertedTo, 8);
+  const allLinkedOutputRows = useMemo<LinkedOutputRow[]>(() => {
     const seen = new Set<string>();
-    return [...directOutputRows, ...linkedOutputRows].filter((row) => {
+    return [...directAssessmentRows, ...directOutputRows, ...linkedOutputRows].filter((row) => {
       const key = row.artifactId || `${row.kind}:${row.originRecordId}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
-  }, [directOutputRows, linkedOutputRows]);
-  const linkedOutputsErrorMessage = directOutputsError || linkedOutputsError;
-  const linkedOutputsBusy = directOutputsLoading || linkedOutputsLoading;
+  }, [directAssessmentRows, directOutputRows, linkedOutputRows]);
+  const linkedOutputsErrorMessage = directAssessmentsError || directOutputsError || linkedOutputsError;
+  const linkedOutputsBusy = directAssessmentsLoading || directOutputsLoading || linkedOutputsLoading;
 
   useEffect(() => {
     if (!open) return;
@@ -454,6 +463,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       | 'task'
       | 'decision'
       | 'notebook'
+      | 'assessment'
       | 'report'
       | 'presentation'
       | 'sheet',
@@ -699,7 +709,9 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                           <button
                             onClick={() =>
                               openItem(
-                                row.kind === 'document'
+                                row.kind === 'assessment'
+                                  ? 'assessment'
+                                  : row.kind === 'document'
                                   ? 'report'
                                   : row.kind === 'presentation'
                                     ? 'presentation'
