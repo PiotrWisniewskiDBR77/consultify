@@ -1149,8 +1149,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             renderIndicator={!isV8MultiplayerEnabled}
             onPresenceUpdate={setRemotePresenceUsers}
           />
-          {usePlatform && realtime.presence.length > 0 && (
-            <PresenceIndicators presence={realtime.presence} currentUserId={currentUserId} />
+          {usePlatform && (
+            <PresenceIndicators
+              presence={realtime.presence}
+              currentUserId={currentUserId}
+              connectionState={realtime.connectionState}
+              enabled={usePlatform}
+            />
           )}
 
           {/* View tabs */}

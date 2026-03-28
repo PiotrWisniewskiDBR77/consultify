@@ -72,7 +72,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `10 / 13`
 - active lane: broader `Multiplayer / collaboration` breadth
-- landed packets in the current active lane: `1`
+- landed packets in the current active lane: `3`
 - last accepted lane: broader `Sync` completion
 
 ---
@@ -402,10 +402,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`
 - split-brain map: `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`
-- current packet: `evidence/494-v81-broader-multiplayer-degraded-state-visibility-seam.md`
+- current packet: `evidence/496-v81-broader-multiplayer-legacy-presence-degraded-readback-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether reconnect/runtime continuity or another thinner visible collaboration seam is now the next smallest honest broader-multiplayer packet`
+- next action: `promote reconnect/runtime continuity or another equally explicit broader runtime packet on the active collaboration surfaces`
 - acceptance evidence: `none`
 
 #### broader `Notes` adjunct / object-linked outputs breadth

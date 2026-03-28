@@ -3,7 +3,11 @@
  * Shows avatar bubbles for users viewing the same table, and per-cell cursor highlights.
  */
 
+import { Loader2, WifiOff } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { TableRealtimeConnectionState } from './useTableRealtime';
 
 interface PresenceInfo {
   userId: string;
@@ -16,14 +20,65 @@ interface PresenceInfo {
 interface PresenceIndicatorsProps {
   presence: PresenceInfo[];
   currentUserId: string;
+  connectionState?: TableRealtimeConnectionState;
+  enabled?: boolean;
 }
 
-export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({ presence, currentUserId }) => {
+interface TableRealtimeStatusIndicatorProps {
+  connectionState: TableRealtimeConnectionState;
+  enabled?: boolean;
+}
+
+export const TableRealtimeStatusIndicator: React.FC<TableRealtimeStatusIndicatorProps> = ({
+  connectionState,
+  enabled = true,
+}) => {
+  const { t } = useTranslation();
+
+  if (!enabled || connectionState === 'idle' || connectionState === 'connected') {
+    return null;
+  }
+
+  const isConnecting = connectionState === 'connecting';
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ${
+        isConnecting
+          ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-100'
+          : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-100'
+      }`}
+      aria-label={
+        isConnecting
+          ? t('collaboration.realtimeConnecting', 'Realtime connecting')
+          : t('collaboration.realtimeDegraded', 'Realtime degraded')
+      }
+    >
+      {isConnecting ? <Loader2 size={11} className="animate-spin" /> : <WifiOff size={11} />}
+      <span>{isConnecting ? t('collaboration.realtimeConnecting', 'Realtime connecting') : t('collaboration.realtimeDegraded', 'Realtime degraded')}</span>
+      {!isConnecting && (
+        <span className="text-[9px] font-medium text-amber-700/90 dark:text-amber-200/80">
+          {t('collaboration.singleUserMode', 'Single-user mode')}
+        </span>
+      )}
+    </div>
+  );
+};
+
+export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
+  presence,
+  currentUserId,
+  connectionState = 'connected',
+  enabled = true,
+}) => {
   const others = presence.filter((p) => p.userId !== currentUserId);
-  if (others.length === 0) return null;
+  if (others.length === 0 && (connectionState === 'idle' || connectionState === 'connected')) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-1 px-2">
+      <TableRealtimeStatusIndicator connectionState={connectionState} enabled={enabled} />
       {others.slice(0, 5).map((p) => (
         <div
           key={p.userId}
@@ -57,7 +112,7 @@ export const CellPresenceIndicator: React.FC<CellPresenceProps> = ({
   currentUserId,
 }) => {
   const editing = presence.find(
-    (p) => p.userId !== currentUserId && p.recordId === recordId && p.fieldId === fieldId,
+    (p) => p.userId !== currentUserId && p.recordId === recordId && p.fieldId === fieldId
   );
   if (!editing) return null;
 

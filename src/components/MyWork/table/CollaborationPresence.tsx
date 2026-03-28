@@ -5,14 +5,14 @@
  * "typing…" indicators, and a presence bar at the top.
  * Uses SSE/polling to sync presence state.
  */
-import { Lock, Users } from 'lucide-react';
+import { Lock, Users, WifiOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  V8MultiplayerApi,
   type V8MultiplayerLockRecord,
   type V8MultiplayerSurfacePresence,
-  V8MultiplayerApi,
 } from '@/services/api/v8/multiplayer';
 
 export interface PresenceUser {
@@ -189,7 +189,10 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
   if (!enabled || activeUsers.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1 px-2" aria-label={isPl ? 'Obecni we workspace' : 'Workspace presence'}>
+    <div
+      className="flex items-center gap-1 px-2"
+      aria-label={isPl ? 'Obecni we workspace' : 'Workspace presence'}
+    >
       <Users size={11} className="text-sky-500" />
       <div className="flex items-center -space-x-1.5">
         {activeUsers.slice(0, 5).map((user) => (
@@ -264,7 +267,10 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
   if (!enabled || activeLocks.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1 px-2" aria-label={isPl ? 'Blokady we workspace' : 'Workspace locks'}>
+    <div
+      className="flex items-center gap-1 px-2"
+      aria-label={isPl ? 'Blokady we workspace' : 'Workspace locks'}
+    >
       <Lock size={11} className="text-amber-500" />
       <span className="text-[9px] text-amber-700 dark:text-amber-300">
         {activeLocks.length} {isPl ? 'blocked' : 'locked'}
@@ -300,6 +306,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [remoteUsers, setRemoteUsers] = useState<PresenceUser[]>([]);
+  const [presenceStatus, setPresenceStatus] = useState<'healthy' | 'degraded'>('healthy');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const myColor = useMemo(
     () =>
@@ -341,9 +348,16 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
         );
         setRemoteUsers(active);
         onPresenceUpdate?.(active);
+        setPresenceStatus('healthy');
+      } else {
+        setRemoteUsers([]);
+        onPresenceUpdate?.([]);
+        setPresenceStatus('healthy');
       }
     } catch {
-      // silent
+      setRemoteUsers([]);
+      onPresenceUpdate?.([]);
+      setPresenceStatus('degraded');
     }
   }, [currentUserId, enabled, ideaId, onPresenceUpdate]);
 
@@ -362,10 +376,22 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
 
   const activeUsers = remoteUsers.filter((u) => Date.now() - u.lastSeen < STALE_THRESHOLD_MS);
 
-  if (!enabled || !renderIndicator || activeUsers.length === 0) return null;
+  if (!enabled || !renderIndicator || (activeUsers.length === 0 && presenceStatus !== 'degraded')) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-1 px-2">
+      {presenceStatus === 'degraded' && (
+        <>
+          <WifiOff size={11} className="text-amber-500" />
+          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+            {isPl ? 'Obecność niedostępna' : 'Presence degraded'}
+          </span>
+        </>
+      )}
+      {presenceStatus !== 'degraded' && (
+        <>
       <Users size={11} className="text-slate-400" />
       <div className="flex items-center -space-x-1.5">
         {activeUsers.slice(0, 5).map((user) => (
@@ -403,6 +429,8 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       <span className="text-[9px] text-slate-400 ml-1">
         {activeUsers.length} {isPl ? 'online' : 'online'}
       </span>
+        </>
+      )}
     </div>
   );
 };
