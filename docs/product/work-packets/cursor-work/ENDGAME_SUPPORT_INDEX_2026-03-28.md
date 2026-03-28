@@ -22,6 +22,7 @@ If you need the primary control docs, read:
 1. `docs/product/work-packets/Plan V8.1 Final.md`
 2. `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 3. `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
+4. `docs/product/work-packets/V8_V81_GAP_ANALYSIS_AND_8_2_CUT_2026-03-28.md`
 
 ---
 
@@ -61,6 +62,8 @@ If you need the primary control docs, read:
   Ready-to-fill declaration for formal program completion at `13 / 13`.
 - `docs/product/work-packets/cursor-work/WIDER_PRODUCTION_GO_NO_GO_DECISION_TEMPLATE_2026-03-28.md`
   Ready-to-fill final wider-production decision memo.
+- `docs/product/work-packets/V8_V81_GAP_ANALYSIS_AND_8_2_CUT_2026-03-28.md`
+  Post-closure product truth map: original vision vs delivered program vs explicit `8.2` cut.
 
 ---
 

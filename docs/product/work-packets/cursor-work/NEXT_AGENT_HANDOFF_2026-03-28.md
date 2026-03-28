@@ -39,6 +39,8 @@ Do not spend time on one more tiny notebook direct-readback patch.
 
 There is no active product lane left to extend. The next real step is controlled rollout execution under the already-recorded wider-production `GO`, not another product packet.
 
+If a fresh product-planning conversation starts about `what was really delivered vs what belongs in 8.2`, use `docs/product/work-packets/V8_V81_GAP_ANALYSIS_AND_8_2_CUT_2026-03-28.md` instead of reconstructing that decision from scratch.
+
 ## How the next agent should operate
 
 1. Read the live control docs first, not this handoff in isolation
