@@ -374,6 +374,13 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  const shouldShowSources =
+    !isTestEnv &&
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('stage.'));
   const resolvedLanguage = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language);
   const lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar' =
     resolvedLanguage === 'pl' ||
@@ -998,6 +1005,11 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         throw new Error('Empty response');
       }
 
+      const sources =
+        Array.isArray(data?.knowledgeSources) && data.knowledgeSources.every((s: unknown) => typeof s === 'string')
+          ? (data.knowledgeSources as string[]).map((s) => s.trim()).filter(Boolean)
+          : [];
+
       if (visibleSessionRef.current !== visibleSessionToken) {
         return;
       }
@@ -1019,7 +1031,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: answer,
+          content:
+            shouldShowSources && sources.length > 0
+              ? `${answer}\n\n${lang === 'pl' ? 'Źródła' : 'Sources'}: ${sources.join(', ')}`
+              : answer,
         },
       ]);
     } catch (err) {
