@@ -1,9 +1,10 @@
 /**
  * CollaborationOverlay — Multi-cursor + presence + shared session state.
- * Connects via authenticated WebSocket; gracefully falls back to single-user mode.
+ * Connects via authenticated WebSocket and surfaces degraded single-user mode.
  */
-import { Lock, Users } from 'lucide-react';
+import { Lock, Users, WifiOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CollaborationUser {
   id: string;
@@ -283,7 +284,16 @@ function useCollaboration(
     };
   }, []);
 
-  return { connected, users, sessionState, sendCursor, sendMessage, lockNode, unlockNode, selectNodes };
+  return {
+    connected,
+    users,
+    sessionState,
+    sendCursor,
+    sendMessage,
+    lockNode,
+    unlockNode,
+    selectNodes,
+  };
 }
 
 export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
@@ -294,6 +304,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   onSessionStateChange,
   onRegisterSend,
 }) => {
+  const { t } = useTranslation();
   const { connected, users, sessionState, sendCursor, sendMessage } = useCollaboration(
     ideaId,
     currentUserId,
@@ -335,6 +346,13 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
       .filter(([uid]) => uid !== currentUserId)
       .flatMap(([uid, nodeIds]) => nodeIds.map((nid) => ({ userId: uid, nodeId: nid })));
   }, [sessionState, currentUserId]);
+
+  const shouldShowDegradedState = !connected;
+  const shouldRenderOverlay =
+    shouldShowDegradedState ||
+    otherUsers.length > 0 ||
+    lockedNodeEntries.length > 0 ||
+    otherSelections.length > 0;
 
   useEffect(() => {
     onSessionStateChange?.(sessionState);
@@ -429,10 +447,22 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
     };
   }, [trackedNodeIds, sessionState?.lastActivity]);
 
-  if (!connected && otherUsers.length === 0) return null;
+  if (!shouldRenderOverlay) return null;
 
   return (
     <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
+      {shouldShowDegradedState && (
+        <div className="absolute top-3 right-3 z-50 flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-semibold text-amber-800 shadow-lg backdrop-blur-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <WifiOff size={12} />
+          <div className="flex flex-col leading-tight">
+            <span>{t('collaboration.connectionDegraded', 'Connection degraded')}</span>
+            <span className="text-[9px] font-medium text-amber-700/90 dark:text-amber-200/80">
+              {t('collaboration.singleUserMode', 'Single-user mode')}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
         <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm shadow-lg border border-slate-200/30 dark:border-navy-700/30">

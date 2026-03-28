@@ -5,7 +5,7 @@
 > Program authority: `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Goal: literal `100%` completion of the post-`V8/V8.1` program
-> Last updated: 2026-03-27
+> Last updated: 2026-03-28
 
 ---
 
@@ -65,13 +65,15 @@ Only one major lane should be `active` at a time unless independence is proven.
 - the program is no longer blocked by micro residue
 - what remains is broad residual breadth that must be closed intentionally
 - the first two lanes under this plan are now accepted: `Landing Anna prompt-quality / retrieval-quality` and `Landing Anna multilingual expansion`
-- broader `Sync` completion is now the active lane after broader partner acceptance was returned to held state
+- broader `Sync` completion is now accepted in bounded form
+- broader `Multiplayer / collaboration` breadth is now the active lane
 
 ### Current success metric
 
-- completed remaining themes: `9 / 13`
-- active lane: broader `Sync` completion
-- landed packets in the current active lane: `32`
+- completed remaining themes: `10 / 13`
+- active lane: broader `Multiplayer / collaboration` breadth
+- landed packets in the current active lane: `1`
+- last accepted lane: broader `Sync` completion
 
 ---
 
@@ -89,8 +91,8 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `done` | accepted partner payout/campaign/profile seams plus twenty broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, dashboard runtime/trust, payout-settings ownership, and final commission placeholder retirement | broader partner breadth is accepted |
-| `11` | broader `Sync` completion | `Phase C` | `active` | bounded hub/lifecycle work did not close full OAuth/provider breadth, so the broader lane is now promoted around connect/onboarding completion truth | broader sync completion is accepted |
-| `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
+| `11` | broader `Sync` completion | `Phase C` | `done` | bounded hub/lifecycle work did not close full OAuth/provider breadth, so the broader lane was promoted around connect/onboarding completion truth and is now accepted after the broader surface chain landed | broader sync completion is accepted |
+| `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `active` | presence + lock indicators landed, deeper realtime behavior did not, so the broader lane is now promoted around visible degraded-state and runtime continuity on active collaboration surfaces | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
 
 ---
@@ -166,8 +168,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: Slack governed provider round-trip coverage landed in `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md`
-- reason: the shared governed provider round-trip seam now covers Jira, Gmail, Teams, and Slack, so the active Slack path no longer falls back to a callback placeholder instead of a real provider authorization round-trip
+- latest evidence: settings logs readback continuity landed in `evidence/483-v81-broader-sync-settings-logs-readback-continuity-seam.md`
+- reason: the user-level settings integrations surface no longer hardcodes `{ logs: [] }` for governed providers, so another settings readback seam now runs on the same effective integration truth as the canonical org-level sync path
 
 ### Next three lanes
 
@@ -386,24 +388,24 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Sync` completion
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`
-- last accepted packet: `none`
+- current packet: `none`
+- last accepted packet: `settings refresh reauth authority continuity seam`
 - blocker: `none`
-- next action: `assess whether one more thinner settings-lifecycle seam remains after test continuity`
-- acceptance evidence: `none`
+- next action: `hold the accepted broader sync lane unless a new wider sync product/runtime lane is explicitly promoted later`
+- acceptance evidence: `evidence/492-v81-broader-sync-completion-t4-acceptance.md`
 
 #### broader `Multiplayer / collaboration` breadth
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`
+- split-brain map: `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`
+- current packet: `evidence/494-v81-broader-multiplayer-degraded-state-visibility-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `wait for prior platform parity lanes`
+- next action: `assess whether reconnect/runtime continuity or another thinner visible collaboration seam is now the next smallest honest broader-multiplayer packet`
 - acceptance evidence: `none`
 
 #### broader `Notes` adjunct / object-linked outputs breadth

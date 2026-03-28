@@ -2,7 +2,7 @@
 
 > Status: active
 > Parent program: `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
-> Last updated: 2026-03-27
+> Last updated: 2026-03-28
 
 ---
 
@@ -82,7 +82,8 @@ Status vocabulary:
 | broader `Results / KPI / ROI` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`; split-brain map recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`; landed packets: `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md`, `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md`, `evidence/370-v81-broader-results-kpi-roi-roi-realized-entry-v8-write-seam.md`, `evidence/371-v81-broader-results-kpi-roi-kpi-report-create-v8-write-seam.md`, `evidence/372-v81-broader-results-kpi-roi-kpi-time-series-record-v8-write-seam.md`, `evidence/373-v81-broader-results-kpi-roi-kpi-settings-save-v8-write-seam.md`, `evidence/374-v81-broader-results-kpi-roi-kpi-initiative-link-v8-write-seam.md`, `evidence/375-v81-broader-results-kpi-roi-kpi-initiative-unlink-v8-write-seam.md`, `evidence/376-v81-broader-results-kpi-roi-kpi-delete-v8-write-seam.md`, `evidence/377-v81-broader-results-kpi-roi-deviation-acknowledge-v8-write-seam.md`, `evidence/378-v81-broader-results-kpi-roi-deviation-rca-v8-write-seam.md`, `evidence/379-v81-broader-results-kpi-roi-deviation-action-create-v8-write-seam.md`, `evidence/380-v81-broader-results-kpi-roi-deviation-action-status-v8-write-seam.md`, `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md`, `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md`, `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md`; accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md` |
 | broader `Finance` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`; split-brain map recorded in `evidence/386-v81-broader-finance-parity-split-brain-map.md`; landed packets: `evidence/387-v81-broader-finance-models-list-read-v8-seam.md`, `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md`, `evidence/389-v81-broader-finance-budgets-list-read-v8-seam.md`, `evidence/390-v81-broader-finance-statement-packs-list-read-v8-seam.md`, `evidence/391-v81-broader-finance-statement-pack-detail-read-v8-seam.md`, `evidence/392-v81-broader-finance-child-statement-detail-read-v8-seam.md`, `evidence/393-v81-broader-finance-advanced-statement-detail-read-v8-seam.md`, `evidence/394-v81-broader-finance-canonical-lines-v8-seam.md`, `evidence/395-v81-broader-finance-statement-ratios-v8-seam.md`, `evidence/396-v81-broader-finance-related-list-v8-seam.md`, `evidence/397-v81-broader-finance-document-intelligence-search-v8-seam.md`, `evidence/398-v81-broader-finance-statement-confirm-v8-seam.md`, `evidence/399-v81-broader-finance-statement-values-save-v8-seam.md`, `evidence/400-v81-broader-finance-statement-detect-v8-seam.md`, `evidence/401-v81-broader-finance-statement-extract-map-v8-seam.md`, `evidence/402-v81-broader-finance-import-wizard-manual-detect-extract-map-v8-seam.md`, `evidence/403-v81-broader-finance-import-wizard-values-save-v8-seam.md`, `evidence/404-v81-broader-finance-import-wizard-confirm-v8-seam.md`, `evidence/405-v81-broader-finance-model-detail-v8-seam.md`, `evidence/406-v81-broader-finance-model-validations-v8-seam.md`, `evidence/407-v81-broader-finance-model-outputs-v8-seam.md`, `evidence/408-v81-broader-finance-model-compute-v8-seam.md`, `evidence/409-v81-broader-finance-model-approve-v8-seam.md`, `evidence/410-v81-broader-finance-model-delete-v8-seam.md`, `evidence/411-v81-broader-finance-model-create-v8-seam.md`, `evidence/412-v81-broader-finance-model-event-add-v8-seam.md`, `evidence/413-v81-broader-finance-model-event-delete-v8-seam.md`, `evidence/414-v81-broader-finance-model-assumptions-save-v8-seam.md`, `evidence/415-v81-broader-finance-statement-analytics-v8-seam.md`, `evidence/416-v81-broader-finance-import-upload-v8-seam.md`, `evidence/417-v81-broader-finance-workspace-model-list-v8-seam.md`; accepted in `evidence/418-v81-broader-finance-parity-t4-acceptance.md` |
 | broader `Partner Program` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`; split-brain map recorded in `evidence/155-v81-partner-program-split-brain-map.md`; landed packets through `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`; accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` |
-| broader `Sync` completion | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`; split-brain map recorded in `evidence/442-v81-broader-sync-completion-split-brain-map.md`; landed packets: `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`, `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md`, `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md`, `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md`, `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`, `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md`, `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md`, `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`, `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md`, `evidence/454-v81-broader-sync-run-now-refresh-preflight-honesty-seam.md`, `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md`, `evidence/456-v81-broader-sync-auth-break-recovery-initiation-continuity-seam.md`, `evidence/457-v81-broader-sync-auth-break-recovery-resolution-continuity-seam.md`, `evidence/458-v81-broader-sync-canonical-integrations-readback-continuity-seam.md`, `evidence/459-v81-broader-sync-canonical-connect-initiation-authority-continuity-seam.md`, `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`, `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md`, `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`, `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`; next move: assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next honest broader-sync step |
+| broader `Sync` completion | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`; residual assessment recorded in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`; no further packet inside the accepted bounded lane |
+| broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`; first landed packet is `evidence/494-v81-broader-multiplayer-degraded-state-visibility-seam.md` |
 
 ---
 
@@ -380,7 +381,7 @@ Current status: `done`
 
 ### broader `Sync` completion
 
-Current status: `active`
+Current status: `done`
 
 - [x] broader `Sync` completion charter written
 - [x] broader sync split-brain map captured across `v8`, legacy `sync-hub`, canonical org-level integrations, and user-level settings integrations
@@ -491,6 +492,33 @@ Current status: `active`
 - [x] promoted settings test connection continuity on the governed sync path as the next honest broader-sync implementation step
 - [x] twenty-seventh real bounded packet landed around settings test connection continuity on the governed sync path
 - [x] focused regression added for settings test connection continuity on the settings surface
+- [x] assessed whether one thinner settings-lifecycle readback seam still remains after test continuity
+- [x] promoted settings logs readback continuity on the governed sync path as the next honest broader-sync implementation step
+- [x] twenty-eighth real bounded packet landed around settings logs readback continuity on the governed sync path
+- [x] focused regression added for settings logs readback continuity on the settings surface
+- [x] assessed whether one thinner settings-lifecycle mutation seam still remains after settings logs continuity
+- [x] promoted settings config authority continuity on the governed sync path as the next honest broader-sync implementation step
+- [x] twenty-ninth real bounded packet landed around settings config authority continuity on the governed sync path
+- [x] focused regression added for settings config authority continuity on the settings surface
+- [x] assessed whether the final thinner settings-lifecycle mutation seam is isolated to refresh after settings config continuity
+- [x] promoted settings refresh reauth authority continuity on the governed sync path as the next honest broader-sync implementation step
+- [x] thirtieth real bounded packet landed around settings refresh reauth authority continuity on the governed sync path
+- [x] focused regression added for settings refresh reauth authority continuity on the settings surface
+- [x] assessed whether any thinner settings-lifecycle seam still remains after settings refresh continuity
+- [x] recorded that the settings-lifecycle slice no longer has another honest micro-packet before broader-sync acceptance-review or a wider new promotion
+- [x] lane accepted and moved to `done`
+
+### broader `Multiplayer / collaboration` breadth
+
+Current status: `active`
+
+- [x] explicit follow-on promotion granted after broader `Sync` completion acceptance
+- [x] broader multiplayer / collaboration breadth charter written
+- [x] split-brain map captured for the broader collaboration runtime residual after the accepted bounded `T2` header-indicator lane
+- [x] first evidence-first packet defined around degraded-state visibility on the active collaboration overlay
+- [x] first real bounded packet landed around multiplayer degraded-state visibility on the active collaboration overlay
+- [x] focused regression added for degraded-state visibility on `CollaborationOverlay`
+- [ ] assess whether reconnect/runtime continuity or another thinner visible collaboration seam is now the next smallest honest broader-multiplayer packet
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1310,6 +1338,15 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: promoted broader `Multiplayer / collaboration` breadth into active `T4` execution with charter `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`, recorded the split-brain map in `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`, and landed the first bounded degraded-state visibility packet in `evidence/494-v81-broader-multiplayer-degraded-state-visibility-seam.md`
+- 2026-03-28: accepted broader `Sync` completion as bounded `T4` done in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`, because the lane now closes the honest active sync residual across governed onboarding, provider round-trip coverage, org-level integrations, and settings lifecycle surfaces without leaving another smaller real packet behind
+- 2026-03-28: drove live authenticated production pilot traffic through the shadow-mapped legacy AI endpoints and recorded green production promotion-readiness in `evidence/491-v8-production-pilot-shadow-readiness-green.md` (`134` comparisons, `100%` match rate, `0%` V8 error rate, `1ms` overhead, `ready=true`), so rollout telemetry is no longer the blocker
+- 2026-03-28: deployed the current auth-hardening and broader-sync settings packets to Railway production, verified `consultify` deployment `091e7bd5-657e-4bd5-9421-b96d5c10ebe4` reached `SUCCESS`, and recorded the resulting readiness residual in `evidence/490-production-auth-guard-deploy-and-readiness-residual.md`: the hidden quick-access auth backdoor is removed from production, but credential hygiene and shadow observation still block honest wider promotion
+- 2026-03-28: recorded the broader `Sync` post-settings lifecycle residual assessment in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`, confirming that one more settings micro-packet is no longer the honest next step
+- 2026-03-28: landed the thirtieth real bounded packet inside broader `Sync` completion by aligning the settings refresh route with governed reauthorization truth in `evidence/488-v81-broader-sync-settings-refresh-reauth-authority-seam.md`, so the settings surface no longer claims refresh started while doing nothing on the governed auth path
+- 2026-03-28: landed the twenty-ninth real bounded packet inside broader `Sync` completion by aligning the settings config route with governed connector configuration truth in `evidence/487-v81-broader-sync-settings-config-authority-continuity-seam.md`, so the settings surface no longer claims config updates succeeded by writing only a local preferences shadow
+- 2026-03-28: bootstrapped the limited production V8 pilot in `evidence/486-v8-production-pilot-bootstrap-and-runtime-readback.md` by re-applying and verifying the production `v8` schema, fixing the missing production `ENCRYPTION_SALT`, deploying the current Railway production source successfully, and proving `200` readback for `/api/v8/admin/flags`, `/api/v8/health`, `/api/notifications*`, and `/api/llm/providers/health`; the remaining rollout residual is now observation-window shadow traffic, not deployment bootstrap
+- 2026-03-27: landed the twenty-eighth real bounded packet inside broader `Sync` completion by aligning the settings logs route with effective governed integration readback in `evidence/483-v81-broader-sync-settings-logs-readback-continuity-seam.md`, so that surface no longer hardcodes stubbed empty sync logs for governed providers
 - 2026-03-27: landed the twenty-seventh real bounded packet inside broader `Sync` completion by aligning the settings test connection route with effective governed truth in `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`, so that surface no longer returns stubbed success when the integration is only pending or otherwise not testable
 - 2026-03-27: recorded the broader `Sync` post-settings status readback residual assessment in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md`, confirming that settings test connection continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-sixth real bounded packet inside broader `Sync` completion by aligning the dedicated settings status route with the governed sync readback in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md`, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth
