@@ -12,8 +12,13 @@
 /.codex-worktrees/
 /_analysis/
 
-# Large knowledge/doc corpora (not required at runtime)
+# Large knowledge/doc corpora (keep uploads small)
+# NOTE: We still include the markdown knowledge packs used for AI re-indexing.
 /knowledge/
+!/knowledge/tool-kb/
+!/knowledge/tool-kb/**
+!/knowledge/Pigułki wiedzy */
+!/knowledge/Pigułki wiedzy */**
 /docs/
 /wdrozenia/
 /Plast-met/
