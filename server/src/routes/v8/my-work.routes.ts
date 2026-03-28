@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Router } from 'express';
 import type { Response } from 'express';
+import multer from 'multer';
 import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -32,6 +33,10 @@ import type {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
+const notebookCaptureUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 /** B-05: V8 envelope for governed canonical inbox (V4-INBX-01) intake surface. */
 const V8_INBOX_CANONICAL_CONTRACT = 'my_work_inbox_canonical_v1';
@@ -818,6 +823,37 @@ router.get(
   }),
 );
 
+router.post(
+  '/notebook/capture/upload',
+  notebookCaptureUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({
+        error: 'File required',
+        code: 'NOTEBOOK_CAPTURE_FILE_REQUIRED',
+      });
+    }
+
+    const tags = req.body.tags
+      ? Array.isArray(req.body.tags)
+        ? req.body.tags
+        : [req.body.tags]
+      : [];
+
+    const data = await notebookService.capture(organizationId, userId, {
+      source: 'upload',
+      title: req.body.title,
+      fileBuffer: file.buffer,
+      fileMimetype: file.mimetype,
+      fileOriginalname: file.originalname,
+      tags,
+      projectId: req.body.projectId || undefined,
+    });
+
+    return res.status(201).json({ data, meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT } });
+  })
 router.post(
   '/notebook/pages',
   asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -66,14 +66,15 @@ Only one major lane should be `active` at a time unless independence is proven.
 - what remains is broad residual breadth that must be closed intentionally
 - the first two lanes under this plan are now accepted: `Landing Anna prompt-quality / retrieval-quality` and `Landing Anna multilingual expansion`
 - broader `Sync` completion is now accepted in bounded form
-- broader `Multiplayer / collaboration` breadth is now the active lane
+- broader `Multiplayer / collaboration` breadth is now accepted in bounded form
+- broader `Notes` adjunct / object-linked outputs breadth is now the active lane
 
 ### Current success metric
 
 - completed remaining themes: `10 / 13`
-- active lane: broader `Multiplayer / collaboration` breadth
-- landed packets in the current active lane: `5`
-- last accepted lane: broader `Sync` completion
+- active lane: broader `Notes` adjunct / object-linked outputs breadth
+- landed packets in the current active lane: `1`
+- last accepted lane: broader `Multiplayer / collaboration` breadth
 
 ---
 
@@ -92,8 +93,8 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `done` | accepted partner payout/campaign/profile seams plus twenty broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, dashboard runtime/trust, payout-settings ownership, and final commission placeholder retirement | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `done` | bounded hub/lifecycle work did not close full OAuth/provider breadth, so the broader lane was promoted around connect/onboarding completion truth and is now accepted after the broader surface chain landed | broader sync completion is accepted |
-| `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `active` | presence + lock indicators landed, deeper realtime behavior did not, so the broader lane is now promoted around visible degraded-state and runtime continuity on active collaboration surfaces | broader collaboration breadth is accepted |
-| `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
+| `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `done` | presence + lock indicators landed, deeper realtime behavior did not, so the broader lane was promoted around visible degraded-state and runtime continuity on active collaboration surfaces and is now accepted in bounded form | broader collaboration breadth is accepted |
+| `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `active` | upload/attachment/output breadth remains outside accepted adjunct scope, so the broader lane is now promoted around notebook capture/upload authority and wider object-linked outputs breadth | broader notes/output breadth is accepted |
 
 ---
 
@@ -399,24 +400,24 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Multiplayer / collaboration` breadth
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`
 - split-brain map: `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`
-- current packet: `evidence/499-v81-broader-multiplayer-table-reconnect-runtime-continuity-seam.md`
-- last accepted packet: `none`
+- current packet: `none`
+- last accepted packet: `table reconnect runtime continuity seam`
 - blocker: `none`
-- next action: `assess whether another thinner collaboration runtime seam remains before wider multiplayer acceptance-review or a broader runtime promotion`
-- acceptance evidence: `none`
+- next action: `hold the accepted broader multiplayer lane unless a wider realtime/collaboration runtime lane is explicitly promoted later`
+- acceptance evidence: `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`
 
 #### broader `Notes` adjunct / object-linked outputs breadth
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`
+- split-brain map: `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`
+- current packet: `notebook capture upload authority continuity seam`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `wait for prior platform parity lanes`
+- next action: `assess whether the next thinner seam is notebook-linked outputs continuity, attachment breadth, or another smaller active notes residual`
 - acceptance evidence: `none`
 
 ---

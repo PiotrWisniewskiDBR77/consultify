@@ -12317,7 +12317,15 @@ export const Api = {
 
   /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
   uploadNotebookFile: async (file: File): Promise<any> => {
-    const capture = await Api.notebookCaptureUpload(file);
+    let capture: any;
+    try {
+      capture = await V8MyWorkApi.notebookCaptureUpload(file);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      capture = await Api.notebookCaptureUpload(file);
+    }
     const pageId = String(capture?.pageId || '').trim();
     if (!pageId) {
       throw new Error('Notebook capture upload did not return a pageId');

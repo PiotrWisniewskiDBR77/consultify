@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
   v8Post: vi.fn(),
+  v8PostMultipart: vi.fn(),
   v8Put: vi.fn(),
   v8Delete: vi.fn(),
 }));
 
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
-import { v8Delete, v8Get, v8Post, v8Put } from '@/services/api/v8/client';
+import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from '@/services/api/v8/client';
 
 describe('V8MyWorkApi', () => {
   beforeEach(() => {
@@ -132,6 +133,21 @@ describe('V8MyWorkApi', () => {
     expect(v8Put).toHaveBeenCalledWith('/my-work/notebook/pages/note-1/pin');
     expect(v8Put).toHaveBeenCalledWith('/my-work/notebook/pages/note-1/status', { status: 'archived' });
     expect(v8Delete).toHaveBeenCalledWith('/my-work/notebook/pages/note-1');
+  });
+
+  it('routes notebook capture upload through the V8 namespace', async () => {
+    vi.mocked(v8PostMultipart).mockResolvedValue({
+      pageId: 'captured-note-1',
+      source: 'upload',
+    });
+
+    const file = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    await V8MyWorkApi.notebookCaptureUpload(file);
+
+    expect(v8PostMultipart).toHaveBeenCalledWith(
+      '/my-work/notebook/capture/upload',
+      expect.any(FormData)
+    );
   });
 
   it('requests notebook classify through the V8 namespace', async () => {

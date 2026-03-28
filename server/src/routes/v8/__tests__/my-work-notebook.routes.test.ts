@@ -10,6 +10,7 @@ const mockCreateAIProposal = vi.fn();
 const mockGetProposalsForPage = vi.fn();
 const mockResolveAIProposal = vi.fn();
 const mockConvertNotebookPage = vi.fn();
+const mockNotebookCapture = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -23,6 +24,7 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
 
 vi.mock('../../../services/notebookService.js', () => ({
   default: {
+    capture: (...args: unknown[]) => mockNotebookCapture(...args),
     createAIProposal: (...args: unknown[]) => mockCreateAIProposal(...args),
     getProposalsForPage: (...args: unknown[]) => mockGetProposalsForPage(...args),
     resolveAIProposal: (...args: unknown[]) => mockResolveAIProposal(...args),
@@ -137,15 +139,47 @@ describe('V8 My Work notebook routes', () => {
       updatedAt: '2026-03-26T10:00:00.000Z',
     });
 
-    const res = await request(createApp()).post('/api/v8/my-work/notebook/pages').send({
-      title: 'Fresh note',
-      contentJson: { type: 'doc', content: [] },
-    });
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/pages')
+      .send({
+        title: 'Fresh note',
+        contentJson: { type: 'doc', content: [] },
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.meta.contract).toBe('my_work_notebook_v1');
     expect(mockQueryRun).toHaveBeenCalled();
     expect(res.body.data.title).toBe('Fresh note');
+  });
+
+  it('routes notebook capture upload through the V8 namespace', async () => {
+    mockNotebookCapture.mockResolvedValue({
+      pageId: 'captured-v8-note-1',
+      source: 'upload',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/capture/upload')
+      .attach('file', Buffer.from('hello world'), {
+        filename: 'note.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(res.body.data).toEqual({
+      pageId: 'captured-v8-note-1',
+      source: 'upload',
+    });
+    expect(mockNotebookCapture).toHaveBeenCalledWith(ORG, USER_ID, {
+      source: 'upload',
+      title: undefined,
+      fileBuffer: expect.any(Buffer),
+      fileMimetype: 'text/plain',
+      fileOriginalname: 'note.txt',
+      tags: [],
+      projectId: undefined,
+    });
   });
 
   it('updates an owned notebook page through the V8 namespace', async () => {
@@ -268,11 +302,13 @@ describe('V8 My Work notebook routes', () => {
       sourceSessionId: 'tool-9',
     });
 
-    const res = await request(createApp()).post('/api/v8/my-work/notebook/pages/note-4b/convert').send({
-      target: 'initiative',
-      title: 'Converted initiative',
-      description: 'Notebook summary',
-    });
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/pages/note-4b/convert')
+      .send({
+        target: 'initiative',
+        title: 'Converted initiative',
+        description: 'Notebook summary',
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });

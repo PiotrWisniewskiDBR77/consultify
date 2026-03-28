@@ -83,7 +83,8 @@ Status vocabulary:
 | broader `Finance` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`; split-brain map recorded in `evidence/386-v81-broader-finance-parity-split-brain-map.md`; landed packets: `evidence/387-v81-broader-finance-models-list-read-v8-seam.md`, `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md`, `evidence/389-v81-broader-finance-budgets-list-read-v8-seam.md`, `evidence/390-v81-broader-finance-statement-packs-list-read-v8-seam.md`, `evidence/391-v81-broader-finance-statement-pack-detail-read-v8-seam.md`, `evidence/392-v81-broader-finance-child-statement-detail-read-v8-seam.md`, `evidence/393-v81-broader-finance-advanced-statement-detail-read-v8-seam.md`, `evidence/394-v81-broader-finance-canonical-lines-v8-seam.md`, `evidence/395-v81-broader-finance-statement-ratios-v8-seam.md`, `evidence/396-v81-broader-finance-related-list-v8-seam.md`, `evidence/397-v81-broader-finance-document-intelligence-search-v8-seam.md`, `evidence/398-v81-broader-finance-statement-confirm-v8-seam.md`, `evidence/399-v81-broader-finance-statement-values-save-v8-seam.md`, `evidence/400-v81-broader-finance-statement-detect-v8-seam.md`, `evidence/401-v81-broader-finance-statement-extract-map-v8-seam.md`, `evidence/402-v81-broader-finance-import-wizard-manual-detect-extract-map-v8-seam.md`, `evidence/403-v81-broader-finance-import-wizard-values-save-v8-seam.md`, `evidence/404-v81-broader-finance-import-wizard-confirm-v8-seam.md`, `evidence/405-v81-broader-finance-model-detail-v8-seam.md`, `evidence/406-v81-broader-finance-model-validations-v8-seam.md`, `evidence/407-v81-broader-finance-model-outputs-v8-seam.md`, `evidence/408-v81-broader-finance-model-compute-v8-seam.md`, `evidence/409-v81-broader-finance-model-approve-v8-seam.md`, `evidence/410-v81-broader-finance-model-delete-v8-seam.md`, `evidence/411-v81-broader-finance-model-create-v8-seam.md`, `evidence/412-v81-broader-finance-model-event-add-v8-seam.md`, `evidence/413-v81-broader-finance-model-event-delete-v8-seam.md`, `evidence/414-v81-broader-finance-model-assumptions-save-v8-seam.md`, `evidence/415-v81-broader-finance-statement-analytics-v8-seam.md`, `evidence/416-v81-broader-finance-import-upload-v8-seam.md`, `evidence/417-v81-broader-finance-workspace-model-list-v8-seam.md`; accepted in `evidence/418-v81-broader-finance-parity-t4-acceptance.md` |
 | broader `Partner Program` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`; split-brain map recorded in `evidence/155-v81-partner-program-split-brain-map.md`; landed packets through `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`; accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` |
 | broader `Sync` completion | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`; residual assessment recorded in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`; no further packet inside the accepted bounded lane |
-| broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MULTIPLAYER_COLLABORATION_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/493-v81-broader-multiplayer-collaboration-breadth-split-brain-map.md`; landed packets are `evidence/494-v81-broader-multiplayer-degraded-state-visibility-seam.md`, `evidence/495-v81-broader-multiplayer-table-realtime-status-visibility-seam.md`, `evidence/496-v81-broader-multiplayer-legacy-presence-degraded-readback-seam.md`, `evidence/498-v81-broader-multiplayer-overlay-reconnect-runtime-continuity-seam.md`, and `evidence/499-v81-broader-multiplayer-table-reconnect-runtime-continuity-seam.md` |
+| broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`; no further packet inside the accepted bounded lane |
+| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; first bounded packet is notebook capture upload authority continuity |
 
 ---
 
@@ -510,7 +511,7 @@ Current status: `done`
 
 ### broader `Multiplayer / collaboration` breadth
 
-Current status: `active`
+Current status: `done`
 
 - [x] explicit follow-on promotion granted after broader `Sync` completion acceptance
 - [x] broader multiplayer / collaboration breadth charter written
@@ -527,7 +528,19 @@ Current status: `active`
 - [x] focused regression extended for `CollaborationOverlay` reconnect runtime continuity
 - [x] fifth real bounded packet landed around table reconnect runtime continuity on the active `IdeaTableTool`
 - [x] focused regression extended for `TableRealtimeStatusIndicator` reconnect runtime continuity
-- [ ] assess whether another thinner collaboration runtime seam remains before wider multiplayer acceptance-review or a broader runtime promotion
+- [x] lane accepted and moved to `done`
+
+### broader `Notes` adjunct / object-linked outputs breadth
+
+Current status: `active`
+
+- [x] explicit follow-on promotion granted after broader `Multiplayer / collaboration` breadth acceptance
+- [x] broader notes / object-linked outputs breadth charter written
+- [x] split-brain map captured for the broader notebook capture/upload and object-linked outputs residual after the accepted bounded `T3` notes adjunct lane
+- [x] first evidence-first packet defined around notebook capture upload authority continuity
+- [x] first real bounded packet landed around notebook capture upload authority continuity on the active notebook surface
+- [x] focused regression added for the governed notebook capture upload seam
+- [ ] assess whether another thinner notes/object-linked outputs seam remains before wider notes acceptance-review or the next broader packet
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1347,6 +1360,9 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: landed the first bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, moving notebook capture upload initiation onto a governed V8-first seam while keeping legacy fallback only for unsupported statuses
+- 2026-03-28: accepted broader `Multiplayer / collaboration` breadth as bounded `T4` done in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`, because the lane now closes the honest active collaboration visibility and reconnect continuity residual without leaving another smaller real packet behind
+- 2026-03-28: promoted broader `Notes` adjunct / object-linked outputs breadth into active `T4` execution with charter `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md` and split-brain map `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`, with notebook capture upload authority continuity selected as the first honest packet
 - 2026-03-28: landed the fifth bounded packet inside broader `Multiplayer / collaboration` breadth in `evidence/499-v81-broader-multiplayer-table-reconnect-runtime-continuity-seam.md`, so the active table collaboration runtime now distinguishes reconnect-in-progress from terminal degraded state instead of flattening both into the same status
 - 2026-03-28: landed the fourth bounded packet inside broader `Multiplayer / collaboration` breadth in `evidence/498-v81-broader-multiplayer-overlay-reconnect-runtime-continuity-seam.md`, so the active websocket collaboration overlay now distinguishes connecting vs reconnecting runtime state and clears stale remote session data when the socket drops
 - 2026-03-28: recorded the broader `Multiplayer / collaboration` post-runtime-visibility residual assessment in `evidence/497-v81-broader-multiplayer-post-runtime-visibility-residual-assessment.md`, confirming that one more tiny visibility/readback seam is no longer the honest next step before reconnect/runtime continuity

@@ -23,6 +23,7 @@ vi.mock('@/services/api/v8/my-work', () => ({
   V8MyWorkApi: {
     getNotebookPages: vi.fn(),
     getNotebookPage: vi.fn(),
+    notebookCaptureUpload: vi.fn(),
     createNotebookPage: vi.fn(),
     updateNotebookPage: vi.fn(),
     deleteNotebookPage: vi.fn(),
@@ -220,10 +221,10 @@ describe('Api notebook V8 fallback guard', () => {
   });
 
   it('routes notebook file upload through capture upload and then resolves the created page', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ pageId: 'captured-note-1', source: 'upload' }),
-    } as Response);
+    vi.mocked(V8MyWorkApi.notebookCaptureUpload).mockResolvedValue({
+      pageId: 'captured-note-1',
+      source: 'upload',
+    } as any);
     vi.mocked(V8MyWorkApi.getNotebookPage).mockResolvedValue({
       id: 'captured-note-1',
       title: 'Captured note',
@@ -240,15 +241,42 @@ describe('Api notebook V8 fallback guard', () => {
       id: 'captured-note-1',
       title: 'Captured note',
     });
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(V8MyWorkApi.notebookCaptureUpload)).toHaveBeenCalledWith(file);
+    expect(vi.mocked(V8MyWorkApi.getNotebookPage)).toHaveBeenCalledWith('captured-note-1');
+  });
+
+  it('falls back to legacy notebook capture upload only for non-supported V8 statuses', async () => {
+    vi.mocked(V8MyWorkApi.notebookCaptureUpload).mockRejectedValue({
+      status: 404,
+      message: 'Not Found',
+    });
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ pageId: 'captured-note-2', source: 'upload' }),
+    } as Response);
+    vi.mocked(V8MyWorkApi.getNotebookPage).mockResolvedValue({
+      id: 'captured-note-2',
+      title: 'Captured note two',
+      contentJson: {},
+      tags: [],
+      status: 'active',
+      pinned: false,
+    } as any);
+
+    const file = new File(['hello'], 'note-two.txt', { type: 'text/plain' });
+    const result = await Api.uploadNotebookFile(file);
+
+    expect(result).toMatchObject({
+      id: 'captured-note-2',
+      title: 'Captured note two',
+    });
     expect(fetch).toHaveBeenCalledWith(
       '/api/notebook/capture/upload',
       expect.objectContaining({
         method: 'POST',
         body: expect.any(FormData),
-      }),
+      })
     );
-    expect(vi.mocked(V8MyWorkApi.getNotebookPage)).toHaveBeenCalledWith('captured-note-1');
   });
 
   it('streams notebook action extraction through the shared Api client seam', async () => {
