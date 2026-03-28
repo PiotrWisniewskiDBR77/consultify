@@ -65,6 +65,22 @@ export const ANNA_CHAT_RATE_LIMIT_MAX_REQUESTS = 8;
 const annaChatRateLimitStore = new Map<string, AnnaRateLimitEntry>();
 const annaFunnelEventRateLimitStore = new Map<string, AnnaRateLimitEntry>();
 
+function isDbR77PortfolioQuestion(message: string): boolean {
+  const q = String(message || '').toLowerCase();
+  const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
+  if (!mentionsDbR) return false;
+  return (
+    /\bportfolio\b/.test(q) ||
+    /\bekosystem\b/.test(q) ||
+    /\bprodukty\b/.test(q) ||
+    /\bprodukt\b/.test(q) ||
+    /\boferta\b/.test(q) ||
+    /\bco macie\b/.test(q) ||
+    /\bjakie.*(produkty|produkt)\b/.test(q) ||
+    /\bjakie znasz\b/.test(q)
+  );
+}
+
 const ANNA_PUBLIC_BEHAVIOR = `
 IDENTITY
 - You are Anna, the public Consultify assistant.
@@ -680,7 +696,9 @@ router.post(
         /* worker table may not exist yet */
       }
 
-      if (workerConfig?.worker && workerConfig.profile) {
+      const forceLegacyAnnaKnowledge = isDbR77PortfolioQuestion(body.message);
+
+      if (workerConfig?.worker && workerConfig.profile && !forceLegacyAnnaKnowledge) {
         knowledge = await buildWorkerKnowledgeContext({
           workerSlug: 'anna',
           query: retrievalQuery,

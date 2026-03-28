@@ -165,6 +165,22 @@ function detectRequestedProducts(query: string): {
   };
 }
 
+function isDbR77PortfolioQuestion(query: string): boolean {
+  const q = String(query || '').toLowerCase();
+  const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
+  if (!mentionsDbR) return false;
+  return (
+    /\bportfolio\b/.test(q) ||
+    /\bekosystem\b/.test(q) ||
+    /\bprodukty\b/.test(q) ||
+    /\bprodukt\b/.test(q) ||
+    /\boferta\b/.test(q) ||
+    /\bco macie\b/.test(q) ||
+    /\bjakie.*(produkty|produkt)\b/.test(q) ||
+    /\bjakie znasz\b/.test(q)
+  );
+}
+
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
   let rows: AnnaDocRow[];
 
@@ -322,24 +338,29 @@ export async function buildAnnaKnowledgeContext(opts: {
   limit?: number;
   preferredProducts?: string[];
 }): Promise<AnnaKnowledgeContextResult> {
-  const query = String(opts.query || '').trim();
+  const originalQuery = String(opts.query || '').trim();
   const limit = Math.min(Math.max(opts.limit || 6, 2), 10);
 
-  const detected = detectRequestedProducts(query);
+  const detected = detectRequestedProducts(originalQuery);
   const explicitCrossProductRequest = detected.matchedProducts.some(
     (product) => product !== 'consultify'
   );
   const preferredCrossProductRequest = Boolean(
     opts.preferredProducts?.some((product) => product !== 'consultify')
   );
-  const primaryProducts =
-    opts.preferredProducts && opts.preferredProducts.length > 0
+  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  const primaryProducts = portfolioMode
+    ? uniq(['dbr77', 'consultify', 'vector', 'iris', 'digital-twin', 'iiot', 'marketplace'])
+    : opts.preferredProducts && opts.preferredProducts.length > 0
       ? uniq([
           ...opts.preferredProducts.filter((product) => product !== 'consultify'),
           'consultify',
         ])
       : detected.primaryProducts;
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
+  const query = portfolioMode
+    ? `${originalQuery} consultify vector iris "digital twin" iiot marketplace`
+    : originalQuery;
 
   try {
     const docs = await loadIndexedProductDocs();

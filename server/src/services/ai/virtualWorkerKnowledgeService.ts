@@ -88,6 +88,22 @@ function detectProducts(query: string): string[] {
   return matched;
 }
 
+function isDbR77PortfolioQuestion(query: string): boolean {
+  const q = String(query || '').toLowerCase();
+  const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
+  if (!mentionsDbR) return false;
+  return (
+    /\bportfolio\b/.test(q) ||
+    /\bekosystem\b/.test(q) ||
+    /\bprodukty\b/.test(q) ||
+    /\bprodukt\b/.test(q) ||
+    /\boferta\b/.test(q) ||
+    /\bco macie\b/.test(q) ||
+    /\bjakie.*(produkty|produkt)\b/.test(q) ||
+    /\bjakie znasz\b/.test(q)
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -283,7 +299,7 @@ export async function buildWorkerKnowledgeContext(opts: {
   locale?: string;
   limit?: number;
 }): Promise<WorkerKnowledgeResult> {
-  const query = String(opts.query || '').trim();
+  const originalQuery = String(opts.query || '').trim();
   const limit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
 
@@ -308,7 +324,8 @@ export async function buildWorkerKnowledgeContext(opts: {
     };
   }
 
-  const detectedProducts = detectProducts(query);
+  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  const detectedProducts = detectProducts(originalQuery);
   const assignedProductSlugs = uniq(
     assignments.filter((a) => a.product_slug).map((a) => a.product_slug!)
   );
@@ -318,8 +335,9 @@ export async function buildWorkerKnowledgeContext(opts: {
     : assignedProductSlugs[0] || undefined;
 
   const explicitAssignedProducts = detectedProducts.filter((p) => assignedProductSlugs.includes(p));
-  const primaryProducts =
-    explicitAssignedProducts.length > 0
+  const primaryProducts = portfolioMode
+    ? uniq(['dbr77', 'consultify', 'vector', 'iris', 'digital-twin', 'iiot', 'marketplace'])
+    : explicitAssignedProducts.length > 0
       ? uniq([
           ...explicitAssignedProducts.filter((product) => product !== defaultProduct),
           ...(defaultProduct ? [defaultProduct] : []),
@@ -327,6 +345,9 @@ export async function buildWorkerKnowledgeContext(opts: {
       : defaultProduct
         ? [defaultProduct]
         : assignedProductSlugs.slice(0, 2);
+  const query = portfolioMode
+    ? `${originalQuery} consultify vector iris "digital twin" iiot marketplace`
+    : originalQuery;
 
   try {
     const { docs, weightMap } = await loadWorkerDocs(assignments);
