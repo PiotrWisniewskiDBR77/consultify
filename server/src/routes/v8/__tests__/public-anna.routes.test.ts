@@ -67,6 +67,10 @@ describe('Public Anna route guardrails', () => {
     resetAnnaChatRateLimitStoreForTests();
     resetAnnaFunnelEventRateLimitStoreForTests();
     delete process.env.GEMINI_API_KEY;
+    delete process.env.GOOGLE_API_KEY;
+    delete process.env.GOOGLE_AI_API_KEY;
+    delete process.env.GOOGLE_AI_KEY;
+    delete process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.OPENAI_API_KEY;
   });

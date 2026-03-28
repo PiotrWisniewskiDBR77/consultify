@@ -21,6 +21,7 @@ import {
 } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import llmConfigService from '../services/ai/llmConfigService.js';
 
 const router = Router();
 
@@ -501,8 +502,8 @@ function buildAnnaConversationContext(
 }
 
 async function callGemini(systemInstruction: string, contents: GeminiContent[]): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+  const apiKey = llmConfigService.getApiKeyFromEnv('google');
+  if (!apiKey) throw new Error('GOOGLE_API_KEY not set');
 
   const payload: GeminiContent[] = [
     { role: 'user', parts: [{ text: systemInstruction }] },
@@ -583,7 +584,7 @@ async function callAnnaModel(
   systemInstruction: string,
   contents: GeminiContent[]
 ): Promise<string> {
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiKey = llmConfigService.getApiKeyFromEnv('google');
   if (geminiKey) {
     return callGemini(systemInstruction, contents);
   }
