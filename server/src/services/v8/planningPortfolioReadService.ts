@@ -4,6 +4,7 @@ import {
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
 import logger from '../../utils/Logger.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
@@ -491,21 +492,29 @@ export async function getInitiativeStakeholdersRead(
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
   try {
+    const stakeholderCols = await getTableColumns('initiative_stakeholders');
+    const selectFields = [
+      's.id',
+      's.initiative_id as initiativeId',
+      's.user_id as userId',
+      's.external_name as externalName',
+      's.external_email as externalEmail',
+      's.role',
+      's.raci_type as raciType',
+      stakeholderCols.has('influence_level')
+        ? 's.influence_level as influenceLevel'
+        : 'NULL as influenceLevel',
+      stakeholderCols.has('interest_level')
+        ? 's.interest_level as interestLevel'
+        : 'NULL as interestLevel',
+      's.created_at as createdAt',
+      'u.first_name as firstName',
+      'u.last_name as lastName',
+      'u.email as email',
+    ];
     return await queryHelpers.queryAll(
       `SELECT
-        s.id,
-        s.initiative_id as initiativeId,
-        s.user_id as userId,
-        s.external_name as externalName,
-        s.external_email as externalEmail,
-        s.role,
-        s.raci_type as raciType,
-        s.influence_level as influenceLevel,
-        s.interest_level as interestLevel,
-        s.created_at as createdAt,
-        u.first_name as firstName,
-        u.last_name as lastName,
-        u.email as email
+        ${selectFields.join(',\n        ')}
       FROM initiative_stakeholders s
       JOIN initiatives i ON i.id = s.initiative_id
       LEFT JOIN users u ON u.id = s.user_id

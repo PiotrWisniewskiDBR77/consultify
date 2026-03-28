@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   getBlockingReadinessItemsMock,
+  getTableColumnsMock,
   queryAllMock,
   queryOneMock,
   resolveInitiativeAccessContextMock,
 } = vi.hoisted(() => ({
   getBlockingReadinessItemsMock: vi.fn(),
+  getTableColumnsMock: vi.fn(),
   queryAllMock: vi.fn(),
   queryOneMock: vi.fn(),
   resolveInitiativeAccessContextMock: vi.fn(),
@@ -15,6 +17,10 @@ const {
 vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: queryAllMock,
   queryOne: queryOneMock,
+}));
+
+vi.mock('../../../utils/dbSchema.js', () => ({
+  getTableColumns: getTableColumnsMock,
 }));
 
 vi.mock('../../initiative/initiativeAccessResolver.js', () => ({
@@ -36,9 +42,24 @@ import {
 describe('planningPortfolioReadService support tables', () => {
   beforeEach(() => {
     getBlockingReadinessItemsMock.mockReset();
+    getTableColumnsMock.mockReset();
     queryAllMock.mockReset();
     queryOneMock.mockReset();
     resolveInitiativeAccessContextMock.mockReset();
+    getTableColumnsMock.mockResolvedValue(
+      new Set([
+        'id',
+        'initiative_id',
+        'user_id',
+        'external_name',
+        'external_email',
+        'role',
+        'raci_type',
+        'influence_level',
+        'interest_level',
+        'created_at',
+      ])
+    );
   });
 
   it('returns empty watchers when the support table is missing', async () => {
@@ -65,6 +86,30 @@ describe('planningPortfolioReadService support tables', () => {
     queryAllMock.mockRejectedValueOnce(new Error('relation "initiative_comments" does not exist'));
 
     await expect(getInitiativeCommentsRead('init-1', 'org-1')).resolves.toEqual([]);
+  });
+
+  it('drops optional stakeholder columns when the schema is partial', async () => {
+    getTableColumnsMock.mockResolvedValueOnce(
+      new Set([
+        'id',
+        'initiative_id',
+        'user_id',
+        'external_name',
+        'external_email',
+        'role',
+        'raci_type',
+        'created_at',
+      ])
+    );
+    queryAllMock.mockResolvedValueOnce([]);
+
+    await expect(getInitiativeStakeholdersRead('init-1', 'org-1')).resolves.toEqual([]);
+
+    const sql = String(queryAllMock.mock.calls[0]?.[0] || '');
+    expect(sql).not.toContain('s.influence_level');
+    expect(sql).not.toContain('s.interest_level');
+    expect(sql).toContain('NULL as influenceLevel');
+    expect(sql).toContain('NULL as interestLevel');
   });
 
   it('lets superadmin edit gated top-bar fields in V8 readiness truth', async () => {

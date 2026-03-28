@@ -88,21 +88,21 @@ export class InitiativeSectionTypeService {
    * Get all section types (system + org-specific).
    */
   async getAllSectionTypes(organizationId?: string | null): Promise<InitiativeSectionType[]> {
-    let sql = `SELECT * FROM initiative_section_types WHERE is_active = 1`;
+    let sql = `SELECT * FROM initiative_section_types`;
     const params: any[] = [];
 
     if (organizationId) {
-      sql += ` AND (organization_id IS NULL OR organization_id = ?)`;
+      sql += ` WHERE (organization_id IS NULL OR organization_id = ?)`;
       params.push(organizationId);
     } else {
-      sql += ` AND organization_id IS NULL`;
+      sql += ` WHERE organization_id IS NULL`;
     }
 
     sql += ` ORDER BY column_position, default_order, name`;
 
     try {
       const rows = await DbPromise.all<any>(this.db, sql, params, { fallback: false });
-      return rows.map((row) => this.parseRow(row));
+      return rows.map((row) => this.parseRow(row)).filter((row) => row.isActive);
     } catch (error) {
       const message = String((error as any)?.message || error || '').toLowerCase();
       if (
