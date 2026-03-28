@@ -186,7 +186,7 @@ After configuration, verify:
 ## Related Documentation
 
 - **Quality and Security Standard:** `docs/QUALITY_AND_SECURITY_STANDARD.md`
-- **CI/CD Pipeline:** `docs/CI_CD_PIPELINE.md`
+- **CI/CD Pipeline:** `docs/engineering/CI_CD_PIPELINE.md`
 - **Incident Response:** `docs/INCIDENT_RESPONSE_PLAYBOOK.md`
 
 ---

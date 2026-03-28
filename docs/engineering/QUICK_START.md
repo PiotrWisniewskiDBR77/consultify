@@ -52,7 +52,7 @@ Expected:
 
 ## 📚 Documentation
 
-- **Deployment:** `docs/PRODUCTION_DEPLOYMENT.md`
+- **Deployment:** `docs/operations/archive/RESOURCE_ALLOCATION_PRODUCTION_DEPLOYMENT.md`
 - **Migration Details:** `docs/ENTRY_POINT_MIGRATION_REPORT.md`
 - **Summary:** `docs/MIGRATION_SUMMARY.md`
 

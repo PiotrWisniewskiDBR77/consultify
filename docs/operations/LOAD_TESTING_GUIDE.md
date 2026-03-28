@@ -394,4 +394,4 @@ Test results are automatically saved to:
 
 - [k6 Documentation](https://k6.io/docs/)
 - [k6 Examples](https://k6.io/docs/examples/)
-- Performance Baselines: See `docs/PERFORMANCE_COMPARISON.md`
+- Performance Baselines: See `docs/archive/tool-output/PERFORMANCE_COMPARISON.md`

@@ -15,7 +15,7 @@ Projekt naprawy ~265+ fałszywych testów w Consultinity.
 
 | Dokument                          | Opis                                                                  |
 | --------------------------------- | --------------------------------------------------------------------- |
-| **docs/TEST_REMEDIATION_PLAN.md** | Plan główny — 3 agenty, zależności, kryteria sukcesu                  |
+| **docs/testing/plans/TEST_REMEDIATION_PLAN.md** | Plan główny — 3 agenty, zależności, kryteria sukcesu                  |
 | **AGENT-1-CLEANUP.md**            | Agent 1: Oczyszczenie (duplikaty, workflow)                           |
 | **AGENT-2-INFRASTRUCTURE.md**     | Agent 2: Infrastruktura weryfikacji (quality-check, block-duplicates) |
 | **AGENT-3-REAL-TESTS.md**         | Agent 3: Prawdziwe testy P0                                           |

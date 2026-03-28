@@ -61,4 +61,4 @@ What it does:
 - Health/fallback: `/api/llm/health/status` and capability tests; router uses cost+tier chains.
 - Guards: circuit breaker + rate/concurrency limits in `llmService`.
 - Observability: `LLMServiceMetrics` logs; `ai_usage_logs` for tokens/cost; AI Operations dashboards.
-- Drills/tests: see `docs/LLM_TEST_PLAN.md` (smoke, load/soak, failover).
+- Drills/tests: see `docs/testing/plans/LLM_TEST_PLAN.md` (smoke, load/soak, failover).

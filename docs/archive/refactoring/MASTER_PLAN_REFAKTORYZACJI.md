@@ -156,7 +156,7 @@
 **Deliverables** ✅:
 - [x] Pełna migracja TypeScript (100%) - Faza 1.1
 - [x] Service architecture documentation → `docs/SERVICE_ARCHITECTURE.md`
-- [x] Database optimization report → `docs/DATABASE_OPTIMIZATION_REPORT.md`
+- [x] Database optimization report → `docs/engineering/reports/DATABASE_OPTIMIZATION_REPORT.md`
 - [x] Shared library package → `packages/shared` (@consultinity/shared v0.0.1)
 
 ---
@@ -619,7 +619,7 @@
 - [x] ✅ Blue-green deployment strategy (blue-green-deploy.yml)
 - [x] ✅ Automated testing per app (matrix strategy)
 - [x] ✅ Shared modules pipeline (build-shared job)
-- [x] ✅ CI/CD Documentation (docs/CI_CD_PIPELINE.md)
+- [x] ✅ CI/CD Documentation (docs/engineering/CI_CD_PIPELINE.md)
 - [x] ✅ Fork strategy documentation
     > [!NOTE]
     > Created `docs/FORK_STRATEGY.md` defining Monorepo structure, shared code policy, and build isolation.
@@ -712,10 +712,10 @@
     > `docs/SECURITY_RUNBOOKS.md` covers Incident Response, DDoS, Data Breach, etc.
 - [x] Deployment guides
     > [!NOTE]
-    > `docs/PRODUCTION_DEPLOYMENT.md` created.
+    > `docs/operations/archive/RESOURCE_ALLOCATION_PRODUCTION_DEPLOYMENT.md` created.
 - [x] Troubleshooting guides
     > [!NOTE]
-    > Included in `docs/PRODUCTION_DEPLOYMENT.md` and `docs/SECURITY_RUNBOOKS.md`.
+    > Included in `docs/operations/archive/RESOURCE_ALLOCATION_PRODUCTION_DEPLOYMENT.md` and `docs/SECURITY_RUNBOOKS.md`.
 - [x] Architecture diagrams
     > [!NOTE]
     > Available in `docs/SERVICE_ARCHITECTURE.md` and `docs/ARCHITECTURE_MAP.md`.

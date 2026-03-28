@@ -49,7 +49,7 @@ Some “ 2” files may still exist (historical leftovers or parallel drafts) an
 | Old Path                                  | New Path                                             |
 | ----------------------------------------- | ---------------------------------------------------- |
 | `docs/DEPLOYMENT_GUIDE.md`                | `docs/operations/DEPLOYMENT_GUIDE.md`                |
-| `docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md` | `docs/operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md` |
+| `docs/operations/archive/PRODUCTION_DEPLOYMENT_CHECKLIST_LEGACY_2026-01-10.md` | `docs/operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md` |
 | `docs/DISASTER_RECOVERY.md`               | `docs/operations/DISASTER_RECOVERY.md`               |
 | `docs/MONITORING_DASHBOARD.md`            | `docs/operations/MONITORING_DASHBOARD.md`            |
 | `docs/INCIDENT_RESPONSE_PLAYBOOK.md`      | `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`      |
@@ -125,7 +125,7 @@ Historical documentation from the 2025-2026 VC DD journey moved to `docs/archive
 | Old Path                          | New Path                                                                        |
 | --------------------------------- | ------------------------------------------------------------------------------- |
 | `docs/TESTS_AUDIT_REPORT.md`      | `docs/archive/2025-2026-audit-journey/audit-reports/TESTS_AUDIT_REPORT.md`      |
-| `docs/VC_TECH_AUDIT_PLAN.md`      | `docs/archive/2025-2026-audit-journey/audit-reports/VC_TECH_AUDIT_PLAN.md`      |
+| `docs/due-diligence/VC_TECH_AUDIT_PLAN.md`      | `docs/archive/2025-2026-audit-journey/audit-reports/VC_TECH_AUDIT_PLAN.md`      |
 | `docs/EXCLUDED_TESTS_ANALYSIS.md` | `docs/archive/2025-2026-audit-journey/audit-reports/EXCLUDED_TESTS_ANALYSIS.md` |
 | `docs/TEST_*.md`                  | `docs/archive/2025-2026-audit-journey/audit-reports/TEST_*.md`                  |
 
@@ -175,7 +175,7 @@ Added new "Documentation" section with:
 | Path                                  | Description                                               |
 | ------------------------------------- | --------------------------------------------------------- |
 | `docs/README.md`                      | Comprehensive documentation index with navigation by role |
-| `docs/DOCUMENTATION_MIGRATION_MAP.md` | This file - mapping old → new paths                       |
+| `docs/cleanup/DOCUMENTATION_MIGRATION_MAP.md` | This file - mapping old → new paths                       |
 
 ## UI/UX Standards Consolidation (2026-02-14)
 

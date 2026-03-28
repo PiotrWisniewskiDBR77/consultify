@@ -266,4 +266,4 @@ Import the following panels:
 
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Dashboard Examples](https://grafana.com/grafana/dashboards/)
-- Performance Baselines: See `docs/PERFORMANCE_COMPARISON.md`
+- Performance Baselines: See `docs/archive/tool-output/PERFORMANCE_COMPARISON.md`

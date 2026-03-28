@@ -45,7 +45,7 @@
 
 ## 🔍 VC Tech Audit Readiness (skrót)
 
-- Zobacz: `docs/VC_TECH_AUDIT_PLAN.md` (pełny zakres i evidence).
+- Zobacz: `docs/due-diligence/VC_TECH_AUDIT_PLAN.md` (pełny zakres i evidence).
 - Kluczowe braki do zamknięcia:
   - SSO/SCIM produkcyjnie (bez mocków) + audyt SCIM.
   - Security core: realne endpointy sessions/audit/API keys usage/incidents/DLP/policies + SIEM alerty.

@@ -119,7 +119,7 @@ echo "Razem: $total plików"
 ```typescript
 /**
  * @test-quality PLACEHOLDER - needs real implementation
- * @see docs/TEST_REMEDIATION_PLAN.md
+ * @see docs/testing/plans/TEST_REMEDIATION_PLAN.md
  */
 ```
 

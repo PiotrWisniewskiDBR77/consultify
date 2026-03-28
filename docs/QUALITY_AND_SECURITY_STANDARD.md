@@ -769,10 +769,10 @@ Every security test MUST:
 ## 📚 Related Documentation
 
 - **Architecture:** `docs/ARCHITECTURE.md`
-- **Testing Strategy:** `docs/TESTING.md`, `docs/TESTING_STRATEGY_5_LEVELS.md`
+- **Testing Strategy:** `docs/testing/reports/ENTERPRISE_CUSTOMERS_MODULE_TESTING.md`, `docs/testing/plans/TESTING_STRATEGY_5_LEVELS.md`
 - **Security Runbooks:** `docs/SECURITY_RUNBOOKS.md`
 - **Incident Response:** `docs/INCIDENT_RESPONSE_PLAYBOOK.md`
-- **CI/CD Pipeline:** `docs/CI_CD_PIPELINE.md`
+- **CI/CD Pipeline:** `docs/engineering/CI_CD_PIPELINE.md`
 
 ---
 

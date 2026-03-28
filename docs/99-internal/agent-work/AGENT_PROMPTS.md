@@ -244,7 +244,7 @@ npm run test:e2e
 
 1. Przeczytaj swoją dokumentację w `docs/test-repair-tasks/`
 2. Przeczytaj `docs/TESTS_AUDIT_REPORT.md`
-3. Przeczytaj `docs/TESTS_REPAIR_PLAN.md`
+3. Przeczytaj `docs/testing/plans/TESTS_REPAIR_PLAN.md`
 4. Zacznij od pierwszego pliku na liście
 
 ## Podczas pracy:

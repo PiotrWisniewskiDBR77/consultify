@@ -204,7 +204,7 @@
 
 ## 📋 PRODUCTION DEPLOYMENT CHECKLIST
 
-### Status w `docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md`
+### Status w `docs/operations/archive/PRODUCTION_DEPLOYMENT_CHECKLIST_LEGACY_2026-01-10.md`
 
 | Sekcja                | Liczba pozycji | Status            |
 | --------------------- | -------------- | ----------------- |

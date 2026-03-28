@@ -17,7 +17,7 @@ Skopiuj poniższy tekst i wklej na początku wątku gdzie był tworzony kod:
    git add [plik] && git commit -m "recover: [nazwa]"
    ```
 
-**Pełna lista utraconych plików:** `docs/RECOVERY_INSTRUCTION.md`
+**Pełna lista utraconych plików:** `docs/99-internal/agent-work/RECOVERY_INSTRUCTION.md`
 
 **ZASADY:**
 - NIE używaj `git reset --hard`

@@ -274,7 +274,7 @@ Wymagane dodanie InfoButton do:
 | Endpoints            | ✅     | W docs/AI_OPERATIONS_MODULE.md            |
 | Runbook              | ✅     | W docs/AI_OPERATIONS_MODULE.md            |
 | Seed Instructions    | ✅     | W docs/AI_OPERATIONS_MODULE.md            |
-| Production Checklist | ✅     | `docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md` |
+| Production Checklist | ✅     | `docs/operations/archive/PRODUCTION_DEPLOYMENT_CHECKLIST_LEGACY_2026-01-10.md` |
 
 ---
 
