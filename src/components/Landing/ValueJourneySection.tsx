@@ -115,10 +115,10 @@ export const ValueJourneySection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-3xl p-8 border border-white/10 bg-white/[0.03]"
+            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/15 bg-violet-500/10">
                 <Lightbulb size={20} className="text-violet-400" />
               </div>
               <div>
@@ -138,9 +138,9 @@ export const ValueJourneySection: React.FC = () => {
               {valueLayers.map(({ title, description, Icon }) => (
                 <div
                   key={title}
-                  className="rounded-2xl border border-white/8 bg-black/10 p-4 min-h-[180px]"
+                  className="min-h-[180px] rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-violet-500/12 border border-violet-500/20 flex items-center justify-center mb-4">
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/12 bg-violet-500/10">
                     <Icon size={18} className="text-violet-300" />
                   </div>
                   <p className="text-sm font-black text-white mb-2">{title}</p>
@@ -155,10 +155,10 @@ export const ValueJourneySection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="rounded-3xl p-8 border border-white/10 bg-white/[0.03]"
+            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/15 bg-cyan-500/10">
                 <ArrowRight size={20} className="text-cyan-400" />
               </div>
               <div>
@@ -178,9 +178,9 @@ export const ValueJourneySection: React.FC = () => {
               {journey.map(({ title, description }, index) => (
                 <div
                   key={title}
-                  className="rounded-2xl border border-white/8 bg-black/10 p-4 flex gap-4"
+                  className="flex gap-4 rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
                 >
-                  <div className="w-9 h-9 rounded-full bg-cyan-500/12 border border-cyan-500/20 flex items-center justify-center text-sm font-black text-cyan-300 shrink-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-500/12 bg-cyan-500/10 text-sm font-black text-cyan-300">
                     {index + 1}
                   </div>
                   <div>

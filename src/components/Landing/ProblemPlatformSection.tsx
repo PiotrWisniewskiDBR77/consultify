@@ -74,10 +74,10 @@ export const ProblemPlatformSection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-3xl p-8 border border-white/10 bg-white/[0.03]"
+            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/15 bg-amber-500/10">
                 <LockKeyhole size={20} className="text-amber-400" />
               </div>
               <div>
@@ -115,10 +115,10 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="rounded-3xl p-8 border border-white/10 bg-white/[0.03]"
+            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/15 bg-cyan-500/10">
                 <Globe2 size={20} className="text-cyan-400" />
               </div>
               <div>
@@ -145,7 +145,7 @@ export const ProblemPlatformSection: React.FC = () => {
               {patternExamples.map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-white/8 bg-black/10 px-4 py-3 text-sm text-white/65"
+                  className="rounded-2xl border border-white/[0.045] bg-white/[0.02] px-4 py-3 text-sm text-white/65 transition-colors hover:bg-white/[0.035]"
                 >
                   {item}
                 </div>

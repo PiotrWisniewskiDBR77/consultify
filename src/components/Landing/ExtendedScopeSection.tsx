@@ -81,9 +81,9 @@ export const ExtendedScopeSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08 }}
                 viewport={{ once: true }}
-                className="rounded-3xl p-7 border border-white/10 bg-white/[0.03]"
+                className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-7 backdrop-blur-xl"
               >
-                <div className="w-12 h-12 rounded-xl bg-primary-500/12 border border-primary-500/20 flex items-center justify-center mb-5">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-primary-500/12 bg-primary-500/10">
                   <Icon size={22} className="text-primary-300" />
                 </div>
                 <h3 className="text-2xl font-black text-white mb-3">{scope.title}</h3>
@@ -92,7 +92,7 @@ export const ExtendedScopeSection: React.FC = () => {
                   {scope.bullets.map((bullet) => (
                     <div
                       key={bullet}
-                      className="rounded-2xl border border-white/8 bg-black/10 px-4 py-3 text-sm text-white/65"
+                      className="rounded-2xl border border-white/[0.045] bg-white/[0.02] px-4 py-3 text-sm text-white/65 transition-colors hover:bg-white/[0.035]"
                     >
                       {bullet}
                     </div>
