@@ -60,6 +60,7 @@ describe('featureFlagService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearFlagCache();
+    process.env.NODE_ENV = 'test';
     mockFeatureFlags.ENABLE_V8_GLOBAL = true;
     mockFeatureFlags.ENABLE_V8_SHADOW_MODE = false;
     mockTableExists.mockResolvedValue(true);
@@ -90,7 +91,7 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('returns true when global is on, table exists, but org has no explicit flags yet', async () => {
+    it('returns true when global is on, table exists, but org has no explicit flags yet in non-production', async () => {
       mockDbAll.mockResolvedValue([]);
 
       const result = await isV8Enabled(ORG_ID);
@@ -142,12 +143,30 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('returns true for a specific module when no explicit flags exist yet', async () => {
+    it('returns false in production when org has no explicit flags yet', async () => {
+      process.env.NODE_ENV = 'production';
+      mockDbAll.mockResolvedValue([]);
+
+      const result = await isV8Enabled(ORG_ID);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns true for a specific module when no explicit flags exist yet in non-production', async () => {
       mockDbAll.mockResolvedValue([]);
 
       const result = await isV8Enabled(ORG_ID, 'chat');
 
       expect(result).toBe(true);
+    });
+
+    it('returns false for a specific module in production when no explicit flags exist yet', async () => {
+      process.env.NODE_ENV = 'production';
+      mockDbAll.mockResolvedValue([]);
+
+      const result = await isV8Enabled(ORG_ID, 'chat');
+
+      expect(result).toBe(false);
     });
 
     it('accepts tenant-style organization ids', async () => {
@@ -294,7 +313,7 @@ describe('featureFlagService', () => {
       expect(mockTableExists).not.toHaveBeenCalled();
     });
 
-    it('returns true when table does not exist', async () => {
+    it('returns true when table does not exist in non-production', async () => {
       mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
       mockTableExists.mockResolvedValue(false);
 
@@ -331,13 +350,33 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('returns true when no shadow_mode row exists', async () => {
+    it('returns true when no shadow_mode row exists in non-production', async () => {
       mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
       mockDbGet.mockResolvedValue(null);
 
       const result = await isV8ShadowMode(ORG_ID);
 
       expect(result).toBe(true);
+    });
+
+    it('returns false in production when table does not exist', async () => {
+      process.env.NODE_ENV = 'production';
+      mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
+      mockTableExists.mockResolvedValue(false);
+
+      const result = await isV8ShadowMode(ORG_ID);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false in production when no shadow_mode row exists', async () => {
+      process.env.NODE_ENV = 'production';
+      mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
+      mockDbGet.mockResolvedValue(null);
+
+      const result = await isV8ShadowMode(ORG_ID);
+
+      expect(result).toBe(false);
     });
 
     it('rejects blank organizationId', async () => {

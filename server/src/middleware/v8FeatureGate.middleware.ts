@@ -4,6 +4,8 @@ import { getV8Flags, isV8Enabled, isV8ShadowMode } from '../services/v8/featureF
 import Logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
+const allowImplicitOrgRowsFallback = () => process.env.NODE_ENV !== 'production';
+
 /**
  * Pre-auth gate: checks only the global V8 toggle.
  * Runs BEFORE verifyToken so it can short-circuit without auth overhead.
@@ -37,7 +39,7 @@ export const v8OrgGate = async (
     const enabled = await isV8Enabled(orgId);
     if (!enabled) {
       const flags = await getV8Flags(orgId);
-      if (Object.keys(flags).length === 0) {
+      if (Object.keys(flags).length === 0 && allowImplicitOrgRowsFallback()) {
         Logger.warn('[v8:featureGate] Allowing org without explicit V8 flag rows', {
           organizationId: orgId,
         });
@@ -81,7 +83,7 @@ export const createV8ModuleGate =
       const enabled = await isV8Enabled(orgId, module);
       if (!enabled) {
         const flags = await getV8Flags(orgId);
-        if (Object.keys(flags).length === 0) {
+        if (Object.keys(flags).length === 0 && allowImplicitOrgRowsFallback()) {
           Logger.warn('[v8:featureGate] Allowing module for org without explicit V8 flag rows', {
             organizationId: orgId,
             module,

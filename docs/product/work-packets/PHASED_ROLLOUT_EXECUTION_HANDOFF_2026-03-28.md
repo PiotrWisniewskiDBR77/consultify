@@ -14,6 +14,7 @@ Use these documents in this exact order:
 2. `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
 3. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
 4. `docs/product/work-packets/evidence/491-v8-production-pilot-shadow-readiness-green.md`
+5. `docs/product/work-packets/evidence/520-production-phased-rollout-control-materialization.md`
 
 If any older doc conflicts with the list above, the list above wins.
 
@@ -25,6 +26,12 @@ If any older doc conflicts with the list above, the list above wins.
 - wider production `GO` is approved
 - no product lane remains open inside the completed program
 - rollout now proceeds as a phased operational execution problem, not as a new product implementation track
+
+Current live org map:
+
+- `dbr77` = first explicit promoted org, V8 primary, `shadow_mode=0`
+- `ateliertoys-demo` = explicit not-yet-promoted org, V8 disabled
+- `system` = explicit not-yet-promoted org, V8 disabled
 
 ---
 
@@ -42,11 +49,12 @@ If any older doc conflicts with the list above, the list above wins.
 For each org promotion:
 
 1. confirm the org is the intended next rollout target
-2. enable the intended V8 primary posture only for that org
-3. keep the narrower per-org rollback path available
-4. observe runtime, health, and mismatch signals during the promotion window
-5. keep the `48h` post-promotion monitoring rule from `CP-10`
-6. stop promotion and roll back if the live signals violate the thresholds in `CP-10`
+2. confirm explicit production rows already exist or materialize them as part of the promotion
+3. enable the intended V8 primary posture only for that org
+4. keep the narrower per-org rollback path available
+5. observe runtime, health, and mismatch signals during the promotion window
+6. keep the `48h` post-promotion monitoring rule from `CP-10`
+7. stop promotion and roll back if the live signals violate the thresholds in `CP-10`
 
 ---
 

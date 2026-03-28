@@ -171,6 +171,12 @@ Historical progression that was later completed on real infrastructure:
 2. Keep per-org rollout discipline and do not treat this as a blind all-org cutover
 3. Keep `CP-10` and `evidence/519-wider-production-go-no-go-decision.md` aligned to the same rollout posture
 
+Current rollout-control status:
+
+- explicit production org rows were materialized in `evidence/520-production-phased-rollout-control-materialization.md`
+- `dbr77` now runs as the first explicit primary-V8 org with `shadow_mode=0`
+- `ateliertoys-demo` and `system` remain explicitly disabled until separately promoted
+
 ### Estimated time to wider production promotion: approved now under phased execution discipline
 
 ---

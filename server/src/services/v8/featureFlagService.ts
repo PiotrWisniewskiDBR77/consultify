@@ -29,6 +29,10 @@ const ModuleSchema = z.enum(V8_MODULES);
 const flagCache = new Map<string, { flags: Record<string, boolean>; expiresAt: number }>();
 const CACHE_TTL_MS = 60_000;
 
+function allowImplicitOrgRowsFallback(): boolean {
+  return process.env.NODE_ENV !== 'production';
+}
+
 function cacheKey(orgId: string): string {
   return `v8flags:${orgId}`;
 }
@@ -81,11 +85,11 @@ export async function isV8Enabled(organizationId: string, module?: string): Prom
 
   const flags = await getV8Flags(orgId);
 
-  // Staging and tenant-style orgs may run with global V8 enabled but without
-  // per-org flag rows materialized yet. In that case, preserve V8 access
-  // instead of hard-disabling the namespace.
+  // Non-production environments may bootstrap V8 before org rows are materialized.
+  // Production must require explicit rows so phased rollout cannot drift into
+  // implicit broad enablement for new tenants.
   if (Object.keys(flags).length === 0) {
-    return true;
+    return allowImplicitOrgRowsFallback();
   }
 
   if (module) {
@@ -173,15 +177,16 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
   // When ENABLE_V8_SHADOW_MODE env var is set, shadow mode is active for
   // all V8-enabled orgs by default. A per-org shadow_mode=0 flag can opt out.
   const hasTable = await flagTableExists();
-  if (!hasTable) return true;
+  if (!hasTable) return allowImplicitOrgRowsFallback();
 
   const row = await dbGet<{ enabled: number }>(
     `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
     [orgId]
   );
 
-  // No row = default to enabled (global flag is on). Row with enabled=0 = opt-out.
-  return row === null || row.enabled === 1;
+  // Non-production may default to enabled while bootstrapping; production requires
+  // an explicit row so shadow mode cannot implicitly reactivate for new tenants.
+  return row === null ? allowImplicitOrgRowsFallback() : row.enabled === 1;
 }
 
 export async function getAllOrgFlags(): Promise<
