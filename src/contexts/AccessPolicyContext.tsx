@@ -100,6 +100,11 @@ const getAuthToken = (): string | null => {
   }
 };
 
+const isPolicyBypassedRole = (role: unknown): boolean => {
+  const normalizedRole = String(role || '').trim().toUpperCase();
+  return normalizedRole === 'SUPERADMIN' || normalizedRole === 'SUPER_ADMIN';
+};
+
 export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const currentUser = useAppStore((s) => s.currentUser);
   const [snapshot, setSnapshot] = useState<PolicySnapshot | null>(null);
@@ -108,10 +113,18 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const authKey = useMemo(() => {
     if (!currentUser?.isAuthenticated) return null;
+    if (isPolicyBypassedRole(currentUser?.role)) return null;
     return currentUser.id || null;
-  }, [currentUser?.id, currentUser?.isAuthenticated]);
+  }, [currentUser?.id, currentUser?.isAuthenticated, currentUser?.role]);
 
   const fetchSnapshot = useCallback(async () => {
+    if (isPolicyBypassedRole(currentUser?.role)) {
+      setError(null);
+      setLoading(false);
+      setSnapshot((prev) => (prev === null ? prev : null));
+      return;
+    }
+
     const token = getAuthToken();
 
     if (!currentUser?.isAuthenticated || !token) {
@@ -149,7 +162,7 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.isAuthenticated]);
+  }, [currentUser?.isAuthenticated, currentUser?.role]);
 
   const isDemoMode = useAppStore((s) => s.isDemoMode);
 

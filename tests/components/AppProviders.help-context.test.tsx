@@ -5,6 +5,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const accessPolicyProviderSpy = vi.fn(({ children }: { children: React.ReactNode }) => <>{children}</>);
+
 const storeState = {
   currentUser: null,
   currentView: 'WELCOME',
@@ -31,7 +33,7 @@ vi.mock('@/context/AutoSaveContext', () => ({
 }));
 
 vi.mock('@/contexts/AccessPolicyContext', () => ({
-  AccessPolicyProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AccessPolicyProvider: (props: { children: React.ReactNode }) => accessPolicyProviderSpy(props),
 }));
 
 vi.mock('@/contexts/AIContext', () => ({
@@ -71,5 +73,17 @@ describe('AppProviders help context continuity', () => {
     );
 
     expect(screen.getByTestId('help-ready')).toHaveTextContent('true');
+  });
+
+  it('still mounts the access policy provider for unauthenticated routes', () => {
+    accessPolicyProviderSpy.mockClear();
+
+    render(
+      <AppProviders>
+        <div>child</div>
+      </AppProviders>,
+    );
+
+    expect(accessPolicyProviderSpy).toHaveBeenCalled();
   });
 });

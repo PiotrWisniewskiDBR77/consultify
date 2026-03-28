@@ -40,6 +40,11 @@ const defaultState: TrialState = {
 
 const TrialContext = createContext<TrialState>(defaultState);
 
+const isPolicyBypassedRole = (role: unknown): boolean => {
+  const normalizedRole = String(role || '').trim().toUpperCase();
+  return normalizedRole === 'SUPERADMIN' || normalizedRole === 'SUPER_ADMIN';
+};
+
 export const useTrial = () => useContext(TrialContext);
 
 export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,7 +56,10 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [state, setState] = useState<TrialState>(defaultState);
 
   const refreshTrialStatus = useCallback(async () => {
-    if (!user?.isAuthenticated) return;
+    if (!user?.isAuthenticated || isPolicyBypassedRole(user?.role)) {
+      setState({ ...defaultState, loading: false });
+      return;
+    }
     const storedToken = localStorage.getItem('token');
     if (!storedToken) return;
 
@@ -98,12 +106,12 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [user?.isAuthenticated]);
 
   useEffect(() => {
-    if (user?.isAuthenticated) {
+    if (user?.isAuthenticated && !isPolicyBypassedRole(user?.role)) {
       refreshTrialStatus();
     } else {
       queueMicrotask(() => setState({ ...defaultState, loading: false }));
     }
-  }, [user?.isAuthenticated, refreshTrialStatus]);
+  }, [user?.isAuthenticated, user?.role, refreshTrialStatus]);
 
   const value = useMemo<TrialState>(() => {
     return {

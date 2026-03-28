@@ -78,8 +78,6 @@ const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ child
 );
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
-  const isAuthenticated = useAppStore((s) => s.currentUser?.isAuthenticated === true);
-
   // Log initialization for debugging
   React.useEffect(() => {
     console.log('[AppProviders] Initializing providers...');
@@ -94,11 +92,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
             <AutoSaveProvider>
               <TourProvider>
                 <HelpProvider>
-                  {isAuthenticated ? (
-                    <AuthenticatedProviders>{children}</AuthenticatedProviders>
-                  ) : (
-                    children
-                  )}
+                  <AuthenticatedProviders>{children}</AuthenticatedProviders>
                   <Toaster position="bottom-right" />
                 </HelpProvider>
               </TourProvider>
