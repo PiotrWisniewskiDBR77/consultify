@@ -133,6 +133,61 @@ async function requireNotebookPagesTable(res: Response): Promise<boolean> {
   return true;
 }
 
+async function getNotebookPageColumns(): Promise<Set<string>> {
+  return getTableColumns('notebook_pages');
+}
+
+function notebookSelectExpr(
+  cols: Set<string>,
+  tableAlias: string,
+  column: string,
+  alias: string,
+  fallbackSql: string
+): string {
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+  return cols.has(column)
+    ? `${prefix}${column} as ${alias}`
+    : `${fallbackSql} as ${alias}`;
+}
+
+function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string {
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+  return [
+    `${prefix}id`,
+    `${prefix}owner_user_id as "ownerUserId"`,
+    `${prefix}organization_id as "organizationId"`,
+    `${prefix}project_id as "projectId"`,
+    `${prefix}visibility`,
+    `${prefix}title`,
+    `${prefix}content_json as "contentJson"`,
+    `${prefix}content_text as "contentText"`,
+    `${prefix}tags_json as tags`,
+    notebookSelectExpr(cols, tableAlias, 'maturity', 'maturity', `'seed'`),
+    notebookSelectExpr(cols, tableAlias, 'icon', 'icon', 'NULL'),
+    notebookSelectExpr(cols, tableAlias, 'summary', 'summary', 'NULL'),
+    notebookSelectExpr(cols, tableAlias, 'status', 'status', `'active'`),
+    cols.has('pinned')
+      ? `coalesce(${prefix}pinned, 0) as pinned`
+      : `0 as pinned`,
+    cols.has('verification_status')
+      ? `coalesce(${prefix}verification_status, 'unverified') as "verificationStatus"`
+      : `'unverified' as "verificationStatus"`,
+    cols.has('review_cadence')
+      ? `coalesce(${prefix}review_cadence, 'monthly') as "reviewCadence"`
+      : `'monthly' as "reviewCadence"`,
+    notebookSelectExpr(cols, tableAlias, 'stale_at', '"staleAt"', 'NULL'),
+    notebookSelectExpr(cols, tableAlias, 'last_reviewed_at', '"lastReviewedAt"', 'NULL'),
+    notebookSelectExpr(cols, tableAlias, 'capture_source', '"captureSource"', 'NULL'),
+    notebookSelectExpr(cols, tableAlias, 'capture_metadata', '"captureMetadataJson"', 'NULL'),
+    cols.has('attachments_json')
+      ? `${prefix}attachments_json as "attachmentsJson"`
+      : `'[]' as "attachmentsJson"`,
+    notebookSelectExpr(cols, tableAlias, 'converted_to_json', '"convertedToJson"', 'NULL'),
+    `${prefix}created_at as "createdAt"`,
+    `${prefix}updated_at as "updatedAt"`,
+  ].join(',\n          ');
+}
+
 function classifyNotebookSuggestion(input: { title?: string | null; contentText?: string | null }) {
   const text = String(input.contentText || input.title || '').toLowerCase();
 
@@ -759,6 +814,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const where = [`np.organization_id = ?`];
     const params: Array<string | number> = [organizationId];
@@ -814,30 +870,7 @@ router.get(
       (await queryHelpers.queryAll<any>(
         `
         SELECT
-          np.id,
-          np.owner_user_id as "ownerUserId",
-          np.organization_id as "organizationId",
-          np.project_id as "projectId",
-          np.visibility,
-          np.title,
-          np.content_json as "contentJson",
-          np.content_text as "contentText",
-          np.tags_json as tags,
-          np.maturity,
-          np.icon,
-          np.summary,
-          coalesce(np.status, 'active') as status,
-          coalesce(np.pinned, 0) as pinned,
-          coalesce(np.verification_status, 'unverified') as "verificationStatus",
-          coalesce(np.review_cadence, 'monthly') as "reviewCadence",
-          np.stale_at as "staleAt",
-          np.last_reviewed_at as "lastReviewedAt",
-          np.capture_source as "captureSource",
-          np.capture_metadata as "captureMetadataJson",
-          np.attachments_json as "attachmentsJson",
-          np.converted_to_json as "convertedToJson",
-          np.created_at as "createdAt",
-          np.updated_at as "updatedAt"
+          ${buildNotebookSelectFields(notebookCols, 'np')}
         FROM notebook_pages np
         LEFT JOIN project_members pm
           ON pm.project_id = np.project_id
@@ -897,6 +930,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const title = String(req.body?.title || '').trim();
     if (!title) {
@@ -960,30 +994,7 @@ router.post(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as "verificationStatus",
-        coalesce(review_cadence, 'monthly') as "reviewCadence",
-        stale_at as "staleAt",
-        last_reviewed_at as "lastReviewedAt",
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildNotebookSelectFields(notebookCols, '')}
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -1001,33 +1012,11 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as "verificationStatus",
-        coalesce(review_cadence, 'monthly') as "reviewCadence",
-        stale_at as "staleAt",
-        last_reviewed_at as "lastReviewedAt",
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildNotebookSelectFields(notebookCols, '')}
        FROM notebook_pages
        WHERE id = ?
        LIMIT 1`,
@@ -1100,6 +1089,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const id = String(req.params.id || '').trim();
     const files = ((req.files as Express.Multer.File[] | undefined) || []).filter(Boolean);
@@ -1148,30 +1138,7 @@ router.post(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as "verificationStatus",
-        coalesce(review_cadence, 'monthly') as "reviewCadence",
-        stale_at as "staleAt",
-        last_reviewed_at as "lastReviewedAt",
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildNotebookSelectFields(notebookCols, '')}
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -1228,6 +1195,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const id = String(req.params.id || '').trim();
     const attachmentId = String(req.params.attachmentId || '').trim();
@@ -1270,30 +1238,7 @@ router.delete(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as "verificationStatus",
-        coalesce(review_cadence, 'monthly') as "reviewCadence",
-        stale_at as "staleAt",
-        last_reviewed_at as "lastReviewedAt",
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildNotebookSelectFields(notebookCols, '')}
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -1310,6 +1255,7 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
+    const notebookCols = await getNotebookPageColumns();
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
@@ -1346,31 +1292,39 @@ router.put(
       );
     }
     if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
-    if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
-    if (typeof req.body?.icon === 'string') set('icon', req.body.icon);
-    if (typeof req.body?.summary === 'string') set('summary', req.body.summary);
+    if (notebookCols.has('maturity') && typeof req.body?.maturity === 'string')
+      set('maturity', req.body.maturity);
+    if (notebookCols.has('icon') && typeof req.body?.icon === 'string') set('icon', req.body.icon);
+    if (notebookCols.has('summary') && typeof req.body?.summary === 'string')
+      set('summary', req.body.summary);
     if (
+      notebookCols.has('status') &&
       typeof req.body?.status === 'string' &&
       ['inbox', 'active', 'converted', 'archived'].includes(req.body.status)
     ) {
       set('status', req.body.status);
     }
     if (
+      notebookCols.has('verification_status') &&
       typeof req.body?.verificationStatus === 'string' &&
       ['unverified', 'verified', 'disputed'].includes(req.body.verificationStatus)
     ) {
       set('verification_status', req.body.verificationStatus);
     }
     if (
+      notebookCols.has('review_cadence') &&
       typeof req.body?.reviewCadence === 'string' &&
       ['weekly', 'monthly', 'quarterly', 'never'].includes(req.body.reviewCadence)
     ) {
       set('review_cadence', req.body.reviewCadence);
     }
-    if (req.body?.staleAt === null || (typeof req.body?.staleAt === 'string' && req.body.staleAt)) {
+    if (
+      notebookCols.has('stale_at') &&
+      (req.body?.staleAt === null || (typeof req.body?.staleAt === 'string' && req.body.staleAt))
+    ) {
       set('stale_at', req.body.staleAt || null);
     }
-    if (req.body?.lastReviewedAt !== undefined) {
+    if (notebookCols.has('last_reviewed_at') && req.body?.lastReviewedAt !== undefined) {
       set('last_reviewed_at', req.body.lastReviewedAt || null);
     }
     if (req.body?.projectId !== undefined) {
@@ -1378,7 +1332,7 @@ router.put(
       set('project_id', nextProjectId);
       set('visibility', nextProjectId ? 'project' : 'private');
     }
-    if (req.body?.convertedTo !== undefined) {
+    if (notebookCols.has('converted_to_json') && req.body?.convertedTo !== undefined) {
       set(
         'converted_to_json',
         safeJsonString(Array.isArray(req.body.convertedTo) ? req.body.convertedTo : [], '[]')
@@ -1396,30 +1350,7 @@ router.put(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as "verificationStatus",
-        coalesce(review_cadence, 'monthly') as "reviewCadence",
-        stale_at as "staleAt",
-        last_reviewed_at as "lastReviewedAt",
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildNotebookSelectFields(notebookCols, '')}
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );

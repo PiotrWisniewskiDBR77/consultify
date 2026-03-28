@@ -189,6 +189,65 @@ describe('V8 My Work notebook routes', () => {
     expect(res.body.data[0].attachments[0].storageKey).toBeUndefined();
   });
 
+  it('lists notebook pages even when optional notebook columns are missing', async () => {
+    mockGetTableColumns.mockResolvedValue(
+      new Map(
+        [
+          'id',
+          'owner_user_id',
+          'organization_id',
+          'project_id',
+          'visibility',
+          'title',
+          'content_json',
+          'content_text',
+          'tags_json',
+          'created_at',
+          'updated_at',
+        ].map((name) => [name, { name }])
+      )
+    );
+
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'note-legacy-1',
+        ownerUserId: USER_ID,
+        organizationId: ORG,
+        projectId: null,
+        visibility: 'private',
+        title: 'Legacy notebook item',
+        contentJson: JSON.stringify({ type: 'doc', content: [] }),
+        contentText: 'legacy content',
+        tags: '["legacy"]',
+        status: 'active',
+        pinned: 0,
+        createdAt: '2026-03-26T10:00:00.000Z',
+        updatedAt: '2026-03-26T10:00:00.000Z',
+      },
+    ]);
+
+    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0]).toMatchObject({
+      id: 'note-legacy-1',
+      title: 'Legacy notebook item',
+      tags: ['legacy'],
+      captureSource: null,
+      captureMetadata: null,
+      attachments: [],
+      convertedTo: null,
+      verificationStatus: 'unverified',
+      reviewCadence: 'monthly',
+      pinned: false,
+    });
+
+    const executedSql = String(mockQueryAll.mock.calls[0]?.[0] || '');
+    expect(executedSql).not.toContain('np.capture_source');
+    expect(executedSql).not.toContain('np.attachments_json');
+    expect(executedSql).not.toContain('np.converted_to_json');
+  });
+
   it('creates a notebook page through the V8 namespace', async () => {
     mockQueryRun.mockResolvedValue({});
     mockQueryOne.mockResolvedValue({
@@ -468,6 +527,34 @@ describe('V8 My Work notebook routes', () => {
   });
 
   it('updates an owned notebook page through the V8 namespace', async () => {
+    mockGetTableColumns.mockResolvedValue(
+      new Map(
+        [
+          'id',
+          'owner_user_id',
+          'organization_id',
+          'project_id',
+          'visibility',
+          'title',
+          'content_json',
+          'content_text',
+          'tags_json',
+          'maturity',
+          'icon',
+          'summary',
+          'status',
+          'pinned',
+          'verification_status',
+          'review_cadence',
+          'stale_at',
+          'last_reviewed_at',
+          'converted_to_json',
+          'created_at',
+          'updated_at',
+        ].map((name) => [name, { name }])
+      )
+    );
+
     mockQueryOne
       .mockResolvedValueOnce({
         id: 'note-3',
