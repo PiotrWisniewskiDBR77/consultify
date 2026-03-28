@@ -40,25 +40,40 @@ export const TableRealtimeStatusIndicator: React.FC<TableRealtimeStatusIndicator
   }
 
   const isConnecting = connectionState === 'connecting';
+  const isReconnecting = connectionState === 'reconnecting';
 
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ${
-        isConnecting
+        isConnecting || isReconnecting
           ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-100'
           : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-100'
       }`}
       aria-label={
         isConnecting
           ? t('collaboration.realtimeConnecting', 'Realtime connecting')
+          : isReconnecting
+            ? t('collaboration.realtimeReconnecting', 'Realtime reconnecting')
           : t('collaboration.realtimeDegraded', 'Realtime degraded')
       }
     >
-      {isConnecting ? <Loader2 size={11} className="animate-spin" /> : <WifiOff size={11} />}
-      <span>{isConnecting ? t('collaboration.realtimeConnecting', 'Realtime connecting') : t('collaboration.realtimeDegraded', 'Realtime degraded')}</span>
+      {isConnecting || isReconnecting ? (
+        <Loader2 size={11} className="animate-spin" />
+      ) : (
+        <WifiOff size={11} />
+      )}
+      <span>
+        {isConnecting
+          ? t('collaboration.realtimeConnecting', 'Realtime connecting')
+          : isReconnecting
+            ? t('collaboration.realtimeReconnecting', 'Realtime reconnecting')
+            : t('collaboration.realtimeDegraded', 'Realtime degraded')}
+      </span>
       {!isConnecting && (
         <span className="text-[9px] font-medium text-amber-700/90 dark:text-amber-200/80">
-          {t('collaboration.singleUserMode', 'Single-user mode')}
+          {isReconnecting
+            ? t('collaboration.recoveryInProgress', 'Recovery in progress')
+            : t('collaboration.singleUserMode', 'Single-user mode')}
         </span>
       )}
     </div>

@@ -25,6 +25,13 @@ describe('TableRealtimeStatusIndicator', () => {
     expect(screen.getByText('Single-user mode')).toBeInTheDocument();
   });
 
+  it('renders a reconnecting recovery state while realtime is returning', () => {
+    render(<TableRealtimeStatusIndicator connectionState="reconnecting" enabled={true} />);
+
+    expect(screen.getByText('Realtime reconnecting')).toBeInTheDocument();
+    expect(screen.getByText('Recovery in progress')).toBeInTheDocument();
+  });
+
   it('stays hidden while idle or fully connected', () => {
     const idle = render(<TableRealtimeStatusIndicator connectionState="idle" enabled={true} />);
     expect(idle.container).toBeEmptyDOMElement();

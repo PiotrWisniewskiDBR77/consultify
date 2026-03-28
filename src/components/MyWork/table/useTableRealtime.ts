@@ -28,7 +28,12 @@ interface UseTableRealtimeOptions {
   onCellUpdated?: (data: unknown) => void;
 }
 
-export type TableRealtimeConnectionState = 'idle' | 'connecting' | 'connected' | 'degraded';
+export type TableRealtimeConnectionState =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'degraded';
 
 export function useTableRealtime(options: UseTableRealtimeOptions) {
   const {
@@ -43,6 +48,7 @@ export function useTableRealtime(options: UseTableRealtimeOptions) {
   } = options;
 
   const socketRef = useRef<Socket | null>(null);
+  const hasConnectedOnceRef = useRef(false);
   const [presence, setPresence] = useState<PresenceInfo[]>([]);
   const [connected, setConnected] = useState(false);
   const [connectionState, setConnectionState] = useState<TableRealtimeConnectionState>('idle');
@@ -67,6 +73,7 @@ export function useTableRealtime(options: UseTableRealtimeOptions) {
       setPresence([]);
       setConnected(false);
       setConnectionState('idle');
+      hasConnectedOnceRef.current = false;
       return;
     }
 
@@ -85,16 +92,27 @@ export function useTableRealtime(options: UseTableRealtimeOptions) {
       if (disposed) return;
       setConnected(true);
       setConnectionState('connected');
+      hasConnectedOnceRef.current = true;
       socket.emit('join:table', tableId);
     });
 
     socket.on('disconnect', () => {
       if (disposed) return;
       setConnected(false);
-      setConnectionState('degraded');
       setPresence([]);
+      setConnectionState(hasConnectedOnceRef.current ? 'reconnecting' : 'degraded');
     });
     socket.on('connect_error', () => {
+      if (disposed) return;
+      setConnected(false);
+      setConnectionState(hasConnectedOnceRef.current ? 'reconnecting' : 'degraded');
+    });
+    socket.io.on('reconnect_attempt', () => {
+      if (disposed) return;
+      setConnected(false);
+      setConnectionState('reconnecting');
+    });
+    socket.io.on('reconnect_failed', () => {
       if (disposed) return;
       setConnected(false);
       setConnectionState('degraded');
@@ -117,6 +135,8 @@ export function useTableRealtime(options: UseTableRealtimeOptions) {
     return () => {
       disposed = true;
       setConnected(false);
+      socket.io.off('reconnect_attempt');
+      socket.io.off('reconnect_failed');
       socket.emit('leave:table', tableId);
       socket.disconnect();
       socketRef.current = null;
