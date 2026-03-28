@@ -168,8 +168,15 @@ export class KnowledgeIndexer {
   private isPg: boolean;
 
   constructor() {
-    const rootUrl = new URL('../../../', import.meta.url);
-    this.projectRoot = path.resolve(fileURLToPath(rootUrl));
+    const cwd = process.cwd();
+    const cwdHasKnowledge =
+      fs.existsSync(path.join(cwd, 'knowledge')) || fs.existsSync(path.join(cwd, '..', 'knowledge'));
+    if (cwdHasKnowledge) {
+      this.projectRoot = path.resolve(cwd);
+    } else {
+      const rootUrl = new URL('../../../', import.meta.url);
+      this.projectRoot = path.resolve(fileURLToPath(rootUrl));
+    }
     this.embeddingService = null;
     this.isPg = process.env.DB_TYPE === 'postgres';
   }
@@ -408,6 +415,9 @@ export class KnowledgeIndexer {
   }
 
   private findProductPillsRoot(): string | null {
+    const runtimeRootAbs = this.resolveWorkspacePath('knowledge-runtime/product-pills');
+    if (fs.existsSync(runtimeRootAbs)) return runtimeRootAbs;
+
     const knowledgeAbs = this.resolveWorkspacePath('knowledge');
     if (!fs.existsSync(knowledgeAbs)) return null;
 
@@ -529,7 +539,10 @@ export class KnowledgeIndexer {
       failed: [] as Array<{ file: string; error: string }>,
     };
 
-    const toolKbAbs = this.resolveWorkspacePath('knowledge/tool-kb');
+    const runtimeToolKbAbs = this.resolveWorkspacePath('knowledge-runtime/tool-kb');
+    const toolKbAbs = fs.existsSync(runtimeToolKbAbs)
+      ? runtimeToolKbAbs
+      : this.resolveWorkspacePath('knowledge/tool-kb');
     if (!fs.existsSync(toolKbAbs)) {
       results.failed.push({ file: 'knowledge/tool-kb', error: 'Folder not found' });
       return results;

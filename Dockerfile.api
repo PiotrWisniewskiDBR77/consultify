@@ -43,6 +43,15 @@ RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm
 
 # Copy remaining source and build
 COPY . .
+# Build a minimal runtime knowledge bundle so staging/prod can reindex
+# product pills and tool packs without shipping large PDFs/XLSX.
+RUN mkdir -p /tmp/knowledge-runtime/product-pills /tmp/knowledge-runtime/tool-kb && \
+    if [ -d "knowledge/Pigułki wiedzy " ]; then \
+      cp -R "knowledge/Pigułki wiedzy "/. /tmp/knowledge-runtime/product-pills/; \
+    fi && \
+    if [ -d "knowledge/tool-kb" ]; then \
+      cp -R knowledge/tool-kb/. /tmp/knowledge-runtime/tool-kb/; \
+    fi
 # Railway snapshots can (rarely) omit some tracked folders; ensure critical frontend util exists.
 RUN if [ ! -f src/lib/utils.ts ]; then \
       echo "Recreating missing src/lib/utils.ts" && \
@@ -149,6 +158,7 @@ RUN apk update && \
 # Structure: backend at /app/server/index.js, frontend at /app/dist
 # So: path.join('/app/server', '../dist') = /app/dist ✓
 COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist /app/dist
+COPY --from=frontend-builder --chown=nodejs:nodejs /tmp/knowledge-runtime /app/knowledge-runtime
 
 # Copy built backend (server code) to /app/server/
 # Backend compiled output is in dist/ directory

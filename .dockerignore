@@ -40,6 +40,8 @@ Thumbs.db
 docs
 *.md
 !README.md
+!knowledge/**/*.md
+!knowledge/**/*.markdown
 
 # Tests (not needed in production)
 tests
