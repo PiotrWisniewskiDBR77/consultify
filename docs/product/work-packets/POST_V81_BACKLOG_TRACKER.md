@@ -17,12 +17,12 @@ Use it together with the parent program:
 
 Helpful supporting docs for the final closeout record:
 
-- `docs/product/work-packets/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
-- `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
-- `docs/product/work-packets/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/NEXT_AGENT_HANDOFF_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
 
 Status vocabulary:
 

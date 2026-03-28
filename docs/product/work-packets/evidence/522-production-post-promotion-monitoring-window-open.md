@@ -62,4 +62,4 @@ Latest saved checkpoint artefact:
 
 Manual-test operator support:
 
-- `docs/product/work-packets/MANUAL_TEST_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/MANUAL_TEST_RUNBOOK_2026-03-28.md`

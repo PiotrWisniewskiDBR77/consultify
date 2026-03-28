@@ -58,10 +58,10 @@ For each org promotion:
 5. observe runtime, health, and mismatch signals during the promotion window
 6. keep the `48h` post-promotion monitoring rule from `CP-10`
 7. stop promotion and roll back if the live signals violate the thresholds in `CP-10`
-8. do not promote another org while `evidence/522-production-post-promotion-monitoring-window-open.md` remains the current monitoring checkpoint
+8. do not promote another org while `../evidence/522-production-post-promotion-monitoring-window-open.md` remains the current monitoring checkpoint
 9. prefer rerunning `npm run rollout:v8:monitor -- --json` for repeatable checkpoint evidence instead of rebuilding the probe sequence by hand
 10. keep the auto-saved JSON artefacts from that command as the machine-readable observation trail under `server/exports/`
-11. use `docs/product/work-packets/MANUAL_TEST_RUNBOOK_2026-03-28.md` for the bounded pre/post-manual verification pass instead of inventing a new ad hoc checklist
+11. use `docs/product/work-packets/cursor-work/MANUAL_TEST_RUNBOOK_2026-03-28.md` for the bounded pre/post-manual verification pass instead of inventing a new ad hoc checklist
 
 ---
 
@@ -90,4 +90,4 @@ Do not widen rollout while an org is in a degraded or ambiguous state.
 
 If another operator or agent takes over, the shortest correct instruction is:
 
-`Use evidence/519 as the rollout authority, follow CP-10 thresholds and rollback rules, and execute phased per-org promotion without reopening product scope.`
+`Use ../evidence/519 as the rollout authority, follow CP-10 thresholds and rollback rules, and execute phased per-org promotion without reopening product scope.`

@@ -70,5 +70,5 @@ Current truth:
 This closure requires aligned follow-up updates in:
 
 - `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
 - the final wider-production decision memo

@@ -11,7 +11,7 @@
 
 The active lane is still broader `Notes` adjunct / object-linked outputs breadth.
 
-As of `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, the narrower direct-readback seams are already closed.
+As of `../evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`, the narrower direct-readback seams are already closed.
 
 What is already landed:
 
@@ -131,13 +131,13 @@ If the active agent lands the next packet, these docs should be checked immediat
 - `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 - `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
 - `docs/product/work-packets/Plan V8.1 Final.md`
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
 
 If the lane is accepted, also update:
 
-- the active lane ledger in `Plan V8.1 Final.md`
-- the tranche board row in `POST_V81_BACKLOG_TRACKER.md`
+- the active lane ledger in `../Plan V8.1 Final.md`
+- the tranche board row in `../POST_V81_BACKLOG_TRACKER.md`
 - any final acceptance evidence reference for broader `Notes`
 
 ---

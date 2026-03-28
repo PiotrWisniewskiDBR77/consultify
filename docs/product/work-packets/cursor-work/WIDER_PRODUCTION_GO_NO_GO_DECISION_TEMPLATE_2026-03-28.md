@@ -47,7 +47,7 @@ The final decision should cite at minimum:
 
 - broader `Notes` acceptance evidence
 - `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
-- `evidence/491-v8-production-pilot-shadow-readiness-green.md`
+- `../evidence/491-v8-production-pilot-shadow-readiness-green.md`
 - credential-hygiene closure evidence
 
 ## If the decision is `GO`

@@ -3,7 +3,7 @@
 > Status: final CTO sign-off with bounded exceptions
 > Date: 2026-03-26
 > Purpose: state whether the frozen `V8 + V8.1` package is closure-ready, what is already accepted as done, and what still blocks final sign-off
-> Operational decision companion: `docs/product/work-packets/V8_V81_FINAL_GO_DECISION.md`
+> Operational decision companion: `docs/product/work-packets/cursor-work/V8_V81_FINAL_GO_DECISION.md`
 
 ---
 

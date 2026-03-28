@@ -3,15 +3,15 @@
 > Date: 2026-03-28
 > Purpose: historical ops checklist used to close the former wider-production credential blocker
 > Scope: production account / credential operations only
-> Status: executed and closed in `evidence/518-production-credential-hygiene-closure.md`
+> Status: executed and closed in `../evidence/518-production-credential-hygiene-closure.md`
 
 ---
 
 ## 1. Why this exists
 
-At the time this checklist was created, `evidence/490-production-auth-guard-deploy-and-readiness-residual.md` and `evidence/491-v8-production-pilot-shadow-readiness-green.md` still pointed to credential hygiene as the remaining wider-production blocker.
+At the time this checklist was created, `../evidence/490-production-auth-guard-deploy-and-readiness-residual.md` and `../evidence/491-v8-production-pilot-shadow-readiness-green.md` still pointed to credential hygiene as the remaining wider-production blocker.
 
-That blocker is now closed in `evidence/518-production-credential-hygiene-closure.md` and the final rollout authority is `evidence/519-wider-production-go-no-go-decision.md`.
+That blocker is now closed in `../evidence/518-production-credential-hygiene-closure.md` and the final rollout authority is `../evidence/519-wider-production-go-no-go-decision.md`.
 
 - rollout telemetry is green,
 - the product program is complete at `13 / 13`,
@@ -47,7 +47,7 @@ This is an ops / access-hygiene closeout only.
 
 ## 4. Execution sequence
 
-Execution result: complete. The full closeout evidence is recorded in `evidence/518-production-credential-hygiene-closure.md`.
+Execution result: complete. The full closeout evidence is recorded in `../evidence/518-production-credential-hygiene-closure.md`.
 
 ### Step 1 - Inventory the affected accounts
 
@@ -102,7 +102,7 @@ Capture bounded evidence for:
 - proof that the new credential succeeds
 - proof that no emergency rollback was needed
 
-Use `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md` as the ready-to-fill evidence skeleton.
+Use `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md` as the ready-to-fill evidence skeleton.
 
 ### Step 7 - Update rollout truth
 

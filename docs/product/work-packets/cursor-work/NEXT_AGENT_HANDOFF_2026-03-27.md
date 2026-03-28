@@ -6,7 +6,7 @@ This handoff originally captured the boundary right after broader `Partner Progr
 
 It is now superseded by later same-day control-doc updates that promoted broader `Sync` completion.
 
-It is also superseded by the newer handoff snapshot in `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`, which reflects the current broader `Notes` lane and the current wider-production credential-hygiene residual.
+It is also superseded by the newer handoff snapshot in `docs/product/work-packets/cursor-work/NEXT_AGENT_HANDOFF_2026-03-28.md`, which reflects the current broader `Notes` lane and the current wider-production credential-hygiene residual.
 
 Use the live control docs as the source of truth:
 
@@ -30,7 +30,7 @@ After partner acceptance, broader `Sync` completion was explicitly promoted and 
 Current sync truth:
 
 - the active broader-sync packet chain has continued through user-level settings authority continuity
-- the latest landed sync packet is `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`
+- the latest landed sync packet is `../evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`
 - the next honest broader-sync step is to assess whether one thinner settings-lifecycle seam still remains after settings test continuity or whether the remaining work is now the wider `config` / `refresh` / `logs` bundle
 
 ## Important truth for the next agent
@@ -65,10 +65,10 @@ The broader partner lane was closed fully, not partially.
 
 Key evidence:
 
-- `evidence/438-v81-broader-partner-payout-settings-ownership-seam.md`
-- `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`
-- `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`
-- `evidence/441-v81-post-backlog-program-held-state-after-broader-partner-parity.md`
+- `../evidence/438-v81-broader-partner-payout-settings-ownership-seam.md`
+- `../evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`
+- `../evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`
+- `../evidence/441-v81-post-backlog-program-held-state-after-broader-partner-parity.md`
 
 ## Fast context path
 
@@ -77,4 +77,4 @@ Read in this order:
 1. `docs/product/work-packets/Plan V8.1 Final.md`
 2. `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 3. `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
-4. `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`
+4. `../evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`

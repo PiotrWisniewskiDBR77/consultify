@@ -3,7 +3,7 @@
 > Status: complete - historical record of the finished debt-reduction program
 > Owner: Manager Agent
 > Scope: post-closure backlog reduction after the frozen `V8 + V8.1` wave
-> Authority inputs: `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, `docs/product/work-packets/V8_V81_FINAL_SIGNOFF_MEMO.md`, `docs/product/work-packets/V8_V81_FINAL_GO_DECISION.md`, `docs/product/work-packets/V8_V81_WAVE_CLOSURE_DECLARATION.md`
+> Authority inputs: `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`, `docs/product/work-packets/cursor-work/V8_V81_FINAL_SIGNOFF_MEMO.md`, `docs/product/work-packets/cursor-work/V8_V81_FINAL_GO_DECISION.md`, `docs/product/work-packets/cursor-work/V8_V81_WAVE_CLOSURE_DECLARATION.md`
 > Last updated: 2026-03-28
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
@@ -26,12 +26,12 @@ It exists to ensure that:
 
 Use these alongside the live control docs when you need the shortest path to the current endgame:
 
-- `docs/product/work-packets/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
-- `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
-- `docs/product/work-packets/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
-- `docs/product/work-packets/FINAL_CLOSEOUT_SEQUENCE_13_OF_13_AND_WIDER_GO_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/NEXT_AGENT_HANDOFF_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/FINAL_CLOSEOUT_SEQUENCE_13_OF_13_AND_WIDER_GO_2026-03-28.md`
 
 This document does **not** replace area SSOTs. It sequences them.
 

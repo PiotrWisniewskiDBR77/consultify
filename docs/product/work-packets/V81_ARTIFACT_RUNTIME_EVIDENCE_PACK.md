@@ -2,7 +2,7 @@
 
 > Status: historical local evidence pack
 > Scope: `V8.1` artifact runtime, Outputs Library, My Work outputs bridge, and final local closure evidence
-> Authority: supports `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md` and `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
+> Authority: supports `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md` and `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`
 > Last updated: 2026-03-24
 
 ---
@@ -203,7 +203,7 @@ Operator readiness is now materially better for the narrow `V8.1` slice because:
 - the canonical runtime path is explicit,
 - local evidence is concentrated in one pack,
 - `sheet` scope is explicitly truth-bounded,
-- and the final closure matrix exists in `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`.
+- and the final closure matrix exists in `docs/product/work-packets/cursor-work/V81_FINAL_CLOSURE_MATRIX.md`.
 
 Operator readiness is still not fully green because:
 

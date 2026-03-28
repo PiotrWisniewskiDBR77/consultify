@@ -3,8 +3,8 @@
 > Status: resolved by final closure declaration
 > Date: 2026-03-26
 > Purpose: convert the remaining `yellow` package tail into explicit `close now / hold / defer` decisions
-> Final sign-off companion: `docs/product/work-packets/V8_V81_FINAL_SIGNOFF_MEMO.md`
-> Final closure declaration: `docs/product/work-packets/V8_V81_WAVE_CLOSURE_DECLARATION.md`
+> Final sign-off companion: `docs/product/work-packets/cursor-work/V8_V81_FINAL_SIGNOFF_MEMO.md`
+> Final closure declaration: `docs/product/work-packets/cursor-work/V8_V81_WAVE_CLOSURE_DECLARATION.md`
 
 ---
 

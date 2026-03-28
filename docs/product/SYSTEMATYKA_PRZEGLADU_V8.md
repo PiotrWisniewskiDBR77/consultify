@@ -21,7 +21,7 @@ Wazne:
 - aktualna authority dla finalnego domkniecia to:
   - `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
   - `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md`
-  - `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
+  - `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`
 
 Legenda:
 

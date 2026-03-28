@@ -36,7 +36,7 @@ These two tracks proceeded in parallel because Track B did not require touching 
 
 1. execute `PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
 2. write credential-hygiene closure evidence
-3. update `CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
+3. update `../CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
 4. issue the final managerial `GO / NO-GO`
 
 ---
@@ -49,9 +49,9 @@ When broader `Notes` was ready to move to acceptance, these were the required fi
 - `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
 - `docs/product/work-packets/Plan V8.1 Final.md`
 - broader-notes acceptance evidence file
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
-- `docs/product/work-packets/POST_V81_13_OF_13_COMPLETION_DECLARATION_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_CLOSEOUT_RUNBOOK_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/POST_V81_13_OF_13_COMPLETION_DECLARATION_TEMPLATE_2026-03-28.md`
 
 Minimum truth after acceptance:
 
@@ -70,8 +70,8 @@ When credential hygiene was being closed, these were the required files:
 - `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
 - `docs/product/work-packets/evidence/490-production-auth-guard-deploy-and-readiness-residual.md`
 - credential-hygiene closure evidence file
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md`
-- `docs/product/work-packets/WIDER_PRODUCTION_GO_NO_GO_DECISION_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/WIDER_PRODUCTION_GO_NO_GO_DECISION_TEMPLATE_2026-03-28.md`
 
 Minimum truth after closure:
 
@@ -82,9 +82,9 @@ Minimum truth after closure:
 
 Completed outcome:
 
-- Track A closed in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md` and `evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
-- Track B closed in `evidence/518-production-credential-hygiene-closure.md`
-- the final rollout authority is `evidence/519-wider-production-go-no-go-decision.md`
+- Track A closed in `../evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md` and `../evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
+- Track B closed in `../evidence/518-production-credential-hygiene-closure.md`
+- the final rollout authority is `../evidence/519-wider-production-go-no-go-decision.md`
 
 ---
 
@@ -110,7 +110,7 @@ Before declaring the project fully handoff-ready, confirm:
 - no control doc still describes `Sync` as active
 - no control doc still describes shadow telemetry as the remaining blocker
 
-Current result: these conditions are now met, and the live rollout posture is governed by `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md` plus `evidence/519-wider-production-go-no-go-decision.md`.
+Current result: these conditions are now met, and the live rollout posture is governed by `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md` plus `../evidence/519-wider-production-go-no-go-decision.md`.
 
 ---
 
@@ -123,4 +123,4 @@ Do not:
 - widen rollout scope before credential hygiene is proven closed
 - declare `100%` from one doc while another control doc still shows an older active lane or blocker
 
-Historical note: the third rule above was satisfied by `evidence/518-production-credential-hygiene-closure.md`, and the current wider-production posture is already `GO` under phased rollout discipline.
+Historical note: the third rule above was satisfied by `../evidence/518-production-credential-hygiene-closure.md`, and the current wider-production posture is already `GO` under phased rollout discipline.

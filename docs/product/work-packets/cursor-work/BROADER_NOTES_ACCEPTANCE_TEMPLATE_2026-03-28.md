@@ -30,7 +30,7 @@ Status: accepted
 ## Why acceptance is justified
 
 1. the lane broke the broader notes residual into honest bounded packets across notebook capture/upload authority, notebook-origin output persistence/readback, notebook list summary continuity, upload provenance readback, and the active notebook linked outputs surface
-2. those packets landed with real runtime and visible surface continuity, plus focused regression coverage, through the final broader-notes packet selected after `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`
+2. those packets landed with real runtime and visible surface continuity, plus focused regression coverage, through the final broader-notes packet selected after `../evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`
 3. the final residual assessment confirmed that no thinner honest notebook readback / output micro-packet remains before either acceptance review or a deliberately wider new promotion
 4. accepting the lane here does not pretend to solve a whole notebook / attachment / artifact-registry redesign: anything beyond the bounded accepted slice remains separate broader work rather than hidden residue inside this lane
 

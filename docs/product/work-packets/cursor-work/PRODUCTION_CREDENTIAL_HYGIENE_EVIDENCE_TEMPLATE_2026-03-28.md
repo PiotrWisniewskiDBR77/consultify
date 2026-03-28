@@ -39,11 +39,11 @@ Status: closed
 
 ## Result
 
-The remaining wider-production blocker recorded in `evidence/490-production-auth-guard-deploy-and-readiness-residual.md` is now closed.
+The remaining wider-production blocker recorded in `../evidence/490-production-auth-guard-deploy-and-readiness-residual.md` is now closed.
 
 Current truth:
 
-- production shadow readiness remains green from `evidence/491-v8-production-pilot-shadow-readiness-green.md`
+- production shadow readiness remains green from `../evidence/491-v8-production-pilot-shadow-readiness-green.md`
 - credential hygiene is no longer the blocker for an honest wider-production go decision
 - the remaining step is managerial approval and rollout-scope choice, not unresolved account security debt
 
@@ -52,7 +52,7 @@ Current truth:
 After writing this evidence, update:
 
 - `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
 - any final wider-production decision doc that still lists credential hygiene as open
 
 ---

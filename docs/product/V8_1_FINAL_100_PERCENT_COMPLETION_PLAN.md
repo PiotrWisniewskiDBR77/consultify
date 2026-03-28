@@ -220,7 +220,7 @@ This is the actual closure gap list that must be driven to zero or explicitly de
    - target architecture,
    - current runtime truth,
    - and historical phased delivery assumptions.
-3. The final closure matrix now exists in `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`, but the remaining staging/sign-off blockers must still remain explicit.
+3. The final closure matrix now exists in `docs/product/work-packets/cursor-work/V81_FINAL_CLOSURE_MATRIX.md`, but the remaining staging/sign-off blockers must still remain explicit.
 
 ### 7.2 Runtime gaps
 
@@ -253,7 +253,7 @@ This is the actual closure gap list that must be driven to zero or explicitly de
 2. Full tri-format local deep-flow evidence now exists for the implemented `document` / `presentation` / governed `sheet` scope.
 3. Staging verification summary is missing.
 4. Operator-ready closure is now documented through the evidence pack and closure matrix, but still lacks staging confirmation.
-5. The package-level deferred ledger exists in `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, and the `V8.1` artifact-runtime-specific closure matrix now exists in `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`.
+5. The package-level deferred ledger exists in `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`, and the `V8.1` artifact-runtime-specific closure matrix now exists in `docs/product/work-packets/cursor-work/V81_FINAL_CLOSURE_MATRIX.md`.
 
 ---
 

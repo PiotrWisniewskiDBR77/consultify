@@ -10,11 +10,11 @@
 
 - program completion stands at `13 / 13`
 - no product lane is active
-- the latest product-program acceptance is `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
-- the product program completion declaration is `evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
+- the latest product-program acceptance is `../evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
+- the product program completion declaration is `../evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
 - production shadow readiness is green
-- credential hygiene is closed in `evidence/518-production-credential-hygiene-closure.md`
-- wider production `GO` is now recorded in `evidence/519-wider-production-go-no-go-decision.md`
+- credential hygiene is closed in `../evidence/518-production-credential-hygiene-closure.md`
+- wider production `GO` is now recorded in `../evidence/519-wider-production-go-no-go-decision.md`
 
 ---
 
@@ -28,7 +28,7 @@
 
 ### Ops track
 
-1. use `evidence/519-wider-production-go-no-go-decision.md` as the current rollout decision authority
+1. use `../evidence/519-wider-production-go-no-go-decision.md` as the current rollout decision authority
 2. keep phased promotion, rollback, and monitoring discipline aligned with `CP-10`
 3. do not reopen product work as a substitute for rollout execution
 
@@ -41,9 +41,9 @@
 - broader `Multiplayer / collaboration` breadth is accepted
 - broader `Notes` is accepted
 - the full product program is declared `13 / 13` complete
-- production shadow observation is green in `evidence/491-v8-production-pilot-shadow-readiness-green.md`
-- production credential hygiene is closed in `evidence/518-production-credential-hygiene-closure.md`
-- wider production `GO` is recorded in `evidence/519-wider-production-go-no-go-decision.md`
+- production shadow observation is green in `../evidence/491-v8-production-pilot-shadow-readiness-green.md`
+- production credential hygiene is closed in `../evidence/518-production-credential-hygiene-closure.md`
+- wider production `GO` is recorded in `../evidence/519-wider-production-go-no-go-decision.md`
 - doc support for final closeout is prepared:
   - `BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
   - `BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
@@ -60,4 +60,4 @@ Do not reopen already accepted lanes.
 
 Do not invent another tiny notebook readback patch if the residual has already been assessed as a larger breadth choice.
 
-Do not drift from the phased rollout, rollback, and monitoring posture recorded in `CP-10` and `evidence/519-wider-production-go-no-go-decision.md`.
+Do not drift from the phased rollout, rollback, and monitoring posture recorded in `CP-10` and `../evidence/519-wider-production-go-no-go-decision.md`.

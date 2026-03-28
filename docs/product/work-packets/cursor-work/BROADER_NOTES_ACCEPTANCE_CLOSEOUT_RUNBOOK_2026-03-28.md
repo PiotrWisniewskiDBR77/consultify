@@ -102,7 +102,7 @@ Update `Per-lane execution ledger` for broader `Notes`:
 
 Use:
 
-- `docs/product/work-packets/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
 
 Fill in:
 
@@ -118,7 +118,7 @@ Fill in:
 After the runbook is complete, all of the following should be true:
 
 - broader `Notes` is `done` in tracker, program, and plan
-- `Plan V8.1 Final.md` shows `13 / 13`
+- `../Plan V8.1 Final.md` shows `13 / 13`
 - `Current lane` is `none`
 - `Next three lanes` is empty
 - the broader-notes acceptance evidence is linked from the control docs
@@ -140,8 +140,8 @@ Before ending the closeout pass, verify:
 
 If credential hygiene is also closed around the same time, immediately follow this runbook with:
 
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
-- `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md`
-- `docs/product/work-packets/FINAL_CLOSEOUT_SEQUENCE_13_OF_13_AND_WIDER_GO_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md`
+- `docs/product/work-packets/cursor-work/FINAL_CLOSEOUT_SEQUENCE_13_OF_13_AND_WIDER_GO_2026-03-28.md`
 
 That allows the team to move from `13 / 13` straight into the final wider-production decision with minimal additional admin work.

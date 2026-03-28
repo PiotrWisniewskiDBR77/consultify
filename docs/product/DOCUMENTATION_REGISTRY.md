@@ -420,7 +420,7 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: operational execution ledger for the frozen `V8.0 + V8.1` package, tracking current implementation/runtime/evidence progress after the 20-wave foundation
   - **Authority**: Highest for current closure-execution status reporting below final sign-off authority
 
-- `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
+- `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`
   - **Owner**: Manager Agent
   - **Scope**: mandatory area-by-area closure ledger for the frozen `V8.0 + V8.1` package, tracking scope, canonical docs, implementation mapping, runtime evidence, surface evidence, test/staging evidence, owner, next packet and blocker
   - **Authority**: Highest for package-wide closure status accounting required by the final completion program
@@ -430,7 +430,7 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: focused evidence pack for the `V8.1` artifact runtime, Outputs Library, My Work outputs bridge, and explicit local-vs-staging sign-off boundaries
   - **Authority**: High for the local `V8.1` artifact-runtime proof set used by the closure ledger and final evidence assembly
 
-- `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`
+- `docs/product/work-packets/cursor-work/V81_FINAL_CLOSURE_MATRIX.md`
   - **Owner**: Manager Agent
   - **Scope**: explicit fulfilled/partial/deferred/blocked matrix for the `V8.1` artifact runtime and outputs scope, including final local closure verdict and remaining formal blockers
   - **Authority**: High for final `V8.1` local closure accounting under the `V8.1` final completion plan
