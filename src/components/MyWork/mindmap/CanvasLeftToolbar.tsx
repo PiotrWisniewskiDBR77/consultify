@@ -32,7 +32,10 @@ import type {
   IdeaWorkspaceSelection,
   MindMapInteractionMode,
 } from '../ideaSelectionTypes';
-import { getMindmapConnectToolbarAction } from './mindmapInteractionGrammar';
+import {
+  getMindmapConnectToolbarAction,
+  getMindmapPointerToggleTooltip,
+} from './mindmapInteractionGrammar';
 import { AddNodePopover } from './toolbar-popovers/AddNodePopover';
 import { AIActionsPopover } from './toolbar-popovers/AIActionsPopover';
 import { ImportExportPopover } from './toolbar-popovers/ImportExportPopover';
@@ -250,16 +253,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     setOpenPopover(null);
   }, [interactionMode, onAction]);
 
-  const pointerTooltip = (() => {
-    if (interactionMode === 'select') {
-      return isPl
-        ? 'Zaznaczanie — klik zaznacza, kliknij by przełączyć na przesuwanie'
-        : 'Select — click to select nodes, click to switch to pan';
-    }
-    return isPl
-      ? 'Przesuwanie — przeciągaj canvas, kliknij by przełączyć na zaznaczanie'
-      : 'Pan — drag the canvas, click to switch to select';
-  })();
+  const pointerTooltip = getMindmapPointerToggleTooltip(interactionMode, isPl);
 
   const renderSlot = (slot: ToolSlot, idx: number) => {
     if (slot.id === 'pointer_toggle') {
@@ -276,7 +270,13 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
-              {interactionMode === 'pan' ? (isPl ? 'PAN' : 'PAN') : isPl ? 'SEL' : 'SEL'}
+              {interactionMode === 'pan'
+                ? 'PAN'
+                : interactionMode === 'connect'
+                  ? (isPl ? 'LNK' : 'LNK')
+                  : isPl
+                    ? 'SEL'
+                    : 'SEL'}
             </span>
           </div>
         </div>

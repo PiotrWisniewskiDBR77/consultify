@@ -69,6 +69,7 @@ import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspace
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
+import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import type { MyIdea } from './MyIdeasListContent';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
@@ -368,6 +369,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [mindMapInteractionMode, setMindMapInteractionMode] =
     useState<MindMapInteractionMode>('select');
+  const handleMindMapInteractionModeChange = useCallback((requestedMode: MindMapInteractionMode) => {
+    setMindMapInteractionMode((previousMode) =>
+      stabilizeMindmapInteractionMode(previousMode, requestedMode)
+    );
+  }, []);
 
   useEffect(() => {
     selectionRef.current = selection;
@@ -800,15 +806,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       }
 
       trackFunnelEvent('ideas_quick_tool_used', { tool: activeTool, action });
-      if (action === 'mm_select_mode') setMindMapInteractionMode('select');
-      if (action === 'mm_pan_mode') setMindMapInteractionMode('pan');
-      if (action === 'mm_connect_mode') setMindMapInteractionMode('connect');
+      if (action === 'mm_select_mode') handleMindMapInteractionModeChange('select');
+      if (action === 'mm_pan_mode') handleMindMapInteractionModeChange('pan');
+      if (action === 'mm_connect_mode') handleMindMapInteractionModeChange('connect');
       externalOnQuickAction?.(action);
       window.dispatchEvent(
         new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId: realId } })
       );
     },
-    [activeTool, externalOnQuickAction, isPolish, realId, setActiveTool]
+    [activeTool, externalOnQuickAction, handleMindMapInteractionModeChange, isPolish, realId, setActiveTool]
   );
 
   useEffect(() => {
@@ -2325,7 +2331,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               }
               onOpenChat={openChat}
               interactionMode={mindMapInteractionMode}
-              onInteractionModeChange={setMindMapInteractionMode}
+              onInteractionModeChange={handleMindMapInteractionModeChange}
               externalRuntime={{
                 version: graphRuntime.graph.version,
                 loading: graphRuntime.loading,

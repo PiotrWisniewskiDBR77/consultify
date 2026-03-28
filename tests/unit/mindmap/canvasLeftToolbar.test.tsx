@@ -69,6 +69,11 @@ describe('CanvasLeftToolbar', () => {
 
     if (connectBtn) fireEvent.click(connectBtn);
     expect(onAction).toHaveBeenCalledWith('mm_select_mode');
+    expect(
+      screen
+        .getAllByRole('button')
+        .find((b) => b.getAttribute('title') === 'Connect — click Connect or empty canvas to return to select')
+    ).toBeTruthy();
   });
 
   it('opens AI popover on click', () => {
