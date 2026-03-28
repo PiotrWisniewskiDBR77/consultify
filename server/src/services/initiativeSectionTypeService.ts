@@ -100,8 +100,19 @@ export class InitiativeSectionTypeService {
 
     sql += ` ORDER BY column_position, default_order, name`;
 
-    const rows = await DbPromise.all<any>(this.db, sql, params, { fallback: false });
-    return rows.map((row) => this.parseRow(row));
+    try {
+      const rows = await DbPromise.all<any>(this.db, sql, params, { fallback: false });
+      return rows.map((row) => this.parseRow(row));
+    } catch (error) {
+      const message = String((error as any)?.message || error || '').toLowerCase();
+      if (
+        (message.includes('no such table') || message.includes('does not exist')) &&
+        message.includes('initiative_section_types')
+      ) {
+        return [];
+      }
+      throw error;
+    }
   }
 
   /**

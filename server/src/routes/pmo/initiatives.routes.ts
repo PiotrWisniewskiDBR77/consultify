@@ -1111,6 +1111,14 @@ router.post('/:id/apply-blueprint', requireOrgRole('user'), async (req: any, res
   }
 });
 
+function isMissingInitiativeSectionTypesTable(error: unknown): boolean {
+  const message = String((error as any)?.message || error || '').toLowerCase();
+  return (
+    (message.includes('no such table') || message.includes('does not exist')) &&
+    message.includes('initiative_section_types')
+  );
+}
+
 // ==========================================
 // INITIATIVE SECTION TYPES (Library)
 // ==========================================
@@ -1125,6 +1133,9 @@ router.get('/section-types', async (req: any, res: any) => {
     const sectionTypes = await initiativeSectionTypeService.getAllSectionTypes(orgId);
     return res.json(sectionTypes);
   } catch (err: any) {
+    if (isMissingInitiativeSectionTypesTable(err)) {
+      return res.json([]);
+    }
     return res.status(500).json({ error: 'Failed to fetch section types', message: err.message });
   }
 });

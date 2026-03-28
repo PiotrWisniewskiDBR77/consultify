@@ -8,6 +8,15 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 
+function isMissingPlanningSupportTableError(error: unknown, tableName: string): boolean {
+  const message = String((error as any)?.message || error || '').toLowerCase();
+  const normalizedTable = tableName.toLowerCase();
+  return (
+    (message.includes('no such table') || message.includes('does not exist')) &&
+    message.includes(normalizedTable)
+  );
+}
+
 export interface V8PlanningPortfolioReadFilters {
   projectId?: string;
   programId?: string;
@@ -481,50 +490,64 @@ export async function getInitiativeStakeholdersRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
-  return queryHelpers.queryAll(
-    `SELECT
-      s.id,
-      s.initiative_id as initiativeId,
-      s.user_id as userId,
-      s.external_name as externalName,
-      s.external_email as externalEmail,
-      s.role,
-      s.raci_type as raciType,
-      s.influence_level as influenceLevel,
-      s.interest_level as interestLevel,
-      s.created_at as createdAt,
-      u.first_name as firstName,
-      u.last_name as lastName,
-      u.email as email
-    FROM initiative_stakeholders s
-    JOIN initiatives i ON i.id = s.initiative_id
-    LEFT JOIN users u ON u.id = s.user_id
-    WHERE s.initiative_id = ? AND i.organization_id = ?
-    ORDER BY s.created_at DESC`,
-    [initiativeId, organizationId]
-  );
+  try {
+    return await queryHelpers.queryAll(
+      `SELECT
+        s.id,
+        s.initiative_id as initiativeId,
+        s.user_id as userId,
+        s.external_name as externalName,
+        s.external_email as externalEmail,
+        s.role,
+        s.raci_type as raciType,
+        s.influence_level as influenceLevel,
+        s.interest_level as interestLevel,
+        s.created_at as createdAt,
+        u.first_name as firstName,
+        u.last_name as lastName,
+        u.email as email
+      FROM initiative_stakeholders s
+      JOIN initiatives i ON i.id = s.initiative_id
+      LEFT JOIN users u ON u.id = s.user_id
+      WHERE s.initiative_id = ? AND i.organization_id = ?
+      ORDER BY s.created_at DESC`,
+      [initiativeId, organizationId]
+    );
+  } catch (error) {
+    if (isMissingPlanningSupportTableError(error, 'initiative_stakeholders')) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getInitiativeWatchersRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
-  return queryHelpers.queryAll(
-    `SELECT
-      w.id,
-      w.initiative_id as initiativeId,
-      w.user_id as userId,
-      w.created_at as createdAt,
-      u.first_name as firstName,
-      u.last_name as lastName,
-      u.email as email
-    FROM initiative_watchers w
-    JOIN initiatives i ON i.id = w.initiative_id
-    JOIN users u ON u.id = w.user_id
-    WHERE w.initiative_id = ? AND i.organization_id = ?
-    ORDER BY w.created_at DESC`,
-    [initiativeId, organizationId]
-  );
+  try {
+    return await queryHelpers.queryAll(
+      `SELECT
+        w.id,
+        w.initiative_id as initiativeId,
+        w.user_id as userId,
+        w.created_at as createdAt,
+        u.first_name as firstName,
+        u.last_name as lastName,
+        u.email as email
+      FROM initiative_watchers w
+      JOIN initiatives i ON i.id = w.initiative_id
+      JOIN users u ON u.id = w.user_id
+      WHERE w.initiative_id = ? AND i.organization_id = ?
+      ORDER BY w.created_at DESC`,
+      [initiativeId, organizationId]
+    );
+  } catch (error) {
+    if (isMissingPlanningSupportTableError(error, 'initiative_watchers')) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getInitiativeGateRolesRead(
@@ -671,45 +694,60 @@ export async function getInitiativeHistoryRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
-  return queryHelpers.queryAll(
-    `SELECT
-      h.id,
-      h.initiative_id as initiativeId,
-      h.action as eventType,
-      h.changed_by as actorId,
-      h.changed_at as createdAt,
-      h.old_value as oldValue,
-      h.new_value as newValue,
-      h.notes
-    FROM initiative_history h
-    LEFT JOIN initiatives i ON i.id = h.initiative_id
-    WHERE h.initiative_id = ? AND (i.organization_id = ? OR i.id IS NULL)
-    ORDER BY h.changed_at DESC
-    LIMIT 200`,
-    [initiativeId, organizationId]
-  );
+  try {
+    return await queryHelpers.queryAll(
+      `SELECT
+        h.id,
+        h.initiative_id as initiativeId,
+        h.action as eventType,
+        h.changed_by as actorId,
+        h.changed_at as createdAt,
+        h.old_value as oldValue,
+        h.new_value as newValue,
+        h.notes
+      FROM initiative_history h
+      LEFT JOIN initiatives i ON i.id = h.initiative_id
+      WHERE h.initiative_id = ? AND (i.organization_id = ? OR i.id IS NULL)
+      ORDER BY h.changed_at DESC
+      LIMIT 200`,
+      [initiativeId, organizationId]
+    );
+  } catch (error) {
+    if (isMissingPlanningSupportTableError(error, 'initiative_history')) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getInitiativeCommentsRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
-  const rows = await queryHelpers.queryAll(
-    `SELECT
-      c.id,
-      c.content,
-      c.user_id as authorId,
-      c.created_at as createdAt,
-      u.first_name as firstName,
-      u.last_name as lastName,
-      u.email as email
-    FROM initiative_comments c
-    LEFT JOIN users u ON u.id = c.user_id
-    WHERE c.initiative_id = ? AND c.organization_id = ?
-    ORDER BY c.created_at DESC
-    LIMIT 200`,
-    [initiativeId, organizationId]
-  );
+  let rows: any[] = [];
+  try {
+    rows = await queryHelpers.queryAll(
+      `SELECT
+        c.id,
+        c.content,
+        c.user_id as authorId,
+        c.created_at as createdAt,
+        u.first_name as firstName,
+        u.last_name as lastName,
+        u.email as email
+      FROM initiative_comments c
+      LEFT JOIN users u ON u.id = c.user_id
+      WHERE c.initiative_id = ? AND c.organization_id = ?
+      ORDER BY c.created_at DESC
+      LIMIT 200`,
+      [initiativeId, organizationId]
+    );
+  } catch (error) {
+    if (isMissingPlanningSupportTableError(error, 'initiative_comments')) {
+      return [];
+    }
+    throw error;
+  }
 
   return rows.map((row: any) => {
     const authorName = `${row.firstName || ''} ${row.lastName || ''}`.trim() || row.email || 'User';
