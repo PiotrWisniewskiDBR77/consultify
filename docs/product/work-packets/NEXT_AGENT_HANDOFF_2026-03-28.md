@@ -21,6 +21,7 @@ Use the live control docs as the source of truth:
 - wider-production `GO` is now recorded in `evidence/519-wider-production-go-no-go-decision.md`
 - phased rollout control was materialized in `evidence/520-production-phased-rollout-control-materialization.md`
 - `ateliertoys-demo` was then promoted as the second explicit primary-V8 org in `evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+- the mandatory post-promotion monitoring window is now open in `evidence/522-production-post-promotion-monitoring-window-open.md`
 
 ## What changed since the earlier handoff
 
@@ -45,8 +46,9 @@ There is no active product lane left to extend. The next real step is controlled
 3. Read `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
 4. Read `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
 5. Read `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
-6. Execute rollout under the phased monitoring and rollback posture recorded there
-7. Keep the product program closed unless a fresh explicit lane promotion is approved
+6. Read `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
+7. Execute rollout under the phased monitoring and rollback posture recorded there
+8. Keep the product program closed unless a fresh explicit lane promotion is approved
 
 ## Parallel non-code work already prepared
 
@@ -68,5 +70,6 @@ Read in this order:
 3. `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
 4. `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
 5. `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
-6. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
-7. `docs/product/work-packets/evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
+6. `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
+7. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
+8. `docs/product/work-packets/evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`

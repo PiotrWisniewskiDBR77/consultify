@@ -16,6 +16,7 @@ Use these documents in this exact order:
 4. `docs/product/work-packets/evidence/491-v8-production-pilot-shadow-readiness-green.md`
 5. `docs/product/work-packets/evidence/520-production-phased-rollout-control-materialization.md`
 6. `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+7. `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
 
 If any older doc conflicts with the list above, the list above wins.
 
@@ -33,6 +34,7 @@ Current live org map:
 - `dbr77` = explicit promoted org, V8 primary, `shadow_mode=0`
 - `ateliertoys-demo` = explicit promoted org, V8 primary, `shadow_mode=0`
 - `system` = explicit not-yet-promoted org, V8 disabled
+- the mandatory `48h` post-promotion observation window is currently open
 
 ---
 
@@ -56,6 +58,7 @@ For each org promotion:
 5. observe runtime, health, and mismatch signals during the promotion window
 6. keep the `48h` post-promotion monitoring rule from `CP-10`
 7. stop promotion and roll back if the live signals violate the thresholds in `CP-10`
+8. do not promote another org while `evidence/522-production-post-promotion-monitoring-window-open.md` remains the current monitoring checkpoint
 
 ---
 

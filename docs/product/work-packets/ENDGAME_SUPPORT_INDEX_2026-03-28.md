@@ -15,6 +15,7 @@ If you need the fastest current snapshot, read:
 3. `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
 4. `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
 5. `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+6. `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
 
 If you need the primary control docs, read:
 
@@ -45,6 +46,8 @@ If you need the primary control docs, read:
   Current operator handoff for phased rollout execution after the final wider-production `GO`.
 - `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
   Current evidence for the second explicit production org promotion under the phased rollout posture.
+- `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
+  Current observation-window checkpoint after the second explicit production org promotion.
 
 ---
 
@@ -69,6 +72,8 @@ If you need the primary control docs, read:
   Final wider-production rollout authority.
 - `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
   Latest phased rollout execution evidence showing `ateliertoys-demo` promoted under explicit per-org control.
+- `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
+  Current monitoring-window authority showing no further org should be promoted until the observation window is resolved.
 - `docs/product/work-packets/evidence/491-v8-production-pilot-shadow-readiness-green.md`
   Historical production shadow-readiness evidence that feeds into the final rollout authority.
 - `docs/product/work-packets/evidence/490-production-auth-guard-deploy-and-readiness-residual.md`
