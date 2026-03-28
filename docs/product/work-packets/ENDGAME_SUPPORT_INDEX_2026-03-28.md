@@ -13,6 +13,7 @@ If you need the fastest current snapshot, read:
 1. `docs/product/work-packets/STATUS_CARD_NOW_NEXT_DONE_2026-03-28.md`
 2. `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
 3. `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
+4. `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
 
 If you need the primary control docs, read:
 
@@ -39,6 +40,8 @@ If you need the primary control docs, read:
   Historical ops checklist that was executed to close the former wider-production credential blocker.
 - `docs/product/work-packets/PRODUCTION_CREDENTIAL_HYGIENE_EVIDENCE_TEMPLATE_2026-03-28.md`
   Template used to produce the credential-hygiene closure evidence.
+- `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
+  Current operator handoff for phased rollout execution after the final wider-production `GO`.
 
 ---
 

@@ -41,8 +41,9 @@ There is no active product lane left to extend. The next real step is controlled
 1. Read the live control docs first, not this handoff in isolation
 2. Read `evidence/519-wider-production-go-no-go-decision.md`
 3. Read `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
-4. Execute rollout under the phased monitoring and rollback posture recorded there
-5. Keep the product program closed unless a fresh explicit lane promotion is approved
+4. Read `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
+5. Execute rollout under the phased monitoring and rollback posture recorded there
+6. Keep the product program closed unless a fresh explicit lane promotion is approved
 
 ## Parallel non-code work already prepared
 
@@ -62,5 +63,6 @@ Read in this order:
 1. `docs/product/work-packets/Plan V8.1 Final.md`
 2. `docs/product/work-packets/CP-10-ROLLOUT-SAFETY-CHECKLIST.md`
 3. `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
-4. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
-5. `docs/product/work-packets/evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
+4. `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
+5. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
+6. `docs/product/work-packets/evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
