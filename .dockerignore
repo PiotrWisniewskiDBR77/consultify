@@ -41,21 +41,14 @@ docs
 *.md
 !README.md
 # Keep runtime knowledge packs (Anna product pills, tool packs).
-# Some Docker ignore implementations are inconsistent with `**`, so we whitelist a few depths.
-!knowledge/**/*.md
-!knowledge/**/*.markdown
-!knowledge/*/*.md
-!knowledge/*/*/*.md
-!knowledge/*/*/*/*.md
-!knowledge/*/*/*/*/*.md
-!knowledge/*/*/*/*/*/*.md
-!knowledge/*/*/*/*/*/*/*.md
-!knowledge/*/*.markdown
-!knowledge/*/*/*.markdown
-!knowledge/*/*/*/*.markdown
-!knowledge/*/*/*/*/*.markdown
-!knowledge/*/*/*/*/*/*.markdown
-!knowledge/*/*/*/*/*/*/*.markdown
+# Re-include the entire knowledge tree, then exclude large binary sources.
+!knowledge/
+!knowledge/**
+knowledge/**/*.pdf
+knowledge/**/*.xlsx
+knowledge/**/*.pptx
+knowledge/**/*.docx
+knowledge/**/*.zip
 
 # Tests (not needed in production)
 tests
