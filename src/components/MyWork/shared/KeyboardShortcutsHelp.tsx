@@ -9,16 +9,18 @@ import { Command, Keyboard, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SHORTCUTS_HELP } from '../hooks/useKeyboardShortcuts';
+import { SHORTCUTS_HELP, type ShortcutHelp } from '../hooks/useKeyboardShortcuts';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
   onClose: () => void;
+  shortcuts?: ShortcutHelp[];
 }
 
 export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   isOpen,
   onClose,
+  shortcuts = SHORTCUTS_HELP,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -42,7 +44,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
     },
   };
 
-  const groupedShortcuts = SHORTCUTS_HELP.reduce(
+  const groupedShortcuts = shortcuts.reduce(
     (acc, shortcut) => {
       if (!acc[shortcut.category]) {
         acc[shortcut.category] = [];
@@ -50,7 +52,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
       acc[shortcut.category].push(shortcut);
       return acc;
     },
-    {} as Record<string, typeof SHORTCUTS_HELP>
+    {} as Record<string, ShortcutHelp[]>
   );
 
   return (

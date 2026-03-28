@@ -67,6 +67,7 @@ import { cn } from '../../utils/cn';
 
 const WelcomeHeroBanner: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 p-8 md:p-12">
@@ -98,13 +99,19 @@ const WelcomeHeroBanner: React.FC = () => {
         </p>
 
         <div className="flex flex-wrap gap-4">
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-violet-700 font-semibold rounded-lg hover:bg-violet-50 transition-colors">
-            {t('partner.hero.getStarted', 'Get Started Now')}
+          <button
+            onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-violet-700 font-semibold rounded-lg hover:bg-violet-50 transition-colors"
+          >
+            {t('partner.hero.getStarted', 'Open onboarding')}
             <ArrowRight className="w-5 h-5" />
           </button>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20">
+          <button
+            onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+          >
             <Play className="w-5 h-5" />
-            {t('partner.hero.watchOverview', 'Watch Overview')}
+            {t('partner.hero.watchOverview', 'Open partner docs')}
           </button>
         </div>
       </div>
@@ -282,7 +289,7 @@ const BetaSuccessStories: React.FC = () => {
             dangerouslySetInnerHTML={{
               __html: t(
                 'partner.beta.launchNotice',
-                '<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.'
+                '<strong>Partner onboarding runs in a controlled rollout.</strong> Access to onboarding, resources, and payout operations is enabled progressively after partner profile activation.'
               ),
             }}
           />

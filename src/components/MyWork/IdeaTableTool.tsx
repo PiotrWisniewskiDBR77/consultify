@@ -68,6 +68,7 @@ import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
+import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { ActivityFeed } from './table/ActivityFeed';
 import { AddColumnDialog } from './table/AddColumnDialog';
@@ -417,7 +418,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Persistence hook ────────────────────────────────────────────────────────
-  const { loading, saving, saveStatusLabel, handleSave } = useTablePersistence({
+  const { loading, saving, saveStatusLabel, handleSave, loadError, refresh } = useTablePersistence({
     open,
     ideaId,
     isPl,
@@ -453,6 +454,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     ? platformIntegration.saveStatusLabel
     : saveStatusLabel;
   const effectiveHandleSave = usePlatform ? platformIntegration.handleSave : handleSave;
+  const effectiveLoadError = usePlatform ? platformIntegration.error : loadError;
+  const effectiveRefresh = usePlatform ? platformIntegration.refresh : refresh;
 
   // ── Platform switch: alias effective values for JSX consumption ────────────
   // When platform is active, these shadow the legacy values so the entire
@@ -2257,6 +2260,47 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 setAiProposal(null);
               }}
               onReject={() => setAiProposal(null)}
+            />
+          </div>
+        )}
+
+        {locked && (
+          <div className="px-3 md:px-4 pt-3">
+            <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
+              <div className="font-medium text-slate-900 dark:text-slate-100">
+                {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {isPl
+                  ? 'Możesz przeglądać tabelę, ale edycja i zapis są obecnie zablokowane.'
+                  : 'You can review the table, but editing and saving are currently disabled.'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {effectiveLoadError && !_loading && effectiveNodes.length === 0 && (
+          <div className="px-3 md:px-4 pt-3">
+            <EmptyStateInline
+              icon={Table2}
+              dashed={false}
+              message={
+                isPl
+                  ? 'Widok tabeli jest chwilowo niedostępny.'
+                  : 'Table view is temporarily unavailable.'
+              }
+              hint={
+                isPl
+                  ? 'To nie oznacza, że tabela jest pusta. Spróbuj ponownie wczytać dane i sprawdź jeszcze raz.'
+                  : 'This does not mean the table is empty. Retry loading the data and check again.'
+              }
+              action={{
+                label: isPl ? 'Ponów' : 'Retry',
+                onClick: () => {
+                  void effectiveRefresh();
+                },
+              }}
+              className="mb-2"
             />
           </div>
         )}

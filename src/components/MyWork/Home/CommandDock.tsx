@@ -32,10 +32,32 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
   const runtimeSummary = payload.runtimeSummary;
+  const primaryAction = payload.primaryAction;
 
   return (
     <HomeBlockShell block={block} className="sticky bottom-4 z-20">
       <div className="grid gap-3">
+        {primaryAction ? (
+          <div className="rounded-[22px] border border-primary-400/20 bg-gradient-to-r from-primary-500/12 via-violet-500/8 to-cyan-400/10 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-primary-100/75">
+                  {isPolish ? 'Zrób teraz' : 'Do this now'}
+                </div>
+                <div className="mt-1 text-base font-semibold text-white">{primaryAction.title}</div>
+                <div className="mt-1 text-sm text-slate-300/80">{primaryAction.helper}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onAction(primaryAction.action)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.13]"
+              >
+                {getPrimaryActionLabel(primaryAction.action.type, isPolish)}
+                <ArrowUpRight size={14} className="text-white/70" />
+              </button>
+            </div>
+          </div>
+        ) : null}
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
@@ -61,6 +83,9 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
+          <div className="w-full text-[10px] uppercase tracking-[0.18em] text-slate-400">
+            {isPolish ? 'Skróty i szybkie tworzenie' : 'Shortcuts and quick create'}
+          </div>
           {payload.actions.map((action) => {
             const Icon =
               action.id === 'new-idea'
@@ -112,10 +137,25 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
             );
           })}
           <div className="ml-auto text-xs text-slate-300/55">
-            {isPolish ? 'Most do całej aplikacji i czatu AI' : 'Bridge to the app and AI chat'}
+            {isPolish ? 'Najpierw priorytet, potem skróty' : 'Priority first, shortcuts second'}
           </div>
         </div>
       </div>
     </HomeBlockShell>
   );
 };
+
+function getPrimaryActionLabel(actionType: 'open' | 'create' | 'navigate' | 'chat', isPolish: boolean) {
+  switch (actionType) {
+    case 'open':
+      return isPolish ? 'Otwórz' : 'Open';
+    case 'create':
+      return isPolish ? 'Utwórz' : 'Create';
+    case 'navigate':
+      return isPolish ? 'Przejdź' : 'Go there';
+    case 'chat':
+      return isPolish ? 'Zapytaj AI' : 'Ask AI';
+    default:
+      return isPolish ? 'Otwórz' : 'Open';
+  }
+}

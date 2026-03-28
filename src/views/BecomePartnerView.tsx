@@ -31,8 +31,7 @@ export const BecomePartnerView: React.FC = () => {
   const navigate = useNavigate();
 
   const handleApplyClick = () => {
-    // Navigate to partner registration or contact
-    navigate(ROUTES.REGISTER);
+    navigate(ROUTES.PARTNER.ONBOARDING);
   };
 
   const handleLearnMoreClick = () => {
@@ -127,9 +126,9 @@ export const BecomePartnerView: React.FC = () => {
 
             {/* Main Headline */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-              Become Partner <br className="hidden md:block" />
+              Dołącz do <br className="hidden md:block" />
               <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Platformy PMO + AI
+                Programu Partnerskiego Consultify
               </span>
             </h1>
 
@@ -165,7 +164,7 @@ export const BecomePartnerView: React.FC = () => {
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
               >
                 <Shield size={18} className="text-violet-400" />
-                Portal Partnera
+                Mam już konto partnera
               </button>
             </div>
           </section>

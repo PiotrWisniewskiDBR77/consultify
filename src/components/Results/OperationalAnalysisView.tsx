@@ -65,7 +65,17 @@ function deriveNeedsEntry(kpi: {
 
 type SortOption = 'worst' | 'best' | 'recent';
 
-export const OperationalAnalysisView: React.FC = () => {
+interface OperationalAnalysisViewProps {
+  kpis?: ResultsKPI[];
+  loading?: boolean;
+  onResultsTruthChange?: () => void | Promise<void>;
+}
+
+export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = ({
+  kpis: controlledKpis,
+  loading: controlledLoading,
+  onResultsTruthChange,
+}) => {
   const { t } = useTranslation();
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +83,9 @@ export const OperationalAnalysisView: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('worst');
   const [filterProject, setFilterProject] = useState<string | null>(null);
   const [filterOwner, setFilterOwner] = useState<string | null>(null);
+  const isControlled = controlledKpis !== undefined;
+  const effectiveKpis = isControlled ? controlledKpis || [] : kpis;
+  const effectiveLoading = isControlled ? Boolean(controlledLoading) : loading;
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
@@ -148,21 +161,25 @@ export const OperationalAnalysisView: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isControlled) {
+      setLoading(false);
+      return;
+    }
     fetchKPIs();
     trackFunnelEvent('results_analysis_opened', { type: 'operational' });
-  }, [fetchKPIs]);
+  }, [fetchKPIs, isControlled]);
 
   const projects = useMemo(
-    () => [...new Set(kpis.filter((k) => k.initiativeName).map((k) => k.initiativeName!))],
-    [kpis]
+    () => [...new Set(effectiveKpis.filter((k) => k.initiativeName).map((k) => k.initiativeName!))],
+    [effectiveKpis]
   );
   const owners = useMemo(
-    () => [...new Set(kpis.filter((k) => k.ownerName).map((k) => k.ownerName!))],
-    [kpis]
+    () => [...new Set(effectiveKpis.filter((k) => k.ownerName).map((k) => k.ownerName!))],
+    [effectiveKpis]
   );
 
   const filteredKpis = useMemo(() => {
-    let items = [...kpis];
+    let items = [...effectiveKpis];
     if (filterProject) items = items.filter((k) => k.initiativeName === filterProject);
     if (filterOwner) items = items.filter((k) => k.ownerName === filterOwner);
 
@@ -186,7 +203,7 @@ export const OperationalAnalysisView: React.FC = () => {
       });
     }
     return items;
-  }, [kpis, sortBy, filterProject, filterOwner]);
+  }, [effectiveKpis, sortBy, filterProject, filterOwner]);
 
   const summary = useMemo(() => {
     const total = filteredKpis.length;
@@ -206,7 +223,7 @@ export const OperationalAnalysisView: React.FC = () => {
     setFilterOwner(null);
   }, []);
 
-  if (loading) {
+  if (effectiveLoading) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="flex items-center gap-3 text-slate-400">
@@ -458,7 +475,13 @@ export const OperationalAnalysisView: React.FC = () => {
         <KPITimeSeriesDrawer
           kpiId={drawerKpiId}
           onClose={() => setDrawerKpiId(null)}
-          onValueRecorded={fetchKPIs}
+          onValueRecorded={() => {
+            if (onResultsTruthChange) {
+              void onResultsTruthChange();
+              return;
+            }
+            void fetchKPIs();
+          }}
         />
       )}
     </div>

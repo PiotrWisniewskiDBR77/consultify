@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { KbCategory, useDocsCategories } from '@/hooks/useDocs';
@@ -30,14 +31,16 @@ interface DocsLayoutProps {
 }
 
 export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
-  const { data: categories, isLoading: categoriesLoading } = useDocsCategories();
+  const { data: categories, isLoading: categoriesLoading } = useDocsCategories(docsLanguage);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -85,7 +88,9 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
                 <Book size={16} className="text-white" />
               </div>
-              <span className="hidden sm:inline">Consultify Docs</span>
+              <span className="hidden sm:inline">
+                {t('docs.layout.brand', 'Consultify Docs')}
+              </span>
             </Link>
           </div>
 
@@ -96,7 +101,9 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               className="w-full flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-900 border border-transparent hover:border-slate-300 dark:hover:border-navy-700 text-slate-500 dark:text-slate-400 text-sm transition-colors"
             >
               <Search size={16} />
-              <span className="flex-1 text-left">Search documentation...</span>
+              <span className="flex-1 text-left">
+                {t('docs.layout.searchPlaceholder', 'Search documentation...')}
+              </span>
               <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs font-medium">
                 <span>⌘</span>K
               </kbd>
@@ -110,13 +117,13 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
               <Home size={16} />
-              <span>Home</span>
+              <span>{t('docs.layout.home', 'Home')}</span>
             </Link>
             <Link
               to="/login"
               className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors"
             >
-              Sign In
+              {t('docs.layout.signIn', 'Sign In')}
             </Link>
           </div>
         </div>
@@ -147,7 +154,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search documentation..."
+                      placeholder={t('docs.layout.searchPlaceholder', 'Search documentation...')}
                       className="flex-1 bg-transparent outline-none text-lg placeholder-slate-400"
                       autoFocus
                     />
@@ -158,11 +165,11 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 </form>
                 <div className="p-4">
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Press{' '}
+                    {t('docs.layout.pressEnterPrefix', 'Press')}{' '}
                     <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-xs">
                       Enter
                     </kbd>{' '}
-                    to search
+                    {t('docs.layout.pressEnterSuffix', 'to search')}
                   </p>
                 </div>
               </div>
@@ -201,7 +208,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 )}
               >
                 <Home size={16} />
-                Overview
+                {t('docs.layout.overview', 'Overview')}
               </Link>
 
               {categories?.map((category: KbCategory) => (
@@ -252,7 +259,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                       )}
                     >
                       <Home size={16} />
-                      Overview
+                      {t('docs.layout.overview', 'Overview')}
                     </Link>
 
                     {categories?.map((category: KbCategory) => (

@@ -3,63 +3,105 @@ import { ArrowRight, CheckCircle2, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
+import { ROUTES } from '../routes/routeConfig';
 
-const plans = [
+type PlanAction = 'trial' | 'contact';
+
+interface PricingPlan {
+  name: string;
+  price: {
+    monthly: number | null;
+    annual: number | null;
+  };
+  description: string;
+  color: string;
+  features: string[];
+  cta: string;
+  popular: boolean;
+  action: PlanAction;
+}
+
+const plans: PricingPlan[] = [
   {
-    name: 'Starter',
+    name: 'Trial',
     price: { monthly: 0, annual: 0 },
-    description: 'For individuals and small teams ready to try AI-powered strategy.',
+    description: '14 days to validate the workflow before you commit.',
     color: '#6b7280',
     features: [
-      '3 active projects',
-      'AI Chat (50 messages/mo)',
-      'Basic financial modeling',
-      '2 report exports/mo',
-      'Community support',
+      '1 workspace sandbox',
+      '2 active projects',
+      '30 AI credits total',
+      'Basic report export',
+      'Email support',
     ],
-    cta: 'Start for free',
+    cta: 'Start trial',
     popular: false,
+    action: 'trial',
   },
   {
-    name: 'Pro',
-    price: { monthly: 149, annual: 119 },
-    description: 'For founders and executives running serious transformations.',
+    name: 'User',
+    price: { monthly: 29, annual: 23 },
+    description: 'For solo consultants and operators who need steady monthly usage.',
     color: '#7c3aed',
     features: [
-      'Unlimited projects',
-      'AI Chat (unlimited)',
-      'Full financial modeling suite',
-      'NPV / IRR / Sensitivity analysis',
-      'Initiative management',
-      'Unlimited report exports',
-      'Board-ready presentation builder',
+      '1 user seat',
+      '5 active projects',
+      '150 AI credits / month',
+      'Scenario builder and report drafts',
+      '10 exports / month',
+      'Email support',
+    ],
+    cta: 'Choose User',
+    popular: false,
+    action: 'trial',
+  },
+  {
+    name: 'Manager',
+    price: { monthly: 49, annual: 39 },
+    description: 'For team leads running multiple initiatives with shared visibility.',
+    color: '#a855f7',
+    features: [
+      '3 user seats included',
+      '15 active projects',
+      '500 AI credits / month',
+      'Shared workspace and approvals',
+      'Presentation-ready exports',
       'Priority support',
     ],
-    cta: 'Start 14-day free trial',
+    cta: 'Choose Manager',
     popular: true,
+    action: 'trial',
   },
   {
     name: 'Enterprise',
     price: { monthly: null, annual: null },
-    description: 'For consulting firms and enterprise teams. Custom pricing.',
+    description: 'For consulting firms and enterprise teams with security and rollout needs.',
     color: '#06b6d4',
     features: [
-      'Everything in Pro',
-      'White-label workspaces',
-      'Custom LLM routing',
-      'Full API & MCP access',
-      'Partner revenue share',
-      'SSO & advanced security',
-      'SLA guarantee',
-      'Dedicated success manager',
+      'Custom seats and usage packs',
+      'SSO / SAML and advanced permissions',
+      'API and MCP access',
+      'Private model routing or BYOK',
+      'Security review and SLA',
+      'Dedicated onboarding',
     ],
-    cta: 'Talk to us',
+    cta: 'Contact sales',
     popular: false,
+    action: 'contact',
   },
 ];
 
 export const PricingLandingPage: React.FC = () => {
-  const [annual, setAnnual] = useState(true);
+  const [annual, setAnnual] = useState(false);
+
+  const handlePlanClick = (action: PlanAction) => {
+    if (action === 'contact') {
+      window.location.href = ROUTES.LEGAL.CONTACT;
+      return;
+    }
+
+    window.location.href = ROUTES.TRIAL_ENTRY;
+  };
 
   return (
     <MarketingLayout>
@@ -104,7 +146,7 @@ export const PricingLandingPage: React.FC = () => {
               backgroundClip: 'text',
             }}
           >
-            Unlimited intelligence.
+            Clear usage limits.
           </span>
         </motion.h1>
 
@@ -114,7 +156,7 @@ export const PricingLandingPage: React.FC = () => {
           transition={{ delay: 0.14 }}
           className="text-lg text-white/50 max-w-xl mx-auto mb-8"
         >
-          Start free for 14 days. No credit card required. Cancel anytime.
+          Choose the package that matches your actual usage, team size, and rollout stage.
         </motion.p>
 
         {/* Toggle */}
@@ -155,13 +197,12 @@ export const PricingLandingPage: React.FC = () => {
 
       {/* Plans */}
       <section className="px-6 pb-24">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
+        <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08 }}
               className="relative p-7 rounded-2xl flex flex-col"
               style={{
@@ -213,6 +254,7 @@ export const PricingLandingPage: React.FC = () => {
               </div>
 
               <button
+                onClick={() => handlePlanClick(plan.action)}
                 className="w-full py-3 rounded-full text-sm font-semibold text-white transition-all flex items-center justify-center gap-2"
                 style={
                   plan.popular
@@ -234,8 +276,8 @@ export const PricingLandingPage: React.FC = () => {
 
         <div className="max-w-lg mx-auto text-center mt-12">
           <p className="text-sm text-white/30">
-            All plans include GDPR compliance, EU data residency, and AES-256 encryption. No AI
-            training on your data.
+            Pricing is explicit on seats, projects, exports, and AI usage so teams can scale
+            predictably.
           </p>
         </div>
       </section>

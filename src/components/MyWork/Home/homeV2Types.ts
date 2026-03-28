@@ -68,6 +68,19 @@ export type HomeScreenAction =
     }
   | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' };
 
+export interface HomePrimaryAction {
+  title: string;
+  helper: string;
+  action:
+    | { type: 'open'; target: 'idea' | 'note' | 'task' | 'decision'; id: string }
+    | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' }
+    | {
+        type: 'navigate';
+        target: 'ideas' | 'notebook' | 'calendar' | 'tasks' | 'decisions' | 'manager';
+      }
+    | { type: 'chat'; packet: HomeChatContextPacket };
+}
+
 export interface HomeFocusItem {
   id: string;
   type: 'task' | 'decision' | 'idea';
@@ -229,6 +242,7 @@ export interface TeamSignalPayload {
 }
 
 export interface CommandDockPayload {
+  primaryAction?: HomePrimaryAction | null;
   actions: Array<{
     id: string;
     label: string;

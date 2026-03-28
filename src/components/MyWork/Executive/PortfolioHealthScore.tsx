@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 interface HealthBreakdown {
   execution: number; // Task completion rate
   decisions: number; // Decision velocity
-  capacity: number; // Team utilization
+  capacity: number; // Capacity balance / overload pressure
   risk: number; // Risk mitigation
 }
 

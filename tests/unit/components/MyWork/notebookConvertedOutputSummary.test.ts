@@ -20,7 +20,7 @@ describe('getNotebookConvertedOutputSummary', () => {
     });
   });
 
-  it('dedupes repeated converted output types while preserving first-seen order', () => {
+  it('keeps first-seen order and shows multiplicity for repeated output types', () => {
     expect(
       getNotebookConvertedOutputSummary([
         { type: 'report', id: 'report-1' },
@@ -28,8 +28,8 @@ describe('getNotebookConvertedOutputSummary', () => {
         { type: 'presentation', id: 'deck-1' },
       ])
     ).toEqual({
-      total: 2,
-      visibleTypes: ['report', 'presentation'],
+      total: 3,
+      visibleTypes: ['report ×2', 'presentation'],
       extraCount: 0,
     });
   });

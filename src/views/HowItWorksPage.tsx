@@ -37,7 +37,7 @@ const steps = [
     glow: 'rgba(168,85,247,0.28)',
     title: 'AI instantly understands the full picture',
     description:
-      'LLMind — our proprietary AI engine — cross-references your data against 1,000+ real consulting engagements and every frontier model to map gaps, risks, and opportunities with surgical precision. No hallucinations. Full citations.',
+      'DBR77 Vector — our proprietary model — analyzes your context against 1,000+ real transformation engagements to map gaps, risks, and opportunities with structured reasoning. Built for decisions, not generic chat.',
     details: [
       'Cross-referenced against 1,000+ engagements',
       'Gap analysis vs. industry benchmarks',
@@ -321,29 +321,32 @@ export const HowItWorksPage: React.FC = () => {
                   </span>
                 </div>
                 <h2 className="text-3xl font-black text-white mb-5">
-                  Powered by every frontier LLM + our proprietary LLMind.
+                  Powered by DBR77 Vector, our proprietary AI model.
                 </h2>
                 <p className="text-white/55 leading-relaxed mb-6">
-                  Built on Microsoft infrastructure and trained on 1,000+ real consulting
-                  engagements. Full MCP integration for true end-to-end automation — from data
-                  ingestion to board presentation, with zero human bottlenecks.
+                  Built on 1,000+ real transformation engagements and delivered through secure
+                  deployment options. DBR77 Vector is our model, not a wrapper, with MCP
+                  integration for end-to-end automation from data ingestion to final output.
                 </p>
-                <button
+                <a
+                  href="https://vector.dbr77.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
                     boxShadow: '0 0 30px -10px rgba(124,58,237,0.60)',
                   }}
                 >
-                  See it in action <ArrowRight size={14} />
-                </button>
+                  Explore DBR77 Vector <ArrowRight size={14} />
+                </a>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 {[
                   {
-                    label: 'LLMind™',
-                    desc: 'Proprietary consulting AI engine',
+                    label: 'DBR77 Vector',
+                    desc: 'Proprietary AI model',
                     color: '#7c3aed',
                     icon: Brain,
                   },
@@ -354,14 +357,14 @@ export const HowItWorksPage: React.FC = () => {
                     icon: Zap,
                   },
                   {
-                    label: 'All Frontier LLMs',
-                    desc: 'GPT-4o, Claude, Gemini+',
+                    label: 'Private Deployment',
+                    desc: 'On-premise, private API, or isolated access',
                     color: '#a855f7',
                     icon: Cpu,
                   },
                   {
                     label: '1,000+ Engagements',
-                    desc: 'Real consulting training data',
+                    desc: 'Real transformation knowledge base',
                     color: '#10b981',
                     icon: CheckCircle2,
                   },

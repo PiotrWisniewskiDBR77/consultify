@@ -135,6 +135,7 @@ const homeBlocks = [
 describe('HomeView aggregated contract', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const refresh = vi.fn();
     useHomeDataMock.mockReturnValue({
       screen: {
         timeMode: 'liveDay',
@@ -150,6 +151,7 @@ describe('HomeView aggregated contract', () => {
       loading: false,
       error: null,
       updateLayout: vi.fn(),
+      refresh,
     });
 
     useV8MyWorkRoofSummaryMock.mockReturnValue({
@@ -221,5 +223,36 @@ describe('HomeView aggregated contract', () => {
       type: 'create',
       target: 'idea',
     });
+  });
+
+  it('shows a retryable radar error state instead of a raw empty screen', () => {
+    const refresh = vi.fn();
+    useHomeDataMock.mockReturnValue({
+      screen: {
+        timeMode: 'liveDay',
+        updatedAt: '2026-03-25T05:00:00.000Z',
+        pulseLabel: '',
+        blocks: [],
+      },
+      blocks: [],
+      layout: {
+        ambientMotion: 'full',
+        blockLayouts: [],
+      },
+      loading: false,
+      error: 'Home V2 unavailable. Please try again in a moment.',
+      updateLayout: vi.fn(),
+      refresh,
+    });
+
+    render(<HomeView onAction={vi.fn()} />);
+
+    expect(screen.getByText('Radar is temporarily unavailable.')).toBeInTheDocument();
+    expect(
+      screen.getByText('This does not mean the day is empty. Retry loading the home screen.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

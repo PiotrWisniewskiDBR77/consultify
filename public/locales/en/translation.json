@@ -62,14 +62,31 @@
       }
     },
     "topBar": {
-      "demo": "Demo",
-      "trial": "Trial",
+      "demo": "Watch demo",
+      "trial": "Start trial",
       "login": "Log in",
       "signUp": "Sign up"
     },
     "epicHero": {
       "eyebrow": "Consulting Intelligence Platform",
-      "sub": "Structured consulting workflow for diagnosis, planning, execution, and impact."
+      "sub": "For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.",
+      "annaBadge": "Start with Anna",
+      "annaSub": "Not sure whether to start with a demo or a trial? Anna can explain fit, pricing, and security before you choose your next step.",
+      "annaPrimaryCta": "Ask Anna first",
+      "annaPrompts": {
+        "fit": {
+          "label": "Ask about fit",
+          "prompt": "Is Consultify right for my team?"
+        },
+        "pricing": {
+          "label": "Ask about pricing",
+          "prompt": "How should I choose between demo, trial, and pricing plans?"
+        },
+        "security": {
+          "label": "Ask about security",
+          "prompt": "How does Consultify handle security and data residency?"
+        }
+      }
     },
     "problemPlatform": {
       "badge": "Why this category matters",
@@ -171,7 +188,7 @@
           "bullets": [
             "Reports",
             "Executive presentations",
-            "Consulting deliverables"
+            "Notes"
           ]
         },
         {
@@ -181,21 +198,22 @@
             "Tasks",
             "Decisions",
             "Ideas",
-            "Notes"
+            "Initiatives"
           ]
         }
       ]
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify is the",
-        "line2": "Spotify for",
-        "line3": "consulting knowledge."
+        "line1": "Consultify gives teams",
+        "line2": "consulting intelligence",
+        "line3": "they can actually execute."
       },
-      "sub": "Structured consulting workflow for diagnosis, planning, execution, and impact.",
+      "sub": "For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.",
       "billboard": "We did for consulting what Spotify did for music: unlimited access — but instead of playlists, you get profit.",
-      "ctaPrimary": "Launch Free Trial",
-      "ctaSecondary": "OPEN DEMO NOW",
+      "billboardShort": "One workflow from diagnosis to execution to measurable results.",
+      "ctaPrimary": "Start trial",
+      "ctaSecondary": "Watch demo",
       "ctaNote": "Short teasers are public. Full videos unlock after login.",
       "panel": {
         "title": "From chat → to deliverables → to profit",
@@ -283,8 +301,36 @@
       "fullTitleFallback": "Full video"
     },
     "faq": {
-      "ctaPrimary": "Launch Free Trial",
-      "ctaSecondary": "Browse resources"
+      "badge": "FAQ",
+      "heading": "Questions? Answers.",
+      "more": "Have more questions?",
+      "contact": "Contact us",
+      "items": [
+        {
+          "q": "What is Consultify?",
+          "a": "Consultify is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports."
+        },
+        {
+          "q": "How is this different from traditional consulting?",
+          "a": "Traditional consulting delivers PowerPoint decks. Consultify delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf."
+        },
+        {
+          "q": "Is my data secure?",
+          "a": "Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK)."
+        },
+        {
+          "q": "Do I need technical expertise to use it?",
+          "a": "No. Consultify is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team."
+        },
+        {
+          "q": "Can I try before I buy?",
+          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
+        },
+        {
+          "q": "What industries do you serve?",
+          "a": "We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges."
+        }
+      ]
     },
     "methodology": {
       "badge": "Our Methodology",
@@ -437,14 +483,14 @@
         "gdpr": "GDPR",
         "encryption": "AES-256"
       },
-      "dataResidency": "Data Residency Options:",
+      "dataResidency": "Data residency",
       "regions": {
         "eu": "Europe",
         "us": "North America",
         "gcc": "Middle East",
         "jp": "Japan"
       },
-      "dataNote": "Your data stays in your chosen region • No AI training on your data • Full regulatory compliance"
+      "dataNote": "Your data stays in the EU region • No AI training on your data"
     },
     "trust": {
       "carouselTagline": "AI analyzes. You command.",
@@ -457,38 +503,6 @@
         "SOC2 compliant infrastructure logic"
       ],
       "cta": "View Security Overview"
-    },
-    "faq": {
-      "badge": "FAQ",
-      "heading": "Questions? Answers.",
-      "more": "Have more questions?",
-      "contact": "Contact us",
-      "items": [
-        {
-          "q": "What is Consultify?",
-          "a": "Consultify is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports."
-        },
-        {
-          "q": "How is this different from traditional consulting?",
-          "a": "Traditional consulting delivers PowerPoint decks. Consultify delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf."
-        },
-        {
-          "q": "Is my data secure?",
-          "a": "Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK)."
-        },
-        {
-          "q": "Do I need technical expertise to use it?",
-          "a": "No. Consultify is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team."
-        },
-        {
-          "q": "Can I try before I buy?",
-          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
-        },
-        {
-          "q": "What industries do you serve?",
-          "a": "We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges."
-        }
-      ]
     },
     "footer": {
       "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
@@ -550,8 +564,8 @@
       "title1": "Be Our Partner.",
       "title2": "Let's Grow Together.",
       "description": "Join our network of transformation experts. Earn recurring revenue, access premium tools, and help businesses achieve digital excellence.",
-      "getStarted": "Get Started Now",
-      "watchOverview": "Watch Overview"
+      "getStarted": "Open onboarding",
+      "watchOverview": "Open partner docs"
     },
     "value": {
       "title": "Why Partner with Consultify?",
@@ -585,7 +599,7 @@
       "subtitle": "Our beta partners are transforming how they work with clients",
       "resultsLabel": "Results in Beta Phase:",
       "partnerSince": "Beta Partner since {{date}}",
-      "launchNotice": "<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.",
+      "launchNotice": "<strong>Partner onboarding runs in a controlled rollout.</strong> Access to onboarding, resources, and payout operations is enabled progressively after partner profile activation.",
       "stories": {
         "0": {
           "company": "Nordic Digital Solutions",
@@ -882,105 +896,28 @@
     "periodEnd": "Period end"
   },
   "superadmin": {
-    "customers": {
-      "playbooks": {
-        "title": "Customer Success Playbooks",
-        "subtitle": "Automate customer success workflows",
-        "newPlaybook": "New Playbook",
-        "execute": "Execute",
-        "confirmDelete": "Are you sure you want to delete this playbook?",
-        "stats": {
-          "totalPlaybooks": "Total Playbooks",
-          "active": "Active",
-          "totalActions": "Total Actions",
-          "completedActions": "Completed Actions"
-        },
-        "playbooks": "Playbooks",
-        "status": {
-          "active": "Active",
-          "inactive": "Inactive"
-        },
-        "actionsCount": "{{count}} actions",
-        "empty": {
-          "noPlaybooks": "No playbooks yet",
-          "createFirst": "Create your first playbook",
-          "selectTitle": "Select a Playbook",
-          "selectSubtitle": "Choose a playbook from the list or create a new one"
-        },
-        "fields": {
-          "name": "Playbook Name",
-          "description": "Description",
-          "trigger": "Trigger",
-          "actions": "Actions",
-          "organizationId": "Organization ID"
-        },
-        "placeholders": {
-          "name": "e.g., New Customer Onboarding",
-          "organizationId": "Enter organization ID"
-        },
-        "modals": {
-          "createTitle": "Create Customer Success Playbook",
-          "createCta": "Create Playbook",
-          "executeTitle": "Execute Playbook",
-          "executeSubtitle": "Execute \"{{name}}\" for a specific organization.",
-          "executeCta": "Execute"
-        },
-        "actionTypes": {
-          "sendEmail": "Send Email",
-          "createTask": "Create Task",
-          "notifyCsm": "Notify CSM",
-          "scheduleCall": "Schedule Call",
-          "updateHealth": "Update Health Score",
-          "custom": "Custom Action"
-        },
-        "triggerTypes": {
-          "onboardingComplete": "Onboarding Complete",
-          "trialEnding": "Trial Ending",
-          "lowEngagement": "Low Engagement",
-          "healthScoreDrop": "Health Score Drop",
-          "subscriptionChange": "Subscription Change",
-          "milestoneReached": "Milestone Reached"
-        }
-      },
-      "compliance": {
-        "title": "Compliance Management",
-        "subtitle": "Track customer compliance status and requirements",
-        "unknownOrganization": "Unknown Organization",
-        "errorLoad": "Failed to load compliance summary. Please try again.",
-        "stats": {
-          "fullyCompliant": "Fully Compliant",
-          "requiresAttention": "Requires Attention",
-          "auditPassed": "Audit Passed"
-        },
-        "table": {
-          "title": "Organization Compliance Status",
-          "empty": "No compliance data available yet.",
-          "never": "Never",
-          "columns": {
-            "organization": "Organization",
-            "gdpr": "GDPR",
-            "dpa": "DPA Signed",
-            "dataRetention": "Data Retention",
-            "securityAudit": "Security Audit",
-            "lastAudit": "Last Audit"
-          }
-        }
-      }
+    "confirm": {
+      "title": "Confirm Action",
+      "description": "This action will be logged in the audit trail.",
+      "reasonLabel": "Reason for this action",
+      "reasonPlaceholder": "e.g., Customer request, security incident, compliance...",
+      "reasonRequired": "Please provide a reason (min 3 characters).",
+      "cancel": "Cancel",
+      "proceed": "Confirm & Proceed",
+      "auditNotice": "This action will be recorded in the audit log with your identity and timestamp."
     },
-    "promptOsRuntime": {
-      "title": "Prompt OS runtime (V8)",
-      "subtitle": "Read-only summary from GET /api/v8/prompt-os/runtime/summary",
-      "refresh": "Refresh",
-      "loading": "Loading runtime summary…",
-      "loadError": "Could not load summary: {{message}}",
-      "none": "—",
-      "fields": {
-        "contract": "Contract",
-        "presetCount": "Presets",
-        "bundleCount": "Bundles",
-        "activeBundleCount": "Active bundles",
-        "purposeFamilies": "Purpose families supported"
-      }
+    "impersonation": {
+      "banner": "Impersonating Mode",
+      "exit": "Exit Impersonation",
+      "title": "Impersonate User",
+      "description": "You will be logged in as this user. All your actions will be recorded in the audit log.",
+      "started": "Impersonation started",
+      "ended": "Impersonation ended"
+    },
+    "testSupport": {
+      "bootstrapLabel": "Bootstrap Test Tenant",
+      "cleanupLabel": "Cleanup Test Data",
+      "gatingNotice": "Available only in test environment with proper credentials."
     },
     "playbookTemplates": {
       "title": "Playbook Templates",
@@ -1040,9 +977,7 @@
         "duplicated": "Template duplicated as draft",
         "imported": "Template imported",
         "importInvalid": "Invalid template JSON",
-        "fieldsRequired": "Title, Key and Trigger Signal are required",
-        "editViaApi": "Edit this template through the API.",
-        "previewAfterReport": "Preview is available after generating a report."
+        "fieldsRequired": "Title, Key and Trigger Signal are required"
       }
     },
     "emailTemplates": {
@@ -3182,7 +3117,9 @@
       "mutedHint": "Muted types:"
     },
     "quickClicks": {
-      "brief": { "label": "Daily brief" },
+      "brief": {
+        "label": "Daily brief"
+      },
       "savings": {
         "label": "Quick savings",
         "prompt": "Let’s find savings — where can we cut cost fastest without losing quality?"
@@ -3301,6 +3238,10 @@
     "contextPlaceholder": "How can I help with {{context}}?",
     "welcome": "Start a conversation",
     "welcomeSubtitle": "Ask questions, get insights, and collaborate with AI",
+    "teresaPlaceholder": "Ask Teresa about your work...",
+    "teresaContextPlaceholder": "How can Teresa help with {{context}}?",
+    "teresaWelcome": "Talk to Teresa",
+    "teresaWelcomeSubtitle": "Work through decisions, notes, and next steps with your internal AI partner",
     "loadingConversation": "Loading conversation…",
     "autoReadOn": "Enable voice reading",
     "autoReadOff": "Disable voice reading",
@@ -4219,401 +4160,36 @@
     }
   },
   "presentations": {
-    "wizard": {
-      "title": "Presentation Generator",
-      "titleRequired": "Please enter a title",
-      "outlineFailed": "Failed to generate outline",
-      "generationFailed": "Generation failed",
-      "downloadFailed": "Download failed",
-      "presentationMode": "Presentation Mode",
-      "communicationRegister": "Communication Register",
-      "contentDepth": "Content Depth",
-      "imageStylePreset": "Image Style",
-      "imageSource": "Image Source",
-      "cardSize": "Card Size",
-      "colorSet": "Color Palette",
-      "brandKit": "Brand Kit",
-      "visualsSection": "Visuals & Branding",
-      "visualsSectionDesc": "Control image style, color palette, and card dimensions.",
-      "wordsPerSlide": "Words/slide",
-      "typicalSlides": "Slides",
-      "animations": "Animations",
-      "showAdvanced": "Advanced options",
-      "additionalInstructions": "Additional Instructions for AI",
-      "additionalInstructionsPlaceholder": "e.g., Focus on financial metrics, use dark backgrounds...",
-      "modes": {
-        "show": "Show",
-        "showDesc": "Narrative storytelling for a live audience. Bold visuals, minimal text.",
-        "document": "Document",
-        "documentDesc": "Self-standing consulting deliverable. Dense content, minimal images.",
-        "briefing": "Briefing",
-        "briefingDesc": "Quick executive update. Key metrics and status changes.",
-        "workshop": "Workshop",
-        "workshopDesc": "Workshop material with frameworks and interactive elements."
-      },
-      "registers": {
-        "executive": "Executive",
-        "executiveDesc": "Decisive, concise, 'so what' framing",
-        "professional": "Professional",
-        "professionalDesc": "Business-neutral, canonical default",
-        "technical": "Technical",
-        "technicalDesc": "Analytical, precise, with more detail",
-        "narrative": "Narrative",
-        "narrativeDesc": "Storytelling style, best for Show mode"
-      },
-      "imageStyles": {
-        "corporatePhotography": "Corporate Photo",
-        "corporatePhotographyDesc": "Professional people, offices, products",
-        "abstractGeometric": "Abstract",
-        "abstractGeometricDesc": "Gradients, shapes, patterns",
-        "flatIllustration": "Illustration",
-        "flatIllustrationDesc": "Modern vector illustrations",
-        "dataFocused": "Data-Focused",
-        "dataFocusedDesc": "Charts and diagrams only, no decorative images",
-        "industryRealistic": "Industry",
-        "industryRealisticDesc": "Realistic industry-specific imagery",
-        "minimalNoImages": "Minimal",
-        "minimalNoImagesDesc": "Typography + color only"
-      },
-      "imageSources": {
-        "smart": "Smart (auto)",
-        "orgLibrary": "Organization Library",
-        "aiOnly": "AI Generated",
-        "none": "No Images",
-        "manual": "Manual Only"
-      },
-      "contentDepth": {
-        "minimal": "Minimal",
-        "minimalDesc": "Headlines and key numbers only",
-        "concise": "Concise",
-        "conciseDesc": "Brief paragraphs with key points",
-        "detailed": "Detailed",
-        "detailedDesc": "Full analysis with supporting data",
-        "extensive": "Extensive",
-        "extensiveDesc": "Comprehensive deep-dive"
-      }
+    "tabs": {
+      "allDecks": "All Decks",
+      "recent": "Recent"
     },
-    "steps": {
-      "sources": "Sources",
-      "setup": "Setup",
-      "outline": "Outline",
-      "result": "Result"
+    "columns": {
+      "title": "Title",
+      "sourceType": "Source",
+      "owner": "Owner",
+      "date": "Date"
     },
-    "sources": {
-      "title": "Select Data Sources",
-      "subtitle": "Choose which platform artifacts to include in your deck.",
-      "initiative": "Initiatives",
-      "note": "Notes",
-      "report": "Reports",
-      "financial_analysis": "Financial Analysis",
-      "valuation": "Enterprise Valuation",
-      "tool_session": "Tool Sessions",
-      "workspace": "Workspaces",
-      "insight": "Insights",
-      "initiative_portfolio": "Initiative Portfolio",
-      "execution_status": "Execution Status",
-      "kpi_roi": "KPI & ROI",
-      "raid": "Risks & Issues",
-      "assessment": "Assessment Results"
+    "sourceType": {
+      "tool": "Tool",
+      "assessment": "Assessment",
+      "finance": "Finance",
+      "upload": "Upload",
+      "unknown": "Unknown"
     },
-    "setup": {
-      "title": "Configure Your Deck",
-      "subtitle": "Set the mode, audience, visuals, and style.",
-      "deckTitle": "Deck Title",
-      "titlePlaceholder": "e.g., Steering Committee Update — Q1 2026",
-      "creationPath": "Creation Path",
-      "aiGenerates": "AI Generates",
-      "aiGeneratesDesc": "AI proposes structure from your sources",
-      "template": "Template (optional)",
-      "customDeck": "Custom Deck",
-      "customDeckDesc": "AI generates outline from sources",
-      "audience": "Audience",
-      "goal": "Goal",
-      "language": "Language",
-      "theme": "Theme",
-      "confidentiality": "Confidentiality",
-      "generateOutline": "Generate Outline",
-      "visuals": {
-        "title": "Visuals (AI images)",
-        "desc": "Gamma-like visuals: cover + subtle textures. Works best in Quality mode.",
-        "priority": "Visual Priority",
-        "quality": "Quality",
-        "cost": "Cost",
-        "density": "Image density",
-        "densityLow": "Low",
-        "densityMedium": "Medium",
-        "densityHigh": "High"
-      }
+    "actions": {
+      "rename": "Rename",
+      "export": "Export",
+      "openSource": "Open source"
     },
-    "audiences": {
-      "sponsor": "Sponsor",
-      "executive": "Executive",
-      "board": "Board Members",
-      "project_team": "Project Team",
-      "client": "Client",
-      "investor": "Investor / VC",
-      "internal": "Internal Team",
-      "educate": "Educate"
-    },
-    "goals": {
-      "inform": "Inform",
-      "decide": "Decide",
-      "sell": "Sell",
-      "align": "Align",
-      "educate": "Educate"
-    },
-    "themes": {
-      "corporate": "Corporate",
-      "minimal": "Minimal",
-      "modern": "Modern"
-    },
-    "confidentialities": {
-      "confidential": "Confidential",
-      "internal": "Internal",
-      "public": "Public"
-    },
-    "outline": {
-      "title": "Deck Outline",
-      "slides": "slides",
-      "header": "AI proposed {{count}} slides. Drag to reorder. Click to edit.",
-      "reorder": "Drag to reorder, toggle to include/exclude",
-      "addSlide": "Add slide",
-      "generate": "Generate Deck",
-      "contentHintPlaceholder": "Content hint: describe what this slide should contain...",
-      "aiRecommends": "AI recommends adding:",
-      "validation": {
-        "minSlides": "Minimum 2 slides required",
-        "maxSlides": "Maximum 30 slides exceeded",
-        "tooMany": "Consider splitting into two presentations (>20 slides)",
-        "noCover": "Missing cover slide"
-      },
-      "suggestions": {
-        "addRisk": "Risk Overview",
-        "addKpi": "KPI Dashboard",
-        "addNextSteps": "Next Steps",
-        "addThankYou": "Thank You"
-      }
-    },
-    "generating": {
-      "title": "Generating Your Deck",
-      "subtitle": "Creating consulting-grade slides with quality validation. This may take a moment..."
-    },
-    "result": {
-      "ready": "Your Deck is Ready!",
-      "slidesGenerated": "slides generated successfully",
-      "warnings": "Quality Warnings",
-      "downloadPptx": "Download PPTX",
-      "editOutline": "Edit & Regenerate",
-      "openBuilder": "Open Deck Builder"
-    },
-    "templates": {
-      "systemTemplates": "System Templates",
-      "orgTemplates": "Organization Templates",
-      "viewOutline": "View outline",
-      "use": "Use",
-      "clone": "Clone",
-      "cloned": "Template cloned to your organization",
-      "cloneFailed": "Failed to clone"
-    },
-    "brandKit": {
-      "title": "Brand Kit",
-      "subtitle": "Configure your organization branding for presentations and reports.",
-      "colors": "Colors",
-      "primary": "Primary",
-      "secondary": "Secondary",
-      "accent": "Accent",
-      "fonts": "Fonts",
-      "titleFont": "Title Font",
-      "bodyFont": "Body Font",
-      "headerFooter": "Header & Footer",
-      "headerText": "Header text",
-      "footerText": "Footer text",
-      "pageNumbers": "Page numbers",
-      "confidentialityBanner": "Confidentiality banner",
-      "defaultConfidentiality": "Default Confidentiality",
-      "disclaimer": "Disclaimer text",
-      "disclaimerPlaceholder": "Optional legal disclaimer for financial/valuation decks",
-      "saved": "Brand kit saved",
-      "saveFailed": "Failed to save"
-    },
-    "builder": {
-      "title": "Deck Builder",
-      "exit": "Exit to Presentations",
-      "untitled": "Untitled Deck",
-      "slideSorter": "Slide Sorter",
-      "cardView": "Cards",
-      "listView": "List",
-      "addBlank": "Blank slide",
-      "addAi": "AI generates",
-      "addFromTemplate": "From template",
-      "topBar": {
-        "theme": "Theme",
-        "share": "Share",
-        "agent": "Agent",
-        "present": "Present",
-        "undo": "Undo",
-        "redo": "Redo"
-      },
-      "bottomBar": {
-        "card": "Card",
-        "of": "of",
-        "quickEdits": "Quick edits",
-        "notes": "Notes"
-      },
-      "toolbar": {
-        "search": "Search",
-        "basicBlocks": "Basic blocks",
-        "images": "Images",
-        "smartLayouts": "Smart layouts",
-        "diagrams": "Diagrams",
-        "chartsData": "Charts & data",
-        "media": "Media",
-        "artifacts": "Artifacts",
-        "aiEdit": "AI Edit"
-      },
-      "blocks": {
-        "heading": "Heading",
-        "paragraph": "Paragraph",
-        "bulletList": "Bullet list",
-        "numberedList": "Numbered list",
-        "table": "Table",
-        "chart": "Chart",
-        "image": "Image",
-        "kpiWidget": "KPI Widget",
-        "metricStrip": "Metric Strip",
-        "smartLayout": "Smart Layout",
-        "smartDiagram": "Smart Diagram",
-        "callout": "Callout",
-        "timeline": "Timeline",
-        "artifactEmbed": "Artifact",
-        "divider": "Divider"
-      },
-      "editCard": {
-        "title": "Edit this card",
-        "prompt": "How would you like to edit this card?",
-        "improveWriting": "Improve writing",
-        "fixSpelling": "Fix spelling & grammar",
-        "translate": "Translate",
-        "makeLonger": "Make longer",
-        "makeShorter": "Make shorter",
-        "simplify": "Simplify language",
-        "moreSpecific": "Be more specific",
-        "moreVisual": "Make more visual",
-        "addImage": "Add an image",
-        "addChart": "Add a chart",
-        "swapOrgPhoto": "Use organization photo",
-        "regenerateImages": "Regenerate all images",
-        "updateData": "Update data from source",
-        "changeChartType": "Change chart type",
-        "addKpi": "Add KPI widget",
-        "tryNewLayout": "Try new layout"
-      },
-      "present": {
-        "inTab": "In this tab",
-        "fullScreen": "Full screen",
-        "presenterView": "Presenter view",
-        "shareFollow": "Share a follow link"
-      },
-      "share": {
-        "collaborate": "Collaborate",
-        "shareLink": "Share link",
-        "export": "Export",
-        "embed": "Embed",
-        "analytics": "Analytics",
-        "inviteByEmail": "Invite by email",
-        "publicLink": "Public link",
-        "copyLink": "Copy link",
-        "anyoneCanView": "Anyone with link can view",
-        "anyoneCanComment": "Anyone with link can comment"
-      },
-      "export": {
-        "pdf": "PDF",
-        "pptx": "PowerPoint (PPTX)",
-        "png": "PNGs (per slide)",
-        "html": "Interactive HTML5",
-        "allCards": "All cards",
-        "selectedRange": "Selected range",
-        "fontGuidance": "To ensure proper rendering, install these fonts:",
-        "staticNote": "Animated elements will be static in PDF and PowerPoint",
-        "htmlNote": "Self-contained interactive page with animations & navigation"
-      },
-      "commandPalette": {
-        "placeholder": "Type a command or ask AI...",
-        "categories": {
-          "insert": "Insert",
-          "edit": "Edit",
-          "theme": "Theme",
-          "export": "Export & Present",
-          "navigate": "Navigate",
-          "ai": "AI Actions"
-        }
-      },
-      "mediaLibrary": {
-        "title": "Media Library",
-        "search": "Search by tag or name...",
-        "empty": "No images found",
-        "upload": "Upload images",
-        "uploadFirst": "Upload your first image",
-        "categories": {
-          "all": "All",
-          "photo": "Photos",
-          "illustration": "Illustrations",
-          "logo": "Logos",
-          "icon": "Icons"
-        }
-      },
-      "versionHistory": {
-        "title": "Version History",
-        "unsavedChanges": "Unsaved changes",
-        "allSaved": "All changes saved",
-        "saveCheckpoint": "Save named version",
-        "restore": "Restore",
-        "confirmRestore": "Click again to confirm restore",
-        "auto": "Auto-save",
-        "manual": "Manual",
-        "checkpoint": "Checkpoint"
-      },
-      "animations": {
-        "enabled": "Animations On",
-        "disabled": "Animations Off",
-        "toggle": "Toggle animations"
-      },
-      "dataRefresh": {
-        "refresh": "Refresh data",
-        "refreshAll": "Refresh all data",
-        "outdated": "Data may be outdated",
-        "refreshing": "Refreshing...",
-        "upToDate": "Up to date"
-      },
-      "collaboration": {
-        "onlyYou": "Only you",
-        "connected": "Connected",
-        "disconnected": "Disconnected",
-        "connecting": "Connecting..."
-      },
-      "sourceTraceability": {
-        "dataFrom": "Data from",
-        "clickToOpen": "Click to open source artifact"
-      }
-    },
-    "agent": {
-      "title": "AI Agent",
-      "greeting": "Hi! I know this deck was built from {{sources}}. How can I help?",
-      "placeholder": "Ask me to edit, create, or style anything",
-      "suggestions": {
-        "addSummary": "Add an executive summary",
-        "makeConcise": "Make all slides more concise",
-        "addNotes": "Add speaker notes",
-        "updateData": "Update data from sources",
-        "improveVisuals": "Improve visual consistency"
-      },
-      "proactive": {
-        "sourceUpdated": "Source '{{name}}' has been updated. Want me to refresh data?",
-        "densSlide": "Slide {{number}} has very dense content. Want me to split it?",
-        "noNotes": "I notice no speaker notes. Want me to generate them?",
-        "betterChart": "The chart on slide {{number}} would look better as a {{type}}. Want me to change it?"
-      }
-    }
+    "loading": "Loading decks...",
+    "empty": "No presentations yet.",
+    "minimalPreview": "Minimal preview — full editor coming soon",
+    "previewPlaceholder": "Deck preview will be rendered here.",
+    "exportSuccess": "Export started",
+    "renameSuccess": "Renamed",
+    "renamePlaceholder": "Deck title",
+    "comingSoon": "Coming soon"
   },
   "finance": {
     "export": {
@@ -4739,24 +4315,10 @@
       "generateProjections": "Generate projections"
     },
     "toast": {
-      "modelCreated": "Model created",
-      "analysisCreated": "Analysis created",
-      "budgetCreated": "Budget created",
-      "valuationCreated": "Valuation created",
-      "createFailed": "Failed to create",
-      "analysisApproved": "Analysis approved",
-      "budgetApproved": "Budget approved",
-      "valuationApproved": "Valuation approved",
-      "approveFailed": "Failed to approve",
-      "reanalyzed": "Analysis recomputed",
-      "reanalyzeFailed": "Failed to recompute",
-      "projected": "Projections generated",
-      "projectionFailed": "Failed to generate",
-      "computed": "Prediction computed",
-      "computeFailed": "Failed to compute",
-      "valuationComputed": "Valuation computed",
-      "pptxExported": "PPTX generated",
-      "exportFailed": "Failed to export"
+      "deleted": "Deleted",
+      "deleteFailed": "Failed to delete",
+      "duplicated": "Duplicated",
+      "duplicateFailed": "Failed to duplicate"
     },
     "prediction": {
       "budget": "Budget",
@@ -4796,12 +4358,6 @@
       "dcfResults": "DCF Results",
       "sensitivity": "Sensitivity Analysis",
       "advisory": "Advisory"
-    },
-    "toast": {
-      "deleted": "Deleted",
-      "deleteFailed": "Failed to delete",
-      "duplicated": "Duplicated",
-      "duplicateFailed": "Failed to duplicate"
     },
     "budget": {
       "valuate": "Valuate Budget",
@@ -5284,141 +4840,6 @@
       "groupAdmin": "ADMIN"
     }
   },
-  "superadmin": {
-    "confirm": {
-      "title": "Confirm Action",
-      "description": "This action will be logged in the audit trail.",
-      "reasonLabel": "Reason for this action",
-      "reasonPlaceholder": "e.g., Customer request, security incident, compliance...",
-      "reasonRequired": "Please provide a reason (min 3 characters).",
-      "cancel": "Cancel",
-      "proceed": "Confirm & Proceed",
-      "auditNotice": "This action will be recorded in the audit log with your identity and timestamp."
-    },
-    "impersonation": {
-      "banner": "Impersonating Mode",
-      "exit": "Exit Impersonation",
-      "title": "Impersonate User",
-      "description": "You will be logged in as this user. All your actions will be recorded in the audit log.",
-      "started": "Impersonation started",
-      "ended": "Impersonation ended"
-    },
-    "testSupport": {
-      "bootstrapLabel": "Bootstrap Test Tenant",
-      "cleanupLabel": "Cleanup Test Data",
-      "gatingNotice": "Available only in test environment with proper credentials."
-    },
-    "playbookTemplates": {
-      "title": "Playbook Templates",
-      "subtitle": "Create and manage AI playbook templates",
-      "newTemplate": "New Template",
-      "importJson": "Import JSON",
-      "searchPlaceholder": "Search templates...",
-      "filters": {
-        "all": "All",
-        "drafts": "Drafts",
-        "published": "Published",
-        "deprecated": "Deprecated"
-      },
-      "empty": {
-        "title": "No templates found",
-        "description": "Get started by creating your first playbook template.",
-        "cta": "Create Template"
-      },
-      "table": {
-        "template": "Template",
-        "trigger": "Trigger",
-        "version": "Version",
-        "status": "Status",
-        "actions": "Actions"
-      },
-      "modal": {
-        "title": "New Playbook Template",
-        "titleField": "Title",
-        "keyField": "Key",
-        "triggerField": "Trigger Signal",
-        "descriptionField": "Description",
-        "cancel": "Cancel",
-        "create": "Create Template",
-        "creating": "Creating..."
-      },
-      "actions": {
-        "edit": "Edit",
-        "view": "View",
-        "validate": "Validate",
-        "publish": "Publish",
-        "duplicate": "Duplicate",
-        "export": "Export JSON",
-        "deprecate": "Deprecate"
-      },
-      "toast": {
-        "loadFailed": "Failed to load templates",
-        "valid": "Template is valid ✓",
-        "validationFailed": "Validation failed",
-        "published": "Template published successfully",
-        "publishFailed": "Failed to publish template",
-        "deprecated": "Template deprecated",
-        "deprecateFailed": "Failed to deprecate template",
-        "exported": "Template exported",
-        "exportFailed": "Export failed",
-        "created": "Template created",
-        "createFailed": "Failed to create template",
-        "duplicated": "Template duplicated as draft",
-        "imported": "Template imported",
-        "importInvalid": "Invalid template JSON",
-        "fieldsRequired": "Title, Key and Trigger Signal are required"
-      }
-    },
-    "emailTemplates": {
-      "title": "Email Templates",
-      "subtitle": "Manage email templates for notifications and communications",
-      "newTemplate": "New Template",
-      "searchPlaceholder": "Search templates...",
-      "filters": {
-        "allStatuses": "All Statuses",
-        "allCategories": "All Categories",
-        "filtersLabel": "Filters"
-      },
-      "status": {
-        "published": "Published",
-        "draft": "Draft",
-        "deprecated": "Deprecated"
-      },
-      "empty": {
-        "title": "No templates found",
-        "withFilters": "Try adjusting your filters",
-        "noFilters": "Get started by creating your first email template",
-        "cta": "Create Template"
-      },
-      "loading": "Loading templates...",
-      "table": {
-        "template": "Template",
-        "category": "Category",
-        "status": "Status",
-        "version": "Version",
-        "usage": "Usage",
-        "actions": "Actions"
-      },
-      "stats": {
-        "total": "Total Templates",
-        "published": "Published",
-        "drafts": "Drafts",
-        "totalSends": "Total Sends"
-      },
-      "actions": {
-        "edit": "Edit",
-        "clone": "Clone",
-        "preview": "Preview",
-        "publish": "Publish",
-        "deprecate": "Deprecate",
-        "delete": "Delete"
-      },
-      "toast": {
-        "loadFailed": "Failed to load templates",
-        "confirmDelete": "Are you sure you want to delete this template?"
-      }
-    }
-  },
   "modelRegistry": {
     "catalog": {
       "title": "Model Catalog",
@@ -5893,38 +5314,6 @@
       "schedule": "Open Calendar",
       "scheduleDesc": "View scheduled items"
     }
-  },
-  "presentations": {
-    "tabs": {
-      "allDecks": "All Decks",
-      "recent": "Recent"
-    },
-    "columns": {
-      "title": "Title",
-      "sourceType": "Source",
-      "owner": "Owner",
-      "date": "Date"
-    },
-    "sourceType": {
-      "tool": "Tool",
-      "assessment": "Assessment",
-      "finance": "Finance",
-      "upload": "Upload",
-      "unknown": "Unknown"
-    },
-    "actions": {
-      "rename": "Rename",
-      "export": "Export",
-      "openSource": "Open source"
-    },
-    "loading": "Loading decks...",
-    "empty": "No presentations yet.",
-    "minimalPreview": "Minimal preview — full editor coming soon",
-    "previewPlaceholder": "Deck preview will be rendered here.",
-    "exportSuccess": "Export started",
-    "renameSuccess": "Renamed",
-    "renamePlaceholder": "Deck title",
-    "comingSoon": "Coming soon"
   },
   "results": {
     "moduleName": "Results",

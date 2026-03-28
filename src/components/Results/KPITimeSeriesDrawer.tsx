@@ -1,5 +1,6 @@
 import { Calendar, Link2, Pencil, Target, Trash2, TrendingUp, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
@@ -278,8 +279,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         setNewNotes('');
         fetchData();
         onValueRecorded?.();
-      } catch {
-        // silent
+        toast.success(t('results.drawer.recorded', 'Measurement recorded'));
+      } catch (error: any) {
+        toast.error(error?.message || t('results.drawer.recordFailed', 'Failed to record measurement'));
       } finally {
         setSubmitting(false);
       }
@@ -330,8 +332,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setEditMode(false);
       fetchData();
       onValueRecorded?.();
-    } catch {
-      // silent
+      toast.success(t('results.drawer.saved', 'KPI settings saved'));
+    } catch (error: any) {
+      toast.error(error?.message || t('results.drawer.saveFailed', 'Failed to save KPI settings'));
     } finally {
       setSavingSettings(false);
     }
@@ -372,8 +375,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       }
       onValueRecorded?.();
       onClose();
-    } catch {
-      // silent
+      toast.success(t('results.drawer.deleted', 'KPI deleted'));
+    } catch (error: any) {
+      toast.error(error?.message || t('results.drawer.deleteFailed', 'Failed to delete KPI'));
     } finally {
       setDeleting(false);
     }

@@ -40,6 +40,9 @@ export interface RiskSignal {
 interface RiskSignalsPanelProps {
   projectId?: string;
   onInitiativeClick?: (initiativeId: string) => void;
+  signals?: RiskSignal[];
+  loading?: boolean;
+  onRefresh?: () => void;
 }
 
 const SEVERITY_CONFIG = {
@@ -93,12 +96,18 @@ function getAuthToken(): string | null {
 export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   projectId,
   onInitiativeClick,
+  signals: controlledSignals,
+  loading: controlledLoading,
+  onRefresh,
 }) => {
   const { t } = useTranslation();
   const [signals, setSignals] = useState<RiskSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const isControlled = controlledSignals !== undefined;
+  const visibleSignalsSource = isControlled ? controlledSignals || [] : signals;
+  const effectiveLoading = isControlled ? Boolean(controlledLoading) : loading;
 
   const fetchSignals = useCallback(async () => {
     try {
@@ -128,8 +137,12 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   }, [projectId]);
 
   useEffect(() => {
+    if (isControlled) {
+      setLoading(false);
+      return;
+    }
     fetchSignals();
-  }, [fetchSignals]);
+  }, [fetchSignals, isControlled]);
 
   const handleDismiss = useCallback(async (signalId: string) => {
     try {
@@ -151,15 +164,16 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
       });
 
       setDismissedIds((prev) => new Set([...prev, signalId]));
+      onRefresh?.();
       trackFunnelEvent('execution_risk_signal_dismissed', { signalId });
     } catch {
       // noop
     }
-  }, []);
+  }, [onRefresh]);
 
-  const visibleSignals = signals.filter((s) => !dismissedIds.has(s.id));
+  const visibleSignals = visibleSignalsSource.filter((s) => !dismissedIds.has(s.id));
 
-  if (loading) {
+  if (effectiveLoading) {
     return (
       <div className="p-6 flex items-center justify-center">
         <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />

@@ -121,6 +121,53 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
     };
   }, []);
 
+  const handleAnnaPrompt = useCallback(
+    (prompt: string, promptKey: string) => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('anna:open', { detail: { prompt } }));
+      }
+      trackFunnelEvent('landing_anna_guided_prompt_clicked', {
+        promptKey,
+        variant,
+      });
+    },
+    [variant]
+  );
+
+  const handleAnnaOpen = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('anna:open'));
+    }
+    trackFunnelEvent('landing_anna_guided_prompt_clicked', {
+      promptKey: 'open_assistant',
+      variant,
+    });
+  }, [variant]);
+
+  const annaPrompts = [
+    {
+      key: 'fit',
+      label: t('landing.epicHero.annaPrompts.fit.label', 'Ask about fit'),
+      prompt: t('landing.epicHero.annaPrompts.fit.prompt', 'Is Consultify right for my team?'),
+    },
+    {
+      key: 'pricing',
+      label: t('landing.epicHero.annaPrompts.pricing.label', 'Ask about pricing'),
+      prompt: t(
+        'landing.epicHero.annaPrompts.pricing.prompt',
+        'How should I choose between demo, trial, and pricing plans?'
+      ),
+    },
+    {
+      key: 'security',
+      label: t('landing.epicHero.annaPrompts.security.label', 'Ask about security'),
+      prompt: t(
+        'landing.epicHero.annaPrompts.security.prompt',
+        'How does Consultify handle security and data residency?'
+      ),
+    },
+  ];
+
   return (
     <section className="relative z-10 px-6 min-h-screen flex flex-col">
       {/* ── Ambient Background Layer ── */}
@@ -222,9 +269,9 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="font-black tracking-tight leading-[1.0] text-white"
               style={{ fontSize: 'clamp(40px, 5.5vw, 88px)' }}
             >
-              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify is the')}</span>
+              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify gives teams')}</span>
               <span className="block text-white/75 mt-1">
-                {t('landing.profitHero.h1.line2', 'Spotify for')}
+                {t('landing.profitHero.h1.line2', 'consulting intelligence')}
               </span>
               <span
                 className="block mt-1"
@@ -235,7 +282,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   backgroundClip: 'text',
                 }}
               >
-                {t('landing.profitHero.h1.line3', 'consulting knowledge.')}
+                {t('landing.profitHero.h1.line3', 'they can actually execute.')}
               </span>
             </motion.h1>
 
@@ -248,7 +295,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
             >
               {t(
                 'landing.epicHero.sub',
-                'Structured consulting workflow for diagnosis, planning, execution, and impact.'
+                'For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.'
               )}
             </motion.p>
 
@@ -285,7 +332,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_60%)]" />
                 <span className="relative">
-                  {t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}
+                  {t('landing.profitHero.ctaPrimary', 'Start trial')}
                 </span>
                 <ArrowRight size={15} className="relative" />
               </button>
@@ -316,8 +363,46 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 }}
               >
                 <Play size={14} className="text-white/70" fill="currentColor" />
-                <span>{t('landing.profitHero.ctaSecondary', 'Open Demo Now')}</span>
+                <span>{t('landing.profitHero.ctaSecondary', 'Watch demo')}</span>
               </button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.28 }}
+              className="max-w-xl rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-300">
+                <Sparkles size={12} />
+                <span>{t('landing.epicHero.annaBadge', 'Start with Anna')}</span>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                {t(
+                  'landing.epicHero.annaSub',
+                  'Not sure whether to start with a demo or a trial? Anna can explain fit, pricing, and security before you choose your next step.'
+                )}
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={handleAnnaOpen}
+                  className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/12 px-3.5 py-2 text-xs font-semibold text-violet-100 transition-all duration-200 hover:bg-violet-500/20"
+                >
+                  <Sparkles size={12} />
+                  <span>{t('landing.epicHero.annaPrimaryCta', 'Ask Anna first')}</span>
+                </button>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {annaPrompts.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => handleAnnaPrompt(item.prompt, item.key)}
+                    className="rounded-full border border-white/12 bg-white/[0.035] px-3.5 py-2 text-xs font-semibold text-white/75 transition-all duration-200 hover:bg-white/[0.07] hover:text-white"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </motion.div>
 
             {/* Social proof micro-line */}
@@ -393,7 +478,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               <span className="text-xs font-black text-white/50 uppercase tracking-widest">
                 {t(
                   'landing.profitHero.billboardShort',
-                  'We did for consulting what Spotify did for music.'
+                  'One workflow from diagnosis to execution to measurable results.'
                 )}
               </span>
             </div>

@@ -585,10 +585,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
+  const [overspendSignals, setOverspendSignals] = useState<
+    Array<{
+      id: string;
+      initiativeId: string | null;
+      initiativeName: string;
+      signalType: string;
+      severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      plannedAmount: number;
+      actualAmount: number;
+      variancePercent: number;
+      message: string;
+    }>
+  >([]);
+  const [isLoadingControlSignals, setIsLoadingControlSignals] = useState(false);
   const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
   const [capacityTimeline, setCapacityTimeline] = useState<GovernedCapacityWeek[]>([]);
+  const [executionTruthRefreshKey, setExecutionTruthRefreshKey] = useState(0);
   /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
   const [actionQueueItems, setActionQueueItems] = useState<
     Array<{
@@ -647,6 +662,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const topTimelineWarning = timelineWarnings[0] ?? null;
   const topCapacityAlert = capacityAlerts[0] ?? null;
   const capacityHorizon = capacityTimeline[0] ?? null;
+  const queueExecutionTruthRefresh = useCallback(() => {
+    setExecutionTruthRefreshKey((prev) => prev + 1);
+  }, []);
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -796,11 +814,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       risks: {
         heatmap: {},
         topRisks: [],
-        signals: { riskSignals: [], delaySignals: [], overspendSignals: [] },
+        signals: { riskSignals, delaySignals, overspendSignals },
       },
       ai: { enabled: false, insights: null },
     };
-  }, [currentProjectId, decisions, execPeriod, healthSnapshot, initiatives, t, tasks]);
+  }, [
+    currentProjectId,
+    decisions,
+    delaySignals,
+    execPeriod,
+    healthSnapshot,
+    initiatives,
+    overspendSignals,
+    riskSignals,
+    t,
+    tasks,
+  ]);
 
   const formatHeatmapKey = useCallback((k: string) => {
     const [p, i] = String(k || '').split(':');
@@ -858,7 +887,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [currentProjectId, fullSessionData?.initiatives]);
+  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -884,6 +913,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setRiskSignals(data.signals || []);
       } catch {
         // risk signals are non-blocking
+        setRiskSignals([]);
       }
     };
     const loadDelaySignals = async () => {
@@ -909,11 +939,32 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setDelaySignals(data.signals || []);
       } catch {
         // delay signals are non-blocking
+        setDelaySignals([]);
       }
     };
-    loadRiskSignals();
-    loadDelaySignals();
-  }, [currentProjectId, initiatives.length]);
+    const loadOverspendSignals = async () => {
+      try {
+        const data = await V8ExecutionControlApi.getOverspendSignals(
+          currentProjectId || undefined
+        ).catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetchLegacyExecutionControl<{ signals: typeof overspendSignals }>(
+            '/api/execution-control/budget/overspend-signals',
+            currentProjectId ? { projectId: currentProjectId } : undefined
+          );
+        });
+        setOverspendSignals(data.signals || []);
+      } catch {
+        setOverspendSignals([]);
+      }
+    };
+    setIsLoadingControlSignals(true);
+    void Promise.allSettled([loadRiskSignals(), loadDelaySignals(), loadOverspendSignals()]).finally(
+      () => setIsLoadingControlSignals(false)
+    );
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -978,7 +1029,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return () => {
       cancelled = true;
     };
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -995,7 +1046,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadTasks();
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -1013,7 +1064,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadDecisions();
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -1030,7 +1081,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadHealthSnapshot();
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   // V4-EXEC-01: Fetch execution health for per-initiative whyRed chain
   useEffect(() => {
@@ -1055,7 +1106,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadExecutionHealth();
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   // V4-EXEC-02: Fetch Action Queue — overdue decisions, high risks, overdue tasks
   useEffect(() => {
@@ -2013,19 +2064,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
 
-    const completedTasks = tasks.filter(
-      (task) => normalizeTaskStatus(task.status) === 'done'
-    ).length;
-    const taskHealth = tasks.length
-      ? Math.max(0, Math.round((completedTasks / tasks.length) * 100))
-      : 0;
+    const criticalCapacityAlerts = capacityAlerts.filter((alert) => alert.severity === 'critical').length;
+    const warningCapacityAlerts = capacityAlerts.filter((alert) => alert.severity !== 'critical').length;
+    const capacityHealth =
+      capacityAlerts.length === 0
+        ? 100
+        : Math.max(0, 100 - criticalCapacityAlerts * 30 - warningCapacityAlerts * 15);
 
     const blockedCount = healthSnapshot?.initiatives?.blockedCount ?? stats.blocked;
     const riskHealth = totalInitiatives
       ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
       : 100;
 
-    const healthScore = Math.round((avgProgress + decisionHealth + taskHealth + riskHealth) / 4);
+    const healthScore = Math.round((avgProgress + decisionHealth + capacityHealth + riskHealth) / 4);
 
     const budgetValues = initiatives
       .map((initiative) => (initiative as any).budget || (initiative as any).costCapex)
@@ -2042,14 +2093,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       breakdown: {
         execution: avgProgress,
         decisions: decisionHealth,
-        capacity: taskHealth,
+        capacity: capacityHealth,
         risk: riskHealth,
       },
       blockers: healthSnapshot?.blockers || [],
       stageGate: healthSnapshot?.stageGate || null,
       isHealthLoading: isLoadingHealth,
     };
-  }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth]);
+  }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
 
   const calendarItems = useMemo(() => {
     const items: CalendarItem[] = [];
@@ -2551,7 +2602,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setSelectedInitiative((prev) =>
       prev?.id === updated.id ? { ...prev, status: updated.status } : prev
     );
-  }, []);
+    queueExecutionTruthRefresh();
+  }, [queueExecutionTruthRefresh]);
 
   const handleTimelineUpdate = useCallback(
     async (initiativeId: string, field: string, value: string, reason?: string) => {
@@ -2644,28 +2696,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return next as FullInitiative;
         });
+        queueExecutionTruthRefresh();
       } catch (e: any) {
         toast.error(
           e?.message || t('execution.toast.timelineUpdateFailed', 'Failed to update timeline')
         );
       }
     },
-    [t]
+    [queueExecutionTruthRefresh, t]
   );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
-    try {
-      const response = await Api.getInitiatives(currentProjectId || undefined);
-      const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
-      const executionInitiatives = data.filter((i: FullInitiative) =>
-        EXECUTION_STATUSES.includes(i.status)
-      );
-      setInitiatives(executionInitiatives);
-    } catch (err) {
-      console.error('[ExecutionHub] Failed to refresh:', err);
+    queueExecutionTruthRefresh();
+    if (activeTab === 'list' && currentProjectId) {
+      void loadExecutiveSnapshot({ refresh: true });
     }
-  }, [currentProjectId]);
+  }, [activeTab, currentProjectId, loadExecutiveSnapshot, queueExecutionTruthRefresh]);
 
   const renderPortfolioHealth = () => (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]" data-testid="portfolio-health">
@@ -3908,6 +3955,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             onDependenciesChanged={handleRefresh}
             riskSignals={riskSignals}
             delaySignals={delaySignals}
+            governedTimelineWarnings={timelineWarnings}
             projectId={currentProjectId || undefined}
           />
         </div>
@@ -4894,9 +4942,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   {t('execution.execSnapshot.risks.signalCounts', 'Risk/Delay/Overspend signals')}
                   :&nbsp;
                   <span className="tabular-nums">
-                    {(snapshot.risks.signals?.riskSignals || []).length}/
-                    {(snapshot.risks.signals?.delaySignals || []).length}/
-                    {(snapshot.risks.signals?.overspendSignals || []).length}
+                    {riskSignals.length}/{delaySignals.length}/{overspendSignals.length}
                   </span>
                 </Callout>
                 <Callout
@@ -4923,20 +4969,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </ToggleBlock>
 
             {/* Existing control panels (detailed) */}
-            {riskSignals.length > 0 && (
-              <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-                <RiskSignalsPanel
-                  projectId={currentProjectId || undefined}
-                  onInitiativeClick={(id) => {
-                    const init = initiatives.find((i) => i.id === id);
-                    if (init) handleOpenSidePanel(init);
-                  }}
-                />
-              </div>
-            )}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+              <RiskSignalsPanel
+                projectId={currentProjectId || undefined}
+                signals={riskSignals}
+                loading={isLoadingControlSignals}
+                onRefresh={handleRefresh}
+                onInitiativeClick={(id) => {
+                  const init = initiatives.find((i) => i.id === id);
+                  if (init) handleOpenSidePanel(init);
+                }}
+              />
+            </div>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
               <DelayDetectionPanel
                 projectId={currentProjectId || undefined}
+                signals={delaySignals}
+                loading={isLoadingControlSignals}
+                onRefresh={handleRefresh}
                 onInitiativeClick={(id) => {
                   const init = initiatives.find((i) => i.id === id);
                   if (init) handleOpenSidePanel(init);
@@ -4946,6 +4996,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
               <BudgetControlPanel
                 projectId={currentProjectId || undefined}
+                overspendSignals={overspendSignals}
+                loading={isLoadingControlSignals}
+                onSaved={handleRefresh}
                 onInitiativeClick={(id) => {
                   const init = initiatives.find((i) => i.id === id);
                   if (init) handleOpenSidePanel(init);

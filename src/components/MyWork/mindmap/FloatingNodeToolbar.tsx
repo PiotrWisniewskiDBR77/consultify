@@ -163,8 +163,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={onAddSibling}
             disabled={disabled}
-            title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
-            aria-label={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+            title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+            aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
             className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
           >
             <GitBranch size={13} />

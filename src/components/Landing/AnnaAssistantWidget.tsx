@@ -57,12 +57,12 @@ const FRONTEND_GEMINI_KEY =
 const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
   en: {
     title: 'Anna',
-    subtitle: 'Public product assistant',
+    subtitle: 'Guided product entry assistant',
     intro:
-      'I can explain Consultify, DBR77 Vector, digital transformation, demo, trial, and public security topics. I do not have access to client or project data.',
+      'I can explain Consultify and help you choose the right next step: demo, trial, or contact. I do not have access to client or project data.',
     placeholder: 'Ask Anna about the product...',
     send: 'Send',
-    open: 'Ask Anna',
+    open: 'Ask Anna first',
     loading: 'Anna is thinking...',
     suggestionsLabel: 'Try asking:',
     privacyBadge: 'Public knowledge only',
@@ -81,19 +81,19 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceError: 'Live voice ran into an issue. You can continue with Anna by text.',
     voiceStart: 'Start voice conversation',
     voiceStop: 'Stop voice conversation',
-    handoffLabel: 'Quick next steps',
-    demoCta: 'Try Demo',
-    trialCta: 'Start Trial',
+    handoffLabel: 'Choose your next step',
+    demoCta: 'Watch demo',
+    trialCta: 'Start trial',
     contactCta: 'Contact',
   },
   pl: {
     title: 'Anna',
-    subtitle: 'Publiczna asystentka produktowa',
+    subtitle: 'Asystentka wejścia produktowego',
     intro:
-      'Moge wyjasnic Consultify, DBR77 Vector, transformacje cyfrowa, demo, trial i publiczne kwestie bezpieczenstwa. Nie mam dostepu do danych klienta ani projektow.',
+      'Moge wyjasnic Consultify i pomóc wybrać właściwy kolejny krok: demo, trial albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
     placeholder: 'Zapytaj Anne o produkt...',
     send: 'Wyslij',
-    open: 'Zapytaj Anne',
+    open: 'Zapytaj Anne najpierw',
     loading: 'Anna analizuje...',
     suggestionsLabel: 'Mozesz zapytac:',
     privacyBadge: 'Tylko wiedza publiczna',
@@ -112,8 +112,8 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     voiceError: 'Wystapil problem z trybem glosowym. Mozesz kontynuowac rozmowe w tekscie.',
     voiceStart: 'Uruchom rozmowe glosowa',
     voiceStop: 'Zatrzymaj rozmowe glosowa',
-    handoffLabel: 'Szybkie kolejne kroki',
-    demoCta: 'Wyprobuj demo',
+    handoffLabel: 'Wybierz kolejny krok',
+    demoCta: 'Zobacz demo',
     trialCta: 'Rozpocznij trial',
     contactCta: 'Kontakt',
   },
@@ -367,6 +367,10 @@ interface AnnaAssistantWidgetProps {
   onContactClick?: () => void;
 }
 
+type AnnaOpenEventDetail = {
+  prompt?: string;
+};
+
 export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   onDemoClick,
   onTrialClick,
@@ -482,20 +486,25 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     []
   );
 
-  const openWidget = useCallback(() => {
-    if (isOpen) return;
-    visibleSessionRef.current += 1;
-    setError(null);
-    setInput('');
-    setIsOpen(true);
-    trackFunnelEvent('landing_anna_widget_opened', {
-      locale: lang,
-    });
-    void postPublicAnnaFunnelEvent('landing_anna_widget_opened', {
-      sessionId: sessionIdRef.current,
-      locale: lang,
-    });
-  }, [isOpen, lang]);
+  const openWidget = useCallback(
+    (draftPrompt?: string) => {
+      setError(null);
+      setInput(draftPrompt ?? '');
+
+      if (isOpen) return;
+
+      visibleSessionRef.current += 1;
+      setIsOpen(true);
+      trackFunnelEvent('landing_anna_widget_opened', {
+        locale: lang,
+      });
+      void postPublicAnnaFunnelEvent('landing_anna_widget_opened', {
+        sessionId: sessionIdRef.current,
+        locale: lang,
+      });
+    },
+    [isOpen, lang]
+  );
 
   const closeWidget = useCallback(() => {
     visibleSessionRef.current += 1;
@@ -624,7 +633,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   }, []);
 
   useEffect(() => {
-    const openAnna = () => openWidget();
+    const openAnna = (event: Event) => {
+      const customEvent = event as CustomEvent<AnnaOpenEventDetail>;
+      openWidget(customEvent.detail?.prompt);
+    };
     window.addEventListener('anna:open', openAnna);
     return () => window.removeEventListener('anna:open', openAnna);
   }, [openWidget]);
@@ -1251,17 +1263,17 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => triggerHandoff('demo')}
-                      className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition-colors hover:bg-cyan-500/20"
-                    >
-                      {copy.demoCta}
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => triggerHandoff('trial')}
                       className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-100 transition-colors hover:bg-violet-500/20"
                     >
                       {copy.trialCta}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerHandoff('demo')}
+                      className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition-colors hover:bg-cyan-500/20"
+                    >
+                      {copy.demoCta}
                     </button>
                     <button
                       type="button"

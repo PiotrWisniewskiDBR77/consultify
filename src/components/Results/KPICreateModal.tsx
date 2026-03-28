@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
@@ -99,6 +100,14 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           (created as any)?.data?.data?.id ||
           (created as any)?.data?.data ||
           null;
+        if (!kpiId) {
+          throw new Error(
+            t(
+              'results.createModal.missingId',
+              'KPI was created without a stable identifier. The result list was not refreshed.'
+            )
+          );
+        }
 
         if (initiativeIds.length > 0 && kpiId) {
           const mappingPayloads: V8ResultsCreateKpiMappingPayload[] = initiativeIds.map((id) => ({
@@ -124,9 +133,10 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           );
         }
 
+        toast.success(t('results.createModal.created', 'KPI created'));
         onSuccess();
-      } catch {
-        // silently fail
+      } catch (error: any) {
+        toast.error(error?.message || t('results.createModal.createFailed', 'Failed to create KPI'));
       } finally {
         setSaving(false);
       }

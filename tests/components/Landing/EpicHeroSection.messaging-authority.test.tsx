@@ -32,7 +32,7 @@ describe('EpicHeroSection messaging authority', () => {
     });
   });
 
-  it('uses the V8 canonical category and analogy on the active landing hero', () => {
+  it('uses the canonical category with a clearer who-its-for message and Anna-guided entry', () => {
     render(
       <I18nextProvider i18n={i18n}>
         <EpicHeroSection
@@ -44,14 +44,17 @@ describe('EpicHeroSection messaging authority', () => {
     );
 
     expect(screen.getByText('Consulting Intelligence Platform')).toBeInTheDocument();
-    expect(screen.getByText('Consultify is the')).toBeInTheDocument();
-    expect(screen.getByText('Spotify for')).toBeInTheDocument();
-    expect(screen.getByText('consulting knowledge.')).toBeInTheDocument();
+    expect(screen.getByText('Consultify gives teams')).toBeInTheDocument();
+    expect(screen.getByText('consulting intelligence')).toBeInTheDocument();
+    expect(screen.getByText('they can actually execute.')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Structured consulting workflow for diagnosis, planning, execution, and impact.'
+        'For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByText('AI-Powered Consulting Platform')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask about fit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask about pricing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask about security' })).toBeInTheDocument();
   });
 });

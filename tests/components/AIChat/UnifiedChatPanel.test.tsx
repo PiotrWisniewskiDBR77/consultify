@@ -337,6 +337,14 @@ vi.mock('../../../src/components/AIChat/MessageRenderer', () => ({
   },
 }));
 
+vi.mock('../../../src/components/AIChat/V8ArtifactRunControl', () => ({
+  V8ArtifactRunControl: () => <div data-testid="v8-artifact-run-control" />,
+}));
+
+vi.mock('../../../src/components/AIChat/V8ContextIndicator', () => ({
+  V8ContextIndicator: () => <div data-testid="v8-context-indicator" />,
+}));
+
 let UnifiedChatPanel: any;
 
 describe('UnifiedChatPanel (L2)', () => {
@@ -441,7 +449,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
 
     expect(screen.getByText('Skip to chat input')).toHaveClass('sr-only');
-    expect(screen.getByText('Start a conversation')).toBeInTheDocument();
+    expect(screen.getByText('Talk to Teresa')).toBeInTheDocument();
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
   });
@@ -469,6 +477,35 @@ describe('UnifiedChatPanel (L2)', () => {
       )
     );
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+  });
+
+  it('uses the canonical trial route when demo access is blocked', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    demoState = {
+      ...demoState,
+      isDemo: true,
+      timeRemainingMs: 0,
+      aiInteractionsRemaining: 10,
+      aiInteractionsLimit: 10,
+    };
+
+    renderWithRouter(<UnifiedChatPanel />);
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() =>
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'access:blocked',
+          detail: expect.objectContaining({
+            code: 'DEMO_TIME_EXPIRED',
+            cta: expect.objectContaining({
+              label: 'Start free trial',
+              href: '/trial',
+            }),
+          }),
+        })
+      )
+    );
   });
 
   it('uploads supported attachments and shows analysis status; skips unsupported types', async () => {
@@ -553,6 +590,27 @@ describe('UnifiedChatPanel (L2)', () => {
     );
     expect(addChatMessageMock).toHaveBeenCalledWith(expect.objectContaining({ role: 'ai' }));
     expect(speakMock).toHaveBeenCalled();
+  });
+
+  it('persists a product-safe Teresa fallback when stream start fails', async () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+
+    renderWithRouter(<UnifiedChatPanel />);
+    expect(aiStreamOptionsCaptured?.onStreamError).toBeTypeOf('function');
+
+    await aiStreamOptionsCaptured.onStreamError(new Error('provider boot failed'));
+
+    expect(addMessageToConversationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        role: 'ai',
+        content:
+          '⚠️ Teresa is temporarily unavailable. Please try again in a moment. If the problem persists, start a new chat or refresh the view.',
+        metadata: expect.objectContaining({
+          error: 'provider boot failed',
+        }),
+      })
+    );
   });
 
   it('deep thinking flow: confirm, proceed, and post-run agent audit (streamed verdict path)', async () => {

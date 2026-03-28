@@ -26,8 +26,38 @@ describe('NotebookMetadataBadges', () => {
     expect(screen.getByText('report, presentation +1')).toBeInTheDocument();
   });
 
+  it('shows multiplicity when the same output type was created multiple times', () => {
+    render(
+      <NotebookMetadataBadges
+        convertedTo={[
+          { type: 'report', id: 'report-1' },
+          { type: 'report', id: 'report-2' },
+          { type: 'presentation', id: 'deck-1' },
+        ]}
+        isPolish={false}
+      />
+    );
+
+    expect(screen.getByText('report ×2, presentation')).toBeInTheDocument();
+  });
+
   it('renders nothing when notebook metadata is absent', () => {
     const { container } = render(<NotebookMetadataBadges isPolish={false} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders provenance for non-upload capture sources', () => {
+    render(
+      <NotebookMetadataBadges
+        captureSource="web_clipper"
+        captureMetadata={{
+          url: 'https://example.com/article',
+        }}
+        isPolish={false}
+      />
+    );
+
+    expect(screen.getByText('Web clip')).toBeInTheDocument();
+    expect(screen.getByTitle('Note created from a clipped page: https://example.com/article')).toBeInTheDocument();
   });
 });

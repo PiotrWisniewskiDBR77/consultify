@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -51,12 +52,14 @@ const extractHeadings = (content: string): { id: string; text: string; level: nu
 };
 
 export const DocsArticleView: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { categorySlug, articleSlug } = useParams<{ categorySlug: string; articleSlug: string }>();
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
+  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
-  const { data: article, isLoading, error } = useDocsArticle(articleSlug || '', 'en');
+  const { data: article, isLoading, error } = useDocsArticle(articleSlug || '', docsLanguage);
   const trackView = useDocsTrackView();
 
   // Track view on mount
@@ -69,6 +72,7 @@ export const DocsArticleView: React.FC = () => {
   // Scroll spy for TOC
   useEffect(() => {
     if (!article?.content) return;
+    if (typeof IntersectionObserver === 'undefined') return;
 
     const headings = extractHeadings(article.content);
     const observer = new IntersectionObserver(
@@ -134,16 +138,21 @@ export const DocsArticleView: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <Book size={64} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Article Not Found</h1>
+        <h1 className="text-2xl font-bold mb-2">
+          {t('docs.article.notFoundTitle', 'Article Not Found')}
+        </h1>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
-          The article you're looking for doesn't exist or has been moved.
+          {t(
+            'docs.article.notFoundBody',
+            "The article you're looking for doesn't exist or has been moved."
+          )}
         </p>
         <Link
           to="/docs"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
         >
           <ArrowLeft size={16} />
-          Back to Documentation
+          {t('docs.article.backToDocs', 'Back to Documentation')}
         </Link>
       </div>
     );
@@ -156,7 +165,7 @@ export const DocsArticleView: React.FC = () => {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
         <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
-          Docs
+          {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
         <Link
@@ -191,18 +200,22 @@ export const DocsArticleView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <Clock size={14} />
-                {article.reading_time_minutes} min read
+                {t('docs.common.readTime', '{{count}} min read', {
+                  count: article.reading_time_minutes,
+                })}
               </span>
               <span className="flex items-center gap-1">
                 <Eye size={14} />
-                {article.view_count} views
+                {t('docs.common.views', '{{count}} views', { count: article.view_count })}
               </span>
               <button
                 onClick={handleCopyLink}
                 className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
               >
                 {copied ? <Check size={14} /> : <Share2 size={14} />}
-                {copied ? 'Copied!' : 'Share'}
+                {copied
+                  ? t('docs.article.copied', 'Copied!')
+                  : t('docs.article.share', 'Share')}
               </button>
             </div>
           </header>
@@ -223,7 +236,7 @@ export const DocsArticleView: React.FC = () => {
                 </div>
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white text-sm">
                   <ExternalLink size={14} />
-                  Watch video tutorial
+                  {t('docs.article.watchVideo', 'Watch video tutorial')}
                 </div>
               </a>
             </div>

@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const v8ArtifactRunControlMock = vi.fn();
 const v8ContextIndicatorMock = vi.fn();
+const addMessageMock = vi.fn();
+let aiStreamOptionsCaptured: any = null;
 
 vi.mock('react-i18next', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-i18next')>();
@@ -28,20 +30,23 @@ vi.mock('../../../src/contexts/AIContext', () => ({
 }));
 
 vi.mock('../../../src/hooks/useAIStream', () => ({
-  useAIStream: () => ({
-    isStreaming: false,
-    streamedContent: '',
-    startStream: vi.fn(),
-    thinkingSteps: [],
-    abortStream: vi.fn(),
-    retryLastStream: vi.fn(),
-    lastError: null,
-    clearLastError: vi.fn(),
-    researchProgress: null,
-    streamStartedAt: null,
-    streamCompletedSignal: 0,
-    retryInfo: null,
-  }),
+  useAIStream: (options: any) => {
+    aiStreamOptionsCaptured = options;
+    return {
+      isStreaming: false,
+      streamedContent: '',
+      startStream: vi.fn(),
+      thinkingSteps: [],
+      abortStream: vi.fn(),
+      retryLastStream: vi.fn(),
+      lastError: null,
+      clearLastError: vi.fn(),
+      researchProgress: null,
+      streamStartedAt: null,
+      streamCompletedSignal: 0,
+      retryInfo: null,
+    };
+  },
 }));
 
 vi.mock('../../../src/hooks/useUniversalVoice', () => ({
@@ -109,7 +114,7 @@ vi.mock('../../../src/store/useConversationStore', () => ({
       entityName: 'Board Program',
     },
     createConversation: vi.fn(),
-    addMessage: vi.fn(),
+    addMessage: addMessageMock,
     setActiveConversation: vi.fn(),
     clearActiveChat: vi.fn(),
     truncateFromMessage: vi.fn(),
@@ -186,6 +191,7 @@ vi.mock('../../../src/components/AIChat/V8ContextIndicator', () => ({
 describe('AIChatWelcomeView governed V8 controls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    aiStreamOptionsCaptured = null;
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockReturnValue({
@@ -224,6 +230,23 @@ describe('AIChatWelcomeView governed V8 controls', () => {
         conversationId: 'conv-legacy-1',
         defaultGoal: 'Prepare board update summary',
       }),
+    );
+  });
+
+  it('persists a product-safe empty-response fallback on the legacy Teresa surface', async () => {
+    const { AIChatWelcomeView } = await import('../../../src/views/AIChatWelcomeView');
+
+    render(<AIChatWelcomeView />);
+    expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
+
+    await aiStreamOptionsCaptured.onStreamDone('', [], [], {});
+
+    expect(addMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-legacy-1',
+        role: 'ai',
+        content: '⚠️ Teresa nie zwrocila pelnej odpowiedzi. Sprobuj ponownie za chwile.',
+      })
     );
   });
 });

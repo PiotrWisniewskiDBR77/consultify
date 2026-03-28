@@ -32,6 +32,7 @@ import type {
   IdeaWorkspaceSelection,
   MindMapInteractionMode,
 } from '../ideaSelectionTypes';
+import { getMindmapConnectToolbarAction } from './mindmapInteractionGrammar';
 import { AddNodePopover } from './toolbar-popovers/AddNodePopover';
 import { AIActionsPopover } from './toolbar-popovers/AIActionsPopover';
 import { ImportExportPopover } from './toolbar-popovers/ImportExportPopover';
@@ -223,12 +224,15 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     (slot: ToolSlot) => {
       if (slot.popover) {
         setOpenPopover((cur) => (cur === slot.popover ? null : (slot.popover as PopoverId)));
+      } else if (activeTool === 'mindmap' && slot.id === 'connect') {
+        onAction(getMindmapConnectToolbarAction(interactionMode));
+        setOpenPopover(null);
       } else if (slot.action) {
         onAction(slot.action);
         setOpenPopover(null);
       }
     },
-    [onAction]
+    [activeTool, interactionMode, onAction]
   );
 
   const handlePopoverAction = useCallback(
@@ -282,13 +286,25 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     const Icon = slot.icon;
     const isModeSlot =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
+    const slotTitle =
+      activeTool === 'mindmap' && slot.id === 'connect'
+        ? interactionMode === 'connect'
+          ? isPl
+            ? 'Zakończ łączenie i wróć do zaznaczania'
+            : 'Finish connecting and return to select'
+          : isPl
+            ? slot.labelPl
+            : slot.labelEn
+        : isPl
+          ? slot.labelPl
+          : slot.labelEn;
     const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (
       <div key={slot.id} className="relative">
         <button
           onClick={() => handleSlotClick(slot)}
-          title={isPl ? slot.labelPl : slot.labelEn}
-          aria-label={isPl ? slot.labelPl : slot.labelEn}
+          title={slotTitle}
+          aria-label={slotTitle}
           className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
             isActive
               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'

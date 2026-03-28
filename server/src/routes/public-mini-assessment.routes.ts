@@ -67,6 +67,33 @@ router.get(
 );
 
 router.post(
+  '/:token/draft',
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = String(req.params.token);
+    const { answers } = req.body;
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'answers array is required' });
+    }
+
+    try {
+      const result = await miniAssessmentService.saveDraftAnswers({
+        token,
+        answers,
+      });
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      if (err.message === 'Assessment not found') {
+        return res.status(404).json({ error: err.message });
+      }
+      if (err.message === 'Assessment already completed') {
+        return res.status(409).json({ error: err.message });
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
   '/:token/submit',
   asyncHandler(async (req: Request, res: Response) => {
     const token = String(req.params.token);

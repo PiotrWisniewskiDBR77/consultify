@@ -68,6 +68,9 @@ interface BudgetControlPanelProps {
   projectId?: string;
   initiativeId?: string;
   onInitiativeClick?: (initiativeId: string) => void;
+  overspendSignals?: OverspendSignal[];
+  loading?: boolean;
+  onSaved?: () => void;
 }
 
 // ── Config ─────────────────────────────────────────────────────
@@ -84,6 +87,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
   projectId,
   initiativeId,
   onInitiativeClick,
+  overspendSignals: controlledOverspendSignals,
+  loading: controlledLoading,
+  onSaved,
 }) => {
   const { t } = useTranslation();
   const [portfolio, setPortfolio] = useState<PortfolioBudgetSummary | null>(null);
@@ -98,6 +104,8 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
     category: '',
     description: '',
   });
+  const effectiveOverspendSignals = controlledOverspendSignals ?? overspendSignals;
+  const effectiveLoading = controlledLoading ?? isLoading;
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -187,6 +195,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         setShowAddEntry(false);
         setEntryForm({ costType: 'CAPEX', amount: '', category: '', description: '' });
         loadData();
+        onSaved?.();
         trackFunnelEvent('budget_actual_updated', { initiativeId });
         toast.success(t('execution.toast.budgetEntryAdded', 'Budget entry added'));
       } else {
@@ -200,7 +209,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
     } catch {
       toast.error(t('execution.toast.budgetEntryAddFailed', 'Failed to add budget entry'));
     }
-  }, [initiativeId, entryForm, loadData]);
+  }, [initiativeId, entryForm, loadData, onSaved]);
 
   const formatCurrency = (amount: number, currency: string) => {
     return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -363,7 +372,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
 
   // ── Portfolio-Level View ──
 
-  if (isLoading) {
+  if (effectiveLoading) {
     return (
       <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
         {t('execution.budget.loading')}
@@ -430,12 +439,12 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       </div>
 
       {/* Overspend Signals */}
-      {overspendSignals.length > 0 && (
+      {effectiveOverspendSignals.length > 0 && (
         <div className="space-y-2">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {t('execution.budget.overspendSignals')}
           </span>
-          {overspendSignals.slice(0, 5).map((sig) => (
+          {effectiveOverspendSignals.slice(0, 5).map((sig) => (
             <div
               key={sig.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${

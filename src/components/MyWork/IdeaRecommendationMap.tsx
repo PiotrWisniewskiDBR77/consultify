@@ -106,6 +106,7 @@ import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
+import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGrammar';
 import {
   appendAIHistoryEntry,
   applyNodeStyle,
@@ -1252,7 +1253,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
             <button
               type="button"
-              title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+              title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white shadow-md hover:bg-slate-600 hover:scale-110 transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
@@ -2447,7 +2448,7 @@ function MindMapInner({
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail || {};
-      const { action } = detail;
+      const action = normalizeMindmapNodeQuickAction(String(detail.action || ''));
       if (action === 'add_child' && detail.nodeId) addChildNode(detail.nodeId);
       if (action === 'add_sibling' && detail.nodeId) addSiblingNode(detail.nodeId);
       if (action === 'open_properties' && detail.nodeId) setDrawerNodeId(detail.nodeId);
@@ -4085,10 +4086,13 @@ function MindMapInner({
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
       markInputHandled('click', event.target, 'onPaneClick');
+      if (interactionMode === 'connect') {
+        updateInteractionMode('select');
+      }
       window.setTimeout(() => containerRef.current?.focus(), 0);
       debugLog('PANE_CLICK', { source: 'handler' });
     },
-    [debugLog, markInputHandled]
+    [debugLog, interactionMode, markInputHandled, updateInteractionMode]
   );
 
   // V5-IDEA-17: Helper to get the context-menu target node (right-clicked) or fallback to selected

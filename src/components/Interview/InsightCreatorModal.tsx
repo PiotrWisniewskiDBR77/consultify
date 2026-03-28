@@ -25,6 +25,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -271,6 +272,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [completedSessions, setCompletedSessions] = useState<CompletedSession[]>([]);
   const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
@@ -278,16 +280,35 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
     const loadData = async () => {
       setIsLoading(true);
+      setLoadError(null);
       try {
-        const [sessionsRes, templatesRes] = await Promise.all([
-          Api.get('/interview/sessions/completed').catch(() => []),
-          Api.get('/interview/templates').catch(() => []),
+        const [sessionsRes, templatesRes] = await Promise.allSettled([
+          Api.get('/interview/sessions/completed'),
+          Api.get('/interview/templates'),
         ]);
 
-        setCompletedSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
-        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+        const nextSessions =
+          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value) ? sessionsRes.value : [];
+        const nextTemplates =
+          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value) ? templatesRes.value : [];
+
+        setCompletedSessions(nextSessions);
+        setTemplates(nextTemplates);
+
+        if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
+          setLoadError(
+            isPolish
+              ? 'Nie udało się wczytać danych do generatora wniosków.'
+              : 'Failed to load insight generator data.'
+          );
+        }
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
+        setLoadError(
+          isPolish
+            ? 'Nie udało się wczytać danych do generatora wniosków.'
+            : 'Failed to load insight generator data.'
+        );
       } finally {
         setIsLoading(false);
       }
@@ -307,6 +328,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setFilterTemplate('');
       setFilterDateFrom('');
       setFilterDateTo('');
+      setLoadError(null);
     }
   }, [isOpen]);
 
@@ -759,6 +781,59 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               <div className="flex items-center justify-center py-8">
                 <Loader2 size={24} className="animate-spin text-primary-400" />
               </div>
+            ) : loadError ? (
+              <EmptyStateInline
+                icon={AlertTriangle}
+                dashed={false}
+                message={
+                  isPolish
+                    ? 'Generator wniosków jest chwilowo niedostępny.'
+                    : 'Insight generator is temporarily unavailable.'
+                }
+                hint={
+                  isPolish
+                    ? 'To nie oznacza, że nie ma zakończonych sesji. Spróbuj ponownie wczytać dane.'
+                    : 'This does not mean there are no completed sessions. Retry loading the data.'
+                }
+                action={{
+                  label: isPolish ? 'Ponów' : 'Retry',
+                  onClick: () => {
+                    setIsLoading(true);
+                    setLoadError(null);
+                    void (async () => {
+                      try {
+                        const [sessionsRes, templatesRes] = await Promise.allSettled([
+                          Api.get('/interview/sessions/completed'),
+                          Api.get('/interview/templates'),
+                        ]);
+
+                        const nextSessions =
+                          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
+                            ? sessionsRes.value
+                            : [];
+                        const nextTemplates =
+                          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value)
+                            ? templatesRes.value
+                            : [];
+
+                        setCompletedSessions(nextSessions);
+                        setTemplates(nextTemplates);
+
+                        if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
+                          setLoadError(
+                            isPolish
+                              ? 'Nie udało się wczytać danych do generatora wniosków.'
+                              : 'Failed to load insight generator data.'
+                          );
+                        }
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    })();
+                  },
+                }}
+                className="bg-navy-800/50 rounded-lg border border-navy-700"
+              />
             ) : filteredSessions.length === 0 ? (
               <div className="text-center py-8 text-slate-500 bg-navy-800/50 rounded-lg border border-navy-700">
                 <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />

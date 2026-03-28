@@ -46,6 +46,11 @@ import { useNavigate } from 'react-router-dom';
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
 import { Api } from '@/services/api';
+import {
+  getInitiativeGateReadinessTruth,
+  getInitiativeStatusPreflightTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
@@ -248,7 +253,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         Api.get(`/tasks?initiativeId=${id}`),
         Api.get(`/decisions?relatedObjectId=${id}&relatedObjectType=initiative`),
         Api.get(`/initiatives/${id}/raid`),
-        Api.get(`/initiatives/${id}/gate-readiness-check`),
+        getInitiativeGateReadinessTruth(id),
       ]);
 
       if (tasksRes.status === 'fulfilled') {
@@ -374,17 +379,49 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
     }
 
     try {
+      const { transition, blockingItems } = await getInitiativeStatusPreflightTruth(
+        id,
+        action.targetStatus
+      );
+      if (!transition || !transition.canCurrentUserExecute) {
+        toast.error(t('initiatives.toast.statusChangeFailed', 'Zmiana statusu nie powiodła się'));
+        return;
+      }
+      if (blockingItems.length > 0) {
+        toast.error(
+          t(
+            'initiatives.toast.cannotApprove',
+            'Nie można zatwierdzić — brakuje wymaganych pól:\n• {{errors}}',
+            { errors: blockingItems.join('\n• ') }
+          ),
+          { duration: 6000 }
+        );
+        return;
+      }
       // Keep in sync with InitiativesHub API routes.
       // The backend exposes a dedicated status endpoint.
-      await Api.patch(`/initiatives/${id}/status`, { status: action.targetStatus });
+      const truth = await updateInitiativeStatusWriteTruth(id, action.targetStatus);
       toast.success(
         t('initiatives.toast.statusChangedLabel', 'Status zmieniony na {{label}}', {
           label: action.label,
         })
       );
-      const updated = { ...initiative!, status: action.targetStatus as InitiativeStatus };
+      const updated = {
+        ...initiative!,
+        ...(truth.initiative || {}),
+        status: action.targetStatus as InitiativeStatus,
+      };
       setInitiative(updated);
+      setGateReadiness(
+        truth.gateReadiness
+          ? {
+              readiness: truth.gateReadiness.readiness || [],
+              availableTransitions: truth.gateReadiness.availableTransitions || [],
+            }
+          : null
+      );
       onUpdate?.(updated);
+      fetchData();
     } catch (e: any) {
       toast.error(
         e?.message || t('initiatives.toast.statusChangeFailed', 'Zmiana statusu nie powiodła się')
@@ -674,8 +711,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             {activeTab === 'summary' && <SummaryTab initiative={initiative} users={users} />}
             {activeTab === 'tasks' && <TasksTab tasks={tasks} milestones={milestones} />}
             {activeTab === 'decisions' && <DecisionsTab decisions={decisions} />}
-            {activeTab === 'raid' && <RaidTab items={raidItems} />}
-            {activeTab === 'finance' && <FinanceTab initiative={initiative} />}
+            {activeTab === 'raid' && <RaidTab items={raidItems} onMitigationSaved={fetchData} />}
+            {activeTab === 'finance' && (
+              <FinanceTab initiative={initiative} onBudgetSaved={fetchData} />
+            )}
             {activeTab === 'outputs' && (
               <OutputsTab
                 rows={outputRows}
@@ -1100,7 +1139,10 @@ const CompactDecisionRow: React.FC<{ decision: DecisionItem }> = ({ decision }) 
 // TAB: RAID
 // ==========================================
 
-const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
+const RaidTab: React.FC<{ items: RaidItem[]; onMitigationSaved?: () => void }> = ({
+  items,
+  onMitigationSaved,
+}) => {
   const { t } = useTranslation();
   const [expandedMitigationId, setExpandedMitigationId] = useState<string | null>(null);
   if (items.length === 0) {
@@ -1198,6 +1240,7 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
                     typeof MitigationPanel
                   >['initialStatus']) || 'OPEN'
                 }
+                onSaved={onMitigationSaved}
               />
             )}
           </div>
@@ -1211,7 +1254,10 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
 // TAB: FINANCE
 // ==========================================
 
-const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ initiative }) => {
+const FinanceTab: React.FC<{
+  initiative: PortfolioInitiative | null;
+  onBudgetSaved?: () => void;
+}> = ({ initiative, onBudgetSaved }) => {
   const { t } = useTranslation();
   const init = initiative as any;
   if (!init) return null;
@@ -1219,23 +1265,28 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
   const budget = init.estimatedBudget || init.budget;
   const roi = init.roi || init.estimatedRoi;
   const spent = init.actualSpent || init.spent;
+  const hasGovernedBudgetPanel = Boolean(init?.id);
 
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         {[
-          {
-            labelKey: 'initiatives.compact.budget',
-            value: budget ? `${Number(budget).toLocaleString()} PLN` : '—',
-            icon: DollarSign,
-            color: 'text-blue-500',
-          },
-          {
-            labelKey: 'initiatives.compact.spent',
-            value: spent ? `${Number(spent).toLocaleString()} PLN` : '—',
-            icon: TrendingUp,
-            color: 'text-amber-500',
-          },
+          ...(!hasGovernedBudgetPanel
+            ? [
+                {
+                  labelKey: 'initiatives.compact.budget',
+                  value: budget ? `${Number(budget).toLocaleString()} PLN` : '—',
+                  icon: DollarSign,
+                  color: 'text-blue-500',
+                },
+                {
+                  labelKey: 'initiatives.compact.spent',
+                  value: spent ? `${Number(spent).toLocaleString()} PLN` : '—',
+                  icon: TrendingUp,
+                  color: 'text-amber-500',
+                },
+              ]
+            : []),
           {
             labelKey: 'initiatives.drawer.roi',
             value: roi ? `${roi}%` : '—',
@@ -1262,7 +1313,7 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
         ))}
       </div>
 
-      {budget && spent && (
+      {!hasGovernedBudgetPanel && budget && spent && (
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50">
           <div className="flex justify-between text-[10px] text-slate-500 mb-1">
             <span>{t('initiatives.compact.budgetUtilization')}</span>
@@ -1276,7 +1327,7 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
         </div>
       )}
 
-      {!budget && !roi && !spent && (
+      {!hasGovernedBudgetPanel && !budget && !roi && !spent && (
         <div className="flex flex-col items-center justify-center h-24 text-slate-500 dark:text-slate-400">
           <DollarSign size={24} className="mb-2 opacity-30" />
           <p className="text-xs">{t('initiatives.compact.noFinancialData')}</p>
@@ -1285,7 +1336,13 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
 
       {!!init?.id && (
         <div className="pt-1">
-          <BudgetControlPanel initiativeId={String(init.id)} />
+          <div className="mb-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-[11px] leading-5 text-slate-600 dark:border-navy-700 dark:bg-navy-800/50 dark:text-slate-300">
+            {t(
+              'initiatives.compact.executionBudgetTruth',
+              'Budget execution truth is sourced from the governed panel below.'
+            )}
+          </div>
+          <BudgetControlPanel initiativeId={String(init.id)} onSaved={onBudgetSaved} />
         </div>
       )}
     </div>

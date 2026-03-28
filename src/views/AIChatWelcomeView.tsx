@@ -47,6 +47,10 @@ import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
+import {
+  getTeresaEmptyResponseMessage,
+  getTeresaStartFailureMessage,
+} from '../components/AIChat/teresaRuntimeCopy';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
@@ -191,6 +195,11 @@ export const AIChatWelcomeView: React.FC = () => {
       artifacts: any[] = [],
       meta?: { citations?: any[]; sessionId?: string }
     ) => {
+      const safeText =
+        typeof fullText === 'string' && fullText.trim().length > 0
+          ? fullText
+          : getTeresaEmptyResponseMessage(i18n.language);
+
       // Use ref to get the latest conversation ID (avoids stale closure)
       const convId = activeConversationIdRef.current;
       if (!convId) {
@@ -203,7 +212,7 @@ export const AIChatWelcomeView: React.FC = () => {
         await addMessage({
           conversationId: convId,
           role: 'ai',
-          content: fullText,
+          content: safeText,
           messageType: 'text',
           metadata: buildPersistedAiResponseMetadata({
             thinking: thinking as any,
@@ -249,8 +258,7 @@ export const AIChatWelcomeView: React.FC = () => {
       void addMessage({
         conversationId: convId,
         role: 'ai',
-        content:
-          '⚠️ Nie udało się połączyć z AI. Sprawdź logi backendu i konsolę przeglądarki (Network/Console).',
+        content: getTeresaStartFailureMessage(i18n.language),
         messageType: 'text',
         metadata: { error: (err as Error)?.message || String(err) },
       } as any);
@@ -1997,6 +2005,9 @@ For example: REMEMBER: preferred_language: Polish`;
         <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
           {/* Personalized Greeting */}
           <div className="text-center mb-10">
+            <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
+              Teresa
+            </div>
             <h1 className="text-4xl md:text-5xl font-semibold text-navy-900 dark:text-white">
               {t(`aiChat.greeting.${timeContext.greetingKey}`, timeContext.greetingFallback)}
               {firstName && <span className="text-primary-600">, {firstName}</span>}
@@ -2039,7 +2050,7 @@ For example: REMEMBER: preferred_language: Polish`;
               isStreaming={isStreaming}
               disabled={false}
               variant="compact"
-              placeholder={t('aiChat.placeholder', 'Ask anything...')}
+              placeholder={t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')}
               voiceModeEnabled={voiceModeEnabled}
               onVoiceModeChange={handleVoiceModeChange}
               chatLanguage={chatLanguage}

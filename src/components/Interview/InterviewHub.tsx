@@ -60,24 +60,11 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 
 // Helper function to safely display error messages
-const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) => {
-  let errorMessage: string;
-  if (typeof error === 'string') {
-    errorMessage = error;
-  } else if (error?.response?.data?.error) {
-    const errData = error.response.data.error;
-    errorMessage = typeof errData === 'string' ? errData : JSON.stringify(errData);
-  } else if (error?.message) {
-    errorMessage =
-      typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
-  } else if (error?.error) {
-    errorMessage = typeof error.error === 'string' ? error.error : JSON.stringify(error.error);
-  } else {
-    errorMessage = defaultMessage;
-  }
-  toast.error(errorMessage);
+const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) => {
+  toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
 };
 
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';

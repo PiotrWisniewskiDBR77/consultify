@@ -51,6 +51,7 @@ export interface UseTablePlatformIntegrationReturn {
   loading: boolean;
   saving: boolean;
   saveStatusLabel: string;
+  error: string | null;
 
   // Schema
   columns: ColumnDef[];
@@ -382,6 +383,7 @@ export function useTablePlatformIntegration(
       loading: false,
       saving: false,
       saveStatusLabel: '',
+      error: null,
       columns: EMPTY_COLUMNS,
       setColumns: NOOP_FN,
       visibleColumns: EMPTY_COLUMNS,
@@ -433,6 +435,7 @@ export function useTablePlatformIntegration(
     loading,
     saving,
     saveStatusLabel,
+    error: bridge.error,
     columns,
     setColumns: setLocalColumns,
     visibleColumns,

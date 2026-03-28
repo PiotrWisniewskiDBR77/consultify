@@ -55,10 +55,10 @@ describe('SecurityView CTA authority', () => {
   it('preserves topbar demo/trial routes and exposes Anna on the page', () => {
     renderView();
 
-    expect(screen.getByRole('button', { name: 'Ask Anna' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Trial' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
 
     expect(navigateMock).toHaveBeenNthCalledWith(1, '/trial/start');
     expect(navigateMock).toHaveBeenNthCalledWith(2, '/demo');

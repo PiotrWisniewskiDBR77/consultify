@@ -55,7 +55,7 @@ describe('AboutView CTA authority', () => {
   it('preserves demo/trial CTA routes and exposes Anna on the page', () => {
     renderView();
 
-    expect(screen.getByRole('button', { name: 'Ask Anna' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Explore Demo' })[0]);
     fireEvent.click(screen.getAllByRole('button', { name: 'Start Free Trial' })[0]);

@@ -15,6 +15,13 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 vi.mock('../../../src/services/api', () => ({
   Api: {
     get: vi.fn(),

@@ -124,18 +124,17 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           </a>
 
           {/* Ghost pill helper */}
-          {(['partner', 'demo', 'trial'] as const).map((id) => {
+          {(['partner', 'demo'] as const).map((id) => {
             const cfg = {
               partner: {
                 label: t('partner.becomePartner', 'Become Partner'),
                 icon: <Handshake size={13} />,
                 onClick: () => navigate(ROUTES.BECOME_PARTNER),
               },
-              demo: { label: t('landing.topBar.demo', 'Demo'), icon: null, onClick: onDemoClick },
-              trial: {
-                label: t('landing.topBar.trial', 'Trial'),
+              demo: {
+                label: t('landing.topBar.demo', 'Watch demo'),
                 icon: null,
-                onClick: onTrialClick,
+                onClick: onDemoClick,
               },
             }[id];
             return (
@@ -383,9 +382,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             {t('landing.topBar.login', 'Log in')}
           </button>
 
-          {/* Sign up — filled pill */}
+          {/* Primary public CTA */}
           <button
-            onClick={() => onRegisterClick?.()}
+            onClick={onTrialClick}
             className="px-5 py-1.5 rounded-full text-sm font-semibold text-white transition-all duration-200 cursor-pointer"
             style={{
               background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
@@ -398,7 +397,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               (e.currentTarget as HTMLButtonElement).style.opacity = '1';
             }}
           >
-            {t('landing.topBar.signUp', 'Sign up')}
+            {t('landing.topBar.trial', 'Start trial')}
           </button>
         </div>
 
@@ -476,16 +475,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       },
                     },
                     {
-                      label: t('landing.topBar.demo', 'Demo'),
+                      label: t('landing.topBar.demo', 'Watch demo'),
                       onClick: () => {
                         onDemoClick();
-                        setIsMobileMenuOpen(false);
-                      },
-                    },
-                    {
-                      label: t('landing.topBar.trial', 'Trial'),
-                      onClick: () => {
-                        onTrialClick();
                         setIsMobileMenuOpen(false);
                       },
                     },
@@ -515,13 +507,13 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
                   <button
                     onClick={() => {
-                      onRegisterClick?.();
+                      onTrialClick();
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full px-4 py-2.5 rounded-full text-sm font-semibold text-white text-center transition-all"
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
                   >
-                    {t('auth.createOne', 'Sign up')}
+                    {t('landing.topBar.trial', 'Start trial')}
                   </button>
 
                   {/* Language row */}

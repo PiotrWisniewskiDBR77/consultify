@@ -53,6 +53,24 @@ describe('CanvasLeftToolbar', () => {
     expect(onAction).toHaveBeenCalledWith('mm_pan_mode');
   });
 
+  it('toggles connect back to select when already in connect mode', () => {
+    const onAction = vi.fn();
+    render(
+      <CanvasLeftToolbar
+        {...baseProps}
+        interactionMode="connect"
+        onAction={onAction}
+      />
+    );
+
+    const connectBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'Finish connecting and return to select');
+
+    if (connectBtn) fireEvent.click(connectBtn);
+    expect(onAction).toHaveBeenCalledWith('mm_select_mode');
+  });
+
   it('opens AI popover on click', () => {
     render(<CanvasLeftToolbar {...baseProps} />);
     const aiBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'AI');

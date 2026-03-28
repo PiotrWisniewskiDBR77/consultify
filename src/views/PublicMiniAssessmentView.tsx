@@ -7,16 +7,16 @@ import {
   ArrowRight,
   BarChart3,
   CheckCircle2,
-  ExternalLink,
   Loader2,
   Mail,
   Sparkles,
   Star,
   TrendingUp,
+  Copy,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import {
   type SurveyAnswer,
@@ -30,25 +30,30 @@ const API_BASE = '/api/public/mini-assessment';
 type ViewState = 'loading' | 'intro' | 'survey' | 'submitting' | 'result' | 'error';
 
 interface AIResult {
+  resultKind: 'rules_based_snapshot';
+  resultLabel: string;
+  methodNotes: string[];
   overallScore: number;
   overallLevel: string;
   dimensions: Array<{ name: string; score: number; maxScore: number; level: string }>;
   insights: string[];
   assumptions: string[];
   biggestChallenge: string | null;
+  followUpTopics: string[];
+  answerSummary: Array<{ questionId: string; question: string; answer: string }>;
 }
 
 export const PublicMiniAssessmentView: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
 
   const [viewState, setViewState] = useState<ViewState>('loading');
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [isDraftSaving, setIsDraftSaving] = useState(false);
 
   const lang = searchParams.get('lang') || i18n.language || 'en';
 
@@ -128,9 +133,32 @@ export const PublicMiniAssessmentView: React.FC = () => {
     trackFunnelEvent('external_assessment_started');
   }, []);
 
+  const hasDraftAnswers = Array.isArray(assessmentData?.answers) && assessmentData.answers.length > 0;
+
   const handleAnswer = useCallback((answer: SurveyAnswer) => {
     // No-op for public assessment — answers tracked internally by SurveyShell
   }, []);
+
+  const handleAutosave = useCallback(
+    async (answers: SurveyAnswer[]) => {
+      const currentToken = token || assessmentData?.token;
+      if (!currentToken) return;
+
+      setIsDraftSaving(true);
+      try {
+        await fetch(`${API_BASE}/${currentToken}/draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers }),
+        });
+      } catch {
+        // Draft save is best-effort; keep the survey usable.
+      } finally {
+        setIsDraftSaving(false);
+      }
+    },
+    [token, assessmentData]
+  );
 
   const handleSubmit = useCallback(
     async (answers: SurveyAnswer[]) => {
@@ -160,15 +188,51 @@ export const PublicMiniAssessmentView: React.FC = () => {
     [token, assessmentData, email]
   );
 
-  const handleCTA = useCallback(
-    (action: string) => {
-      trackFunnelEvent('external_assessment_cta_clicked', { action });
-      if (action === 'trial') navigate('/register');
-      else if (action === 'demo') navigate('/demo');
-      else if (action === 'contact') navigate('/contact');
-    },
-    [navigate]
-  );
+  const buildFollowUpBrief = useCallback(() => {
+    if (!aiResult) return '';
+
+    const lines = [
+      lang === 'pl' ? 'Follow-up interview brief' : 'Follow-up interview brief',
+      '',
+      `${lang === 'pl' ? 'Snapshot' : 'Snapshot'}: ${aiResult.resultLabel}`,
+      `${lang === 'pl' ? 'Score' : 'Score'}: ${aiResult.overallScore}% (${levelLabel(aiResult.overallLevel)})`,
+      '',
+      lang === 'pl' ? 'Najważniejsze obserwacje:' : 'Key observations:',
+      ...aiResult.insights.map((insight) => `- ${insight}`),
+      '',
+      lang === 'pl' ? 'Główne wyzwanie respondenta:' : 'Main respondent challenge:',
+      aiResult.biggestChallenge || (lang === 'pl' ? 'Brak odpowiedzi' : 'No answer provided'),
+      '',
+      lang === 'pl' ? 'Tematy do follow-up interview:' : 'Topics for follow-up interview:',
+      ...aiResult.followUpTopics.map((topic) => `- ${topic}`),
+      '',
+      lang === 'pl' ? 'Odpowiedzi źródłowe:' : 'Source answers:',
+      ...aiResult.answerSummary.map((entry) => `- ${entry.question}: ${entry.answer}`),
+    ];
+
+    return lines.join('\n');
+  }, [aiResult, lang]);
+
+  const handleCopyFollowUpBrief = useCallback(async () => {
+    const brief = buildFollowUpBrief();
+    if (!brief) return;
+
+    try {
+      await navigator.clipboard.writeText(brief);
+      trackFunnelEvent('external_assessment_cta_clicked', { action: 'copy_follow_up_brief' });
+    } catch {
+      setError(
+        lang === 'pl'
+          ? 'Nie udało się skopiować briefu follow-up.'
+          : 'Failed to copy the follow-up brief.'
+      );
+    }
+  }, [buildFollowUpBrief, lang]);
+
+  const handleRestart = useCallback(() => {
+    const nextUrl = `/assess?lang=${encodeURIComponent(lang)}`;
+    window.location.assign(nextUrl);
+  }, [lang]);
 
   const levelColor = (level: string) => {
     switch (level) {
@@ -242,7 +306,8 @@ export const PublicMiniAssessmentView: React.FC = () => {
               {t('publicAssessment.questions', 'questions')}
             </span>
             <span className="flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> {t('publicAssessment.aiResult', 'AI-powered result')}
+              <Sparkles className="w-3 h-3" />{' '}
+              {t('publicAssessment.aiResult', 'Rules-based snapshot')}
             </span>
           </div>
 
@@ -268,14 +333,25 @@ export const PublicMiniAssessmentView: React.FC = () => {
             className="w-full py-3 px-6 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors
               flex items-center justify-center gap-2 text-sm"
           >
-            {t('publicAssessment.startButton', 'Start Assessment')}
+            {hasDraftAnswers
+              ? t('publicAssessment.continueButton', 'Continue Assessment')
+              : t('publicAssessment.startButton', 'Start Assessment')}
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {hasDraftAnswers && (
+            <p className="text-xs text-indigo-500 mt-3">
+              {t(
+                'publicAssessment.resumeHint',
+                'We found a saved draft and will reopen the first unanswered question.'
+              )}
+            </p>
+          )}
 
           <p className="text-xs text-gray-400 mt-4">
             {t(
               'publicAssessment.disclaimer',
-              'Your answers are used only to generate your result. No account required.'
+              'Your answers are saved as a draft before submit and used to generate a rules-based readiness snapshot. No account required.'
             )}
           </p>
         </div>
@@ -306,15 +382,22 @@ export const PublicMiniAssessmentView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
             {/* Score header */}
             <div className="bg-indigo-600 text-white p-8 text-center">
-              <h1 className="text-xl font-bold mb-2">
-                {t('publicAssessment.resultTitle', 'Your Readiness Score')}
-              </h1>
+              <p className="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-3">
+                {aiResult.resultLabel}
+              </p>
+              <h1 className="text-xl font-bold mb-2">{t('publicAssessment.resultTitle', 'Your Readiness Score')}</h1>
               <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}
               >
                 {levelLabel(aiResult.overallLevel)}
               </span>
+              <p className="text-xs text-indigo-100/80 mt-4 max-w-lg mx-auto">
+                {t(
+                  'publicAssessment.honestyLabel',
+                  'This is a rules-based snapshot from your form answers, not a full consulting diagnosis.'
+                )}
+              </p>
             </div>
 
             {/* Dimensions */}
@@ -361,38 +444,84 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </ul>
             </div>
 
-            {/* Assumptions */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
-              <p className="text-xs text-gray-400 italic">{aiResult.assumptions.join(' • ')}</p>
+            {/* Biggest challenge */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                {t('publicAssessment.mainChallenge', 'Main challenge reported')}
+              </h2>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {aiResult.biggestChallenge ||
+                  t('publicAssessment.noChallenge', 'No free-text challenge was provided.')}
+              </p>
             </div>
 
-            {/* CTA */}
+            {/* Follow-up interview action */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                {t('publicAssessment.followUpTitle', 'Suggested follow-up interview focus')}
+              </h2>
+              <ul className="space-y-2">
+                {aiResult.followUpTopics.map((topic, idx) => (
+                  <li
+                    key={`${topic}-${idx}`}
+                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    {topic}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Source answers */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                {t('publicAssessment.sourceAnswers', 'Source answers used')}
+              </h2>
+              <div className="space-y-3">
+                {aiResult.answerSummary.map((entry) => (
+                  <div key={entry.questionId} className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      {entry.question}
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{entry.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Assumptions */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('publicAssessment.methodTitle', 'Method notes')}
+                </p>
+                <p className="text-xs text-gray-400 italic">
+                  {[...aiResult.methodNotes, ...aiResult.assumptions].join(' • ')}
+                </p>
+              </div>
+            </div>
+
+            {/* Action */}
             <div className="p-6">
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                {t('publicAssessment.nextSteps', 'Ready to take the next step?')}
+                {t('publicAssessment.nextSteps', 'Next action')}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => handleCTA('trial')}
+                  onClick={() => void handleCopyFollowUpBrief()}
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-xl
                     hover:bg-indigo-700 text-sm font-medium transition-colors"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  {t('publicAssessment.startTrial', 'Start Free Trial')}
+                  <Copy className="w-4 h-4" />
+                  {t('publicAssessment.copyBrief', 'Copy Follow-up Interview Brief')}
                 </button>
                 <button
-                  onClick={() => handleCTA('demo')}
+                  onClick={handleRestart}
                   className="flex items-center justify-center gap-2 px-4 py-3 border border-indigo-300 dark:border-indigo-600
                     text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm font-medium"
                 >
-                  {t('publicAssessment.bookDemo', 'Book a Demo')}
-                </button>
-                <button
-                  onClick={() => handleCTA('contact')}
-                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-600
-                    text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium"
-                >
-                  {t('publicAssessment.contactUs', 'Contact Us')}
+                  {t('publicAssessment.restart', 'Start a New Assessment')}
                 </button>
               </div>
             </div>
@@ -421,12 +550,19 @@ export const PublicMiniAssessmentView: React.FC = () => {
             {error}
           </div>
         )}
+        <div className="mb-4 px-1 text-xs text-gray-400">
+          {isDraftSaving
+            ? t('publicAssessment.savingDraft', 'Saving draft...')
+            : t('publicAssessment.draftSaved', 'Draft answers are autosaved before submit.')}
+        </div>
         <SurveyShell
           sections={surveySections}
           language={lang}
+          initialAnswers={assessmentData?.answers || []}
           focusMode={true}
           estimatedMinutes={assessmentData?.template?.estimatedMinutes || 3}
           onAnswer={handleAnswer}
+          onAutosave={handleAutosave}
           onSubmit={handleSubmit}
         />
       </div>

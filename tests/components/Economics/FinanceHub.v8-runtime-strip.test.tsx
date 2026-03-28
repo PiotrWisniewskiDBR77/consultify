@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const financeDataState = vi.hoisted(() => ({
@@ -20,6 +20,8 @@ const financeDataState = vi.hoisted(() => ({
   rowsForActiveTab: [] as any[],
   filteredRows: [] as any[],
   statusCounts: { all: 0, draft: 0, review: 0, approved: 0 },
+  lastActiveTab: '' as string,
+  lastSearchQuery: '' as string,
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -65,23 +67,27 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
 }));
 
 vi.mock('../../../src/components/Economics/hooks/useFinanceData', () => ({
-  useFinanceData: () => ({
-    statements: financeDataState.statements,
-    models: financeDataState.models,
-    analyses: financeDataState.analyses,
-    valuations: financeDataState.valuations,
-    budgets: financeDataState.budgets,
-    loadingTab: false,
-    loadError: null,
-    loadStatements: financeDataState.loadStatements,
-    loadModels: financeDataState.loadModels,
-    loadAnalyses: financeDataState.loadAnalyses,
-    loadValuations: financeDataState.loadValuations,
-    loadBudgets: financeDataState.loadBudgets,
-    rowsForActiveTab: financeDataState.rowsForActiveTab,
-    filteredRows: financeDataState.filteredRows,
-    statusCounts: financeDataState.statusCounts,
-  }),
+  useFinanceData: (activeTab: string, searchQuery: string) => {
+    financeDataState.lastActiveTab = activeTab;
+    financeDataState.lastSearchQuery = searchQuery;
+    return {
+      statements: financeDataState.statements,
+      models: financeDataState.models,
+      analyses: financeDataState.analyses,
+      valuations: financeDataState.valuations,
+      budgets: financeDataState.budgets,
+      loadingTab: false,
+      loadError: null,
+      loadStatements: financeDataState.loadStatements,
+      loadModels: financeDataState.loadModels,
+      loadAnalyses: financeDataState.loadAnalyses,
+      loadValuations: financeDataState.loadValuations,
+      loadBudgets: financeDataState.loadBudgets,
+      rowsForActiveTab: financeDataState.rowsForActiveTab,
+      filteredRows: financeDataState.filteredRows,
+      statusCounts: financeDataState.statusCounts,
+    };
+  },
 }));
 
 vi.mock('../../../src/components/Economics/hooks/useFinanceSelection', () => ({
@@ -180,6 +186,11 @@ import { FinanceHub } from '../../../src/components/Economics/FinanceHub';
 import { Api } from '../../../src/services/api';
 import { V8FinanceApi } from '../../../src/services/api/v8/finance';
 
+const LocationProbe = () => {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+};
+
 describe('FinanceHub V8 runtime strip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -191,6 +202,8 @@ describe('FinanceHub V8 runtime strip', () => {
     financeDataState.rowsForActiveTab = [];
     financeDataState.filteredRows = [];
     financeDataState.statusCounts = { all: 0, draft: 0, review: 0, approved: 0 };
+    financeDataState.lastActiveTab = '';
+    financeDataState.lastSearchQuery = '';
     financeDataState.loadStatements.mockResolvedValue(undefined);
     financeDataState.loadModels.mockResolvedValue(undefined);
     financeDataState.loadAnalyses.mockResolvedValue(undefined);
@@ -258,6 +271,26 @@ describe('FinanceHub V8 runtime strip', () => {
 
     expect(screen.getByText('Escalations')).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
+  });
+
+  it('keeps the finance runtime strip visible with unavailable markers when the dashboard fails', async () => {
+    vi.mocked(V8FinanceApi.getDashboard).mockRejectedValue(new Error('dashboard down'));
+
+    render(
+      <MemoryRouter>
+        <FinanceHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8FinanceApi.getDashboard).toHaveBeenCalled();
+      expect(screen.getByText('V8 Ingestion')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Escalations')).toBeInTheDocument();
+    expect(screen.getByText('Linkages')).toBeInTheDocument();
+    expect(screen.getByText('Gate pass')).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(4);
   });
 
   it('routes import-complete statement-pack lookup through the governed V8 seam first', async () => {
@@ -345,5 +378,37 @@ describe('FinanceHub V8 runtime strip', () => {
 
     expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
+  });
+
+  it('canonicalizes economics deep links to finance and preserves valuation context', async () => {
+    render(
+      <MemoryRouter initialEntries={['/economics?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha']}>
+        <LocationProbe />
+        <FinanceHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/finance?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha');
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('valuation');
+    });
+
+    expect(financeDataState.lastSearchQuery).toBe('Initiative Alpha');
+  });
+
+  it('syncs the active finance tab back into the url', async () => {
+    render(
+      <MemoryRouter initialEntries={['/finance?tab=statements']}>
+        <LocationProbe />
+        <FinanceHub />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Predykcja' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('prediction');
+      expect(screen.getByTestId('location')).toHaveTextContent('/finance?tab=prediction');
+    });
   });
 });

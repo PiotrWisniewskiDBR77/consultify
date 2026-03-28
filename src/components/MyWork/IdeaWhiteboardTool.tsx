@@ -28,6 +28,7 @@ import {
   Group,
   Hexagon,
   Image as ImageIcon,
+  Keyboard,
   Layers,
   LayoutGrid,
   Link2,
@@ -113,6 +114,11 @@ import {
   type WhiteboardSharePolicy,
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
+import {
+  getWhiteboardModeCopy,
+  getWhiteboardShortcuts,
+} from './whiteboard/whiteboardInteractionGrammar';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
 // ── Sticky colors ────────────────────────────────────────────────────────────
 
@@ -1362,6 +1368,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [whiteboardMode, setWhiteboardMode] = useState<'board' | 'draw'>('board');
+  const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [sessionState, setSessionState] = useState<WhiteboardSessionState>(DEFAULT_SESSION_STATE);
@@ -1856,6 +1863,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     },
     [appendActivity, currentUserId, isPl]
   );
+  const whiteboardModeCopy = useMemo(
+    () => getWhiteboardModeCopy(whiteboardMode, isPl, locked),
+    [isPl, locked, whiteboardMode]
+  );
+  const whiteboardShortcuts = useMemo(() => getWhiteboardShortcuts(isPl), [isPl]);
 
   const cycleSessionRole = useCallback(() => {
     const nextRole = cycleWhiteboardRole(sessionState.role);
@@ -2998,6 +3010,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setShortcutsHelpOpen((prev) => !prev);
+        return;
+      }
+      if (e.key === 'Escape') {
+        if (shortcutsHelpOpen) {
+          e.preventDefault();
+          setShortcutsHelpOpen(false);
+          return;
+        }
+        if (whiteboardMode === 'draw') {
+          e.preventDefault();
+          setBoardMode('board');
+          return;
+        }
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
@@ -3005,7 +3034,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleSave, open]);
+  }, [handleSave, open, setBoardMode, shortcutsHelpOpen, whiteboardMode]);
 
   // ── Focus-mode filtering (nodes + edges) ───────────────────────────────────
   const { nodes: displayNodes, edges: displayEdges } = useMemo(() => {
@@ -3127,7 +3156,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         />
         <ToolbarBtn
           icon={Pen}
-          label={whiteboardMode === 'draw' ? (isPl ? 'Canvas' : 'Canvas') : isPl ? 'Rysuj' : 'Draw'}
+          label={whiteboardModeCopy.toggleLabel}
           onClick={() => setBoardMode(whiteboardMode === 'draw' ? 'board' : 'draw')}
           disabled={locked}
           active={whiteboardMode === 'draw'}
@@ -3172,6 +3201,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               new CustomEvent('idea-workspace-open-export-menu', { detail: { ideaId } })
             )
           }
+        />
+        <ToolbarBtn
+          icon={Keyboard}
+          label={isPl ? 'Pomoc' : 'Help'}
+          onClick={() => setShortcutsHelpOpen(true)}
+          active={shortcutsHelpOpen}
         />
 
         <ToolbarDropdown
@@ -3282,7 +3317,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                    {whiteboardMode === 'draw' ? (isPl ? 'Draw mode' : 'Draw mode') : 'Board mode'}
+                    {whiteboardModeCopy.modeLabel}
                   </div>
                   <div className="text-[9px] text-slate-400 dark:text-slate-500">
                     {sessionState.timerEndsAt
@@ -3294,6 +3329,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                <span className="px-2 py-1 rounded-full bg-primary-500/10 text-[10px] font-medium text-primary-700 dark:text-primary-300">
+                  {whiteboardModeCopy.exitHint}
+                </span>
                 <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
                   {sessionState.votingOpen
                     ? isPl
@@ -3311,6 +3349,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                     {isPl ? 'Spotlight aktywny' : 'Spotlight active'}
                   </span>
                 )}
+              </div>
+              <div className="mt-2 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+                {whiteboardModeCopy.helper}
               </div>
             </div>
 
@@ -3621,6 +3662,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             currentUserId={currentUserId}
             currentUserName={currentUserName}
             selectedNodeIds={selectedNodeIds}
+          />
+          <KeyboardShortcutsHelp
+            isOpen={shortcutsHelpOpen}
+            onClose={() => setShortcutsHelpOpen(false)}
+            shortcuts={whiteboardShortcuts}
           />
         </div>
       )}

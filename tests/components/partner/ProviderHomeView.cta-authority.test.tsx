@@ -50,7 +50,7 @@ import { ProviderHomeView } from '@/views/partner/ProviderHomeView';
 
 function LocationProbe() {
   const location = useLocation();
-  return <div data-testid="location-probe">{location.pathname}</div>;
+  return <div data-testid="location-probe">{`${location.pathname}${location.search}`}</div>;
 }
 
 describe('ProviderHomeView CTA authority', () => {
@@ -82,5 +82,20 @@ describe('ProviderHomeView CTA authority', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review terms' }));
 
     expect(screen.getByTestId('location-probe')).toHaveTextContent(ROUTES.PARTNER.ONBOARDING);
+  });
+
+  it('uses honest hero CTAs for onboarding and partner docs', async () => {
+    render(
+      <MemoryRouter initialEntries={['/partner']}>
+        <ProviderHomeView />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open onboarding' }));
+    expect(screen.getByTestId('location-probe')).toHaveTextContent(ROUTES.PARTNER.ONBOARDING);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open partner docs' }));
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/partner?tab=documentation');
   });
 });

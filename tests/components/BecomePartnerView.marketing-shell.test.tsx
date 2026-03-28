@@ -7,6 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import i18n from '../../src/i18n';
+import { ROUTES } from '../../src/routes/routeConfig';
 import { BecomePartnerView } from '../../src/views/BecomePartnerView';
 
 const navigateMock = vi.fn();
@@ -69,10 +70,18 @@ describe('BecomePartnerView marketing shell parity', () => {
 
     expect(screen.getByTestId('landing-mobile-menu-trigger')).toBeInTheDocument();
     expect(screen.getByText('Terms')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ask Anna' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Portal Partnera' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mam już konto partnera' }));
 
-    expect(navigateMock).toHaveBeenCalledWith('/partner');
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.LANDING);
+  });
+
+  it('routes the main application CTA to partner onboarding', () => {
+    renderView();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aplikuj o Partnerstwo' }));
+
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
   });
 });

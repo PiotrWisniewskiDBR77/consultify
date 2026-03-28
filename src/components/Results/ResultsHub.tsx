@@ -109,6 +109,7 @@ export const ResultsHub: React.FC = () => {
   const [roiOpenModal, setRoiOpenModal] = useState(false);
   const [roiDrawer, setRoiDrawer] = useState<{ id: string; name: string } | null>(null);
   const [roiRefreshNonce, setRoiRefreshNonce] = useState(0);
+  const [resultsRefreshNonce, setResultsRefreshNonce] = useState(0);
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,29 +188,35 @@ export const ResultsHub: React.FC = () => {
     }
   }, []);
 
+  const loadV8Snapshot = useCallback(async () => {
+    try {
+      const response = await V8ResultsApi.getDashboard();
+      setV8Snapshot(response.snapshot);
+    } catch {
+      setV8Snapshot(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchKPIs();
   }, [fetchKPIs]);
 
   useEffect(() => {
-    let cancelled = false;
-    const loadV8Snapshot = async () => {
-      try {
-        const response = await V8ResultsApi.getDashboard();
-        if (!cancelled) {
-          setV8Snapshot(response.snapshot);
-        }
-      } catch {
-        if (!cancelled) {
-          setV8Snapshot(null);
-        }
-      }
-    };
     void loadV8Snapshot();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, [loadV8Snapshot]);
+
+  const refreshResultsTruth = useCallback(
+    async (options?: { refreshSummary?: boolean; refreshRoi?: boolean }) => {
+      await Promise.allSettled([fetchKPIs(), loadV8Snapshot()]);
+      if (options?.refreshSummary !== false) {
+        setResultsRefreshNonce((prev) => prev + 1);
+      }
+      if (options?.refreshRoi !== false) {
+        setRoiRefreshNonce(Date.now());
+      }
+    },
+    [fetchKPIs, loadV8Snapshot]
+  );
 
   const tabs: TabConfig[] = useMemo(
     () => [
@@ -302,10 +309,10 @@ export const ResultsHub: React.FC = () => {
         // silent
       } finally {
         setDrawerKpiId((prev) => (prev === kpiId ? null : prev));
-        fetchKPIs();
+        void refreshResultsTruth();
       }
     },
-    [fetchKPIs, t]
+    [refreshResultsTruth, t]
   );
 
   const handleRowAction = useCallback(
@@ -330,8 +337,8 @@ export const ResultsHub: React.FC = () => {
 
   const handleCreateSuccess = useCallback(() => {
     setShowCreateModal(false);
-    fetchKPIs();
-  }, [fetchKPIs]);
+    void refreshResultsTruth();
+  }, [refreshResultsTruth]);
 
   const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
 
@@ -694,9 +701,16 @@ export const ResultsHub: React.FC = () => {
             searchQuery={searchQuery}
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
+            governedSnapshot={v8Snapshot}
+            refreshNonce={resultsRefreshNonce}
+            onResultsTruthChange={refreshResultsTruth}
           />
         ) : activeTab === 'operational' ? (
-          <OperationalAnalysisView />
+          <OperationalAnalysisView
+            kpis={kpis}
+            loading={loading}
+            onResultsTruthChange={refreshResultsTruth}
+          />
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
         ) : activeTab === 'kpi_reports' ? (
@@ -740,7 +754,9 @@ export const ResultsHub: React.FC = () => {
         <KPITimeSeriesDrawer
           kpiId={drawerKpiId}
           onClose={() => setDrawerKpiId(null)}
-          onValueRecorded={fetchKPIs}
+          onValueRecorded={() => {
+            void refreshResultsTruth();
+          }}
         />
       )}
 
@@ -761,7 +777,7 @@ export const ResultsHub: React.FC = () => {
           initiativeName={roiDrawer.name}
           onClose={() => setRoiDrawer(null)}
           onSaved={() => {
-            setRoiRefreshNonce(Date.now());
+            void refreshResultsTruth();
           }}
         />
       )}

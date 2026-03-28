@@ -59,6 +59,11 @@ import { useTranslation } from 'react-i18next';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
+import {
+  getInitiativeStatusPreflightTruth,
+  saveInitiativeWriteTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import {
   getContextActions,
@@ -2133,11 +2138,43 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     setIsMutating(true);
     try {
-      await Api.patch(`/initiatives/${initiativeId}/status`, { status: action.targetStatus });
-      setInitiative((prev: any) => ({ ...prev, status: action.targetStatus }));
+      const { transition, blockingItems } = await getInitiativeStatusPreflightTruth(
+        initiativeId,
+        action.targetStatus
+      );
+      if (!transition || !transition.canCurrentUserExecute) {
+        toast.error(
+          t(
+            'initiatives.toast.statusUpdateError',
+            'Nie udało się zaktualizować statusu'
+          )
+        );
+        return;
+      }
+      if (blockingItems.length > 0) {
+        const list = blockingItems.slice(0, 5).join('\n• ');
+        toast.error(
+          t(
+            'initiatives.toast.gateBlockedHub',
+            'Nie można przejść dalej — brakuje elementów blokujących:\n• {{items}}',
+            { items: list || t('common.missing', 'Missing required items') }
+          ),
+          { duration: 6500 }
+        );
+        return;
+      }
+
+      const truth = await updateInitiativeStatusWriteTruth(initiativeId, action.targetStatus);
+      setInitiative((prev: any) => ({
+        ...prev,
+        ...(truth.initiative || {}),
+        status: action.targetStatus,
+      }));
+      setGateReadiness(truth.gateReadiness);
+      setStatusHistory(truth.statusHistory as any);
+      setHistory(truth.history as any);
       onStatusChange?.(action.targetStatus);
       toast.success(isPolish ? 'Status zaktualizowany' : 'Status updated');
-      fetchAll();
     } catch (e: any) {
       toast.error(
         e?.message ||
@@ -2247,11 +2284,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         updatePayload.plannedEndDate = targetDate || undefined;
       }
 
-      await Api.put(`/initiatives/${initiativeId}`, updatePayload);
+      const truth = await saveInitiativeWriteTruth(initiativeId, updatePayload);
 
       // Keep local baseline in sync so dirty-check resets immediately.
       setInitiative((prev: any) => ({
         ...prev,
+        ...(truth.initiative || {}),
         title: canEditCards && normalizedTitle ? normalizedTitle : prev?.title,
         name: canEditCards && normalizedTitle ? normalizedTitle : prev?.name,
         summary,
@@ -2284,6 +2322,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         targetState: { description: targetDescriptionDraft || '' },
         target_state: { description: targetDescriptionDraft || '' },
       }));
+      setGateReadiness(truth.gateReadiness);
+      setStatusHistory(truth.statusHistory as any);
+      setHistory(truth.history as any);
 
       // Clear local draft backup after a successful save.
       try {

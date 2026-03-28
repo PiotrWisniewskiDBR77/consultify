@@ -66,7 +66,9 @@ export interface UseTablePersistenceReturn {
   saving: boolean;
   syncState: string;
   saveStatusLabel: string;
+  loadError: string | null;
   handleSave: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const VALID_NODE_TYPES = ['center', 'branch', 'idea', 'knowledgeCard', 'noteCard', 'evidenceCard'];
@@ -102,6 +104,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
   } = opts;
 
   const [loading, setLoading] = useState(open);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const hydratedOnceRef = useRef(false);
   const didPersistPreferredRef = useRef(false);
   const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
@@ -158,6 +161,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
   const hydrate = useCallback(async () => {
     if (!open) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
       const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
@@ -245,7 +249,10 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
         }
       }
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
+      const nextError =
+        err?.message || (isPl ? 'Nie udało się wczytać mapy' : 'Failed to load map');
+      toast.error(nextError);
+      setLoadError(nextError);
       setNodes([]);
       setEdges([]);
       setExtensions({});
@@ -290,6 +297,8 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
     saving,
     syncState,
     saveStatusLabel: formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
+    loadError,
     handleSave,
+    refresh: hydrate,
   };
 }

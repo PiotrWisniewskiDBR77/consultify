@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Brain, CheckCircle2, Cpu, FileText, Play, TrendingUp, Zap } from 'lucide-react';
+import { ArrowRight, Brain, CheckCircle2, Cpu, FileText, Play, TrendingUp, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +20,7 @@ const steps = [
     glow: 'rgba(168,85,247,0.28)',
     title: 'AI instantly understands the full picture',
     description:
-      'LLMind — our proprietary AI engine — cross-references your data against 1,000+ real consulting engagements and every frontier model to map gaps, risks, and opportunities.',
+      'DBR77 Vector — our proprietary model — analyzes your context against 1,000+ real transformation engagements to map gaps, risks, and opportunities with structured reasoning.',
   },
   {
     number: '03',
@@ -200,25 +200,38 @@ export const HowItWorksSection: React.FC = () => {
               <h3 className="text-2xl font-black text-white mb-4 leading-tight">
                 {t(
                   'landing.howItWorks.techTitle',
-                  'Powered by every frontier LLM + our proprietary LLMind.'
+                  'Powered by DBR77 Vector, our proprietary AI model.'
                 )}
               </h3>
               <p className="text-sm text-white/55 leading-relaxed">
                 {t(
                   'landing.howItWorks.techDesc',
-                  'Built on Microsoft infrastructure and trained on 1,000+ real consulting engagements. Full MCP integration for true end-to-end automation — from data ingestion to board presentation.'
+                  'Built on 1,000+ real transformation engagements and delivered through secure deployment paths. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation.'
                 )}
               </p>
+              <a
+                href="https://vector.dbr77.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition-colors hover:text-cyan-200"
+              >
+                Explore DBR77 Vector
+                <ArrowRight size={14} />
+              </a>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'LLMind™', desc: 'Proprietary consulting AI', color: '#7c3aed' },
+                { label: 'DBR77 Vector', desc: 'Proprietary AI model', color: '#7c3aed' },
                 { label: 'MCP Integration', desc: 'Full end-to-end automation', color: '#06b6d4' },
-                { label: 'All Frontier LLMs', desc: 'GPT-4o, Claude, Gemini+', color: '#a855f7' },
+                {
+                  label: 'Private Deployment',
+                  desc: 'On-premise, private API, or isolated access',
+                  color: '#a855f7',
+                },
                 {
                   label: '1,000+ Engagements',
-                  desc: 'Real consulting training data',
+                  desc: 'Real transformation knowledge base',
                   color: '#10b981',
                 },
               ].map((item) => (

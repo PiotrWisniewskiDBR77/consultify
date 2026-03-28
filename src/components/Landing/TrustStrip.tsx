@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Award, Globe, Key, Lock, ShieldCheck } from 'lucide-react';
+import { Award, Globe } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,34 +14,6 @@ export const TrustStrip: React.FC = () => {
       glowColor: 'rgba(56,189,248,0.20)',
       borderColor: 'rgba(56,189,248,0.20)',
     },
-    {
-      icon: Lock,
-      label: 'SOC2 Type II',
-      color: 'text-blue-400',
-      glowColor: 'rgba(96,165,250,0.20)',
-      borderColor: 'rgba(96,165,250,0.20)',
-    },
-    {
-      icon: ShieldCheck,
-      label: 'GDPR',
-      color: 'text-emerald-400',
-      glowColor: 'rgba(52,211,153,0.20)',
-      borderColor: 'rgba(52,211,153,0.20)',
-    },
-    {
-      icon: Key,
-      label: 'AES-256',
-      color: 'text-amber-400',
-      glowColor: 'rgba(251,191,36,0.18)',
-      borderColor: 'rgba(251,191,36,0.18)',
-    },
-  ];
-
-  const regions = [
-    { flag: '🇪🇺', name: 'EU', label: t('landing.compliance.regions.eu', 'Europe') },
-    { flag: '🇺🇸', name: 'US', label: t('landing.compliance.regions.us', 'North America') },
-    { flag: '🇸🇦', name: 'GCC', label: t('landing.compliance.regions.gcc', 'Middle East') },
-    { flag: '🇯🇵', name: 'JP', label: t('landing.compliance.regions.jp', 'Japan') },
   ];
 
   return (
@@ -99,29 +71,23 @@ export const TrustStrip: React.FC = () => {
           <div className="flex items-center gap-2 text-xs text-white/30">
             <Globe size={13} className="text-primary-400" />
             <span className="font-medium">
-              {t('landing.compliance.dataResidency', 'Data Residency Options:')}
+              {t('landing.compliance.dataResidency', 'Data residency')}
             </span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {regions.map((region, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                }}
-              >
-                <span className="text-sm">{region.flag}</span>
-                <span className="font-bold text-white/60">{region.name}</span>
-                <span className="text-white/30 hidden sm:inline">({region.label})</span>
-              </div>
-            ))}
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.10)',
+            }}
+          >
+            <span className="text-sm">🇪🇺</span>
+            <span className="font-bold text-white/60">EU data</span>
           </div>
           <p className="text-[11px] text-white/25 text-center mt-1">
             {t(
               'landing.compliance.dataNote',
-              'Your data stays in your chosen region • No AI training on your data • Full regulatory compliance'
+              'Your data stays in the EU region • No AI training on your data'
             )}
           </p>
         </motion.div>

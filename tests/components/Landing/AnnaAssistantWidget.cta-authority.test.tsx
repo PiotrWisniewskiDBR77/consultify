@@ -106,11 +106,11 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget({ onDemoClick, onTrialClick, onContactClick });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Try Demo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start Trial' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.click(screen.getByRole('button', { name: 'Contact' }));
 
     expect(onDemoClick).toHaveBeenCalledTimes(1);
@@ -130,11 +130,11 @@ describe('AnnaAssistantWidget CTA authority', () => {
   it('falls back to canonical public routes when shared callbacks are not provided', () => {
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Try Demo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start Trial' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.click(screen.getByRole('button', { name: 'Contact' }));
 
     expect(navigateMock).toHaveBeenNthCalledWith(1, '/demo');
@@ -145,11 +145,35 @@ describe('AnnaAssistantWidget CTA authority', () => {
   it('does not track another widget-open event when anna:open fires while the widget is already open', () => {
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     window.dispatchEvent(new Event('anna:open'));
 
     expect(getTrackedEventNames()).toEqual(['landing_anna_widget_opened']);
     expect(screen.getByRole('button', { name: 'Close Anna' })).toBeInTheDocument();
+  });
+
+  it('opens Anna with a prefilled guided-entry prompt when anna:open carries prompt detail', async () => {
+    renderWidget();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('anna:open', {
+          detail: { prompt: 'Is Consultify right for my team?' },
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(getTrackedEventNames()).toEqual(['landing_anna_widget_opened']);
+      expect(screen.getByRole('button', { name: 'Close Anna' })).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Ask Anna about the product...')).toHaveValue(
+        'Is Consultify right for my team?',
+      );
+    });
   });
 
   it('surfaces the polite rate-limit message instead of collapsing to a generic error', async () => {
@@ -178,7 +202,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Tell me more about pricing' },
     });
@@ -225,7 +249,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: '안녕하세요, 가격을 알고 싶어요' },
     });
@@ -271,7 +295,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Hola, quiero entender mejor Consultify' },
     });
@@ -315,7 +339,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Hallo, ich mochte Consultify besser verstehen' },
     });
@@ -359,7 +383,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'こんにちは、Consultifyについてもっと知りたいです' },
     });
@@ -402,7 +426,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'مرحبا، اريد فهم Consultify بشكل افضل' },
     });
@@ -422,7 +446,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Tell me about Consultify' },
     });
@@ -444,7 +468,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     const view = renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Tell me about Consultify' },
     });
@@ -459,7 +483,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     expect(
       view.container.querySelector('.border-red-400\\/15.bg-red-500\\/10'),
@@ -469,13 +493,13 @@ describe('AnnaAssistantWidget CTA authority', () => {
   it('clears the stale unsent draft after close and reopen', () => {
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Draft that should not survive reopen' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     expect(screen.getByPlaceholderText('Ask Anna about the product...')).toHaveValue('');
   });
@@ -505,7 +529,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'Tell me about Consultify' },
     });
@@ -514,7 +538,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     expect(screen.getByText('Anna is thinking...')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     expect(screen.queryByText('Anna is thinking...')).not.toBeInTheDocument();
 
@@ -623,7 +647,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(screen.getByText('Tap the microphone to start a live voice conversation.')).toBeInTheDocument();
@@ -635,8 +659,8 @@ describe('AnnaAssistantWidget CTA authority', () => {
       expect(screen.getByText('Connecting voice mode...')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await act(async () => {
       deferredOnOpen?.();
@@ -744,7 +768,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(screen.getByText('Tap the microphone to start a live voice conversation.')).toBeInTheDocument();
@@ -756,8 +780,8 @@ describe('AnnaAssistantWidget CTA authority', () => {
       expect(screen.getByText('Connecting voice mode...')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await act(async () => {
       deferredOnError?.(new Error('late voice error'));
@@ -889,7 +913,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(screen.getByText('Tap the microphone to start a live voice conversation.')).toBeInTheDocument();
@@ -1056,7 +1080,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'What is Consultify?' },
     });
@@ -1150,7 +1174,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(
@@ -1252,7 +1276,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(
@@ -1268,7 +1292,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -1359,7 +1383,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(
@@ -1377,7 +1401,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Close Anna' })).not.toBeInTheDocument();
@@ -1391,7 +1415,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
   it('shows the static degraded-state voice fallback without exposing technical setup details', () => {
     renderWidget();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
 
     expect(
       screen.getByText(

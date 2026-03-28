@@ -102,6 +102,86 @@ Najwieksze rozjazdy miedzy wizja a wykonaniem:
 
 ---
 
+## 4A. User Review Triage
+
+Poniższa warstwa nie zastępuje poprzedniej analizy.
+
+To jest dodatkowa, praktyczna klasyfikacja do pracy operacyjnej:
+
+- `Must have` = musi byc akceptowalne przed odbiorem obecnej fali
+- `Nice have` = warto miec, ale nie powinno blokowac szybkiego finishu
+- `8.2` = swiadomie poza obecna fala
+
+Wazne:
+
+- `Must have` nie oznacza `dowozimy 100% pierwotnej wizji`
+- `Must have` oznacza `musimy miec wystarczajaco dobry, odbieralny stan teraz`
+
+### V8.0 priorytety po review
+
+| Modul | Przyblizony stan wzgledem pierwotnej wizji | Priorytet po review |
+| --- | --- | --- |
+| `Czat / Teresa` | `45%` | `Must have` |
+| `Landing / Anna` | `70%` | `Must have` |
+| `MyWork` | `50%` | `Must have` |
+| `Radar` | `75%` | `Must have` |
+| `Idea founder / Idea maker` | `55%` | `Must have` |
+| `Mindmap` | `50%` | `Must have` |
+| `Whiteboard` | `20%` | `Must have` |
+| `Proces flow` | `45%` | `Must have` |
+| `Tabele` | `30%` | `Nice have` |
+| `Notatki` | `80%` | `Must have` |
+| `Kalendarz` | `65%` | `Nice have` |
+| `Integracja` | `55%` | `Nice have` |
+| `Komunikacja dwukierunkowa` | `40%` | `Nice have` |
+| `Interview / Ankiety` | `45%` | `Nice have` |
+| `Tools / Assessment / DRD / SIRI / ADMA` | `40%` | `Nice have` |
+| `Inicjatywy / Projekty` | `75%` | `Nice have` |
+| `Wdrozenie / Execution` | `60%` | `Nice have` |
+| `KPI / BI` | `80%` | `Nice have` |
+| `Finanse` | `80%` | `Nice have` |
+| `Help / Baza wiedzy` | `45%` | `Nice have` |
+| `Organizacja` | `35%` | `8.2` |
+| `Settings` | `20%` | `8.2` |
+| `Admin` | `45%` | `8.2` |
+| `Synchronizacja` | `70%` | `8.2` |
+| `Superadmin` | `45%` | `Must have` |
+| `Edukacja` | `10%` | `8.2` |
+| `Komunikacja` | `55%` | `8.2` |
+| `Mobile` | `70%` | `8.2` |
+| `Program partnerski` | `75%` | `Nice have` |
+| `Agenci / KIMI / Prompty / Palantir` | `30%` | `Nice have` |
+
+### V8.1 priorytety po review
+
+| Modul | Przyblizony stan wzgledem pierwotnej wizji | Priorytet po review |
+| --- | --- | --- |
+| `Outputs Library` | `85%` | `Must have` |
+| `Documents` | `80%` | `Must have` |
+| `Presentations` | `55%` | `Must have` |
+| `Sheet` | `35%` | `Nice have` |
+| `ArtifactRun z czatu` | `75%` | `Nice have` |
+| `Object-linked outputs` | `70%` | `Must have` |
+| `Notebook outputs` | `85%` | `Must have` |
+| `Notebook attachments` | `90%` | `Must have` |
+| `Report -> Presentation` | `50%` | `Nice have` |
+| `Provenance / review / visibility` | `80%` | `Must have` |
+| `Pelny Reports / Presentations builder` | `25%` | `Nice have` |
+
+### Co z tego wynika
+
+Twoja klasyfikacja jest bardziej wymagajaca niz poprzednie closure docs.
+
+To oznacza, ze od teraz nie patrzymy juz tylko na:
+
+- `czy bounded slice jest formalnie zaakceptowany`
+
+Patrzymy tez na:
+
+- `czy user uzna ten modul za wystarczajaco gotowy do pracy`
+
+---
+
 ## 5. Co domykamy teraz
 
 Zasada:
@@ -268,6 +348,96 @@ Pierwsze kandydaty do `8.2`:
 2. `Sheet / Table platform`
 3. `Whiteboard / Diagramy / Miro`
 4. `Chat / Teresa / KIMI / Agents`
+
+---
+
+## 7A. Jak pracowac szybko i efektywnie od teraz
+
+Zeby nie utknac znowu w wielkim, rozmytym programie, kazdy `Must have` musi przejsc przez ten sam filtr:
+
+1. `czy to jest realny brak user-facing, czy tylko niska liczba procentowa`
+2. `czy da sie to zamknac w 1-3 bounded packetach`
+3. `czy efekt bedzie widoczny dla uzytkownika, a nie tylko dla closure ledger`
+
+Jesli odpowiedz brzmi `nie`, to nawet `Must have` trzeba rozbijac na mniejszy odbieralny slice zamiast probowac dowiesc caly modul.
+
+### Kolejnosc pracy
+
+Najpierw bierzemy `Must have`, ale nie alfabetycznie.
+Bierzemy je wedlug relacji `widocznosc efektu / koszt / ryzyko`.
+
+#### Faza A - szybko widoczne i juz blisko
+
+1. `Notatki`
+2. `Outputs Library`
+3. `Notebook outputs`
+4. `Notebook attachments`
+5. `Object-linked outputs`
+6. `Documents`
+7. `Provenance / review / visibility`
+
+Powod:
+
+- te obszary sa juz wysoko
+- sa blisko odbioru
+- kazdy maly finish jest od razu widoczny
+
+#### Faza B - warstwa odbiorowa produktu
+
+1. `Landing / Anna`
+2. `MyWork`
+3. `Radar`
+4. `Presentations`
+5. `Kalendarz`
+
+Powod:
+
+- to sa surface'y, po ktorych user najbardziej oceni, czy aplikacja jest gotowa
+
+#### Faza C - trudniejsze must-have, ale tylko w minimalnym odbieralnym zakresie
+
+1. `Czat / Teresa`
+2. `Idea founder`
+3. `Mindmap`
+4. `Proces flow`
+5. `Whiteboard`
+6. `Superadmin`
+
+Powod:
+
+- te obszary sa wazne, ale szerokie
+- trzeba z gory pilnowac, zeby nie zamienily sie w nowy wielki program
+
+### Czego nie robic
+
+- nie ruszac `8.2`
+- nie rozpraszac sie `Nice have`, dopoki nie mamy listy konkretnych brakow w `Must have`
+- nie brac calego modulu naraz
+- nie pisac kolejnych wielkich analiz bez przekladania ich na 1 konkretny packet
+
+### Definicja szybkiego pakietu
+
+Kazdy kolejny packet powinien spelniac wszystkie warunki:
+
+- dotyka najwyzej 1 modulu albo 1 wspolnej powierzchni
+- daje widoczna roznice w UI albo w flow usera
+- ma jasny test/proof
+- nie wymaga otwierania nowej architektury
+
+---
+
+## 7B. Co zamrazamy na teraz
+
+Do czasu przejscia przez `Must have` nie ruszamy:
+
+- wszystkich pozycji `8.2`
+- pozycji `Nice have`, chyba ze sa praktycznie darmowym dodatkiem do aktywnego `Must have`
+
+To jest kluczowe, bo inaczej znowu pomieszamy:
+
+- polish,
+- closure,
+- i nowy program produktowy
 
 ---
 

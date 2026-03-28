@@ -60,6 +60,52 @@ import {
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
+const PARTNER_SECTIONS = new Set<PartnerSection>([
+  'partner-home',
+  'dashboard',
+  'metrics',
+  'referral-tools',
+  'referral-analytics',
+  'referred-organizations',
+  'earnings',
+  'statements',
+  'payouts',
+  'payout-settings',
+  'client-access',
+  'organizations',
+  'projects',
+  'users',
+  'learning-path',
+  'exams',
+  'certificates',
+  'documentation',
+  'marketing',
+  'case-studies',
+  'templates',
+  'company-info',
+  'specializations',
+  'regions',
+  'public-listing',
+]);
+
+const LEGACY_PARTNER_PATH_TO_SECTION: Array<{ path: string; section: PartnerSection }> = [
+  { path: ROUTES.PARTNER.DASHBOARD, section: 'dashboard' },
+  { path: ROUTES.PARTNER.CLIENTS, section: 'client-access' },
+  { path: ROUTES.PARTNER.COMMISSION, section: 'earnings' },
+  { path: ROUTES.PARTNER.DIRECTORY, section: 'public-listing' },
+  { path: ROUTES.PARTNER.RESOURCES, section: 'documentation' },
+];
+
+function isPartnerSection(value: string | null): value is PartnerSection {
+  return Boolean(value && PARTNER_SECTIONS.has(value as PartnerSection));
+}
+
+function getLegacyPartnerSection(pathname: string): PartnerSection | null {
+  const normalized = pathname.replace(/\/+$/, '') || '/';
+  const match = LEGACY_PARTNER_PATH_TO_SECTION.find(({ path }) => normalized === path);
+  return match?.section ?? null;
+}
+
 // Lazy load new sections
 const ReferralToolsSection = React.lazy(() => import('./sections/ReferralToolsSection'));
 const EarningsSection = React.lazy(() => import('./sections/EarningsSection'));
@@ -2891,13 +2937,29 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
 
   const activeSection = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    const section = params.get('tab') as PartnerSection | null;
+    const section = params.get('tab');
 
     // When partner profile is not connected, lock navigation to the onboarding screen.
     if (!isConnected) return 'partner-home';
 
-    return (section ? section : 'dashboard') as PartnerSection;
-  }, [location.search, isConnected]);
+    if (isPartnerSection(section)) return section;
+
+    const legacySection = getLegacyPartnerSection(location.pathname);
+    return legacySection ?? 'dashboard';
+  }, [location.pathname, location.search, isConnected]);
+
+  useEffect(() => {
+    if (connectionLoading || !isConnected) return;
+
+    const legacySection = getLegacyPartnerSection(location.pathname);
+    if (!legacySection) return;
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === legacySection && location.pathname === ROUTES.PARTNER.LANDING) return;
+
+    params.set('tab', legacySection);
+    navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
+  }, [connectionLoading, isConnected, location.pathname, location.search, navigate]);
 
   const handleSectionChange = useCallback(
     (section: PartnerSection) => {
@@ -3112,8 +3174,6 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
-      activeClients={12}
-      pendingCertifications={2}
     >
       {connectionLoading ? (
         <div className="flex items-center justify-center h-64">

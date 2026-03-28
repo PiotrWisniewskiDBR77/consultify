@@ -33,7 +33,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import {
@@ -41,6 +41,7 @@ import {
   V8FinanceApi,
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
+import { ROUTES } from '@/routes/routeConfig';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -59,6 +60,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { FinanceModelDocumentView } from './FinanceModelDocumentView';
 import { useFinancePreview } from './FinancePreviewPanel';
@@ -100,6 +102,7 @@ function isInvestmentAnalysisType(value: unknown): boolean {
 export const FinanceHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -144,6 +147,10 @@ export const FinanceHub: React.FC = () => {
   }>({});
   const [valuationInitialTitle, setValuationInitialTitle] = useState('');
   const analyzeMenuRef = useRef<HTMLDivElement | null>(null);
+  const validFinanceTabs = useMemo(
+    () => ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
+    []
+  );
 
   // ---- Extracted hooks ----
   const {
@@ -200,6 +207,17 @@ export const FinanceHub: React.FC = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (location.pathname !== ROUTES.ECONOMICS) return;
+    navigate(
+      {
+        pathname: ROUTES.FINANCE,
+        search: location.search,
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (!activeDocument) return;
@@ -558,20 +576,32 @@ export const FinanceHub: React.FC = () => {
       | 'budget'
       | null;
     const sourceId = searchParams.get('sourceId');
+    const initiativeName = searchParams.get('initiativeName');
 
-    if (
-      tab &&
-      ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'].includes(tab)
-    ) {
+    if (tab && validFinanceTabs.includes(tab as ModuleTab)) {
       setActiveTab(tab as ModuleTab);
+    }
+
+    if (initiativeName && !searchQuery.trim()) {
+      setSearchQuery(initiativeName);
     }
 
     if (createFrom && tab === 'valuation') {
       setValuationInitialSource({ type: createFrom, id: sourceId || undefined });
       setShowValuationCreateModal(true);
-      setSearchParams({}, { replace: true });
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('createFrom');
+      nextParams.delete('sourceId');
+      setSearchParams(nextParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, searchQuery, setSearchParams, validFinanceTabs]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextParams.get('tab') === activeTab) return;
+    nextParams.set('tab', activeTab);
+    setSearchParams(nextParams, { replace: true });
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!showAnalyzeMenu) return;
@@ -1358,6 +1388,34 @@ export const FinanceHub: React.FC = () => {
         active: activeFilters.some((f) => f.column === 'status' && f.value === 'APPROVED'),
       },
     ];
+    const runtimeChips = [
+      {
+        label: t('finance.v8.ingestion', 'V8 Ingestion'),
+        value:
+          v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline.totalCount ?? '—'),
+        dotClassName: 'bg-cyan-400',
+      },
+      {
+        label: t('finance.v8.escalations', 'Escalations'),
+        value:
+          v8Dashboard == null ? '—' : String(v8Dashboard.unresolvedEscalationsCount ?? '—'),
+        dotClassName: 'bg-amber-400',
+      },
+      {
+        label: t('finance.v8.linkages', 'Linkages'),
+        value:
+          v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth.totalLinkages ?? '—'),
+        dotClassName: 'bg-violet-400',
+      },
+      {
+        label: t('finance.v8.gates', 'Gate pass'),
+        value:
+          v8Dashboard?.promotionGatePassRate == null
+            ? '—'
+            : `${Math.round(v8Dashboard.promotionGatePassRate * 100)}%`,
+        dotClassName: 'bg-emerald-400',
+      },
+    ];
     return (
       <div className="flex items-center gap-1.5 overflow-x-auto">
         {chips.map((chip) => (
@@ -1406,41 +1464,19 @@ export const FinanceHub: React.FC = () => {
             </span>
           </button>
         ))}
-        {v8Dashboard && (
-          <>
-            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
-              <span>{t('finance.v8.ingestion', 'V8 Ingestion')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-                {v8Dashboard.ingestionPipeline.totalCount}
-              </span>
-            </div>
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-              <span>{t('finance.v8.escalations', 'Escalations')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-                {v8Dashboard.unresolvedEscalationsCount}
-              </span>
-            </div>
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 flex-shrink-0" />
-              <span>{t('finance.v8.linkages', 'Linkages')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-                {v8Dashboard.linkageHealth.totalLinkages}
-              </span>
-            </div>
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-              <span>{t('finance.v8.gates', 'Gate pass')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-                {v8Dashboard.promotionGatePassRate == null
-                  ? '—'
-                  : `${Math.round(v8Dashboard.promotionGatePassRate * 100)}%`}
-              </span>
-            </div>
-          </>
-        )}
+        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+        {runtimeChips.map((chip) => (
+          <div
+            key={chip.label}
+            className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]"
+          >
+            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
+            <span>{chip.label}</span>
+            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+              {chip.value}
+            </span>
+          </div>
+        ))}
       </div>
     );
   }, [rowsForActiveTab.length, statusCounts, activeFilters, activeTab, t, v8Dashboard]);
@@ -1633,9 +1669,23 @@ export const FinanceHub: React.FC = () => {
                 onValuationChanged={handleValuationChanged}
               />
             ) : (
-              <pre className="text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                {JSON.stringify(activeDocument, null, 2)}
-              </pre>
+              <div className="p-4">
+                <EmptyStateInline
+                  icon={FileText}
+                  message={t(
+                    'finance.document.unsupported.message',
+                    'This finance document type is not yet available in the full workspace.'
+                  )}
+                  hint={t(
+                    'finance.document.unsupported.hint',
+                    'Return to the list and reopen a supported statement pack, model, analysis, budget, or valuation.'
+                  )}
+                  action={{
+                    label: t('common.backToList', 'Wróć do listy'),
+                    onClick: handleShowList,
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>

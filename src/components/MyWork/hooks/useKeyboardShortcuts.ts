@@ -49,7 +49,7 @@ export interface KeyboardShortcutsConfig {
   enabled?: boolean;
 }
 
-interface ShortcutHelp {
+export interface ShortcutHelp {
   key: string;
   description: string;
   category: 'navigation' | 'actions' | 'status' | 'selection';
@@ -94,6 +94,37 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
   { key: 'Ctrl+D', description: 'Clear selection', category: 'selection' },
 ];
 
+export function buildShortcutHelp(config: KeyboardShortcutsConfig): ShortcutHelp[] {
+  const shortcuts: ShortcutHelp[] = [{ key: '?', description: 'Show / hide keyboard help', category: 'navigation' }];
+
+  if (config.onNavigateUp) shortcuts.push(SHORTCUTS_HELP[0]);
+  if (config.onNavigateDown) shortcuts.push(SHORTCUTS_HELP[1]);
+  if (config.onNavigateFirst) shortcuts.push(SHORTCUTS_HELP[2]);
+  if (config.onNavigateLast) shortcuts.push(SHORTCUTS_HELP[3]);
+  if (config.onOpen) shortcuts.push(SHORTCUTS_HELP[4]);
+  if (config.onCancel) shortcuts.push(SHORTCUTS_HELP[5]);
+  if (config.onNew) shortcuts.push(SHORTCUTS_HELP[6]);
+  if (config.onEdit) shortcuts.push(SHORTCUTS_HELP[7]);
+  if (config.onDuplicate) shortcuts.push(SHORTCUTS_HELP[8]);
+  if (config.onDelete) shortcuts.push(SHORTCUTS_HELP[9]);
+  if (config.onSave) shortcuts.push(SHORTCUTS_HELP[10]);
+  if (config.onSlashCommand || config.onSearch) shortcuts.push(SHORTCUTS_HELP[11]);
+  if (config.onSetPriority) shortcuts.push(...SHORTCUTS_HELP.slice(12, 16));
+  if (config.onToggleComplete) shortcuts.push(SHORTCUTS_HELP[16]);
+  if (config.onGroup) shortcuts.push(SHORTCUTS_HELP[17]);
+  if (config.onAIExpand) shortcuts.push(SHORTCUTS_HELP[18]);
+  if (config.onAddChild) shortcuts.push(SHORTCUTS_HELP[19]);
+  if (config.onAddSibling) shortcuts.push(SHORTCUTS_HELP[20]);
+  if (config.onToggleCollapse || config.onToggleSelection) shortcuts.push(SHORTCUTS_HELP[21]);
+  if (config.onFocusSelection) shortcuts.push(SHORTCUTS_HELP[22]);
+  if (config.onReparentPromote) shortcuts.push(SHORTCUTS_HELP[23]);
+  if (config.onReparentDemote) shortcuts.push(SHORTCUTS_HELP[24]);
+  if (config.onSelectAll) shortcuts.push(SHORTCUTS_HELP[25]);
+  if (config.onClearSelection) shortcuts.push(SHORTCUTS_HELP[26]);
+
+  return shortcuts;
+}
+
 export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
   const [showHelp, setShowHelp] = useState(false);
 
@@ -126,6 +157,7 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
     onSearch,
     enabled = true,
   } = config;
+  const shortcuts = buildShortcutHelp(config);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -159,37 +191,37 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       }
 
       // Navigation shortcuts
-      if (event.key === 'ArrowUp' || event.key === 'k') {
+      if ((event.key === 'ArrowUp' || event.key === 'k') && onNavigateUp) {
         event.preventDefault();
-        onNavigateUp?.();
+        onNavigateUp();
         return;
       }
 
-      if (event.key === 'ArrowDown' || event.key === 'j') {
+      if ((event.key === 'ArrowDown' || event.key === 'j') && onNavigateDown) {
         event.preventDefault();
-        onNavigateDown?.();
+        onNavigateDown();
         return;
       }
 
-      if (event.key === 'Home') {
+      if (event.key === 'Home' && onNavigateFirst) {
         event.preventDefault();
-        onNavigateFirst?.();
+        onNavigateFirst();
         return;
       }
 
-      if (event.key === 'End') {
+      if (event.key === 'End' && onNavigateLast) {
         event.preventDefault();
-        onNavigateLast?.();
+        onNavigateLast();
         return;
       }
 
-      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey && onOpen) {
         event.preventDefault();
-        onOpen?.();
+        onOpen();
         return;
       }
 
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && (onCancel || showHelp)) {
         event.preventDefault();
         onCancel?.();
         setShowHelp(false);
@@ -197,33 +229,33 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       }
 
       // Action shortcuts
-      if (event.key === 'n' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === 'n' && !event.ctrlKey && !event.metaKey && onNew) {
         event.preventDefault();
-        onNew?.();
+        onNew();
         return;
       }
 
-      if (event.key === 'e' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === 'e' && !event.ctrlKey && !event.metaKey && onEdit) {
         event.preventDefault();
-        onEdit?.();
+        onEdit();
         return;
       }
 
-      if (event.key === 'd' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === 'd' && !event.ctrlKey && !event.metaKey && onDuplicate) {
         event.preventDefault();
-        onDuplicate?.();
+        onDuplicate();
         return;
       }
 
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && onDelete) {
         event.preventDefault();
-        onDelete?.();
+        onDelete();
         return;
       }
 
-      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+      if (event.key === 's' && (event.ctrlKey || event.metaKey) && onSave) {
         event.preventDefault();
-        onSave?.();
+        onSave();
         return;
       }
 
@@ -243,7 +275,7 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         }
       }
 
-      if (event.key === '/') {
+      if (event.key === '/' && (onSlashCommand || onSearch)) {
         event.preventDefault();
         if (onSlashCommand) onSlashCommand();
         else onSearch?.();
@@ -251,15 +283,15 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       }
 
       // Canvas shortcuts
-      if (event.key === 'g' && (event.ctrlKey || event.metaKey)) {
+      if (event.key === 'g' && (event.ctrlKey || event.metaKey) && onGroup) {
         event.preventDefault();
-        onGroup?.();
+        onGroup();
         return;
       }
 
-      if (event.key === 'A' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
+      if (event.key === 'A' && (event.ctrlKey || event.metaKey) && event.shiftKey && onAIExpand) {
         event.preventDefault();
-        onAIExpand?.();
+        onAIExpand();
         return;
       }
 
@@ -288,50 +320,50 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       }
 
       // Priority shortcuts (1-4)
-      if (event.key === '1' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === '1' && !event.ctrlKey && !event.metaKey && onSetPriority) {
         event.preventDefault();
-        onSetPriority?.('low');
+        onSetPriority('low');
         return;
       }
 
-      if (event.key === '2' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === '2' && !event.ctrlKey && !event.metaKey && onSetPriority) {
         event.preventDefault();
-        onSetPriority?.('medium');
+        onSetPriority('medium');
         return;
       }
 
-      if (event.key === '3' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === '3' && !event.ctrlKey && !event.metaKey && onSetPriority) {
         event.preventDefault();
-        onSetPriority?.('high');
+        onSetPriority('high');
         return;
       }
 
-      if (event.key === '4' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === '4' && !event.ctrlKey && !event.metaKey && onSetPriority) {
         event.preventDefault();
-        onSetPriority?.('critical');
+        onSetPriority('critical');
         return;
       }
 
-      if (event.key === 'x' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === 'x' && !event.ctrlKey && !event.metaKey && onToggleComplete) {
         event.preventDefault();
-        onToggleComplete?.();
+        onToggleComplete();
         return;
       }
 
       // Selection shortcuts
-      if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
+      if (event.key === 'a' && (event.ctrlKey || event.metaKey) && onSelectAll) {
         event.preventDefault();
-        onSelectAll?.();
+        onSelectAll();
         return;
       }
 
-      if (event.key === 'd' && (event.ctrlKey || event.metaKey)) {
+      if (event.key === 'd' && (event.ctrlKey || event.metaKey) && onClearSelection) {
         event.preventDefault();
-        onClearSelection?.();
+        onClearSelection();
         return;
       }
 
-      if (event.key === ' ') {
+      if (event.key === ' ' && (onToggleCollapse || onToggleSelection)) {
         event.preventDefault();
         if (onToggleCollapse) onToggleCollapse();
         else onToggleSelection?.();
@@ -379,7 +411,7 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
   return {
     showHelp,
     setShowHelp,
-    shortcuts: SHORTCUTS_HELP,
+    shortcuts,
   };
 };
 

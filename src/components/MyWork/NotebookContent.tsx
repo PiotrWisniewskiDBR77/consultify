@@ -69,6 +69,7 @@ import {
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
+import { NotebookCanonicalPathStrip } from './notebook/NotebookCanonicalPathStrip';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
@@ -203,6 +204,11 @@ const relativeTime = (dateStr?: string): string => {
 const wordCount = (text: string): number => {
   return text.trim().split(/\s+/).filter(Boolean).length;
 };
+
+const getDeliverableGuardMessage = (isPolish: boolean) =>
+  isPolish
+    ? 'Najpierw dopracuj notatkę: dodaj więcej treści albo czytelny outline, zanim przekonwertujesz ją do deliverable.'
+    : 'Refine the note first: add more content or a clearer outline before converting it into a deliverable.';
 
 const extractText = (json: any): string => {
   try {
@@ -597,8 +603,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
+  const attemptedOpenPageRef = useRef<string | null>(null);
 
   // Allow external navigation to a specific note (e.g. from origin badges / backlinks)
+  useEffect(() => {
+    const targetId = String(openPageId || '').trim();
+    if (!targetId) return;
+    attemptedOpenPageRef.current = null;
+  }, [openPageId]);
+
   useEffect(() => {
     const targetId = String(openPageId || '').trim();
     if (!targetId) return;
@@ -606,6 +619,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     const run = async () => {
       setActiveId(targetId);
       if (pages.some((p) => p.id === targetId)) return;
+      if (attemptedOpenPageRef.current === targetId) return;
+      attemptedOpenPageRef.current = targetId;
       try {
         const page = (await Api.getNotebookPage(targetId)) as any;
         if (cancelled || !page?.id) return;
@@ -614,14 +629,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           return exists ? prev : [page as NotebookPage, ...prev];
         });
       } catch {
-        /* best-effort */
+        if (!cancelled) {
+          toast.error(
+            isPolish ? 'Nie udało się otworzyć wskazanej notatki' : 'Failed to open the requested note'
+          );
+        }
       }
     };
     run();
     return () => {
       cancelled = true;
     };
-  }, [openPageId, pages]);
+  }, [openPageId, pages, isPolish]);
 
   const [title, setTitle] = useState(activePage?.title || '');
   const [pageProjectId, setPageProjectId] = useState(activePage?.projectId || '');
@@ -629,6 +648,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [tagInput, setTagInput] = useState('');
   const saveTimer = useRef<number | null>(null);
   const isSavingRef = useRef(false);
+  const pendingDraftRef = useRef<NotebookPage | null>(null);
+  const queuedSaveRef = useRef<NotebookPage | null>(null);
 
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
@@ -641,9 +662,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // AI inline response
   const [aiCommand, setAiCommand] = useState<AICommandType | null>(null);
   const [pendingAIProposals, setPendingAIProposals] = useState<NotebookAIProposal[]>([]);
+  const [proposalLoadError, setProposalLoadError] = useState(false);
   const [selectedEmbedPreview, setSelectedEmbedPreview] = useState<EmbeddedRefPreview | null>(null);
   const [outlineDraft, setOutlineDraft] = useState<OutlineDraft | null>(null);
   const [isDownloadingSourceFile, setIsDownloadingSourceFile] = useState(false);
+  const proposalReviewRef = useRef<HTMLDivElement | null>(null);
+  const attachmentsSectionRef = useRef<HTMLDivElement | null>(null);
+  const proposalRequestSeqRef = useRef(0);
 
   // Auto-summary
   const summaryTimer = useRef<number | null>(null);
@@ -651,6 +676,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const headingOutline = useMemo(
     () => (activePage?.contentJson ? extractHeadings(activePage.contentJson) : []),
     [activePage?.contentJson, activePage?.id]
+  );
+  const canConvertDeliverable = useMemo(() => {
+    if (!activePage) return false;
+    return wordCount(activePage.contentText || extractText(activePage.contentJson)) >= 80 || headingOutline.length >= 2;
+  }, [activePage, headingOutline.length]);
+  const deliverableGuardMessage = useMemo(
+    () => getDeliverableGuardMessage(isPolish),
+    [isPolish]
   );
 
   const editor = useEditor({
@@ -733,7 +766,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
   });
 
-  // Sync editor when switching pages
+  // Sync editor when switching pages or when the same page gets fresher server content.
   useEffect(() => {
     if (!editor) return;
     if (!activePage) {
@@ -749,7 +782,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
-  }, [activePage?.id, editor]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activePage?.id, activePage?.updatedAt, editor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Counts
   useEffect(() => {
@@ -883,66 +916,103 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [isPolish]
   );
 
+  const persistNotebookDraft = useCallback(
+    async (draft: NotebookPage) => {
+      queuedSaveRef.current = draft;
+      if (isSavingRef.current) return;
+
+      while (queuedSaveRef.current) {
+        const nextDraft = queuedSaveRef.current;
+        queuedSaveRef.current = null;
+        isSavingRef.current = true;
+
+        trackFunnelEvent('notebook_page_edited', { pageId: nextDraft.id });
+
+        const newMaturity = computeMaturity(nextDraft);
+        const persistedDraft: NotebookPage = { ...nextDraft, maturity: newMaturity };
+
+        try {
+          await Api.updateNotebookPage(persistedDraft.id, {
+            title: persistedDraft.title,
+            projectId: persistedDraft.projectId,
+            visibility: persistedDraft.visibility,
+            tags: persistedDraft.tags,
+            contentJson: persistedDraft.contentJson,
+            contentText: persistedDraft.contentText,
+            maturity: newMaturity,
+            ...(persistedDraft.verificationStatus !== undefined && {
+              verificationStatus: persistedDraft.verificationStatus,
+            }),
+            ...(persistedDraft.reviewCadence !== undefined && {
+              reviewCadence: persistedDraft.reviewCadence,
+            }),
+            ...(persistedDraft.lastReviewedAt !== undefined && {
+              lastReviewedAt: persistedDraft.lastReviewedAt,
+            }),
+            ...(persistedDraft.staleAt !== undefined && {
+              staleAt: persistedDraft.staleAt,
+            }),
+          });
+
+          const textLen = (persistedDraft.contentText || '').length;
+          if (textLen > 200 && persistedDraft.id) {
+            if (summaryTimer.current) window.clearTimeout(summaryTimer.current);
+            summaryTimer.current = window.setTimeout(() => {
+              generateSummary(
+                persistedDraft.id,
+                persistedDraft.title,
+                persistedDraft.contentText || ''
+              );
+            }, 3000);
+          }
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to save notebook page', e);
+          toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
+        } finally {
+          isSavingRef.current = false;
+        }
+      }
+    },
+    [generateSummary, t]
+  );
+
+  const flushPendingSave = useCallback(() => {
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const pendingDraft = pendingDraftRef.current;
+    if (!pendingDraft) return;
+    pendingDraftRef.current = null;
+    void persistNotebookDraft(pendingDraft);
+  }, [persistNotebookDraft]);
+
   const scheduleSave = useCallback(
     (next: Partial<NotebookPage>) => {
       if (!activePage) return;
+      const base = pages.find((p) => p.id === activePage.id);
+      if (!base) return;
+
+      const updated: NotebookPage = {
+        ...base,
+        ...next,
+      };
+      updated.maturity = computeMaturity(updated);
+
+      pendingDraftRef.current = updated;
+      setPages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
       saveTimer.current = window.setTimeout(() => {
-        const base = pages.find((p) => p.id === activePage.id);
-        if (!base) return;
-        const updated: NotebookPage = { ...base, ...next };
-        setPages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-
-        if (isSavingRef.current) return;
-        isSavingRef.current = true;
-
-        trackFunnelEvent('notebook_page_edited', { pageId: updated.id });
-
-        const newMaturity = computeMaturity(updated);
-        updated.maturity = newMaturity;
-
-        Api.updateNotebookPage(updated.id, {
-          title: updated.title,
-          projectId: updated.projectId,
-          visibility: updated.visibility,
-          tags: updated.tags,
-          contentJson: updated.contentJson,
-          contentText: updated.contentText,
-          maturity: newMaturity,
-          ...(updated.verificationStatus !== undefined && {
-            verificationStatus: updated.verificationStatus,
-          }),
-          ...(updated.reviewCadence !== undefined && {
-            reviewCadence: updated.reviewCadence,
-          }),
-          ...(updated.lastReviewedAt !== undefined && {
-            lastReviewedAt: updated.lastReviewedAt,
-          }),
-          ...(updated.staleAt !== undefined && {
-            staleAt: updated.staleAt,
-          }),
-        })
-          .then(() => {
-            // Trigger auto-summary generation for substantial content
-            const textLen = (updated.contentText || '').length;
-            if (textLen > 200 && updated.id) {
-              if (summaryTimer.current) window.clearTimeout(summaryTimer.current);
-              summaryTimer.current = window.setTimeout(() => {
-                generateSummary(updated.id, updated.title, updated.contentText || '');
-              }, 3000);
-            }
-          })
-          .catch((e) => {
-            // eslint-disable-next-line no-console
-            console.error('Failed to save notebook page', e);
-            toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
-          })
-          .finally(() => {
-            isSavingRef.current = false;
-          });
+        const draft = pendingDraftRef.current;
+        pendingDraftRef.current = null;
+        saveTimer.current = null;
+        if (!draft) return;
+        void persistNotebookDraft(draft);
       }, 350);
     },
-    [activePage, pages, t]
+    [activePage, pages, persistNotebookDraft]
   );
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -1285,36 +1355,60 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const handleUploadNotebookAttachments = useCallback(
     async (files: FileList) => {
       if (!activePage?.id) return;
-      const updated = await Api.uploadNotebookAttachments(activePage.id, files);
-      if (!updated?.id) return;
-      setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+      try {
+        const updated = await Api.uploadNotebookAttachments(activePage.id, files);
+        if (!updated?.id) return;
+        setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+      } catch (error) {
+        console.error('Failed to upload notebook attachments', error);
+        toast.error(
+          isPolish ? 'Nie udało się wgrać załączników' : 'Failed to upload attachments'
+        );
+      }
     },
-    [activePage?.id]
+    [activePage?.id, isPolish]
   );
 
   const handleDeleteNotebookAttachment = useCallback(
     async (attachmentId: string) => {
       if (!activePage?.id) return;
-      const updated = await Api.deleteNotebookAttachment(activePage.id, attachmentId);
-      if (!updated?.id) return;
-      setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+      try {
+        const updated = await Api.deleteNotebookAttachment(activePage.id, attachmentId);
+        if (!updated?.id) return;
+        setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+      } catch (error) {
+        console.error('Failed to delete notebook attachment', error);
+        toast.error(
+          isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment'
+        );
+      }
     },
-    [activePage?.id]
+    [activePage?.id, isPolish]
   );
 
   const refreshAIProposals = useCallback(async (pageId: string) => {
+    const requestSeq = ++proposalRequestSeqRef.current;
     try {
+      setProposalLoadError(false);
       const result = await Api.notebookGetAIProposals(pageId, { status: 'proposed', limit: 20 });
+      if (proposalRequestSeqRef.current !== requestSeq) return;
       const proposals = Array.isArray((result as any)?.proposals)
         ? ((result as any).proposals as NotebookAIProposal[])
         : Array.isArray(result)
           ? (result as NotebookAIProposal[])
           : [];
       setPendingAIProposals(proposals);
-    } catch {
+      setProposalLoadError(false);
+    } catch (error) {
+      if (proposalRequestSeqRef.current !== requestSeq) return;
+      console.error('Failed to refresh notebook AI proposals', error);
+      setProposalLoadError(true);
       setPendingAIProposals([]);
+      toast.error(
+        isPolish ? 'Nie udało się odświeżyć propozycji AI' : 'Failed to refresh AI proposals'
+      );
     }
-  }, []);
+  }, [isPolish]);
 
   useEffect(() => {
     if (!activePage?.id) {
@@ -1334,26 +1428,33 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         .map((part) => part.trim())
         .filter(Boolean);
       if (paragraphs.length === 0) return;
-      await Api.notebookCreateAIProposal(activePage.id, {
-        proposalType: 'append',
-        rationale,
-        blockContent: {
-          type: 'callout',
-          attrs: { variant: 'purple' },
-          content: [
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: `✨ ${titleLabel}` }],
-            },
-            ...paragraphs.map((paragraph) => ({
-              type: 'paragraph',
-              content: [{ type: 'text', text: paragraph }],
-            })),
-          ],
-        },
-      });
-      await refreshAIProposals(activePage.id);
-      toast.success(isPolish ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review');
+      try {
+        await Api.notebookCreateAIProposal(activePage.id, {
+          proposalType: 'append',
+          rationale,
+          blockContent: {
+            type: 'callout',
+            attrs: { variant: 'purple' },
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: `✨ ${titleLabel}` }],
+              },
+              ...paragraphs.map((paragraph) => ({
+                type: 'paragraph',
+                content: [{ type: 'text', text: paragraph }],
+              })),
+            ],
+          },
+        });
+        await refreshAIProposals(activePage.id);
+        toast.success(isPolish ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review');
+      } catch (error) {
+        console.error('Failed to create notebook AI proposal', error);
+        toast.error(
+          isPolish ? 'Nie udało się utworzyć propozycji AI' : 'Failed to create AI proposal'
+        );
+      }
     },
     [activePage, isPolish, refreshAIProposals]
   );
@@ -1361,17 +1462,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const resolveNotebookAIProposal = useCallback(
     async (proposalId: string, action: 'accepted' | 'rejected') => {
       if (!activePage) return;
-      await Api.notebookResolveAIProposal(proposalId, action);
-      await Promise.all([refreshAIProposals(activePage.id), fetchPages()]);
-      toast.success(
-        action === 'accepted'
-          ? isPolish
-            ? 'Propozycja została zaakceptowana'
-            : 'Proposal accepted'
-          : isPolish
-            ? 'Propozycja została odrzucona'
-            : 'Proposal rejected'
-      );
+      try {
+        await Api.notebookResolveAIProposal(proposalId, action);
+        await Promise.all([refreshAIProposals(activePage.id), fetchPages()]);
+        toast.success(
+          action === 'accepted'
+            ? isPolish
+              ? 'Propozycja została zaakceptowana'
+              : 'Proposal accepted'
+            : isPolish
+              ? 'Propozycja została odrzucona'
+              : 'Proposal rejected'
+        );
+      } catch (error) {
+        console.error('Failed to resolve notebook AI proposal', error);
+        toast.error(
+          action === 'accepted'
+            ? isPolish
+              ? 'Nie udało się zaakceptować propozycji'
+              : 'Failed to accept proposal'
+            : isPolish
+              ? 'Nie udało się odrzucić propozycji'
+              : 'Failed to reject proposal'
+        );
+      }
     },
     [activePage, fetchPages, isPolish, refreshAIProposals]
   );
@@ -1390,6 +1504,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
 
       if (target === 'assessment' || target === 'report' || target === 'presentation') {
+        if (!canConvertDeliverable) {
+          toast.error(deliverableGuardMessage);
+          return;
+        }
         setOutlineDraft({
           target,
           title: activePage.title || (isPolish ? 'Nowy artefakt' : 'New deliverable'),
@@ -1459,7 +1577,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         toast.error(err?.message || 'Conversion failed');
       }
     },
-    [activePage, isPolish, emitMyWorkEvent]
+    [activePage, canConvertDeliverable, deliverableGuardMessage, isPolish, emitMyWorkEvent]
   );
 
   const handleConfirmOutlineDraft = useCallback(async () => {
@@ -1522,6 +1640,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       editor.off('update', handler);
     };
   }, [editor, activePage?.id, scheduleSave]);
+
+  useEffect(() => {
+    return () => {
+      flushPendingSave();
+    };
+  }, [activePage?.id, flushPendingSave]);
 
   // Tag management
   const handleAddTag = () => {
@@ -2244,41 +2368,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     {/* Subtle divider */}
                     <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-3 py-2 dark:border-indigo-500/20 dark:bg-indigo-500/10">
-                      <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300">
-                        {isPolish
-                          ? 'Notebook → Deliverables: najpierw dopracuj outline, potem konwertuj do raportu lub prezentacji.'
-                          : 'Notebook → Deliverables: refine the outline first, then convert to a report or presentation.'}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setChatOpen(true)}
-                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
-                      >
-                        {isPolish ? 'Otwórz AI outline' : 'Open AI outline'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleConvertFromPanel('report')}
-                        className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-indigo-500"
-                      >
-                        {isPolish ? 'Do raportu' : 'To report'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleConvertFromPanel('presentation')}
-                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
-                      >
-                        {isPolish ? 'Do prezentacji' : 'To presentation'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleConvertFromPanel('assessment')}
-                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
-                      >
-                        {isPolish ? 'Do oceny' : 'To assessment'}
-                      </button>
-                    </div>
+                    <NotebookCanonicalPathStrip
+                      isPolish={isPolish}
+                      hasPendingAIProposals={pendingAIProposals.length > 0}
+                      canConvertDeliverable={canConvertDeliverable}
+                      convertBlockedReason={deliverableGuardMessage}
+                      onOpenAttachments={() =>
+                        attachmentsSectionRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start',
+                        })
+                      }
+                      onCreateAIProposal={() => setAiCommand('action')}
+                      onReviewAIProposal={() =>
+                        proposalReviewRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start',
+                        })
+                      }
+                      onConvert={() => void handleConvertFromPanel('report')}
+                    />
                   </div>
 
                   {headingOutline.length > 0 && (
@@ -2317,8 +2426,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </div>
                   )}
 
+                  {proposalLoadError ? (
+                    <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                      {isPolish
+                        ? 'Nie udało się załadować propozycji AI dla tej notatki. Odśwież stronę lub spróbuj ponownie za chwilę.'
+                        : 'Could not load AI proposals for this note. Refresh the page or try again in a moment.'}
+                    </div>
+                  ) : null}
+
                   {pendingAIProposals.length > 0 && (
-                    <div className="mb-4 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-3 dark:border-violet-500/20 dark:bg-violet-500/10">
+                    <div
+                      ref={proposalReviewRef}
+                      className="mb-4 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-3 dark:border-violet-500/20 dark:bg-violet-500/10"
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">
@@ -2401,7 +2521,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <EditorContent editor={editor} />
 
                   {activePage ? (
-                    <div className="mt-4">
+                    <div ref={attachmentsSectionRef} className="mt-4">
                       <NotebookAttachmentsSection
                         noteId={activePage.id}
                         attachments={activePage.attachments || []}
@@ -2553,6 +2673,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             onOpenAIChat={() => setChatOpen(true)}
             onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
             onConvert={handleConvertFromPanel}
+            canConvertDeliverable={canConvertDeliverable}
+            convertBlockedReason={deliverableGuardMessage}
           />
         )}
       </div>

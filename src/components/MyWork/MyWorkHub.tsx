@@ -88,6 +88,14 @@ import {
 } from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import {
+  createDefaultIdeaWorkspaceState,
+  moveIdeaWorkspaceState,
+  patchIdeaWorkspaceState,
+  removeIdeaWorkspaceState,
+  type IdeaWorkspaceHubState,
+} from './ideaWorkspaceState';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
@@ -566,6 +574,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [ideaLocked, setIdeaLocked] = useState(true);
+  const [ideaWorkspaceStateById, setIdeaWorkspaceStateById] = useState<
+    Record<string, IdeaWorkspaceHubState>
+  >({});
   const [showStartupTemplates, setShowStartupTemplates] = useState(false);
   const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
   const [ideasStageCounts, setIdeasStageCounts] = useState<{
@@ -585,10 +596,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     IdeasBulkBarPayload,
     'selectAllVisible' | 'clearSelection' | 'convert' | 'tag' | 'deleteSelected'
   > | null>(null);
-
-  const handleIdeaPanelChange = useCallback((panel: WorkspacePanelKey) => {
-    setIdeaActivePanel(panel);
-  }, []);
 
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
@@ -870,6 +877,61 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeTab !== 'ideas' || !activeDocumentId) return null;
     return openDocuments.find((d) => d.id === activeDocumentId && d.type === 'idea') || null;
   }, [activeTab, activeDocumentId, openDocuments]);
+  const activeIdeaWorkspaceState = useMemo(
+    () =>
+      activeIdeaDoc
+        ? ideaWorkspaceStateById[activeIdeaDoc.id] || createDefaultIdeaWorkspaceState(activeIdeaDoc)
+        : null,
+    [activeIdeaDoc, ideaWorkspaceStateById]
+  );
+  const activeIdeaToolLabel = useMemo(
+    () =>
+      getIdeaWorkspaceToolLabel(
+        activeIdeaWorkspaceState?.activeTool || ideaActiveTool,
+        Boolean(isPolish)
+      ),
+    [activeIdeaWorkspaceState?.activeTool, ideaActiveTool, isPolish]
+  );
+
+  const updateActiveIdeaWorkspaceState = useCallback(
+    (patch: Partial<IdeaWorkspaceHubState>) => {
+      if (!activeIdeaDoc) return;
+      setIdeaWorkspaceStateById((prev) => patchIdeaWorkspaceState(prev, activeIdeaDoc, patch));
+    },
+    [activeIdeaDoc]
+  );
+
+  const handleIdeaPanelChange = useCallback(
+    (panel: WorkspacePanelKey) => {
+      setIdeaActivePanel(panel);
+      updateActiveIdeaWorkspaceState({ activePanel: panel });
+    },
+    [updateActiveIdeaWorkspaceState]
+  );
+
+  const handleIdeaToolChange = useCallback(
+    (tool: CanvasToolType) => {
+      setIdeaActiveTool(tool);
+      updateActiveIdeaWorkspaceState({ activeTool: tool });
+    },
+    [updateActiveIdeaWorkspaceState]
+  );
+
+  const handleIdeaSelectionChange = useCallback(
+    (selection: IdeaWorkspaceSelection) => {
+      setIdeaSelection(selection);
+      updateActiveIdeaWorkspaceState({ selection });
+    },
+    [updateActiveIdeaWorkspaceState]
+  );
+
+  const handleIdeaLockedChange = useCallback(
+    (locked: boolean) => {
+      setIdeaLocked(locked);
+      updateActiveIdeaWorkspaceState({ locked });
+    },
+    [updateActiveIdeaWorkspaceState]
+  );
 
   useEffect(() => {
     let prompt = TAB_SYSTEM_PROMPTS[activeTab] || '';
@@ -891,10 +953,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeIdeaDoc) {
       const wsCtx: string[] = [];
       wsCtx.push(`Active idea: "${activeIdeaDoc.name}"`);
-      wsCtx.push(`Active system: ${ideaActiveTool}`);
-      wsCtx.push(ideaLocked ? 'Stage: seed (not yet accepted)' : 'Stage: active (accepted)');
-      if (ideaSelection.type !== 'none') {
-        wsCtx.push(`Selection: ${ideaSelection.count} ${ideaSelection.type}(s) selected`);
+      wsCtx.push(`Active system: ${activeIdeaToolLabel}`);
+      wsCtx.push(
+        activeIdeaWorkspaceState?.locked
+          ? 'Stage: spark (not yet accepted)'
+          : 'Stage: active (accepted)'
+      );
+      if (activeIdeaWorkspaceState?.selection.type && activeIdeaWorkspaceState.selection.type !== 'none') {
+        wsCtx.push(
+          `Selection: ${activeIdeaWorkspaceState.selection.count} ${activeIdeaWorkspaceState.selection.type}(s) selected`
+        );
       }
       prompt += `\n\nWorkspace context:\n${wsCtx.join('\n')}`;
     }
@@ -903,13 +971,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
   }, [
     activeTab,
+    activeIdeaWorkspaceState,
     contextSummary,
+    activeIdeaToolLabel,
     setChatSystemPrompt,
     setChatQuickPrompts,
     activeIdeaDoc,
-    ideaActiveTool,
-    ideaLocked,
-    ideaSelection,
   ]);
 
   // Deep link support: header dropdown → open inside My Work
@@ -1309,6 +1376,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      setIdeaWorkspaceStateById((prev) => removeIdeaWorkspaceState(prev, id));
       if (activeDocumentId === id) {
         setActiveDocumentId(null);
       }
@@ -1355,9 +1423,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     (seedIntent: IdeaWorkspaceSeedIntent) => {
       const newId = `new-idea-${Date.now()}`;
       const preferredSystem = normalizePreferredSystem(seedIntent.preferredSystem);
-      if (preferredSystem) {
-        setIdeaActiveTool(preferredSystem);
-      }
       const body = composeIdeaBodyFromSeedIntent(seedIntent);
       const title = deriveIdeaTitleFromSeedIntent(
         seedIntent,
@@ -1379,6 +1444,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           },
         },
       });
+      setIdeaWorkspaceStateById((prev) =>
+        patchIdeaWorkspaceState(
+          prev,
+          { id: newId, data: { isNew: true, initialTool: preferredSystem || 'mindmap' } },
+          {
+            activeTool: preferredSystem || 'mindmap',
+            activePanel: 'tools',
+            selection: EMPTY_SELECTION,
+            locked: true,
+          }
+        )
+      );
     },
     [handleOpenDocument, isPolish]
   );
@@ -1389,9 +1466,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       ideaData?: MyIdea,
       options?: { openMap?: boolean; initialTool?: CanvasToolType }
     ) => {
-      if (options?.initialTool) {
-        setIdeaActiveTool(options.initialTool);
-      }
       handleOpenDocument({
         id: ideaId,
         type: 'idea',
@@ -1403,6 +1477,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           initialTool: options?.initialTool,
         },
       });
+      if (options?.initialTool) {
+        setIdeaWorkspaceStateById((prev) =>
+          patchIdeaWorkspaceState(
+            prev,
+            { id: ideaId, data: { initialTool: options.initialTool } },
+            { activeTool: options.initialTool }
+          )
+        );
+      }
     },
     [handleOpenDocument, isPolish]
   );
@@ -1455,6 +1538,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           : null;
 
       if (nextId && nextId !== docId) {
+        setIdeaWorkspaceStateById((prev) => moveIdeaWorkspaceState(prev, docId, nextId));
         setOpenDocuments((prev) => {
           const existing = prev.find((d) => d.id === docId);
           if (!existing) return prev;
@@ -2641,12 +2725,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               seedIntent={(activeDoc as any)?.data?.seedIntent}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-              activeTool={ideaActiveTool}
-              onActiveToolChange={setIdeaActiveTool}
-              activePanel={ideaActivePanel}
+              activeTool={activeIdeaWorkspaceState?.activeTool || ideaActiveTool}
+              onActiveToolChange={handleIdeaToolChange}
+              activePanel={activeIdeaWorkspaceState?.activePanel || ideaActivePanel}
               onActivePanelChange={handleIdeaPanelChange}
-              onSelectionChange={setIdeaSelection}
-              onLockedChange={setIdeaLocked}
+              onSelectionChange={handleIdeaSelectionChange}
+              onLockedChange={handleIdeaLockedChange}
             />
           </React.Suspense>
         );
@@ -3192,7 +3276,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
               {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
               {activeTab === 'ideas' && activeDocumentId && (
-                <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
+                <WorkspacePanelStrip
+                  value={activeIdeaWorkspaceState?.activePanel || ideaActivePanel}
+                  onChange={handleIdeaPanelChange}
+                />
               )}
 
               {/* Ideas: canonical view mode switcher — table / grid */}

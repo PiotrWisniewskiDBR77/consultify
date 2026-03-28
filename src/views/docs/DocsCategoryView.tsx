@@ -9,17 +9,21 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Book, ChevronRight, Clock, Eye, Search } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
 import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 
 export const DocsCategoryView: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const [searchQuery, setSearchQuery] = useState('');
+  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
-  const { data: categories } = useDocsCategories();
+  const { data: categories } = useDocsCategories(docsLanguage);
   const { data: articlesData, isLoading } = useDocsArticles({
+    language: docsLanguage,
     categorySlug,
     search: searchQuery || undefined,
   });
@@ -32,7 +36,7 @@ export const DocsCategoryView: React.FC = () => {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
         <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
-          Docs
+          {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
         <span className="text-slate-900 dark:text-white font-medium">
@@ -42,7 +46,9 @@ export const DocsCategoryView: React.FC = () => {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{currentCategory?.name || 'Category'}</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {currentCategory?.name || t('docs.category.fallbackTitle', 'Category')}
+        </h1>
         {currentCategory?.description && (
           <p className="text-lg text-slate-600 dark:text-slate-400">
             {currentCategory.description}
@@ -57,7 +63,7 @@ export const DocsCategoryView: React.FC = () => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search in this category..."
+          placeholder={t('docs.category.searchPlaceholder', 'Search in this category...')}
           className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
         />
       </div>
@@ -80,10 +86,12 @@ export const DocsCategoryView: React.FC = () => {
           <div className="text-center py-12">
             <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-              No articles found
+              {t('docs.category.emptyTitle', 'No articles found')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-500">
-              {searchQuery ? 'Try adjusting your search query' : 'This category is empty'}
+              {searchQuery
+                ? t('docs.category.emptySearch', 'Try adjusting your search query')
+                : t('docs.category.emptyCategory', 'This category is empty')}
             </p>
           </div>
         ) : (
@@ -109,15 +117,17 @@ export const DocsCategoryView: React.FC = () => {
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
-                        {article.reading_time_minutes} min read
+                        {t('docs.common.readTime', '{{count}} min read', {
+                          count: article.reading_time_minutes,
+                        })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Eye size={12} />
-                        {article.view_count} views
+                        {t('docs.common.views', '{{count}} views', { count: article.view_count })}
                       </span>
                       {article.is_featured && (
                         <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
-                          Featured
+                          {t('docs.common.featured', 'Featured')}
                         </span>
                       )}
                     </div>
@@ -140,7 +150,7 @@ export const DocsCategoryView: React.FC = () => {
           className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           <ArrowLeft size={16} />
-          Back to all categories
+          {t('docs.category.backToCategories', 'Back to all categories')}
         </Link>
       </div>
     </div>

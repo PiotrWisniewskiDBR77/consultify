@@ -9,6 +9,7 @@ interface CalendarSidebarProps {
   onFilterChange: (filter: CalendarFilter) => void;
   currentDate: Date;
   onDateChange: (date: Date) => void;
+  externalSourceAvailability?: Partial<Record<'google' | 'outlook', boolean>>;
 }
 
 const ALL_SOURCES: CalendarEventSource[] = [
@@ -25,11 +26,16 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onFilterChange,
   currentDate,
   onDateChange,
+  externalSourceAvailability,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const toggleSource = (source: CalendarEventSource) => {
+    const isExternalSource = source === 'google' || source === 'outlook';
+    if (isExternalSource && !externalSourceAvailability?.[source]) {
+      return;
+    }
     const current = filter.sources;
     const next = current.includes(source)
       ? current.filter((s) => s !== source)
@@ -119,13 +125,18 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         </h4>
         <div className="space-y-1.5">
           {ALL_SOURCES.map((source) => {
-            const active = filter.sources.includes(source);
+            const isExternalSource = source === 'google' || source === 'outlook';
+            const isAvailable = isExternalSource ? Boolean(externalSourceAvailability?.[source]) : true;
+            const active = isAvailable && filter.sources.includes(source);
             return (
               <button
                 key={source}
                 onClick={() => toggleSource(source)}
+                disabled={!isAvailable}
                 className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  active
+                  !isAvailable
+                    ? 'cursor-not-allowed text-slate-400 dark:text-slate-600 opacity-70'
+                    : active
                     ? 'text-slate-800 dark:text-white'
                     : 'text-slate-400 dark:text-slate-600 line-through'
                 } hover:bg-slate-100 dark:hover:bg-navy-800`}
@@ -138,11 +149,28 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                     opacity: active ? 1 : 0.4,
                   }}
                 />
-                {isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}
+                <span className="min-w-0 text-left">
+                  <span className="block">
+                    {isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}
+                  </span>
+                  {!isAvailable && isExternalSource && (
+                    <span className="block text-[10px] font-normal normal-case text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Podłącz w Integracjach' : 'Connect in Integrations'}
+                    </span>
+                  )}
+                </span>
               </button>
             );
           })}
         </div>
+        {(externalSourceAvailability?.google === false ||
+          externalSourceAvailability?.outlook === false) && (
+          <p className="mt-3 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Źródła Google i Outlook pojawiają się tutaj dopiero po aktywnym podłączeniu w Integracjach.'
+              : 'Google and Outlook sources appear here only after an active connection is available in Integrations.'}
+          </p>
+        )}
       </div>
 
       {/* Today button */}

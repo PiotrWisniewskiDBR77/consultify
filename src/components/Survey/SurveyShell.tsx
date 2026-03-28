@@ -50,9 +50,32 @@ export interface SurveyShellProps {
   focusMode?: boolean;
   locked?: boolean;
   onAnswer: (answer: SurveyAnswer) => void;
-  onSubmit: (answers: SurveyAnswer[]) => void;
+  onSubmit: (answers: SurveyAnswer[]) => void | Promise<void>;
   onAutosave?: (answers: SurveyAnswer[], currentSection: number) => void;
   className?: string;
+}
+
+function getInitialFocusPosition(
+  sections: SurveySection[],
+  initialAnswers: SurveyAnswer[],
+  fallbackSectionIndex: number
+): { sectionIndex: number; questionIndex: number } {
+  const answeredIds = new Set(initialAnswers.map((answer) => answer.questionId));
+
+  for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex += 1) {
+    const questionIndex = sections[sectionIndex]?.questions.findIndex(
+      (question) => !answeredIds.has(question.id)
+    );
+
+    if (questionIndex !== undefined && questionIndex >= 0) {
+      return { sectionIndex, questionIndex };
+    }
+  }
+
+  return {
+    sectionIndex: Math.max(0, Math.min(fallbackSectionIndex, Math.max(0, sections.length - 1))),
+    questionIndex: 0,
+  };
 }
 
 export const SurveyShell: React.FC<SurveyShellProps> = ({
@@ -69,11 +92,15 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const initialPosition = useMemo(
+    () => getInitialFocusPosition(sections, initialAnswers, initialSectionIndex),
+    [initialAnswers, initialSectionIndex, sections]
+  );
   const [answers, setAnswers] = useState<Map<string, string | number | string[]>>(
     () => new Map(initialAnswers.map((a) => [a.questionId, a.value]))
   );
-  const [currentSection, setCurrentSection] = useState(initialSectionIndex);
-  const [focusQuestionIdx, setFocusQuestionIdx] = useState(0);
+  const [currentSection, setCurrentSection] = useState(initialPosition.sectionIndex);
+  const [focusQuestionIdx, setFocusQuestionIdx] = useState(initialPosition.questionIndex);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRTL = language === 'ar';
@@ -98,18 +125,24 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
     return requiredIds.every((id) => answers.has(id));
   }, [allQuestions, answers]);
 
-  const scheduleAutosave = useCallback(() => {
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(() => {
-      if (onAutosave) {
-        const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({
-          questionId,
-          value,
-        }));
-        onAutosave(answerArray, currentSection);
-      }
-    }, 2000);
-  }, [answers, currentSection, onAutosave]);
+  const scheduleAutosave = useCallback(
+    (
+      latestAnswers: Map<string, string | number | string[]>,
+      latestSection: number = currentSection
+    ) => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = setTimeout(() => {
+        if (onAutosave) {
+          const answerArray = Array.from(latestAnswers.entries()).map(([questionId, value]) => ({
+            questionId,
+            value,
+          }));
+          onAutosave(answerArray, latestSection);
+        }
+      }, 2000);
+    },
+    [currentSection, onAutosave]
+  );
 
   useEffect(() => {
     return () => {
@@ -123,22 +156,26 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
       setAnswers((prev) => {
         const next = new Map(prev);
         next.set(questionId, value);
+        scheduleAutosave(next, currentSection);
         return next;
       });
       onAnswer({ questionId, value });
-      scheduleAutosave();
     },
-    [locked, onAnswer, scheduleAutosave]
+    [currentSection, locked, onAnswer, scheduleAutosave]
   );
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!canSubmit || locked) return;
     setIsSubmitting(true);
     const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({
       questionId,
       value,
     }));
-    onSubmit(answerArray);
+    try {
+      await Promise.resolve(onSubmit(answerArray));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [canSubmit, locked, answers, onSubmit]);
 
   const goToSection = useCallback((idx: number) => {
@@ -368,6 +405,20 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
 
       {/* Canvas — Questions */}
       <main className="flex-1 p-6 lg:p-8 overflow-auto">
+        {locked && (
+          <div className="max-w-2xl mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-4 py-3">
+            <div className="font-medium text-gray-900 dark:text-gray-100">
+              {t('survey.readOnlyTitle', 'Read-only mode')}
+            </div>
+            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t(
+                'survey.readOnlyHint',
+                'You can review the survey, but answering and submitting are currently disabled.'
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Focus mode — single question */}
         {focusMode && focusQuestion ? (
           <div className="max-w-xl mx-auto">

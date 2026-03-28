@@ -72,6 +72,7 @@ import {
 } from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
+import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
@@ -719,10 +720,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
           ? fullText
-          : t(
-              'thinking.processing',
-              '⚠️ AI returned an empty response. Check backend LLM provider configuration.'
-            );
+          : getTeresaEmptyResponseMessage(i18n.language);
 
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
@@ -975,11 +973,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
-      const uiLang = (i18n.language || 'en').split('-')[0];
-      const friendly =
-        uiLang === 'pl'
-          ? '⚠️ Nie udało się uruchomić AI. Sprawdź backend (logi) oraz czy jest skonfigurowany dostawca LLM (np. OPENAI_API_KEY / GEMINI_API_KEY).'
-          : '⚠️ Failed to start AI. Check backend logs and ensure an LLM provider is configured (e.g. OPENAI_API_KEY / GEMINI_API_KEY).';
+      const friendly = getTeresaStartFailureMessage(i18n.language);
 
       try {
         if (activeConversationId) {
@@ -1340,7 +1334,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               detail: {
                 code: 'DEMO_TIME_EXPIRED',
                 message: 'Demo session expired. Start a free trial to continue.',
-                cta: { label: 'Start free trial', href: '/auth?mode=register' },
+                cta: { label: 'Start free trial', href: '/trial' },
               },
             })
           );
@@ -1353,7 +1347,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               detail: {
                 code: 'DEMO_AI_SESSION_LIMIT_REACHED',
                 message: `Demo AI limit reached (${aiInteractionsLimit ?? 0}). Start a free trial to continue.`,
-                cta: { label: 'Start free trial', href: '/auth?mode=register' },
+                cta: { label: 'Start free trial', href: '/trial' },
               },
             })
           );
@@ -2954,12 +2948,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <h3
               className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
             >
-              {t('aiChat.welcome', 'Start a conversation')}
+              {t('aiChat.teresaWelcome', 'Talk to Teresa')}
             </h3>
             <p
               className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
             >
-              {t('aiChat.welcomeSubtitle', 'Ask questions, get insights, and collaborate with AI')}
+              {t(
+                'aiChat.teresaWelcomeSubtitle',
+                'Work through decisions, notes, and next steps with your internal AI partner'
+              )}
             </p>
           </div>
         ) : (
@@ -3035,11 +3032,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           disabled={isDisabled}
           placeholder={
             workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-              ? t('aiChat.contextPlaceholder', {
-                  defaultValue: 'Jak mogę pomóc z {{context}}?',
+              ? t('aiChat.teresaContextPlaceholder', {
+                  defaultValue: 'How can Teresa help with {{context}}?',
                   context: workspaceContext.entityName,
                 })
-              : t('aiChat.placeholder', 'How can I help you?')
+              : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
           }
           voiceModeEnabled={voiceModeEnabled}
           onVoiceModeChange={setVoiceModeEnabled}

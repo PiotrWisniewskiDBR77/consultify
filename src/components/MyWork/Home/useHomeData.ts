@@ -8,6 +8,7 @@ import type {
   HomeBlockLayout,
   HomeBlockSize,
   HomeLayoutConfig,
+  HomePrimaryAction,
   HomeScreenData,
   SparkItem,
 } from './homeV2Types';
@@ -97,6 +98,7 @@ export interface HomeData {
   loading: boolean;
   error: string | null;
   updateLayout: (layout: HomeLayoutConfig) => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const DEFAULT_LAYOUT: HomeLayoutConfig = {
@@ -680,6 +682,93 @@ function buildLegacyNudge(screen: HomeScreenData): NudgeData | null {
   };
 }
 
+function buildCommandPrimaryAction(screen: HomeScreenData): HomePrimaryAction | null {
+  const aiPulsePayload = getBlockPayload(screen, 'aiPulseCore');
+  const topFocusItem = Array.isArray(aiPulsePayload.focusItems) ? aiPulsePayload.focusItems[0] : null;
+
+  if (topFocusItem && typeof topFocusItem.id === 'string' && typeof topFocusItem.title === 'string') {
+    const target =
+      topFocusItem.type === 'idea' || topFocusItem.type === 'task' || topFocusItem.type === 'decision'
+        ? topFocusItem.type
+        : 'idea';
+
+    return {
+      title: String(topFocusItem.title),
+      helper:
+        typeof topFocusItem.meta === 'string' && topFocusItem.meta.trim().length > 0
+          ? String(topFocusItem.meta)
+          : typeof aiPulsePayload.summary === 'string'
+            ? String(aiPulsePayload.summary)
+            : '',
+      action: {
+        type: 'open',
+        target,
+        id: String(topFocusItem.id),
+      },
+    };
+  }
+
+  const decisionPayload = getBlockPayload(screen, 'decisionTemperature');
+  const hottestDecision = decisionPayload.hottestDecision;
+  if (
+    hottestDecision &&
+    typeof hottestDecision.id === 'string' &&
+    typeof hottestDecision.title === 'string'
+  ) {
+    return {
+      title: String(hottestDecision.title),
+      helper:
+        typeof hottestDecision.deadlineLabel === 'string' && hottestDecision.deadlineLabel.trim().length > 0
+          ? String(hottestDecision.deadlineLabel)
+          : typeof hottestDecision.ownerLabel === 'string'
+            ? String(hottestDecision.ownerLabel)
+            : '',
+      action: {
+        type: 'open',
+        target: 'decision',
+        id: String(hottestDecision.id),
+      },
+    };
+  }
+
+  const sparkPayload = getBlockPayload(screen, 'sparkField');
+  if (
+    sparkPayload.nudge &&
+    typeof sparkPayload.nudge === 'object' &&
+    typeof sparkPayload.nudge.ideaId === 'string'
+  ) {
+    return {
+      title: String(sparkPayload.nudge.text || 'Explore the strongest idea'),
+      helper: typeof sparkPayload.nudge.text === 'string' ? String(sparkPayload.nudge.text) : '',
+      action: {
+        type: 'open',
+        target: 'idea',
+        id: String(sparkPayload.nudge.ideaId),
+      },
+    };
+  }
+
+  return null;
+}
+
+function enrichCommandDock(screen: HomeScreenData): HomeScreenData {
+  const primaryAction = buildCommandPrimaryAction(screen);
+
+  return {
+    ...screen,
+    blocks: screen.blocks.map((block) => {
+      if (block.id !== 'commandDock') return block;
+      return {
+        ...block,
+        payload: {
+          ...block.payload,
+          primaryAction,
+        },
+      };
+    }),
+  };
+}
+
 export function useHomeData(refreshTrigger?: number): HomeData {
   const [screen, setScreen] = useState<HomeScreenData>(cloneMockScreen);
   const [layout, setLayout] = useState<HomeLayoutConfig>(getDefaultLayout);
@@ -700,7 +789,7 @@ export function useHomeData(refreshTrigger?: number): HomeData {
 
     const screenData =
       screenRes.status === 'fulfilled' && screenRes.value?.data?.blocks
-        ? (screenRes.value.data as HomeScreenData)
+        ? enrichCommandDock(screenRes.value.data as HomeScreenData)
         : createEmptyScreen();
     const savedLayout =
       prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
@@ -717,9 +806,7 @@ export function useHomeData(refreshTrigger?: number): HomeData {
         setScreen(screenData);
         setLayout(savedLayout);
       }
-      setError(
-        screenRes.reason instanceof Error ? screenRes.reason.message : 'Failed to load home data'
-      );
+      setError('Home V2 unavailable. Please try again in a moment.');
     }
     setLoading(false);
   }, []);
@@ -747,5 +834,5 @@ export function useHomeData(refreshTrigger?: number): HomeData {
   const pulse = useMemo(() => buildLegacyPulse(screen), [screen]);
   const nudge = useMemo(() => buildLegacyNudge(screen), [screen]);
 
-  return { screen, blocks, layout, brief, spark, pulse, nudge, loading, error, updateLayout };
+  return { screen, blocks, layout, brief, spark, pulse, nudge, loading, error, updateLayout, refresh: fetchData };
 }

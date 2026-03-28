@@ -109,6 +109,7 @@ import {
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
+import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { vsmNodeTypes } from './VSMNodeComponent';
 import { VSMTimelineBar } from './VSMTimelineBar';
 
@@ -1141,6 +1142,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const currentUser = useAppStore((state) => state.currentUser);
 
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [lanes, setLanes] = useState<Lane[]>(DEFAULT_LANES);
@@ -1536,6 +1538,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const hydrate = useCallback(async () => {
     if (!open) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
       const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
@@ -1626,7 +1629,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         }
       }
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load'));
+      const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
+      toast.error(nextError);
+      setLoadError(nextError);
       setNodes([]);
       setEdges([]);
       setExtensions({});
@@ -2702,6 +2707,45 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
         </div>
       </div>
+
+      {loadError && !loading && nodes.length === 0 && (
+        <div className="px-4 pt-3">
+          <EmptyStateInline
+            icon={AlertTriangle}
+            dashed={false}
+            message={
+              isPl
+                ? 'Widok procesu jest chwilowo niedostępny.'
+                : 'Process flow is temporarily unavailable.'
+            }
+            hint={
+              isPl
+                ? 'To nie oznacza pustego procesu. Spróbuj ponownie wczytać mapę i sprawdź jeszcze raz.'
+                : 'This does not mean the process is empty. Retry loading the map and check again.'
+            }
+            action={{
+              label: isPl ? 'Ponów' : 'Retry',
+              onClick: hydrate,
+            }}
+            className="mb-2"
+          />
+        </div>
+      )}
+
+      {locked && (
+        <div className="px-4 pt-3">
+          <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
+            <div className="font-medium text-slate-900 dark:text-slate-100">
+              {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {isPl
+                ? 'Możesz przeglądać przepływ, ale edycja i zapis są obecnie zablokowane.'
+                : 'You can review the flow, but editing and saving are currently disabled.'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Warnings panel */}
       {showWarnings && warnings.length > 0 && (

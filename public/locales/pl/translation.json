@@ -2355,14 +2355,31 @@
       }
     },
     "topBar": {
-      "demo": "Demo",
-      "trial": "Okres próbny",
+      "demo": "Zobacz demo",
+      "trial": "Rozpocznij trial",
       "login": "Zaloguj się",
       "signUp": "Zarejestruj się"
     },
     "epicHero": {
       "eyebrow": "Platforma konsultingowej inteligencji",
-      "sub": "Ustrukturyzowany workflow konsultingowy dla diagnozy, planowania, realizacji i mierzenia efektu."
+      "sub": "Dla konsultantów, zespołów transformacyjnych i operatorów, którzy chcą przejść od diagnozy do planu, realizacji i mierzalnych wyników w jednym workflow.",
+      "annaBadge": "Zacznij od Anny",
+      "annaSub": "Nie wiesz, czy lepiej zacząć od demo czy od triala? Anna wyjaśni dopasowanie, pricing i bezpieczeństwo, zanim wybierzesz kolejny krok.",
+      "annaPrimaryCta": "Zapytaj Annę najpierw",
+      "annaPrompts": {
+        "fit": {
+          "label": "Zapytaj o dopasowanie",
+          "prompt": "Czy Consultify pasuje do mojego zespołu?"
+        },
+        "pricing": {
+          "label": "Zapytaj o pricing",
+          "prompt": "Jak wybrać między demo, trialem i planami cenowymi?"
+        },
+        "security": {
+          "label": "Zapytaj o bezpieczeństwo",
+          "prompt": "Jak Consultify podchodzi do bezpieczeństwa i rezydencji danych?"
+        }
+      }
     },
     "problemPlatform": {
       "badge": "Dlaczego ta kategoria ma znaczenie",
@@ -2481,14 +2498,15 @@
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify to",
-        "line2": "Spotify dla",
-        "line3": "wiedzy konsultingowej."
+        "line1": "Consultify daje zespołom",
+        "line2": "konsultingową inteligencję",
+        "line3": "którą da się realnie wdrażać."
       },
-      "sub": "Ustrukturyzowany workflow konsultingowy dla diagnozy, planowania, realizacji i mierzenia efektu.",
+      "sub": "Dla konsultantów, zespołów transformacyjnych i operatorów, którzy chcą przejść od diagnozy do planu, realizacji i mierzalnych wyników w jednym workflow.",
       "billboard": "Zrobiliśmy dla konsultingu to, co Spotify zrobił dla muzyki: nielimitowany dostęp — tylko zamiast playlist masz zysk.",
-      "ctaPrimary": "Uruchom darmowy trial",
-      "ctaSecondary": "OPEN DEMO NOW",
+      "billboardShort": "Jeden workflow od diagnozy do realizacji i mierzalnych wyników.",
+      "ctaPrimary": "Rozpocznij trial",
+      "ctaSecondary": "Zobacz demo",
       "ctaNote": "Teasery są publiczne. Pełne filmy odblokujesz po zalogowaniu.",
       "panel": {
         "title": "Od czatu → do artefaktów → do zysku",
@@ -2843,8 +2861,8 @@
       "title1": "Zostań Naszym Partnerem.",
       "title2": "Rośnijmy Razem.",
       "description": "Dołącz do naszej sieci ekspertów transformacji. Zarabiaj powtarzalne przychody, korzystaj z narzędzi premium i pomagaj firmom osiągać cyfrową doskonałość.",
-      "getStarted": "Rozpocznij teraz",
-      "watchOverview": "Obejrzyj prezentację"
+      "getStarted": "Otwórz onboarding",
+      "watchOverview": "Otwórz dokumentację partnera"
     },
     "value": {
       "title": "Dlaczego warto zostać partnerem Consultify?",
@@ -2878,7 +2896,7 @@
       "subtitle": "Nasi partnerzy beta transformują sposób pracy z klientami",
       "resultsLabel": "Rezultaty w fazie beta:",
       "partnerSince": "Partner beta od {{date}}",
-      "launchNotice": "<strong>Oficjalne uruchomienie Programu Partnerskiego Q1 2026.</strong> Dołącz teraz jako wczesny użytkownik i uzyskaj priorytetowy dostęp, specjalne stawki prowizji i bezpośredni wpływ na roadmapę produktu.",
+      "launchNotice": "<strong>Onboarding partnerów działa w trybie kontrolowanego rolloutu.</strong> Dostęp do onboardingu, materiałów i operacji payout jest włączany stopniowo po aktywacji profilu partnera.",
       "stories": {
         "0": {
           "company": "Nordic Digital Solutions",
@@ -3333,6 +3351,10 @@
     "contextPlaceholder": "Jak mogę pomóc z {{context}}?",
     "welcome": "Rozpocznij rozmowę",
     "welcomeSubtitle": "Zadawaj pytania, uzyskuj wglądy i współpracuj z AI",
+    "teresaPlaceholder": "Zapytaj Teresę o swoją pracę...",
+    "teresaContextPlaceholder": "Jak Teresa może pomóc z {{context}}?",
+    "teresaWelcome": "Porozmawiaj z Teresą",
+    "teresaWelcomeSubtitle": "Pracuj nad decyzjami, notatkami i kolejnymi krokami z wewnętrzną partnerką AI",
     "loadingConversation": "Ładowanie rozmowy…",
     "autoReadOn": "Włącz czytanie na głos",
     "autoReadOff": "Wyłącz czytanie na głos",

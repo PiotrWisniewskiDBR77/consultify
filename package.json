@@ -9,11 +9,12 @@
     "apps/*/backend"
   ],
   "scripts": {
-    "dev": "npm run dev:stable",
+    "dev": "npm run dev:live",
     "dev:stop": "node scripts/dev/stop-dev-ports.mjs",
     "dev:railway": "node scripts/dev/preflight-ports.mjs && VITE_STABLE_DEV=1 npx concurrently --restart-tries -1 --restart-after 2000 \"npm run dev:backend:railway\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:railway:diag": "node scripts/dev/preflight-ports.mjs && VITE_STABLE_DEV=1 npx concurrently --timings --restart-tries -1 --restart-after 2000 \"npm run dev:backend:railway\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:stable": "node scripts/dev/preflight-ports.mjs && VITE_STABLE_DEV=1 LOG_LEVEL=info AI_LOG_LEVEL=INFO concurrently \"npm run dev:backend\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
+    "dev:live": "node scripts/dev/preflight-ports.mjs && LOG_LEVEL=info AI_LOG_LEVEL=INFO concurrently \"npm run dev:backend\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:localdb": "node scripts/dev/reject-local-db.mjs dev:localdb",
     "dev:pg": "node scripts/dev/reject-local-db.mjs dev:pg",
     "dev:watch": "concurrently \"npm run dev:backend:watch\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",

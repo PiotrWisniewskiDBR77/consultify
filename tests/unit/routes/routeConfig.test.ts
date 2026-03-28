@@ -42,6 +42,14 @@ describe('routeConfig helpers', () => {
     expect(ROUTES.ONBOARDING).toBe('/setup/onboarding');
   });
 
+  it('keeps legacy partner entry routes mapped to their partner app views', () => {
+    expect(getAppViewFromPath('/partner/dashboard')).toBe(AppView.PARTNER_PROVIDER_HOME);
+    expect(getAppViewFromPath('/partner/clients')).toBe(AppView.PARTNER_CLIENT_ACCESS);
+    expect(getAppViewFromPath('/partner/commission')).toBe(AppView.PARTNER_COMMISSION);
+    expect(getAppViewFromPath('/partner/directory')).toBe(AppView.PARTNER_DIRECTORY);
+    expect(getAppViewFromPath('/partner/resources')).toBe(AppView.PARTNER_RESOURCES);
+  });
+
   it('getAppViewFromPath: resolves both /finance and /economics to ECONOMICS', () => {
     expect(getAppViewFromPath('/finance')).toBe(AppView.ECONOMICS);
     expect(getAppViewFromPath('/finance/models')).toBe(AppView.ECONOMICS);

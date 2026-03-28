@@ -26,6 +26,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -70,6 +71,9 @@ export interface ResultsSummaryViewProps {
   searchQuery: string;
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
+  governedSnapshot?: V8ResultsDashboardSnapshot | null;
+  refreshNonce?: number;
+  onResultsTruthChange?: () => void | Promise<void>;
 }
 
 interface SnapshotStatCardProps {
@@ -157,6 +161,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
   searchQuery,
   activeFilters,
   onFilterChange,
+  governedSnapshot,
+  refreshNonce = 0,
+  onResultsTruthChange,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -183,7 +190,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
     try {
       const [initiativesRes, v8SnapshotRes, catalogRes] = await Promise.allSettled([
         Api.getInitiativesByStatus('DONE'),
-        V8ResultsApi.getDashboard(),
+        governedSnapshot
+          ? Promise.resolve({ snapshot: governedSnapshot })
+          : V8ResultsApi.getDashboard(),
         V8ResultsApi.getKpiCatalog(),
       ]);
 
@@ -270,11 +279,19 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [governedSnapshot]);
+
+  const triggerResultsTruthRefresh = useCallback(() => {
+    if (onResultsTruthChange) {
+      void onResultsTruthChange();
+      return;
+    }
+    void fetchData();
+  }, [fetchData, onResultsTruthChange]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, refreshNonce]);
 
   const filtered = useMemo(() => {
     let list = [...items];
@@ -628,7 +645,10 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                   {
                     label: t('results.summary.actions.economics', 'Finanse'),
                     icon: TrendingUp,
-                    onClick: () => navigate('/economics?tab=valuation'),
+                    onClick: () =>
+                      navigate(
+                        `${ROUTES.FINANCE}?tab=valuation&initiativeId=${encodeURIComponent(i.id)}&initiativeName=${encodeURIComponent(i.title)}`
+                      ),
                     colorScheme: 'neutral',
                   },
                 ],
@@ -707,7 +727,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
           onSuccess={() => {
             setShowCreateKpi(false);
             setCreateKpiInitiativeId(null);
-            fetchData();
+            triggerResultsTruthRefresh();
           }}
         />
       )}
@@ -717,7 +737,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
           initiativeId={roiDrawerInitiativeId}
           initiativeName={items.find((x) => x.id === roiDrawerInitiativeId)?.title || ''}
           onClose={() => setRoiDrawerInitiativeId(null)}
-          onSaved={fetchData}
+          onSaved={triggerResultsTruthRefresh}
         />
       )}
     </>

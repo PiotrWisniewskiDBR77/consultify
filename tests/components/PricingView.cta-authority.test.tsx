@@ -55,10 +55,10 @@ describe('PricingView CTA authority', () => {
   it('preserves public pricing trial and demo routes and exposes Anna on the page', () => {
     renderView();
 
-    expect(screen.getByRole('button', { name: 'Ask Anna' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Trial' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
     fireEvent.click(screen.getAllByRole('button', { name: /Start Free Trial/i })[0]);
 
     expect(navigateMock).toHaveBeenNthCalledWith(1, '/trial/start');

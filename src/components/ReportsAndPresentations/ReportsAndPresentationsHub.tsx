@@ -81,7 +81,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
     if (fromQuery) return fromQuery;
     if (location.pathname.startsWith('/reports')) return 'outputs_documents';
-    if (location.pathname.startsWith('/presentations')) return 'outputs_all';
+    if (location.pathname.startsWith('/presentations')) return 'presentations';
     return 'outputs_all';
   }, [location.pathname, location.search]);
 

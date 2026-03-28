@@ -25,6 +25,12 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import {
+  createInitiativeWriteTruth,
+  getInitiativeStatusPreflightTruth,
+  quickUpdateInitiativeWriteTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
+import {
   V8PlanningApi,
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
@@ -694,11 +700,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        const rc = await Api.get(`/initiatives/${initiativeId}/gate-readiness-check`);
-        const transitions = Array.isArray(rc?.availableTransitions) ? rc.availableTransitions : [];
-        const tr = transitions.find(
-          (x: any) =>
-            String(x?.targetStatus || '').toUpperCase() === String(newStatus).toUpperCase()
+        const { transition: tr, blockingItems } = await getInitiativeStatusPreflightTruth(
+          initiativeId,
+          newStatus
         );
         if (!tr || !tr.canCurrentUserExecute) {
           toast.error(
@@ -710,16 +714,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           );
           return;
         }
-        const readiness = Array.isArray(rc?.readiness) ? rc.readiness : [];
-        const blockingMissing = readiness.filter(
-          (r: any) => r?.severity === 'blocking' && !r?.pass
-        );
-        if (blockingMissing.length > 0) {
-          const list = blockingMissing
-            .slice(0, 5)
-            .map((r: any) => String(r?.label || r?.key || '').trim())
-            .filter(Boolean)
-            .join('\n• ');
+        if (blockingItems.length > 0) {
+          const list = blockingItems.slice(0, 5).join('\n• ');
           toast.error(
             t(
               'initiatives.toast.gateBlockedHub',
@@ -735,11 +731,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
 
       try {
-        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+        const truth = await updateInitiativeStatusWriteTruth(initiativeId, newStatus);
+        const refreshed = truth.initiative;
         setInitiatives((prev) =>
-          prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i))
+          prev.map((initiative) =>
+            initiative.id === initiativeId
+              ? ({ ...initiative, ...(refreshed || {}), status: newStatus } as any)
+              : initiative
+          )
+        );
+        setAllInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId
+              ? ({ ...initiative, ...(refreshed || {}), status: newStatus } as any)
+              : initiative
+          )
+        );
+        setOpenDocuments((prev) =>
+          prev.map((document) =>
+            document.id === initiativeId
+              ? {
+                  ...document,
+                  name: refreshed?.name || refreshed?.title || document.name,
+                  status: (refreshed?.status || newStatus) as any,
+                }
+              : document
+          )
         );
         toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        fetchData(true);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
@@ -747,7 +767,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
     },
-    [setOpenDocuments, t]
+    [fetchData, setOpenDocuments, t]
   );
 
   const handleQuickUpdate = useCallback(
@@ -787,15 +807,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
+        const truth = await quickUpdateInitiativeWriteTruth(initiativeId, updates as Record<string, unknown>);
+        const refreshed = truth.initiative;
         setInitiatives((prev) =>
-          prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i))
+          prev.map((initiative) =>
+            initiative.id === initiativeId
+              ? ({ ...initiative, ...(refreshed || updates) } as any)
+              : initiative
+          )
+        );
+        setAllInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId
+              ? ({ ...initiative, ...(refreshed || updates) } as any)
+              : initiative
+          )
+        );
+        setOpenDocuments((prev) =>
+          prev.map((document) =>
+            document.id === initiativeId
+              ? {
+                  ...document,
+                  name: refreshed?.name || refreshed?.title || document.name,
+                  status: (refreshed?.status || document.status) as any,
+                }
+              : document
+          )
         );
       } catch (error: any) {
         toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
       }
     },
-    [initiatives, t]
+    [setOpenDocuments, t]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -1527,7 +1570,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
                 try {
                   setIsCreating(true);
-                  const created = await Api.post('/initiatives', {
+                  const { createdId, truth } = await createInitiativeWriteTruth({
                     projectId: currentProjectId || undefined,
                     title: newTitle.trim(),
                     axis: newAxis,
@@ -1542,16 +1585,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewLevel('standard');
                   // Refresh list and open quick preview for immediate follow-up
                   fetchData(true);
-                  const createdId = created?.id || created?.initiative?.id;
                   if (createdId) {
                     // Best-effort: fetch full row for drawer via governed V8 read first.
                     try {
-                      let full: any;
-                      try {
-                        full = await V8PlanningApi.getInitiative(createdId);
-                      } catch {
-                        full = await Api.get(`/initiatives/${createdId}`);
-                      }
+                      const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
                       handleInitiativeClick(full as any);
                     } catch {
                       // ignore

@@ -240,8 +240,8 @@ describe('useFinanceData V8 analyses seam', () => {
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy forecast');
   });
 
-  it('prefers governed finance valuations before legacy economics fallback', async () => {
-    vi.mocked(V8FinanceApi.getValuations).mockResolvedValue({
+  it('keeps valuation list reads on the same legacy family as valuation writes', async () => {
+    vi.mocked(Api.get).mockResolvedValue({
       valuations: [
         {
           id: 'valuation-1',
@@ -253,7 +253,6 @@ describe('useFinanceData V8 analyses seam', () => {
           updated_at: '2026-03-27T10:00:00.000Z',
         },
       ],
-      count: 1,
     } as any);
 
     const { result } = renderHook(() => useFinanceData('valuation', '', []));
@@ -263,59 +262,51 @@ describe('useFinanceData V8 analyses seam', () => {
       expect(result.current.valuations).toHaveLength(1);
     });
 
-    expect(V8FinanceApi.getValuations).toHaveBeenCalled();
-    expect(Api.get).not.toHaveBeenCalledWith('/api/economics/valuations');
+    expect(V8FinanceApi.getValuations).not.toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/economics/valuations');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('DCF valuation');
   });
 
-  it('falls back to legacy finance valuations when V8 seam returns a bounded compatibility status', async () => {
-    vi.mocked(V8FinanceApi.getValuations).mockRejectedValue({ status: 404 });
+  it('returns an empty valuation list when the legacy valuation payload lacks valuations', async () => {
     vi.mocked(Api.get).mockResolvedValue({
-      valuations: [
-        {
-          id: 'valuation-legacy-1',
-          title: 'Legacy valuation',
-          status: 'draft',
-          source_type: 'manual',
-          currency: 'PLN',
-          horizon_years: 4,
-          updated_at: '2026-03-27T10:05:00.000Z',
-        },
-      ],
+      invalid: [],
     } as any);
 
     const { result } = renderHook(() => useFinanceData('valuation', '', []));
 
     await waitFor(() => {
       expect(result.current.loadingTab).toBeNull();
-      expect(result.current.valuations).toHaveLength(1);
+      expect(result.current.valuations).toHaveLength(0);
     });
 
-    expect(V8FinanceApi.getValuations).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/economics/valuations');
-    expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy valuation');
+    expect(result.current.rowsForActiveTab).toHaveLength(0);
   });
 
-  it('prefers governed finance budgets before legacy economics fallback', async () => {
-    vi.mocked(V8FinanceApi.getBudgets).mockResolvedValue({
-      budgets: [
-        {
-          id: 'budget-1',
-          title: 'FY26 operating budget',
-          status: 'draft',
-          currency: 'PLN',
-          granularity: 'monthly',
-          period_start: '2026-01-01',
-          period_end: '2026-12-31',
-          updated_at: '2026-03-27T11:00:00.000Z',
-        },
-      ],
-      count: 1,
-    } as any);
+  it('keeps budget list reads on the same legacy family as budget writes', async () => {
     vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
       models: [],
       count: 0,
     } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/economics/budgets') {
+        return {
+          budgets: [
+            {
+              id: 'budget-1',
+              title: 'FY26 operating budget',
+              status: 'draft',
+              currency: 'PLN',
+              granularity: 'monthly',
+              period_start: '2026-01-01',
+              period_end: '2026-12-31',
+              updated_at: '2026-03-27T11:00:00.000Z',
+            },
+          ],
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
 
     const { result } = renderHook(() => useFinanceData('prediction', '', []));
 
@@ -324,13 +315,12 @@ describe('useFinanceData V8 analyses seam', () => {
       expect(result.current.budgets).toHaveLength(1);
     });
 
-    expect(V8FinanceApi.getBudgets).toHaveBeenCalled();
-    expect(Api.get).not.toHaveBeenCalledWith('/api/economics/budgets');
+    expect(V8FinanceApi.getBudgets).not.toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/economics/budgets');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('FY26 operating budget');
   });
 
-  it('falls back to legacy finance budgets when V8 seam returns a bounded compatibility status', async () => {
-    vi.mocked(V8FinanceApi.getBudgets).mockRejectedValue({ status: 404 });
+  it('keeps legacy budget payloads as the single source of truth for prediction budgets', async () => {
     vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
       models: [],
       count: 0,
@@ -362,7 +352,6 @@ describe('useFinanceData V8 analyses seam', () => {
       expect(result.current.budgets).toHaveLength(1);
     });
 
-    expect(V8FinanceApi.getBudgets).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/economics/budgets');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy operating budget');
   });

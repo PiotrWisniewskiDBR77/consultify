@@ -28,6 +28,12 @@ const TOOL_CONFIG: Array<{
   { id: 'table', labelPl: 'Tabela', labelEn: 'Table', icon: Table2 },
 ];
 
+export function getIdeaWorkspaceToolLabel(activeTool: CanvasToolType, isPolish: boolean): string {
+  const match = TOOL_CONFIG.find((tool) => tool.id === activeTool);
+  if (!match) return activeTool;
+  return isPolish ? match.labelPl : match.labelEn;
+}
+
 export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   activeTool,
   onToolChange,
@@ -53,10 +59,12 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
                   ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
-              title={isPl ? tool.labelPl : tool.labelEn}
+              title={getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
             >
               <Icon size={14} />
-              <span className="hidden sm:inline">{isPl ? tool.labelPl : tool.labelEn}</span>
+              <span className="hidden sm:inline">
+                {getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
+              </span>
               {hasContent && !isActive && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-500/60" />
               )}

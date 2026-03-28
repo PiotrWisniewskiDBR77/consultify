@@ -22,6 +22,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
+  const [primaryFocus, ...secondaryFocus] = payload.focusItems;
 
   return (
     <HomeBlockShell
@@ -106,7 +107,38 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
       </div>
 
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-        {payload.focusItems.map((item, index) => (
+        {primaryFocus ? (
+          <div className="rounded-[24px] border border-primary-400/30 bg-gradient-to-br from-primary-500/18 via-violet-500/10 to-cyan-400/10 p-4 shadow-[0_20px_60px_-28px_rgba(76,29,149,0.9)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-primary-100/80">
+                {isPolish ? 'Najważniejszy ruch teraz' : 'Top move right now'}
+              </div>
+              <span
+                className={cn(
+                  'h-2.5 w-2.5 rounded-full bg-gradient-to-r',
+                  PRIORITY_RING[primaryFocus.priority]
+                )}
+              />
+            </div>
+            <div className="mt-3 text-lg font-semibold leading-snug text-white">{primaryFocus.title}</div>
+            <div className="mt-2 text-sm leading-6 text-slate-200/80">{primaryFocus.meta}</div>
+            <button
+              onClick={() =>
+                onAction({
+                  type: 'open',
+                  target: primaryFocus.type === 'idea' ? 'idea' : primaryFocus.type,
+                  id: primaryFocus.id,
+                })
+              }
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.13]"
+            >
+              {isPolish ? 'Otwórz priorytet' : 'Open priority'}
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        ) : null}
+
+        {secondaryFocus.map((item, index) => (
           <button
             key={item.id}
             onClick={() =>
@@ -120,7 +152,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
           >
             <div className="flex items-center justify-between gap-3">
               <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-                {isPolish ? `Ruch ${index + 1}` : `Move ${index + 1}`}
+                {isPolish ? `Kolejka ${index + 2}` : `Queue ${index + 2}`}
               </div>
               <span
                 className={cn(

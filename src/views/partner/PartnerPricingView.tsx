@@ -11,7 +11,9 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, ChevronDown, HelpCircle, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import {
@@ -28,6 +30,7 @@ import {
 
 export const PartnerPricingView: React.FC = () => {
   const { setCurrentView } = useAppStore();
+  const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const handleNavigate = useCallback(
@@ -38,14 +41,12 @@ export const PartnerPricingView: React.FC = () => {
   const handleCtaClick = useCallback(
     (tier: PartnerTier) => {
       if (tier.id === 'PLATINUM') {
-        // For Platinum, go to resources to contact PDM
-        setCurrentView(AppView.PARTNER_RESOURCES);
+        navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`);
       } else {
-        // For other tiers, go to provider home to start onboarding
-        setCurrentView(AppView.PARTNER_PROVIDER_HOME);
+        navigate(ROUTES.PARTNER.ONBOARDING);
       }
     },
-    [setCurrentView]
+    [navigate]
   );
 
   return (
@@ -79,10 +80,10 @@ export const PartnerPricingView: React.FC = () => {
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <button
-                onClick={handleNavigate(AppView.PARTNER_PROVIDER_HOME)}
+                onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
                 className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
               >
-                Rozpocznij współpracę
+                Otwórz onboarding partnera
                 <ArrowRight size={18} />
               </button>
               <button
@@ -413,17 +414,17 @@ export const PartnerPricingView: React.FC = () => {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
-              onClick={handleNavigate(AppView.PARTNER_PROVIDER_HOME)}
+              onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
               className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900 px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50"
             >
-              Rozpocznij teraz
+              Otwórz onboarding partnera
               <ArrowRight size={18} />
             </button>
             <button
-              onClick={handleNavigate(AppView.PARTNER_RESOURCES)}
+              onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
               className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-slate-100 dark:hover:bg-navy-800/40"
             >
-              Porozmawiaj z PDM
+              Otwórz materiały partnera
             </button>
           </div>
         </div>

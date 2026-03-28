@@ -1,0 +1,155 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+const apiGetMyIdeaMapMock = vi.fn();
+const toastErrorMock = vi.fn();
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+  }),
+}));
+
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: (...args: any[]) => toastErrorMock(...args),
+    success: vi.fn(),
+  },
+}));
+
+vi.mock('reactflow', () => ({
+  default: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
+  ReactFlowProvider: ({ children }: any) => <div>{children}</div>,
+  Background: () => null,
+  MiniMap: () => null,
+  Handle: () => null,
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  addEdge: vi.fn((edge, edges) => [...edges, edge]),
+  applyEdgeChanges: vi.fn((_changes, edges) => edges),
+  applyNodeChanges: vi.fn((_changes, nodes) => nodes),
+}));
+
+vi.mock('@reactflow/core', () => ({
+  getSmoothStepPath: () => ['', 0, 0, 0, 0],
+}));
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    getMyIdeaMap: (...args: any[]) => apiGetMyIdeaMapMock(...args),
+    syncMyIdeaMap: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/ideaAIGenerator', () => ({
+  generateAIProposal: vi.fn(),
+  generateProcessSummary: vi.fn(),
+  runProcessCoach: vi.fn(),
+}));
+
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: () => ({
+    currentUser: { firstName: 'Piotr', lastName: 'W', email: 'piotr@example.com' },
+  }),
+}));
+
+vi.mock('@/utils/artifactLinks', () => ({
+  withNormalizedArtifactLinks: (value: any) => value,
+}));
+
+vi.mock('../../../src/components/MyWork/canvas/useIdeaMapSync', () => ({
+  formatIdeaMapSyncLabel: () => 'Saved just now',
+  resolveIdeaMapHydration: (_ideaId: string, map: any) => ({ map }),
+  useIdeaMapSync: () => ({
+    saving: false,
+    syncState: 'idle',
+    lastSavedAt: null,
+    queueSync: vi.fn(),
+    flushNow: vi.fn(),
+    primeServerVersion: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowNodes', () => ({
+  useProcessFlowNodes: () => ({
+    deleteSelected: vi.fn(),
+    duplicateSelected: vi.fn(),
+    handleLaneRename: vi.fn(),
+    handleLaneDelete: vi.fn(),
+    handleLaneColorChange: vi.fn(),
+    handleLaneMoveUp: vi.fn(),
+    handleLaneMoveDown: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowQuickActions', () => ({
+  useProcessFlowQuickActions: vi.fn(),
+}));
+
+vi.mock('../../../src/components/MyWork/canvas/CanvasZoomControls', () => ({
+  CanvasZoomControls: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/mindmap/CollaborationOverlay', () => ({
+  CollaborationOverlay: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/ProcessKPIDashboard', () => ({
+  ProcessKPIDashboard: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/VSMNodeComponent', () => ({
+  vsmNodeTypes: {},
+}));
+
+vi.mock('../../../src/components/MyWork/VSMTimelineBar', () => ({
+  VSMTimelineBar: () => null,
+}));
+
+import { IdeaProcessFlowTool } from '../../../src/components/MyWork/IdeaProcessFlowTool';
+
+describe('IdeaProcessFlowTool error honesty', () => {
+  it('shows an explicit read-only banner when the process flow is locked', async () => {
+    apiGetMyIdeaMapMock.mockResolvedValue({
+      map: {
+        version: 1,
+        nodes: [],
+        edges: [],
+        extensions: {},
+      },
+    });
+
+    render(<IdeaProcessFlowTool open ideaId="idea-1" locked />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Read-only mode')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText('You can review the flow, but editing and saving are currently disabled.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows a visible retryable load error instead of leaving an empty canvas after hydrate failure', async () => {
+    apiGetMyIdeaMapMock.mockRejectedValue(new Error('Map failed to load'));
+
+    render(<IdeaProcessFlowTool open ideaId="idea-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Process flow is temporarily unavailable.')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText('This does not mean the process is empty. Retry loading the map and check again.')
+    ).toBeInTheDocument();
+    expect(toastErrorMock).toHaveBeenCalledWith('Map failed to load');
+
+    fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
+    await waitFor(() => {
+      expect(apiGetMyIdeaMapMock).toHaveBeenCalledTimes(2);
+    });
+  });
+});

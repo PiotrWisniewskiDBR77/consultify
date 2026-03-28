@@ -608,10 +608,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 };
 
 // Hook to use command palette globally
-export const useCommandPalette = () => {
+export const useCommandPalette = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled ?? true;
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsOpen(false);
+      return;
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + K to open
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -622,7 +628,7 @@ export const useCommandPalette = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [enabled]);
 
   return {
     isOpen,

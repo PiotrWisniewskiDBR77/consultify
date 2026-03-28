@@ -46,6 +46,9 @@ export interface DelaySignalItem {
 interface DelayDetectionPanelProps {
   projectId?: string;
   onInitiativeClick?: (initiativeId: string) => void;
+  signals?: DelaySignalItem[];
+  loading?: boolean;
+  onRefresh?: () => void;
 }
 
 // ── Config ─────────────────────────────────────────────────────
@@ -86,6 +89,9 @@ const REASON_COLORS: Record<string, string> = {
 export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
   projectId,
   onInitiativeClick,
+  signals: controlledSignals,
+  loading: controlledLoading,
+  onRefresh,
 }) => {
   const { t } = useTranslation();
   const [signals, setSignals] = useState<DelaySignalItem[]>([]);
@@ -93,6 +99,9 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<string>('');
   const [entityFilter, setEntityFilter] = useState<string>('');
+  const isControlled = controlledSignals !== undefined;
+  const effectiveSignalsSource = isControlled ? controlledSignals || [] : signals;
+  const effectiveLoading = isControlled ? Boolean(controlledLoading) : isLoading;
 
   const loadSignals = useCallback(async () => {
     setIsLoading(true);
@@ -174,17 +183,21 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
   }, [projectId]);
 
   useEffect(() => {
+    if (isControlled) {
+      setIsLoading(false);
+      return;
+    }
     loadSignals();
     trackFunnelEvent('delay_detection_viewed', { projectId });
-  }, [loadSignals, projectId]);
+  }, [isControlled, loadSignals, projectId]);
 
   const filteredSignals = useMemo(() => {
-    return signals.filter((s) => {
+    return effectiveSignalsSource.filter((s) => {
       if (severityFilter && s.severity !== severityFilter) return false;
       if (entityFilter && s.entityType !== entityFilter) return false;
       return true;
     });
-  }, [signals, severityFilter, entityFilter]);
+  }, [effectiveSignalsSource, severityFilter, entityFilter]);
 
   const handleDismiss = useCallback(async (signal: DelaySignalItem) => {
     try {
@@ -215,6 +228,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
       }
 
       setSignals((prev) => prev.filter((s) => s.id !== signal.id));
+      onRefresh?.();
       trackFunnelEvent('delay_signal_dismissed', {
         deviationType: signal.deviationType,
         severity: signal.severity,
@@ -222,10 +236,10 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
     } catch {
       // non-blocking
     }
-  }, []);
+  }, [onRefresh]);
 
-  const criticalCount = signals.filter((s) => s.severity === 'CRITICAL').length;
-  const warningCount = signals.filter((s) => s.severity === 'WARNING').length;
+  const criticalCount = effectiveSignalsSource.filter((s) => s.severity === 'CRITICAL').length;
+  const warningCount = effectiveSignalsSource.filter((s) => s.severity === 'WARNING').length;
 
   return (
     <div className="space-y-3">
@@ -269,7 +283,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
       </div>
 
       {/* Signal List */}
-      {isLoading ? (
+      {effectiveLoading ? (
         <div className="flex items-center justify-center h-24 text-slate-400 text-sm">
           {t('execution.delay.loading')}
         </div>

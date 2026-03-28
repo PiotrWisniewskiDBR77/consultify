@@ -318,17 +318,9 @@ export function useFinanceData(
 
   const loadValuations = useCallback(async () => {
     try {
-      let arr: any[] = [];
-      try {
-        const data = await V8FinanceApi.getValuations();
-        arr = Array.isArray(data?.valuations) ? data.valuations : [];
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
-        }
-        const data = await Api.get('/api/economics/valuations');
-        arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
-      }
+      // Keep valuations on one API family until V8 mutation parity exists.
+      const data = await Api.get('/api/economics/valuations');
+      const arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
       setLoadError(null);
       setIsUsingDemoData(false);
       setValuations(arr);
@@ -346,17 +338,9 @@ export function useFinanceData(
 
   const loadBudgets = useCallback(async () => {
     try {
-      let arr: any[] = [];
-      try {
-        const data = await V8FinanceApi.getBudgets();
-        arr = Array.isArray(data?.budgets) ? data.budgets : [];
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
-        }
-        const data = await Api.get('/api/economics/budgets');
-        arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
-      }
+      // Keep budgets on one API family until V8 mutation parity exists.
+      const data = await Api.get('/api/economics/budgets');
+      const arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
       setLoadError(null);
       setIsUsingDemoData(false);
       setBudgets(arr);

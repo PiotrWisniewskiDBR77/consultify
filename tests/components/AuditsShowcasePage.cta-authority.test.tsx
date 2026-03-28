@@ -72,12 +72,12 @@ describe('AuditsShowcasePage CTA authority', () => {
   it('routes topbar demo and trial through the shared modal contract and exposes Anna on the page', () => {
     renderView();
 
-    expect(screen.getByRole('button', { name: 'Ask Anna' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('trial');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('demo');
   });
 });

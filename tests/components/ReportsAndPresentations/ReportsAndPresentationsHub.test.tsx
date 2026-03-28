@@ -102,7 +102,7 @@ vi.mock('../../../src/components/ReportsAndPresentations/TemplatesTabContent', (
 }));
 
 describe('ReportsAndPresentationsHub', () => {
-  it('renders Wave 2 Outputs Library taxonomy on the unified hub', () => {
+  it('renders Wave 2 Outputs Library taxonomy on the unified hub and opens presentations on /presentations', () => {
     render(
       <MemoryRouter initialEntries={['/presentations']}>
         <ReportsAndPresentationsHub />
@@ -116,7 +116,7 @@ describe('ReportsAndPresentationsHub', () => {
     expect(screen.getAllByText('Prezentacje').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Sheets').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Biblioteka wzorców').length).toBeGreaterThan(0);
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_all');
+    expect(screen.getByTestId('active-tab')).toHaveTextContent('presentations');
   });
 
   it('keeps legacy reports query alias mapped to documents tab', () => {

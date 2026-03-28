@@ -659,6 +659,7 @@ export interface NotebookPage {
     sourceFileSizeBytes?: number | null;
   } | null;
   attachments?: NotebookAttachment[];
+  wordCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -65,7 +65,7 @@ import { applyIdeaTemplate, findIdeaTemplate, IdeaTemplateGallery } from './Idea
 import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
-import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
+import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
@@ -280,8 +280,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [focusObjectId, setFocusObjectId] = useState<string | null>(null);
   const toolFocusMode = focusMode === 'full' ? null : focusMode;
 
-  const cmdPalette = useCommandPalette();
-
   // V51-30: Artifact attach popover state
   const [artifactPopoverOpen, setArtifactPopoverOpen] = useState(false);
   const [artifactSearchResults, setArtifactSearchResults] = useState<
@@ -330,6 +328,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const activeTool = externalActiveTool ?? internalActiveTool;
   const activePanel = externalActivePanel ?? internalActivePanel;
+  const cmdPalette = useCommandPalette({ enabled: activeTool !== 'mindmap' });
   // The canvas must stay editable even before formal acceptance.
   // Acceptance still gates downstream actions like AI/convert, but not node manipulation.
   const canvasLocked = false;
@@ -1310,27 +1309,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [setActiveTool]);
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
-  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen } = useKeyboardShortcuts({
-    enabled: !loading,
-    onCancel: () => {
-      if (nodeDetailOpen) setNodeDetailOpen(false);
-      else if (templateGalleryOpen) setTemplateGalleryOpen(false);
-      else if (searchOpen) setSearchOpen(false);
-      else if (votingActive) setVotingActive(false);
-      else if (focusMode !== 'full') handleExitFocus();
-    },
-    onSlashCommand: () => setSearchOpen(true),
-    onAddChild: () => handleQuickAction('mm_add_child'),
-    onAddSibling: () => handleQuickAction('mm_add_sibling'),
-    onGroup: () => handleQuickAction('group'),
-    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
-    onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-    onSelectAll: () => handleQuickAction('selectAll'),
-    onClearSelection: () => handleQuickAction('clearSelection'),
-  });
+  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen, shortcuts } =
+    useKeyboardShortcuts({
+      enabled: !loading,
+      onCancel: () => {
+        if (nodeDetailOpen) setNodeDetailOpen(false);
+        else if (templateGalleryOpen) setTemplateGalleryOpen(false);
+        else if (searchOpen) setSearchOpen(false);
+        else if (votingActive) setVotingActive(false);
+        else if (focusMode !== 'full') handleExitFocus();
+      },
+      onSlashCommand: () => setSearchOpen(true),
+      onAddChild: () => handleQuickAction('mm_add_child'),
+      onAddSibling: () => handleQuickAction('mm_add_sibling'),
+      onGroup: () => handleQuickAction('group'),
+      onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
+      onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+      onFocusSelection: () => handleQuickAction('mm_focus_selected'),
+      onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
+      onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
+      onSelectAll: () => handleQuickAction('selectAll'),
+      onClearSelection: () => handleQuickAction('clearSelection'),
+    });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -2078,6 +2078,46 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
   }, [isPolish, lastSavedAt, saving]);
+  const activeToolLabel = useMemo(
+    () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
+    [activeTool, isPolish]
+  );
+  const workspaceNextStepLabel = useMemo(() => {
+    if (selection.type !== 'none') {
+      return isPolish
+        ? 'Dopracuj zaznaczenie w panelu Tools albo rozwiń je na aktywnym canvasie.'
+        : 'Refine the current selection in Tools or expand it on the active canvas.';
+    }
+    if (activePanel !== 'tools') {
+      return isPolish
+        ? 'Otwórz panel Tools, aby nadać temu pomysłowi następny konkretny ruch.'
+        : 'Open the Tools panel to give this idea a concrete next move.';
+    }
+    switch (activeTool) {
+      case 'mindmap':
+        return isPolish
+          ? 'Zacznij od głównego problemu i dołóż pierwszą gałąź rekomendacji.'
+          : 'Start with the core problem and add the first recommendation branch.';
+      case 'whiteboard':
+        return isPolish
+          ? 'Naszkicuj warianty i zgrupuj najmocniejszy kierunek.'
+          : 'Sketch options and cluster the strongest direction.';
+      case 'process_flow':
+        return isPolish
+          ? 'Rozpisz główne kroki, właścicieli i blokery przepływu.'
+          : 'Map the main steps, owners, and blockers in the flow.';
+      case 'table':
+        return isPolish
+          ? 'Przełóż pomysł na uporządkowane wiersze, żeby przygotować dalsze decyzje.'
+          : 'Translate the idea into structured rows to prepare the next decisions.';
+      default:
+        return isPolish
+          ? 'Nadaj tej idei kolejny konkretny ruch.'
+          : 'Give this idea the next concrete move.';
+    }
+  }, [activePanel, activeTool, isPolish, selection.type]);
+  const workspaceHeaderOffsetClass =
+    drillDownStack.length > 0 || focusMode !== 'full' ? 'top-14' : 'top-4';
 
   if (loading) {
     return (
@@ -2134,8 +2174,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
               {focusMode === 'system'
                 ? isPolish
-                  ? `Tryb skupiony: ${activeTool}`
-                  : `Focused: ${activeTool}`
+                  ? `Tryb skupiony: ${activeToolLabel}`
+                  : `Focused: ${activeToolLabel}`
                 : isPolish
                   ? 'Tryb obiektu'
                   : 'Object focus'}
@@ -2148,6 +2188,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </button>
           </div>
         )}
+
+        <div
+          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
+              {isPolish ? 'Idea workspace' : 'Idea workspace'}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+              {activeToolLabel}
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+          </div>
+          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+            {title || safeTitleFromSeed(seedText, isPolish)}
+          </div>
+          <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+            {workspaceNextStepLabel}
+          </div>
+        </div>
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
@@ -2657,6 +2717,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <KeyboardShortcutsHelp
         isOpen={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
+        shortcuts={shortcuts}
       />
     </div>
   );

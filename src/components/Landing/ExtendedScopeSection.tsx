@@ -22,13 +22,13 @@ export const ExtendedScopeSection: React.FC = () => {
           title: 'Reports & Presentations',
           description:
             'Consultify turns live work into reports, executive presentations, and consulting deliverables.',
-          bullets: ['Reports', 'Executive presentations', 'Consulting deliverables'],
+          bullets: ['Reports', 'Executive presentations', 'Notes'],
         },
         {
           title: 'My Work',
           description:
             'Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.',
-          bullets: ['Tasks', 'Decisions', 'Ideas', 'Notes'],
+          bullets: ['Tasks', 'Decisions', 'Ideas', 'Initiatives'],
         },
       ];
 

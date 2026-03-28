@@ -9,17 +9,20 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Book, ChevronRight, Clock, Eye, Search } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { KbArticleListItem, useDocsSearch } from '@/hooks/useDocs';
 
 export const DocsSearchView: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
+  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
-  const { data: results, isLoading } = useDocsSearch(query);
+  const { data: results, isLoading } = useDocsSearch(query, docsLanguage);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +36,12 @@ export const DocsSearchView: React.FC = () => {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
         <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
-          Docs
+          {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white font-medium">Search</span>
+        <span className="text-slate-900 dark:text-white font-medium">
+          {t('docs.search.title', 'Search')}
+        </span>
       </nav>
 
       {/* Search Box */}
@@ -47,7 +52,7 @@ export const DocsSearchView: React.FC = () => {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search documentation..."
+            placeholder={t('docs.search.placeholder', 'Search documentation...')}
             className="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
             autoFocus
           />
@@ -57,9 +62,15 @@ export const DocsSearchView: React.FC = () => {
       {/* Results Header */}
       {query && (
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Search results for "{query}"</h1>
+          <h1 className="text-2xl font-bold mb-1">
+            {t('docs.search.resultsFor', 'Search results for "{{query}}"', { query })}
+          </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {isLoading ? 'Searching...' : `${results?.length || 0} results found`}
+            {isLoading
+              ? t('docs.search.searching', 'Searching...')
+              : t('docs.search.resultsCount', '{{count}} results found', {
+                  count: results?.length || 0,
+                })}
           </p>
         </div>
       )}
@@ -82,20 +93,23 @@ export const DocsSearchView: React.FC = () => {
           <div className="text-center py-12">
             <Search size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-              Enter a search query
+              {t('docs.search.emptyPromptTitle', 'Enter a search query')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-500">
-              Type in the search box above to find articles
+              {t('docs.search.emptyPromptBody', 'Type in the search box above to find articles')}
             </p>
           </div>
         ) : results?.length === 0 ? (
           <div className="text-center py-12">
             <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-              No results found
+              {t('docs.search.noResultsTitle', 'No results found')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-500">
-              Try adjusting your search query or browse categories
+              {t(
+                'docs.search.noResultsBody',
+                'Try adjusting your search query or browse categories'
+              )}
             </p>
           </div>
         ) : (
@@ -127,11 +141,13 @@ export const DocsSearchView: React.FC = () => {
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
-                        {article.reading_time_minutes} min read
+                        {t('docs.common.readTime', '{{count}} min read', {
+                          count: article.reading_time_minutes,
+                        })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Eye size={12} />
-                        {article.view_count} views
+                        {t('docs.common.views', '{{count}} views', { count: article.view_count })}
                       </span>
                     </div>
                   </div>
@@ -153,7 +169,7 @@ export const DocsSearchView: React.FC = () => {
           className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           <ArrowLeft size={16} />
-          Back to Documentation
+          {t('docs.search.backToDocs', 'Back to Documentation')}
         </Link>
       </div>
     </div>

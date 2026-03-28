@@ -27,6 +27,32 @@ export interface MiniAssessmentTemplate {
   estimatedMinutes: number;
 }
 
+export interface MiniAssessmentAnswer {
+  questionId: string;
+  value: string | number | string[];
+}
+
+export interface MiniAssessmentAnswerSummary {
+  questionId: string;
+  question: string;
+  answer: string;
+}
+
+export interface MiniAssessmentAIResult {
+  resultKind: 'rules_based_snapshot';
+  resultLabel: string;
+  methodNotes: string[];
+  overallScore: number;
+  overallLevel: string;
+  dimensions: Array<{ name: string; score: number; maxScore: number; level: string }>;
+  insights: string[];
+  assumptions: string[];
+  biggestChallenge: string | null;
+  followUpTopics: string[];
+  answerSummary: MiniAssessmentAnswerSummary[];
+  generatedAt: string;
+}
+
 const DEFAULT_TEMPLATE: MiniAssessmentTemplate = {
   id: 'default_v1',
   name: 'Digital Transformation Readiness',
@@ -182,14 +208,33 @@ export async function getAssessmentByToken(token: string): Promise<any> {
   return dbGet(`SELECT * FROM public_mini_assessments WHERE token = ?`, [token]);
 }
 
+export async function saveDraftAnswers(params: {
+  token: string;
+  answers: MiniAssessmentAnswer[];
+}): Promise<{ id: string; answers: MiniAssessmentAnswer[] }> {
+  const { token, answers } = params;
+  const assessment = await getAssessmentByToken(token);
+  if (!assessment) throw new Error('Assessment not found');
+  if (assessment.status === 'completed') throw new Error('Assessment already completed');
+
+  await dbRun(
+    `UPDATE public_mini_assessments
+     SET answers_json = ?
+     WHERE token = ?`,
+    [JSON.stringify(answers), token]
+  );
+
+  return { id: assessment.id, answers };
+}
+
 export async function submitAnswers(params: {
   token: string;
-  answers: Array<{ questionId: string; value: string | number }>;
+  answers: MiniAssessmentAnswer[];
   respondentEmail?: string;
   respondentName?: string;
   ipAddress?: string;
   userAgent?: string;
-}): Promise<{ id: string; aiResult: any }> {
+}): Promise<{ id: string; aiResult: MiniAssessmentAIResult }> {
   const { token, answers, respondentEmail, respondentName, ipAddress, userAgent } = params;
 
   const assessment = await getAssessmentByToken(token);
@@ -222,10 +267,10 @@ export async function submitAnswers(params: {
 }
 
 function generateAIResult(
-  answers: Array<{ questionId: string; value: string | number }>,
+  answers: MiniAssessmentAnswer[],
   template: MiniAssessmentTemplate,
   language: string
-): any {
+): MiniAssessmentAIResult {
   const answerMap = new Map(answers.map((a) => [a.questionId, a.value]));
 
   let totalScore = 0;
@@ -335,8 +380,57 @@ function generateAIResult(
   };
 
   const freeTextAnswer = answerMap.get('q6_biggest_challenge');
+  const answerSummary = template.questions
+    .map((question) => {
+      const answer = answerMap.get(question.id);
+      if (answer === undefined || answer === null || answer === '') return null;
+
+      return {
+        questionId: question.id,
+        question: question.text[language] || question.text.en || question.id,
+        answer: formatAnswerForSummary(question, answer, language),
+      };
+    })
+    .filter(Boolean) as MiniAssessmentAnswerSummary[];
+
+  const weakestDimensions = [...dimensions]
+    .sort((left, right) => left.score / left.maxScore - right.score / right.maxScore)
+    .slice(0, 2);
+
+  const followUpTopics = uniqueItems([
+    ...weakestDimensions.map((dimension) =>
+      language === 'pl'
+        ? `Pogłębić obszar: ${dimension.name}`
+        : `Explore in more depth: ${dimension.name}`
+    ),
+    freeTextAnswer
+      ? language === 'pl'
+        ? `Zweryfikować główne wyzwanie: ${String(freeTextAnswer)}`
+        : `Validate the main stated challenge: ${String(freeTextAnswer)}`
+      : language === 'pl'
+        ? 'Doprecyzować największą blokadę transformacji'
+        : 'Clarify the main transformation blocker',
+    language === 'pl'
+      ? 'Przeprowadzić krótki follow-up interview z przykładami i dowodami'
+      : 'Run a short follow-up interview focused on examples and evidence',
+  ]).slice(0, 4);
+
+  const methodNotes =
+    language === 'pl'
+      ? [
+          'To jest rules-based snapshot oparty na odpowiedziach z formularza, a nie pełna diagnoza konsultingowa.',
+          'Wynik pomaga ustalić priorytety do dalszego interview, ale sam nie stanowi pełnego insightu badawczego.',
+        ]
+      : [
+          'This is a rules-based snapshot based on form responses, not a full consulting diagnosis.',
+          'The result helps prioritize a follow-up interview, but it is not a complete research insight on its own.',
+        ];
 
   return {
+    resultKind: 'rules_based_snapshot',
+    resultLabel:
+      language === 'pl' ? 'Regułowy snapshot gotowości' : 'Rules-based readiness snapshot',
+    methodNotes,
     overallScore: Math.round(overallPct * 100),
     overallLevel,
     dimensions,
@@ -353,8 +447,45 @@ function generateAIResult(
             'Full diagnosis requires an in-depth interview',
           ],
     biggestChallenge: freeTextAnswer ? String(freeTextAnswer) : null,
+    followUpTopics,
+    answerSummary,
     generatedAt: new Date().toISOString(),
   };
+}
+
+function formatAnswerForSummary(
+  question: MiniAssessmentQuestion,
+  value: string | number | string[],
+  language: string
+): string {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry)).join(', ');
+  }
+
+  if (question.type === 'single_choice' && question.options) {
+    const matchingOption = question.options.find((option) => option.value === String(value));
+    if (matchingOption) {
+      return matchingOption.label[language] || matchingOption.label.en || matchingOption.value;
+    }
+  }
+
+  return String(value);
+}
+
+function uniqueItems(items: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of items) {
+    const normalized = String(item || '').trim();
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized);
+  }
+
+  return result;
 }
 
 export async function listAssessments(organizationId?: string): Promise<any[]> {

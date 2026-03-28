@@ -11,6 +11,8 @@ type NotebookConvertedOutputRef = {
 type NotebookCaptureMetadata = {
   fileOriginalname?: string | null;
   fileMimetype?: string | null;
+  url?: string | null;
+  emailFrom?: string | null;
 } | null;
 
 interface NotebookMetadataBadgesProps {

@@ -14,7 +14,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, onTabChange, commandRowContent, children }: any) => (
+  ModuleHub: ({ tabs, activeTab, onTabChange, onNewItem, commandRowContent, children }: any) => (
     <div>
       <div data-testid="active-tab">{activeTab}</div>
       <div>
@@ -23,6 +23,11 @@ vi.mock('../../../src/components/shared/ModuleHub/ModuleHub', () => ({
             {tab.label}
           </button>
         ))}
+        {onNewItem ? (
+          <button type="button" onClick={onNewItem}>
+            add-action
+          </button>
+        ) : null}
       </div>
       <div data-testid="command-row">{commandRowContent}</div>
       <div>{children}</div>
@@ -52,14 +57,19 @@ vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
 }));
 
 vi.mock('../../../src/components/Results/ResultsKpisTableV3', () => ({
-  ResultsKpisTableV3: ({ kpis, onDeleteKpi }: any) => (
+  ResultsKpisTableV3: ({ kpis, onDeleteKpi, onOpenKpi }: any) => (
     <div>
       <div>results-kpis-table</div>
       <div data-testid="results-kpi-count">{Array.isArray(kpis) ? kpis.length : -1}</div>
       {Array.isArray(kpis) && kpis[0] ? (
-        <button type="button" onClick={() => onDeleteKpi?.(kpis[0].id)}>
-          delete-first-kpi
-        </button>
+        <>
+          <button type="button" onClick={() => onDeleteKpi?.(kpis[0].id)}>
+            delete-first-kpi
+          </button>
+          <button type="button" onClick={() => onOpenKpi?.(kpis[0].id)}>
+            open-first-kpi
+          </button>
+        </>
       ) : null}
     </div>
   ),
@@ -78,11 +88,19 @@ vi.mock('../../../src/components/Results/ROIAnalysisView', () => ({
 }));
 
 vi.mock('../../../src/components/Results/KPICreateModal', () => ({
-  KPICreateModal: () => null,
+  KPICreateModal: ({ onSuccess }: any) => (
+    <button type="button" onClick={() => onSuccess?.()}>
+      create-kpi-success
+    </button>
+  ),
 }));
 
 vi.mock('../../../src/components/Results/KPITimeSeriesDrawer', () => ({
-  KPITimeSeriesDrawer: () => null,
+  KPITimeSeriesDrawer: ({ onValueRecorded }: any) => (
+    <button type="button" onClick={() => onValueRecorded?.()}>
+      record-kpi-value
+    </button>
+  ),
 }));
 
 vi.mock('../../../src/components/Results/ROIOpenModal', () => ({
@@ -317,5 +335,57 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     confirmSpy.mockRestore();
+  });
+
+  it('refreshes KPI truth after create success and drawer value updates', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'dbr77',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'North Star KPI',
+          unit: '%',
+          targetValue: 90,
+          latestValue: 70,
+          latestMeasurementDate: '2026-03-20T00:00:00Z',
+          measurementFrequency: 'MONTHLY',
+          isOnTarget: false,
+          createdAt: '2026-03-01T00:00:00Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalledTimes(1);
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('kpis');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'add-action' }));
+    fireEvent.click(screen.getByRole('button', { name: 'create-kpi-success' }));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalledTimes(2);
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalledTimes(2);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'open-first-kpi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'record-kpi-value' }));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalledTimes(3);
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalledTimes(3);
+    });
   });
 });

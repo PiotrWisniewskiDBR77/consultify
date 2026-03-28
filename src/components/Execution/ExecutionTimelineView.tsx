@@ -53,6 +53,7 @@ interface ExecutionTimelineViewProps {
   projectId?: string;
   riskSignals?: RiskSignalItem[];
   delaySignals?: DelaySignalItem[];
+  governedTimelineWarnings?: TimelineWarning[];
 }
 
 export interface RiskSignalItem {
@@ -705,6 +706,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   projectId,
   riskSignals,
   delaySignals,
+  governedTimelineWarnings,
 }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -852,10 +854,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     return map;
   }, [depWarnings]);
 
-  const timelineWarnings = useMemo(
-    () => computeTimelineWarnings(filteredInitiatives),
-    [filteredInitiatives]
-  );
+  const timelineWarnings = useMemo(() => {
+    if (governedTimelineWarnings && governedTimelineWarnings.length > 0) {
+      return governedTimelineWarnings;
+    }
+    return computeTimelineWarnings(filteredInitiatives);
+  }, [filteredInitiatives, governedTimelineWarnings]);
 
   const getWeekIndex = useCallback(
     (dateStr: string | undefined): number => {

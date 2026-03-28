@@ -3,6 +3,7 @@ import { Info } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const { i18n } = useTranslation();
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const pl = lang.startsWith('pl');
-  const { screen, blocks, layout, loading, error } = useHomeData(refreshTrigger);
+  const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
   const roofSummary = useV8MyWorkRoofSummary();
 
   const roofTruthStrip = useMemo(() => {
@@ -66,9 +67,28 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   if (!blocks.length) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
-        <p className="text-base text-red-600 dark:text-red-400">
-          {error || (pl ? 'Home V2 niedostepny' : 'Home V2 unavailable')}
-        </p>
+        <div className="w-full max-w-xl px-6">
+          <EmptyStateInline
+            message={
+              pl ? 'Radar jest chwilowo niedostepny.' : 'Radar is temporarily unavailable.'
+            }
+            hint={
+              pl
+                ? 'To nie oznacza pustego dnia. Sprobuj ponownie wczytac ekran glowny.'
+                : 'This does not mean the day is empty. Retry loading the home screen.'
+            }
+            action={{
+              label: pl ? 'Ponow' : 'Retry',
+              onClick: () => {
+                void refresh();
+              },
+            }}
+            className="border border-slate-200/70 bg-white/80 dark:border-white/[0.06] dark:bg-white/[0.03]"
+          />
+          {error ? (
+            <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">{error}</p>
+          ) : null}
+        </div>
       </div>
     );
   }

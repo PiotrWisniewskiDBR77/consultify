@@ -29,7 +29,9 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -117,6 +119,7 @@ function getIntegrationReadinessMeta(
       badgeLabel: null as string | null,
       badgeClassName: '',
       guidance: null as string | null,
+      nextStep: null as string | null,
     };
   }
 
@@ -127,6 +130,7 @@ function getIntegrationReadinessMeta(
       badgeLabel: t('settings.integrations.readiness.connected', 'Connected'),
       badgeClassName: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
       guidance: null,
+      nextStep: null,
     };
   }
 
@@ -145,6 +149,10 @@ function getIntegrationReadinessMeta(
           'settings.integrations.readiness.verificationPendingGuidance',
           'Authorization callback reached governed sync, but verification still completes in Sync Hub.'
         ),
+        nextStep: t(
+          'settings.integrations.readiness.verificationPendingNextStep',
+          'Wait for governed verification to complete.'
+        ),
       };
     }
     if (onboardingStatus === 'pending_external_auth') {
@@ -160,6 +168,10 @@ function getIntegrationReadinessMeta(
           'settings.integrations.readiness.authorizationPendingGuidance',
           'Governed setup is waiting for external authorization in Sync Hub.'
         ),
+        nextStep: t(
+          'settings.integrations.readiness.authorizationPendingNextStep',
+          'Finish external authorization in Sync Hub.'
+        ),
       };
     }
     if (onboardingStatus === 'configuration_submitted_pending_validation') {
@@ -171,6 +183,10 @@ function getIntegrationReadinessMeta(
         guidance: t(
           'settings.integrations.readiness.validationPendingGuidance',
           'Configuration was submitted, but governed validation has not finished yet.'
+        ),
+        nextStep: t(
+          'settings.integrations.readiness.validationPendingNextStep',
+          'Wait for governed validation before sync controls become available.'
         ),
       };
     }
@@ -184,6 +200,64 @@ function getIntegrationReadinessMeta(
         'settings.integrations.readiness.pendingSetupGuidance',
         'This integration exists on the governed sync path, but setup is not complete yet.'
       ),
+      nextStep: t(
+        'settings.integrations.readiness.pendingSetupNextStep',
+        'Complete provider configuration before sync can start.'
+      ),
+    };
+  }
+
+  if (integration.status === 'requires_reauth') {
+    return {
+      isReady: false,
+      isPending: false,
+      badgeLabel: t('settings.integrations.readiness.reauthRequired', 'Reauth Required'),
+      badgeClassName: 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300',
+      guidance: t(
+        'settings.integrations.readiness.reauthRequiredGuidance',
+        'Governed sync marked this connection as requiring re-authorization before sync can resume.'
+      ),
+      nextStep: t(
+        'settings.integrations.readiness.reauthRequiredNextStep',
+        'Re-authorize this provider in Sync Hub.'
+      ),
+    };
+  }
+
+  if (integration.status === 'error') {
+    return {
+      isReady: false,
+      isPending: false,
+      badgeLabel: t('settings.integrations.readiness.error', 'Error'),
+      badgeClassName: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+      guidance: t(
+        'settings.integrations.readiness.errorGuidance',
+        'The last governed sync run failed. Review the latest error before resuming sync.'
+      ),
+      nextStep: t(
+        'settings.integrations.readiness.errorNextStep',
+        'Review the latest error and fix provider setup or auth.'
+      ),
+    };
+  }
+
+  if (integration.status === 'disconnected' || integration.status === 'disabled') {
+    return {
+      isReady: false,
+      isPending: false,
+      badgeLabel:
+        integration.status === 'disabled'
+          ? t('settings.integrations.readiness.disabled', 'Disabled')
+          : t('settings.integrations.readiness.disconnected', 'Disconnected'),
+      badgeClassName: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300',
+      guidance: t(
+        'settings.integrations.readiness.disconnectedGuidance',
+        'This provider is not currently connected on the governed sync path.'
+      ),
+      nextStep: t(
+        'settings.integrations.readiness.disconnectedNextStep',
+        'Reconnect the provider to restore governed sync.'
+      ),
     };
   }
 
@@ -193,6 +267,7 @@ function getIntegrationReadinessMeta(
     badgeLabel: integration.status,
     badgeClassName: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300',
     guidance: null,
+    nextStep: null,
   };
 }
 
@@ -203,6 +278,7 @@ interface ProjectOption {
 
 export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ currentUser }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [providers, setProviders] = useState<IntegrationProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
@@ -434,6 +510,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     fetchProviders,
     fetchProjects,
   ]);
+
+  const openGovernedSyncHub = useCallback(() => {
+    navigate(`${ROUTES.ADMIN.ROOT}/integrations`);
+  }, [navigate]);
 
   // Show message if user has no organization
   if (!currentUser.organizationId) {
@@ -934,6 +1014,16 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 connected?.required_fields?.filter(
                   (field) => !(connected.configured_fields || []).includes(field)
                 ) || [];
+              const lastOperationalLabel = connected?.last_synced_at
+                ? t('settings.integrations.lastGovernedSync', 'Last governed sync')
+                : connected?.created_at
+                  ? t('settings.integrations.governedEntryCreated', 'Governed entry created')
+                  : t('settings.integrations.lastGovernedEvent', 'Last governed event');
+              const lastOperationalValue = connected?.last_synced_at
+                ? new Date(connected.last_synced_at).toLocaleString()
+                : connected?.created_at
+                  ? new Date(connected.created_at).toLocaleString()
+                  : '—';
               const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
               return (
@@ -990,15 +1080,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           <div>
                             Status:{' '}
                             <span className="font-medium text-slate-700 dark:text-slate-200">
-                              {connected.status || 'active'}
+                              {readiness.badgeLabel || connected.status || 'active'}
                             </span>
                           </div>
                           <div>
-                            Last sync:{' '}
+                            {lastOperationalLabel}:{' '}
                             <span className="font-medium text-slate-700 dark:text-slate-200">
-                              {connected.last_synced_at
-                                ? new Date(connected.last_synced_at).toLocaleString()
-                                : '—'}
+                              {lastOperationalValue}
                             </span>
                           </div>
                           {connected.last_error ? (
@@ -1009,6 +1097,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           {readiness.guidance ? (
                             <div className="mt-2 text-amber-700 dark:text-amber-300">
                               {readiness.guidance}
+                            </div>
+                          ) : null}
+                          {readiness.nextStep ? (
+                            <div className="mt-2">
+                              Next step:{' '}
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {readiness.nextStep}
+                              </span>
                             </div>
                           ) : null}
                           {missingFields.length > 0 ? (
@@ -1072,6 +1168,36 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           >
                             <Settings size={16} />
                             {t('settings.integrations.completeSetup', 'Complete setup')}
+                          </button>
+                        )}
+                        {(connected.onboarding_status === 'pending_external_auth' ||
+                          connected.onboarding_status ===
+                            'authorization_callback_received_pending_verification' ||
+                          connected.onboarding_status ===
+                            'configuration_submitted_pending_validation' ||
+                          connected.status === 'requires_reauth' ||
+                          connected.status === 'error') && (
+                          <button
+                            onClick={openGovernedSyncHub}
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
+                          >
+                            <ExternalLink size={16} />
+                            Open governed Sync Hub
+                          </button>
+                        )}
+                        {(connected.onboarding_status === 'pending_external_auth' ||
+                          connected.onboarding_status ===
+                            'authorization_callback_received_pending_verification' ||
+                          connected.onboarding_status ===
+                            'configuration_submitted_pending_validation' ||
+                          connected.status === 'requires_reauth' ||
+                          connected.status === 'error') && (
+                          <button
+                            onClick={() => handleOpenLogs(connected.id, p.displayName)}
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                          >
+                            <Eye size={16} />
+                            View governed status
                           </button>
                         )}
                         <button

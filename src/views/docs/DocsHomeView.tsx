@@ -37,6 +37,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { KbArticleListItem, KbCategory, useDocsCategories, useDocsFeatured } from '@/hooks/useDocs';
@@ -63,11 +64,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const DocsHomeView: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
-  const { data: categories, isLoading: categoriesLoading } = useDocsCategories();
-  const { data: featuredArticles, isLoading: featuredLoading } = useDocsFeatured('en', 6);
+  const { data: categories, isLoading: categoriesLoading } = useDocsCategories(docsLanguage);
+  const { data: featuredArticles, isLoading: featuredLoading } = useDocsFeatured(docsLanguage, 6);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,11 +96,13 @@ export const DocsHomeView: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-              Consultify Documentation
+              {t('docs.home.title', 'Consultify Documentation')}
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
-              Comprehensive guides, tutorials, and best practices for the Consultify Transformation
-              AI Platform. Learn how to accelerate your digital transformation journey.
+              {t(
+                'docs.home.subtitle',
+                'Comprehensive guides, tutorials, and best practices for the Consultify Transformation AI Platform. Learn how to accelerate your digital transformation journey.'
+              )}
             </p>
 
             {/* Search Box */}
@@ -111,14 +116,14 @@ export const DocsHomeView: React.FC = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search documentation..."
+                  placeholder={t('docs.home.searchPlaceholder', 'Search documentation...')}
                   className="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 />
                 <button
                   type="submit"
                   className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
                 >
-                  Search
+                  {t('docs.home.search', 'Search')}
                 </button>
               </div>
             </form>
@@ -130,21 +135,21 @@ export const DocsHomeView: React.FC = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium text-sm hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
               >
                 <Rocket size={16} />
-                Getting Started
+                {t('docs.home.gettingStarted', 'Getting Started')}
               </Link>
               <Link
                 to="/docs/api"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
               >
                 <Code size={16} />
-                API Reference
+                {t('docs.home.apiReference', 'API Reference')}
               </Link>
               <Link
                 to="/docs/security"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
               >
                 <Shield size={16} />
-                Security
+                {t('docs.home.security', 'Security')}
               </Link>
             </div>
           </motion.div>
@@ -153,7 +158,9 @@ export const DocsHomeView: React.FC = () => {
 
       {/* Categories Grid */}
       <section className="max-w-6xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          {t('docs.home.browseByCategory', 'Browse by Category')}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categoriesLoading
             ? // Loading skeleton
@@ -186,10 +193,11 @@ export const DocsHomeView: React.FC = () => {
                       {category.name}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                      {category.description || 'Explore articles in this category'}
+                      {category.description ||
+                        t('docs.home.categoryFallback', 'Explore articles in this category')}
                     </p>
                     <div className="flex items-center text-sm text-purple-600 dark:text-purple-400 font-medium">
-                      Browse articles
+                      {t('docs.home.browseArticles', 'Browse articles')}
                       <ChevronRight
                         size={16}
                         className="ml-1 group-hover:translate-x-1 transition-transform"
@@ -206,13 +214,13 @@ export const DocsHomeView: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Star size={24} className="text-amber-500" />
-            Featured Articles
+            {t('docs.home.featuredArticles', 'Featured Articles')}
           </h2>
           <Link
             to="/docs/featured"
             className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1"
           >
-            View all
+            {t('docs.home.viewAll', 'View all')}
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -291,14 +299,16 @@ export const DocsHomeView: React.FC = () => {
                 <Code size={24} className="text-violet-600 dark:text-violet-400" />
               </div>
               <h3 className="text-lg font-semibold mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                API Reference
+                {t('docs.home.apiReference', 'API Reference')}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Complete REST API documentation with interactive examples, code samples, and
-                authentication guides.
+                {t(
+                  'docs.home.apiCardDescription',
+                  'Check the current API documentation status and request access to integration guidance until the live reference is published.'
+                )}
               </p>
               <div className="flex items-center text-sm text-violet-600 dark:text-violet-400 font-medium">
-                Explore API
+                {t('docs.home.apiCardCta', 'View API status')}
                 <ArrowRight
                   size={16}
                   className="ml-1 group-hover:translate-x-1 transition-transform"
