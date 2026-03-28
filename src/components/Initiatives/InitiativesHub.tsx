@@ -65,6 +65,11 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import {
+  getCreatedInitiativeRevealState,
+  normalizeInitiativeForPortfolio,
+  upsertPortfolioInitiative,
+} from './initiativeCreateFlow';
+import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
@@ -1583,16 +1588,44 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewTitle('');
                   setNewSummary('');
                   setNewLevel('standard');
-                  // Refresh list and open quick preview for immediate follow-up
-                  fetchData(true);
                   if (createdId) {
-                    // Best-effort: fetch full row for drawer via governed V8 read first.
                     try {
                       const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
-                      handleInitiativeClick(full as any);
+                      const normalized = normalizeInitiativeForPortfolio(
+                        full as Record<string, any>,
+                        createdId
+                      );
+                      if (normalized) {
+                        setAllInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+                        setInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+
+                        const revealState = getCreatedInitiativeRevealState(
+                          {
+                            scope,
+                            activeStatusFilter,
+                          },
+                          normalized.status
+                        );
+
+                        if (
+                          revealState.scope !== scope ||
+                          revealState.activeStatusFilter !== activeStatusFilter
+                        ) {
+                          setScope(revealState.scope);
+                          setActiveStatusFilter(revealState.activeStatusFilter);
+                        } else {
+                          fetchData(true);
+                        }
+
+                        handleOpenFullScreen(normalized);
+                      } else {
+                        fetchData(true);
+                      }
                     } catch {
-                      // ignore
+                      fetchData(true);
                     }
+                  } else {
+                    fetchData(true);
                   }
                 } catch (e: any) {
                   toast.error(
