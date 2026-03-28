@@ -15,6 +15,7 @@ Use these documents in this exact order:
 3. `docs/product/work-packets/evidence/518-production-credential-hygiene-closure.md`
 4. `docs/product/work-packets/evidence/491-v8-production-pilot-shadow-readiness-green.md`
 5. `docs/product/work-packets/evidence/520-production-phased-rollout-control-materialization.md`
+6. `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
 
 If any older doc conflicts with the list above, the list above wins.
 
@@ -29,8 +30,8 @@ If any older doc conflicts with the list above, the list above wins.
 
 Current live org map:
 
-- `dbr77` = first explicit promoted org, V8 primary, `shadow_mode=0`
-- `ateliertoys-demo` = explicit not-yet-promoted org, V8 disabled
+- `dbr77` = explicit promoted org, V8 primary, `shadow_mode=0`
+- `ateliertoys-demo` = explicit promoted org, V8 primary, `shadow_mode=0`
 - `system` = explicit not-yet-promoted org, V8 disabled
 
 ---

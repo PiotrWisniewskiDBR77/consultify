@@ -14,6 +14,7 @@ If you need the fastest current snapshot, read:
 2. `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`
 3. `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
 4. `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
+5. `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
 
 If you need the primary control docs, read:
 
@@ -42,6 +43,8 @@ If you need the primary control docs, read:
   Template used to produce the credential-hygiene closure evidence.
 - `docs/product/work-packets/PHASED_ROLLOUT_EXECUTION_HANDOFF_2026-03-28.md`
   Current operator handoff for phased rollout execution after the final wider-production `GO`.
+- `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+  Current evidence for the second explicit production org promotion under the phased rollout posture.
 
 ---
 
@@ -64,6 +67,8 @@ If you need the primary control docs, read:
   Credential-hygiene closure authority.
 - `docs/product/work-packets/evidence/519-wider-production-go-no-go-decision.md`
   Final wider-production rollout authority.
+- `docs/product/work-packets/evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+  Latest phased rollout execution evidence showing `ateliertoys-demo` promoted under explicit per-org control.
 - `docs/product/work-packets/evidence/491-v8-production-pilot-shadow-readiness-green.md`
   Historical production shadow-readiness evidence that feeds into the final rollout authority.
 - `docs/product/work-packets/evidence/490-production-auth-guard-deploy-and-readiness-residual.md`

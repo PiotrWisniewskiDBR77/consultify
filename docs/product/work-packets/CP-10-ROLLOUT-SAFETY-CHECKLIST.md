@@ -174,8 +174,9 @@ Historical progression that was later completed on real infrastructure:
 Current rollout-control status:
 
 - explicit production org rows were materialized in `evidence/520-production-phased-rollout-control-materialization.md`
-- `dbr77` now runs as the first explicit primary-V8 org with `shadow_mode=0`
-- `ateliertoys-demo` and `system` remain explicitly disabled until separately promoted
+- `ateliertoys-demo` was later promoted as the second explicit primary-V8 org in `evidence/521-production-phased-rollout-second-org-promotion-ateliertoys-demo.md`
+- `dbr77` and `ateliertoys-demo` now run as explicit primary-V8 orgs with `shadow_mode=0`
+- `system` remains explicitly disabled until separately promoted
 
 ### Estimated time to wider production promotion: approved now under phased execution discipline
 
