@@ -41,6 +41,9 @@ describe('Artifact trust previews', () => {
         executionState: 'completed',
         executionRunId: 'exec-1',
         originLinks: [{ linkId: 'link-1' }],
+        authority: 'report_builder',
+        canManageAccess: true,
+        exportHistory: [{ exportId: 'exp-1' }],
       },
     };
 
@@ -55,6 +58,8 @@ describe('Artifact trust previews', () => {
     expect(screen.getByText(/Publish state: in_review/i)).toBeInTheDocument();
     expect(screen.getByText(/Execution: completed/i)).toBeInTheDocument();
     expect(screen.getByText(/origin links/i)).toBeInTheDocument();
+    expect(screen.getByText(/Export authority: report_builder/i)).toBeInTheDocument();
+    expect(screen.getByText(/export traces/i)).toBeInTheDocument();
   });
 
   it('renders execution and review trust signals for presentations', () => {
@@ -78,6 +83,9 @@ describe('Artifact trust previews', () => {
         executionState: 'completed',
         executionRunId: 'exec-2',
         originLinks: [{ linkId: 'link-2' }],
+        authority: 'presentations_runtime',
+        canManageAccess: false,
+        exportHistory: [{ exportId: 'exp-2' }],
       },
     };
 
@@ -92,5 +100,7 @@ describe('Artifact trust previews', () => {
     expect(screen.getByText(/Publish state: private_draft/i)).toBeInTheDocument();
     expect(screen.getByText(/Execution: completed/i)).toBeInTheDocument();
     expect(screen.getByText(/origin links/i)).toBeInTheDocument();
+    expect(screen.getByText(/Export authority: presentations_runtime/i)).toBeInTheDocument();
+    expect(screen.getByText(/export traces/i)).toBeInTheDocument();
   });
 });

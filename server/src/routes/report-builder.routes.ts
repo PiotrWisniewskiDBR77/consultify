@@ -52,6 +52,7 @@ import {
 import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -180,6 +181,28 @@ function getAuthContext(req: any): { userId: string; organizationId: string } {
   const userId = req?.user?.id || req?.userId || '';
   const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
   return { userId, organizationId };
+}
+
+async function recordCanonicalExportTrace(params: {
+  organizationId: string;
+  userId: string;
+  reportId: string;
+  format: 'pdf' | 'pptx';
+}) {
+  const artifact = await artifactRegistryService.getArtifactByOrigin({
+    organizationId: params.organizationId,
+    originRuntime: 'report',
+    originRecordId: params.reportId,
+    userId: params.userId,
+    roleKey: null,
+  });
+  if (!artifact?.artifactId) return;
+  await reportsPresModelService.recordCompletedExport(
+    artifact.artifactId,
+    params.organizationId,
+    params.format,
+    params.userId || 'system'
+  );
 }
 
 async function getNotionConfigForUser(userId: string): Promise<{
@@ -3257,6 +3280,12 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
       language: 'en',
       exportedBy: userId,
     });
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'pdf',
+    }).catch(() => null);
 
     logger.info('[ReportBuilder] PDF exported', { reportId: id, userId });
 
@@ -3510,6 +3539,12 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       language: (language as string) || 'pl',
       exportedBy: userId,
     });
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'pptx',
+    }).catch(() => null);
 
     res.setHeader(
       'Content-Type',

@@ -6,6 +6,7 @@ import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../services/v8/executionSpineService.js';
+import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -86,6 +87,19 @@ function buildActionTargetPayload(artifact: {
     };
   }
 
+  if (originRuntime === 'sheet') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: null,
+      exportPath: `/api/table-platform/tables/${originRecordId}/export/xlsx`,
+      deletePath: null,
+      reviewPath,
+      authority: 'table_platform',
+    };
+  }
+
   return {
     artifactId: artifact.artifactId,
     originRuntime,
@@ -101,6 +115,8 @@ function buildActionTargetPayload(artifact: {
 async function buildArtifactTrustPayload(params: {
   artifact: Awaited<ReturnType<typeof artifactRegistryService.getArtifactForUser>>;
   organizationId: string;
+  userId: string;
+  roleKey: string | null;
 }) {
   const artifact = params.artifact;
   if (!artifact) return null;
@@ -112,6 +128,9 @@ async function buildArtifactTrustPayload(params: {
       ? executionSpineService.getRun(artifact.executionRunId, params.organizationId)
       : Promise.resolve(null),
   ]);
+  const exportHistory = await reportsPresModelService
+    .getExportHistory(artifact.artifactId, params.organizationId)
+    .catch(() => []);
 
   const actionTarget = buildActionTargetPayload(artifact);
   const validation = artifactRegistryService.deriveArtifactValidationSnapshot({
@@ -139,9 +158,16 @@ async function buildArtifactTrustPayload(params: {
     originSummary: artifact.originSummary,
     originLinks: links,
     accessGrants: grants,
+    exportHistory,
     openPath: actionTarget.openPath,
     exportPath: actionTarget.exportPath,
     authority: actionTarget.authority,
+    manageAccessPath: `/api/artifacts/${artifact.artifactId}/access`,
+    canManageAccess: canManageArtifactAccess({
+      userId: params.userId,
+      roleKey: params.roleKey,
+      ownerUserId: artifact.ownerUserId,
+    }),
     reviewAuthority: 'artifact_review',
     executionAuthority: 'execution_spine',
   };
@@ -286,7 +312,7 @@ router.get(
       return res.status(404).json({ error: 'Artifact not found' });
     }
 
-    const payload = await buildArtifactTrustPayload({ artifact, organizationId });
+    const payload = await buildArtifactTrustPayload({ artifact, organizationId, userId, roleKey });
     res.json(payload);
   })
 );
@@ -305,7 +331,7 @@ router.get(
       return res.status(404).json({ error: 'Artifact not found' });
     }
 
-    const payload = await buildArtifactTrustPayload({ artifact, organizationId });
+    const payload = await buildArtifactTrustPayload({ artifact, organizationId, userId, roleKey });
     res.json({ data: payload });
   })
 );

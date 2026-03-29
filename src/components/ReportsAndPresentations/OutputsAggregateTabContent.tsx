@@ -421,6 +421,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           openPath: payload.openPath || null,
           exportPath: payload.exportPath || null,
           authority: payload.authority || null,
+          manageAccessPath: payload.manageAccessPath || null,
+          canManageAccess: Boolean(payload.canManageAccess),
+          exportHistory: Array.isArray(payload.exportHistory) ? payload.exportHistory : [],
           reviewAuthority: payload.reviewAuthority || 'artifact_review',
           executionAuthority: payload.executionAuthority || 'execution_spine',
           accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
@@ -581,6 +584,24 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               {t('rap.outputs.preview.exports', 'Exports')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {item.exportFormats.length ? item.exportFormats.join(', ').toUpperCase() : '—'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.exportTrace', 'Export trace')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {item.governance?.exportHistory?.length
+                  ? `${item.governance.exportHistory.length} · ${formatLabel(item.governance.exportHistory[0]?.status)}`
+                  : '—'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.accessControl', 'Access control')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {typeof item.governance?.canManageAccess === 'boolean'
+                  ? item.governance.canManageAccess
+                    ? t('rap.outputs.preview.canManageAccess', 'Can manage')
+                    : t('rap.outputs.preview.readOnly', 'Read only')
+                  : '—'}
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">

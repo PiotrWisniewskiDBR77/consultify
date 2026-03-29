@@ -84,6 +84,17 @@ export interface ArtifactAccessGrantItem {
   createdAt: string;
 }
 
+export interface ArtifactExportTraceItem {
+  exportId: string;
+  artifactId: string;
+  organizationId: string;
+  format: string;
+  requestedBy: string;
+  status: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
 export interface ArtifactGovernanceSummary {
   visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
   publishState?: string | null;
@@ -106,6 +117,9 @@ export interface ArtifactGovernanceSummary {
   openPath?: string | null;
   exportPath?: string | null;
   authority?: string | null;
+  manageAccessPath?: string | null;
+  canManageAccess?: boolean;
+  exportHistory?: ArtifactExportTraceItem[];
   reviewAuthority?: 'artifact_review';
   executionAuthority?: 'execution_spine';
   accessGrants?: ArtifactAccessGrantItem[];

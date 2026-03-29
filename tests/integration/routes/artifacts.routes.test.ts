@@ -30,6 +30,7 @@ const getArtifactAccessGrantsForArtifactMock = vi.fn();
 const startArtifactReviewMock = vi.fn();
 const deriveArtifactValidationSnapshotMock = vi.fn();
 const getExecutionRunMock = vi.fn();
+const getExportHistoryMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   getArtifactForUser: (...args: any[]) => getArtifactForUserMock(...args),
@@ -42,6 +43,10 @@ vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
 
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
   getRun: (...args: any[]) => getExecutionRunMock(...args),
+}));
+
+vi.mock('../../../server/src/services/v8/reportsPresModelService.js', () => ({
+  getExportHistory: (...args: any[]) => getExportHistoryMock(...args),
 }));
 
 import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
@@ -60,10 +65,12 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     startArtifactReviewMock.mockReset();
     deriveArtifactValidationSnapshotMock.mockReset();
     getExecutionRunMock.mockReset();
+    getExportHistoryMock.mockReset();
     deriveArtifactValidationSnapshotMock.mockReturnValue({
       state: 'validated',
       checks: [],
     });
+    getExportHistoryMock.mockResolvedValue([]);
   });
 
   it('rejects access grant mutation for non-owner non-admin users', async () => {
@@ -197,6 +204,18 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     getArtifactOriginLinksMock.mockResolvedValue([{ linkId: 'link-1' }]);
     getArtifactAccessGrantsForArtifactMock.mockResolvedValue([{ grantId: 'grant-1' }]);
     getExecutionRunMock.mockResolvedValue({ state: 'completed' });
+    getExportHistoryMock.mockResolvedValue([
+      {
+        exportId: 'export-1',
+        artifactId: 'art-9',
+        organizationId: 'org-1',
+        format: 'pdf',
+        requestedBy: 'user-1',
+        status: 'completed',
+        createdAt: '2026-03-29T08:10:00.000Z',
+        completedAt: '2026-03-29T08:10:01.000Z',
+      },
+    ]);
 
     const res = await request(app).get('/api/artifacts/art-9/trust-state');
 
@@ -210,6 +229,15 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         reviewGateCount: 2,
         executionRunId: 'exec-9',
         executionState: 'completed',
+        canManageAccess: false,
+        manageAccessPath: '/api/artifacts/art-9/access',
+        exportHistory: [
+          expect.objectContaining({
+            exportId: 'export-1',
+            format: 'pdf',
+            status: 'completed',
+          }),
+        ],
         reviewAuthority: 'artifact_review',
         executionAuthority: 'execution_spine',
         exportPath: '/api/report-builder/report-9/export/pdf',

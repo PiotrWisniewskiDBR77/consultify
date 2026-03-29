@@ -16,6 +16,7 @@ import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesSer
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -32,6 +33,28 @@ function getOrgId(req: any): string {
 
 function getUserId(req: any): string {
   return req.user?.id || req.userId || 'system';
+}
+
+async function recordCanonicalDeckExportTrace(params: {
+  organizationId: string;
+  userId: string;
+  deckId: string;
+  format: 'pdf' | 'pptx';
+}) {
+  const artifact = await artifactRegistryService.getArtifactByOrigin({
+    organizationId: params.organizationId,
+    originRuntime: 'presentation',
+    originRecordId: params.deckId,
+    userId: params.userId,
+    roleKey: null,
+  });
+  if (!artifact?.artifactId) return;
+  await reportsPresModelService.recordCompletedExport(
+    artifact.artifactId,
+    params.organizationId,
+    params.format,
+    params.userId || 'system'
+  );
 }
 
 function isSchemaMissingError(error: unknown): boolean {
@@ -604,6 +627,7 @@ router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
@@ -621,6 +645,12 @@ router.get(
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId: req.params.id,
+      format: 'pptx',
+    }).catch(() => null);
     res.sendFile(path.resolve(deck.export_path));
   })
 );
@@ -630,6 +660,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
 
     const deck = (await dbGet(
@@ -671,6 +702,12 @@ router.get(
       });
     });
 
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId,
+      format: 'pdf',
+    }).catch(() => null);
     doc.end();
   })
 );

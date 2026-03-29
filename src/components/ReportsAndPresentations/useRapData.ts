@@ -414,6 +414,9 @@ function mapArtifactReport(raw: any): ReportItem {
       sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
       originSummary:
         raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
+      manageAccessPath: raw.manageAccessPath || null,
+      canManageAccess: Boolean(raw.canManageAccess),
+      exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
     },
     sourceType: raw.originRuntime,
     sourceId: raw.originRecordId || undefined,
@@ -545,6 +548,9 @@ function mapArtifactPresentation(raw: any): PresentationItem {
       sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
       originSummary:
         raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
+      manageAccessPath: raw.manageAccessPath || null,
+      canManageAccess: Boolean(raw.canManageAccess),
+      exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
     },
   };
 }
@@ -566,6 +572,9 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
     lastTransitionAt: raw.lastTransitionAt || null,
     sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
     originSummary: raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
+    manageAccessPath: raw.manageAccessPath || null,
+    canManageAccess: Boolean(raw.canManageAccess),
+    exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
   };
 
   if (runtime === 'report') {

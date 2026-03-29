@@ -61,6 +61,8 @@ function usePresentationPreviewData(presentation: PresentationItem) {
     `${isPolish ? 'Review gates' : 'Review gates'}: ${governance?.reviewGateCount ?? 0}`,
     `${isPolish ? 'Project' : 'Project'}: ${governance?.projectId || '—'}`,
     `${isPolish ? 'Execution run' : 'Execution run'}: ${governance?.executionRunId || '—'}`,
+    `${isPolish ? 'Export authority' : 'Export authority'}: ${governance?.authority || '—'}`,
+    `${isPolish ? 'ACL control' : 'ACL control'}: ${governance?.canManageAccess ? (isPolish ? 'Can manage' : 'Can manage') : (isPolish ? 'Read only' : 'Read only')}`,
     `${isPolish ? 'Utworzono' : 'Created'}: ${new Date(presentation.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
     `${isPolish ? 'Ostatnia zmiana' : 'Updated'}: ${new Date(presentation.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
   ].join('\n');
@@ -86,6 +88,13 @@ function usePresentationPreviewData(presentation: PresentationItem) {
       ? [
           {
             label: `${governance.accessGrants.length} ${isPolish ? 'grantów dostępu' : 'access grants'}`,
+          },
+        ]
+      : []),
+    ...(governance?.exportHistory?.length
+      ? [
+          {
+            label: `${governance.exportHistory.length} ${isPolish ? 'śladów eksportu' : 'export traces'}`,
           },
         ]
       : []),

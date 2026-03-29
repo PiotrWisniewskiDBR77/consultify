@@ -28,6 +28,7 @@ import { ssoService } from '../services/tablePlatform/SSOService.js';
 import { webhookDispatcher } from '../services/tablePlatform/WebhookDispatcherService.js';
 import { webhookRelayService } from '../services/tablePlatform/WebhookRelayService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import logger from '../utils/Logger.js';
 
 const upload = multer({
@@ -1668,6 +1669,19 @@ router.get(
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
 
       const buffer = await ExportService.buildXlsxBuffer({ tableId, viewId, fieldIds });
+      let exportArtifactId = registeredArtifactId;
+      if (!exportArtifactId && authReq.organizationId && authReq.userId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
 
       res.setHeader(
         'Content-Type',
@@ -1677,6 +1691,16 @@ router.get(
       res.setHeader('Content-Length', buffer.length);
       if (registeredArtifactId) {
         res.setHeader('X-Artifact-Id', registeredArtifactId);
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordCompletedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'xlsx',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
       }
       res.end(buffer);
     } catch (e) {

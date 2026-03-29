@@ -28,6 +28,7 @@ import {
   getQualityScores,
   getRecurringProgramHealth,
   getTemplateUsageStats,
+  recordCompletedExport,
   scheduleExport,
   scoreArtifactQuality,
 } from '../reportsPresModelService.js';
@@ -259,6 +260,23 @@ describe('scheduleExport', () => {
   it('throws when artifact missing', async () => {
     mockDbGet.mockResolvedValueOnce(null);
     await expect(scheduleExport(ARTIFACT_ID, ORG_ID, 'html', USER_ID)).rejects.toThrow('not found');
+  });
+});
+
+describe('recordCompletedExport', () => {
+  it('inserts completed export row', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordCompletedExport(ARTIFACT_ID, ORG_ID, 'pdf', USER_ID);
+
+    expect(rec.format).toBe('pdf');
+    expect(rec.status).toBe('completed');
+    expect(rec.completedAt).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledOnce();
+    const sql = mockDbRun.mock.calls[0][0] as string;
+    expect(sql).toContain('INSERT INTO v8_output_exports');
+    const params = mockDbRun.mock.calls[0][1] as unknown[];
+    expect(params[5]).toBe('completed');
   });
 });
 
