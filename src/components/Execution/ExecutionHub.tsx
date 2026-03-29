@@ -65,6 +65,7 @@ import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
 } from '@/services/api/v8/execution-control';
+import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
   getStatusActions,
@@ -1127,7 +1128,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       })
       .catch(() => setActionQueueItems([]))
       .finally(() => setIsLoadingActionQueue(false));
-  }, [currentProjectId]);
+  }, [currentProjectId, executionTruthRefreshKey]);
 
   const loadExecutiveSnapshot = useCallback(
     async (opts?: { refresh?: boolean }) => {
@@ -1223,6 +1224,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return { executing, blocked, pendingDecisions, overdueTasks };
   }, [decisions, execSnapshot?.kpis?.highlights, initiatives, tasks]);
+
+  const refreshExecutionAfterWrite = useCallback(async () => {
+    await refreshExecutionWriteTruth({
+      activeTab,
+      currentProjectId,
+      queueExecutionTruthRefresh,
+      refreshExecutiveSnapshot: loadExecutiveSnapshot,
+    });
+  }, [activeTab, currentProjectId, loadExecutiveSnapshot, queueExecutionTruthRefresh]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -2610,8 +2620,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setSelectedInitiative((prev) =>
       prev?.id === updated.id ? { ...prev, status: updated.status } : prev
     );
-    queueExecutionTruthRefresh();
-  }, [queueExecutionTruthRefresh]);
+    void refreshExecutionAfterWrite();
+  }, [refreshExecutionAfterWrite]);
 
   const handleTimelineUpdate = useCallback(
     async (initiativeId: string, field: string, value: string, reason?: string) => {
@@ -2704,23 +2714,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return next as FullInitiative;
         });
-        queueExecutionTruthRefresh();
+        await refreshExecutionAfterWrite();
       } catch (e: any) {
         toast.error(
           e?.message || t('execution.toast.timelineUpdateFailed', 'Failed to update timeline')
         );
       }
     },
-    [queueExecutionTruthRefresh, t]
+    [refreshExecutionAfterWrite, t]
   );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
-    queueExecutionTruthRefresh();
-    if (activeTab === 'list' && currentProjectId) {
-      void loadExecutiveSnapshot({ refresh: true });
-    }
-  }, [activeTab, currentProjectId, loadExecutiveSnapshot, queueExecutionTruthRefresh]);
+    await refreshExecutionAfterWrite();
+  }, [refreshExecutionAfterWrite]);
 
   const renderPortfolioHealth = () => (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]" data-testid="portfolio-health">
