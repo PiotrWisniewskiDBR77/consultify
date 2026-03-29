@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
+import { ToolsV8CanonPanel } from '@/components/Discovery/ToolsV8CanonPanel';
 import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
@@ -379,6 +380,10 @@ export const ToolsShowcasePage: React.FC = () => {
           </motion.div>
         </div>
       </section>
+
+      <div className="relative max-w-7xl mx-auto px-4 -mt-8 z-10">
+        <ToolsV8CanonPanel mode="catalog" />
+      </div>
 
       {/* Tools Sections */}
       <div id="tools" className="max-w-7xl mx-auto px-4 py-16">

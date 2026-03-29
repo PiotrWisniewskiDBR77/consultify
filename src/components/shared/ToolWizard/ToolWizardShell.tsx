@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout } from '../NModeBlocks/Callout';
 import { ChecklistBlock } from '../NModeBlocks/ChecklistBlock';
 import { EmptyStateInline } from '../NModeBlocks/EmptyStateInline';
+import { ToolsV8CanonPanel } from '../../Discovery/ToolsV8CanonPanel';
 import { ToolWizardHeader } from './ToolWizardHeader';
 import { ToolWizardStepNav } from './ToolWizardStepNav';
 import type {
@@ -657,6 +658,8 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                 </p>
               )}
             </div>
+
+            <ToolsV8CanonPanel mode="session" compact className="mb-6" />
 
             {/* Step content with animation */}
             <AnimatePresence mode="wait">
