@@ -117,6 +117,7 @@ import {
 } from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
+import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
@@ -1899,8 +1900,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         V8PlanningApi.getGateReadiness(initiativeId)
           .catch(() => Api.get(`/initiatives/${initiativeId}/gate-readiness-check`))
           .then((rc: any) => {
-            const payload = rc?.readiness || rc || null;
-            setGateReadiness(payload);
+            const payload = normalizeGateReadinessPayload(rc);
+            setGateReadiness((payload as GateReadinessCheck | null) || null);
             setUserGateRoles(payload?.userRoles || []);
           })
           .catch(() => {
@@ -6174,17 +6175,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'team': {
+          const TeamComp = SECTION_REGISTRY['team'];
           const InitTeamComp = SECTION_REGISTRY['initiativeTeam'];
-          const initTeamFallbackST = {
-            id: 'initiativeTeam',
-            key: 'initiativeTeam',
+          const teamST = [...leftSections, ...rightSections].find((s) => s.key === 'team');
+          const teamFallbackST = {
+            id: 'team',
+            key: 'team',
             name: 'Team',
             namePl: 'Zespół',
             description: null,
             descriptionPl: null,
-            category: 'content' as const,
+            category: 'control' as const,
             columnPosition: 'right' as const,
             defaultOrder: 20,
+            icon: null,
+            iconColor: null,
+            iconBg: null,
+            componentKey: 'team',
+            isSystem: true,
+            isActive: true,
+          };
+          const initTeamFallbackST = {
+            id: 'initiativeTeam',
+            key: 'initiativeTeam',
+            name: 'Team management',
+            namePl: 'Zarządzanie zespołem',
+            description: null,
+            descriptionPl: null,
+            category: 'content' as const,
+            columnPosition: 'right' as const,
+            defaultOrder: 120,
             icon: null,
             iconColor: null,
             iconBg: null,
@@ -6192,8 +6212,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             isSystem: false,
             isActive: true,
           };
-          component = InitTeamComp ? (
-            <InitTeamComp sectionType={initTeamFallbackST} expanded={true} onToggle={() => {}} />
+          component = TeamComp ? (
+            <div className="space-y-6">
+              <TeamComp
+                sectionType={teamST || teamFallbackST}
+                expanded={true}
+                onToggle={() => {}}
+              />
+              {InitTeamComp ? (
+                <InitTeamComp
+                  sectionType={initTeamFallbackST}
+                  expanded={true}
+                  onToggle={() => {}}
+                />
+              ) : null}
+            </div>
           ) : null;
           break;
         }

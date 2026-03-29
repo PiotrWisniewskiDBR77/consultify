@@ -801,7 +801,8 @@ export async function getInitiativeResourcesRead(
 export async function getInitiativeGateReadinessRead(
   initiativeId: string,
   organizationId: string,
-  currentUserId?: string | null
+  currentUserId?: string | null,
+  currentUserRole?: string | null
 ): Promise<Record<string, unknown> | null> {
   const initiative = await queryHelpers.queryOne(
     `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
@@ -814,7 +815,12 @@ export async function getInitiativeGateReadinessRead(
 
   const accessCtx =
     organizationId && currentUserId
-      ? await resolveInitiativeAccessContext(organizationId, initiativeId, currentUserId)
+      ? await resolveInitiativeAccessContext(
+          organizationId,
+          initiativeId,
+          currentUserId,
+          currentUserRole
+        )
       : null;
   const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
   const userRoles = accessCtx?.effectiveRoles || [];

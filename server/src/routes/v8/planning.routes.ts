@@ -294,7 +294,8 @@ router.get(
     const readiness = await getInitiativeGateReadinessRead(
       parsed.data,
       organizationId,
-      req.user?.id
+      req.user?.id,
+      req.user?.role
     );
     if (!readiness) {
       return res.status(404).json({ error: 'Initiative not found' });

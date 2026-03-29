@@ -656,7 +656,9 @@ export class InitiativeController {
       }
 
       // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities
-      const accessCtx = userId ? await resolveInitiativeAccessContext(orgId, id, userId) : null;
+      const accessCtx = userId
+        ? await resolveInitiativeAccessContext(orgId, id, userId, req.user?.role)
+        : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
       const body = req.body as Record<string, unknown>;
@@ -1004,7 +1006,7 @@ export class InitiativeController {
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
       const gate = getGateForTransition(currentStatus as any, nextStatus as any);
       if (gate) {
-        const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId);
+        const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role);
         const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
         const steeringBoardEnabled = !!accessCtx.steeringBoard.enabled;
         const requiredRoles = GATE_PERMISSIONS[gate] || [];
@@ -1877,7 +1879,9 @@ export class InitiativeController {
       const currentStatus = normalizeStatus((current as any)?.status);
 
       // Enforce top-bar edit rules for quick update endpoint
-      const accessCtx = actorId ? await resolveInitiativeAccessContext(orgId, id, actorId) : null;
+      const accessCtx = actorId
+        ? await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role)
+        : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
 
@@ -5129,7 +5133,12 @@ export class InitiativeController {
       // Canonical role resolution (system role + project membership + gate roles + steering board)
       const accessCtx =
         orgId && currentUserId
-          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId)
+          ? await resolveInitiativeAccessContext(
+              orgId,
+              initiativeId,
+              currentUserId,
+              req.user?.role
+            )
           : null;
       const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
       const userRoles = accessCtx?.effectiveRoles || [];

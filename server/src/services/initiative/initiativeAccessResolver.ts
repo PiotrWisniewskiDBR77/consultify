@@ -36,6 +36,21 @@ function normalizeUpper(value: unknown): string {
     .toUpperCase();
 }
 
+function normalizeSystemRoleHint(value: unknown): string {
+  const normalized = normalizeUpper(value);
+  switch (normalized) {
+    case 'OWNER':
+    case 'SUPER_ADMIN':
+    case 'SUPERADMIN':
+      return 'SUPERADMIN';
+    case 'ADMINISTRATOR':
+    case 'ADMIN':
+      return 'ADMIN';
+    default:
+      return normalized;
+  }
+}
+
 function mapCanonicalProjectRoleToInitiativeRoles(
   canonicalRole: CanonicalProjectRoleType
 ): string[] {
@@ -170,7 +185,8 @@ async function readSystemRole(userId: string): Promise<string> {
 export async function resolveInitiativeAccessContext(
   orgId: string,
   initiativeId: string,
-  userId: string
+  userId: string,
+  currentUserRoleHint?: string | null
 ): Promise<InitiativeAccessContext> {
   const initiative = await queryHelpers.queryOne(
     `SELECT id, project_id as projectId
@@ -179,10 +195,15 @@ export async function resolveInitiativeAccessContext(
   );
   const projectId = (initiative as any)?.projectId ? String((initiative as any).projectId) : null;
 
-  const [systemRole, roleAssignments] = await Promise.all([
+  const [dbSystemRole, roleAssignments] = await Promise.all([
     readSystemRole(userId),
     readInitiativeGateRoleAssignments(orgId, initiativeId),
   ]);
+  const hintedSystemRole = normalizeSystemRoleHint(currentUserRoleHint);
+  const systemRole =
+    hintedSystemRole === 'ADMIN' || hintedSystemRole === 'SUPERADMIN'
+      ? hintedSystemRole
+      : dbSystemRole;
 
   const [membership, steeringBoard] = await Promise.all([
     projectId ? readProjectMembership(projectId, userId) : Promise.resolve(null),

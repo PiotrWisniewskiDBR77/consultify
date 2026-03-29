@@ -129,7 +129,14 @@ describe('planningPortfolioReadService support tables', () => {
     });
     getBlockingReadinessItemsMock.mockResolvedValue([]);
 
-    const result = await getInitiativeGateReadinessRead('init-1', 'org-1', 'user-1');
+    const result = await getInitiativeGateReadinessRead('init-1', 'org-1', 'user-1', 'OWNER');
+
+    expect(resolveInitiativeAccessContextMock).toHaveBeenCalledWith(
+      'org-1',
+      'init-1',
+      'user-1',
+      'OWNER'
+    );
 
     expect(result).toEqual(
       expect.objectContaining({
