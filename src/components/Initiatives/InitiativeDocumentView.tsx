@@ -59,11 +59,6 @@ import { useTranslation } from 'react-i18next';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
-import {
-  getInitiativeStatusPreflightTruth,
-  saveInitiativeWriteTruth,
-  updateInitiativeStatusWriteTruth,
-} from '@/services/initiativeWriteTruth';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import {
   getContextActions,
@@ -74,6 +69,11 @@ import {
   StatusAction,
   willChangeModule,
 } from '@/services/initiativeLifecycle';
+import {
+  getInitiativeStatusPreflightTruth,
+  saveInitiativeWriteTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -118,6 +118,7 @@ import {
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
+import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
@@ -2145,10 +2146,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       if (!transition || !transition.canCurrentUserExecute) {
         toast.error(
-          t(
-            'initiatives.toast.statusUpdateError',
-            'Nie udało się zaktualizować statusu'
-          )
+          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
         );
         return;
       }
@@ -7376,289 +7374,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
   }
 
-  // Temporary: C-mode placeholder (under construction)
+  // C-mode uses the compact panel surface in embedded mode.
   if (presentationMode === 'c') {
     return (
       <InitiativeContext.Provider value={contextValue}>
-        {showRaidAIModal && raidAiProposal && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40">
-            <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
-              <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                    {isPolish ? 'Propozycje zmian w RAID (AI)' : 'Proposed RAID changes (AI)'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    {isPolish
-                      ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                      : 'Select items to add/remove, then click “Apply”.'}
-                  </p>
-                </div>
-                <button
-                  onClick={closeRaidAIModal}
-                  className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                  title={isPolish ? 'Zamknij' : 'Close'}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-                {raidAiNoSuggestionsMessage ? (
-                  <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
-                    {raidAiNoSuggestionsMessage}
-                  </Callout>
-                ) : null}
-
-                <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Do wywalenia' : 'To remove'} ({raidAiProposal.remove.length})
-                    </span>
-                    {raidAiProposal.remove.length > 0 && (
-                      <button
-                        onClick={() =>
-                          setRaidAiSelectedRemoveIds(
-                            Object.fromEntries(
-                              raidAiProposal.remove.map((r) => [r.raidId, true])
-                            ) as Record<string, boolean>
-                          )
-                        }
-                        className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                      >
-                        {isPolish ? 'Zaznacz wszystko' : 'Select all'}
-                      </button>
-                    )}
-                  </div>
-
-                  {raidAiProposal.remove.length === 0 ? (
-                    <EmptyStateInline
-                      icon={Trash2}
-                      dashed={false}
-                      className="p-5"
-                      message={
-                        isPolish
-                          ? 'AI nie zasugerowało usunięć.'
-                          : 'No removal suggestions from AI.'
-                      }
-                      hint={
-                        isPolish
-                          ? 'Jeśli RAID jest OK, AI może nie zaproponować zmian.'
-                          : 'If the RAID log is already good, AI may suggest no changes.'
-                      }
-                    />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {raidAiProposal.remove.map((r) => {
-                        const existing = raidItems.find(
-                          (x: any) => String(x?.id) === String(r.raidId)
-                        );
-                        return (
-                          <label
-                            key={r.raidId}
-                            className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!raidAiSelectedRemoveIds[r.raidId]}
-                              onChange={(e) =>
-                                setRaidAiSelectedRemoveIds((prev) => ({
-                                  ...prev,
-                                  [r.raidId]: e.target.checked,
-                                }))
-                              }
-                              className="mt-1"
-                            />
-                            <div className="min-w-0">
-                              <span className="text-sm font-medium text-slate-800 dark:text-white">
-                                {existing?.title || r.raidId}
-                              </span>
-                              <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
-                                {r.reason}
-                              </p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Do dodania' : 'To add'} ({raidAiProposal.add.length})
-                    </span>
-                    {raidAiProposal.add.length > 0 && (
-                      <button
-                        onClick={() =>
-                          setRaidAiSelectedAddIdx(
-                            Object.fromEntries(
-                              raidAiProposal.add.map((_, idx) => [idx, true])
-                            ) as Record<number, boolean>
-                          )
-                        }
-                        className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                      >
-                        {isPolish ? 'Zaznacz wszystko' : 'Select all'}
-                      </button>
-                    )}
-                  </div>
-
-                  {raidAiProposal.add.length === 0 ? (
-                    <EmptyStateInline
-                      icon={Plus}
-                      dashed={false}
-                      className="p-5"
-                      message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                      hint={
-                        isPolish
-                          ? 'AI może zwrócić tylko usunięcia lub brak zmian.'
-                          : 'AI may return only removals or no changes.'
-                      }
-                    />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {raidAiProposal.add.map((x, idx) => (
-                        <label
-                          key={idx}
-                          className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={!!raidAiSelectedAddIdx[idx]}
-                            onChange={(e) =>
-                              setRaidAiSelectedAddIdx((prev) => ({
-                                ...prev,
-                                [idx]: e.target.checked,
-                              }))
-                            }
-                            className="mt-1"
-                          />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-medium text-slate-800 dark:text-white">
-                                {x.title}
-                              </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
-                                {String(x.type || '').toUpperCase()}
-                              </span>
-                              {x.severity ? (
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
-                                  {x.severity}
-                                </span>
-                              ) : null}
-                            </div>
-                            {x.description ? (
-                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
-                                {x.description}
-                              </p>
-                            ) : null}
-                            {x.rationale ? (
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                                {x.rationale}
-                              </p>
-                            ) : null}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Callout
-                  variant="purple"
-                  title={isPolish ? 'Plan' : 'Plan'}
-                  compact
-                  className="rounded-xl"
-                >
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>
-                      {(isPolish
-                        ? 'Usuń zaznaczone elementy RAID: '
-                        : 'Remove selected RAID items: ') +
-                        raidAiProposal.remove.reduce(
-                          (sum, r) => sum + (raidAiSelectedRemoveIds[r.raidId] ? 1 : 0),
-                          0
-                        )}
-                    </li>
-                    <li>
-                      {(isPolish
-                        ? 'Dodaj zaznaczone elementy RAID: '
-                        : 'Add selected RAID items: ') +
-                        raidAiProposal.add.reduce(
-                          (sum, _x, idx) => sum + (raidAiSelectedAddIdx[idx] ? 1 : 0),
-                          0
-                        )}
-                    </li>
-                  </ul>
-                </Callout>
-              </div>
-
-              <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
-                <button
-                  onClick={closeRaidAIModal}
-                  disabled={isRaidAIProposing}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
-                >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
-                </button>
-                <button
-                  onClick={() => void applyRaidAIProposal()}
-                  disabled={isRaidAIProposing || !canEditCards}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
-                  title={
-                    !canEditCards
-                      ? isPolish
-                        ? 'Brak uprawnień do edycji na tym etapie inicjatywy.'
-                        : 'No edit permission at this initiative stage.'
-                      : undefined
-                  }
-                >
-                  {isRaidAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
-                  {isPolish ? 'Zastosuj' : 'Apply'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-          <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <NModeHeader
-                title={titleDraft || initiative?.name || ''}
-                onTitleChange={setTitleDraft}
-                titleReadOnly={!canEditCards}
-                titleInputId={titleInputId}
-                artifactId={initiativeId}
-                artifactType="initiative"
-                onSave={() => handleSave(false)}
-                saving={isMutating}
-                isDirty={hasUnsavedChanges}
-                onChat={handleOpenChat}
-                onClose={onBack || (() => {})}
-                statusDotColor={statusMeta.dotColor}
-                presentationMode={presentationMode}
-                onPresentationModeChange={setPresentationMode}
-                buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
-              />
-
-              <div className="mt-4">
-                <Callout
-                  variant="warning"
-                  title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
-                  action={{
-                    label: isPolish ? 'Przełącz na N' : 'Switch to N',
-                    onClick: () => setPresentationMode('n'),
-                  }}
-                >
-                  {isPolish
-                    ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
-                    : 'This view will be rebuilt. For now, please use N mode (page-first).'}
-                </Callout>
-              </div>
-            </div>
-          </div>
+        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 p-4">
+          <InitiativeCompactPanel
+            initiative={initiative as any}
+            initiativeId={initiativeId}
+            isOpen
+            onClose={onBack || (() => setPresentationMode('n'))}
+            onOpenFull={(updated) => {
+              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
+              setPresentationMode('n');
+            }}
+            onUpdate={(updated) => {
+              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
+              if (updated?.status) {
+                onStatusChange?.(String(updated.status));
+              }
+            }}
+            mode="embedded"
+            users={users as any}
+          />
         </div>
       </InitiativeContext.Provider>
     );
