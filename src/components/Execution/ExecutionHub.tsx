@@ -100,6 +100,7 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
 import { RiskSignalsPanel } from './RiskSignalsPanel';
+import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -867,7 +868,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       try {
         // Get initiatives that are in execution phase
         const response = await Api.getInitiatives(currentProjectId || undefined);
-        const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
+        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
 
         // Filter to execution-relevant statuses
         const executionInitiatives = data.filter((i: FullInitiative) =>
@@ -910,7 +911,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return res.json();
           })();
         });
-        setRiskSignals(data.signals || []);
+        setRiskSignals(normalizeExecutionArrayEnvelope<RiskSignalItem>(data, ['signals']));
       } catch {
         // risk signals are non-blocking
         setRiskSignals([]);
@@ -936,7 +937,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return res.json();
           })();
         });
-        setDelaySignals(data.signals || []);
+        setDelaySignals(normalizeExecutionArrayEnvelope<DelaySignalItem>(data, ['signals']));
       } catch {
         // delay signals are non-blocking
         setDelaySignals([]);
@@ -955,7 +956,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             currentProjectId ? { projectId: currentProjectId } : undefined
           );
         });
-        setOverspendSignals(data.signals || []);
+        setOverspendSignals(
+          normalizeExecutionArrayEnvelope<typeof overspendSignals[number]>(data, ['signals'])
+        );
       } catch {
         setOverspendSignals([]);
       }
@@ -1006,15 +1009,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
         if (cancelled) return;
 
-        setTimelineWarnings(warningsData.warnings || []);
-        setTimelineWarningTotal(
-          Number(
-            warningsData.total ??
-              (Array.isArray(warningsData.warnings) ? warningsData.warnings.length : 0)
-          )
+        const normalizedWarnings = normalizeExecutionArrayEnvelope<GovernedTimelineWarning>(
+          warningsData,
+          ['warnings']
         );
-        setCapacityAlerts(alertsData.alerts || []);
-        setCapacityTimeline(timelineData.weeks || []);
+        setTimelineWarnings(normalizedWarnings);
+        setTimelineWarningTotal(
+          Number((warningsData as { total?: number } | null)?.total ?? normalizedWarnings.length)
+        );
+        setCapacityAlerts(
+          normalizeExecutionArrayEnvelope<GovernedCapacityAlert>(alertsData, ['alerts'])
+        );
+        setCapacityTimeline(
+          normalizeExecutionArrayEnvelope<GovernedCapacityWeek>(timelineData, ['weeks'])
+        );
       } catch {
         if (cancelled) return;
         setTimelineWarnings([]);
@@ -1037,7 +1045,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setIsLoadingTasks(true);
       try {
         const data = await Api.getTasks({ projectId: currentProjectId });
-        setTasks(Array.isArray(data) ? (data as Task[]) : []);
+        setTasks(normalizeExecutionArrayEnvelope<Task>(data, ['tasks']));
       } catch (err) {
         console.error('[ExecutionHub] Failed to load tasks:', err);
         setTasks([]);
@@ -1054,7 +1062,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setIsLoadingDecisions(true);
       try {
         const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
-        const data = Array.isArray(response) ? response : response?.decisions || [];
+        const data = normalizeExecutionArrayEnvelope<any>(response, ['decisions']);
         setDecisions(data);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load decisions:', err);
