@@ -89,4 +89,5 @@ New coverage:
 ## Status
 
 - `Execution` now has a stronger shared truth spine for its operator-facing control tower.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

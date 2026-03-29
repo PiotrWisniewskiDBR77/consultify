@@ -109,4 +109,5 @@ Coverage includes:
   - honest create semantics
   - governed external-source availability
   - visible retryable failure state
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

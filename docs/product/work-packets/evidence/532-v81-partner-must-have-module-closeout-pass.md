@@ -113,4 +113,5 @@ Coverage includes:
   - public entry -> partner onboarding
   - pricing/home entry -> onboarding or governed docs
   - deprecated duplicate directory/resources surfaces -> redirect shims
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

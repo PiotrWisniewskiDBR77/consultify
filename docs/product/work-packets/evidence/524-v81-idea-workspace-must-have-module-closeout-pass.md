@@ -82,4 +82,5 @@ Existing idea guardrails still green:
 ## Status
 
 - `Idea Workspace` Packet 5 is materially closer to must-have acceptance.
-- Current closure status: code landed, targeted tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, targeted tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

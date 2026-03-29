@@ -87,4 +87,5 @@ Notes:
 ## Status
 
 - `Anna` is accepted at wave-1 code/proof level as the external guided-entry assistant.
-- Current closure status: audited, proof recorded, focused module test suite green, manual acceptance still required.
+- Current closure status at time of write: audited, proof recorded, focused module test suite green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

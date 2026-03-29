@@ -81,4 +81,5 @@ Coverage includes:
 
 - `Tabele` no longer hide load failures behind an empty table shell.
 - `Tabele` no longer hide read-only authority behind silent disabled controls.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

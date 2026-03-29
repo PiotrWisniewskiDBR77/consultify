@@ -1,14 +1,21 @@
 # V8.1 Wave 1 Status
 
-> Status: implemented as `Wave 1 substrate`, not full `V8.1` product closure
+> Status: historical Wave 1 substrate snapshot, later closure superseded
 > Scope owner: Product + Engineering
-> Last updated: 2026-03-24
+> Last updated: 2026-03-29
 
 ---
 
 ## 1. Current truth
 
-`V8.1` is not yet closed as a full product package.
+This document is a historical snapshot from before the later Wave 1 and package closeout ratifications.
+
+Current authority now lives in:
+
+- `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+- `docs/product/work-packets/evidence/549-v8-v81-package-exception-retirement.md`
+
+The current package should no longer be described as `not yet closed` for the frozen Wave 1 scope.
 
 What exists today is a solid `Wave 1` shared artifact substrate:
 

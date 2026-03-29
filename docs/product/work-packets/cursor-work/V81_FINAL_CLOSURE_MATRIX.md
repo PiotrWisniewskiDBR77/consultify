@@ -1,6 +1,6 @@
 # V8.1 Final Closure Matrix
 
-> Status: historical final closure matrix snapshot
+> Status: historical final closure matrix snapshot, later sign-off superseded
 > Owner: Manager Agent
 > Scope: exact closure status for the `V8.1` artifact runtime and outputs scope
 > Authority: high for final `V8.1` local closure accounting under `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md`
@@ -66,19 +66,18 @@ Reason:
 
 ### Final package/sign-off verdict
 
-`not 100% final sign-off yet`
+Historical at time of write:
 
-Reason:
+- `not 100% final sign-off yet`
 
-- the frozen package ledger still contains package-level reds outside the narrow `V8.1` slice,
-- and direct Outputs-facing browser proof on live staging is still not part of the final evidence set.
+Current reading:
+
+- superseded by the later package closure alignment in `V8_V81_CLOSURE_LEDGER.md`
+- superseded by final module ratification in `../evidence/548-v81-wave1-final-module-gate-ratification.md`
+- superseded by package exception retirement in `../evidence/549-v8-v81-package-exception-retirement.md`
 
 ---
 
-## 5. Required next action for absolute 100%
+## 5. Historical next action
 
-To call the slice `100% V8.1 Final` without qualification, the manager still needs:
-
-1. direct Outputs-facing browser proof on live staging or an explicit written waiver,
-2. explicit acceptance of the remaining `sheet` parity deferral in the final sign-off context,
-3. package-level sign-off alignment with `docs/product/work-packets/cursor-work/V8_V81_CLOSURE_LEDGER.md`.
+The action items below were part of the historical matrix state and are no longer the current authority after the later sign-off reconciliation.

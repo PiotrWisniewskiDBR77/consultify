@@ -94,4 +94,5 @@ Existing whiteboard guardrails still green:
 ## Status
 
 - `Whiteboard` now has a bounded must-have trust close for `WB-1 interaction grammar`.
-- Current closure status: code landed, targeted tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, targeted tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

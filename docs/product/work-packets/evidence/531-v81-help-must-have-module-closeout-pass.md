@@ -99,4 +99,5 @@ Coverage includes:
 ## Status
 
 - `Help / Baza wiedzy` now has a clearer canonical docs truth, better locale coherence, honest API-docs behavior, and real route tests aligned with the live customer KB.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

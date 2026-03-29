@@ -68,4 +68,5 @@ Coverage includes:
 
 - `Wnioski w Interview` no longer collapse load failures into fake “no sessions” emptiness.
 - `Wnioski w Interview` no longer risk surfacing raw backend-shaped payloads to the end user.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

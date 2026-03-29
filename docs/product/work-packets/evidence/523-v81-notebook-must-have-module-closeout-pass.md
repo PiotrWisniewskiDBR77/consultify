@@ -2,7 +2,7 @@
 
 Date: 2026-03-28
 Lane: first-tranche `must have` / `Notebook`
-Status: landed for manual acceptance
+Status: historical closeout snapshot, later final module ratification applied
 
 ## Problem
 
@@ -91,4 +91,9 @@ This pass materially improves `Notebook`, but does not claim:
 - stronger reviewer attribution semantics for `verified / disputed`,
 - or a broader redesign of linked outputs and cross-module provenance language.
 
-`Notebook` is now in a better state for manual acceptance in the first must-have tranche, but final module acceptance should still include the manual checklist above.
+`Notebook` was intentionally left at manual-gate stage at the time of this packet.
+
+Current authority:
+
+- final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`
+- deeper notebook browser continuity proof is recorded in `544-v81-mywork-deep-acceptance-pack.md`

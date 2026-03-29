@@ -74,4 +74,5 @@ Coverage includes:
 
 - `Proces flow` no longer hides load failures behind an empty canvas.
 - `Proces flow` no longer hides read-only authority behind silent disabled controls.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

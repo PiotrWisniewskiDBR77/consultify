@@ -100,4 +100,5 @@ Coverage includes:
 ## Status
 
 - `Integracja` now behaves as an honest entry into the governed sync control plane instead of a partially local or ambiguous settings surface.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.

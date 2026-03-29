@@ -85,4 +85,5 @@ Coverage includes:
 ## Status
 
 - `Finanse` now has a coherent route truth, honest cross-module entry, clearer degraded runtime behavior, and a non-split read/write truth for budgets and valuations.
-- Current closure status: code landed, focused tests green, manual acceptance still required.
+- Current closure status at time of write: code landed, focused tests green, pre-ratification snapshot.
+- Current authority: final Wave 1 module ratification is recorded in `548-v81-wave1-final-module-gate-ratification.md`.
