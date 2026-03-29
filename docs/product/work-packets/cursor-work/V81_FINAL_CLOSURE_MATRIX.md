@@ -38,7 +38,7 @@ The matrix is intentionally narrower than the package-wide `V8.0 + V8.1` closure
 | `Traceability + review` | review state, visibility, source context, provenance remain visible | `fulfilled` | aggregate library semantics and preview now expose review, visibility, artifact identity, and source summary | `tests/components/ReportsAndPresentations/ReportsAndPresentationsHub.canonicalDataPath.test.tsx` |
 | `Broad smoke` | artifact surfaces survive browser runtime | `fulfilled` | local L4 smoke passes for Outputs Library canonical path | `tests/e2e/smoke/outputs-library-canonical-artifacts.spec.ts` via `npm run test:l4:local:outputs-library` |
 | `Staging summary` | live staging verification exists | `fulfilled` | live staging verification now covers the governed execution/retrieval support chain and the direct artifact runtime path through `snapshot -> from-chat -> accept-plan -> materialize(report)` | `../evidence/09-v81-execution-proof.json`, `../evidence/10-v81-retrieval-proof.json`, `../evidence/17-v81-artifact-run-proof-after-final-fixes.json` |
-| `Known-failure ledger` | zero or explicit waivers | `fulfilled` | no local known failures remain in the executed `V8.1` targeted suite; remaining blockers are explicit package-level and sign-off-boundary items | targeted suite + browser smoke run on 2026-03-24, plus staging evidence listed below |
+| `Known-failure ledger` | zero or explicit waivers | `fulfilled` | no local known failures remained in the executed `V8.1` targeted suite at the time of this snapshot; later package-level reconciliation is tracked in the newer closure/sign-off docs | targeted suite + browser smoke run on 2026-03-24, plus staging evidence listed below |
 
 ---
 
@@ -68,7 +68,7 @@ Reason:
 
 Historical at time of write:
 
-- `not 100% final sign-off yet`
+- package sign-off was still pending final reconciliation
 
 Current reading:
 
