@@ -98,4 +98,20 @@ describe('ProviderHomeView CTA authority', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open partner docs' }));
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/partner?tab=documentation');
   });
+
+  it('shows the shared partner lifecycle canon inside onboarding surfaces', async () => {
+    render(
+      <MemoryRouter initialEntries={['/partner']}>
+        <ProviderHomeView />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('One path from application to active partner')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Canonical partner journey')).toBeInTheDocument();
+    expect(screen.getByText('Apply and qualify')).toBeInTheDocument();
+    expect(screen.getByText('Lifecycle progress')).toBeInTheDocument();
+  });
 });

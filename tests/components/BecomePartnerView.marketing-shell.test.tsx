@@ -71,6 +71,7 @@ describe('BecomePartnerView marketing shell parity', () => {
     expect(screen.getByTestId('landing-mobile-menu-trigger')).toBeInTheDocument();
     expect(screen.getByText('Terms')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
+    expect(screen.getByText('One path from application to active partner')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Mam już konto partnera' }));
 

@@ -42,6 +42,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
+import { PartnerLifecycleCanonPanel } from '../../components/Partner/PartnerLifecycleCanonPanel';
 import {
   loadPartnerRuntimeSummary,
   type PartnerRuntimeSummary,
@@ -55,6 +56,7 @@ import {
   V8PartnerApi,
   type V8PartnerClient,
   type V8PartnerEarningsSummary,
+  type V8PartnerOnboardingStatus,
   type V8PartnerProject,
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
@@ -147,6 +149,7 @@ const DashboardSection: React.FC = () => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [v8RuntimeSummary, setV8RuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
+  const [onboardingStatus, setOnboardingStatus] = useState<V8PartnerOnboardingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -214,10 +217,20 @@ const DashboardSection: React.FC = () => {
     }
   }, []);
 
+  const fetchOnboardingStatus = useCallback(async () => {
+    try {
+      const response = await V8PartnerApi.getOnboardingStatus();
+      setOnboardingStatus(response?.status || null);
+    } catch {
+      setOnboardingStatus(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
     void fetchV8RuntimeSummary();
-  }, [fetchDashboard, fetchV8RuntimeSummary]);
+    void fetchOnboardingStatus();
+  }, [fetchDashboard, fetchOnboardingStatus, fetchV8RuntimeSummary]);
 
   const quickActions = [
     { label: 'Add New Client', icon: Plus, action: 'add-client' },
@@ -302,6 +315,7 @@ const DashboardSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {v8RuntimeSummary && <PartnerRuntimeSummaryStrip summary={v8RuntimeSummary} />}
+      <PartnerLifecycleCanonPanel status={onboardingStatus} compact />
 
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
