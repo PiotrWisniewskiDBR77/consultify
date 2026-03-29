@@ -192,21 +192,20 @@ export const FinanceHub: React.FC = () => {
     deselectRow,
   } = useFinanceSelection(activeTab);
 
+  const loadV8Dashboard = useCallback(async () => {
+    const response = await V8FinanceApi.getDashboard();
+    setV8Dashboard(response.dashboard);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    const loadV8Dashboard = async () => {
-      try {
-        const response = await V8FinanceApi.getDashboard();
-        if (!cancelled) setV8Dashboard(response.dashboard);
-      } catch {
-        if (!cancelled) setV8Dashboard(null);
-      }
-    };
-    void loadV8Dashboard();
+    void loadV8Dashboard().catch(() => {
+      if (!cancelled) setV8Dashboard(null);
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadV8Dashboard]);
 
   useEffect(() => {
     if (location.pathname !== ROUTES.ECONOMICS) return;
@@ -493,6 +492,24 @@ export const FinanceHub: React.FC = () => {
   const handleValuationChanged = useCallback(async () => {
     await loadValuations();
   }, [loadValuations]);
+
+  const refreshFinanceTruth = useCallback(
+    async (kinds: FinanceKind[]) => {
+      await Promise.allSettled([
+        loadV8Dashboard().catch(() => {
+          setV8Dashboard(null);
+        }),
+        ...kinds.map((kind) => {
+          if (kind === 'statements') return loadStatements();
+          if (kind === 'analysis' || kind === 'investment') return loadAnalyses();
+          if (kind === 'models') return loadModels();
+          if (kind === 'prediction') return Promise.all([loadModels(), loadBudgets()]);
+          return loadValuations();
+        }),
+      ]);
+    },
+    [loadAnalyses, loadBudgets, loadModels, loadStatements, loadV8Dashboard, loadValuations]
+  );
 
   const handleExport = useCallback((row: FinanceRow) => {
     const sourceType =
@@ -1825,7 +1842,7 @@ export const FinanceHub: React.FC = () => {
             setCreateModelSourceStatementPackId(null);
           }}
           onCreated={async (row) => {
-            await loadModels();
+            await refreshFinanceTruth(['models']);
             setShowCreateModelModal(false);
             setCreateModelSourceStatementPackId(null);
             handleOpenFull(row);
@@ -1863,7 +1880,7 @@ export const FinanceHub: React.FC = () => {
                 const data = await Api.get('/api/finance-statements/packs');
                 packs = Array.isArray(data) ? data : [];
               }
-              await loadStatements();
+              await refreshFinanceTruth(['statements']);
               const pack = Array.isArray(packs)
                 ? packs.find((item: any) => String(item.id) === statementPackId)
                 : null;
@@ -1946,7 +1963,7 @@ export const FinanceHub: React.FC = () => {
             setAnalysisInitialTitle('');
           }}
           onCreated={async (row) => {
-            await loadAnalyses();
+            await refreshFinanceTruth(['analysis']);
             setShowAnalysisCreateModal(false);
             setAnalysisSourceStatementPackId(null);
             setAnalysisInitialTitle('');
@@ -1963,7 +1980,7 @@ export const FinanceHub: React.FC = () => {
             setBudgetInitialTitle('');
           }}
           onCreated={async (row) => {
-            await loadBudgets();
+            await refreshFinanceTruth(['prediction']);
             setShowPredictionCreateModal(false);
             setBudgetInitialTitle('');
             handleOpenFull(row);
@@ -1982,7 +1999,7 @@ export const FinanceHub: React.FC = () => {
             setValuationInitialTitle('');
           }}
           onCreated={async (row) => {
-            await loadValuations();
+            await refreshFinanceTruth(['valuation']);
             setShowValuationCreateModal(false);
             setValuationInitialSource({});
             setValuationInitialTitle('');

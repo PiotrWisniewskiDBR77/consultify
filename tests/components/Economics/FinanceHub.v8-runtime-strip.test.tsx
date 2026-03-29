@@ -329,6 +329,7 @@ describe('FinanceHub V8 runtime strip', () => {
     });
 
     expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(V8FinanceApi.getDashboard).toHaveBeenCalledTimes(2);
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs');
     expect(financeDataState.loadStatements).toHaveBeenCalled();
