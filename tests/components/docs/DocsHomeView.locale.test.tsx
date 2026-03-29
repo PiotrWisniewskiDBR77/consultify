@@ -40,5 +40,9 @@ describe('DocsHomeView locale wiring', () => {
     expect(screen.getByText('Ask Teresa for guided help')).toBeInTheDocument();
     expect(screen.getByText('Consulting journey')).toBeInTheDocument();
     expect(screen.getByText('Support surfaces')).toBeInTheDocument();
+    expect(screen.getByText('Where Help ends and Education begins')).toBeInTheDocument();
+    expect(screen.getByText('Canonical learning-path model')).toBeInTheDocument();
+    expect(screen.getByText('Inside Help / Knowledge Base')).toBeInTheDocument();
+    expect(screen.getByText('Inside standalone Education / Academy')).toBeInTheDocument();
   });
 });

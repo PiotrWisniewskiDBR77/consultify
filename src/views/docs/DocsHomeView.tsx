@@ -345,6 +345,123 @@ export const DocsHomeView: React.FC = () => {
         </div>
       </section>
 
+      <section className="max-w-6xl mx-auto px-4 py-6">
+        <div className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 p-6 lg:p-8">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              <GraduationCap size={14} />
+              {t('docs.home.educationScope.badge', 'Education scope')}
+            </div>
+            <h2 className="mt-4 text-2xl font-bold">
+              {t('docs.home.educationScope.title', 'Where Help ends and Education begins')}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              {t(
+                'docs.home.educationScope.subtitle',
+                'Help and Knowledge Base stay focused on just-in-time guidance, reference articles, and contextual support. Education is the separate enablement layer for structured learning paths, role-based progress, and certification-style readiness.'
+              )}
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-slate-50/80 dark:bg-navy-950/40 p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <LifeBuoy size={16} className="text-purple-500" />
+                {t('docs.home.educationScope.helpTitle', 'Inside Help / Knowledge Base')}
+              </div>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li>
+                  {t(
+                    'docs.home.educationScope.helpPoint1',
+                    'Contextual help, FAQs, quick guides, product walkthroughs, and long-form reference articles.'
+                  )}
+                </li>
+                <li>
+                  {t(
+                    'docs.home.educationScope.helpPoint2',
+                    'Teresa-led discovery when the user needs help to continue real work in the current module.'
+                  )}
+                </li>
+                <li>
+                  {t(
+                    'docs.home.educationScope.helpPoint3',
+                    'Updates, release notes, and knowledge surfacing that reduce friction in day-to-day product usage.'
+                  )}
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-slate-50/80 dark:bg-navy-950/40 p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <GraduationCap size={16} className="text-blue-500" />
+                {t('docs.home.educationScope.educationTitle', 'Inside standalone Education / Academy')}
+              </div>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li>
+                  {t(
+                    'docs.home.educationScope.educationPoint1',
+                    'Structured learning paths with foundations, role tracks, and deeper methodology enablement.'
+                  )}
+                </li>
+                <li>
+                  {t(
+                    'docs.home.educationScope.educationPoint2',
+                    'Progress visibility, completion semantics, and certification or readiness checkpoints.'
+                  )}
+                </li>
+                <li>
+                  {t(
+                    'docs.home.educationScope.educationPoint3',
+                    'Role-aware enablement tied to onboarding, partner growth, and skill development over time.'
+                  )}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold">
+              {t('docs.home.educationScope.pathTitle', 'Canonical learning-path model')}
+            </h3>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                {
+                  title: t('docs.home.educationScope.path1.title', '1. Foundations'),
+                  description: t(
+                    'docs.home.educationScope.path1.description',
+                    'Learn the platform, core consulting journey, and essential operating concepts.'
+                  ),
+                },
+                {
+                  title: t('docs.home.educationScope.path2.title', '2. Role path'),
+                  description: t(
+                    'docs.home.educationScope.path2.description',
+                    'Go deeper by role or motion: operator, consultant, partner, or specialized methodology track.'
+                  ),
+                },
+                {
+                  title: t('docs.home.educationScope.path3.title', '3. Proof of readiness'),
+                  description: t(
+                    'docs.home.educationScope.path3.description',
+                    'Close the path with progress evidence, completion state, and certification-style trust signals where needed.'
+                  ),
+                },
+              ].map((step) => (
+                <div
+                  key={step.title}
+                  className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950/40 p-4"
+                >
+                  <div className="font-semibold text-slate-900 dark:text-white">{step.title}</div>
+                  <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    {step.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Categories Grid */}
       <section className="max-w-6xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold mb-6">
