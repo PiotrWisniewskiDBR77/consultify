@@ -370,7 +370,7 @@ function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string
 interface TimelineWarning {
   initiativeId: string;
   initiativeName: string;
-  type: 'overdue' | 'blocked' | 'dependency_conflict';
+  type: 'overdue' | 'blocked' | 'dependency_conflict' | 'sla_approaching';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   daysOverdue?: number;

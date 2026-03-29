@@ -37,10 +37,10 @@ export interface DelaySignalItem {
   deviationType: 'LATE_START' | 'LATE_FINISH_RISK' | 'DEADLINE_RISK' | 'OVERDUE';
   severity: 'WARNING' | 'CRITICAL';
   daysDeviation: number;
-  plannedDate: string | null;
-  actualOrCurrent: string | null;
+  plannedDate?: string | null;
+  actualOrCurrent?: string | null;
   whySlipReasons: Array<{ reason: string; detail: string }>;
-  isDismissed: boolean;
+  isDismissed?: boolean;
 }
 
 interface DelayDetectionPanelProps {

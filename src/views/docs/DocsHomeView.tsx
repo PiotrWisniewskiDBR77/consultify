@@ -72,7 +72,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const DynamicIcon: React.FC<{ name: string; className?: string }> = ({ name, className }) => {
-  const IconComponent = (LucideIcons as Record<string, React.ComponentType<any>>)[name];
+  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<any>>)[name];
   if (!IconComponent) return <BookOpen size={20} className={className} />;
   return <IconComponent size={20} className={className} />;
 };

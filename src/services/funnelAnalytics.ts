@@ -62,6 +62,7 @@ export type FunnelEventName =
   | 'oauth_login_failed'
   | 'oauth_linked'
   | 'oauth_unlinked'
+  | 'landing_anna_guided_prompt_clicked'
   | 'linkedin_connect_cta_shown'
   | 'linkedin_connect_cta_clicked'
   | 'linkedin_connect_cta_dismissed'

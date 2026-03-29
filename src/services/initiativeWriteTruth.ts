@@ -88,18 +88,20 @@ export async function getInitiativeStatusPreflightTruth(
   targetStatus: string
 ): Promise<InitiativeStatusPreflightTruth> {
   const readiness = await getInitiativeGateReadinessTruth(initiativeId);
-  const transitions = Array.isArray(readiness?.availableTransitions)
+  const transitions: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']> = Array.isArray(
+    readiness?.availableTransitions
+  )
     ? readiness.availableTransitions
     : [];
   const transition =
     transitions.find(
-      (item) =>
+      (item: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']>[number]) =>
         String(item?.targetStatus || '').toUpperCase() === String(targetStatus || '').toUpperCase()
     ) || null;
   const blockingItems = Array.isArray(readiness?.readiness)
     ? readiness.readiness
-        .filter((item) => item?.severity === 'blocking' && !item?.pass)
-        .map((item) => String(item?.label || item?.key || '').trim())
+        .filter((item: V8PlanningGateReadinessCheck['readiness'][number]) => item?.severity === 'blocking' && !item?.pass)
+        .map((item: V8PlanningGateReadinessCheck['readiness'][number]) => String(item?.label || item?.key || '').trim())
         .filter(Boolean)
     : [];
 

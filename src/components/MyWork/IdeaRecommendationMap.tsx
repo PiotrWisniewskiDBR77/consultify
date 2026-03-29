@@ -38,7 +38,6 @@ import ReactFlow, {
   useEdgesState,
   useNodesState,
   useReactFlow,
-  useStore,
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
@@ -771,14 +770,15 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
+  const { getNodes, getEdges } = useReactFlow();
   const colors = useMemo(
     () => branchColor(data.branchKey, data._depth),
     [data.branchKey, data._depth]
   );
   const collapsed = data._collapsed;
   const childCount = data.count || 0;
-  const rfNodes = useStore((state: any) => state?.nodes ?? []);
-  const rfEdges = useStore((state: any) => state?.edges ?? []);
+  const rfNodes = getNodes();
+  const rfEdges = getEdges();
   const nodeCount = rfNodes.length;
   const edgeCount = rfEdges.length;
   const health = useMemo(
