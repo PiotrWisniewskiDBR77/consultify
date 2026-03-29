@@ -21,9 +21,56 @@ Status: draft (shared-sourced contract; extracted scope for position 26)
 - Shared source plan (combined): `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md`
 
 ## 4. Softs inspirations (benchmark apps)
-- **Primary**: „knowledge products / help centers” — brak jawnej listy vendorów w repo (**missing input**).
+### 4.1 Primary benchmark family (SSOT)
+- Plan modułu (shared): `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md` (knowledge product + contextual discovery + content ops jako produkt).
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **Intercom (Knowledge Hub: curated knowledge + structures + AI recommendations)**:
+  - `Softs/0 Baza wiedzy /Intercom 2/www.intercom.com/help/en/articles/9357912-knowledge-explained.html` (knowledge hub posture: curated, nie dump).
+  - `Softs/0 Baza wiedzy /Intercom 2/www.intercom.com/help/en/articles/9357924-organize-folders-in-the-knowledge-hub.html` (folders/IA posture).
+  - `Softs/0 Baza wiedzy /Intercom 2/www.intercom.com/help/en/articles/6040998-content-tagging-in-the-knowledge-hub.html` (tagging posture).
+  - `Softs/0 Baza wiedzy /Intercom 2/www.intercom.com/help/en/articles/11394959-use-ai-powered-content-recommendations-to-improve-fin.html` (AI-powered content recommendations).
+- **Zendesk (Help Center: search/discovery posture)**:
+  - `Softs/0 Baza wiedzy /Zendesk 2/support.zendesk.com/hc/ja/search.html` (search surface).
+- **Notion / Evernote (knowledge capture + discovery posture as adjacent family)**:
+  - `Softs/0 Notatki/Notion help.zip` (knowledge base / docs-first mental model; useful as “curation + discovery” adjacency).
+  - `Softs/0 Notatki/evernote help.zip` (capture + organize posture adjacency).
+
+### 4.3 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “knowledge product jako kanał edukacyjno‑sprzedażowy z IA+tags+dystrybucją”, nie “lista artykułów bez życia”.**
+
+- **Curated IA + tags (Intercom Knowledge)**:
+  - Struktura (folders/collections) i tagi to kontrakt; user rozumie “co tu jest” i “co dalej czytać”.
+- **Search & discovery (Zendesk/Intercom)**:
+  - Szybkie wyszukiwanie i sensowne wyniki; brak “scroll-hell”.
+- **AI-led discovery (Intercom recommendations + plan)**:
+  - Anna/Teresa promują i kierują do treści na podstawie kontekstu (bez overclaim).
+- **Distribution posture (intent)**:
+  - Treści mają linkowalność i dystrybucję (newsletter/social) jako element produktu, nie “poza systemem”.
+- **Right panel + tool context (intent)**:
+  - Prawy panel w narzędziach i LP działa jako “contextual reading lane” — bez rozjazdu języka i taksonomii.
+
+### 4.4 Gap ledger vs Softs (what we are missing — derived from Wave2 plan + contract)
+Źródło prawdy: `WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md`.
+
+| Capability cluster (parity target) | What Softs implies | Current truth (contract) | Gap statement (contract requirement) | Priority |
+| --- | --- | --- | --- | --- |
+| Content ops + seeding | curated + durable | “seed 50 + graphics” | Zbudować pipeline seeding/ownership/lifecycle; 50 treści to deliverable, nie zamiar | P0 |
+| Tagging + IA | folders/tags matter | “tags + IA implied” | Dopiąć model IA+tags oraz rules “where it appears” (LP/prawy panel/AI) | P0 |
+| Contextual routing | in-product guidance | “promoted by Anna/Teresa” | Zdefiniować contextual recommendation contract (kiedy i jak promujemy treści) | P1 |
 
 ## 5. Evidence plan (DoD)
-- Acceptance: content jest seeded (docelowe 50), ma tagi i IA; promocja/routing przez AI działa; linkowanie/SEO-ish dystrybucja jest realna.
-- Evidence: staging proof z content setem + checklista dystrybucji + testy dla routing.
+### 5.1 Acceptance criteria
+- Content jest seeded (docelowe 50) + grafiki; ma tagi i IA.
+- Prawy panel + LP pokazują właściwe treści dla kontekstu narzędzia (bez chaosu taksonomii).
+- Promocja/routing przez Annę/Teresę działa i jest “bounded” (bez marketingowych overclaimów).
+
+### 5.2 Tests
+- Integracyjne: browse IA → filter by tags → search → open article → related/next content.
+- Routing tests: tool context → right panel recommended articles; Anna/Teresa → link to exact article ids.
+- Regression: brak treści dla tagu/kontekstu → czytelny degraded state + fallback do “top canonical”.
+
+### 5.3 Staging proof checklist
+- Demo: 3 przykładowe narzędzia → prawy panel → właściwe treści + tag navigation.
+- Demo: newsletter/social link opens correct article + trackable referral.
 
