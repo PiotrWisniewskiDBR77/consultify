@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { CommunicationSurfaceModelPanel } from '../../../components/shared/CommunicationSurfaceModelPanel';
 import Api from '../../../services/api';
 
 interface Communication {
@@ -155,6 +156,8 @@ const CustomerCommunicationView: React.FC = () => {
           New Message
         </button>
       </div>
+
+      <CommunicationSurfaceModelPanel compact />
 
       {/* Runtime Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -75,6 +75,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { Modal } from '@/components/ui/primitives/Modal';
+import { CommunicationSurfaceModelPanel } from '@/components/shared/CommunicationSurfaceModelPanel';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -2987,6 +2988,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
+          <CommunicationSurfaceModelPanel compact className="mb-3" />
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
               <Loader2 className="animate-spin mr-2" size={18} />

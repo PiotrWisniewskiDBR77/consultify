@@ -55,6 +55,8 @@ describe('CustomerCommunicationView', () => {
       expect(Api.getCommunicationStats).toHaveBeenCalledTimes(1);
     });
 
+    expect(screen.getByText('One governed communication family, not a chat clone')).toBeInTheDocument();
+    expect(screen.getByText('Canonical communication flows')).toBeInTheDocument();
     expect(await screen.findByTestId('communication-stat-total')).toHaveTextContent('7');
     expect(screen.getByTestId('communication-stat-sent')).toHaveTextContent('5');
     expect(screen.getByTestId('communication-stat-open-rate')).toHaveTextContent('42%');
