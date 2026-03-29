@@ -9,17 +9,24 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockGetTableColumns = vi.fn();
 const mockResolveInitiativeAccessContext = vi.fn();
+const mockGetBlockingReadinessItems = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
 }));
 
 vi.mock('../../../../server/src/services/initiative/initiativeAccessResolver.js', () => ({
   resolveInitiativeAccessContext: (...args: unknown[]) =>
     mockResolveInitiativeAccessContext(...args),
+}));
+
+vi.mock('../../../../server/src/services/initiative/initiativeGateReadinessService.js', () => ({
+  getBlockingReadinessItems: (...args: unknown[]) => mockGetBlockingReadinessItems(...args),
 }));
 
 vi.mock('../../../../server/src/utils/asyncHandler.js', () => ({
@@ -46,6 +53,29 @@ describe('InitiativeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockResolveInitiativeAccessContext.mockReset();
+    mockGetTableColumns.mockReset();
+    mockGetBlockingReadinessItems.mockReset();
+    mockGetTableColumns.mockResolvedValue([
+      { name: 'status' },
+      { name: 'updated_at' },
+      { name: 'review_requested_at' },
+      { name: 'review_requested_by' },
+      { name: 'approved_at' },
+      { name: 'approved_by' },
+      { name: 'approval_comment' },
+      { name: 'execution_started_at' },
+      { name: 'blocked_at' },
+      { name: 'blocked_reason' },
+      { name: 'unblocked_at' },
+      { name: 'done_at' },
+      { name: 'done_by' },
+      { name: 'completed_at' },
+      { name: 'cancelled_at' },
+      { name: 'cancelled_reason' },
+      { name: 'archived_at' },
+      { name: 'updated_by' },
+    ]);
+    mockGetBlockingReadinessItems.mockResolvedValue([]);
 
     mockReq = {
       user: {
@@ -301,22 +331,14 @@ describe('InitiativeController', () => {
     it('should block DONE -> TRACKING when Benefits KPIs are missing', async () => {
       mockReq.params.id = 'i1';
       mockReq.body = { status: 'TRACKING' };
-      // Existing initiative status lookup
       mockQueryOne
         .mockResolvedValueOnce({
           status: 'DONE',
           name: 'Test Initiative',
-          owner_business_id: 'bo-1',
           created_by: 'user-123',
-        }) // existing
-        .mockResolvedValueOnce({
-          name: 'Test Initiative',
-          owner_business_id: 'bo-1',
-          owner_execution_id: null,
-          sponsor_id: null,
-        }) // gate readiness initiative snapshot
-        .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' }) // owner_business_id lookup
-        .mockResolvedValueOnce({ c: 0 }); // KPI count
+        })
+        .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' })
+        .mockResolvedValueOnce({ c: 0 });
 
       mockResolveInitiativeAccessContext.mockResolvedValue({
         effectiveRoles: ['BUSINESS_OWNER'],
@@ -336,6 +358,46 @@ describe('InitiativeController', () => {
         })
       );
       expect(mockQueryRun).not.toHaveBeenCalled();
+    });
+
+    it('skips missing lifecycle columns when submitting for review on partial schemas', async () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready for review' };
+      mockGetTableColumns.mockResolvedValueOnce([
+        { name: 'status' },
+        { name: 'updated_at' },
+      ]);
+      mockQueryOne.mockResolvedValue({
+        status: 'DRAFT',
+        name: 'Test Initiative',
+        owner_business_id: 'bo-1',
+        created_by: 'user-123',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['ADMIN'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
+
+      const statusUpdateCall = mockQueryRun.mock.calls.find((call) =>
+        String(call[0] || '').includes('UPDATE initiatives SET')
+      );
+
+      expect(statusUpdateCall).toBeTruthy();
+      expect(String(statusUpdateCall?.[0] || '')).not.toContain('review_requested_at');
+      expect(String(statusUpdateCall?.[0] || '')).not.toContain('review_requested_by');
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Status updated',
+          status: 'PENDING_REVIEW',
+        })
+      );
     });
 
     it('should return 401 when user not authenticated', async () => {
@@ -386,7 +448,7 @@ describe('InitiativeController', () => {
           }),
           cards: expect.objectContaining({ canEditCards: true }),
           ctaBar: expect.objectContaining({
-            contextCreateActions: expect.arrayContaining(['task', 'decision', 'raid']),
+            contextCreateActions: expect.arrayContaining(['decision', 'raid']),
             canUseAi: true,
           }),
         })

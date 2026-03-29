@@ -79,6 +79,25 @@ const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, 
   }
 };
 
+const getColumnNameSet = (
+  columns: Array<{
+    name?: string | null;
+  }>
+): Set<string> =>
+  new Set(columns.map((column) => String(column?.name || '').trim()).filter(Boolean));
+
+const pushOptionalColumnUpdate = (
+  updates: string[],
+  params: unknown[],
+  columns: Set<string>,
+  column: string,
+  value: unknown
+) => {
+  if (!columns.has(column)) return;
+  updates.push(`${column} = ?`);
+  params.push(value);
+};
+
 const getTopBarCapabilities = (status: string, userRoles: string[]) => {
   const currentStatus = normalizeStatus(status);
   const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
@@ -1488,51 +1507,152 @@ export class InitiativeController {
 
       // Execute status update with lifecycle timestamps
       const now = new Date().toISOString();
+      const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
       const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
       const lifecycleParams: unknown[] = [nextStatus, now];
 
       // Set lifecycle-specific timestamps
       if (nextStatus === 'PENDING_REVIEW') {
-        lifecycleUpdates.push('review_requested_at = ?', 'review_requested_by = ?');
-        lifecycleParams.push(now, actorId || null);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'review_requested_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'review_requested_by',
+          actorId || null
+        );
       }
       if (nextStatus === 'APPROVED') {
-        lifecycleUpdates.push('approved_at = ?', 'approved_by = ?');
-        lifecycleParams.push(now, actorId || null);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'approved_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'approved_by',
+          actorId || null
+        );
         if (reason) {
-          lifecycleUpdates.push('approval_comment = ?');
-          lifecycleParams.push(reason);
+          pushOptionalColumnUpdate(
+            lifecycleUpdates,
+            lifecycleParams,
+            initiativeColumns,
+            'approval_comment',
+            reason
+          );
         }
       }
       if (nextStatus === 'SCHEDULED') {
-        lifecycleUpdates.push('execution_started_at = ?');
-        lifecycleParams.push(null); // will be set when EXECUTING starts
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'execution_started_at',
+          null
+        ); // will be set when EXECUTING starts
       }
       if (nextStatus === 'EXECUTING') {
-        lifecycleUpdates.push('execution_started_at = ?');
-        lifecycleParams.push(now);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'execution_started_at',
+          now
+        );
       }
       if (nextStatus === 'BLOCKED') {
-        lifecycleUpdates.push('blocked_at = ?', 'blocked_reason = ?');
-        lifecycleParams.push(now, reason || null);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_reason',
+          reason || null
+        );
       }
       if (currentStatus === 'BLOCKED' && nextStatus === 'EXECUTING') {
-        lifecycleUpdates.push('unblocked_at = ?', 'blocked_at = ?', 'blocked_reason = ?');
-        lifecycleParams.push(now, null, null);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'unblocked_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_at',
+          null
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_reason',
+          null
+        );
       }
       if (nextStatus === 'DONE') {
-        lifecycleUpdates.push('done_at = ?', 'done_by = ?', 'completed_at = ?');
-        lifecycleParams.push(now, actorId || null, now);
+        pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'done_at', now);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'done_by',
+          actorId || null
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'completed_at',
+          now
+        );
       }
       if (nextStatus === 'CANCELLED') {
-        lifecycleUpdates.push('cancelled_at = ?', 'cancelled_reason = ?');
-        lifecycleParams.push(now, reason || null);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'cancelled_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'cancelled_reason',
+          reason || null
+        );
       }
       if (nextStatus === 'ARCHIVED') {
-        lifecycleUpdates.push('archived_at = ?');
-        lifecycleParams.push(now);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'archived_at',
+          now
+        );
       }
-      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres') {
+      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' && initiativeColumns.has('updated_by')) {
         lifecycleUpdates.push('updated_by = ?');
         lifecycleParams.push(actorId);
       }
