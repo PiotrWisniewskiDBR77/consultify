@@ -22,9 +22,59 @@ Status: draft (contract wrapper over existing plan)
 - Readiness: `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
 
 ## 4. Softs inspirations (benchmark apps)
-- **Primary**: `Miro` (wprost wskazane w planie przez `Softs/0 Miro`).
+### 4.1 Primary benchmark family (SSOT)
+- Plan modułu wskazuje `Softs/0 Miro` jako primary benchmark family (`WAVE1_FINAL_IMPLEMENTATION_PLAN_MIND_MAP_2026-03-29.md`).
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **Miro (mind map object model + import/co-building patterns)**:
+  - `Softs/0 Miro/Miiro doc.zip :: Miiro doc/developers.miro.com/docs/mind-maps.html` (Mind map (Experimental): CRUD mind maps; “represent and interact with complex structures”; import/export).
+  - `Softs/0 Miro/Miiro doc.zip :: Miiro doc/developers.miro.com/docs/create-mind-map-from-csv.html` (Create mind map from CSV: import → auto-create mind map on board).
+  - `Softs/0 Miro/Miiro doc.zip :: Miiro doc/developers.miro.com/docs/websdk-reference-mindmap-node.html` (MindmapNode: root + child creation; node content).
+  - `Softs/0 Miro/Miiro doc.zip :: Miiro doc/developers.miro.com/reference/create-mindmap-nodes-experimental.html` (Create mind map node: root/child structure; API contract posture).
+- **Adjacents in same Softs family** (dla “tool completeness”, jeśli mapka współistnieje z diagramami):
+  - `Softs/0 Miro/Excalidraw.zip` (whiteboard-style primitives; useful as a “minimal toolbelt” reference).
+  - `Softs/0 Miro/Mermaid.zip` (text-to-diagram mindset; useful for AI “generate structure” flows).
+
+### 4.3 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “spokojny, kompletny builder + przewidywalny model gałęzi”, nie “pełna Miro parity”.**
+
+- **Mind map as a first-class structure (Miro)**:
+  - Root + child nodes są jawne; node content jest edytowalne i stabilne.
+  - Struktura wspiera duże mapy bez utraty orientacji (nawigacja, fokus, “gdzie jestem”).
+- **Import/transform workflows (Miro CSV import)**:
+  - Import danych → wygenerowanie struktury mapy jako kontrolowany workflow (preview → apply).
+  - Export/readback jest możliwy bez gubienia semantyki gałęzi.
+- **Tool completeness for core loop**:
+  - Dodawanie node’ów, zmiana hierarchii (reparent), collapse/expand, szybka edycja treści.
+  - Zoom/pan/fit-to-content, undo/redo, multi-select, drag-and-drop bez “interaction anxiety”.
+- **AI co-building as governed proposals**:
+  - AI generuje/modyfikuje mapę jako propozycję (diff/preview) → user akceptuje; brak silent edits.
+  - AI potrafi: rozwinąć gałąź, zwinąć/reorganizować, wygenerować mapę z briefu.
+- **Trust boundaries (Wave1 doctrine)**:
+  - Użytkownik rozumie co zmieniło się po operacji (manualnej lub AI); stany są spójne.
+
+### 4.4 Gap ledger vs Softs (what we are missing — derived from current plans)
+Źródło prawdy “co mamy / czego brakuje” to: `WAVE1_FINAL_IMPLEMENTATION_PLAN_MIND_MAP_2026-03-29.md` + readiness `MINDMAP_V8_READINESS_AUDIT.md`.
+
+| Capability cluster (Softs parity target) | What Softs implies | Current truth (per plan) | Gap statement (contract requirement) | Priority |
+| --- | --- | --- | --- | --- |
+| Interaction calmness | smooth branch creation/navigation | “interaction calmness trails benchmark” | Uspokoić core loop: selection/navigation/branch ops (bez frustracji) | P0 |
+| Branch-state trust | operations are understandable | “branch-work trust not strong enough” | Ujednolicić semantykę branch state + readback “what changed” | P0 |
+| Collaboration confidence | helpers feel additive | “collaboration confidence later” | Dodać bounded collab/copilot cues bez destabilizacji | P1 |
+| Builder tool completeness | no missing buttons | “tool set incomplete / UX dramatic” | Domknąć minimalny toolbelt buildera (bez pełnej whiteboard parity) | P0 |
 
 ## 5. Evidence plan (DoD)
-- Acceptance: user potrafi zbudować mapę bez braków narzędzi; AI potrafi wygenerować i modyfikować strukturę jako propozycję.
-- Evidence: staging demo builder + testy dla operacji edycji i AI proposals.
+### 5.1 Acceptance criteria
+- User potrafi zbudować mapę bez braków narzędzi; AI potrafi wygenerować i modyfikować strukturę jako propozycję.
+- Core loop jest “calm”: brak sytuacji, gdzie user traci orientację po operacji.
+- AI proposals są reviewable (preview/diff) i audytowalne.
+
+### 5.2 Tests
+- Integracyjne: create root → add children → reparent → collapse/expand → undo/redo → export/readback.
+- Regression: duża mapa (stress) → selection/navigation stabilne; brak “znikających” gałęzi.
+- Contract tests: AI proposal payload → preview → accept/reject → state spójny.
+
+### 5.3 Staging proof checklist
+- Demo: manual build (od zera) + reorganizacja gałęzi + export/readback.
+- Demo: AI “zrób mindmap z briefu” → preview → accept → dalsza ręczna edycja bez glitchy.
 
