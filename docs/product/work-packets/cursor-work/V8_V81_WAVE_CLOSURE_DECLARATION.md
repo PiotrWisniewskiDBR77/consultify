@@ -2,7 +2,7 @@
 
 > Status: final CTO closure declaration
 > Date: 2026-03-26
-> Decision: `closed with bounded exceptions`
+> Decision: `closed`, later exception retirement applied
 
 ---
 
@@ -10,13 +10,13 @@
 
 The frozen `V8 + V8.1` closure wave is now declared:
 
-`closed with bounded exceptions`
+`closed`
 
 This declaration means:
 
 - the wave is finished as an execution wave,
 - the package is not to be reopened for broad parity expansion,
-- remaining unresolved points are carried explicitly as bounded exceptions,
+- earlier unresolved points are now retired where later tracker evidence closed them,
 - any further work belongs to a follow-up program, not to this closure wave.
 
 ---
@@ -47,36 +47,14 @@ Accepted closure-grade lanes include:
 
 ---
 
-## 3. Carried bounded exceptions
+## 3. Historical exceptions retired
 
-The wave is closed while carrying exactly two bounded exceptions.
+The earlier exceptions for:
 
-### Exception A: `Calendar`
+- `Calendar`
+- `Organization / Admin / Superadmin`
 
-Current carried exception:
-
-- fresh staging retest proves governed calendar read continuity on `/api/v8/my-work/calendar/unified` with `200`,
-- the create modal exists and reaches a filled submit-ready state,
-- the conflict check remains on the governed V8 path and currently returns `503`,
-- final live capture of `POST /api/v8/my-work/calendar/events` was not obtained in the closure window.
-
-Interpretation:
-
-- the unresolved point is narrow runtime/proof confirmation,
-- not absence of a governed calendar lane.
-
-### Exception B: `Organization / Admin / Superadmin`
-
-Current carried exception:
-
-- authenticated admin staging already proves `GET /api/v8/admin/flags`,
-- route/client regression covers the bounded admin contract,
-- one superadmin-grade staging diagnostics pass for `health`, `metrics`, and `shadow` visibility was not obtained in the closure window.
-
-Interpretation:
-
-- the unresolved point is bounded staging/access proof,
-- not missing backend implementation.
+are now retired by `../evidence/549-v8-v81-package-exception-retirement.md`, which reconciles the older declaration against the later post-closure tracker and debt-program records that mark both lanes `done`.
 
 ---
 
@@ -98,5 +76,5 @@ This wave is finished.
 The correct operating posture from now on is:
 
 - treat `V8 + V8.1` wave closure as complete,
-- carry the two exceptions transparently,
+- keep the frozen-scope boundary explicit,
 - and move the remaining backlog into the next execution plan instead of continuing this wave indefinitely.

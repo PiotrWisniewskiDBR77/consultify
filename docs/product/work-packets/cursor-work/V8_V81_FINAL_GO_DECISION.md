@@ -1,6 +1,6 @@
 # V8 + V8.1 Final Go Decision
 
-> Status: final CTO decision
+> Status: final CTO decision, later exception retirement applied
 > Date: 2026-03-26
 > Decision type: release/sign-off posture for the frozen `V8 + V8.1` package
 > Short status companion: `docs/product/work-packets/V8_V81_CTO_STATUS_NOW.md`
@@ -11,7 +11,7 @@
 
 Final decision:
 
-`closed with bounded exceptions`
+`closed`
 
 The wave is no longer to be treated as an open implementation program.
 
@@ -27,59 +27,32 @@ The package is already materially closed on the dimensions that matter for the f
 - staging proof exists for the accepted frozen slices,
 - remaining asks are almost entirely outside the cheapest closure path.
 
-The work that remains is no longer product build work.
+The remaining closure-grade question is no longer package execution, but keeping the frozen-lane boundary intact.
 
-It is reduced to two narrow proof checks:
-
-1. `Calendar`
-2. `Organization / Admin / Superadmin`
-
-That is a sign-off boundary, not a delivery boundary.
+The earlier two proof exceptions (`Calendar`, `Organization / Admin / Superadmin`) were later retired in `../evidence/549-v8-v81-package-exception-retirement.md`.
 
 ---
 
-## 3. Residual Exceptions Carried At Closure
+## 3. Exception retirement
 
-The wave is now administratively closed while carrying these explicit exceptions:
+The earlier carried exceptions for:
 
-### `Calendar`
+- `Calendar`
+- `Organization / Admin / Superadmin`
 
-Carried exception:
-
-- final live capture of `POST /api/v8/my-work/calendar/events` is still missing,
-- the latest fresh staging retest already proves governed calendar reads at `200`,
-- the conflict check remains on the governed path and currently returns `503`,
-- no same-window legacy fallback was observed.
-
-Meaning:
-
-- the unresolved point is narrow runtime/proof confirmation,
-- not absence of the governed calendar lane.
-
-### `Organization / Admin / Superadmin`
-
-Carried exception:
-
-- one superadmin-grade staging diagnostics pass is still missing,
-- authenticated admin staging already proves `GET /api/v8/admin/flags`,
-- route/client regression already covers the bounded admin contract,
-- missing proof is specifically visibility of `health`, `metrics`, and `shadow` diagnostics on a real superadmin surface.
-
-Meaning:
-
-- the unresolved point is bounded access/surface proof,
-- not missing implementation.
+were later retired in `../evidence/549-v8-v81-package-exception-retirement.md` after the post-closure tracker and debt-reduction program both recorded those lanes as `done` / `staging proven`.
 
 ---
 
 ## 4. Upgrade Conditions
 
-The only remaining upgrade path from here is:
+No additional upgrade gate remains inside the frozen package closure path.
 
-- convert the two carried exceptions into completed proofs later,
-- and then mark the package as unqualified full sign-off.
+Current reading:
 
-This is optional follow-through, not a reason to reopen the wave.
+- the package is already closure-grade
+- historical exceptions have been retired by `../evidence/549-v8-v81-package-exception-retirement.md`
+- any further work is follow-up scope, not a prerequisite to call the package closed
 
 ---
 
@@ -103,7 +76,7 @@ Those belong to a later post-closure track if still desired.
 From this point the operating sequence is:
 
 1. Treat the wave as closed.
-2. Carry the two exceptions transparently.
+2. Keep all frozen-lane boundaries explicit.
 3. Move all remaining breadth into a separate follow-up program.
 
 ---
@@ -112,6 +85,6 @@ From this point the operating sequence is:
 
 My final recommendation is now enacted:
 
-`the wave is closed with bounded exceptions`
+`the wave is closed`
 
 Do **not** reopen the package under this wave label.

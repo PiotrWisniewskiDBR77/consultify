@@ -74,11 +74,9 @@ These areas are explicitly deferred and do not block final closure if kept defer
 
 ## 4. Final package-level closure position
 
-1. The frozen `V8 + V8.1` wave is now administratively **closed with bounded exceptions**. No major `B`-scope runtime domain remains fully red in the active closure path, and the remaining `B`-scope yellows are governed by the CTO `hold bounded` rule rather than active parity expansion.
+1. The frozen `V8 + V8.1` wave is now administratively **closed**. No major `B`-scope runtime domain remains fully red in the active closure path, and the remaining `B`-scope yellows are governed by the CTO `hold bounded` rule rather than active parity expansion.
 2. `MyWork roof`, `Execution spine`, `retrieval`, `Outputs Library / V8.1 artifact runtime`, `Inbox`, `Interview`, `Knowledge Base`, `Initiatives / PM`, `Assessment`, and the bounded `Prompt OS` runtime slice all have sufficient route/test/staging proof for the frozen package target and are accepted as closure-grade.
-3. The wave is closed while carrying exactly two bounded exceptions:
-   - `Calendar`: governed read continuity is proven and the live create modal reaches submit-ready state, but final create-submit proof is still unresolved and the governed conflict path currently returns `503`.
-   - `Organization / Admin / Superadmin`: the admin route/client contract is proven and live admin staging already proves `GET /api/v8/admin/flags`, but one superadmin-grade diagnostics visibility pass is still missing.
+3. The earlier historical exceptions for `Calendar` and `Organization / Admin / Superadmin` are now retired by `../evidence/549-v8-v81-package-exception-retirement.md`, because the later post-closure tracker and debt-reduction program already record both lanes as `done` / `staging proven`.
 4. `Reports / Presentations` and `Notes` adjunct side-lanes remain explicitly outside the active closure path, and all `hold bounded` lanes remain frozen unless a previously accepted bounded slice regresses.
 
 ---
@@ -89,7 +87,7 @@ These areas are explicitly deferred and do not block final closure if kept defer
 - `C-02i` - ~~continue the residual Home maturity gap for `momentum`, `sparkField`, and `commandDock` without reopening scope~~ **done (2026-03-25):** `Command Dock`, `Momentum`, and `Spark Field` are all staging-proven as governed Home V2 blocks via `../evidence/70-v81-mywork-command-dock-governed-depth-proof.md`, `../evidence/71-v81-mywork-momentum-governed-depth-proof.md`, and `../evidence/72-v81-mywork-spark-field-governed-depth-proof.md`; the roof is already closure-grade at `8 real · 0 partial · 0 non-canonical`
 - `C-02b` - notebook core runtime closure is now staging-proven via `../evidence/97-v8-notes-runtime-core-lane-proof.md`; remaining work is bounded to notebook adjunct/AI side-lanes (`ai-proposals`, `classify`, upload/convert), not absence of a V8 notes runtime path
 - `C-04` - ~~continue assessment editor ancillary side-lane closure now that core V8 load/save and staging deploy continuity are proven~~ **done (2026-03-26):** staging deployment `1a4891ca-5144-4bd9-9f67-7b74dacd48c5` now proves `my-role`, `user-state`, and `assignments` on `/api/v8/assessment/...` with no matching legacy `assessment-workflow-v2` editor ancillary requests in the same runtime window
-- `C-03` - now carried as a bounded closure exception: authenticated admin staging proves `GET /api/v8/admin/flags`, but one superadmin-grade diagnostics retest still remains
-- `C-02b` - now carried as a bounded closure exception: calendar governed reads are proven on staging and the live create modal reaches submit-ready state, but final create-submit proof remains unresolved
+- `C-03` - **retired (2026-03-29):** package exception removed by `../evidence/549-v8-v81-package-exception-retirement.md`; later tracker/debt-program records already marked `Organization / Admin / Superadmin` as `done`
+- `C-02b` - **retired (2026-03-29):** package exception removed by `../evidence/549-v8-v81-package-exception-retirement.md`; later tracker/debt-program records already marked `Calendar` as `done`
 - `B-06d/B-08d/B-09d/B-10d/B-12l/B-13j/B-14e+` - **frozen by CTO hold-bounded rule:** these domains are no longer active closure-build packets; only regression containment is allowed unless the finish path changes
 - `C-01b` / `C-02b notes adjuncts` - **deferred from active closure path:** outputs legacy cleanup and notebook adjunct AI side-lanes no longer qualify as closure work for the current wave
