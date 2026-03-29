@@ -37,6 +37,10 @@ vi.mock('@/components/Landing/ProblemPlatformSection', () => ({
   ProblemPlatformSection: () => <div>problem-platform-section</div>,
 }));
 
+vi.mock('@/components/Landing/AIOsProductMapSection', () => ({
+  AIOsProductMapSection: () => <div>ai-os-product-map-section</div>,
+}));
+
 vi.mock('@/components/Landing/WhereItHappensSection', () => ({
   WhereItHappensSection: () => <div>where-it-happens-section</div>,
 }));
@@ -133,6 +137,7 @@ describe('ProductEntryPage knowledge preview continuity', () => {
 
     const hero = screen.getByText('epic-hero-section');
     const problemPlatform = screen.getByText('problem-platform-section');
+    const aiOsProductMap = screen.getByText('ai-os-product-map-section');
     const whereItHappens = screen.getByText('where-it-happens-section');
     const valueJourney = screen.getByText('value-journey-section');
     const howItWorks = screen.getByText('how-it-works-section');
@@ -145,7 +150,10 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     const trustStrip = screen.getByText('trust-strip');
 
     expect(hero.compareDocumentPosition(problemPlatform)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(problemPlatform.compareDocumentPosition(whereItHappens)).toBe(
+    expect(problemPlatform.compareDocumentPosition(aiOsProductMap)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(aiOsProductMap.compareDocumentPosition(whereItHappens)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(whereItHappens.compareDocumentPosition(valueJourney)).toBe(

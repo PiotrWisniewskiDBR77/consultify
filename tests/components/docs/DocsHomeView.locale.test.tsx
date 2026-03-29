@@ -36,5 +36,9 @@ describe('DocsHomeView locale wiring', () => {
     expect(docsHooks.useDocsCategories).toHaveBeenCalledWith('pl');
     expect(docsHooks.useDocsFeatured).toHaveBeenCalledWith('pl', 6);
     expect(screen.getByText('Consultify Documentation')).toBeInTheDocument();
+    expect(screen.getByText('Get help your way')).toBeInTheDocument();
+    expect(screen.getByText('Ask Teresa for guided help')).toBeInTheDocument();
+    expect(screen.getByText('Consulting journey')).toBeInTheDocument();
+    expect(screen.getByText('Support surfaces')).toBeInTheDocument();
   });
 });

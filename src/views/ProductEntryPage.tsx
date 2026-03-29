@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Api } from '@/services/api';
 
 import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
+import { AIOsProductMapSection } from '../components/Landing/AIOsProductMapSection';
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
 import { EntryFooter } from '../components/Landing/EntryFooter';
@@ -127,6 +128,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         />
 
         <ProblemPlatformSection />
+
+        <AIOsProductMapSection />
 
         <WhereItHappensSection />
 

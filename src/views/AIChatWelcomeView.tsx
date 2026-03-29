@@ -2068,6 +2068,70 @@ For example: REMEMBER: preferred_language: Polish`;
             />
           </div>
 
+          <div className="w-full max-w-5xl mt-5 rounded-2xl border border-slate-200/70 dark:border-white/8 bg-white/70 dark:bg-white/[0.03] p-4 md:p-5">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300">
+              <Sparkles size={12} />
+              <span>{t('aiChat.aiOs.badge', 'AI operating system')}</span>
+            </div>
+            <p className="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {t(
+                'aiChat.aiOs.sub',
+                'Teresa is one part of the Consultify AI operating environment: assistants, governed prompts, agents, policy-aware knowledge, and artifact-native execution working together in one runtime.'
+              )}
+            </p>
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2">
+              {[
+                {
+                  title: t('aiChat.aiOs.cards.assistant.title', 'Assistant'),
+                  desc: t(
+                    'aiChat.aiOs.cards.assistant.desc',
+                    'Teresa guides the conversation and starts governed work.'
+                  ),
+                },
+                {
+                  title: t('aiChat.aiOs.cards.prompts.title', 'Prompt OS'),
+                  desc: t(
+                    'aiChat.aiOs.cards.prompts.desc',
+                    'Prompt behavior, policy, and runtime presets stay aligned.'
+                  ),
+                },
+                {
+                  title: t('aiChat.aiOs.cards.agents.title', 'Agents'),
+                  desc: t(
+                    'aiChat.aiOs.cards.agents.desc',
+                    'AI can plan, propose, and coordinate multi-step work.'
+                  ),
+                },
+                {
+                  title: t('aiChat.aiOs.cards.knowledge.title', 'Knowledge'),
+                  desc: t(
+                    'aiChat.aiOs.cards.knowledge.desc',
+                    'Knowledge is policy-aware, traceable, and tied to context.'
+                  ),
+                },
+                {
+                  title: t('aiChat.aiOs.cards.outputs.title', 'Outputs'),
+                  desc: t(
+                    'aiChat.aiOs.cards.outputs.desc',
+                    'Runs continue into artifacts, deliverables, and execution evidence.'
+                  ),
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-xl border border-slate-200/70 dark:border-white/6 bg-slate-50/80 dark:bg-white/[0.02] p-3 text-left"
+                >
+                  <div className="text-[11px] font-semibold text-navy-900 dark:text-white">
+                    {item.title}
+                  </div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    {item.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* AI Capability Cards — shows what the AI can do */}
           <div className="w-full max-w-2xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
             {[

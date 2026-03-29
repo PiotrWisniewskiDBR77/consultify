@@ -36,12 +36,20 @@ import {
   TrendingUp,
   Wrench,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import {
+  getLocalizedText,
+  getOverviewCards,
+  getOverviewGuides,
+  HELP_SYSTEM_OVERVIEW,
+} from '@/config/helpExperience';
 import { KbArticleListItem, KbCategory, useDocsCategories, useDocsFeatured } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
+import { ROUTES } from '@/routes/routeConfig';
 
 // Icon mapping for categories
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -63,11 +71,19 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   default: <Book size={24} className="text-purple-500" />,
 };
 
+const DynamicIcon: React.FC<{ name: string; className?: string }> = ({ name, className }) => {
+  const IconComponent = (LucideIcons as Record<string, React.ComponentType<any>>)[name];
+  if (!IconComponent) return <BookOpen size={20} className={className} />;
+  return <IconComponent size={20} className={className} />;
+};
+
 export const DocsHomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
+  const overviewCards = getOverviewCards(docsLanguage);
+  const overviewGuides = getOverviewGuides(docsLanguage);
 
   const { data: categories, isLoading: categoriesLoading } = useDocsCategories(docsLanguage);
   const { data: featuredArticles, isLoading: featuredLoading } = useDocsFeatured(docsLanguage, 6);
@@ -103,6 +119,9 @@ export const DocsHomeView: React.FC = () => {
                 'docs.home.subtitle',
                 'Comprehensive guides, tutorials, and best practices for the Consultify Transformation AI Platform. Learn how to accelerate your digital transformation journey.'
               )}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-6">
+              {getLocalizedText(HELP_SYSTEM_OVERVIEW.summary, docsLanguage)}
             </p>
 
             {/* Search Box */}
@@ -153,6 +172,176 @@ export const DocsHomeView: React.FC = () => {
               </Link>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 py-12">
+        <div className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 p-6 lg:p-8">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 dark:bg-purple-900/30 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300">
+                <Sparkles size={14} />
+                {t('docs.home.helpRuntime.badge', 'Help runtime')}
+              </div>
+              <h2 className="mt-4 text-2xl font-bold">
+                {t('docs.home.helpRuntime.title', 'Get help your way')}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+                {t(
+                  'docs.home.helpRuntime.subtitle',
+                  'Use one support system across documentation, guided Teresa help, in-product contextual support, and product updates.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[
+              {
+                title: t('docs.home.helpRuntime.cards.docs.title', 'Browse the knowledge base'),
+                description: t(
+                  'docs.home.helpRuntime.cards.docs.description',
+                  'Use long-form articles, category pages, and featured guidance when you need structured answers.'
+                ),
+                to: ROUTES.DOCS,
+                icon: BookOpen,
+              },
+              {
+                title: t('docs.home.helpRuntime.cards.teresa.title', 'Ask Teresa for guided help'),
+                description: t(
+                  'docs.home.helpRuntime.cards.teresa.description',
+                  'Teresa can explain a workflow, recommend the next step, and help you continue the work from guidance into action.'
+                ),
+                to: ROUTES.AI_CHAT,
+                icon: Brain,
+              },
+              {
+                title: t('docs.home.helpRuntime.cards.contextual.title', 'Use contextual in-app support'),
+                description: t(
+                  'docs.home.helpRuntime.cards.contextual.description',
+                  'Inside the product you get screen-specific help, quick guides, FAQs, and handoff into AI with the right context.'
+                ),
+                to: ROUTES.APP_INTRO,
+                icon: LifeBuoy,
+              },
+              {
+                title: t('docs.home.helpRuntime.cards.updates.title', 'Track updates and releases'),
+                description: t(
+                  'docs.home.helpRuntime.cards.updates.description',
+                  'Stay aligned with product changes, new capabilities, and guided follow-up paths after each release.'
+                ),
+                to: ROUTES.CHANGELOG,
+                icon: History,
+              },
+            ].map((item) => (
+              <Link
+                key={item.title}
+                to={item.to}
+                className="group rounded-xl border border-slate-200 dark:border-navy-800 bg-slate-50/80 dark:bg-navy-950/40 p-4 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800">
+                  <item.icon size={18} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="mt-4 font-semibold group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
+                <div className="mt-4 flex items-center text-sm font-medium text-purple-600 dark:text-purple-400">
+                  {t('docs.home.helpRuntime.cards.cta', 'Open')}
+                  <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">
+              {t('docs.home.journey.title', 'Consulting journey')}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
+              {getLocalizedText(HELP_SYSTEM_OVERVIEW.intro, docsLanguage)}
+            </p>
+            <div className="space-y-3">
+              {overviewCards.journey.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-start gap-3 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/40 p-4"
+                >
+                  <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+                    <DynamicIcon name={card.icon} className="text-purple-500" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">{card.title}</div>
+                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      {card.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">
+                {t('docs.home.support.title', 'Support surfaces')}
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
+                {t(
+                  'docs.home.support.subtitle',
+                  'The help system connects the core transformation journey with the work surfaces where teams actually execute.'
+                )}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {overviewCards.support.map((card) => (
+                  <div
+                    key={card.id}
+                    className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/40 p-4"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+                      <DynamicIcon name={card.icon} className="text-blue-500" />
+                    </div>
+                    <div className="mt-3 font-semibold">{card.title}</div>
+                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      {card.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold mb-2">
+                {t('docs.home.guidedJourneys.title', 'Guided journeys')}
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
+                {t(
+                  'docs.home.guidedJourneys.subtitle',
+                  'Start with a guide when you need a recommended path instead of searching the whole library.'
+                )}
+              </p>
+              <div className="space-y-3">
+                {overviewGuides.map((guide) => (
+                  <div
+                    key={guide.id}
+                    className={cn(
+                      'rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/40 p-4',
+                      'hover:border-purple-300 dark:hover:border-purple-700 transition-colors'
+                    )}
+                  >
+                    <div className="font-semibold">{guide.title}</div>
+                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      {guide.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -9,6 +9,36 @@ const v8ArtifactRunControlMock = vi.fn();
 const v8ContextIndicatorMock = vi.fn();
 const addMessageMock = vi.fn();
 let aiStreamOptionsCaptured: any = null;
+const conversationStoreState: any = {
+  activeConversationId: 'conv-legacy-1',
+  activeMessages: [
+    {
+      id: 'msg-1',
+      role: 'user',
+      content: 'Prepare board update summary',
+      createdAt: new Date().toISOString(),
+      messageType: 'text',
+      metadata: {},
+    },
+  ],
+  isLoading: false,
+  isSidebarOpen: false,
+  workspaceContext: {
+    entityId: '22222222-2222-4222-8222-222222222222',
+    projectId: '11111111-1111-4111-8111-111111111111',
+    type: 'project',
+    entityName: 'Board Program',
+  },
+  createConversation: vi.fn(),
+  addMessage: addMessageMock,
+  setActiveConversation: vi.fn(),
+  clearActiveChat: vi.fn(),
+  truncateFromMessage: vi.fn(),
+  generateTitle: vi.fn(),
+  draftChatLanguage: null,
+  chatLanguageByConversationId: {},
+  setConversationChatLanguage: vi.fn(),
+};
 
 vi.mock('react-i18next', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-i18next')>();
@@ -93,35 +123,7 @@ vi.mock('../../../src/store/useAppStore', () => ({
 }));
 
 vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: () => ({
-    activeConversationId: 'conv-legacy-1',
-    activeMessages: [
-      {
-        id: 'msg-1',
-        role: 'user',
-        content: 'Prepare board update summary',
-        createdAt: new Date().toISOString(),
-        messageType: 'text',
-        metadata: {},
-      },
-    ],
-    isLoading: false,
-    isSidebarOpen: false,
-    workspaceContext: {
-      entityId: '22222222-2222-4222-8222-222222222222',
-      projectId: '11111111-1111-4111-8111-111111111111',
-      type: 'project',
-      entityName: 'Board Program',
-    },
-    createConversation: vi.fn(),
-    addMessage: addMessageMock,
-    setActiveConversation: vi.fn(),
-    clearActiveChat: vi.fn(),
-    truncateFromMessage: vi.fn(),
-    generateTitle: vi.fn(),
-    draftChatLanguage: null,
-    chatLanguageByConversationId: {},
-  }),
+  useConversationStore: () => conversationStoreState,
 }));
 
 vi.mock('../../../src/store/usePMOStore', () => ({
@@ -192,6 +194,17 @@ describe('AIChatWelcomeView governed V8 controls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     aiStreamOptionsCaptured = null;
+    conversationStoreState.activeConversationId = 'conv-legacy-1';
+    conversationStoreState.activeMessages = [
+      {
+        id: 'msg-1',
+        role: 'user',
+        content: 'Prepare board update summary',
+        createdAt: new Date().toISOString(),
+        messageType: 'text',
+        metadata: {},
+      },
+    ];
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockReturnValue({
@@ -231,6 +244,19 @@ describe('AIChatWelcomeView governed V8 controls', () => {
         defaultGoal: 'Prepare board update summary',
       }),
     );
+  });
+
+  it('renders the AI OS product map on the Teresa welcome state', async () => {
+    conversationStoreState.activeConversationId = null;
+    conversationStoreState.activeMessages = [];
+
+    const { AIChatWelcomeView } = await import('../../../src/views/AIChatWelcomeView');
+
+    render(<AIChatWelcomeView />);
+
+    expect(screen.getByText('AI operating system')).toBeInTheDocument();
+    expect(screen.getByText('Prompt OS')).toBeInTheDocument();
+    expect(screen.getByText('Outputs')).toBeInTheDocument();
   });
 
   it('persists a product-safe empty-response fallback on the legacy Teresa surface', async () => {
