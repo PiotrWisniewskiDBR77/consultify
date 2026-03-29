@@ -254,6 +254,7 @@ describe('AIChatWelcomeView governed V8 controls', () => {
 
     render(<AIChatWelcomeView />);
 
+    expect(screen.getByText('Wiarygodna obietnica wsparcia mobile')).toBeInTheDocument();
     expect(screen.getByText('AI operating system')).toBeInTheDocument();
     expect(screen.getByText('Prompt OS')).toBeInTheDocument();
     expect(screen.getByText('Outputs')).toBeInTheDocument();

@@ -39,6 +39,7 @@ const conversationState = {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback ?? _key,
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -149,6 +150,7 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
     render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
 
     expect(screen.getByTestId('llm-selector-prop')).toHaveTextContent('compact');
+    expect(screen.getByText('A credible mobile support promise')).toBeInTheDocument();
   });
 
   it('keeps the shared LLM selector in regular mode outside mobile breakpoints', () => {
