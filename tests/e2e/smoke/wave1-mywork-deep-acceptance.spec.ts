@@ -57,7 +57,7 @@ async function createIdea(page: Page, token: string, title: string) {
 test.describe('Wave 1 deep My Work acceptance', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test.fixme('notebook persists tag changes across note switches through the real UI flow', async ({
+  test('notebook persists tag changes across note switches through the real UI flow', async ({
     page,
   }) => {
     const titleA = uniqueLabel('wave1-notebook-a');
@@ -67,7 +67,31 @@ test.describe('Wave 1 deep My Work acceptance', () => {
 
     await page.getByRole('button', { name: 'New page', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'New Note' })).toBeVisible();
+    const listAResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'GET' && /\/api\/my-work\/notebook\/pages(\?|$)/.test(response.url()),
+      { timeout: 30000 }
+    );
+    const createAResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' && /\/api\/my-work\/notebook\/pages$/.test(response.url()),
+      { timeout: 30000 }
+    );
     await page.getByRole('button', { name: 'Blank page Start from scratch', exact: true }).last().click();
+    const createAResponse = await createAResponsePromise;
+    if (!createAResponse.ok()) {
+      throw new Error(
+        `Notebook create A failed: ${createAResponse.status()} ${createAResponse.statusText()} body=${await createAResponse.text()}`
+      );
+    }
+    const createdA = await createAResponse.json();
+    const listAResponse = await listAResponsePromise;
+    const listABody = await listAResponse.text();
+    if (!listAResponse.ok() || !listABody.includes(String(createdA?.id || ''))) {
+      throw new Error(
+        `Notebook list after create A failed to materialize note ${createdA?.id}: ${listAResponse.status()} ${listAResponse.statusText()} body=${listABody}`
+      );
+    }
 
     const titleInput = page.locator('input[placeholder="Untitled"]').first();
     await expect(titleInput).toBeVisible({ timeout: 30000 });
@@ -77,7 +101,31 @@ test.describe('Wave 1 deep My Work acceptance', () => {
 
     await page.getByRole('button', { name: 'New page', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'New Note' })).toBeVisible();
+    const listBResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'GET' && /\/api\/my-work\/notebook\/pages(\?|$)/.test(response.url()),
+      { timeout: 30000 }
+    );
+    const createBResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' && /\/api\/my-work\/notebook\/pages$/.test(response.url()),
+      { timeout: 30000 }
+    );
     await page.getByRole('button', { name: 'Blank page Start from scratch', exact: true }).last().click();
+    const createBResponse = await createBResponsePromise;
+    if (!createBResponse.ok()) {
+      throw new Error(
+        `Notebook create B failed: ${createBResponse.status()} ${createBResponse.statusText()} body=${await createBResponse.text()}`
+      );
+    }
+    const createdB = await createBResponse.json();
+    const listBResponse = await listBResponsePromise;
+    const listBBody = await listBResponse.text();
+    if (!listBResponse.ok() || !listBBody.includes(String(createdB?.id || ''))) {
+      throw new Error(
+        `Notebook list after create B failed to materialize note ${createdB?.id}: ${listBResponse.status()} ${listBResponse.statusText()} body=${listBBody}`
+      );
+    }
     await expect(titleInput).toBeVisible({ timeout: 30000 });
     await titleInput.fill(titleB);
     await page.keyboard.press('Tab');
@@ -91,10 +139,10 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     await expect(page.getByText('alpha').first()).toBeVisible();
 
     await page.getByText(titleB).first().click();
-    await expect(page.getByDisplayValue(titleB)).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(`input[value="${titleB}"]`).first()).toBeVisible({ timeout: 30000 });
 
     await page.getByText(titleA).first().click();
-    await expect(page.getByDisplayValue(titleA)).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(`input[value="${titleA}"]`).first()).toBeVisible({ timeout: 30000 });
     await expect(page.getByText('alpha').first()).toBeVisible({ timeout: 30000 });
   });
 

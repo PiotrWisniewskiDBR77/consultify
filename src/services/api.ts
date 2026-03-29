@@ -12289,9 +12289,31 @@ export const Api = {
   // ==========================================
   // MY WORK (V2): NOTEBOOK (T011)
   // ==========================================
+  myWorkNotebookLegacyModeKey: 'consultify:notebook-legacy-mode',
   shouldFallbackToLegacyMyWorkNotebook: (error: any) => {
     const status = Number(error?.status);
     return [400, 404, 405, 501].includes(status);
+  },
+  shouldLockLegacyMyWorkNotebookMode: (error: any) => {
+    const status = Number(error?.status);
+    const code = String(error?.data?.code || error?.code || '').trim();
+    return [404, 405, 501].includes(status) || code === 'V8_DISABLED';
+  },
+  shouldPreferLegacyMyWorkNotebook: () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return sessionStorage.getItem(Api.myWorkNotebookLegacyModeKey) === '1';
+    } catch {
+      return false;
+    }
+  },
+  lockLegacyMyWorkNotebookMode: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(Api.myWorkNotebookLegacyModeKey, '1');
+    } catch {
+      // best-effort only
+    }
   },
   getNotebookPages: async (filters?: {
     projectId?: string | null;
@@ -12302,12 +12324,7 @@ export const Api = {
     limit?: number;
     offset?: number;
   }): Promise<any[]> => {
-    try {
-      return await V8MyWorkApi.getNotebookPages(filters);
-    } catch (error) {
-      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
-        throw error;
-      }
+    const fetchLegacy = async () => {
       let url = `${API_URL}/my-work/notebook/pages`;
       if (filters) {
         const params = new URLSearchParams();
@@ -12323,20 +12340,47 @@ export const Api = {
       const res = await fetch(url, { headers: getHeaders() });
       if (!res.ok) throw new Error('Failed to fetch notebook pages');
       return res.json();
+    };
+
+    if (Api.shouldPreferLegacyMyWorkNotebook()) {
+      return fetchLegacy();
+    }
+
+    try {
+      return await V8MyWorkApi.getNotebookPages(filters);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      if (Api.shouldLockLegacyMyWorkNotebookMode(error)) {
+        Api.lockLegacyMyWorkNotebookMode();
+      }
+      return fetchLegacy();
     }
   },
 
   getNotebookPage: async (id: string): Promise<any> => {
+    const fetchLegacy = async () => {
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to fetch notebook page');
+    };
+
+    if (Api.shouldPreferLegacyMyWorkNotebook()) {
+      return fetchLegacy();
+    }
+
     try {
       return await V8MyWorkApi.getNotebookPage(id);
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
         throw error;
       }
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}`, {
-        headers: getHeaders(),
-      });
-      return handleResponse(res, 'Failed to fetch notebook page');
+      if (Api.shouldLockLegacyMyWorkNotebookMode(error)) {
+        Api.lockLegacyMyWorkNotebookMode();
+      }
+      return fetchLegacy();
     }
   },
 
@@ -12468,34 +12512,56 @@ export const Api = {
     status?: string;
     template?: string;
   }): Promise<any> => {
-    try {
-      return await V8MyWorkApi.createNotebookPage(page);
-    } catch (error) {
-      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
-        throw error;
-      }
+    const createLegacy = async () => {
       const res = await fetch(`${API_URL}/my-work/notebook/pages`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(page),
       });
       return handleResponse(res, 'Failed to create notebook page');
-    }
-  },
+    };
 
-  updateNotebookPage: async (id: string, updates: Record<string, any>): Promise<any> => {
+    if (Api.shouldPreferLegacyMyWorkNotebook()) {
+      return createLegacy();
+    }
+
     try {
-      return await V8MyWorkApi.updateNotebookPage(id, updates);
+      return await V8MyWorkApi.createNotebookPage(page);
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
         throw error;
       }
+      if (Api.shouldLockLegacyMyWorkNotebookMode(error)) {
+        Api.lockLegacyMyWorkNotebookMode();
+      }
+      return createLegacy();
+    }
+  },
+
+  updateNotebookPage: async (id: string, updates: Record<string, any>): Promise<any> => {
+    const updateLegacy = async () => {
       const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(updates),
       });
       return handleResponse(res, 'Failed to update notebook page');
+    };
+
+    if (Api.shouldPreferLegacyMyWorkNotebook()) {
+      return updateLegacy();
+    }
+
+    try {
+      return await V8MyWorkApi.updateNotebookPage(id, updates);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      if (Api.shouldLockLegacyMyWorkNotebookMode(error)) {
+        Api.lockLegacyMyWorkNotebookMode();
+      }
+      return updateLegacy();
     }
   },
 

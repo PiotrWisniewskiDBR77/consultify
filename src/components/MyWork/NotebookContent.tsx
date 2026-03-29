@@ -977,7 +977,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [generateSummary, t]
   );
 
-  const flushPendingSave = useCallback(() => {
+  const flushPendingSave = useCallback(async () => {
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
       saveTimer.current = null;
@@ -985,7 +985,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     const pendingDraft = pendingDraftRef.current;
     if (!pendingDraft) return;
     pendingDraftRef.current = null;
-    void persistNotebookDraft(pendingDraft);
+    await persistNotebookDraft(pendingDraft);
   }, [persistNotebookDraft]);
 
   const scheduleSave = useCallback(
@@ -1032,6 +1032,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const handleNewPage = useCallback(
     async (template?: PageTemplate) => {
       try {
+        await flushPendingSave();
         const defaultTitle = template
           ? isPolish
             ? template.defaultTitlePl
@@ -1069,7 +1070,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         toast.error(t('myWork.errors.createFailed', 'Failed to create'));
       }
     },
-    [fetchPages, isPolish, projectId, t]
+    [fetchPages, flushPendingSave, isPolish, projectId, t]
   );
 
   // Create page requested from top bar (MyWorkHub) → open template modal
@@ -1643,7 +1644,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   useEffect(() => {
     return () => {
-      flushPendingSave();
+      void flushPendingSave();
     };
   }, [activePage?.id, flushPendingSave]);
 
@@ -1860,7 +1861,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }`}
                   >
                     <button
-                      onClick={() => setActiveId(p.id)}
+                      onClick={async () => {
+                        await flushPendingSave();
+                        setActiveId(p.id);
+                      }}
                       className="w-full text-left px-3 py-2.5"
                     >
                       <div className="flex items-start gap-2">

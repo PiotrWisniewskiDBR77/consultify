@@ -7401,16 +7401,19 @@ const canAccessNotebookRow = async (
   orgId: string,
   row: {
     owner_user_id?: string;
+    ownerUserId?: string;
     organization_id?: string;
+    organizationId?: string;
     visibility?: string;
     project_id?: string;
+    projectId?: string | null;
   }
 ): Promise<boolean> => {
   if (!row) return false;
-  if (String(row.organization_id || '') !== String(orgId)) return false;
-  const owner = String(row.owner_user_id || '');
+  if (String(row.organization_id ?? row.organizationId ?? '') !== String(orgId)) return false;
+  const owner = String(row.owner_user_id ?? row.ownerUserId ?? '');
   const vis = String(row.visibility || 'private').toLowerCase() as NotebookVisibility;
-  const projectId = row.project_id ? String(row.project_id) : null;
+  const projectId = row.project_id ? String(row.project_id) : row.projectId ? String(row.projectId) : null;
 
   if (owner === userId) return true;
   if (vis !== 'project' || !projectId) return false;
@@ -7449,12 +7452,6 @@ router.get(
 
     const where: string[] = ['np.organization_id = ?'];
     const params: any[] = [orgId];
-
-    where.push(
-      `( (lower(np.visibility) = 'private' AND np.owner_user_id = ?)
-         OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL AND (np.owner_user_id = ? OR pm.user_id IS NOT NULL)) )`
-    );
-    params.push(userId, userId);
 
     if (projectId) {
       where.push('np.project_id = ?');
@@ -7524,15 +7521,19 @@ router.get(
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
         FROM notebook_pages np
-        LEFT JOIN project_members pm
-          ON pm.project_id = np.project_id
-         AND pm.user_id = ?
         WHERE ${where.join(' AND ')}
         ORDER BY ${orderBy}
-        LIMIT ? OFFSET ?
       `,
-        [userId, ...params, limit, offset]
+        params
       )) || [];
+
+    const accessibleRows: any[] = [];
+    for (const row of rows) {
+      if (await canAccessNotebookRow(userId, orgId, row)) {
+        accessibleRows.push(row);
+      }
+    }
+    const pagedRows = accessibleRows.slice(offset, offset + limit);
 
     const parseConvertedTo = (raw: string | null) => {
       if (!raw) return null;
@@ -7543,7 +7544,7 @@ router.get(
       }
     };
     res.json(
-      rows.map((r: any) => ({
+      pagedRows.map((r: any) => ({
         ...r,
         tags: parseTagsArray(r.tags),
         pinned: Boolean(r.pinned),

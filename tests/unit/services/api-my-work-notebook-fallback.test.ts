@@ -46,6 +46,7 @@ describe('Api notebook V8 fallback guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn());
+    sessionStorage.removeItem(Api.myWorkNotebookLegacyModeKey);
   });
 
   it('does not fall back to legacy notebook create on transient V8 errors', async () => {
@@ -79,6 +80,36 @@ describe('Api notebook V8 fallback guard', () => {
     expect(fetch).toHaveBeenCalledWith('/api/my-work/notebook/pages', expect.objectContaining({
       method: 'POST',
     }));
+  });
+
+  it('locks notebook session to legacy after V8 disabled create so list uses the same backend family', async () => {
+    vi.mocked(V8MyWorkApi.createNotebookPage).mockRejectedValue({
+      status: 404,
+      data: { code: 'V8_DISABLED' },
+      message: 'Not Found',
+    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'legacy-note-1' }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: 'legacy-note-1', title: 'Legacy note' }],
+      } as Response);
+
+    await expect(Api.createNotebookPage({ title: 'Legacy fallback note' })).resolves.toEqual({
+      id: 'legacy-note-1',
+    });
+    await expect(Api.getNotebookPages()).resolves.toEqual([{ id: 'legacy-note-1', title: 'Legacy note' }]);
+
+    expect(sessionStorage.getItem(Api.myWorkNotebookLegacyModeKey)).toBe('1');
+    expect(vi.mocked(V8MyWorkApi.getNotebookPages)).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/my-work/notebook/pages',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
   });
 
   it('does not fall back to legacy notebook classify on transient V8 errors', async () => {
