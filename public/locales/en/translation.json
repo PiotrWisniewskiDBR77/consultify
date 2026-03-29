@@ -1693,6 +1693,25 @@
       "create": "Create",
       "cancel": "Cancel"
     },
+    "axis": {
+      "operational": "Operational",
+      "strategic": "Strategic",
+      "transformational": "Transformational",
+      "compliance": "Compliance"
+    },
+    "approval": {
+      "needsTasks": "Add at least one task before changing status.",
+      "needsDeadline": "Set a deadline before changing status.",
+      "needsOwner": "Assign an owner before changing status."
+    },
+    "missingData": "Missing critical data",
+    "missing": {
+      "tasks": "Tasks",
+      "deadline": "Deadline",
+      "owner": "Owner",
+      "summary": "Summary",
+      "risks": "Risk assessment"
+    },
     "gateReadiness": {
       "title": "Gate Readiness & Timeline",
       "readinessSystem": "Readiness (system)",

@@ -994,6 +994,25 @@
       "create": "Utwórz",
       "cancel": "Anuluj"
     },
+    "axis": {
+      "operational": "Operacyjna",
+      "strategic": "Strategiczna",
+      "transformational": "Transformacyjna",
+      "compliance": "Zgodność"
+    },
+    "approval": {
+      "needsTasks": "Dodaj przynajmniej jedno zadanie przed zmianą statusu.",
+      "needsDeadline": "Ustaw termin przed zmianą statusu.",
+      "needsOwner": "Przypisz właściciela przed zmianą statusu."
+    },
+    "missingData": "Brak krytycznych danych",
+    "missing": {
+      "tasks": "Zadania",
+      "deadline": "Termin",
+      "owner": "Właściciel",
+      "summary": "Podsumowanie",
+      "risks": "Ocena ryzyka"
+    },
     "gateReadiness": {
       "title": "Gotowość bramki i harmonogram",
       "readinessSystem": "Gotowość (system)",
