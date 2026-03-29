@@ -59,8 +59,8 @@ Legend:
 | 19 | `Outputs Library` | Jedno miejsce na efekty pracy (tabele/excel, word, prezentacje, raporty); wyszukiwanie + automatyczne tworzenie i wysyłanie (obszar+format → generuj+wyślij). | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_OUTPUTS_LIBRARY_2026-03-29.md` | present (direct) |
 | 20 | `Prezentacje` | Gamma‑like: generacja+edycja; export PPT/PDF; zarządzanie generatorem; edycja z poziomu czata. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PRESENTATIONS_2026-03-29.md` | present (direct) |
 | 21 | `Raporty` | Gamma‑like raporty: template → “zrób raport o … używając template …”. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_DOCUMENTS_2026-03-29.md` | present (shared) |
-| 22 | `Wordy` | 100% KIMI: split-screen chat↔word; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI. | (brak dedykowanego planu; częściowo dotyka `Documents` + `ArtifactRun`) | missing |
-| 23 | `Excele` | 100% KIMI: split-screen chat↔excel; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_SHEET_2026-03-29.md` | present (shared) |
+| 22 | `Wordy` | 100% KIMI: split-screen chat↔word; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI. | (brak dedykowanego planu) <br> Powiązane plany: <br> `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_DOCUMENTS_2026-03-29.md` <br> `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_CHAT_ARTIFACTRUN_2026-03-29.md` <br> `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_OUTPUTS_LIBRARY_2026-03-29.md` <br> `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_AGENTS_KIMI_PROMPTS_PALANTIR_2026-03-29.md` | missing |
+| 23 | `Excele` | 100% KIMI: split-screen chat↔excel; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_SHEET_2026-03-29.md` <br> (kontekst AI OS: `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_AGENTS_KIMI_PROMPTS_PALANTIR_2026-03-29.md`) | present (shared) |
 | 24 | `Templaty` | Templates dla raportów i prezentacji; przeniesienie pełnej funkcji z admin do Outputs: zakładka Templaty + generator + user templates + app templates. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_FULL_REPORTS_PRESENTATIONS_BUILDER_2026-03-29.md` | present (shared) |
 | 25 | `Help` | Kontekstowy help; spójny język; dostępny dla Anny i Teresy. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md` | present (shared) |
 | 26 | `Baza wiedzy` | Narzędzie edukacyjno‑sprzedażowe: LP + prawy panel + kontekst narzędzi; 50 tekstów + grafiki; tagi; linkowanie do newsletter/social; promowane przez Annę/Teresę. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md` | present (shared) |
@@ -72,7 +72,7 @@ Legend:
 | 32 | `Admin` | Dopasować UI/UX; połączyć z Settings i Superadmin; zarządzanie rolami i organizacją. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_ADMIN_2026-03-29.md` | present (direct) |
 | 33 | `Superadmin` | Dopasować UI/UX; pełne zarządzanie dzierżawcą + Virtual Workers (Anna/Teresa) + governance; role. | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_SUPERADMIN_2026-03-29.md` | present (direct) |
 | 34 | `Mądrość czata` | Konkurencyjność: kontekst, reasoning, research; żeby chat był tak dobry jak konkurencja (bez udawania). | `docs/product/KNOWLEDGE_RAG_V8_IMPLEMENTATION_PLAN.md` | present (direct) |
-| 35 | `Historia czatów` | Dobre zarządzanie historią rozmów realizowanych także w aplikacji. | `docs/product/CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md` + `docs/product/CHAT_V8_IMPLEMENTATION_PLAN.md` | present (direct) |
+| 35 | `Historia czatów` | Dobre zarządzanie historią rozmów realizowanych także w aplikacji. | `docs/product/CHAT_V8_IMPLEMENTATION_PLAN.md` <br> (model: `docs/product/CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md`) | present (direct) |
 
 ---
 
@@ -94,4 +94,104 @@ This ordering is a recommendation; the authoritative ordering becomes the one we
 ## 5. Immediate blockers (plan-missing / reference-missing)
 
 - `Wordy` (22): **missing dedicated plan** and explicitly requires **KIMI reference docs** (“100% same style”). Until the reference is linked, we do not implement by approximation.
+- `Excele` (23): ma plan `Sheet`, ale wymaganie „100% KIMI style” oznacza **missing input** dla zachowania split‑screen chat↔excel (dopóki nie mamy referencji KIMI — nie zgadujemy UX/flow/akcje).
+
+---
+
+## 6. Standard „planu modułu” jako kontraktu wdrożeniowego (szablon SSOT)
+
+Każda pozycja z listy 35 ma docelowo własny plik `FINAL_IMPLEMENTATION_PLAN_<MODUŁ>_<YYYY-MM-DD>.md`, który działa jak **kontrakt**: co wdrażamy, czego nie wdrażamy, jak to mierzymy, jak to udowadniamy (evidence), jakie są ryzyka i zależności. Poniżej jest standard, który robi z planu dokument „approval‑grade”.
+
+### 6.1. Minimalny spis treści (wymagany)
+
+- **1. Executive summary (1 strona)**: intent, dla kogo, dlaczego teraz, jaka jest jedna metryka sukcesu.
+- **2. Scope**:
+  - **In-scope**: lista funkcji / flow (enumeracja).
+  - **Out-of-scope / non-goals**: twarde granice (żeby uniknąć „silent scope creep”).
+  - **Assumptions**: co uznajemy za prawdę, co musi być dostarczone przez inne pozycje.
+- **3. Authority chain (SSOT)**:
+  - linki do dokumentów kanonicznych (SSOT, benchmark, gap matrix, module card) w kolejności ważności,
+  - jedno zdanie: „jeśli jest konflikt — wygrywa X”.
+- **4. Product contract (user-facing)**:
+  - **Primary user flows** (kroki end‑to‑end),
+  - **UI surfaces** (gdzie w app to żyje; entry points; role-based access),
+  - **States + transitions** (np. draft → validated → in review → published),
+  - **Error model** (co user widzi; retry; degradacje).
+- **5. Data / API contract (engineering-facing)**:
+  - modele danych / encje / relacje (z przykładami payloadów),
+  - endpointy / akcje / permission gates,
+  - idempotency, concurrency, locking, audit trail.
+- **6. Governance / compliance**:
+  - roles & permissions,
+  - traceability, provenance, review gates,
+  - eksport/import i odpowiedzialność (kto może co wynieść).
+- **7. Evidence plan (Definition of Done)**:
+  - **Acceptance criteria** (lista kontrolna „must pass”),
+  - **Tests** (jakie: unit/integration/e2e; co dokładnie ma dowieść),
+  - **Runtime proof** (staging checklist + screen/video/log artifacts),
+  - **Telemetry** (metryki, eventy, alerty; co monitorujemy po rollout).
+- **8. Delivery plan**:
+  - paczki wdrożeniowe (bounded packets) + zależności,
+  - migracje, rollout strategy (feature flags, gradual exposure),
+  - plan rollback (bez destrukcji danych).
+- **9. Risks, open questions, decisions**:
+  - tabela: risk → impact → mitigation → owner,
+  - lista pytań blokujących + co jest potrzebne jako input.
+- **10. Evidence ledger (po wdrożeniu)**:
+  - linki do PR/commitów, test runów, checklist, screenshotów, nagrań,
+  - daty i osoby zatwierdzające.
+
+### 6.2. Szablon pliku do kopiuj-wklej
+
+```markdown
+# Final Implementation Plan — <MODUŁ>
+Date: <YYYY-MM-DD>  
+Owner: <Product/Eng>  
+Status: draft | approved(scope) | in progress | delivered | verified(evidence)
+
+## 1. Executive summary
+- Intent:
+- Primary users:
+- Success metric:
+- What changes for the user:
+
+## 2. Scope
+### 2.1 In-scope
+### 2.2 Out-of-scope / non-goals
+### 2.3 Assumptions
+
+## 3. Authority chain (SSOT)
+- <link 1>
+- <link 2>
+Conflict rule:
+
+## 4. Product contract (user-facing)
+### 4.1 Primary flows
+### 4.2 UI surfaces / entry points
+### 4.3 States and transitions
+### 4.4 Error model / degraded modes
+
+## 5. Data + API contract (engineering-facing)
+### 5.1 Data model
+### 5.2 API endpoints / actions
+### 5.3 Permissions / audit
+### 5.4 Concurrency / idempotency
+
+## 6. Governance / compliance
+
+## 7. Evidence plan (DoD)
+### 7.1 Acceptance criteria
+### 7.2 Tests
+### 7.3 Staging proof checklist
+### 7.4 Telemetry and monitoring
+
+## 8. Delivery plan
+### 8.1 Bounded delivery packets
+### 8.2 Rollout strategy
+### 8.3 Rollback plan
+
+## 9. Risks / open questions / decisions
+
+## 10. Evidence ledger (fill after delivery)
+```
 
