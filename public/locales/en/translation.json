@@ -1667,6 +1667,32 @@
       "executionBudgetTruth": "Execution budget and spend are unavailable for this initiative.",
       "outputsEmpty": "No linked outputs for this initiative."
     },
+    "hub": {
+      "failedToLoad": "Failed to load initiatives.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
+    "empty": {
+      "title": "No initiatives yet",
+      "description": "Create your first initiative to start planning and tracking execution."
+    },
+    "form": {
+      "newInitiative": "New initiative",
+      "createNew": "Create new initiative",
+      "titleRequired": "Title is required",
+      "titlePlaceholder": "e.g. Energy loss reduction program",
+      "axis": "Axis",
+      "summary": "Summary",
+      "summaryPlaceholder": "Briefly describe the goal and scope of the initiative",
+      "titleRequiredError": "Enter an initiative name.",
+      "duplicateWarning": "Initiative \"{{name}}\" already exists.",
+      "duplicateWarningDesc": "Review the existing card or continue if you are creating a separate initiative.",
+      "initiativeCreated": "Initiative created.",
+      "createFailed": "Failed to create initiative.",
+      "creating": "Creating...",
+      "create": "Create",
+      "cancel": "Cancel"
+    },
     "gateReadiness": {
       "title": "Gate Readiness & Timeline",
       "readinessSystem": "Readiness (system)",

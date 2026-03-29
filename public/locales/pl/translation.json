@@ -968,6 +968,32 @@
       "executionBudgetTruth": "Budżet wykonawczy i wydatki są niedostępne dla tej inicjatywy.",
       "outputsEmpty": "Brak powiązanych rezultatów dla tej inicjatywy."
     },
+    "hub": {
+      "failedToLoad": "Nie udało się załadować inicjatyw.",
+      "retry": "Spróbuj ponownie",
+      "dismiss": "Zamknij"
+    },
+    "empty": {
+      "title": "Brak inicjatyw",
+      "description": "Utwórz pierwszą inicjatywę, aby rozpocząć planowanie i śledzenie realizacji."
+    },
+    "form": {
+      "newInitiative": "Nowa inicjatywa",
+      "createNew": "Utwórz nową inicjatywę",
+      "titleRequired": "Tytuł jest wymagany",
+      "titlePlaceholder": "Np. Program redukcji strat energii",
+      "axis": "Oś",
+      "summary": "Podsumowanie",
+      "summaryPlaceholder": "Krótko opisz cel i zakres inicjatywy",
+      "titleRequiredError": "Podaj nazwę inicjatywy.",
+      "duplicateWarning": "Inicjatywa „{{name}}” już istnieje.",
+      "duplicateWarningDesc": "Sprawdź istniejącą kartę lub kontynuuj, jeśli tworzysz osobną inicjatywę.",
+      "initiativeCreated": "Utworzono inicjatywę.",
+      "createFailed": "Nie udało się utworzyć inicjatywy.",
+      "creating": "Tworzenie...",
+      "create": "Utwórz",
+      "cancel": "Anuluj"
+    },
     "gateReadiness": {
       "title": "Gotowość bramki i harmonogram",
       "readinessSystem": "Gotowość (system)",
