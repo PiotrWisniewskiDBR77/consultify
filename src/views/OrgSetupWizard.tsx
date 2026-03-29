@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
@@ -273,6 +274,8 @@ export const OrgSetupWizard: React.FC = () => {
             Krok {state.step} z 4
           </p>
         </div>
+
+        <OrganizationV8CanonPanel compact className="mb-8" />
 
         {/* Step 1: Organization Name */}
         {state.step === 1 && (

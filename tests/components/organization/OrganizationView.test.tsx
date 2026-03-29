@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({
     t: (key: any, arg2?: any, arg3?: any) => {
       if (typeof arg2 === 'string') {
@@ -67,6 +68,10 @@ vi.mock('../../../src/components/Organization/OrganizationAdminPanel', () => ({
   ),
 }));
 
+vi.mock('../../../src/components/Organization/KnowledgeGraphExplorer', () => ({
+  KnowledgeGraphExplorer: () => <div data-testid="module-knowledge-graph" />,
+}));
+
 vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
   CompanyProfileModule: () => <div data-testid="module-profile" />,
 }));
@@ -98,6 +103,7 @@ describe('OrganizationView (L2)', () => {
   it('renders profile module by default and resolves active section from pathname', async () => {
     const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
+    expect(screen.getByText('One canonical tenant organization product')).toBeInTheDocument();
     expect(screen.getByTestId('module-profile')).toBeInTheDocument();
     expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
   });

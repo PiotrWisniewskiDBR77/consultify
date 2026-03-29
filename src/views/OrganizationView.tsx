@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
+import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
@@ -230,7 +231,10 @@ export const OrganizationView: React.FC = () => {
             )}
           </div>
         </div>
-        <div className="p-4 lg:p-6">{renderContent()}</div>
+        <div className="px-4 lg:px-6 pb-0">
+          <OrganizationV8CanonPanel compact className="mb-4" />
+        </div>
+        <div className="px-4 lg:px-6 pb-6 pt-0">{renderContent()}</div>
       </div>
     </div>
   );
