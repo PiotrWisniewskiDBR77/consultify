@@ -97,6 +97,11 @@ test.describe('Wave 1 module closeout smoke', () => {
   test.setTimeout(120000);
 
   test('public Anna preserves external identity and CTA authority', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await page.context().clearCookies();
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const openButton = page
