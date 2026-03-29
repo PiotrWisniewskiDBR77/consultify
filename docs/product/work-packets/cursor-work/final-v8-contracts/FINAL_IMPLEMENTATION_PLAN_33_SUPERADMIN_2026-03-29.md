@@ -23,9 +23,51 @@ Status: draft (contract wrapper over existing plan)
 - SSOT: `docs/product/SUPERADMIN_V8_SSOT.md`
 
 ## 4. Softs inspirations (benchmark apps)
-- **Primary**: „platform control planes” — repo nie zawiera zdistylowanej listy vendorów (**missing input**).
+### 4.1 Primary benchmark family (SSOT)
+- Detailed plan (direct): `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_SUPERADMIN_2026-03-29.md`
+- SSOT: `docs/product/SUPERADMIN_V8_SSOT.md`
+- Boundaries (must stay explicit):
+  - `Organization` (30), `Admin` (32), `Settings` (31)
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **OpenAI (operator-grade approvals and security posture for agents/tools)**:
+  - `Softs/0 Agenci/OpenAI.zip :: OpenAI/developers.openai.com/codex/agent-approvals-security.html` (approvals/security posture).
+  - `Softs/0 Agenci/OpenAI.zip :: OpenAI/developers.openai.com/codex/security.html` (security posture adjacency).
+- **Linear (security posture adjacency for “who can do what” controls)**:
+  - `Softs/0 Projekty/Linear.zip :: Linear/linear.appx/security.html` (security posture).
+
+### 4.3 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “platform control plane z mounted branches i emergency controls”, nie “ukryty zestaw linków”.**
+
+- **Mounted branches are visible from root (Wave2)**:
+  - Root pokazuje gałęzie (tenant/user ops, AI ops, connector ops, governance) i prowadzi do nich przewidywalnie.
+- **Cross-tenant approvals/guardrails (OpenAI approvals posture)**:
+  - Wrażliwe akcje mają approvals i jawne guardrails; operator widzi co jest “dangerous”.
+- **Separation of concerns (Wave2 boundaries)**:
+  - Superadmin ≠ tenant Admin; nie ma mieszania prawdy i ról.
+- **Operator trust posture (security adjacency)**:
+  - Uprawnienia i skutki akcji są czytelne; error/degraded states nie udają sukcesu.
+
+### 4.4 Gap ledger vs Softs (what we are missing — derived from Wave2 plan)
+Źródło prawdy: `WAVE2_FINAL_IMPLEMENTATION_PLAN_SUPERADMIN_2026-03-29.md`.
+
+| Capability cluster (parity target) | What Softs implies | Current truth (per plan) | Gap statement (contract requirement) | Priority |
+| --- | --- | --- | --- | --- |
+| Root control plane closure | visible root | “root not fully mounted” | Dopiąć root + mounted branches jako jeden control plane | P0 |
+| Cross-tenant intervention | approvals + safety | “operator trust partial” | Zdefiniować approvals/guardrails + emergency posture | P0 |
+| Domain convergence | one operator truth | “fragmented” | Ujednolicić tenant/user + AI/connector towers bez scope blur | P1
 
 ## 5. Evidence plan (DoD)
-- Acceptance: root + branches są odkrywalne; cross-tenant operations są spójne; boundaries z Organization/Admin/Settings są jawne.
-- Evidence: staging operator walkthrough + testy dla cross-tenant gating.
+### 5.1 Acceptance criteria
+- Root + branches są odkrywalne; cross-tenant operations są spójne; boundaries z Organization/Admin/Settings są jawne.
+- Wrażliwe akcje są gated (approvals/confirmations) i mają audyt.
+- AI/connector ops są wpięte jako jawne gałęzie (bez “ukrytych ścieżek”).
+
+### 5.2 Tests
+- Integracyjne: operator navigates root→branch→action; permissions gate; audit event captured.
+- Regression: denied / partial failure → czytelny degraded state; brak silent success.
+- Contract tests: cross-tenant actions require elevated role; approvals recorded.
+
+### 5.3 Staging proof checklist
+- Demo: root walk-through + 2 branches (AI ops + tenant/user search) + jedna gated akcja z audit.
 
