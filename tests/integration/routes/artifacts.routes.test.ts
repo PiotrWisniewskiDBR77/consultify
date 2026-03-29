@@ -24,6 +24,7 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 }));
 
 const getArtifactForUserMock = vi.fn();
+const listArtifactsForUserMock = vi.fn();
 const createArtifactAccessGrantMock = vi.fn();
 const getArtifactOriginLinksMock = vi.fn();
 const getArtifactAccessGrantsForArtifactMock = vi.fn();
@@ -34,6 +35,7 @@ const getExportHistoryMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   getArtifactForUser: (...args: any[]) => getArtifactForUserMock(...args),
+  listArtifactsForUser: (...args: any[]) => listArtifactsForUserMock(...args),
   createArtifactAccessGrant: (...args: any[]) => createArtifactAccessGrantMock(...args),
   getArtifactOriginLinks: (...args: any[]) => getArtifactOriginLinksMock(...args),
   getArtifactAccessGrantsForArtifact: (...args: any[]) => getArtifactAccessGrantsForArtifactMock(...args),
@@ -59,6 +61,7 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
   beforeEach(() => {
     verifyTokenMock.mockReset();
     getArtifactForUserMock.mockReset();
+    listArtifactsForUserMock.mockReset();
     createArtifactAccessGrantMock.mockReset();
     getArtifactOriginLinksMock.mockReset();
     getArtifactAccessGrantsForArtifactMock.mockReset();
@@ -116,6 +119,50 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         authority: 'report_builder',
       },
     });
+  });
+
+  it('returns action metadata on canonical list rows', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([
+      {
+        artifactId: 'art-1',
+        originRuntime: 'report',
+        originRecordId: 'report-77',
+        outputType: 'report',
+        canonicalHome: 'outputs_library',
+        resolvedTitle: 'Report 77',
+      },
+    ]);
+
+    const res = await request(app).get('/api/artifacts?limit=25');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      data: [
+        expect.objectContaining({
+          artifactId: 'art-1',
+          originRuntime: 'report',
+          originRecordId: 'report-77',
+          openPath: '/reports/builder/report-77',
+          exportPath: '/api/report-builder/report-77/export/pdf',
+          authority: 'report_builder',
+        }),
+      ],
+      total: 1,
+      canonicalHome: 'outputs_library',
+    });
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        userId: 'user-1',
+        roleKey: 'USER',
+        filters: expect.objectContaining({
+          limit: 25,
+        }),
+      })
+    );
   });
 
   it('returns canonical action-target metadata for presentation artifacts', async () => {

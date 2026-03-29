@@ -187,6 +187,9 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
               originStatus: 'ready',
               ownerUserId: 'user-a',
               lastTransitionAt: '2026-03-20T10:00:00Z',
+              openPath: '/reports/builder/reg-r1',
+              exportPath: '/api/report-builder/reg-r1/export/pdf',
+              authority: 'report_builder',
             },
             {
               originRuntime: 'presentation',
@@ -224,6 +227,8 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     const doc = result.current.rows.find((r) => r.kind === 'document');
     expect(doc?.title).toBe('Registry Report');
     expect(doc?.artifactId).toBe('art-1');
+    expect(doc?.governance?.openPath).toBe('/reports/builder/reg-r1');
+    expect(doc?.governance?.exportPath).toBe('/api/report-builder/reg-r1/export/pdf');
   });
 
   it('useArtifactOutputsList(mine) appends view=mine', async () => {
@@ -270,6 +275,7 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
               reportType: 'R1',
               ownerUserId: 'owner-1',
               lastTransitionAt: '2026-03-10T08:00:00Z',
+              openPath: '/reports/builder/rb-99',
             },
           ],
         });
@@ -285,6 +291,7 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(result.current.reports[0]?.id).toBe('rb-99');
     expect(result.current.reports[0]?.title).toBe('From Registry');
     expect(result.current.reports[0]?.artifactId).toBe('art-rb');
+    expect(result.current.reports[0]?.governance?.openPath).toBe('/reports/builder/rb-99');
     expect(result.current.error).toBeNull();
   });
 
@@ -306,6 +313,7 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
               ownerUserId: 'owner-p',
               lastTransitionAt: '2026-03-11T09:00:00Z',
               slideCount: 5,
+              openPath: '/presentations/builder/deck-1',
             },
           ],
         });
@@ -322,6 +330,9 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(result.current.presentations).toHaveLength(1);
     expect(result.current.presentations[0]?.title).toBe('Deck From Registry');
     expect(result.current.presentations[0]?.artifactId).toBe('art-p');
+    expect(result.current.presentations[0]?.governance?.openPath).toBe(
+      '/presentations/builder/deck-1'
+    );
     expect(result.current.error).toBeNull();
   });
 

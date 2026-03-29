@@ -355,6 +355,60 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         ] as Array<{ value: string; label: string; color: string }>)
       : [];
 
+    const visibilityOptions = isAggregateTab
+      ? ([
+          {
+            value: 'private',
+            label: t('rap.outputs.visibility.private', 'Private'),
+          },
+          {
+            value: 'review_shared',
+            label: t('rap.outputs.visibility.reviewShared', 'Review shared'),
+          },
+          {
+            value: 'project',
+            label: t('rap.outputs.visibility.project', 'Project'),
+          },
+          {
+            value: 'organization',
+            label: t('rap.outputs.visibility.organization', 'Organization'),
+          },
+          {
+            value: 'demo',
+            label: t('rap.outputs.visibility.demo', 'Demo'),
+          },
+        ] as Array<{ value: string; label: string }>)
+      : [];
+
+    const reviewStateOptions = isAggregateTab
+      ? ([
+          {
+            value: 'private_draft',
+            label: t('rap.outputs.review.privateDraft', 'Private draft'),
+          },
+          {
+            value: 'reviewable_share',
+            label: t('rap.outputs.review.reviewableShare', 'Reviewable share'),
+          },
+          {
+            value: 'in_review',
+            label: t('rap.outputs.review.inReview', 'In review'),
+          },
+          {
+            value: 'approved',
+            label: t('rap.outputs.review.approved', 'Approved'),
+          },
+          {
+            value: 'published',
+            label: t('rap.outputs.review.published', 'Published'),
+          },
+          {
+            value: 'archived',
+            label: t('rap.outputs.review.archived', 'Archived'),
+          },
+        ] as Array<{ value: string; label: string }>)
+      : [];
+
     const reportCanon =
       activeTab === 'outputs_documents' ? (
         <div className="mr-2 hidden xl:flex items-center gap-2">
@@ -487,6 +541,66 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                           <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
                         </button>
                       ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {visibilityOptions.length > 0 ? (
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                      {t('rap.outputs.columns.visibility', 'Visibility')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {visibilityOptions.map((o) => {
+                        const checked = activeFilters.some(
+                          (f) => f.column === 'visibilityScope' && f.value === o.value
+                        );
+                        return (
+                          <button
+                            key={o.value}
+                            type="button"
+                            onClick={() =>
+                              toggleFilter('visibilityScope', o.value, o.label, 'bg-slate-400')
+                            }
+                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
+                              checked
+                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
+                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                            }`}
+                          >
+                            <span className="truncate">{o.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {reviewStateOptions.length > 0 ? (
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                      {t('rap.outputs.columns.review', 'Review')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {reviewStateOptions.map((o) => {
+                        const checked = activeFilters.some(
+                          (f) => f.column === 'publishState' && f.value === o.value
+                        );
+                        return (
+                          <button
+                            key={o.value}
+                            type="button"
+                            onClick={() => toggleFilter('publishState', o.value, o.label, 'bg-purple-400')}
+                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
+                              checked
+                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
+                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                            }`}
+                          >
+                            <span className="truncate">{o.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}

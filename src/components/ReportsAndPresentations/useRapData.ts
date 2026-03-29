@@ -17,7 +17,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
-import type { PresentationItem, ReportItem, TemplateItem, UnifiedOutputRow } from './types';
+import type {
+  ArtifactGovernanceSummary,
+  PresentationItem,
+  ReportItem,
+  TemplateItem,
+  UnifiedOutputRow,
+} from './types';
 
 export type ReportActionTarget =
   | string
@@ -401,23 +407,7 @@ function mapArtifactReport(raw: any): ReportItem {
     updatedAt: raw.lastTransitionAt || raw.updatedAt || new Date().toISOString(),
     exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
     sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-    governance: {
-      visibilityScope: raw.visibilityScope,
-      publishState: raw.publishState,
-      publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
-      reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
-      projectId: raw.projectId || null,
-      executionRunId: raw.executionRunId || null,
-      contextSnapshotId: raw.contextSnapshotId || null,
-      canonicalHome: raw.canonicalHome || null,
-      lastTransitionAt: raw.lastTransitionAt || null,
-      sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-      originSummary:
-        raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
-      manageAccessPath: raw.manageAccessPath || null,
-      canManageAccess: Boolean(raw.canManageAccess),
-      exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
-    },
+    governance: mapArtifactGovernance(raw),
     sourceType: raw.originRuntime,
     sourceId: raw.originRecordId || undefined,
   };
@@ -535,23 +525,7 @@ function mapArtifactPresentation(raw: any): PresentationItem {
     sourceId: raw.originRecordId || undefined,
     thumbnailUrl: raw.thumbnailUrl,
     sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-    governance: {
-      visibilityScope: raw.visibilityScope,
-      publishState: raw.publishState,
-      publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
-      reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
-      projectId: raw.projectId || null,
-      executionRunId: raw.executionRunId || null,
-      contextSnapshotId: raw.contextSnapshotId || null,
-      canonicalHome: raw.canonicalHome || null,
-      lastTransitionAt: raw.lastTransitionAt || null,
-      sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-      originSummary:
-        raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
-      manageAccessPath: raw.manageAccessPath || null,
-      canManageAccess: Boolean(raw.canManageAccess),
-      exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
-    },
+    governance: mapArtifactGovernance(raw),
   };
 }
 
@@ -560,22 +534,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
   const originId = raw?.originRecordId || raw?.origin_record_id;
   if (!runtime || !originId) return null;
 
-  const baseGov = {
-    visibilityScope: raw.visibilityScope,
-    publishState: raw.publishState,
-    publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
-    reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
-    projectId: raw.projectId || null,
-    executionRunId: raw.executionRunId || null,
-    contextSnapshotId: raw.contextSnapshotId || null,
-    canonicalHome: raw.canonicalHome || null,
-    lastTransitionAt: raw.lastTransitionAt || null,
-    sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-    originSummary: raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
-    manageAccessPath: raw.manageAccessPath || null,
-    canManageAccess: Boolean(raw.canManageAccess),
-    exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
-  };
+  const baseGov = mapArtifactGovernance(raw);
 
   if (runtime === 'report') {
     const r = mapArtifactReport(raw);
@@ -629,6 +588,35 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
   }
 
   return null;
+}
+
+function mapArtifactGovernance(raw: any): ArtifactGovernanceSummary {
+  return {
+    visibilityScope: raw.visibilityScope,
+    publishState: raw.publishState,
+    validationState: raw.validationState || null,
+    validationChecks: Array.isArray(raw.validationChecks) ? raw.validationChecks : [],
+    publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
+    reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
+    projectId: raw.projectId || null,
+    executionRunId: raw.executionRunId || null,
+    executionState: raw.executionState || null,
+    contextSnapshotId: raw.contextSnapshotId || null,
+    canonicalHome: raw.canonicalHome || null,
+    lastTransitionAt: raw.lastTransitionAt || null,
+    sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+    originSummary: raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
+    openPath: raw.openPath || null,
+    exportPath: raw.exportPath || null,
+    authority: raw.authority || null,
+    manageAccessPath: raw.manageAccessPath || null,
+    canManageAccess: Boolean(raw.canManageAccess),
+    exportHistory: Array.isArray(raw.exportHistory) ? raw.exportHistory : [],
+    reviewAuthority: raw.reviewAuthority || 'artifact_review',
+    executionAuthority: raw.executionAuthority || 'execution_spine',
+    accessGrants: Array.isArray(raw.accessGrants) ? raw.accessGrants : [],
+    originLinks: Array.isArray(raw.originLinks) ? raw.originLinks : [],
+  };
 }
 
 export type ArtifactOutputsRegistryView = 'all' | 'mine' | 'review';

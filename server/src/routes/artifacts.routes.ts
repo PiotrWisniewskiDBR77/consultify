@@ -213,7 +213,12 @@ router.get(
       },
     });
 
-    res.json({ data: items, total: items.length, canonicalHome: 'outputs_library' });
+    const data = items.map((item) => ({
+      ...item,
+      ...buildActionTargetPayload(item),
+    }));
+
+    res.json({ data, total: data.length, canonicalHome: 'outputs_library' });
   })
 );
 

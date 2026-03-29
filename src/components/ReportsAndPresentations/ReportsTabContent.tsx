@@ -20,6 +20,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
 import { ReportPreviewBody, ReportPreviewFooter } from './previews/ReportPreview';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
@@ -214,13 +215,22 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     [t, isPolish]
   );
 
+  const openReport = (row: ReportItem) => {
+    const openPath = resolveArtifactOpenPath({
+      kind: 'document',
+      originRecordId: row.id,
+      governance: row.governance,
+    });
+    if (openPath) navigate(openPath);
+  };
+
   const getRowActions = (row: ReportItem): RowAction[] => [
     {
       id: 'open',
       label: t('rap.actions.open', 'Otwórz'),
       icon: ExternalLink,
       variant: 'primary',
-      onClick: () => navigate(`/reports/builder/${row.id}`),
+      onClick: () => openReport(row),
     },
     {
       id: 'export',
@@ -232,7 +242,17 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       id: 'share',
       label: t('rap.actions.share', 'Udostępnij'),
       icon: Share2,
-      onClick: () => navigate(`/reports/builder/${row.id}?action=share`),
+      onClick: () => {
+        const sharePath = appendArtifactOpenAction(
+          resolveArtifactOpenPath({
+            kind: 'document',
+            originRecordId: row.id,
+            governance: row.governance,
+          }),
+          'share'
+        );
+        if (sharePath) navigate(sharePath);
+      },
     },
     {
       id: 'archive',
@@ -456,7 +476,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
                 : undefined
             }
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onOpen={() => navigate(`/reports/builder/${item.id}`)}
+            onOpen={() => openReport(item)}
             onExport={() => actions.exportReportPdf(item)}
           />
         )}
@@ -466,7 +486,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => navigate(`/reports/builder/${row.id}`)}
+          onRowDoubleClick={(row) => openReport(row as ReportItem)}
           getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}

@@ -35,6 +35,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { resolveArtifactOpenPath } from './artifactNavigation';
 import type { UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
 
@@ -77,6 +78,29 @@ function formatReviewSummary(
     return `${state} (${gateCount})`;
   }
   return state;
+}
+
+function collectSearchTokens(
+  row: UnifiedOutputRow,
+  t: (key: string, fallback?: string) => string
+): string[] {
+  return [
+    row.title,
+    row.owner,
+    row.statusKey,
+    row.kind,
+    row.sourceType,
+    row.sourceInitiativeId,
+    row.governance?.visibilityScope,
+    row.governance?.publishState,
+    row.governance?.canonicalHome,
+    row.governance?.authority,
+    formatSourceSummary(row, t),
+    formatReviewSummary(row, t),
+    row.exportFormats.join(' '),
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
 }
 
 type AggregateRow = UnifiedOutputRow & { id: string; title: string };
@@ -146,19 +170,20 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     let data = tableRows;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      data = data.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.owner.toLowerCase().includes(q) ||
-          item.statusKey.toLowerCase().includes(q)
-      );
+      data = data.filter((item) => collectSearchTokens(item, translate).some((token) => token.includes(q)));
     }
     for (const f of activeFilters) {
       if (f.column === 'outputKind') data = data.filter((item) => item.kind === f.value);
       if (f.column === 'status') data = data.filter((item) => item.statusKey === f.value);
+      if (f.column === 'visibilityScope') {
+        data = data.filter((item) => (item.governance?.visibilityScope || '') === f.value);
+      }
+      if (f.column === 'publishState') {
+        data = data.filter((item) => (item.governance?.publishState || '') === f.value);
+      }
     }
     return data;
-  }, [tableRows, searchQuery, activeFilters]);
+  }, [tableRows, searchQuery, activeFilters, translate]);
 
   const columns: TableColumn[] = useMemo(
     () => [
@@ -313,9 +338,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   );
 
   const openRow = (row: UnifiedOutputRow) => {
-    if (row.kind === 'document') navigate(`/reports/builder/${row.originRecordId}`);
-    else if (row.kind === 'presentation') navigate(`/presentations/builder/${row.originRecordId}`);
-    else if (row.kind === 'sheet') void openGovernedSheetRow(row.originRecordId);
+    const openPath = resolveArtifactOpenPath({
+      kind: row.kind,
+      originRecordId: row.originRecordId,
+      governance: row.governance,
+    });
+    if (openPath) {
+      navigate(openPath);
+      return;
+    }
+    if (row.kind === 'sheet') void openGovernedSheetRow(row.originRecordId);
   };
 
   const getRowActions = (row: AggregateRow): RowAction[] => {

@@ -20,6 +20,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
 import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
 import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
@@ -193,13 +194,22 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     [t, isPolish]
   );
 
+  const openPresentation = (row: PresentationItem) => {
+    const openPath = resolveArtifactOpenPath({
+      kind: 'presentation',
+      originRecordId: row.id,
+      governance: row.governance,
+    });
+    if (openPath) navigate(openPath);
+  };
+
   const getRowActions = (row: PresentationItem): RowAction[] => [
     {
       id: 'open',
       label: t('rap.actions.open', 'Otwórz'),
       icon: ExternalLink,
       variant: 'primary',
-      onClick: () => navigate(`/presentations/builder/${row.id}`),
+      onClick: () => openPresentation(row),
     },
     {
       id: 'export',
@@ -211,13 +221,33 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       id: 'share',
       label: t('rap.actions.share', 'Udostępnij'),
       icon: Share2,
-      onClick: () => navigate(`/presentations/builder/${row.id}?action=share`),
+      onClick: () => {
+        const sharePath = appendArtifactOpenAction(
+          resolveArtifactOpenPath({
+            kind: 'presentation',
+            originRecordId: row.id,
+            governance: row.governance,
+          }),
+          'share'
+        );
+        if (sharePath) navigate(sharePath);
+      },
     },
     {
       id: 'rename',
       label: t('rap.actions.rename', 'Zmień nazwę'),
       icon: Edit,
-      onClick: () => navigate(`/presentations/builder/${row.id}?action=rename`),
+      onClick: () => {
+        const renamePath = appendArtifactOpenAction(
+          resolveArtifactOpenPath({
+            kind: 'presentation',
+            originRecordId: row.id,
+            governance: row.governance,
+          }),
+          'rename'
+        );
+        if (renamePath) navigate(renamePath);
+      },
     },
     {
       id: 'archive',
@@ -392,7 +422,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 : undefined
             }
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onOpen={() => navigate(`/presentations/builder/${item.id}`)}
+            onOpen={() => openPresentation(item)}
             onExport={() => {
               actions.exportDeckPptx(item);
             }}
@@ -404,7 +434,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => navigate(`/presentations/builder/${row.id}`)}
+          onRowDoubleClick={(row) => openPresentation(row as PresentationItem)}
           getRowActions={(row) => getRowActions(row as unknown as PresentationItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}
