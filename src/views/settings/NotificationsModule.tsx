@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { NotificationRulesBuilder } from '../../components/settings/NotificationRulesBuilder';
 import { NotificationSettings } from '../../components/settings/NotificationSettings';
+import { SettingsTaxonomyPanel } from '../../components/settings/SettingsTaxonomyPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
 
@@ -191,7 +192,12 @@ export const NotificationsModule: React.FC<NotificationsModuleProps> = ({
         'Manage how and when you receive notifications'
       )}
     >
-      {renderContent()}
+      <>
+        <div className="p-6 pb-0">
+          <SettingsTaxonomyPanel compact />
+        </div>
+        {renderContent()}
+      </>
     </TabLayout>
   );
 };

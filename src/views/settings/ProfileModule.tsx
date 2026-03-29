@@ -44,6 +44,7 @@ import { ProfileCompletenessIndicator } from '../../components/settings/ProfileC
 import { ProfileSettings } from '../../components/settings/ProfileSettings';
 import { ProfileSocialSettings } from '../../components/settings/ProfileSocialSettings';
 import { ProfileStatusSettings } from '../../components/settings/ProfileStatusSettings';
+import { SettingsTaxonomyPanel } from '../../components/settings/SettingsTaxonomyPanel';
 import { ProfileVisibilitySettings } from '../../components/settings/ProfileVisibilitySettings';
 import { ProfileWorkHoursSettings } from '../../components/settings/ProfileWorkHoursSettings';
 import { SocialLinksSection } from '../../components/settings/SocialLinksSection';
@@ -706,7 +707,12 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
         'Manage your personal information and account settings'
       )}
     >
-      {renderContent()}
+      <>
+        <div className="p-6 pb-0">
+          <SettingsTaxonomyPanel compact />
+        </div>
+        {renderContent()}
+      </>
     </TabLayout>
   );
 };

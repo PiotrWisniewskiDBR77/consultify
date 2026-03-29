@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { IntegrationSettings } from '../../components/settings/IntegrationSettings';
+import { SettingsTaxonomyPanel } from '../../components/settings/SettingsTaxonomyPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
 
@@ -324,7 +325,12 @@ export const IntegrationsModule: React.FC<IntegrationsModuleProps> = ({
         'Connect apps, manage API keys, and configure webhooks'
       )}
     >
-      {renderContent()}
+      <>
+        <div className="p-6 pb-0">
+          <SettingsTaxonomyPanel compact />
+        </div>
+        {renderContent()}
+      </>
     </TabLayout>
   );
 };

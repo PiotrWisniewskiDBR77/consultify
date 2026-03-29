@@ -63,6 +63,7 @@ import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
 import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
+import { SettingsTaxonomyPanel } from '../components/settings/SettingsTaxonomyPanel';
 import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
@@ -409,7 +410,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Content */}
         <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">{renderContent()}</div>
+          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">
+            <SettingsTaxonomyPanel compact />
+            {renderContent()}
+          </div>
         </ScrollArea>
       </div>
     </div>
