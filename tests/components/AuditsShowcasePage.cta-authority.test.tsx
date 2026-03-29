@@ -73,11 +73,13 @@ describe('AuditsShowcasePage CTA authority', () => {
     renderView();
 
     expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
+    expect(screen.getByText('One assessment family with one shared workbench')).toBeInTheDocument();
+    expect(screen.getByText('Shared assessment contract')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('trial');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: /demo/i }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('demo');
   });
 });

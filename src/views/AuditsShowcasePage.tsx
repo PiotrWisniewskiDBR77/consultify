@@ -27,6 +27,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
 import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
@@ -297,6 +298,10 @@ export const AuditsShowcasePage: React.FC = () => {
           </div>
         </motion.div>
       </section>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 -mt-8">
+        <AssessmentV8CanonPanel mode="catalog" />
+      </div>
 
       {/* Vertical Multi-Audit Sections */}
       <div className="relative z-10">

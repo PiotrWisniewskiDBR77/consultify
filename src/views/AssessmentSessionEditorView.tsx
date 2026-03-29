@@ -19,6 +19,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmentEditor';
+import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
@@ -1715,6 +1716,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="px-6 pb-4">
+          <AssessmentV8CanonPanel mode="session" compact />
         </div>
 
         {isInfoOpen && (
