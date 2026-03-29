@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { EasySyncSetupShellPanel } from '../shared/EasySyncSetupShellPanel';
 import { InfoButton } from '../shared/InfoButton';
 
 // Webhook types
@@ -525,6 +526,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             Connect external tools to streamline your workflow.
           </p>
         </div>
+        <EasySyncSetupShellPanel compact />
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-8 text-center">
           <Building2 size={48} className="mx-auto text-amber-600 dark:text-amber-500 mb-4" />
           <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-2">
@@ -966,6 +968,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {t('settings.integrations.description', 'Connect external tools and configure webhooks.')}
         </p>
       </div>
+      <EasySyncSetupShellPanel compact />
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-900 p-1 rounded-lg w-fit">
         <button

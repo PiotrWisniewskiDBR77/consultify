@@ -188,6 +188,8 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Connect your first integration')).toBeInTheDocument();
     });
 
+    expect(screen.getByText('One canonical provider connect journey')).toBeInTheDocument();
+    expect(screen.getByText('Setup closure rules')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
 
     await waitFor(() => {

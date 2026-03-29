@@ -102,6 +102,8 @@ describe('IntegrationSettings governed sync readback', () => {
       expect(screen.getAllByText('Pending setup').length).toBeGreaterThan(0);
     });
 
+    expect(screen.getByText('One canonical provider connect journey')).toBeInTheDocument();
+    expect(screen.getByText('Canonical setup path')).toBeInTheDocument();
     expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('cloud_id');
     expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('client_id');
     expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('client_secret');

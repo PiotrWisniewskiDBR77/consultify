@@ -37,6 +37,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EasySyncSetupShellPanel } from '@/components/shared/EasySyncSetupShellPanel';
 import {
   V8MultiplayerApi,
   type V8MultiplayerLockRecord,
@@ -3566,6 +3567,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
+
+      <EasySyncSetupShellPanel compact />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-navy-700/50">
