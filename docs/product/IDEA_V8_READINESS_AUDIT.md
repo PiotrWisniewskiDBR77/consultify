@@ -1,6 +1,8 @@
 # Idea v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Purpose: be the canonical entrypoint for the whole `Idea` module, unifying the shared workspace doctrine, all four native work systems, and the final integration layer with the rest of Consultify
 

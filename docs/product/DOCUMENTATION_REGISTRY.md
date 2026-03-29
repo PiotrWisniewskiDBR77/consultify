@@ -125,8 +125,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/EXECUTION_READINESS_AUDIT_V8.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness audit for Execution or Wdrozenie across runtime, operator control, workload, timeliness, risk and PMO-style oversight
-  - **Authority**: Highest for execution-package completeness assessment and read-order gating
+  - **Scope**: historical readiness audit snapshot for Execution or Wdrozenie across runtime, operator control, workload, timeliness, risk and PMO-style oversight
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
   - **Owner**: Product
@@ -197,8 +197,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/MYWORK_RADAR_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: canonical entry point, read order and readiness verdict for the `MyWork Radar v8` package
-  - **Authority**: Highest for Radar package navigation and readiness interpretation
+  - **Scope**: historical readiness audit snapshot for the `MyWork Radar v8` package
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/MYWORK_RADAR_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -242,8 +242,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/NOTATKA_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: canonical entry point, benchmark conclusion, read order and readiness verdict for the `Notatka v8` package
-  - **Authority**: Highest for Notebook package navigation and completeness interpretation
+  - **Scope**: historical readiness audit snapshot for the `Notatka v8` package
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/544-v81-mywork-deep-acceptance-pack.md` and `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/NOTATKA_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -274,8 +274,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/IDEA_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: module-level readiness verdict for the whole Idea package across shared workspace doctrine, all four native work systems, and the final integration layer with the rest of Consultify
-  - **Authority**: Highest for Idea package navigation, module-level completeness assessment, and final closure of the Idea documentation program
+  - **Scope**: historical readiness audit snapshot for the whole Idea package across shared workspace doctrine, all four native work systems, and the final integration layer with the rest of Consultify
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
@@ -289,8 +289,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, read order, true blockers, and finalization direction for the full Mind Map package inside `Idea Workspace`
-  - **Authority**: Highest for Mind Map package navigation, readiness truth, and step-2 closure in the `Idea v8` program
+  - **Scope**: historical readiness audit snapshot for the full Mind Map package inside `Idea Workspace`
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/MINDMAP_V1_SSOT.md`
   - **Owner**: Product + Engineering
@@ -309,8 +309,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/WHITEBOARD_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, real versus partial capability truth, and finalization direction for the full Whiteboard package inside `Idea Workspace`
-  - **Authority**: Highest for Whiteboard package navigation, readiness truth, and step-3 closure in the `Idea v8` program
+  - **Scope**: historical readiness audit snapshot for the full Whiteboard package inside `Idea Workspace`
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/WHITEBOARD_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -319,8 +319,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/PROCESS_FLOW_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, capability truth, and finalization direction for the full Process Flow package inside `Idea Workspace`
-  - **Authority**: Highest for Process Flow package navigation, readiness truth, and step-4 closure in the `Idea v8` program
+  - **Scope**: historical readiness audit snapshot for the full Process Flow package inside `Idea Workspace`
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/PROCESS_FLOW_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -334,8 +334,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/TABLE_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, capability truth, and finalization direction for the full Table package inside `Idea Workspace`, with explicit comparison to existing Consultify reality
-  - **Authority**: Highest for Table package navigation, readiness truth, and step-5 closure in the `Idea v8` program
+  - **Scope**: historical readiness audit snapshot for the full Table package inside `Idea Workspace`, with explicit comparison to existing Consultify reality
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/TABLE_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -444,8 +444,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/INTERVIEW_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, read order, ownership model and remaining blockers for the whole Interview package across V3, V6 and V8 docs
-  - **Authority**: Highest for Interview package navigation, readiness assessment and downstream documentation gating
+  - **Scope**: historical readiness audit snapshot for the whole Interview package across V3, V6 and V8 docs
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
   - **Owner**: Product + Engineering
@@ -568,8 +568,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/CHAT_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness verdict, read order, ownership model and remaining blockers for the whole Chat v8 package
-  - **Authority**: Highest for Chat v8 package navigation, readiness assessment and downstream documentation gating
+  - **Scope**: historical readiness audit snapshot for the whole Chat v8 package
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/CHAT_AND_AGENT_FUNCTIONAL_COMPLETENESS_AUDIT_V8.md`
   - **Owner**: Product + Engineering
@@ -613,8 +613,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/MYWORK_CALENDAR_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness audit for the calendar capability as a PMO-grade unified time surface with external sync
-  - **Authority**: Highest for current-state verdict and read order of the calendar v8 package
+  - **Scope**: historical readiness audit snapshot for the calendar capability as a PMO-grade unified time surface with external sync
+  - **Authority**: Historical navigation snapshot only; current closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md` and `docs/product/work-packets/evidence/549-v8-v81-package-exception-retirement.md`
 
 - `docs/product/MYWORK_CALENDAR_V8_SSOT.md`
   - **Owner**: Product + Engineering
@@ -862,8 +862,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/EXTERNAL_SYNC_READINESS_AUDIT_V8.md`
   - **Owner**: Product + Engineering
-  - **Scope**: readiness audit of current external synchronization capability across calendars, communication, PM systems, cloud docs, knowledge sources and AI provider ecosystems
-  - **Authority**: Highest for current-state verdict and severity-tier gap framing of the sync package
+  - **Scope**: historical readiness audit snapshot of external synchronization capability across calendars, communication, PM systems, cloud docs, knowledge sources and AI provider ecosystems
+  - **Authority**: Historical navigation snapshot only; current Wave 1 closure authority lives in `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 - `docs/product/AI_SYNC_AND_INTEROPERABILITY_STANDARDS_V8.md`
   - **Owner**: Product + Engineering

@@ -1,6 +1,8 @@
 # Execution Readiness Audit v8
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Scope: readiness audit for the Execution or Wdrozenie module across runtime, operator control, workload, timeliness, risks, recovery and PMO-style oversight
 

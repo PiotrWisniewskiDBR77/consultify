@@ -1,6 +1,8 @@
 # Mind Map v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Purpose: byc kanonicznym punktem wejscia dla finalizacji `Mind Map`, rozdzielic co jest naprawde gotowe od tego, co tylko wyglada szeroko, i ustawic finalny kierunek dopiecia mapy mysli do poziomu produkcyjnego.
 

@@ -1,6 +1,8 @@
 # MyWork Radar v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Purpose: byc kanonicznym punktem wejscia dla calego pakietu `MyWork Radar v8`, zebrac read order, rozdzielic role dokumentow i ocenic, czy `Radar` jest juz gotowy do dalszego planowania i implementacji.
 

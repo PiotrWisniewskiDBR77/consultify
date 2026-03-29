@@ -1,6 +1,8 @@
 # Chat v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Cel: spiac pakiet `Chat v8` w jeden punkt orientacyjny, ustalic read order, rozdzielic role dokumentow lokalnych i przekrojowych oraz wskazac, co jeszcze trzeba minimalnie domknac przed uznaniem chatu za planistycznie gotowy.
 

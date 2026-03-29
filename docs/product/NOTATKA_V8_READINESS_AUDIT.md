@@ -1,6 +1,8 @@
 # Notatka v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/544-v81-mywork-deep-acceptance-pack.md` and `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Purpose: byc kanonicznym entrypointem dla calego pakietu `Notatka v8`, laczac benchmark z `Softs/Notatki`, obecny runtime `Notebook` oraz finalne braki potrzebne do uznania notatek za kompletny AI-native knowledge system w `consultify`
 

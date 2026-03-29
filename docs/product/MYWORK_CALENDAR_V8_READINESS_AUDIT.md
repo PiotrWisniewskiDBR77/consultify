@@ -1,6 +1,8 @@
 # MyWork Calendar v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md` and `docs/product/work-packets/evidence/549-v8-v81-package-exception-retirement.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Scope: readiness audit for Consultify's calendar capability as a PMO-grade unified time surface with external sync
 

@@ -1,6 +1,8 @@
 # Interview v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Scope: readiness verdict, read order, ownership model and remaining blockers for the whole Interview package across V3, V6 and V8 docs
 

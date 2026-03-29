@@ -1,6 +1,8 @@
 # Whiteboard v8 Readiness Audit
 
-> Status: Draft v8
+> Status: Historical readiness audit snapshot; later Wave 1 closure superseded this draft
+> Current authority: `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+> Note: readiness and blocker language below is historical at time of write, not the current Wave 1 program status
 > Owner: Product + Engineering
 > Purpose: byc kanonicznym punktem wejscia dla finalizacji `Whiteboard`, rozdzielic to, co juz jest realnym runtime, od tego, co nadal jest tylko czesciowe, i ustawic uczciwy kierunek dopiecia do poziomu produkcyjnego.
 
