@@ -30,6 +30,7 @@ import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
 import * as publishReviewService from './publishReviewService.js';
+import type { RunState } from '../../types/executionSpine.js';
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
@@ -264,6 +265,110 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
   };
 }
 
+export function deriveArtifactRunStatusFromExecutionState(params: {
+  persistedStatus: ArtifactRunStatus;
+  executionState?: RunState | null;
+}): ArtifactRunStatus {
+  const { persistedStatus, executionState } = params;
+
+  if (
+    persistedStatus === 'completed' ||
+    persistedStatus === 'failed' ||
+    persistedStatus === 'retry_requested'
+  ) {
+    return persistedStatus;
+  }
+
+  if (persistedStatus === 'planned') {
+    return 'planned';
+  }
+
+  switch (executionState) {
+    case 'drafting':
+    case 'planning':
+      return 'planned';
+    case 'proposals_ready':
+      return 'proposal_created';
+    case 'waiting_for_review':
+      return 'awaiting_review';
+    case 'approved_for_apply':
+      return 'approved_for_apply';
+    case 'applying':
+      return 'applying';
+    case 'rejected':
+      return 'rejected';
+    case 'failed':
+      return 'failed';
+    default:
+      return persistedStatus;
+  }
+}
+
+export function deriveArtifactValidationSnapshot(params: {
+  artifact: Pick<
+    ArtifactRecord,
+    'titleSnapshot' | 'contextSnapshotId' | 'executionRunId' | 'sourceInitiativeId' | 'originSummary'
+  >;
+  executionState?: RunState | null;
+  sourceRefs?: unknown[];
+}): {
+  state: 'validated' | 'pending' | 'attention_required';
+  checks: Array<{
+    id: 'title_present' | 'source_grounded' | 'execution_complete';
+    status: 'passed' | 'pending' | 'failed';
+    message: string;
+  }>;
+} {
+  const sourceRefs =
+    params.sourceRefs && Array.isArray(params.sourceRefs)
+      ? params.sourceRefs
+      : sourceRefsFromOriginSummary(params.artifact.originSummary);
+
+  const checks: Array<{
+    id: 'title_present' | 'source_grounded' | 'execution_complete';
+    status: 'passed' | 'pending' | 'failed';
+    message: string;
+  }> = [
+    {
+      id: 'title_present',
+      status: String(params.artifact.titleSnapshot || '').trim() ? 'passed' : 'failed',
+      message: 'Artifact title snapshot is present',
+    },
+    {
+      id: 'source_grounded',
+      status:
+        sourceRefs.length > 0 ||
+        Boolean(params.artifact.sourceInitiativeId) ||
+        Boolean(params.artifact.contextSnapshotId)
+          ? 'passed'
+          : 'failed',
+      message: 'Artifact keeps source grounding or context lineage',
+    },
+    {
+      id: 'execution_complete',
+      status: !params.artifact.executionRunId
+        ? 'passed'
+        : params.executionState === 'completed'
+          ? 'passed'
+          : params.executionState === 'failed' ||
+              params.executionState === 'cancelled' ||
+              params.executionState === 'expired' ||
+              params.executionState === 'rejected'
+            ? 'failed'
+            : 'pending',
+      message: 'Execution approval is completed before review or delivery',
+    },
+  ];
+
+  if (checks.some((check) => check.status === 'pending')) {
+    return { state: 'pending', checks };
+  }
+  if (checks.some((check) => check.status === 'failed')) {
+    return { state: 'attention_required', checks };
+  }
+  return { state: 'validated', checks };
+}
+
 export function mapReportStatusToDeliveryState(status: string | null | undefined): string {
   const normalized = String(status || 'draft')
     .trim()
@@ -373,6 +478,32 @@ async function getArtifactRunRow(
     [runId, organizationId],
     { fallback: true }
   );
+}
+
+async function getArtifactRunChildRows(
+  runId: string,
+  organizationId: string
+): Promise<ArtifactRunRow[]> {
+  return dbAll<ArtifactRunRow>(
+    `SELECT *
+     FROM v8_artifact_runs
+     WHERE retry_of_run_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [runId, organizationId],
+    { fallback: true }
+  );
+}
+
+async function mapArtifactRunRowWithEffectiveStatus(row: ArtifactRunRow): Promise<ArtifactRunRecord> {
+  const mapped = mapArtifactRunRow(row);
+  const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
+  return {
+    ...mapped,
+    runStatus: deriveArtifactRunStatusFromExecutionState({
+      persistedStatus: mapped.runStatus,
+      executionState: spineRun?.state,
+    }),
+  };
 }
 
 async function updateArtifactMetadata(
@@ -545,6 +676,17 @@ export async function startArtifactReview(params: {
     );
   }
 
+  const executionRun = artifact.execution_run_id
+    ? await executionSpineService.getRun(artifact.execution_run_id, params.organizationId)
+    : null;
+  const validation = deriveArtifactValidationSnapshot({
+    artifact: mapArtifactRow(artifact),
+    executionState: executionRun?.state,
+  });
+  if (validation.state !== 'validated') {
+    throw new Error(`Artifact ${params.artifactId} cannot enter review before artifact validation passes`);
+  }
+
   let record = await publishReviewService.getPublishRecord(
     params.artifactId,
     params.organizationId
@@ -663,7 +805,7 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
             d.export_format, d.created_at, d.updated_at, d.source_id,
-            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json') AS source_refs_json
+            COALESCE(d.source_artifacts, d.source_refs_json) AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = d.organization_id
@@ -905,8 +1047,7 @@ async function getArtifactListItemRow(
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json')
-              AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -959,8 +1100,7 @@ export async function listArtifactsForUser(params: {
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json')
-              AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1463,7 +1603,39 @@ export async function getArtifactRun(
   organizationId: string
 ): Promise<ArtifactRunRecord | null> {
   const row = await getArtifactRunRow(runId, organizationId);
-  return row ? mapArtifactRunRow(row) : null;
+  return row ? mapArtifactRunRowWithEffectiveStatus(row) : null;
+}
+
+export async function listArtifactRunHistory(params: {
+  runId: string;
+  organizationId: string;
+}): Promise<ArtifactRunRecord[]> {
+  const current = await getArtifactRunRow(params.runId, params.organizationId);
+  if (!current) return [];
+
+  let root = current;
+  while (root.retry_of_run_id) {
+    const parent = await getArtifactRunRow(root.retry_of_run_id, params.organizationId);
+    if (!parent) break;
+    root = parent;
+  }
+
+  const queue: ArtifactRunRow[] = [root];
+  const collected = new Map<string, ArtifactRunRow>();
+
+  while (queue.length > 0) {
+    const next = queue.shift()!;
+    if (collected.has(next.run_id)) continue;
+    collected.set(next.run_id, next);
+    const children = await getArtifactRunChildRows(next.run_id, params.organizationId);
+    for (const child of children) queue.push(child);
+  }
+
+  const ordered = Array.from(collected.values()).sort((a, b) =>
+    String(a.created_at || '').localeCompare(String(b.created_at || ''))
+  );
+
+  return Promise.all(ordered.map((row) => mapArtifactRunRowWithEffectiveStatus(row)));
 }
 
 export async function acceptArtifactRunPlan(params: {
@@ -1603,9 +1775,15 @@ export async function materializeArtifactRun(
       `ArtifactRun ${validated.runId} only supports report, presentation, or sheet materialization currently`
     );
   }
-  if (current.runStatus !== 'proposal_created') {
+  if (
+    current.runStatus === 'planned' ||
+    current.runStatus === 'retry_requested' ||
+    current.runStatus === 'rejected' ||
+    current.runStatus === 'failed' ||
+    current.runStatus === 'completed'
+  ) {
     throw new Error(
-      `ArtifactRun ${validated.runId} must be in proposal_created before materialization`
+      `ArtifactRun ${validated.runId} must have an accepted lifecycle before materialization`
     );
   }
 
@@ -1621,33 +1799,12 @@ export async function materializeArtifactRun(
     }
 
     if (spineRun.state === 'proposals_ready') {
-      await executionSpineService.submitForReview(
-        current.executionRunId,
-        validated.organizationId,
-        validated.actorUserId
-      );
-      await executionSpineService.approveRun(
-        current.executionRunId,
-        validated.organizationId,
-        validated.actorUserId,
-        'ArtifactRun materialization approved'
-      );
-      await executionSpineService.applyRun(
-        current.executionRunId,
-        validated.organizationId,
-        validated.actorUserId
+      throw new Error(
+        `ArtifactRun ${validated.runId} must be submitted for review before materialization`
       );
     } else if (spineRun.state === 'waiting_for_review') {
-      await executionSpineService.approveRun(
-        current.executionRunId,
-        validated.organizationId,
-        validated.actorUserId,
-        'ArtifactRun materialization approved'
-      );
-      await executionSpineService.applyRun(
-        current.executionRunId,
-        validated.organizationId,
-        validated.actorUserId
+      throw new Error(
+        `ArtifactRun ${validated.runId} must be approved for apply before materialization`
       );
     } else if (spineRun.state === 'approved_for_apply') {
       await executionSpineService.applyRun(
@@ -1726,6 +1883,14 @@ export async function materializeArtifactRun(
         userId: validated.actorUserId,
       });
       resolvedArtifactId = artifact?.artifactId || null;
+      if (!resolvedArtifactId) {
+        const link = await getOriginLinkByOrigin(
+          validated.organizationId,
+          'presentation',
+          outlined.deckId
+        );
+        resolvedArtifactId = link?.artifactId || null;
+      }
     } else {
       const tableId =
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';

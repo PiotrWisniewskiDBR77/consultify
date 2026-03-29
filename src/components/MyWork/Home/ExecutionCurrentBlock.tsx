@@ -44,6 +44,29 @@ const VISIBILITY_META = {
   },
 } as const;
 
+const REVIEW_META = {
+  private_draft: {
+    labelEn: 'Private draft',
+    labelPl: 'Szkic prywatny',
+  },
+  reviewable_share: {
+    labelEn: 'Review ready',
+    labelPl: 'Gotowe do review',
+  },
+  in_review: {
+    labelEn: 'In review',
+    labelPl: 'W review',
+  },
+  approved: {
+    labelEn: 'Approved',
+    labelPl: 'Zatwierdzone',
+  },
+  published: {
+    labelEn: 'Published',
+    labelPl: 'Opublikowane',
+  },
+} as const;
+
 export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
   block,
   onAction,
@@ -54,7 +77,10 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
   const orderedArtifactOutputs = [...(payload.artifactOutputs || [])].sort((left, right) => {
     const leftScore = left.visibilityScope === 'review_shared' ? 0 : 1;
     const rightScore = right.visibilityScope === 'review_shared' ? 0 : 1;
-    return leftScore - rightScore;
+    if (leftScore !== rightScore) return leftScore - rightScore;
+    const leftReviewScore = left.publishState === 'in_review' ? 0 : 1;
+    const rightReviewScore = right.publishState === 'in_review' ? 0 : 1;
+    return leftReviewScore - rightReviewScore;
   });
 
   return (
@@ -107,6 +133,11 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                     ? ('sheet' as const)
                     : ('report' as const);
               const visibilityMeta = VISIBILITY_META[artifact.visibilityScope];
+              const reviewMeta =
+                artifact.publishState &&
+                artifact.publishState in REVIEW_META
+                  ? REVIEW_META[artifact.publishState as keyof typeof REVIEW_META]
+                  : null;
               return (
                 <button
                   key={artifact.artifactId}
@@ -136,6 +167,14 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                       >
                         {isPolish ? visibilityMeta.labelPl : visibilityMeta.labelEn}
                       </span>
+                      {reviewMeta ? (
+                        <span className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-200">
+                          {isPolish ? reviewMeta.labelPl : reviewMeta.labelEn}
+                          {artifact.reviewGateCount && artifact.reviewGateCount > 0
+                            ? ` · ${artifact.reviewGateCount}`
+                            : ''}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-1 text-xs text-slate-300/70">
                       {artifact.originRuntime === 'presentation'
@@ -150,6 +189,13 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                             ? `Raport · ${artifact.deliveryState}`
                             : `Report · ${artifact.deliveryState}`}
                     </div>
+                    {artifact.publishState ? (
+                      <div className="mt-1 text-[11px] text-slate-400">
+                        {isPolish
+                          ? 'Review i visibility są spójne z Outputs Library.'
+                          : 'Review and visibility stay aligned with the Outputs Library.'}
+                      </div>
+                    ) : null}
                   </div>
                   <ArrowRight size={16} className="text-white/30" />
                 </button>

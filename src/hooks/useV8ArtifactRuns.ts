@@ -21,12 +21,21 @@ export type {
 
 export const V8_ARTIFACT_RUN_KEYS = {
   run: (runId: string) => ['v8', 'artifact-run', runId] as const,
+  history: (runId: string) => ['v8', 'artifact-run', runId, 'history'] as const,
 };
 
 export function useV8ArtifactRun(runId: string | undefined) {
   return useQuery<ArtifactRunRecord>({
     queryKey: V8_ARTIFACT_RUN_KEYS.run(runId ?? ''),
     queryFn: () => ArtifactRunsApi.getRun(runId!),
+    enabled: !!runId,
+  });
+}
+
+export function useV8ArtifactRunHistory(runId: string | undefined) {
+  return useQuery<ArtifactRunRecord[]>({
+    queryKey: V8_ARTIFACT_RUN_KEYS.history(runId ?? ''),
+    queryFn: () => ArtifactRunsApi.getHistory(runId!),
     enabled: !!runId,
   });
 }

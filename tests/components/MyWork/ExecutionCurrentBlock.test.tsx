@@ -54,6 +54,8 @@ describe('ExecutionCurrentBlock', () => {
                 originRuntime: 'presentation',
                 deliveryState: 'review',
                 visibilityScope: 'review_shared',
+                publishState: 'in_review',
+                reviewGateCount: 2,
               },
             ],
           },
@@ -63,6 +65,7 @@ describe('ExecutionCurrentBlock', () => {
 
     expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(screen.getByText('Private')).toBeInTheDocument();
+    expect(screen.getByText('In review · 2')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Board review deck'));
 

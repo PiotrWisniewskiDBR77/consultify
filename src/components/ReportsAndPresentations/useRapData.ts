@@ -33,6 +33,7 @@ type ArtifactOriginActionTarget = ReportActionTarget | PresentationActionTarget;
 
 export interface AssessmentOriginOutputRow {
   kind: 'assessment';
+  artifactId?: string;
   originRecordId: string;
   title: string;
   statusKey: string;
@@ -53,6 +54,29 @@ type ArtifactActionTargetPayload = {
   reviewPath: string;
   authority: string;
 };
+
+function isOriginRuntimeEntry(
+  entry:
+    | readonly [`report:${string}` | `presentation:${string}`, { readonly runtime: 'report' | 'presentation'; readonly id: string }]
+    | null
+): entry is readonly [
+  `report:${string}` | `presentation:${string}`,
+  { readonly runtime: 'report' | 'presentation'; readonly id: string },
+] {
+  return !!entry;
+}
+
+function isAssessmentOriginEntry(
+  entry: readonly [`assessment:${string}`, { readonly id: string }] | null
+): entry is readonly [`assessment:${string}`, { readonly id: string }] {
+  return !!entry;
+}
+
+function isAssessmentOutputRow(
+  item: AssessmentOriginOutputRow | null
+): item is AssessmentOriginOutputRow {
+  return !!item;
+}
 
 function normalizeArtifactOriginActionTarget(target: ArtifactOriginActionTarget): {
   originRecordId: string;
@@ -383,6 +407,13 @@ function mapArtifactReport(raw: any): ReportItem {
       publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
       reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
       projectId: raw.projectId || null,
+      executionRunId: raw.executionRunId || null,
+      contextSnapshotId: raw.contextSnapshotId || null,
+      canonicalHome: raw.canonicalHome || null,
+      lastTransitionAt: raw.lastTransitionAt || null,
+      sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+      originSummary:
+        raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
     },
     sourceType: raw.originRuntime,
     sourceId: raw.originRecordId || undefined,
@@ -507,6 +538,13 @@ function mapArtifactPresentation(raw: any): PresentationItem {
       publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
       reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
       projectId: raw.projectId || null,
+      executionRunId: raw.executionRunId || null,
+      contextSnapshotId: raw.contextSnapshotId || null,
+      canonicalHome: raw.canonicalHome || null,
+      lastTransitionAt: raw.lastTransitionAt || null,
+      sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+      originSummary:
+        raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
     },
   };
 }
@@ -522,6 +560,12 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
     publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
     reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
     projectId: raw.projectId || null,
+    executionRunId: raw.executionRunId || null,
+    contextSnapshotId: raw.contextSnapshotId || null,
+    canonicalHome: raw.canonicalHome || null,
+    lastTransitionAt: raw.lastTransitionAt || null,
+    sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+    originSummary: raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
   };
 
   if (runtime === 'report') {
@@ -814,7 +858,7 @@ export function useArtifactOutputsForOrigins(
           if (!runtime || !id) return null;
           return [`${runtime}:${id}`, { runtime, id }] as const;
         })
-        .filter(Boolean)
+        .filter(isOriginRuntimeEntry)
     ).values()
   ).slice(0, Math.max(1, limit));
 
@@ -883,7 +927,7 @@ export function useAssessmentOutputsForOrigins(
           if (type !== 'assessment' || !id) return null;
           return [`assessment:${id}`, { id }] as const;
         })
-        .filter(Boolean)
+        .filter(isAssessmentOriginEntry)
     ).values()
   ).slice(0, Math.max(1, limit));
 
@@ -899,7 +943,7 @@ export function useAssessmentOutputsForOrigins(
 
     setLoading(true);
     try {
-      const responses = await Promise.all(
+      const responses: Array<AssessmentOriginOutputRow | null> = await Promise.all(
         normalizedOrigins.map(async ({ id }) => {
           const res = await fetch(`${API_URL}/assessments/${encodeURIComponent(id)}`, {
             headers: getHeaders(),
@@ -923,9 +967,7 @@ export function useAssessmentOutputsForOrigins(
       );
 
       setRows(
-        responses.filter(
-          (item: AssessmentOriginOutputRow | null): item is AssessmentOriginOutputRow => !!item
-        )
+        responses.filter(isAssessmentOutputRow)
       );
       setError(null);
     } catch {

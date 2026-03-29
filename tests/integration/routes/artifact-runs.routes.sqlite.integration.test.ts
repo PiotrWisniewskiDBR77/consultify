@@ -218,6 +218,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
         proposalId: 'proposal-abc',
       }),
     );
+    spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
 
     const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Board report',
@@ -245,6 +246,15 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
         executionRunId: 'exec-run-2',
       }),
     );
+
+    spineMocks.getRun.mockImplementation(async (executionRunId: string) =>
+      executionRunId === 'exec-run-1'
+        ? { state: 'approved_for_apply' }
+        : { state: 'planning' }
+    );
+    const historyRes = await request(app).get(`/api/artifact-runs/${retryRes.body.data.runId}/history`);
+    expect(historyRes.status).toBe(200);
+    expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([runId, retryRes.body.data.runId]);
   });
 
   it('materializes a presentation run through the governed artifact-run route', async () => {
@@ -265,6 +275,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     const acceptRes = await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     expect(acceptRes.status).toBe(200);
     expect(acceptRes.body.data.runStatus).toBe('proposal_created');
+    spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
 
     const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Board presentation',
@@ -309,6 +320,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     const acceptRes = await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     expect(acceptRes.status).toBe(200);
     expect(acceptRes.body.data.runStatus).toBe('proposal_created');
+    spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
 
     const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Governed matrix',

@@ -55,9 +55,12 @@ function usePresentationPreviewData(presentation: PresentationItem) {
     `${isPolish ? 'Tryb' : 'Mode'}: ${presentation.presentationMode || 'briefing'}`,
     `${isPolish ? 'Slajdy' : 'Slides'}: ${presentation.slideCount}`,
     `${isPolish ? 'Visibility' : 'Visibility'}: ${governance?.visibilityScope || '—'}`,
+    `${isPolish ? 'Validation state' : 'Validation state'}: ${governance?.validationState || '—'}`,
+    `${isPolish ? 'Execution state' : 'Execution state'}: ${governance?.executionState || '—'}`,
     `${isPolish ? 'Publish state' : 'Publish state'}: ${governance?.publishState || '—'}`,
     `${isPolish ? 'Review gates' : 'Review gates'}: ${governance?.reviewGateCount ?? 0}`,
     `${isPolish ? 'Project' : 'Project'}: ${governance?.projectId || '—'}`,
+    `${isPolish ? 'Execution run' : 'Execution run'}: ${governance?.executionRunId || '—'}`,
     `${isPolish ? 'Utworzono' : 'Created'}: ${new Date(presentation.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
     `${isPolish ? 'Ostatnia zmiana' : 'Updated'}: ${new Date(presentation.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
   ].join('\n');
@@ -68,6 +71,9 @@ function usePresentationPreviewData(presentation: PresentationItem) {
       : []),
     ...(presentation.sourceRefs?.length
       ? [{ label: `${presentation.sourceRefs.length} ${isPolish ? 'referencji' : 'references'}` }]
+      : []),
+    ...(governance?.originLinks?.length
+      ? [{ label: `${governance.originLinks.length} ${isPolish ? 'linków pochodzenia' : 'origin links'}` }]
       : []),
     ...(governance?.publishReviewers?.length
       ? [
@@ -184,6 +190,12 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
                 : null,
               governance?.publishState
                 ? `${isPolish ? 'Review' : 'Review'}: ${governance.publishState}`
+                : null,
+              governance?.validationState
+                ? `${isPolish ? 'Validation' : 'Validation'}: ${governance.validationState}`
+                : null,
+              governance?.executionState
+                ? `${isPolish ? 'Execution' : 'Execution'}: ${governance.executionState}`
                 : null,
             ].filter(Boolean) as string[]
           }

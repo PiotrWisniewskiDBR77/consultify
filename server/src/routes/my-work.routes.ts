@@ -12496,6 +12496,9 @@ router.get(
         originRuntime: String(artifact.originRuntime || artifact.outputType || 'report'),
         deliveryState: String(artifact.deliveryState || 'draft'),
         visibilityScope: String(artifact.visibilityScope || 'private'),
+        publishState: artifact.publishState ? String(artifact.publishState) : null,
+        reviewGateCount:
+          typeof artifact.reviewGateCount === 'number' ? artifact.reviewGateCount : 0,
       }));
 
       const executionSignalTypes = Array.from(executionSignalRollup.byType.entries()).sort(

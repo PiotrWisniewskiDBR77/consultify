@@ -96,6 +96,21 @@ interface SummaryInitiativeItem extends PreviewableItem {
   ownerName: string;
 }
 
+export function getFinanceConsequenceTab(item: {
+  hasRoiPlan: boolean;
+  hasRoiRealized: boolean;
+}): 'analysis' | 'prediction' | 'valuation' {
+  if (item.hasRoiRealized) {
+    return 'valuation';
+  }
+
+  if (item.hasRoiPlan) {
+    return 'prediction';
+  }
+
+  return 'analysis';
+}
+
 const formatDate = (value: unknown): string => {
   if (!value) return '—';
   const d = value instanceof Date ? value : new Date(String(value));
@@ -387,6 +402,16 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
     [navigate]
   );
 
+  const openFinanceConsequenceLane = useCallback(
+    (item: Pick<SummaryInitiativeItem, 'id' | 'title' | 'hasRoiPlan' | 'hasRoiRealized'>) => {
+      const tab = getFinanceConsequenceTab(item);
+      navigate(
+        `${ROUTES.FINANCE}?tab=${tab}&initiativeId=${encodeURIComponent(item.id)}&initiativeName=${encodeURIComponent(item.title)}`
+      );
+    },
+    [navigate]
+  );
+
   useEffect(() => {
     setDetailsExpanded(false);
   }, [selectedId]);
@@ -645,10 +670,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                   {
                     label: t('results.summary.actions.economics', 'Finanse'),
                     icon: TrendingUp,
-                    onClick: () =>
-                      navigate(
-                        `${ROUTES.FINANCE}?tab=valuation&initiativeId=${encodeURIComponent(i.id)}&initiativeName=${encodeURIComponent(i.title)}`
-                      ),
+                    onClick: () => openFinanceConsequenceLane(i),
                     colorScheme: 'neutral',
                   },
                 ],
@@ -704,6 +726,12 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                     setCreateKpiInitiativeId(i.id);
                     setShowCreateKpi(true);
                   },
+                },
+                {
+                  id: 'finance',
+                  label: t('results.summary.actions.economics', 'Finanse'),
+                  icon: TrendingUp,
+                  onClick: () => openFinanceConsequenceLane(i),
                 },
                 {
                   id: 'connect_roi',

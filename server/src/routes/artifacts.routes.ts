@@ -5,6 +5,7 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import * as executionSpineService from '../services/v8/executionSpineService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -94,6 +95,55 @@ function buildActionTargetPayload(artifact: {
     deletePath: null,
     reviewPath,
     authority: 'artifact_registry',
+  };
+}
+
+async function buildArtifactTrustPayload(params: {
+  artifact: Awaited<ReturnType<typeof artifactRegistryService.getArtifactForUser>>;
+  organizationId: string;
+}) {
+  const artifact = params.artifact;
+  if (!artifact) return null;
+
+  const [links, grants, executionRun] = await Promise.all([
+    artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, params.organizationId),
+    artifactRegistryService.getArtifactAccessGrantsForArtifact(artifact.artifactId, params.organizationId),
+    artifact.executionRunId
+      ? executionSpineService.getRun(artifact.executionRunId, params.organizationId)
+      : Promise.resolve(null),
+  ]);
+
+  const actionTarget = buildActionTargetPayload(artifact);
+  const validation = artifactRegistryService.deriveArtifactValidationSnapshot({
+    artifact,
+    executionState: executionRun?.state,
+    sourceRefs: artifact.sourceRefs,
+  });
+
+  return {
+    artifactId: artifact.artifactId,
+    outputType: artifact.outputType,
+    canonicalHome: artifact.canonicalHome,
+    visibilityScope: artifact.visibilityScope,
+    projectId: artifact.projectId,
+    publishState: artifact.publishState,
+    validationState: validation.state,
+    validationChecks: validation.checks,
+    reviewers: artifact.publishReviewers,
+    reviewGateCount: artifact.reviewGateCount,
+    executionRunId: artifact.executionRunId,
+    executionState: executionRun?.state || null,
+    contextSnapshotId: artifact.contextSnapshotId,
+    lastTransitionAt: artifact.lastTransitionAt,
+    sourceRefs: artifact.sourceRefs,
+    originSummary: artifact.originSummary,
+    originLinks: links,
+    accessGrants: grants,
+    openPath: actionTarget.openPath,
+    exportPath: actionTarget.exportPath,
+    authority: actionTarget.authority,
+    reviewAuthority: 'artifact_review',
+    executionAuthority: 'execution_spine',
   };
 }
 
@@ -236,22 +286,27 @@ router.get(
       return res.status(404).json({ error: 'Artifact not found' });
     }
 
-    const [links, grants] = await Promise.all([
-      artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, organizationId),
-      artifactRegistryService.getArtifactAccessGrantsForArtifact(
-        artifact.artifactId,
-        organizationId
-      ),
-    ]);
-    res.json({
-      artifactId: artifact.artifactId,
-      visibilityScope: artifact.visibilityScope,
-      projectId: artifact.projectId,
-      publishState: artifact.publishState,
-      reviewers: artifact.publishReviewers,
-      originLinks: links,
-      accessGrants: grants,
+    const payload = await buildArtifactTrustPayload({ artifact, organizationId });
+    res.json(payload);
+  })
+);
+
+router.get(
+  '/:id/trust-state',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
     });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    const payload = await buildArtifactTrustPayload({ artifact, organizationId });
+    res.json({ data: payload });
   })
 );
 
@@ -300,16 +355,24 @@ router.post(
       return res.status(404).json({ error: 'Artifact not found' });
     }
 
-    const started = await artifactRegistryService.startArtifactReview({
-      artifactId: artifact.artifactId,
-      organizationId,
-      actorUserId: userId,
-      reviewers: Array.isArray(req.body?.reviewers)
-        ? req.body.reviewers.map((value: unknown) => String(value))
-        : [],
-    });
+    try {
+      const started = await artifactRegistryService.startArtifactReview({
+        artifactId: artifact.artifactId,
+        organizationId,
+        actorUserId: userId,
+        reviewers: Array.isArray(req.body?.reviewers)
+          ? req.body.reviewers.map((value: unknown) => String(value))
+          : [],
+      });
 
-    res.status(200).json({ data: started });
+      return res.status(200).json({ data: started });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not start artifact review';
+      if (message.includes('cannot enter review before artifact validation passes')) {
+        return res.status(409).json({ error: message });
+      }
+      throw error;
+    }
   })
 );
 

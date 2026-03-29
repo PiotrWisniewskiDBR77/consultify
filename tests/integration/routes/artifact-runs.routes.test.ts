@@ -28,6 +28,7 @@ const acceptArtifactRunPlanMock = vi.fn();
 const materializeArtifactRunMock = vi.fn();
 const retryArtifactRunMock = vi.fn();
 const getArtifactRunMock = vi.fn();
+const listArtifactRunHistoryMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   createArtifactRunFromChat: (...args: any[]) => createArtifactRunFromChatMock(...args),
@@ -35,6 +36,7 @@ vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   materializeArtifactRun: (...args: any[]) => materializeArtifactRunMock(...args),
   retryArtifactRun: (...args: any[]) => retryArtifactRunMock(...args),
   getArtifactRun: (...args: any[]) => getArtifactRunMock(...args),
+  listArtifactRunHistory: (...args: any[]) => listArtifactRunHistoryMock(...args),
 }));
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
@@ -51,6 +53,7 @@ describe('artifact-runs routes (HTTP contract; artifactRegistryService mocked)',
     materializeArtifactRunMock.mockReset();
     retryArtifactRunMock.mockReset();
     getArtifactRunMock.mockReset();
+    listArtifactRunHistoryMock.mockReset();
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'user-1', organizationId: 'org-1' };
     });
@@ -130,6 +133,27 @@ describe('artifact-runs routes (HTTP contract; artifactRegistryService mocked)',
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual(expect.objectContaining({ error: 'ArtifactRun not found' }));
+  });
+
+  it('GET /api/artifact-runs/:runId/history returns the retry chain for a run', async () => {
+    listArtifactRunHistoryMock.mockResolvedValue([
+      { runId: 'ar-1', runStatus: 'completed', retryOfRunId: null },
+      { runId: 'ar-2', runStatus: 'planned', retryOfRunId: 'ar-1' },
+    ]);
+
+    const res = await request(app).get('/api/artifact-runs/ar-2/history');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactRunHistoryMock).toHaveBeenCalledWith({
+      runId: 'ar-2',
+      organizationId: 'org-1',
+    });
+    expect(res.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ runId: 'ar-1' }),
+        expect.objectContaining({ runId: 'ar-2' }),
+      ])
+    );
   });
 
   it('POST /api/artifact-runs/:runId/materialize passes report materialization params through', async () => {

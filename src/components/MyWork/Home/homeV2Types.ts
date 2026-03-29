@@ -226,6 +226,8 @@ export interface ExecutionCurrentPayload {
     originRuntime: 'report' | 'presentation' | 'sheet';
     deliveryState: string;
     visibilityScope: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
+    publishState?: string | null;
+    reviewGateCount?: number;
   }>;
 }
 

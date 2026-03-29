@@ -25,10 +25,23 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 
 const getArtifactForUserMock = vi.fn();
 const createArtifactAccessGrantMock = vi.fn();
+const getArtifactOriginLinksMock = vi.fn();
+const getArtifactAccessGrantsForArtifactMock = vi.fn();
+const startArtifactReviewMock = vi.fn();
+const deriveArtifactValidationSnapshotMock = vi.fn();
+const getExecutionRunMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   getArtifactForUser: (...args: any[]) => getArtifactForUserMock(...args),
   createArtifactAccessGrant: (...args: any[]) => createArtifactAccessGrantMock(...args),
+  getArtifactOriginLinks: (...args: any[]) => getArtifactOriginLinksMock(...args),
+  getArtifactAccessGrantsForArtifact: (...args: any[]) => getArtifactAccessGrantsForArtifactMock(...args),
+  startArtifactReview: (...args: any[]) => startArtifactReviewMock(...args),
+  deriveArtifactValidationSnapshot: (...args: any[]) => deriveArtifactValidationSnapshotMock(...args),
+}));
+
+vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
+  getRun: (...args: any[]) => getExecutionRunMock(...args),
 }));
 
 import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
@@ -42,6 +55,15 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     verifyTokenMock.mockReset();
     getArtifactForUserMock.mockReset();
     createArtifactAccessGrantMock.mockReset();
+    getArtifactOriginLinksMock.mockReset();
+    getArtifactAccessGrantsForArtifactMock.mockReset();
+    startArtifactReviewMock.mockReset();
+    deriveArtifactValidationSnapshotMock.mockReset();
+    getExecutionRunMock.mockReset();
+    deriveArtifactValidationSnapshotMock.mockReturnValue({
+      state: 'validated',
+      checks: [],
+    });
   });
 
   it('rejects access grant mutation for non-owner non-admin users', async () => {
@@ -147,6 +169,74 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         createdBy: 'owner-1',
         userId: 'user-3',
       }),
+    );
+  });
+
+  it('returns trust-state payload with explicit execution and review separation', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'art-9',
+      outputType: 'report',
+      titleSnapshot: 'Trust state report',
+      canonicalHome: 'outputs_library',
+      visibilityScope: 'review_shared',
+      projectId: 'proj-1',
+      publishState: 'in_review',
+      publishReviewers: ['reviewer-1'],
+      reviewGateCount: 2,
+      executionRunId: 'exec-9',
+      contextSnapshotId: 'ctx-9',
+      lastTransitionAt: '2026-03-29T08:00:00.000Z',
+      sourceRefs: [{ id: 'source-1' }],
+      originSummary: { nativeStatus: 'draft' },
+      originRuntime: 'report',
+      originRecordId: 'report-9',
+    });
+    getArtifactOriginLinksMock.mockResolvedValue([{ linkId: 'link-1' }]);
+    getArtifactAccessGrantsForArtifactMock.mockResolvedValue([{ grantId: 'grant-1' }]);
+    getExecutionRunMock.mockResolvedValue({ state: 'completed' });
+
+    const res = await request(app).get('/api/artifacts/art-9/trust-state');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        artifactId: 'art-9',
+        visibilityScope: 'review_shared',
+        publishState: 'in_review',
+        validationState: 'validated',
+        reviewGateCount: 2,
+        executionRunId: 'exec-9',
+        executionState: 'completed',
+        reviewAuthority: 'artifact_review',
+        executionAuthority: 'execution_spine',
+        exportPath: '/api/report-builder/report-9/export/pdf',
+        authority: 'report_builder',
+      })
+    );
+  });
+
+  it('returns 409 when review is requested before execution approval is completed', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'art-5',
+      ownerUserId: 'user-1',
+    });
+    startArtifactReviewMock.mockRejectedValue(
+      new Error('Artifact art-5 cannot enter review before artifact validation passes')
+    );
+
+    const res = await request(app).post('/api/artifacts/art-5/start-review').send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'Artifact art-5 cannot enter review before artifact validation passes',
+      })
     );
   });
 });

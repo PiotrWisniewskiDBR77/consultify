@@ -21,6 +21,7 @@ import type {
 import {
   useV8AcceptArtifactRunPlan,
   useV8CreateArtifactRunFromChat,
+  useV8ArtifactRunHistory,
   useV8MaterializeArtifactRun,
   useV8RetryArtifactRun,
 } from '@/hooks/useV8ArtifactRuns';
@@ -61,6 +62,14 @@ function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
   switch (status) {
     case 'proposal_created':
       return 'Proposal created';
+    case 'awaiting_review':
+      return 'Awaiting review';
+    case 'approved_for_apply':
+      return 'Approved for apply';
+    case 'applying':
+      return 'Applying';
+    case 'rejected':
+      return 'Rejected';
     case 'retry_requested':
       return 'Retry requested';
     case 'completed':
@@ -69,6 +78,39 @@ function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
       return 'Failed';
     default:
       return 'Planned';
+  }
+}
+
+function deriveEffectiveRunStatus(
+  runStatus: ArtifactRunRecord['runStatus'],
+  executionState: string | null | undefined
+): ArtifactRunRecord['runStatus'] {
+  if (runStatus === 'completed' || runStatus === 'failed' || runStatus === 'retry_requested') {
+    return runStatus;
+  }
+
+  if (runStatus === 'planned') {
+    return 'planned';
+  }
+
+  switch (executionState) {
+    case 'drafting':
+    case 'planning':
+      return 'planned';
+    case 'proposals_ready':
+      return 'proposal_created';
+    case 'waiting_for_review':
+      return 'awaiting_review';
+    case 'approved_for_apply':
+      return 'approved_for_apply';
+    case 'applying':
+      return 'applying';
+    case 'rejected':
+      return 'rejected';
+    case 'failed':
+      return 'failed';
+    default:
+      return runStatus;
   }
 }
 
@@ -103,6 +145,7 @@ export function V8ArtifactRunControl({
   const [sheetTableId, setSheetTableId] = useState('');
   const [currentRun, setCurrentRun] = useState<ArtifactRunRecord | null>(null);
   const [currentPlan, setCurrentPlan] = useState<ArtifactRunPlan | null>(null);
+  const runHistory = useV8ArtifactRunHistory(currentRun?.runId || undefined);
   const executionRun = useV8ExecutionRun(currentRun?.executionRunId || undefined);
   const executionProposals = useV8ExecutionProposals(currentRun?.executionRunId || undefined);
   const executionTransitions = useV8ExecutionTransitions(currentRun?.executionRunId || undefined);
@@ -128,6 +171,9 @@ export function V8ArtifactRunControl({
       OUTPUT_OPTIONS[0],
     [selectedOutputType]
   );
+  const effectiveRunStatus = currentRun
+    ? deriveEffectiveRunStatus(currentRun.runStatus, executionRun.data?.state)
+    : null;
 
   if (!showV8Chat || !conversationId) return null;
 
@@ -142,17 +188,16 @@ export function V8ArtifactRunControl({
     approveExecutionRun.isPending ||
     rejectExecutionRun.isPending;
   const canPlan = Boolean(latestSnapshot?.snapshotId) && goal.trim().length > 0 && !isBusy;
-  const canAccept =
-    currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
+  const canAccept = effectiveRunStatus === 'planned' || effectiveRunStatus === 'retry_requested';
   const requiresSheetTableTarget = (currentRun?.plan.outputType ?? selectedOutputType) === 'sheet';
   const hasSheetTableTarget = sheetTableId.trim().length > 0;
   const canMaterialize =
-    currentRun?.runStatus === 'proposal_created' &&
+    !!currentRun &&
+    (effectiveRunStatus === 'approved_for_apply' || effectiveRunStatus === 'applying') &&
     (currentRun?.plan.outputType === 'report' ||
       currentRun?.plan.outputType === 'presentation' ||
       currentRun?.plan.outputType === 'sheet') &&
     (!requiresSheetTableTarget || hasSheetTableTarget) &&
-    !['rejected', 'failed', 'cancelled', 'expired'].includes(executionRun.data?.state || '') &&
     !currentRun.artifactId;
   const canSubmitReview = executionRun.data?.state === 'proposals_ready';
   const canApproveReview = executionRun.data?.state === 'waiting_for_review';
@@ -495,7 +540,7 @@ export function V8ArtifactRunControl({
                   {currentRun.plan.titleHint}
                 </div>
                 <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-                  {formatRunStatus(currentRun.runStatus)}
+                  {formatRunStatus(effectiveRunStatus || currentRun.runStatus)}
                 </span>
               </div>
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -517,6 +562,32 @@ export function V8ArtifactRunControl({
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
+                </div>
+              )}
+
+              {runHistory.data && runHistory.data.length > 1 && (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                    {t('v8.artifactRun.historyTitle', 'Run history')}
+                  </div>
+                  <div className="mt-2 space-y-1.5">
+                    {runHistory.data.map((item, index) => (
+                      <div
+                        key={item.runId}
+                        className="flex items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400"
+                      >
+                        <div className="min-w-0 truncate">
+                          {index === 0
+                            ? t('v8.artifactRun.historyOriginal', 'Original')
+                            : t('v8.artifactRun.historyRetry', 'Retry')}{' '}
+                          · {item.runId}
+                        </div>
+                        <div className="shrink-0 text-slate-600 dark:text-slate-300">
+                          {formatRunStatus(item.runStatus)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

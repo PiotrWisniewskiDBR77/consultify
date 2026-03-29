@@ -12,7 +12,7 @@ import {
   Loader2,
   Presentation,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +24,7 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { API_URL, getHeaders } from '../../services/api';
 import {
   FilterableTable,
   type FilterChip,
@@ -108,6 +109,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlags();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedGovernance, setSelectedGovernance] = useState<
+    UnifiedOutputRow['governance'] | null
+  >(null);
   const translate = useCallback(
     (key: string, fallback?: string) => t(key, { defaultValue: fallback ?? key }),
     [t]
@@ -365,7 +369,73 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   };
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
+  const previewItem = selectedItem
+    ? {
+        ...selectedItem,
+        governance: selectedGovernance || selectedItem.governance,
+      }
+    : null;
   const itemIds = filteredData.map((i) => i.id);
+
+  useEffect(() => {
+    let isMounted = true;
+    setSelectedGovernance(selectedItem?.governance || null);
+
+    async function fetchTrustState() {
+      if (!selectedItem?.artifactId) {
+        setSelectedGovernance(selectedItem?.governance || null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/trust-state`, {
+          headers: getHeaders(),
+        });
+        if (!res.ok) {
+          if (isMounted) setSelectedGovernance(selectedItem.governance || null);
+          return;
+        }
+        const data = await res.json();
+        const payload = data?.data || data;
+        if (!isMounted) return;
+        setSelectedGovernance({
+          ...(selectedItem.governance || {}),
+          visibilityScope: payload.visibilityScope,
+          publishState: payload.publishState,
+          validationState: payload.validationState || null,
+          validationChecks: Array.isArray(payload.validationChecks) ? payload.validationChecks : [],
+          publishReviewers: Array.isArray(payload.reviewers) ? payload.reviewers : [],
+          reviewGateCount:
+            typeof payload.reviewGateCount === 'number' ? payload.reviewGateCount : 0,
+          projectId: payload.projectId || null,
+          executionRunId: payload.executionRunId || null,
+          executionState: payload.executionState || null,
+          contextSnapshotId: payload.contextSnapshotId || null,
+          canonicalHome: payload.canonicalHome || null,
+          lastTransitionAt: payload.lastTransitionAt || null,
+          sourceRefs: Array.isArray(payload.sourceRefs) ? payload.sourceRefs : [],
+          originSummary:
+            payload.originSummary && typeof payload.originSummary === 'object'
+              ? payload.originSummary
+              : null,
+          openPath: payload.openPath || null,
+          exportPath: payload.exportPath || null,
+          authority: payload.authority || null,
+          reviewAuthority: payload.reviewAuthority || 'artifact_review',
+          executionAuthority: payload.executionAuthority || 'execution_spine',
+          accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
+          originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
+        });
+      } catch {
+        if (isMounted) setSelectedGovernance(selectedItem?.governance || null);
+      }
+    }
+
+    void fetchTrustState();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedItem?.artifactId, selectedItem?.governance]);
 
   if (loading) {
     return (
@@ -420,7 +490,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     <div className="h-full overflow-hidden">
       <TableWithPreviewLayout<AggregateRow>
         selectedId={selectedId}
-        selectedItem={selectedItem}
+        selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
@@ -451,6 +521,18 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.validation', 'Validation')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {formatLabel(item.governance?.validationState)}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.execution', 'Execution')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {formatLabel(item.governance?.executionState)}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.review', 'Review')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {formatLabel(item.governance?.publishState)}
@@ -469,15 +551,54 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.lineage', 'Lineage')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {[
+                  typeof item.governance?.originLinks?.length === 'number'
+                    ? `${item.governance.originLinks.length} ${t('rap.outputs.preview.originsShort', 'origins')}`
+                    : null,
+                  typeof item.governance?.sourceRefs?.length === 'number'
+                    ? `${item.governance.sourceRefs.length} ${t('rap.outputs.preview.sourcesShort', 'sources')}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || '—'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.artifactId', 'Artifact ID')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {item.artifactId || '—'}
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.executionRunId', 'Execution run')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {item.governance?.executionRunId || '—'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.exports', 'Exports')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {item.exportFormats.length ? item.exportFormats.join(', ').toUpperCase() : '—'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.trustBoundary', 'Trust boundary')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {`${t('rap.outputs.preview.executionAuthority', 'Execution')}: ${formatLabel(item.governance?.executionAuthority)} · ${t('rap.outputs.preview.reviewAuthority', 'Review')}: ${formatLabel(item.governance?.reviewAuthority)}`}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.validationChecks', 'Validation checks')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {Array.isArray(item.governance?.validationChecks) &&
+                item.governance.validationChecks.length > 0
+                  ? item.governance.validationChecks
+                      .filter((check) => check.status !== 'passed')
+                      .map((check) => `${check.id}:${check.status}`)
+                      .join(' · ') || t('rap.outputs.preview.validationChecksAllGood', 'all passed')
+                  : '—'}
               </span>
             </div>
             {item.kind === 'sheet' ? (
@@ -506,13 +627,19 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             {item.artifactId ? (
               <button
                 type="button"
+                disabled={
+                  item.governance?.validationState === 'pending' ||
+                  item.governance?.validationState === 'attention_required' ||
+                  (!!item.governance?.publishState &&
+                    item.governance.publishState !== 'private_draft')
+                }
                 onClick={async () => {
                   const aid = item.artifactId;
                   if (!aid) return;
                   const ok = await actions.startArtifactReview(aid);
                   if (ok) onRefresh();
                 }}
-                className="h-9 px-4 rounded-full text-sm font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="h-9 px-4 rounded-full text-sm font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('rap.actions.startReview', 'Start review')}
               </button>

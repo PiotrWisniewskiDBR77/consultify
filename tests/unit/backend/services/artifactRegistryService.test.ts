@@ -5,6 +5,8 @@ import {
   RegisterArtifactOriginParamsSchema,
 } from '../../../../../server/src/types/artifactRegistry.js';
 import {
+  deriveArtifactValidationSnapshot,
+  deriveArtifactRunStatusFromExecutionState,
   deriveArtifactVisibilityScope,
   mapPresentationStatusToDeliveryState,
   mapReportStatusToDeliveryState,
@@ -85,5 +87,78 @@ describe('artifactRegistryService', () => {
 
     expect(parsed.requestedArtifactFamily).toBe('sheet');
     expect(parsed.requestedOutputType).toBe('sheet');
+  });
+
+  it('derives richer artifact-run lifecycle states from execution state without rewriting persistence', () => {
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'proposal_created',
+        executionState: 'waiting_for_review',
+      })
+    ).toBe('awaiting_review');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'proposal_created',
+        executionState: 'approved_for_apply',
+      })
+    ).toBe('approved_for_apply');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'proposal_created',
+        executionState: 'applying',
+      })
+    ).toBe('applying');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'proposal_created',
+        executionState: 'rejected',
+      })
+    ).toBe('rejected');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'completed',
+        executionState: 'approved_for_apply',
+      })
+    ).toBe('completed');
+  });
+
+  it('derives validation stage separately from review semantics', () => {
+    expect(
+      deriveArtifactValidationSnapshot({
+        artifact: {
+          titleSnapshot: 'Board report',
+          contextSnapshotId: 'ctx-1',
+          executionRunId: 'exec-1',
+          sourceInitiativeId: null,
+          originSummary: { sourceRefs: [{ artifactId: 'src-1' }] },
+        },
+        executionState: 'completed',
+      }).state
+    ).toBe('validated');
+
+    expect(
+      deriveArtifactValidationSnapshot({
+        artifact: {
+          titleSnapshot: 'Board report',
+          contextSnapshotId: 'ctx-1',
+          executionRunId: 'exec-1',
+          sourceInitiativeId: null,
+          originSummary: { sourceRefs: [{ artifactId: 'src-1' }] },
+        },
+        executionState: 'applying',
+      }).state
+    ).toBe('pending');
+
+    expect(
+      deriveArtifactValidationSnapshot({
+        artifact: {
+          titleSnapshot: '',
+          contextSnapshotId: null,
+          executionRunId: null,
+          sourceInitiativeId: null,
+          originSummary: null,
+        },
+      }).state
+    ).toBe('attention_required');
   });
 });

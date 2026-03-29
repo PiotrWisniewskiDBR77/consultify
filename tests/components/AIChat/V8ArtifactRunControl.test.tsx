@@ -13,6 +13,7 @@ const materializeRunMutateAsync = vi.fn();
 const retryRunMutateAsync = vi.fn();
 const captureSnapshotMutateAsync = vi.fn();
 const useV8SnapshotsMock = vi.fn();
+const useV8ArtifactRunHistoryMock = vi.fn();
 const submitReviewMutateAsync = vi.fn();
 const approveExecutionRunMutateAsync = vi.fn();
 const rejectExecutionRunMutateAsync = vi.fn();
@@ -48,6 +49,7 @@ vi.mock('../../../src/hooks/useV8Chat', () => ({
 }));
 
 vi.mock('../../../src/hooks/useV8ArtifactRuns', () => ({
+  useV8ArtifactRunHistory: (...args: any[]) => useV8ArtifactRunHistoryMock(...args),
   useV8CreateArtifactRunFromChat: () => ({
     mutateAsync: createRunMutateAsync,
     isPending: false,
@@ -95,6 +97,7 @@ describe('V8ArtifactRunControl', () => {
     approveExecutionRunMutateAsync.mockReset();
     rejectExecutionRunMutateAsync.mockReset();
     useV8SnapshotsMock.mockReset();
+    useV8ArtifactRunHistoryMock.mockReset();
     useV8ExecutionRunMock.mockReset();
     useV8ExecutionProposalsMock.mockReset();
     useV8ExecutionTransitionsMock.mockReset();
@@ -104,6 +107,10 @@ describe('V8ArtifactRunControl', () => {
     });
     useV8ExecutionRunMock.mockReturnValue({
       data: null,
+      isLoading: false,
+    });
+    useV8ArtifactRunHistoryMock.mockReturnValue({
+      data: [],
       isLoading: false,
     });
     useV8ExecutionProposalsMock.mockReturnValue({
@@ -117,6 +124,38 @@ describe('V8ArtifactRunControl', () => {
   });
 
   it('creates a governed artifact run from the latest snapshot and allows accept/materialize/retry', async () => {
+    useV8ExecutionRunMock.mockReturnValue({
+      data: {
+        runId: 'exec-1',
+        organizationId: 'org-1',
+        contextSnapshotId: 'snap-2',
+        initiatorUserId: 'user-1',
+        state: 'approved_for_apply',
+        planVersion: 1,
+        goal: 'Build board update deck',
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:01:00.000Z',
+        resolvedAt: null,
+        expiresAt: null,
+        metadata: {},
+      },
+      isLoading: false,
+    });
+    useV8ArtifactRunHistoryMock.mockReturnValue({
+      data: [
+        {
+          runId: 'run-1',
+          runStatus: 'completed',
+          retryOfRunId: null,
+        },
+        {
+          runId: 'run-2',
+          runStatus: 'planned',
+          retryOfRunId: 'run-1',
+        },
+      ],
+      isLoading: false,
+    });
     createRunMutateAsync.mockResolvedValue({
       artifactRunId: 'run-1',
       executionRunId: 'exec-1',
@@ -269,6 +308,7 @@ describe('V8ArtifactRunControl', () => {
       }),
     );
     expect(await screen.findByText(/Artifact ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/Run history/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-retry'));
     await waitFor(() => expect(retryRunMutateAsync).toHaveBeenCalledWith('run-1'));
@@ -344,6 +384,23 @@ describe('V8ArtifactRunControl', () => {
   });
 
   it('allows governed sheet planning and materialization into an existing table target', async () => {
+    useV8ExecutionRunMock.mockReturnValue({
+      data: {
+        runId: 'exec-sheet-1',
+        organizationId: 'org-1',
+        contextSnapshotId: 'snap-2',
+        initiatorUserId: 'user-1',
+        state: 'approved_for_apply',
+        planVersion: 1,
+        goal: 'Build governed model sheet',
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:01:00.000Z',
+        resolvedAt: null,
+        expiresAt: null,
+        metadata: {},
+      },
+      isLoading: false,
+    });
     createRunMutateAsync.mockResolvedValue({
       artifactRunId: 'run-sheet-1',
       executionRunId: 'exec-sheet-1',
@@ -473,6 +530,23 @@ describe('V8ArtifactRunControl', () => {
   });
 
   it('allows governed presentation planning and materialization from chat control', async () => {
+    useV8ExecutionRunMock.mockReturnValue({
+      data: {
+        runId: 'exec-p1',
+        organizationId: 'org-1',
+        contextSnapshotId: 'snap-2',
+        initiatorUserId: 'user-1',
+        state: 'approved_for_apply',
+        planVersion: 1,
+        goal: 'Build executive deck',
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:01:00.000Z',
+        resolvedAt: null,
+        expiresAt: null,
+        metadata: {},
+      },
+      isLoading: false,
+    });
     createRunMutateAsync.mockResolvedValue({
       artifactRunId: 'run-p1',
       executionRunId: 'exec-p1',
@@ -721,6 +795,7 @@ describe('V8ArtifactRunControl', () => {
     expect(governancePanel).toHaveTextContent('Governed execution');
     expect(governancePanel).toHaveTextContent('Waiting For Review');
     expect(governancePanel).toHaveTextContent('Proposals');
+    expect(await screen.findByText(/Awaiting review/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-approve-review'));
     await waitFor(() =>

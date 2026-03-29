@@ -37,6 +37,10 @@ export type ArtifactRunTriggerType = (typeof ArtifactRunTriggerTypeValues)[numbe
 export const ArtifactRunStatusValues = [
   'planned',
   'proposal_created',
+  'awaiting_review',
+  'approved_for_apply',
+  'applying',
+  'rejected',
   'retry_requested',
   'completed',
   'failed',

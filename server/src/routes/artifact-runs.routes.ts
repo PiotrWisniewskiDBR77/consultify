@@ -53,6 +53,18 @@ router.get(
   })
 );
 
+router.get(
+  '/:runId/history',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const history = await artifactRegistryService.listArtifactRunHistory({
+      runId: String(req.params.runId || ''),
+      organizationId,
+    });
+    res.json({ data: history });
+  })
+);
+
 router.post(
   '/:runId/accept-plan',
   requireAudit,

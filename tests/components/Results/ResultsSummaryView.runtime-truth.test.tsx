@@ -79,7 +79,10 @@ vi.mock('../../../src/services/api/v8/results', () => ({
   },
 }));
 
-import { ResultsSummaryView } from '../../../src/components/Results/ResultsSummaryView';
+import {
+  getFinanceConsequenceTab,
+  ResultsSummaryView,
+} from '../../../src/components/Results/ResultsSummaryView';
 import { Api } from '../../../src/services/api';
 import { V8ResultsApi } from '../../../src/services/api/v8/results';
 
@@ -142,5 +145,13 @@ describe('ResultsSummaryView runtime truth alignment', () => {
     expect(screen.queryByText('Digital Transformation Program')).not.toBeInTheDocument();
     expect(screen.getByText('480,000')).toBeInTheDocument();
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpi-mappings');
+  });
+
+  it('selects the finance handoff lane from the actual consequence state', () => {
+    expect(getFinanceConsequenceTab({ hasRoiPlan: false, hasRoiRealized: false })).toBe('analysis');
+    expect(getFinanceConsequenceTab({ hasRoiPlan: true, hasRoiRealized: false })).toBe(
+      'prediction'
+    );
+    expect(getFinanceConsequenceTab({ hasRoiPlan: true, hasRoiRealized: true })).toBe('valuation');
   });
 });

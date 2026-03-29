@@ -11,6 +11,10 @@ export type ArtifactVisibilityScope =
 export type ArtifactRunStatus =
   | 'planned'
   | 'proposal_created'
+  | 'awaiting_review'
+  | 'approved_for_apply'
+  | 'applying'
+  | 'rejected'
   | 'retry_requested'
   | 'completed'
   | 'failed';
@@ -95,6 +99,21 @@ export const ArtifactRunsApi = {
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
       'Failed to fetch artifact run'
+    );
+    return json.data;
+  },
+
+  getHistory: async (runId: string): Promise<ArtifactRunRecord[]> => {
+    const res = await fetchWithRetry(
+      `${ARTIFACT_RUNS_BASE}/${encodeURIComponent(runId)}/history`,
+      {
+        method: 'GET',
+        headers: getHeaders(),
+      }
+    );
+    const json = await handleResponse<{ data: ArtifactRunRecord[] }>(
+      res,
+      'Failed to fetch artifact run history'
     );
     return json.data;
   },

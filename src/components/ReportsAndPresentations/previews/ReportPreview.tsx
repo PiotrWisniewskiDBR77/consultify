@@ -69,9 +69,12 @@ function useReportPreviewData(report: ReportItem) {
     `${isPolish ? 'Poufność' : 'Confidentiality'}: ${report.confidentiality || '—'}`,
     `${isPolish ? 'Okres' : 'Period'}: ${periodLabel}`,
     `${isPolish ? 'Visibility' : 'Visibility'}: ${governance?.visibilityScope || '—'}`,
+    `${isPolish ? 'Validation state' : 'Validation state'}: ${governance?.validationState || '—'}`,
+    `${isPolish ? 'Execution state' : 'Execution state'}: ${governance?.executionState || '—'}`,
     `${isPolish ? 'Publish state' : 'Publish state'}: ${governance?.publishState || '—'}`,
     `${isPolish ? 'Review gates' : 'Review gates'}: ${governance?.reviewGateCount ?? 0}`,
     `${isPolish ? 'Project' : 'Project'}: ${governance?.projectId || '—'}`,
+    `${isPolish ? 'Execution run' : 'Execution run'}: ${governance?.executionRunId || '—'}`,
     `${isPolish ? 'Utworzony' : 'Created'}: ${new Date(report.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
     `${isPolish ? 'Ostatnia zmiana' : 'Updated'}: ${new Date(report.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
   ].join('\n');
@@ -80,6 +83,9 @@ function useReportPreviewData(report: ReportItem) {
     ...(report.exportFormats?.length ? report.exportFormats.map((fmt) => ({ label: fmt })) : []),
     ...(report.sourceRefs?.length
       ? [{ label: `${report.sourceRefs.length} ${isPolish ? 'powiązań' : 'references'}` }]
+      : []),
+    ...(governance?.originLinks?.length
+      ? [{ label: `${governance.originLinks.length} ${isPolish ? 'linków pochodzenia' : 'origin links'}` }]
       : []),
     ...(governance?.publishReviewers?.length
       ? [
@@ -178,6 +184,12 @@ export const ReportPreviewFooter: React.FC<ReportPreviewProps> = ({
                 : null,
               governance?.publishState
                 ? `${isPolish ? 'Review' : 'Review'}: ${governance.publishState}`
+                : null,
+              governance?.validationState
+                ? `${isPolish ? 'Validation' : 'Validation'}: ${governance.validationState}`
+                : null,
+              governance?.executionState
+                ? `${isPolish ? 'Execution' : 'Execution'}: ${governance.executionState}`
                 : null,
             ].filter(Boolean) as string[]
           }

@@ -87,9 +87,27 @@ export interface ArtifactAccessGrantItem {
 export interface ArtifactGovernanceSummary {
   visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
   publishState?: string | null;
+  validationState?: 'validated' | 'pending' | 'attention_required' | null;
+  validationChecks?: Array<{
+    id: string;
+    status: 'passed' | 'pending' | 'failed';
+    message: string;
+  }>;
   publishReviewers?: string[];
   reviewGateCount?: number;
   projectId?: string | null;
+  executionRunId?: string | null;
+  executionState?: string | null;
+  contextSnapshotId?: string | null;
+  canonicalHome?: string | null;
+  lastTransitionAt?: string | null;
+  sourceRefs?: unknown[];
+  originSummary?: Record<string, unknown> | null;
+  openPath?: string | null;
+  exportPath?: string | null;
+  authority?: string | null;
+  reviewAuthority?: 'artifact_review';
+  executionAuthority?: 'execution_spine';
   accessGrants?: ArtifactAccessGrantItem[];
   originLinks?: ArtifactOriginLinkItem[];
 }

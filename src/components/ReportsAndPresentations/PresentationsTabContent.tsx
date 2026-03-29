@@ -244,6 +244,8 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   const reviewDisabled =
     !previewItem?.artifactId ||
     reviewBusyArtifactId === previewItem?.artifactId ||
+    (!!previewItem?.governance?.validationState &&
+      previewItem.governance.validationState !== 'validated') ||
     (!!previewItem?.governance?.publishState &&
       previewItem.governance.publishState !== 'private_draft');
 
@@ -258,7 +260,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       }
 
       try {
-        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/access`, {
+        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/trust-state`, {
           headers: getHeaders(),
         });
         if (!res.ok) {
@@ -266,15 +268,35 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           return;
         }
         const data = await res.json();
+        const payload = data?.data || data;
         if (!isMounted) return;
         setSelectedGovernance({
           ...(selectedItem.governance || {}),
-          visibilityScope: data.visibilityScope,
-          publishState: data.publishState,
-          publishReviewers: Array.isArray(data.reviewers) ? data.reviewers : [],
-          projectId: data.projectId || null,
-          accessGrants: Array.isArray(data.accessGrants) ? data.accessGrants : [],
-          originLinks: Array.isArray(data.originLinks) ? data.originLinks : [],
+          visibilityScope: payload.visibilityScope,
+          publishState: payload.publishState,
+          validationState: payload.validationState || null,
+          validationChecks: Array.isArray(payload.validationChecks) ? payload.validationChecks : [],
+          publishReviewers: Array.isArray(payload.reviewers) ? payload.reviewers : [],
+          reviewGateCount:
+            typeof payload.reviewGateCount === 'number' ? payload.reviewGateCount : 0,
+          projectId: payload.projectId || null,
+          executionRunId: payload.executionRunId || null,
+          executionState: payload.executionState || null,
+          contextSnapshotId: payload.contextSnapshotId || null,
+          canonicalHome: payload.canonicalHome || null,
+          lastTransitionAt: payload.lastTransitionAt || null,
+          sourceRefs: Array.isArray(payload.sourceRefs) ? payload.sourceRefs : [],
+          originSummary:
+            payload.originSummary && typeof payload.originSummary === 'object'
+              ? payload.originSummary
+              : null,
+          openPath: payload.openPath || null,
+          exportPath: payload.exportPath || null,
+          authority: payload.authority || null,
+          reviewAuthority: payload.reviewAuthority || 'artifact_review',
+          executionAuthority: payload.executionAuthority || 'execution_spine',
+          accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
+          originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
         });
       } catch {
         if (isMounted) setSelectedGovernance(selectedItem.governance || null);
