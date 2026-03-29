@@ -100,8 +100,9 @@ i18n
     // Backend configuration for loading translation files
     backend: {
       loadPath: `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || ''}/locales/{{lng}}/{{ns}}.json`,
-      // In dev, bypass cache so locale changes are picked up; avoids stale 404/parse errors
-      requestOptions: import.meta.env.DEV ? { cache: 'no-store' } : undefined,
+      // Locale JSON must always refresh after deploys; otherwise browsers keep stale
+      // translation payloads and render raw i18n keys until users clear cache manually.
+      requestOptions: { cache: 'no-store' },
     },
 
     // Language detection configuration
