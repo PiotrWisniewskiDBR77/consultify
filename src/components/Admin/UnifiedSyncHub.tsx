@@ -37,6 +37,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { AdminV8CanonPanel } from '@/components/Admin/AdminV8CanonPanel';
 import { EasySyncSetupShellPanel } from '@/components/shared/EasySyncSetupShellPanel';
 import {
   V8MultiplayerApi,
@@ -3568,6 +3569,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </button>
       </div>
 
+      <AdminV8CanonPanel compact />
       <EasySyncSetupShellPanel compact />
 
       {/* Tabs */}
