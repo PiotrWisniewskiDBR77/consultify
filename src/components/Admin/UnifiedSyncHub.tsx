@@ -59,6 +59,7 @@ import {
   type V8SyncInitiatedIntegration,
   type V8SyncIntegrationInventoryRow,
   type V8SyncProviderFamily,
+  type V8SyncRefreshSecretRef,
   type V8SyncRefreshTimingPolicy,
 } from '@/services/api/v8/sync';
 
@@ -140,6 +141,13 @@ interface CredentialDraft {
   workspaceOrTenantId: string;
   scopesGranted: string;
   tokenExpiresAt: string;
+}
+
+interface RefreshSecretDraft {
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  tokenEndpoint: string;
 }
 
 type RefreshResultDraft = 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked';
@@ -335,6 +343,15 @@ function openExternalAuthSession(session: ExternalAuthSessionInfo | null | undef
   window.open(session.authUrl, '_blank', 'noopener,noreferrer,width=900,height=780');
 }
 
+function getAuditDetailBoolean(details: Record<string, unknown> | undefined, key: string): boolean {
+  return details?.[key] === true;
+}
+
+function getAuditDetailString(details: Record<string, unknown> | undefined, key: string): string | null {
+  const value = details?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
 // ── Component ──────────────────────────────────────────────────
 
 export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -393,6 +410,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
   const [savingCredentialId, setSavingCredentialId] = useState<string | null>(null);
   const [credentialDrafts, setCredentialDrafts] = useState<Record<string, CredentialDraft>>({});
+  const [editingRefreshSecretId, setEditingRefreshSecretId] = useState<string | null>(null);
+  const [savingRefreshSecretId, setSavingRefreshSecretId] = useState<string | null>(null);
+  const [refreshSecretDrafts, setRefreshSecretDrafts] = useState<Record<string, RefreshSecretDraft>>(
+    {}
+  );
+  const [storedRefreshSecrets, setStoredRefreshSecrets] = useState<
+    Record<string, V8SyncRefreshSecretRef>
+  >({});
   const [editingRefreshResultId, setEditingRefreshResultId] = useState<string | null>(null);
   const [savingRefreshResultId, setSavingRefreshResultId] = useState<string | null>(null);
   const [refreshResultDrafts, setRefreshResultDrafts] = useState<
@@ -1173,6 +1198,89 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   };
 
+  const handleRefreshSecretDraftChange = (
+    integrationId: string,
+    field: keyof RefreshSecretDraft,
+    value: string
+  ) => {
+    setRefreshSecretDrafts((current) => ({
+      ...current,
+      [integrationId]: {
+        clientId: current[integrationId]?.clientId || '',
+        clientSecret: current[integrationId]?.clientSecret || '',
+        refreshToken: current[integrationId]?.refreshToken || '',
+        tokenEndpoint: current[integrationId]?.tokenEndpoint || '',
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveRefreshSecret = async (integration: IntegrationItem) => {
+    const draft = refreshSecretDrafts[integration.id] || {
+      clientId: '',
+      clientSecret: '',
+      refreshToken: '',
+      tokenEndpoint: '',
+    };
+
+    if (
+      !draft.clientId.trim() ||
+      !draft.clientSecret.trim() ||
+      !draft.refreshToken.trim()
+    ) {
+      toast.error(
+        t(
+          'integrations.syncHub.refreshSecretFieldsRequired',
+          'Client ID, client secret, and refresh token are required.'
+        )
+      );
+      return;
+    }
+
+    setSavingRefreshSecretId(integration.id);
+    try {
+      const payload = {
+        clientId: draft.clientId.trim(),
+        clientSecret: draft.clientSecret.trim(),
+        refreshToken: draft.refreshToken.trim(),
+        ...(draft.tokenEndpoint.trim().length > 0
+          ? { tokenEndpoint: draft.tokenEndpoint.trim() }
+          : {}),
+      };
+      const data = await V8SyncApi.storeRefreshSecret(integration.id, payload);
+      setStoredRefreshSecrets((current) => ({
+        ...current,
+        [integration.id]: data.refreshSecret,
+      }));
+      toast.success(
+        t(
+          'integrations.syncHub.refreshSecretSaved',
+          'Governed refresh runtime secret materialized'
+        )
+      );
+      setEditingRefreshSecretId(null);
+      setRefreshSecretDrafts((current) => ({
+        ...current,
+        [integration.id]: {
+          clientId: '',
+          clientSecret: '',
+          refreshToken: '',
+          tokenEndpoint: data.refreshSecret.tokenEndpoint || '',
+        },
+      }));
+      await loadAll();
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.refreshSecretSaveFailed',
+          'Failed to materialize governed refresh runtime secret'
+        )
+      );
+    } finally {
+      setSavingRefreshSecretId(null);
+    }
+  };
+
   const handleRefreshResultDraftChange = (integrationId: string, value: RefreshResultDraft) => {
     setRefreshResultDrafts((current) => ({
       ...current,
@@ -1301,6 +1409,48 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     return groups;
   }, [catalog, selectedCategory]);
 
+  const getRefreshRuntimeRef = useCallback(
+    (integrationId: string): V8SyncRefreshSecretRef | null => {
+      const sessionRef = storedRefreshSecrets[integrationId];
+      if (sessionRef) {
+        return sessionRef;
+      }
+
+      for (let index = auditLog.length - 1; index >= 0; index -= 1) {
+        const entry = auditLog[index];
+        if (entry.integration_id !== integrationId) {
+          continue;
+        }
+
+        if (entry.action === 'refresh_secret_materialized') {
+          return {
+            connectorId: getAuditDetailString(entry.details, 'connectorId') || '',
+            organizationId: currentOrganization?.id || '',
+            clientIdPresent: getAuditDetailBoolean(entry.details, 'clientIdPresent'),
+            refreshTokenPresent: getAuditDetailBoolean(entry.details, 'refreshTokenPresent'),
+            tokenEndpoint: getAuditDetailString(entry.details, 'tokenEndpoint') || '',
+          };
+        }
+
+        if (
+          entry.action === 'external_auth_callback_received' &&
+          getAuditDetailBoolean(entry.details, 'refreshSecretStored')
+        ) {
+          return {
+            connectorId: getAuditDetailString(entry.details, 'connectorId') || '',
+            organizationId: currentOrganization?.id || '',
+            clientIdPresent: true,
+            refreshTokenPresent: true,
+            tokenEndpoint: getAuditDetailString(entry.details, 'tokenEndpoint') || '',
+          };
+        }
+      }
+
+      return null;
+    },
+    [auditLog, currentOrganization?.id, storedRefreshSecrets]
+  );
+
   // ── Tab definitions ──────────────────────────────────────────
 
   const TABS: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
@@ -1370,6 +1520,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const providerFamily = getProviderFamily(int.connectorId);
     const canMaterializeCredential =
       int.status === 'connected' && int.connector?.authType === 'oauth2' && providerFamily !== null;
+    const refreshRuntimeRef = getRefreshRuntimeRef(int.id);
+    const canStoreRefreshSecret =
+      int.connector?.authType === 'oauth2' &&
+      int.status !== 'pending' &&
+      int.status !== 'disconnected' &&
+      providerFamily !== null;
+    const isEditingRefreshSecret = editingRefreshSecretId === int.id;
     const canRecordRefreshResult =
       int.credential !== null && int.connector?.authType === 'oauth2' && providerFamily !== null;
     const credentialDraft = credentialDrafts[int.id] || {
@@ -1377,6 +1534,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       workspaceOrTenantId: int.credential?.workspaceOrTenantId || '',
       scopesGranted: int.credential?.scopesGranted?.join(', ') || '',
       tokenExpiresAt: int.credential?.tokenExpiresAt || '',
+    };
+    const refreshSecretDraft = refreshSecretDrafts[int.id] || {
+      clientId: '',
+      clientSecret: '',
+      refreshToken: '',
+      tokenEndpoint: refreshRuntimeRef?.tokenEndpoint || '',
     };
     const refreshResultDraft = refreshResultDrafts[int.id] || 'success';
     const pendingSetupDescription =
@@ -1404,6 +1567,136 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   'integrations.syncHub.setupPendingDesc',
                   'Complete external auth or provider configuration before sync controls become available.'
                 );
+    const lifecycleSteps = [
+      {
+        key: 'connect',
+        label: t('integrations.syncHub.lifecycleConnect', 'Connect'),
+        state: 'done' as const,
+        detail: t('integrations.syncHub.lifecycleConnectDone', 'Provider entry exists in governed sync.'),
+      },
+      {
+        key: 'configure',
+        label: t('integrations.syncHub.lifecycleConfigure', 'Configure'),
+        state: missingConfigFields.length === 0 ? ('done' as const) : ('active' as const),
+        detail:
+          missingConfigFields.length === 0
+            ? t(
+                'integrations.syncHub.lifecycleConfigureDone',
+                'Required provider fields are saved on the governed path.'
+              )
+            : t(
+                'integrations.syncHub.lifecycleConfigureActive',
+                'Save the remaining provider fields before the lane can move forward.'
+              ),
+      },
+      {
+        key: 'authorize',
+        label: t('integrations.syncHub.lifecycleAuthorize', 'Authorize'),
+        state:
+          int.connector?.authType !== 'oauth2'
+            ? ('done' as const)
+            : int.status === 'requires_reauth'
+              ? ('active' as const)
+              : int.onboardingStatus === 'pending_external_auth' ||
+                  int.onboardingStatus === 'pending_external_auth_or_configuration'
+                ? ('active' as const)
+                : ('done' as const),
+        detail:
+          int.connector?.authType !== 'oauth2'
+            ? t(
+                'integrations.syncHub.lifecycleAuthorizeNotNeeded',
+                'This provider does not require an OAuth authorization round-trip.'
+              )
+            : int.status === 'requires_reauth'
+              ? t(
+                  'integrations.syncHub.lifecycleAuthorizeReauth',
+                  'Authorization must be renewed before sync can continue.'
+                )
+              : int.onboardingStatus === 'pending_external_auth' ||
+                  int.onboardingStatus === 'pending_external_auth_or_configuration'
+                ? t(
+                    'integrations.syncHub.lifecycleAuthorizeActive',
+                    'Finish the governed provider authorization round-trip.'
+                  )
+                : t(
+                    'integrations.syncHub.lifecycleAuthorizeDone',
+                    'Governed authorization has completed.'
+                  ),
+      },
+      {
+        key: 'verify',
+        label: t('integrations.syncHub.lifecycleVerify', 'Verify'),
+        state:
+          int.onboardingStatus === 'authorization_callback_received_pending_verification'
+            ? ('active' as const)
+            : int.status === 'pending'
+              ? ('todo' as const)
+              : ('done' as const),
+        detail:
+          int.onboardingStatus === 'authorization_callback_received_pending_verification'
+            ? t(
+                'integrations.syncHub.lifecycleVerifyActive',
+                'The callback returned, but governed verification still needs to complete.'
+              )
+            : int.status === 'pending'
+              ? t(
+                  'integrations.syncHub.lifecycleVerifyTodo',
+                  'Verification unlocks after configuration and authorization are complete.'
+                )
+              : t(
+                  'integrations.syncHub.lifecycleVerifyDone',
+                  'Governed verification is no longer blocking this lane.'
+                ),
+      },
+      {
+        key: 'refresh',
+        label: t('integrations.syncHub.lifecycleRefresh', 'Refresh runtime'),
+        state:
+          int.connector?.authType !== 'oauth2'
+            ? ('done' as const)
+            : refreshRuntimeRef
+              ? ('done' as const)
+              : canStoreRefreshSecret
+                ? ('active' as const)
+                : ('todo' as const),
+        detail:
+          int.connector?.authType !== 'oauth2'
+            ? t(
+                'integrations.syncHub.lifecycleRefreshNotNeeded',
+                'This provider does not require OAuth refresh material.'
+              )
+            : refreshRuntimeRef
+              ? t(
+                  'integrations.syncHub.lifecycleRefreshDone',
+                  'Governed refresh material is present for automatic recovery.'
+                )
+              : canStoreRefreshSecret
+                ? t(
+                    'integrations.syncHub.lifecycleRefreshActive',
+                    'Materialize refresh secrets so expired auth can recover without split-brain behavior.'
+                  )
+                : t(
+                    'integrations.syncHub.lifecycleRefreshTodo',
+                    'Refresh runtime is available after the provider reaches an operating state.'
+                  ),
+      },
+      {
+        key: 'monitor',
+        label: t('integrations.syncHub.lifecycleMonitor', 'Monitor'),
+        state:
+          int.lastRun || int.lastSyncAt || int.status === 'connected' ? ('done' as const) : ('todo' as const),
+        detail:
+          int.lastRun || int.lastSyncAt || int.status === 'connected'
+            ? t(
+                'integrations.syncHub.lifecycleMonitorDone',
+                'The lane has enough runtime truth to monitor health, syncs, and recovery.'
+              )
+            : t(
+                'integrations.syncHub.lifecycleMonitorTodo',
+                'Monitoring becomes meaningful after the lifecycle reaches an operating state.'
+              ),
+      },
+    ];
 
     return (
       <motion.div
@@ -1689,6 +1982,81 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   </div>
                 )}
 
+                <div className="rounded-lg border border-slate-700/70 bg-navy-950/30 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-white">
+                        {t('integrations.syncHub.lifecycleShell', 'Lifecycle shell')}
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-400">
+                        {t(
+                          'integrations.syncHub.lifecycleShellDesc',
+                          'One governed lane for connect, complete, recover, and operate.'
+                        )}
+                      </div>
+                    </div>
+                    {int.status === 'requires_reauth' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleReauth(int.id)}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-orange-500/20 bg-orange-500/10 px-2.5 py-1.5 text-[11px] font-medium text-orange-300 hover:bg-orange-500/15 transition-colors"
+                      >
+                        <Shield size={12} />
+                        {t('integrations.syncHub.reauth', 'Re-authorize')}
+                      </button>
+                    ) : int.onboardingStatus === 'pending_external_auth' && externalAuthSession ? (
+                      <button
+                        type="button"
+                        onClick={() => openExternalAuthSession(externalAuthSession)}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-medium text-sky-100 hover:bg-sky-500/15 transition-colors"
+                      >
+                        <ExternalLink size={12} />
+                        {t(
+                          'integrations.syncHub.openExternalAuth',
+                          'Open provider authorization'
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    {lifecycleSteps.map((step) => {
+                      const toneClasses =
+                        step.state === 'done'
+                          ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200'
+                          : step.state === 'active'
+                            ? 'border-amber-500/20 bg-amber-500/5 text-amber-100'
+                            : 'border-slate-700 bg-navy-900/30 text-slate-300';
+                      const badgeClasses =
+                        step.state === 'done'
+                          ? 'bg-emerald-500/15 text-emerald-300'
+                          : step.state === 'active'
+                            ? 'bg-amber-500/15 text-amber-200'
+                            : 'bg-slate-700/60 text-slate-300';
+                      const badgeLabel =
+                        step.state === 'done'
+                          ? t('integrations.syncHub.lifecycleDone', 'Done')
+                          : step.state === 'active'
+                            ? t('integrations.syncHub.lifecycleActive', 'Active')
+                            : t('integrations.syncHub.lifecycleLater', 'Later');
+
+                      return (
+                        <div
+                          key={step.key}
+                          className={`rounded-lg border p-2.5 text-[11px] ${toneClasses}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium">{step.label}</div>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] ${badgeClasses}`}>
+                              {badgeLabel}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 text-current/80">{step.detail}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Capabilities / Scopes */}
                 {int.connector?.capabilities && (
                   <div>
@@ -1947,6 +2315,180 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {canStoreRefreshSecret && (
+                  <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 text-xs">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-sky-100">
+                          {t(
+                            'integrations.syncHub.governedRefreshRuntime',
+                            'Governed refresh runtime'
+                          )}
+                        </div>
+                        <div className="mt-1 text-sky-100/70">
+                          {refreshRuntimeRef
+                            ? t(
+                                'integrations.syncHub.governedRefreshRuntimeReady',
+                                'Refresh secret material is already present for this connector.'
+                              )
+                            : t(
+                                'integrations.syncHub.governedRefreshRuntimeMissing',
+                                'Materialize refresh secret material so expired credentials can recover on the governed runtime path.'
+                              )}
+                        </div>
+                      </div>
+                      {!isEditingRefreshSecret && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingRefreshSecretId(int.id)}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-medium text-sky-100 hover:bg-sky-500/15 transition-colors"
+                        >
+                          <Shield size={12} />
+                          {refreshRuntimeRef
+                            ? t(
+                                'integrations.syncHub.editGovernedRefreshRuntime',
+                                'Edit refresh runtime'
+                              )
+                            : t(
+                                'integrations.syncHub.addGovernedRefreshRuntime',
+                                'Add refresh runtime'
+                              )}
+                        </button>
+                      )}
+                    </div>
+
+                    {refreshRuntimeRef && !isEditingRefreshSecret && (
+                      <div className="mt-3 grid gap-2 md:grid-cols-2 text-[11px] text-sky-100/80">
+                        <div>
+                          <div className="text-sky-100/60">
+                            {t('integrations.syncHub.refreshSecretStatus', 'Secret status')}
+                          </div>
+                          <div className="mt-1">
+                            {refreshRuntimeRef.clientIdPresent && refreshRuntimeRef.refreshTokenPresent
+                              ? t(
+                                  'integrations.syncHub.refreshSecretStatusStored',
+                                  'Stored for governed refresh execution'
+                                )
+                              : t(
+                                  'integrations.syncHub.refreshSecretStatusIncomplete',
+                                  'Materialization needs to be completed'
+                                )}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sky-100/60">
+                            {t('integrations.syncHub.tokenEndpoint', 'Token endpoint')}
+                          </div>
+                          <div className="mt-1 break-all">
+                            {refreshRuntimeRef.tokenEndpoint || t('common.notAvailable', 'Not available')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isEditingRefreshSecret && (
+                      <div className="mt-3 space-y-2 rounded-lg border border-sky-500/20 bg-navy-950/30 p-3">
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-sky-100/80">
+                            {t('integrations.syncHub.clientId', 'Client ID')}
+                          </div>
+                          <input
+                            type="text"
+                            value={refreshSecretDraft.clientId}
+                            onChange={(e) =>
+                              handleRefreshSecretDraftChange(int.id, 'clientId', e.target.value)
+                            }
+                            placeholder="client-id"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-sky-100/80">
+                            {t('integrations.syncHub.clientSecret', 'Client secret')}
+                          </div>
+                          <input
+                            type="password"
+                            value={refreshSecretDraft.clientSecret}
+                            onChange={(e) =>
+                              handleRefreshSecretDraftChange(
+                                int.id,
+                                'clientSecret',
+                                e.target.value
+                              )
+                            }
+                            placeholder="client-secret"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-sky-100/80">
+                            {t('integrations.syncHub.refreshToken', 'Refresh token')}
+                          </div>
+                          <input
+                            type="password"
+                            value={refreshSecretDraft.refreshToken}
+                            onChange={(e) =>
+                              handleRefreshSecretDraftChange(
+                                int.id,
+                                'refreshToken',
+                                e.target.value
+                              )
+                            }
+                            placeholder="refresh-token"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-sky-100/80">
+                            {t('integrations.syncHub.tokenEndpoint', 'Token endpoint')}
+                          </div>
+                          <input
+                            type="text"
+                            value={refreshSecretDraft.tokenEndpoint}
+                            onChange={(e) =>
+                              handleRefreshSecretDraftChange(
+                                int.id,
+                                'tokenEndpoint',
+                                e.target.value
+                              )
+                            }
+                            placeholder="https://auth.atlassian.com/oauth/token"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <div className="text-[11px] text-sky-100/60">
+                          {t(
+                            'integrations.syncHub.governedRefreshRuntimeHint',
+                            'Leave token endpoint empty when the connector has a governed default.'
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleSaveRefreshSecret(int)}
+                            disabled={savingRefreshSecretId === int.id}
+                            className="px-3 py-1.5 text-xs rounded-lg bg-sky-500/15 text-sky-100 hover:bg-sky-500/25 transition-colors disabled:opacity-50"
+                          >
+                            {savingRefreshSecretId === int.id
+                              ? t('common.saving', 'Saving...')
+                              : t(
+                                  'integrations.syncHub.saveGovernedRefreshRuntime',
+                                  'Save refresh runtime'
+                                )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingRefreshSecretId(null)}
+                            className="px-3 py-1.5 text-xs text-slate-300 hover:text-white rounded-lg transition-colors"
+                          >
+                            {t('common.cancel', 'Cancel')}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

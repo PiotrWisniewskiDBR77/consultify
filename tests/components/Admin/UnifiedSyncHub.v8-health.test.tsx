@@ -53,6 +53,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     connectIntegration: vi.fn(),
     configureIntegration: vi.fn(),
     materializeCredential: vi.fn(),
+    storeRefreshSecret: vi.fn(),
     recordRefreshResult: vi.fn(),
     getHubHealth: vi.fn(),
     getErrors: vi.fn(),
@@ -498,7 +499,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(updatedIntegrations as any);
-    fireEvent.click(screen.getByRole('button', { name: /Re-authorize/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Re-authorize/i })[0]);
 
     await waitFor(() => {
       expect(V8SyncApi.reauthIntegration).toHaveBeenCalledWith('int-1');
@@ -1062,7 +1063,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Mark verification complete/i })).toBeInTheDocument();
@@ -1182,7 +1183,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Add governed credential/i })).toBeInTheDocument();
@@ -1217,6 +1218,117 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('acct-123')).toBeInTheDocument();
     expect(screen.getByText('tenant-456')).toBeInTheDocument();
     expect(screen.getByText('read:jira-work')).toBeInTheDocument();
+  });
+
+  it('materializes governed refresh runtime secrets on the active hub', async () => {
+    const connectedWithCredential = {
+      integrations: [
+        {
+          id: 'int-connected-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: {
+            providerAccountId: 'acct-123',
+            workspaceOrTenantId: 'tenant-456',
+            scopesGranted: ['read:jira-work'],
+            tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+            lastVerificationAt: '2026-03-27T18:00:00.000Z',
+            lastRefreshAt: null,
+            lastRefreshResult: null,
+          },
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedWithCredential as any);
+    vi.mocked(V8SyncApi.getAuditLog)
+      .mockResolvedValueOnce({ entries: [], count: 0 } as any)
+      .mockResolvedValue({
+        entries: [
+          {
+            id: 'audit-1',
+            integration_id: 'int-connected-1',
+            action: 'refresh_secret_materialized',
+            actor_name: 'user-sync-v8',
+            details: {
+              connectorId: 'jira',
+              tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+              clientIdPresent: true,
+              refreshTokenPresent: true,
+            },
+            created_at: '2026-03-27T20:00:00.000Z',
+          },
+        ],
+        count: 1,
+      } as any);
+    vi.mocked(V8SyncApi.storeRefreshSecret).mockResolvedValue({
+      refreshSecret: {
+        connectorId: 'jira',
+        organizationId: 'org-sync-1',
+        clientIdPresent: true,
+        refreshTokenPresent: true,
+        tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+      },
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /refresh runtime/i })).toBeInTheDocument();
+      expect(screen.getByText('Lifecycle shell')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /refresh runtime/i }));
+    fireEvent.change(screen.getByPlaceholderText('client-id'), {
+      target: { value: 'client-1' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('client-secret'), {
+      target: { value: 'secret-1' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('refresh-token'), {
+      target: { value: 'refresh-1' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save refresh runtime/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.storeRefreshSecret).toHaveBeenCalledWith('int-connected-1', {
+        clientId: 'client-1',
+        clientSecret: 'secret-1',
+        refreshToken: 'refresh-1',
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Refresh secret material is already present for this connector.')
+      ).toBeInTheDocument();
+    });
   });
 
   it('records auth-break refresh result and surfaces governed escalation on the active hub', async () => {

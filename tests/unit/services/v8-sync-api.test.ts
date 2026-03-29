@@ -226,6 +226,32 @@ describe('V8SyncApi', () => {
     expect(data.credential.providerAccountId).toBe('acct-123');
   });
 
+  it('posts governed refresh secret materialization to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      refreshSecret: {
+        connectorId: 'jira',
+        organizationId: 'org-1',
+        clientIdPresent: true,
+        refreshTokenPresent: true,
+        tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+      },
+    });
+
+    const data = await V8SyncApi.storeRefreshSecret('int-1', {
+      clientId: 'client-1',
+      clientSecret: 'secret-1',
+      refreshToken: 'refresh-1',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/refresh-secret', {
+      clientId: 'client-1',
+      clientSecret: 'secret-1',
+      refreshToken: 'refresh-1',
+    });
+    expect(data.refreshSecret.connectorId).toBe('jira');
+    expect(data.refreshSecret.clientIdPresent).toBe(true);
+  });
+
   it('posts governed refresh result recording to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       credential: {

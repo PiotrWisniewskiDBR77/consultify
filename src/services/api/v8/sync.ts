@@ -192,6 +192,14 @@ export interface V8SyncExternalAuthSession {
   expiresAt: string;
 }
 
+export interface V8SyncRefreshSecretRef {
+  connectorId: string;
+  organizationId: string;
+  clientIdPresent: boolean;
+  refreshTokenPresent: boolean;
+  tokenEndpoint: string;
+}
+
 export interface V8SyncHealthSummary {
   total: number;
   healthy: number;
@@ -286,6 +294,19 @@ export const V8SyncApi = {
   ) =>
     v8Post<{ credential: V8SyncConnectionCredentialRef }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/credential`,
+      payload
+    ),
+  storeRefreshSecret: (
+    integrationId: string,
+    payload: {
+      clientId: string;
+      clientSecret: string;
+      refreshToken: string;
+      tokenEndpoint?: string;
+    }
+  ) =>
+    v8Post<{ refreshSecret: V8SyncRefreshSecretRef }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/refresh-secret`,
       payload
     ),
   recordRefreshResult: (
