@@ -37,7 +37,7 @@ This document exists to close the loop and answer one question:
 
 Current verdict for `Idea` is:
 
-`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, the integration/promotion layer, and cross-canvas UI/UX unification. Step 6 now explicitly covers AI-agent orchestration, all-canvas integration, organization context, note continuity, and synced external-source grounding. The remaining blockers are primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
+`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, the integration/promotion layer, and cross-canvas UI/UX unification. Step 6 now explicitly covers AI-agent orchestration, all-canvas integration, organization context, note continuity, and synced external-source grounding. The historical open items described in this snapshot were primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
 
 This means:
 
@@ -237,9 +237,9 @@ The concept is now clear.
 
 ---
 
-## 8. Real remaining blockers
+## 8. Historical open items at time of write
 
-The real remaining blockers are now mostly implementation-facing:
+The historical open items in this snapshot were mostly implementation-facing:
 
 1. runtime consistency across all four systems
 2. shared shell and shared primitive hardening

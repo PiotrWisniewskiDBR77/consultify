@@ -84,7 +84,7 @@ Rule:
 
 | Document family | Owns what |
 | --- | --- |
-| `CHAT_V8_READINESS_AUDIT.md` | readiness verdict, read order, remaining blockers, hardening priorities |
+| `CHAT_V8_READINESS_AUDIT.md` | readiness verdict, read order, historical hardening notes, and prior closure context |
 | `CHAT_V8_SSOT.md` | chat product purpose, scope, main promises and completeness criteria |
 | `CHAT_V8_BENCHMARK.md` | external benchmark, parity targets and non-goal discipline |
 | `CHAT_V8_WORKFLOW_MODEL.md` | canonical user path and workflow variants |
