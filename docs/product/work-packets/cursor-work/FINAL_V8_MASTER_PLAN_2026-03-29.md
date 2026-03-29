@@ -1,7 +1,7 @@
-# Final V8 Master Plan (Wave 1 + Wave 2)
+# Final V8 Master Plan (Wave 1 + Wave 2 + cross-cutting V8)
 Date: 2026-03-29  
 Owner: Program (Product + Engineering)  
-Scope: one master index and execution order for all active modules in **Wave 1** and **Wave 2**, with explicit links to per-module implementation plans and approval/evidence expectations.
+Scope: one master index and execution order for all active modules in **Wave 1** and **Wave 2**, plus a small set of cross-cutting V8 modules explicitly called out in the current program review (Chat history + Knowledge/RAG).
 
 ---
 
@@ -18,7 +18,7 @@ What we still need operationally is:
 - one **manager index** that points to the exact per-module plan,
 - one consistent rule that a module is only considered **done** after: **scope approval + full execution + evidence**.
 
-This file is that master index.
+This file is that master index — updated to match the latest program re-grouping notes.
 
 ---
 
@@ -43,6 +43,12 @@ Wave 2:
 - `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_MASTER_PLAN_2026-03-29.md` (Wave 2 execution-grade framing)
 - `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_GAP_BACKLOG_2026-03-29.md` (Wave 2 gap backlog)
 
+Cross-cutting V8 (non-wave, but actively referenced in the current program review):
+
+- `docs/product/CHAT_V8_IMPLEMENTATION_PLAN.md`
+- `docs/product/CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md`
+- `docs/product/KNOWLEDGE_RAG_V8_IMPLEMENTATION_PLAN.md`
+
 ---
 
 ## 3. Program doctrine (the rule that keeps us honest)
@@ -64,9 +70,16 @@ If any of the above is missing, the module is not considered done.
 
 ---
 
-## 4. One combined execution order (Wave 1 + Wave 2)
+## 4. One combined execution order (Wave 1 + Wave 2 + cross-cutting)
 
-We combine the waves into one program order by dependency and trust:
+We combine the waves into one program order by dependency and trust. This section is aligned to the re-grouping notes captured in the program review (the “newly described list”).
+
+### Phase 0 — Cross-cutting: Chat continuity and “chat wisdom”
+
+Rationale: these are cross-cutting foundations referenced as active work items in the current program review list.
+
+0. `Historia czatów` (Chat history & library)
+1. `Mądrość czata` (Knowledge/RAG / durable retrieval-backed memory)
 
 ### Phase 1 — Wave 1 structural trust and runtime coherence (P0-first)
 
@@ -98,20 +111,27 @@ Rationale: these are the highest-risk structural gaps that weaken day-to-day bel
 
 16. `Anna`
 
-### Phase 5 — Wave 2 (Cluster A) Outputs and Artifact Family
+### Phase 5 — Outputs spine (chat → run → trust → library → formats)
 
-Rationale: this is the most shared cross-module truth, so it comes first.
+Rationale: artifact truth is the most shared cross-module truth; we treat it as one spine:
+
+- `ArtifactRun z czatu` (chat drives governed runs),
+- `Provenance / review / visibility` (trust grammar),
+- `Outputs Library` (one canonical home),
+- and then format-specific surfaces (presentations, reports/documents, sheets, templates).
 
 17. `ArtifactRun z czatu`
 18. `Provenance / review / visibility`
 19. `Outputs Library`
-20. `Documents`
-21. `Presentations`
-22. `Sheet`
-23. `Object-linked outputs`
-24. `Notebook outputs`
-25. `Report -> Presentation`
-26. `Pelny Reports / Presentations builder`
+20. `Prezentacje` (maps to Wave 2 `Presentations`)
+21. `Raporty` (maps to Wave 2 `Documents`)
+22. `Wordy` (currently treated as the same delivered “document artifact” lane as `Raporty` unless separately split)
+23. `Excele` (maps to Wave 2 `Sheet`)
+24. `Templaty` (maps to Wave 2 templates inside `Reports/Presentations builder` scope)
+
+Note:
+
+- The Wave 2 artifact-family modules `Object-linked outputs`, `Notebook outputs`, `Report -> Presentation`, and `Pelny Reports / Presentations builder` remain in Wave 2 scope, but in the current program review list they are treated as secondary follow-ups behind the spine and core format lanes.
 
 ### Phase 6 — Wave 2 (Cluster B) Entry and AI OS expansion
 
@@ -201,6 +221,25 @@ All Wave 2 modules **already have** a per-module final implementation plan file.
 | 40 | `Mobile` | `docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_MOBILE_2026-03-29.md` | `docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_MOBILE.md` | present |
 
 ---
+
+## 6.1 Program review mapping (new names → canonical modules / plan files)
+
+The current program review list uses a few shorthand names. This mapping keeps the master plan consistent with the canonical Wave 2 module set:
+
+| Program review label | Canonical module (Wave 1/2) | Plan file exists | Where |
+| --- | --- | --- | --- |
+| `Notatnik` | `Notatki` (Wave 1) | yes | `.../wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_NOTATKI_2026-03-29.md` |
+| `Mindmap` | `Mind map` (Wave 1) | yes | `.../wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_MIND_MAP_2026-03-29.md` |
+| `OutputsLibrary` | `Outputs Library` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_OUTPUTS_LIBRARY_2026-03-29.md` |
+| `Prezentacje` | `Presentations` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PRESENTATIONS_2026-03-29.md` |
+| `Raporty` | `Documents` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_DOCUMENTS_2026-03-29.md` |
+| `Excele` | `Sheet` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_SHEET_2026-03-29.md` |
+| `Templaty` | `Pelny Reports / Presentations builder` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_FULL_REPORTS_PRESENTATIONS_BUILDER_2026-03-29.md` |
+| `Help` + `Baza wiedzy` | `Help / Baza wiedzy` (Wave 2) | yes | `.../wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_HELP_KNOWLEDGE_BASE_2026-03-29.md` |
+| `Historia czatów` | Chat v8 (cross-cutting) | yes | `docs/product/CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md` + `docs/product/CHAT_V8_IMPLEMENTATION_PLAN.md` |
+| `Mądrość czata` | Knowledge/RAG v8 (cross-cutting) | yes | `docs/product/KNOWLEDGE_RAG_V8_IMPLEMENTATION_PLAN.md` |
+
+If we later decide that `Wordy` is a separate module from `Raporty` (documents-as-reports), it requires an explicit scope split and a new dedicated per-module plan file.
 
 ## 7. Next step after this master plan
 
