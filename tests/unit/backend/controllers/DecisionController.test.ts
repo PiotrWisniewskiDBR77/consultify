@@ -378,6 +378,30 @@ describe('DecisionController', () => {
     });
   });
 
+  describe('decide', () => {
+    it('allows OWNER auth alias to approve decisions they do not own directly', async () => {
+      mockReq.user.role = 'OWNER';
+      mockReq.params.id = 'd-approve';
+      mockReq.body = { decision: 'approved', rationale: 'Gate approved' };
+      mockQueryOne.mockResolvedValue({
+        id: 'd-approve',
+        status: 'pending',
+        decision_maker_id: 'someone-else',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+
+      const { DecisionController } =
+        await import('../../../../server/src/controllers/DecisionController.js');
+      await DecisionController.decide(mockReq, mockRes, mockNext);
+
+      expect(mockRes.json).toHaveBeenCalledWith({
+        id: 'd-approve',
+        status: 'APPROVED',
+        decidedBy: 'user-123',
+      });
+    });
+  });
+
   describe('transitionWorkflow', () => {
     it('allows review to proposed rollback', async () => {
       mockReq.params.id = 'd-workflow';

@@ -79,6 +79,15 @@ const normalizeStatus = (status?: string | null): string => {
   return 'pending';
 };
 
+const normalizeAdminLikeRole = (role?: string | null): string => {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'OWNER' || normalized === 'SUPER_ADMIN') return 'SUPERADMIN';
+  if (normalized === 'ADMINISTRATOR') return 'ADMIN';
+  return normalized;
+};
+
 const toApiStatus = (status?: string | null): string => normalizeStatus(status).toUpperCase();
 
 const isDecisionStatusInput = (status?: string | null): boolean => {
@@ -972,10 +981,11 @@ export class DecisionController {
       }
 
       // Check if user is decision owner
+      const normalizedUserRole = normalizeAdminLikeRole(req.user?.role);
       if (
         currentDecision.decision_maker_id !== userId &&
-        req.user?.role !== 'ADMIN' &&
-        req.user?.role !== 'SUPERADMIN'
+        normalizedUserRole !== 'ADMIN' &&
+        normalizedUserRole !== 'SUPERADMIN'
       ) {
         res.status(403).json({ error: 'Only decision owner can decide' });
         return;
