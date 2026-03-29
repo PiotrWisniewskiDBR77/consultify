@@ -11,6 +11,28 @@ import { CalendarSidebar } from './CalendarSidebar';
 import type { CalendarViewMode } from './calendarTypes';
 import { useCalendarData } from './useCalendarData';
 
+type ExternalCalendarStatusKey = 'connected' | 'pending' | 'reauth' | 'error' | 'disconnected';
+
+interface ExternalCalendarSourceState {
+  available: boolean;
+  statusLabel: string;
+  helper: string;
+  nextStep?: string | null;
+}
+
+interface CalendarConflictItem {
+  id: string;
+  title: string;
+}
+
+interface CalendarConflictResponse {
+  tasks?: CalendarConflictItem[];
+  decisions?: CalendarConflictItem[];
+  totalItems?: number;
+  hasConflicts?: boolean;
+  suggestion?: string | null;
+}
+
 interface CalendarViewProps {
   refreshTrigger?: number;
   createRequestId?: number;
@@ -32,18 +54,148 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [externalSourceAvailability, setExternalSourceAvailability] = useState<{
-    google: boolean;
-    outlook: boolean;
-  }>({
-    google: false,
-    outlook: false,
+  const [externalSourceStatus, setExternalSourceStatus] = useState<
+    Record<'google' | 'outlook', ExternalCalendarSourceState>
+  >({
+    google: {
+      available: false,
+      statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+      helper: isPolish
+        ? 'Google Calendar nie ma jeszcze aktywnego połączenia.'
+        : 'Google Calendar does not have an active connection yet.',
+      nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+    },
+    outlook: {
+      available: false,
+      statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+      helper: isPolish
+        ? 'Outlook nie ma jeszcze aktywnego połączenia.'
+        : 'Outlook does not have an active connection yet.',
+      nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+    },
   });
+  const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
+  const [dayLoadLoading, setDayLoadLoading] = useState(false);
+  const [dayLoadError, setDayLoadError] = useState<string | null>(null);
 
   const { events, loading, error, filter, setFilter, refetch } = useCalendarData(
     dateRange,
     refreshTrigger
   );
+
+  const buildExternalSourceState = useCallback(
+    (status: ExternalCalendarStatusKey, providerLabel: string): ExternalCalendarSourceState => {
+      switch (status) {
+        case 'connected':
+          return {
+            available: true,
+            statusLabel: isPolish ? 'Aktywne' : 'Active',
+            helper: isPolish
+              ? `${providerLabel} jest gotowe do filtrowania w kalendarzu.`
+              : `${providerLabel} is ready for calendar filtering.`,
+            nextStep: null,
+          };
+        case 'pending':
+          return {
+            available: false,
+            statusLabel: isPolish ? 'Konfiguracja w toku' : 'Setup in progress',
+            helper: isPolish
+              ? `${providerLabel} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.`
+              : `${providerLabel} is on the governed path, but configuration or authorization is not complete yet.`,
+            nextStep: isPolish
+              ? 'Dokończ konfigurację lub autoryzację w Integracjach.'
+              : 'Finish configuration or authorization in Integrations.',
+          };
+        case 'reauth':
+          return {
+            available: false,
+            statusLabel: isPolish ? 'Wymaga ponownej autoryzacji' : 'Reauth required',
+            helper: isPolish
+              ? `${providerLabel} wymaga ponownej autoryzacji zanim wróci do wiarygodnego syncu.`
+              : `${providerLabel} needs reauthorization before it returns to a trustworthy sync state.`,
+            nextStep: isPolish
+              ? 'Uruchom ponowną autoryzację w Integracjach.'
+              : 'Start reauthorization in Integrations.',
+          };
+        case 'error':
+          return {
+            available: false,
+            statusLabel: isPolish ? 'Błąd syncu' : 'Sync error',
+            helper: isPolish
+              ? `${providerLabel} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.`
+              : `${providerLabel} has an active error and should not be treated as a ready calendar source.`,
+            nextStep: isPolish
+              ? 'Sprawdź stan i logi w Integracjach.'
+              : 'Review the status and logs in Integrations.',
+          };
+        default:
+          return {
+            available: false,
+            statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+            helper: isPolish
+              ? `${providerLabel} nie ma jeszcze aktywnego połączenia.`
+              : `${providerLabel} does not have an active connection yet.`,
+            nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+          };
+      }
+    },
+    [isPolish]
+  );
+
+  const buildWorkloadSummary = useCallback(() => {
+    if (dayLoadLoading) {
+      return {
+        variant: 'info' as const,
+        title: isPolish ? 'Obciążenie dnia' : 'Day load',
+        body: isPolish ? 'Sprawdzanie obciążenia wybranego dnia...' : 'Checking the selected day load...',
+      };
+    }
+
+    if (dayLoadError) {
+      return {
+        variant: 'warning' as const,
+        title: isPolish ? 'Podgląd obciążenia ograniczony' : 'Day-load preview limited',
+        body: dayLoadError,
+      };
+    }
+
+    const totalItems = Number(dayLoad?.totalItems ?? 0);
+    const hasConflicts = Boolean(dayLoad?.hasConflicts);
+    const taskCount = Number(dayLoad?.tasks?.length ?? 0);
+    const decisionCount = Number(dayLoad?.decisions?.length ?? 0);
+
+    if (totalItems === 0) {
+      return {
+        variant: 'success' as const,
+        title: isPolish ? 'Dzień wygląda na wolny' : 'Day looks clear',
+        body: isPolish
+          ? 'Wybrana data nie pokazuje jeszcze zadań ani decyzji wymagających uwagi.'
+          : 'The selected date does not yet show tasks or decisions demanding attention.',
+      };
+    }
+
+    if (hasConflicts || totalItems >= 4) {
+      return {
+        variant: 'warning' as const,
+        title: isPolish ? 'Dzień jest już mocno obciążony' : 'Day is already heavily loaded',
+        body:
+          dayLoad?.suggestion ||
+          (isPolish
+            ? `Masz tu ${totalItems} pozycji, w tym ${taskCount} zadań i ${decisionCount} decyzji. Warto rozważyć przesunięcie lub korektę planu.`
+            : `You already have ${totalItems} items here, including ${taskCount} tasks and ${decisionCount} decisions. Consider a reschedule or a planning adjustment.`),
+      };
+    }
+
+    return {
+      variant: 'info' as const,
+      title: isPolish ? 'Dzień jest częściowo zajęty' : 'Day is partially loaded',
+      body:
+        dayLoad?.suggestion ||
+        (isPolish
+          ? `Wybrany dzień ma ${totalItems} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań.`
+          : `The selected day already has ${totalItems} items. This is a good moment to place new work deliberately.`),
+    };
+  }, [dayLoad, dayLoadError, dayLoadLoading, isPolish]);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,19 +204,30 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       try {
         const response = await Api.getIntegrations();
         const rows = Array.isArray(response) ? response : response?.integrations || [];
-        const next = rows.reduce(
-          (acc: { google: boolean; outlook: boolean }, item: any) => {
+        const nextStatus = rows.reduce(
+          (acc: Record<'google' | 'outlook', ExternalCalendarStatusKey>, item: any) => {
             const provider = String(item?.provider || '').toLowerCase();
             const status = String(item?.status || '').toLowerCase();
-            const onboardingStatus = item?.onboarding_status;
-            const isReady = (status === 'active' || status === 'connected') && !onboardingStatus;
-
-            if (!isReady) {
-              return acc;
-            }
+            const hasPendingOnboarding = Boolean(item?.onboarding_status);
+            const normalizedStatus: ExternalCalendarStatusKey =
+              status === 'active' || status === 'connected'
+                ? hasPendingOnboarding
+                  ? 'pending'
+                  : 'connected'
+                : status === 'pending'
+                  ? 'pending'
+                  : status === 'requires_reauth'
+                    ? 'reauth'
+                    : status === 'error'
+                      ? 'error'
+                      : 'disconnected';
 
             if (provider === 'google' || provider === 'google_calendar') {
-              acc.google = true;
+              acc.google =
+                normalizedStatus === 'connected' ||
+                acc.google !== 'connected'
+                  ? normalizedStatus
+                  : acc.google;
             }
 
             if (
@@ -73,20 +236,30 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               provider === 'microsoft_365' ||
               provider === 'outlook_calendar'
             ) {
-              acc.outlook = true;
+              acc.outlook =
+                normalizedStatus === 'connected' ||
+                acc.outlook !== 'connected'
+                  ? normalizedStatus
+                  : acc.outlook;
             }
 
             return acc;
           },
-          { google: false, outlook: false }
+          { google: 'disconnected', outlook: 'disconnected' }
         );
 
         if (!cancelled) {
-          setExternalSourceAvailability(next);
+          setExternalSourceStatus({
+            google: buildExternalSourceState(nextStatus.google, 'Google Calendar'),
+            outlook: buildExternalSourceState(nextStatus.outlook, 'Outlook'),
+          });
         }
       } catch {
         if (!cancelled) {
-          setExternalSourceAvailability({ google: false, outlook: false });
+          setExternalSourceStatus({
+            google: buildExternalSourceState('disconnected', 'Google Calendar'),
+            outlook: buildExternalSourceState('disconnected', 'Outlook'),
+          });
         }
       }
     };
@@ -96,7 +269,46 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [buildExternalSourceState]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const dateKey = currentDate.toISOString().slice(0, 10);
+
+    const loadDayLoad = async () => {
+      try {
+        setDayLoadLoading(true);
+        setDayLoadError(null);
+        const response = await Api.getMyWorkCalendarConflicts(dateKey);
+        if (!cancelled) {
+          setDayLoad(response?.data ?? response ?? null);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setDayLoad(null);
+          setDayLoadError(
+            err?.status === 503
+              ? isPolish
+                ? 'Podglad obciazenia dnia jest chwilowo niedostepny, ale kalendarz nadal pokazuje biezace pozycje.'
+                : 'Day-load preview is temporarily unavailable, but the calendar still shows current items.'
+              : isPolish
+                ? 'Nie udalo sie odczytac obciazenia wybranego dnia.'
+                : 'Failed to read the selected day load.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setDayLoadLoading(false);
+        }
+      }
+    };
+
+    loadDayLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentDate, isPolish]);
 
   const handleEventClick = useCallback(
     (eventId: string, source: string) => {
@@ -127,7 +339,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onFilterChange={setFilter}
         currentDate={currentDate}
         onDateChange={setCurrentDate}
-        externalSourceAvailability={externalSourceAvailability}
+        externalSourceStatus={externalSourceStatus}
+        workloadSummary={buildWorkloadSummary()}
       />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
         {loading && (

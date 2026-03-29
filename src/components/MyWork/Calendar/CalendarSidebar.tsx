@@ -1,15 +1,31 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Callout } from '@/components/shared/NModeBlocks';
+
 import type { CalendarEventSource, CalendarFilter } from './calendarTypes';
 import { SOURCE_COLORS, SOURCE_LABELS } from './calendarTypes';
+
+interface ExternalCalendarSourceState {
+  available: boolean;
+  statusLabel: string;
+  helper: string;
+  nextStep?: string | null;
+}
+
+interface CalendarWorkloadSummary {
+  variant: 'info' | 'warning' | 'success';
+  title: string;
+  body: string;
+}
 
 interface CalendarSidebarProps {
   filter: CalendarFilter;
   onFilterChange: (filter: CalendarFilter) => void;
   currentDate: Date;
   onDateChange: (date: Date) => void;
-  externalSourceAvailability?: Partial<Record<'google' | 'outlook', boolean>>;
+  externalSourceStatus?: Partial<Record<'google' | 'outlook', ExternalCalendarSourceState>>;
+  workloadSummary?: CalendarWorkloadSummary | null;
 }
 
 const ALL_SOURCES: CalendarEventSource[] = [
@@ -26,14 +42,15 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onFilterChange,
   currentDate,
   onDateChange,
-  externalSourceAvailability,
+  externalSourceStatus,
+  workloadSummary,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const toggleSource = (source: CalendarEventSource) => {
     const isExternalSource = source === 'google' || source === 'outlook';
-    if (isExternalSource && !externalSourceAvailability?.[source]) {
+    if (isExternalSource && !externalSourceStatus?.[source]?.available) {
       return;
     }
     const current = filter.sources;
@@ -126,7 +143,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         <div className="space-y-1.5">
           {ALL_SOURCES.map((source) => {
             const isExternalSource = source === 'google' || source === 'outlook';
-            const isAvailable = isExternalSource ? Boolean(externalSourceAvailability?.[source]) : true;
+            const isAvailable = isExternalSource ? Boolean(externalSourceStatus?.[source]?.available) : true;
             const active = isAvailable && filter.sources.includes(source);
             return (
               <button
@@ -163,15 +180,32 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             );
           })}
         </div>
-        {(externalSourceAvailability?.google === false ||
-          externalSourceAvailability?.outlook === false) && (
-          <p className="mt-3 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Źródła Google i Outlook pojawiają się tutaj dopiero po aktywnym podłączeniu w Integracjach.'
-              : 'Google and Outlook sources appear here only after an active connection is available in Integrations.'}
-          </p>
+        {(externalSourceStatus?.google || externalSourceStatus?.outlook) && (
+          <div className="mt-3 space-y-2">
+            {(['google', 'outlook'] as const).map((source) => {
+              const state = externalSourceStatus?.[source];
+              if (!state || state.available) return null;
+              return (
+                <Callout
+                  key={source}
+                  variant="info"
+                  compact
+                  title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${state.statusLabel}`}
+                >
+                  <div>{state.helper}</div>
+                  {state.nextStep ? <div className="mt-1">{state.nextStep}</div> : null}
+                </Callout>
+              );
+            })}
+          </div>
         )}
       </div>
+
+      {workloadSummary && (
+        <Callout variant={workloadSummary.variant} title={workloadSummary.title} compact>
+          {workloadSummary.body}
+        </Callout>
+      )}
 
       {/* Today button */}
       <button

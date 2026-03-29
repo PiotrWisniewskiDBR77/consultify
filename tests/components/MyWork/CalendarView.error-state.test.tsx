@@ -16,6 +16,13 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../src/services/api', () => ({
   default: {
     getIntegrations: vi.fn().mockResolvedValue([]),
+    getMyWorkCalendarConflicts: vi.fn().mockResolvedValue({
+      totalItems: 0,
+      hasConflicts: false,
+      tasks: [],
+      decisions: [],
+      suggestion: null,
+    }),
   },
 }));
 
