@@ -2,7 +2,7 @@
 
 Date: 2026-03-29
 Owner: Cursor agent
-Status: proposed execution scope freeze
+Status: ratified and consumed by executed Wave 1A remediation
 Purpose: freeze `Wave 1A` as the P0 remediation stage after the full Wave 1 audit
 
 ## Definition
@@ -70,3 +70,9 @@ If deeper breadth is needed, it must be cut forward into `Wave 1B` or `Wave 1C`.
 - each brief has a concrete code/test surface map
 - each brief has an acceptance proof plan
 - the boundary to `Wave 1B` and `Wave 1C` is explicit
+
+Execution note:
+
+- all four packets were implemented and pushed on the active branch
+- the scope freeze held; no `P1` or `P2` packet was silently pulled into `Wave 1A`
+- the next valid continuation stage after this document is `Wave 1B`

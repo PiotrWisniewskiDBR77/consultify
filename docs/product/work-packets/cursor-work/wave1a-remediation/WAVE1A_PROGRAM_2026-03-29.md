@@ -2,8 +2,26 @@
 
 Date: 2026-03-29
 Owner: Cursor agent
-Status: proposed remediation program
+Status: executed P0 remediation program
 Scope: P0 remediation after formal Wave 1 closure
+
+## 0. Execution outcome
+
+Wave 1A has now been executed and the four P0 packets were closed on the active branch:
+
+- `Integracja` via `838ccea191` - governed lifecycle shell and refresh-runtime materialization
+- `Kalendarz` via `8a28370187` - external source honesty and selected-day workload guidance
+- `Wdrożenia` via `f8e02ee5b5` - shared post-write execution refresh spine
+- `KPI + Finanse` via `8631d675de` - finance runtime-strip refresh after import/create flows
+
+Verification recorded during execution:
+
+- targeted `Calendar` tests: `8/8` passing
+- targeted `Execution` tests: `16/16` passing
+- targeted `Finance` tests: `16/16` passing
+- edited-file lint checks: clean
+
+Wave 1A therefore no longer sits in `proposed` status. It is the completed P0 remediation stage and serves as the handoff boundary to `Wave 1B`.
 
 ## 1. Purpose
 
