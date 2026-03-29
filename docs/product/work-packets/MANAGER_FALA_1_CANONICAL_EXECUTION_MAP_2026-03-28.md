@@ -11,6 +11,10 @@
 
 From this point forward, this file is the single managerial source of truth for Fala 1.
 
+Final module-gate ratification for this scope is recorded in:
+
+- `docs/product/work-packets/evidence/548-v81-wave1-final-module-gate-ratification.md`
+
 It overrides:
 
 - ambiguous placeholder-based agent scopes,

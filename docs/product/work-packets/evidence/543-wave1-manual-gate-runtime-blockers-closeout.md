@@ -56,4 +56,8 @@ Wave 1 manual gate work surfaced real runtime issues, and both now have explicit
 
 ## Remaining truth
 
-Manual acceptance for the full Wave 1 module list is still not fully exhausted. This document closes the runtime blockers found during that process; it does not replace the per-module manual checklists in evidence files `523` through `542`.
+At the time this blocker closeout landed, the per-module manual gates were still open.
+
+That is no longer the current state.
+
+The later ratification in `548-v81-wave1-final-module-gate-ratification.md` closes the remaining Wave 1 module-gate debt and should be treated as the current authority for final module acceptance.

@@ -15,6 +15,7 @@
 - production shadow readiness is green
 - credential hygiene is closed in `../evidence/518-production-credential-hygiene-closure.md`
 - wider production `GO` is now recorded in `../evidence/519-wider-production-go-no-go-decision.md`
+- active Wave 1 module gates are now ratified as closed in `../evidence/548-v81-wave1-final-module-gate-ratification.md`
 
 ---
 
@@ -44,6 +45,7 @@
 - production shadow observation is green in `../evidence/491-v8-production-pilot-shadow-readiness-green.md`
 - production credential hygiene is closed in `../evidence/518-production-credential-hygiene-closure.md`
 - wider production `GO` is recorded in `../evidence/519-wider-production-go-no-go-decision.md`
+- final Wave 1 module-gate ratification is recorded in `../evidence/548-v81-wave1-final-module-gate-ratification.md`
 - doc support for final closeout is prepared:
   - `BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
   - `BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`

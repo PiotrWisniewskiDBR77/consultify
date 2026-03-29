@@ -57,7 +57,7 @@ These redirects were encoded into the acceptance suite instead of being treated 
 
 Passed:
 
-- `E2E_MODE=true E2E_USE_WEB_SERVER=true E2E_BACKEND_RUNNER=tsx E2E_API_URL=http://127.0.0.1:3001 E2E_BASE_URL=http://127.0.0.1:3000 npx playwright test --config playwright.config.ts tests/e2e/smoke/wave1-module-closeout.spec.ts`
+- `E2E_MODE=true E2E_USE_WEB_SERVER=true E2E_BACKEND_RUNNER=tsx E2E_API_URL=http://127.0.0.1:3001 E2E_BASE_URL=http://127.0.0.1:3000 npx playwright test --config playwright.smoke.config.ts tests/e2e/smoke/wave1-module-closeout.spec.ts`
 - `npx vitest run tests/components/MyWork/NotebookCanonicalPathStrip.test.tsx tests/components/MyWork/AIChatInlinePanel.convert-guard.test.tsx tests/components/MyWork/notebookMetadataBadges.test.tsx tests/components/MyWork/NotebookContent.manual-gate.test.tsx tests/unit/components/MyWork/notebookConvertedOutputSummary.test.ts tests/unit/components/MyWork/ideaWorkspaceState.test.ts tests/components/MyWork/IdeasMindMap.redirect.test.tsx tests/components/MyWork/ideaEntryTypes.test.ts tests/unit/mindmap/canvasLeftToolbar.test.tsx tests/unit/mindmap/mindmapInteractionGrammar.test.ts tests/unit/components/MyWork/useKeyboardShortcuts.test.tsx tests/unit/mywork/whiteboardInteractionGrammar.test.ts tests/unit/mywork/whiteboardNodes.test.ts tests/unit/backend/services/ideaAIGeneratorService.whiteboardFormatters.test.ts tests/components/MyWork/IdeaProcessFlowTool.error-state.test.tsx tests/unit/mywork/useProcessFlowNodes.test.ts tests/unit/mywork/crossToolTransform.test.ts tests/components/MyWork/IdeaTableTool.honesty.test.tsx tests/components/MyWork/TableRealtimeStatusIndicator.test.tsx tests/components/Survey/SurveyShell.capture-resume.test.tsx tests/components/Interview/interviewErrorCopy.test.ts tests/components/Interview/InsightCreatorModal.error-state.test.tsx tests/components/MyWork/HomeView.outputs.test.tsx tests/components/MyWork/AIPulseCore.actionable-priority.test.tsx tests/components/Landing/AnnaAssistantWidget.cta-authority.test.tsx`
 
 Result:
@@ -80,3 +80,4 @@ Notes:
 
 - Wave-1 now has one repeatable browser-level smoke spine covering the public assistant, internal assistant, and canonical must-have route shell
 - The acceptance story is materially stronger and less dependent on fragile ad-hoc browser sessions
+- Together with `544-v81-mywork-deep-acceptance-pack.md` and `548-v81-wave1-final-module-gate-ratification.md`, this spine now participates in the final closure-grade Wave 1 module acceptance set
