@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
+import { SuperadminRootClosurePanel } from '../../components/SuperAdmin/SuperadminRootClosurePanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
@@ -149,7 +150,12 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
       subtitle="System dashboard and real-time insights"
       actions={<InfoButton cardId={getHelpCardId()} />}
     >
-      {renderContent()}
+      <>
+        <div className="p-6 pb-0">
+          <SuperadminRootClosurePanel compact />
+        </div>
+        {renderContent()}
+      </>
     </TabLayout>
   );
 };
