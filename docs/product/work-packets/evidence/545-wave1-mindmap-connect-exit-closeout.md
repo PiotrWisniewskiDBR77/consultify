@@ -2,7 +2,7 @@
 
 Date: 2026-03-28
 Lane: first-tranche `must have` / `Mind map`
-Status: code landed, awaiting deploy-backed manual re-check
+Status: historical blocker closeout, later mindmap ratification applied
 
 ## Problem
 
@@ -46,11 +46,16 @@ Static:
 
 Hosted manual acceptance previously reproduced the blocker.
 
-This fix is now in code, but the live module gate still needs a post-deploy re-run to confirm:
+At the time of this closeout, the live module gate still needed a post-deploy re-run to confirm:
 
 1. second click on `Connect` returns to `select`
 2. click on empty canvas returns to `select`, not `pan`
 3. active pointer/help copy accurately reflects connect mode
+
+Current authority:
+
+- deeper mindmap browser proof is recorded in `544-v81-mywork-deep-acceptance-pack.md`
+- final module closure is ratified in `548-v81-wave1-final-module-gate-ratification.md`
 
 ## Why this matters
 

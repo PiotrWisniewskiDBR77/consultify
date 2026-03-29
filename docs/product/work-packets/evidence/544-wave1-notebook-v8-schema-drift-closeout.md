@@ -2,7 +2,7 @@
 
 Date: 2026-03-28
 Lane: first-tranche `must have` / `Notebook`
-Status: code landed, awaiting deploy-backed manual re-check
+Status: historical blocker closeout, later notebook ratification applied
 
 ## Problem
 
@@ -75,12 +75,17 @@ Static:
 
 Live hosted manual gate discovered the blocker and established the failing request path.
 
-The runtime fix is now in code, but the hosted `Notebook` manual checklist still needs a post-deploy re-run to confirm:
+At the time of this closeout, the hosted `Notebook` manual checklist still needed a post-deploy re-run to confirm:
 
 1. page list loads without `500`
 2. note create/readback works
 3. attachment readback stays honest
 4. convert/readback path remains available on the live environment
+
+Current authority:
+
+- deeper notebook browser continuity proof is recorded in `544-v81-mywork-deep-acceptance-pack.md`
+- final module closure is ratified in `548-v81-wave1-final-module-gate-ratification.md`
 
 ## Why this matters
 

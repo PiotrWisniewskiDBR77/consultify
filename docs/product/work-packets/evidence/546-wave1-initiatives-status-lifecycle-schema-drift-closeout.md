@@ -2,7 +2,7 @@
 
 Date: 2026-03-29
 Lane: first-tranche `must have` / `Inicjatywy`
-Status: code landed, awaiting deploy-backed manual re-check
+Status: historical blocker closeout, later initiatives ratification applied
 
 ## Problem
 
@@ -79,12 +79,17 @@ Live Railway logs confirmed the schema-drift root cause:
 
 - `column "review_requested_at" of relation "initiatives" does not exist`
 
-The runtime fix is now in code, but hosted manual re-check is still required after deploy to confirm:
+At the time of this closeout, hosted manual re-check was still required after deploy to confirm:
 
 1. `DRAFT -> PENDING_REVIEW` succeeds on the live initiative created during the gate
 2. status readback stays aligned in the open document
 3. readiness refresh still returns `200`
 4. compact-panel status flow no longer inherits the same backend failure
+
+Current authority:
+
+- live initiatives manual gate pass is recorded in `547-wave1-initiatives-manual-gate-pass.md`
+- final module closure is ratified in `548-v81-wave1-final-module-gate-ratification.md`
 
 ## Why this matters
 
