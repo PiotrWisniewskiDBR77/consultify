@@ -22,10 +22,61 @@ Status: draft (contract wrapper over existing plan)
 - SSOT stack: `docs/product/MYWORK_RADAR_V8_SSOT.md` (+ powiązane runtime docs wymienione w planie)
 
 ## 4. Softs inspirations (benchmark apps)
-- **Primary (projects/execution cockpit patterns)**: `Linear` (triage discipline), `ClickUp` / `monday.com` (dashboards + operational signals) z `PROJECT_MANAGEMENT_V8_BENCHMARK.md` i `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`.
-- **KPI family**: KPI vendor list w repo = **missing input**, ale cockpit logic może czerpać z execution dashboards patterns.
+### 4.1 Primary benchmark family (SSOT)
+- Plan modułu wskazuje `Softs/0 Projekty` i `Softs/0 KPI` jako benchmark family (`WAVE1_FINAL_IMPLEMENTATION_PLAN_RADAR_2026-03-29.md`).
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **Linear (triage + notifications discipline)**:
+  - `Softs/0 Projekty/Linear.zip :: Linear/linear.appx/docs/triage.html` (triage jako “special inbox”: review/update/prioritize zanim trafi do workflow).
+  - `Softs/0 Projekty/Linear.zip :: Linear/linear.appx/docs/notifications.html` (inbox notifications + konfiguracja kanałów alertów).
+  - `Softs/0 Projekty/Linear.zip :: Linear/linear.appx/developers/agent-signals.html` (“Signals” jako metadane intencji dla aktywności agentów; downstream ma rozumieć jak interpretować/obsłużyć).
+- **ClickUp (dashboard operator surface)**:
+  - `Softs/0 Projekty/Clickup help.zip :: Clickup help/help.clickup.com/hc/en-us/articles/6312197753239-Intro-to-Dashboards.html` (dashboards jako warstwa operacyjna).
+- **monday.com (dashboard/widget surfaces / API)**:
+  - `Softs/0 Projekty/Monday dev.zip :: Monday dev/developer.monday.com/api-reference/reference/dashboards-and-widgets.html` (dashboards & widgets jako first-class API surface).
+- **Palantir Foundry (cockpit pattern: steps + status + actions)**:
+  - `Softs/Palantir/www.palantir.com/docs/foundry/hyperauto/v1-cockpit.html` (Cockpit: central place; left panel = steps+status; main area = actions per step).
+  - `Softs/Palantir/www.palantir.com/docs/foundry/sap/sap-cockpit.html` (Cockpit jako admin surface + monitor, wejście przez transaction code; w dokumencie wprost pojawia się “Data transfer monitor”).
+
+### 4.3 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “decyzyjny cockpit z uczciwą gramatyką sygnałów”, nie “BI dashboard”.**
+
+- **Triage / inbox discipline (Linear)**:
+  - Radar ma działać jak “inbox dla rzeczy ważnych”: review → update context → prioritize → handoff do workflow.
+  - Powinna istnieć ścieżka ownership (“kto ma to przejąć”) i unikanie “nobody’s queue”.
+- **Alerting/notifications posture (Linear)**:
+  - Użytkownik ma jasne, konfigurowalne kanały “co jest alertem”, a co jest tylko informacją.
+- **Signals + intent metadata (Linear Developers)**:
+  - Rekomendacje/sygnały mają jawne metadane intencji i “how to handle”, żeby downstream moduły mogły utrzymać spójność.
+- **Cockpit anatomy: steps + status + action (Palantir)**:
+  - UI ma wyraźną oś: “co jest krokiem / stanem / następną akcją” (nie wykres bez decyzji).
+  - Stany muszą być czytelne (ready/degraded/blocked) i mieć “next action” (kto jest ownerem akcji).
+- **Dashboard as operator surface (ClickUp/monday)**:
+  - Filtry, ranking, i “co jest P0” muszą być jednoznaczne; user nie czyta całej strony, żeby zrozumieć priorytety.
+  - Drill-down → link-out do właściwego modułu z zachowanym kontekstem.
+
+### 4.4 Gap ledger vs Softs (what we are missing — derived from current plans)
+Źródło prawdy “co mamy / czego brakuje” to: `WAVE1_FINAL_IMPLEMENTATION_PLAN_RADAR_2026-03-29.md` + SSOT stack Radar (sekcja 3 planu).
+
+| Capability cluster (Softs parity target) | What Softs implies | Current truth (per plan) | Gap statement (contract requirement) | Priority |
+| --- | --- | --- | --- | --- |
+| Ranking / prioritization grammar | directive inbox, not “pretty page” | “prioritization quality is uneven” | Ustalić i dowieźć stabilną gramatykę rankingową + “why-now” | P0 |
+| Explainability | user can trust why it surfaced | “explainability not deep enough” | Każdy sygnał ma rationale + evidence pointers + uncertainty boundary | P0 |
+| Signal→action continuity | triage → handoff | “downstream continuity partial” | Domknąć handoff z zachowanym kontekstem do `Inicjatywy`/`Wdrożenia`/`Notatki` | P0 |
+| Ownership / queue hygiene | no orphaned items | (nieudowodnione jako zamknięte) | Jawny owner/queue semantics dla najważniejszych sygnałów | P1 |
 
 ## 5. Evidence plan (DoD)
-- Acceptance: ranking + explainability + handoff działają; user nie musi „czytać całej strony”, żeby zrozumieć co jest P0.
-- Evidence: staging demo „signal → why → next action → landing w module docelowym” + testy dla recommendation/trust grammar.
+### 5.1 Acceptance criteria
+- Ranking + explainability + handoff działają; user nie musi „czytać całej strony”, żeby zrozumieć co jest P0.
+- Każda rekomendacja ma: dlaczego (rationale), na jakich danych (evidence pointers), oraz granicę pewności (uncertainty/degraded).
+- “Next action” jest jednoznaczne i prowadzi do właściwego modułu z zachowanym kontekstem.
+
+### 5.2 Tests
+- Testy kontraktowe: sygnał/rekomendacja → payload (why/evidence/uncertainty) → UI render.
+- Testy integracyjne: click “next action” → lądowanie w module docelowym z zachowanymi parametrami/kontekstem.
+- Regression: degraded/missing-data → Radar jest uczciwy (nie overclaim) i wskazuje “co brakuje”.
+
+### 5.3 Staging proof checklist
+- Demo: „signal → why → next action → landing w module docelowym” (3 różne typy sygnałów).
+- Demo: “uncertainty boundary”: brak danych / conflict → Radar pokazuje ograniczenie i bezpieczną akcję.
 
