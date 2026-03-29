@@ -67,9 +67,9 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
     {
       title: t('landing.footer.product.title', 'Product'),
       links: [
-        { label: t('landing.footer.product.demo', 'Demo'), href: '/demo', onClick: onDemoClick },
+        { label: t('landing.footer.product.demo', 'Try Demo'), href: '/demo', onClick: onDemoClick },
         {
-          label: t('landing.footer.product.trial', 'Trial'),
+          label: t('landing.footer.product.trial', 'Start Trial'),
           href: ROUTES.TRIAL_ENTRY,
           onClick: onTrialClick,
         },
@@ -145,7 +145,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
               {t(
                 'landing.footer.tagline',
-                'Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.'
+                'Consultify is the Consulting Intelligence Platform: accessible world-class knowledge, structured guidance, and execution in one working environment.'
               )}
             </p>
 

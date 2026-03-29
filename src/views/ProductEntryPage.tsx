@@ -14,6 +14,7 @@ import { ForWhomSection } from '../components/Landing/ForWhomSection';
 import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
 import { InfoSections } from '../components/Landing/InfoSections';
 import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
+import { LandingNarrativeCtaBand } from '../components/Landing/LandingNarrativeCtaBand';
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
 import { ProblemPlatformSection } from '../components/Landing/ProblemPlatformSection';
 import { TrustStrip } from '../components/Landing/TrustStrip';
@@ -96,6 +97,16 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     navigate(ROUTES.LEGAL.CONTACT);
   };
 
+  const handleAnnaClick = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('anna:open'));
+    }
+    trackFunnelEvent('landing_anna_guided_prompt_clicked', {
+      promptKey: 'midpage_cta',
+      variant: landingVariant,
+    });
+  };
+
   return (
     <div className="dark absolute inset-0 bg-[#0A0A1F] text-white overflow-y-auto overflow-x-hidden">
       <EntryTopBar
@@ -126,6 +137,12 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ExtendedScopeSection />
 
         <ForWhomSection />
+
+        <LandingNarrativeCtaBand
+          onAnnaClick={handleAnnaClick}
+          onDemoClick={handleDemoClick}
+          onTrialClick={handleTrialClick}
+        />
 
         <DocumentationSection />
 

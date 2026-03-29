@@ -363,7 +363,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 }}
               >
                 <Play size={14} className="text-white/70" fill="currentColor" />
-                <span>{t('landing.profitHero.ctaSecondary', 'Watch demo')}</span>
+                <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
               </button>
             </motion.div>
 

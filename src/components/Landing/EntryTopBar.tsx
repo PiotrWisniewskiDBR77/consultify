@@ -132,7 +132,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 onClick: () => navigate(ROUTES.BECOME_PARTNER),
               },
               demo: {
-                label: t('landing.topBar.demo', 'Watch demo'),
+                label: t('landing.topBar.demo', 'Try demo'),
                 icon: null,
                 onClick: onDemoClick,
               },
@@ -475,7 +475,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       },
                     },
                     {
-                      label: t('landing.topBar.demo', 'Watch demo'),
+                      label: t('landing.topBar.demo', 'Try demo'),
                       onClick: () => {
                         onDemoClick();
                         setIsMobileMenuOpen(false);

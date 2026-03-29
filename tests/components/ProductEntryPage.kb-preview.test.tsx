@@ -57,6 +57,10 @@ vi.mock('@/components/Landing/ForWhomSection', () => ({
   ForWhomSection: () => <div>for-whom-section</div>,
 }));
 
+vi.mock('@/components/Landing/LandingNarrativeCtaBand', () => ({
+  LandingNarrativeCtaBand: () => <div>landing-narrative-cta-band</div>,
+}));
+
 vi.mock('@/components/Landing/DocumentationSection', () => ({
   DocumentationSection: () => <div>documentation-section</div>,
 }));
@@ -134,6 +138,7 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     const howItWorks = screen.getByText('how-it-works-section');
     const extendedScope = screen.getByText('extended-scope-section');
     const forWhom = screen.getByText('for-whom-section');
+    const landingNarrativeCtaBand = screen.getByText('landing-narrative-cta-band');
     const documentation = screen.getByText('documentation-section');
     const knowledgePreview = screen.getByText('knowledge-preview-section');
     const infoSections = screen.getByText('info-sections');
@@ -153,10 +158,15 @@ describe('ProductEntryPage knowledge preview continuity', () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(extendedScope.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(forWhom.compareDocumentPosition(landingNarrativeCtaBand)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     expect(hero.compareDocumentPosition(whereItHappens)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(whereItHappens.compareDocumentPosition(howItWorks)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(howItWorks.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(forWhom.compareDocumentPosition(documentation)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(landingNarrativeCtaBand.compareDocumentPosition(documentation)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     expect(documentation.compareDocumentPosition(knowledgePreview)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );

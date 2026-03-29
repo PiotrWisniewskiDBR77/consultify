@@ -92,7 +92,7 @@ export const WhereItHappensSection: React.FC = () => {
           >
             <Zap size={12} className="text-primary-300" />
             <span className="text-xs font-bold text-primary-300 uppercase tracking-wider">
-              {t('landing.whereItHappens.badge', 'Product')}
+              {t('landing.whereItHappens.badge', 'What Consultify does')}
             </span>
           </motion.div>
           <motion.h2
@@ -102,7 +102,10 @@ export const WhereItHappensSection: React.FC = () => {
             viewport={{ once: true }}
             className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4"
           >
-            {t('landing.whereItHappens.heading', 'Consultify is where it happens.')}
+            {t(
+              'landing.whereItHappens.heading',
+              'Consultify brings consulting knowledge, frameworks, execution, and deliverables into one working environment.'
+            )}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -113,7 +116,7 @@ export const WhereItHappensSection: React.FC = () => {
           >
             {t(
               'landing.whereItHappens.sub',
-              'Chat, tools, execution, ROI and deliverables — all in one place.'
+              'This is the Consulting Intelligence Platform in practice: not just AI answers, but a structured consulting workflow from diagnosis through results.'
             )}
           </motion.p>
         </div>
@@ -226,7 +229,7 @@ export const WhereItHappensSection: React.FC = () => {
             <Target size={12} className="text-primary-400" />
             {t(
               'landing.whereItHappens.closingNote',
-              'Everything connected. One workspace. Full transparency.'
+              'One category promise, one product surface, one path from understanding to measurable results.'
             )}
           </div>
         </motion.div>

@@ -27,8 +27,8 @@ describe('EntryFooter CTA authority', () => {
     const onTrialClick = vi.fn();
     renderFooter({ onDemoClick, onTrialClick });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Demo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Trial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try Demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start Trial' }));
 
     expect(onDemoClick).toHaveBeenCalledTimes(1);
     expect(onTrialClick).toHaveBeenCalledTimes(1);
@@ -37,7 +37,7 @@ describe('EntryFooter CTA authority', () => {
   it('keeps safe href fallbacks when shared callbacks are absent', () => {
     renderFooter();
 
-    expect(screen.getByRole('link', { name: 'Demo' })).toHaveAttribute('href', '/demo');
-    expect(screen.getByRole('link', { name: 'Trial' })).toHaveAttribute('href', '/trial');
+    expect(screen.getByRole('link', { name: 'Try Demo' })).toHaveAttribute('href', '/demo');
+    expect(screen.getByRole('link', { name: 'Start Trial' })).toHaveAttribute('href', '/trial');
   });
 });
