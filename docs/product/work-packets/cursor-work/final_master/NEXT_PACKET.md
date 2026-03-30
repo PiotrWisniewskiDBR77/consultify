@@ -12,24 +12,24 @@ Rules:
 
 ## Authorized packet(s)
 
-### 1) P18-A — Provenance/Review/Visibility (approved(scope))
+### 1) P30-A — Organization (approved(scope))
 
-Goal: freeze trust-state canon (payload + stage language + approve(run) ≠ review(artifact)).
+Goal: freeze one tenant truth + reuse contract (profile/defaults/trust) that downstream modules must consume (no parallel org truth).
 
 Dependencies:
 
-- none (foundation packet)
+- P18-A (trust-state canon) should be `approved(scope)` (now done)
 
 Lock:
 
-- create `docs/product/work-packets/cursor-work/final_master/locks/P18-A.md`
+- create `docs/product/work-packets/cursor-work/final_master/locks/P30-A.md`
 
 Completion:
 
-- update `EXECUTION_INDEX.md` #18 → `approved(scope)`
+- update `EXECUTION_INDEX.md` #30 → `approved(scope)`
 - release the lock (`Status: released`)
 
 Notes:
 
-- Outputs Library (#19) is already progressing in runtime; P18-A must be shipped next to make the trust-state dependency explicit and prevent drift.
+- This is the next foundation block in dependency-first order (after trust/home/gov).
 
