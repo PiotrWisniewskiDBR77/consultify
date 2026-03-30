@@ -34,6 +34,7 @@ import type {
   TemplateStatus,
 } from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
+import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import {
   useArtifactOutputsList,
   usePresentations,
@@ -42,34 +43,6 @@ import {
   useSheetOutputs,
   useTemplates,
 } from './useRapData';
-
-const TAB_TO_QUERY: Record<RapTab, string> = {
-  outputs_all: 'all',
-  outputs_mine: 'mine',
-  outputs_review: 'needs_review',
-  outputs_documents: 'documents',
-  presentations: 'presentations',
-  outputs_sheets: 'sheets',
-  templates: 'templates',
-};
-
-function parseRapTabFromQuery(raw: string | null): RapTab | null {
-  if (!raw) return null;
-  const n = raw.trim().toLowerCase();
-  const map: Record<string, RapTab> = {
-    all: 'outputs_all',
-    mine: 'outputs_mine',
-    needs_review: 'outputs_review',
-    review: 'outputs_review',
-    documents: 'outputs_documents',
-    // Backward compatibility for legacy deep-links. Canonical query is `documents`.
-    reports: 'outputs_documents',
-    presentations: 'presentations',
-    sheets: 'outputs_sheets',
-    templates: 'templates',
-  };
-  return map[n] ?? null;
-}
 
 export const ReportsAndPresentationsHub: React.FC = () => {
   const { t } = useTranslation();
@@ -976,7 +949,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           setActiveTab(next);
           setActiveFilters([]);
           setFiltersOpen(false);
-          const q = TAB_TO_QUERY[next];
+          const q = RAP_TAB_TO_QUERY[next];
           navigate(`${location.pathname}?tab=${encodeURIComponent(q)}`, { replace: true });
         }}
         showTabCounts={false}

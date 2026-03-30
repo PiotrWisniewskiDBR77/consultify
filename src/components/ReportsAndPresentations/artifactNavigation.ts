@@ -1,3 +1,5 @@
+import { getArtifactPath } from '@/utils/artifactLinks';
+
 import type { ArtifactGovernanceSummary } from './types';
 
 type ArtifactNavigationKind = 'document' | 'presentation' | 'sheet';
@@ -10,8 +12,12 @@ export function resolveArtifactOpenPath(params: {
   const explicitOpenPath = String(params.governance?.openPath || '').trim();
   if (explicitOpenPath) return explicitOpenPath;
 
-  if (params.kind === 'document') return `/reports/builder/${params.originRecordId}`;
-  if (params.kind === 'presentation') return `/presentations/builder/${params.originRecordId}`;
+  const id = String(params.originRecordId || '').trim();
+  if (!id) return null;
+
+  // Same primary URL as deep links / chat (getArtifactPath) — preview “Open” must not fork truth.
+  if (params.kind === 'document') return getArtifactPath('report', id);
+  if (params.kind === 'presentation') return getArtifactPath('presentation', id);
   return null;
 }
 

@@ -70,6 +70,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
+import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
@@ -1784,15 +1785,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           return;
         case 'navigate':
           if (action.target === 'outputs_all') {
-            navigate('/presentations?tab=all');
+            navigate(`/presentations?tab=${presentationsTabQueryForHomeBridge('outputs_all')}`);
             return;
           }
           if (action.target === 'outputs_mine') {
-            navigate('/presentations?tab=mine');
+            navigate(`/presentations?tab=${presentationsTabQueryForHomeBridge('outputs_mine')}`);
             return;
           }
           if (action.target === 'outputs_review') {
-            navigate('/presentations?tab=needs_review');
+            navigate(`/presentations?tab=${presentationsTabQueryForHomeBridge('outputs_review')}`);
             return;
           }
           setActiveTab(action.target);

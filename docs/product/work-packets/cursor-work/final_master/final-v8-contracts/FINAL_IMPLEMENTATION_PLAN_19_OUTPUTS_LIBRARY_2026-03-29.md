@@ -1,8 +1,8 @@
 # Final Implementation Contract — Outputs Library (Position 19/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P19-A** (library canon frozen); P19-B / P19-C not started  
-Last updated: 2026-03-30 (P19-A scope closure)
+Status: **P19-A** `approved(scope)`; **P19-B** `in progress` (runtime); **P19-C** not started  
+Last updated: 2026-03-30 (P19-B: tab-query SSOT + open-path parity with `getArtifactPath`)
 
 ## 1. Executive summary
 - **Intent**: Jedno miejsce na efekty pracy (tabele/excel, word, prezentacje, raporty); wyszukiwanie + automatyczne tworzenie i wysyłanie.
@@ -188,6 +188,6 @@ If implementers find a near-duplicate store or route, **stop** — record in §9
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P19-A | approved(scope) | `2d0f958aff` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
-| P19-B |  |  |  |  |  |
+| P19-B | in progress | (see commit after push) | `npx vitest run tests/unit/components/ReportsAndPresentations/outputsLibraryTabQuery.test.ts tests/unit/components/ReportsAndPresentations/artifactNavigation.test.ts` → pass | pending | Queue `?tab=` single module; My Work bridge uses same; aggregate **Open** uses `getArtifactPath` when no explicit `openPath`. Lock: `locks/P19-B.md`. Remaining: full 4-type staging + integration suite per §5.2. |
 | P19-C |  |  |  |  |  |
 
