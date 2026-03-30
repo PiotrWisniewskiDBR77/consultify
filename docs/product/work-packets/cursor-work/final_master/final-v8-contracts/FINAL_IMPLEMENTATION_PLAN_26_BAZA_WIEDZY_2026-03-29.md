@@ -23,22 +23,27 @@ This section freezes the operator-grade canon for Knowledge Base (KB): **one** k
 #### 2.3.1 KB object model (runtime + ops)
 
 - **Article**: atomic unit of knowledge (one URL, one canonical topic). Must support:
-  - **id** (stable, never reused), **slug** (URL), **title**, **summary/lede**, **body**, **hero/graphics references** (optional), **readingTime** (derived), **status** (draft/published/deprecated), **visibility** (public/in-app/internal), **createdAt/updatedAt**, **owner**.
+  - **identity**: `id` (stable, never reused), `canonicalTopicKey` (optional but recommended), `slug` (URL path; may change only with redirect), `status` (draft/published/deprecated), `visibility` (public/in-app/internal).
+  - **content**: `title`, `summary/lede`, `body`, `heroAssetRefs?`, `readingTime` (derived), `callouts?` (bounded, operator-authored).
+  - **ops**: `owner` (person/team), `reviewCadenceDays?`, `reviewDueAt?`, `createdAt`, `updatedAt`, `publishedAt?`, `deprecatedAt?`, `deprecationReason?`.
   - **taxonomy bindings**: `collectionIds[]`, `tagIds[]`.
-  - **discovery bindings**: `surfaceBindings[]` (where this article is allowed to appear: LP / Help entry / right panel / AI recommendations).
-  - **relations**: `relatedArticleIds[]` (bounded, curated; not “infinite scroll”).
+  - **discovery bindings**: `surfaceBindings[]` (explicit allow-list: LP / Help entry / right panel / AI recommendations / public docs).
+  - **relations**: `relatedArticleIds[]` (bounded, curated; not “infinite scroll”), `replacementArticleId?` (when deprecated), `redirectToArticleId?` (when moved).
+  - **sources**: `sourceIds[]` (optional pointers; never treated as proof-of-truth by default).
 - **Collection**: curated folder/series that explains “what is here” and “what to read next”.
   - `id`, `slug`, `title`, `description`, `order`, `parentCollectionId?` (optional), `visibility`, `featured?`.
   - Collections are the primary IA spine; tags do not replace them.
 - **Tag**: cross-cutting facet for filtering and discovery; must be bounded and operator-owned.
-  - `id`, `slug`, `label`, `description?`, `kind` (e.g. domain/tool/concept/stage), `synonyms[]`, `visibility`.
-- **Source**: evidence pointer for why a statement exists (internal doc / benchmark / customer input / release note).
-  - Captured as a pointer, not a guarantee of truth; used for “no overclaim”.
+  - `id`, `slug`, `label`, `description?`, `kind` (domain/tool/concept/stage/audience), `synonyms[]`, `visibility`, `status` (active/deprecated), `redirectToTagId?` (for merges).
+- **Source**: evidence pointer for why a statement exists (internal doc / benchmark / customer input / release note). Pointer only.
+  - `id`, `kind`, `title?`, `uri?`, `capturedAt?`, `excerpt?`, `notes?`, `visibility` (internal/public).
+  - Used for “why we recommend / where it comes from” — not as a correctness guarantee.
 - **Version**: KB is mutable, but must be auditable.
-  - Canon: every published article has `version` + last change reason; breaking updates require explicit update note.
+  - `articleId`, `version` (monotonic), `changeType` (typo/clarify/update/breaking), `changeNote`, `changedBy`, `changedAt`.
+  - Canon: every published article exposes `version` + last change note; breaking updates require a visible update note on the article.
 - **Translation (PL/EN)**: KB must be bilingual with safe fallback.
-  - Canon: `articleId` + `locale` produce a localized payload.
-  - Rule: lack of translation must trigger a clear degraded state (see 2.3.6), never silent language mixing.
+  - Canon: `articleId` + `locale` yields a localized payload (title/summary/body), plus `translationStatus` (native/translated/stale/missing).
+  - Rule: lack of translation triggers a clear degraded state (see 2.3.6), never silent language mixing.
 
 #### 2.3.2 Taxonomy + search/discovery posture (operator-grade)
 
@@ -46,19 +51,29 @@ This section freezes the operator-grade canon for Knowledge Base (KB): **one** k
   - LP knowledge entry, Help entrypoints, KB browse/search, right-panel contextual reading lane, AI recommendation linking.
 - **Discovery contract**:
   - **Browse** starts from Collections (IA), not from tags.
-  - **Search** is fast, tolerant (synonyms), and returns results with clear scopes (collection/tag context).
+  - **Search** is fast, tolerant (synonyms + typo tolerance), and returns results with clear scope cues (collection context + tag facets).
   - **Tags** are facets, not IA; they refine browse/search.
   - **Related/Next** is curated (bounded list), not purely algorithmic.
+- **Search operator posture (what “good” means)**:
+  - **Ranking**: exact title match > title contains > lede contains > body contains; boost featured collections; de-boost deprecated; never surface internal-only content on public surfaces.
+  - **Facets**: results always expose available `collection` + `tag` filters derived from the result set.
+  - **Locale**: search runs in requested locale first; if fallback is used, it must be explicit (see 2.3.6).
+  - **Surface bindings respected**: search/browse must filter by `surfaceBindings` (no “leak” into a disallowed surface).
 - **Indexing posture**:
   - “Index stale” is a first-class degraded mode; user must still be able to browse via IA and open canonical featured collections.
 - **Operator controls**:
   - Featured collections/tags and “surface bindings” are explicit knobs; no implicit auto-promotion across surfaces.
+  - Tag governance is explicit: new tags require an owner, a `kind`, and synonyms; tag merges deprecate + redirect (no “two labels for same thing”).
 
 #### 2.3.3 Content ops baseline (ownership + lifecycle)
 
 - **Ownership**:
   - Every published article has an **owner** (person/team) and a **review cadence** (time-boxed).
   - Collections also have owners (IA is a product, not only metadata).
+- **Roles (minimal)**:
+  - **KB owner**: taxonomy + IA spine owner (collections + tag governance).
+  - **Article owner**: correctness + currency for a topic.
+  - **Publisher/operator**: enforces publish bar, redirects, and deprecation hygiene.
 - **Lifecycle**:
   - States: `draft` → `published` → `deprecated` → `redirected/archived`.
   - Deprecation must include: reason + replacement pointer (article/collection) when available.
@@ -68,6 +83,7 @@ This section freezes the operator-grade canon for Knowledge Base (KB): **one** k
 - **Redirect posture**:
   - Prefer **redirects** over deletions; preserve inbound links (newsletter/social).
   - If content is removed, replace with a clear “this moved” canonical page and pointers.
+  - Redirects apply to both **slugs** and **merged tags**; users should never hit a dead end from a previously published URL.
 
 #### 2.3.4 Grounding contract for AI (Anna/Teresa)
 
@@ -82,8 +98,9 @@ AI must recommend KB content using an explicit payload that is auditable and doe
     - For each id: 1–3 bullets “why this fits the context”, plus any explicit limits/assumptions.
   - **nextStep** (optional): what to do after reading (bounded; no invented promises).
 - **Citations / evidence pointers posture (no overclaim)**:
-  - AI may point to `source` pointers (internal or benchmark) as “why we recommend”, but must not claim correctness beyond what KB states.
-  - If unsure: AI must prefer “I might be wrong” posture and route to canonical collections.
+  - AI must cite **KB ids** (article/collection) as the primary citations. If a URL is shown, it must be derived from the KB slug (no invented links).
+  - AI may additionally point to `source` pointers (internal or benchmark) as “why we recommend / where the content comes from”, but must not claim correctness beyond what the KB states.
+  - If unsure or if KB coverage is missing: prefer uncertainty posture and route to canonical collections (and/or propose a topic request) rather than inventing content.
 
 #### 2.3.5 Anti-duplicate gate (KB ≠ Help, but integrated)
 
@@ -94,7 +111,8 @@ AI must recommend KB content using an explicit payload that is auditable and doe
 - **Integration rule**:
   - Help surfaces may *route into KB* using KB article/collection ids; they must not clone content into a separate “help KB”.
 - **Duplicate detection** (operator gate):
-  - If a new article overlaps an existing one: merge/redirect; do not publish parallel topics with different ids.
+  - If a new article overlaps an existing one: merge + redirect; do not publish parallel topics with different ids.
+  - Canon rule: one canonical topic → one canonical article id; “variants” are translations or updates, not separate competing articles.
 
 #### 2.3.6 Degraded / error posture + acceptance checklist (P26-A)
 
@@ -107,6 +125,7 @@ Degraded modes are part of user trust; they must be explicit and safe.
   - Empty results for tag/collection → show “no content yet” + nearest alternatives + “request topic” posture (bounded).
   - Surface binding disallows an article in this surface → do not show it; fall back to allowed featured content.
   - Deprecated article opened → show deprecation notice + replacement pointer.
+  - Missing/invalid redirect target → fail closed to canonical collection entry (never loop, never 404 without guidance).
 
 - **Acceptance checklist (scope approval; 10+)**:
   - [ ] Article/Collection/Tag/Source/Version/Translation canon defined (this section) and referenced as SSOT for P26-B.
