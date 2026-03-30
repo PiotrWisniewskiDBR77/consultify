@@ -270,7 +270,7 @@ Acceptance is **testable** and derived from §2.3 canon.
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P11-A | approved(scope) | TBD (fill after commit) | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
+| P11-A | approved(scope) | 7965f5da18 | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
 | P11-B |  |  |  |  |  |
 | P11-C |  |  |  |  |  |
 
