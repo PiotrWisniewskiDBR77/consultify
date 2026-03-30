@@ -12,31 +12,9 @@ Rules:
 
 ## Authorized packet(s)
 
-### 1) P21-A — Report template-first canon + sources posture (scope approval)
+_No packet currently authorized. Manager gate: do **not** start a new packet until this section is updated._
 
-Goal: freeze report as a template-first deliverable artifact with evidence pointers (sources/citations), degraded/no-web posture, and clear separation of approve(run) vs review(artifact). Reports consume Templates (P24), land in Outputs (P19), carry provenance (P18).
-
-Dependencies:
-
-- P24-A (Templates canon) — `approved(scope)` (done)
-- P19-A/B/C (Outputs Library) — `verified(evidence)` (done)
-- P18-A (Provenance/trust) — `approved(scope)` (done)
-- P30-A (Organization) — `approved(scope)` (done)
-
-Lock:
-
-- create `docs/product/work-packets/cursor-work/final_master/locks/P21-A.md`
-
-Completion:
-
-- update `EXECUTION_INDEX.md` #21 → `approved(scope)`
-- release the lock (`Status: released`)
-
-Notes:
-
-- Reports are a product lane (not "documents in general") — template-first, governed, with sources posture.
-- Reports ≠ Wordy (P22) — Wordy is KIMI net-new; Reports is template-driven deliverable.
-- No "full report builder" — scope is template→generate→artifact→library→continue→export.
+_P21-A (Reports) done. Next consumer packets awaiting manager authorization (recommended: P20 Prezentacje, P22 Wordy, P17 ArtifactRun)._
 
 ## Completed (archive)
 
@@ -50,3 +28,4 @@ Notes:
 | P32-A | approved(scope) | 2026-03-30 |
 | P33-A | approved(scope) | 2026-03-30 |
 | P24-A | approved(scope) | 2026-03-30 |
+| P21-A | approved(scope) | 2026-03-30 |
