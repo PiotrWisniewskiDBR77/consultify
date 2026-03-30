@@ -157,6 +157,42 @@ Goal: deliver contextual help entry points on 3 surfaces + search→article→ne
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P25-B.md`
 
+### 3) P16-B — Anna (public assistant): landing + bounded assistant runtime (core runtime)
+
+Goal: deliver Anna public assistant surface per contract: bounded funnel CTA + citations/uncertainty + degraded rules; explicitly separate from Teresa.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P16-B.md`
+
+### 4) P24-C — Templaty: verification + rollout + evidence (runtime verification)
+
+Goal: execute P24 staging proof, run tests, fill evidence ledger rows P24-B/P24-C, and close packet as `verified(evidence)`.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P24-C.md`
+
+### 5) P18-B — Provenance: end-to-end traceability closure (core runtime)
+
+Goal: deliver click-through lineage (run→tool calls→output) + export audit that respects visibility, with integration tests + staging proof.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P18-B.md`
+
+### 6) P17-B — ArtifactRun: validation + rerun/failure closure (core runtime)
+
+Goal: deliver explicit validation/preflight stage + failure packaging + retry/rerun without ghost artifacts, with integration tests + staging proof.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-B.md`
+
+### 7) P34-B — Mądrość czata: source ledger + promotion workflow closure (core runtime)
+
+Goal: deliver policy-first retrieval gateway runtime: used/blocked source ledger + governed private→org promotion, proven by security tests + staging demos.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P34-B.md`
+
+### 8) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
+
+Goal: deliver full thread lifecycle + server-side search target with pagination/filters + team folder permission denials (no leakage), with integration/security tests + staging demo.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-B.md`
+
 ---
 
 Completion (each agent independently):
