@@ -12,29 +12,29 @@ Rules:
 
 ## Authorized packet(s) — PARALLEL BATCH
 
-### 1) P01-A — Integracja: control-plane canon + object model (scope approval)
+### 1) P08-A — Teresa: copilot canon + boundaries (scope approval) — REDO (previous attempt incomplete)
 
-Goal: freeze the operator-grade integration control plane: explicit object model (provider/connection/workflow/run), lifecycle grammar, and recovery states (connect → complete → monitor → recover).
+Goal: freeze Teresa as contextual copilot (proposal→approval→execution→audit) with P0 handoff targets, voice degraded rules, and clear boundaries vs Anna/public assistant. This packet must fill contract §2.3 canon + evidence ledger and update `EXECUTION_INDEX` #08 → `approved(scope)`.
 
-Dependencies: benchmark + readiness SSOT (`SYNC_PLATFORM_BENCHMARK_V8.md`, `EXTERNAL_SYNC_READINESS_AUDIT_V8.md`)
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P01-A.md`
-
-### 2) P07-A — Notatnik: notebook canon + scope approval
-
-Goal: freeze notebook as durable working memory (capture + search + linking + attachments lifecycle) with explicit provenance language and bounded downstream handoffs.
-
-Dependencies: `NOTATKA_V8_SSOT.md` + benchmark (`NOTATKA_V8_BENCHMARK.md`)
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P07-A.md`
-
-### 3) P08-A — Teresa: copilot canon + boundaries (scope approval)
-
-Goal: freeze Teresa as contextual copilot (proposal→approval→execution→audit) with P0 handoff targets, voice degraded rules, and clear boundaries vs Anna/public assistant.
-
-Dependencies: chat benchmark + Wave2 AI OS context (`CHAT_V8_BENCHMARK.md`, `WAVE2_FINAL_IMPLEMENTATION_PLAN_AGENTS_KIMI_PROMPTS_PALANTIR_2026-03-29.md`)
+Dependencies: P17-A ✅, P07-A ✅, foundations ✅; benchmarks: `CHAT_V8_BENCHMARK.md` + Wave2 AI OS context.
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P08-A.md`
+
+### 2) P09-A — Ankiety: collection lane canon + scope approval
+
+Goal: freeze surveys as governed collection lane (submission status grammar + operator workflow + handoff payload to Insights), explicitly not an insight engine.
+
+Dependencies: flow `docs/flows/core/ASSESSMENT_EXECUTION_FLOW.md` + detailed plan.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P09-A.md`
+
+### 3) P10-A — Wnioski w Interview: insight artifact canon + scope approval
+
+Goal: freeze insight as auditable artifact (finding/evidence/limits/next action) with confidence semantics, evidence pointers rules, and handoff payload to Initiatives.
+
+Dependencies: readiness `docs/product/INTERVIEW_V8_READINESS_AUDIT.md` + Ankiety handoff posture (P09).
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P10-A.md`
 
 ### 8) P02-A — Kalendarz interoperability canon (scope approval) (DOCS ONLY)
 
