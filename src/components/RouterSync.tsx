@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
-import { AppView, AuthStep, SessionMode } from '../types';
+import { AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
 import { isSuperAdminRole } from '../utils/roleGuards';
 
@@ -227,6 +227,9 @@ export const RouterSync: React.FC = () => {
     // ---------------------------
     // URL -> currentView sync
     // ---------------------------
+    // Only react to pathname (and auth) changes — not to `currentView`.
+    // Otherwise: sidebar calls setCurrentView + navigate; this effect re-runs on
+    // the same path before the URL updates and overwrites the new view (Superadmin felt "stuck").
     const mappedView = getAppViewFromPath(path);
     if (mappedView && mappedView !== currentView) {
       setCurrentViewState(mappedView);
@@ -235,7 +238,6 @@ export const RouterSync: React.FC = () => {
     location.pathname,
     currentUser?.isAuthenticated,
     currentUser?.role,
-    currentView,
     navigate,
     setCurrentViewState,
     setSessionMode,
