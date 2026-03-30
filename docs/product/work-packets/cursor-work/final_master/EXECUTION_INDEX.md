@@ -75,17 +75,17 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 20 | Prezentacje | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_20_PREZENTACJE_2026-03-29.md` | P20-A / P20-B / P20-C | approved(scope) |
 | 21 | Raporty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_21_RAPORTY_2026-03-29.md` | P21-A / P21-B / P21-C | approved(scope) |
 | 22 | Wordy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_22_WORDY_2026-03-29.md` | P22-A / P22-B / P22-C | draft |
-| 23 | Excele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md` | P23-A / P23-B / P23-C | draft |
+| 23 | Excele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md` | P23-A / P23-B / P23-C | approved(scope) |
 | 24 | Templaty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_24_TEMPLATY_2026-03-29.md` | P24-A / P24-B / P24-C | approved(scope) |
 | 25 | Help | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_25_HELP_2026-03-29.md` | P25-A / P25-B / P25-C | approved(scope) |
 | 26 | Baza wiedzy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_26_BAZA_WIEDZY_2026-03-29.md` | P26-A / P26-B / P26-C | approved(scope) |
 | 27 | Tools | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_27_TOOLS_2026-03-29.md` | P27-A / P27-B / P27-C | approved(scope) |
 | 28 | Assessment | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md` | P28-A / P28-B / P28-C | draft |
-| 29 | Program partnerski | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` | P29-A / P29-B / P29-C | draft |
+| 29 | Program partnerski | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` | P29-A / P29-B / P29-C | approved(scope) |
 | 30 | Organization | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_30_ORGANIZATION_2026-03-29.md` | P30-A / P30-B / P30-C | approved(scope) |
 | 31 | Settings | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_31_SETTINGS_2026-03-29.md` | P31-A / P31-B / P31-C | approved(scope) |
 | 32 | Admin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_2026-03-29.md` | P32-A / P32-B / P32-C | approved(scope) |
 | 33 | Superadmin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_33_SUPERADMIN_2026-03-29.md` | P33-A / P33-B / P33-C | approved(scope) |
-| 34 | Mądrość czata | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_34_MADROSC_CZATA_2026-03-29.md` | P34-A / P34-B / P34-C | draft |
+| 34 | Mądrość czata | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_34_MADROSC_CZATA_2026-03-29.md` | P34-A / P34-B / P34-C | approved(scope) |
 | 35 | Historia czatów | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_35_HISTORIA_CZATOW_2026-03-29.md` | P35-A / P35-B / P35-C | draft |
 
