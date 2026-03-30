@@ -1,7 +1,8 @@
 # Final Implementation Contract — Prezentacje (Position 20/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P20-A** (deck lifecycle canon + review/export grammar frozen); P20-B / P20-C not started  
+Last updated: 2026-03-30 (P20-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Gamma‑like: generacja+edycja; export PPT/PDF; zarządzanie generatorem; edycja z poziomu czata.
@@ -15,6 +16,141 @@ Status: draft (contract wrapper over existing plan)
 
 ### 2.2 Out-of-scope / non-goals
 - Pełna parity z narzędziami prezentacyjnymi.
+- “Full PowerPoint suite” parity (animations, master slide editor, complex layouts, realtime co-authoring as baseline).
+- Dekki jako “osobny świat” poza Outputs (P19) — jeden kanoniczny home artefaktów.
+
+### 2.3 Deck artifact canon (schema + single truth)
+
+**Rule:** Deck jest artefaktem w **Outputs Library (P19)** i konsumuje **Templates (P24)** oraz **trust-state / provenance (P18)**. Prezentacje nie mogą tworzyć równoległej rejestracji ani “presentations_v2”.
+
+**Canonical identity:**
+
+- `deck_artifact_id` = `Artifact.id` / `ArtifactRef` (SSOT: `docs/product/ARTIFACT_LINKING_V5_SSOT.md`, P19).
+- `template_id` jest **mandatory** i wskazuje na `OutputTemplate.templateId` (P24; template też jest artefaktem w Outputs).
+
+**Deck payload (logical model; stored/derived as needed):**
+
+| Field | Type | Meaning | Truth source / constraints |
+| --- | --- | --- | --- |
+| `deck_artifact_id` | string (UUID) | Stable deck identity | P19 `ArtifactRef` |
+| `template_id` | string (UUID) | Template contract used | P24 `OutputTemplate.templateId` (required) |
+| `format_family` | `'deck'` | Family discriminator | Must match template |
+| `title` | string | Deck title | Editable without changing identity |
+| `slide_count` | number | Current number of slides | Derived from `slide_structure[]` |
+| `slide_structure[]` | array | Ordered slide records | Stable `slide_id` per slide; order mutable |
+| `speaker_notes` | enum / payload | Speaker notes posture + content | `required/optional/none` from P24 template; per-slide notes stored in structure |
+| `transition_style` | enum | Governed transition posture | Bounded (e.g. `none` / `basic`) — no animation suite |
+| `version` | integer | Optimistic concurrency + history key | Increment on structural/content edits |
+| `export_ledger[]` | array | Export attempts and successes | **Projection of P18 `exportHistory`**; no parallel export store |
+| `share_posture` | object | Share link/access posture | Must respect P18 visibility/access grants |
+| `analytics_summary` | object | Bounded consumption signal | Bounded (views/time); no overclaim |
+
+**Slide structure record (minimum):**
+
+| Field | Type | Meaning | Notes |
+| --- | --- | --- | --- |
+| `slide_id` | string (UUID) | Stable per-slide identity | Persists across edits/reorder |
+| `order` | number | Order in deck | Reorder changes order, not ids |
+| `intent` | string | Slide intent | Should align with template `outlineBlueprint` intents |
+| `layout` | string | Layout key | Governed set; template may constrain |
+| `content_blocks[]` | array | Structured content | No freeform “pptx XML editing” |
+| `speaker_notes_text?` | string | Notes per slide | Optional / required per template policy |
+
+### 2.4 Lifecycle states (draft → reviewed → exported) — without duplicating P18
+
+**Rule:** Deck lifecycle badges must be **falsifiable** and must not fork trust vocabulary. We expose the three canonical deck states:
+
+- `draft`: deck exists but is not marked reviewed for delivery.
+- `reviewed`: human review of the **artifact** is complete (maps to P18 publish/review axis).
+- `exported`: at least one **successful** export exists in `export_ledger[]` (maps to P18 export ledger).
+
+**Source of truth mapping:**
+
+- `draft/reviewed` is a view on top of P18 publish/review axis (`publishState` / reviewers).
+- `exported` is computed from P18 `exportHistory` with `status=success`.
+- Surfaces may denormalize these badges into list rows, but **must** be derivable from the P18 trust payload (no parallel enums).
+
+### 2.5 Durable identity + reopen/continue semantics (structural continuity)
+
+**Reopen rule:** Reopen from Outputs Library must open the same `deck_artifact_id` and preserve:
+
+- slide ids (`slide_id`) and ordering,
+- template reference (`template_id`) and template-derived constraints,
+- trust-state (P18) and export ledger projection.
+
+**Continuation rule:** “Continue editing” means patching the existing deck (no regenerate-from-scratch by default). Regeneration can exist only as an explicit action that:
+
+- preserves `deck_artifact_id`,
+- records a version history entry,
+- maintains traceability to prior versions.
+
+### 2.6 Continuation depth (per-slide AI edits + version history + revert)
+
+**Minimum continuation operations (bounded):**
+
+- Slide-level refine: rewrite bullets, change tone, tighten summary **within** slide intent.
+- Slide-level replace: regenerate a single slide while preserving deck identity.
+- Insert/remove slide: structural changes preserve deck identity; removed slides are recoverable via version history (bounded).
+- Speaker notes edit: per-slide notes refinement (if policy allows).
+
+**Versioning posture:**
+
+- Deck maintains `version` (monotonic) for optimistic concurrency and `version_history` for revert.
+- Revert restores a prior deck version while keeping the same `deck_artifact_id` and recording the revert as a new version (no destructive “time travel”).
+
+### 2.7 Review/export grammar (badges + next actions + resilience)
+
+**Review grammar (artifact review, not run approval):**
+
+- Badges communicate `draft` vs `reviewed` with clear next-action cues (e.g. “Mark as reviewed”, “Request changes”).
+- Review actions update the **P18 publish/review axis** (never `approve(run)`).
+
+**Export grammar (bounded PDF/PPTX):**
+
+- Supported formats: **PDF**, **PPTX** only (explicitly bounded).
+- Export limits are explicit (examples; finalize in P20-B implementation): max slide count, max embedded assets size, limited transitions/animations, font fallback rules.
+
+**Export resilience (no ghost artifacts):**
+
+- Every export attempt yields a ledger entry (`export_ledger[]`) with `status: success | failed`.
+- Failure must not create a new deck artifact; it records error + retry affordance.
+- Retry reuses the same deck identity; multiple exports append ledger entries (audit trail).
+
+### 2.8 Template integration + org branding (P24 + P30)
+
+- `template_id` is mandatory for deck creation and persists for the deck’s lifetime (unless explicit “retarget template” operation is approved later).
+- Deck uses P24 `OutputTemplate` deck extensions as its generation contract (e.g. `outlineBlueprint`, `slideCountRange`, `speakerNotesPolicy`).
+- Branding defaults come from P30 `ResolvedOrganizationContext.profile`; templates inherit brand defaults (P24 rule: no redefining org branding).
+
+### 2.9 Share + analytics posture (bounded, governed)
+
+**Share:**
+
+- Share is a link-based view of the deck artifact with access control (P18 visibility/access grants).
+- Share permission denied returns explicit “what next” guidance (request access / switch org / ask owner).
+- Share events are audit-recorded as provenance events (P18) and/or access-grant changes (no parallel share ledger outside trust/provenance).
+
+**Analytics (bounded):**
+
+- Only bounded consumption metrics: `views_count`, `unique_viewers_count` (if feasible), `time_spent_total` / `avg_time_spent` (coarse).
+- Analytics is directional, not definitive “engagement truth”; no overclaim dashboards in scope.
+
+### 2.10 Anti-duplicate gate (explicit)
+
+**Hard rules:**
+
+- No parallel template store (P24 `OutputTemplate` is SSOT).
+- No parallel Outputs home (P19 library is SSOT).
+- No parallel provenance / trust-state or export ledger (P18 is SSOT).
+- No `presentations_v2` table, no `deck_registry_v2`, no forked routes for open/reopen beyond `ArtifactRef` identity.
+
+### 2.11 Degraded / error posture (must be explicit)
+
+- **Template not found** (invalid/deleted `template_id`): 404 + guidance to choose a new template; deck remains readable; generation/edit features that require template are blocked with explicit message.
+- **Export failure**: ledger records `failed` with error category + retry guidance; no ghost artifacts; if partial file created, it must not be attached as a “success export”.
+- **Continuation conflict (concurrent edit)**: 409 with guidance to refresh; client must rebase changes against latest `version`.
+- **Share permission denied**: 403 with “request access” path; do not leak deck content via share endpoint.
+- **Provenance unavailable (P18 outage)**: fail closed for review/export state transitions that require ledger writes; keep read-only access.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -109,6 +245,23 @@ Status: draft (contract wrapper over existing plan)
 - **DoD**:
   - Approved(scope): continuation and review/export semantics are explicit and testable.
 
+##### P20-A — Acceptance checklist (testable, 10+)
+
+1. **Deck is an Output artifact**: deck has stable `deck_artifact_id` (`ArtifactRef`) and appears in Outputs Library (P19) as the canonical home.
+2. **Template required**: `template_id` is mandatory on create and references P24 `OutputTemplate.templateId`; no create flow without a template contract.
+3. **Deck schema extensions explicit**: deck payload includes `slide_count`, `slide_structure[]`, `speaker_notes` posture, and `transition_style` with bounded semantics.
+4. **Stable slide identity**: each slide has stable `slide_id`; reordering/editing preserves ids; add/remove preserves deck identity.
+5. **Reopen preserves structure**: reopen from Outputs Library returns the same deck identity and the same slide structure (modulo latest edits), not a regenerated deck.
+6. **Continuation ≠ regenerate**: “continue editing” defaults to patching existing deck; regenerate-from-scratch requires explicit user action and records version history.
+7. **Lifecycle badges are derivable**: `draft/reviewed/exported` are derived from P18 publish/review axis and export ledger; no parallel lifecycle enum store.
+8. **Review grammar is artifact review**: review actions modify P18 publish/review axis and do not conflate with `approve(run)`.
+9. **Export bounded + resilient**: export supports only PDF/PPTX with explicit limits; failures record a ledger entry and provide retry; no ghost deck artifacts created.
+10. **Export recorded in provenance**: successful and failed exports are recorded in P18 `exportHistory` and reflected in deck `export_ledger[]` projection.
+11. **Share governed**: share link respects access control; denied access yields 403 with guidance; share events are recorded as provenance/access changes.
+12. **Bounded analytics**: only views/time metrics; explicitly not “full engagement analytics”; surfaced as directional signal.
+13. **Concurrency conflict explicit**: concurrent edit yields 409 with version mismatch guidance; client must refresh/rebase.
+14. **Anti-duplicate enforced**: contract explicitly forbids parallel template/output/provenance stores and `presentations_v2`.
+
 #### P20-B — Generate→continue→review→export closure
 - **Goal**: domknąć E2E lifecycle + export audit.
 - **Acceptance**: continue nie gubi struktury; export ma recovery path; lineage widoczne.
@@ -150,7 +303,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P20-A |  |  |  |  |  |
+| P20-A | approved(scope) |  | N/A — scope packet | N/A — scope packet | Canon frozen in §2.3–2.11 + P20-A checklist; lock P20-A released; EXECUTION_INDEX #20 updated. |
 | P20-B |  |  |  |  |  |
 | P20-C |  |  |  |  |  |
 
