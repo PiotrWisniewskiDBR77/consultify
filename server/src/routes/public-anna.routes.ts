@@ -306,6 +306,42 @@ function buildAnnaServiceUnavailableMessage(locale?: string): string {
   return 'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.';
 }
 
+function enforceAnnaCitationsOrUncertainty(answer: string, sources: string[], locale?: string): string {
+  const resolvedLocale = resolveAnnaLocale(locale);
+  const trimmed = String(answer || '').trim();
+  const safeSources = Array.isArray(sources) ? sources.filter((s) => Boolean(String(s).trim())) : [];
+
+  const alreadyHasSources =
+    /\n\s*(Sources|Źródła)\s*:/i.test(trimmed) || /\b(Sources|Źródła):\s*\S+/i.test(trimmed);
+  if (safeSources.length > 0) {
+    if (alreadyHasSources) return trimmed;
+    const label = resolvedLocale === 'pl' ? 'Źródła' : 'Sources';
+    return `${trimmed}\n\n${label}: ${safeSources.join(', ')}`;
+  }
+
+  const alreadyHasUncertainty =
+    /\b(i may be mistaken|i might be wrong|not (fully )?sure|uncertain)\b/i.test(trimmed) ||
+    /\b(mogę się mylić|nie (mam )?pewności)\b/i.test(trimmed) ||
+    /確実ではありません/u.test(trimmed) ||
+    /قد أكون مخطئ/u.test(trimmed);
+  if (alreadyHasUncertainty) return trimmed;
+
+  const marker =
+    resolvedLocale === 'pl'
+      ? 'Mogę się mylić — jeśli potrzebujesz potwierdzonej odpowiedzi, skontaktuj się z nami.'
+      : resolvedLocale === 'es'
+        ? 'Puede que me equivoque — si necesitas una respuesta confirmada, contáctanos.'
+        : resolvedLocale === 'de'
+          ? 'Ich könnte mich irren — wenn du eine bestätigte Antwort brauchst, kontaktiere uns.'
+          : resolvedLocale === 'jp'
+            ? '確実ではありません。確認が必要ならお問い合わせください。'
+            : resolvedLocale === 'ar'
+              ? 'قد أكون مخطئًا — إذا كنت بحاجة لإجابة مؤكدة، يرجى التواصل معنا.'
+              : 'I may be mistaken — if you need a confirmed answer, please contact us.';
+
+  return `${trimmed}\n\n${marker}`;
+}
+
 function safeSlice(text: string, maxChars: number): string {
   const value = String(text || '').trim();
   return value.length <= maxChars
@@ -720,6 +756,7 @@ router.post(
 
       const answer = await callAnnaModel(systemPrompt, contents);
       const latencyMs = Date.now() - startMs;
+      const finalAnswer = enforceAnnaCitationsOrUncertainty(answer, knowledge.sources, body.locale);
 
       // Log conversation asynchronously (best-effort)
       if (workerConfig?.worker && body.sessionId) {
@@ -751,7 +788,7 @@ router.post(
       }
 
       return res.json({
-        message: answer,
+        message: finalAnswer,
         knowledgeSources: knowledge.sources,
         matchedProducts: knowledge.matchedProducts,
         primaryProducts: knowledge.primaryProducts,
@@ -844,7 +881,7 @@ const VoiceEventSchema = z.object({
   locale: z.string().optional(),
 });
 
-const AnnaFunnelEventSchema = z.object({
+const LegacyAnnaFunnelEventSchema = z.object({
   eventName: z.enum(PUBLIC_ANNA_FUNNEL_EVENT_NAMES),
   sessionId: z.string().min(1).max(120),
   locale: z.string().max(20).optional(),
@@ -856,6 +893,41 @@ const AnnaFunnelEventSchema = z.object({
   voiceStatus: z.enum(['idle', 'connecting', 'live', 'error']).optional(),
 });
 
+const AnnaLpCtaVerbSchema = z.enum([
+  'impression',
+  'click',
+  'start',
+  'submit_attempt',
+  'submit_success',
+  'submit_error',
+  'retry',
+  'fallback_used',
+]);
+
+const CanonicalAnnaLpCtaEventSchema = z.object({
+  eventName: z
+    .string()
+    .regex(
+      /^anna_lp\.cta\.(impression|click|start|submit_attempt|submit_success|submit_error|retry|fallback_used)$/
+    ) as unknown as z.ZodType<`anna_lp.cta.${z.infer<typeof AnnaLpCtaVerbSchema>}`>,
+  session_id: z.string().min(1).max(120),
+  cta_type: z.enum(['demo', 'trial', 'contact']),
+  language: z.enum(['pl', 'en', 'es', 'de', 'jp', 'ar']),
+  channel: z.enum(['text', 'voice']),
+  turn_id: z.string().min(1).max(120),
+  source_intent: z.enum([
+    'learn',
+    'evaluate_fit',
+    'pricing',
+    'security_compliance',
+    'get_started',
+    'talk_to_human',
+    'unknown',
+  ]),
+});
+
+const AnnaFunnelEventSchema = z.union([LegacyAnnaFunnelEventSchema, CanonicalAnnaLpCtaEventSchema]);
+
 router.post(
   '/funnel-event',
   asyncHandler(async (req, res: Response) => {
@@ -864,24 +936,43 @@ router.post(
       return res.status(400).json({ error: 'Invalid Anna funnel event' });
     }
 
-    const rateLimit = consumeAnnaFunnelEventRateLimit(req, parsed.data.sessionId);
+    const sessionId =
+      'session_id' in parsed.data ? parsed.data.session_id : (parsed.data.sessionId as string);
+    const rateLimit = consumeAnnaFunnelEventRateLimit(req, sessionId);
     if (!rateLimit.allowed) {
       return res.status(202).json({ success: false, ignored: 'rate_limited' });
     }
 
-    await recordPublicAnnaFunnelEvent({
-      eventName: parsed.data.eventName,
-      metadata: {
-        sessionId: parsed.data.sessionId,
-        locale: parsed.data.locale,
-        source: parsed.data.source,
-        messageLength: parsed.data.messageLength,
-        historyLength: parsed.data.historyLength,
-        fallbackReason: parsed.data.fallbackReason,
-        target: parsed.data.target,
-        voiceStatus: parsed.data.voiceStatus,
-      },
-    });
+    if ('session_id' in parsed.data) {
+      await recordPublicAnnaFunnelEvent({
+        eventName: parsed.data.eventName as any,
+        metadata: {
+          session_id: parsed.data.session_id,
+          cta_type: parsed.data.cta_type,
+          language: parsed.data.language,
+          channel: parsed.data.channel,
+          turn_id: parsed.data.turn_id,
+          source_intent: parsed.data.source_intent,
+          // Compatibility mirrors
+          sessionId: parsed.data.session_id,
+          locale: parsed.data.language,
+        },
+      });
+    } else {
+      await recordPublicAnnaFunnelEvent({
+        eventName: parsed.data.eventName as any,
+        metadata: {
+          sessionId: parsed.data.sessionId,
+          locale: parsed.data.locale,
+          source: parsed.data.source,
+          messageLength: parsed.data.messageLength,
+          historyLength: parsed.data.historyLength,
+          fallbackReason: parsed.data.fallbackReason,
+          target: parsed.data.target,
+          voiceStatus: parsed.data.voiceStatus,
+        },
+      });
+    }
 
     return res.status(202).json({ success: true });
   })

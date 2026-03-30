@@ -232,12 +232,42 @@ describe('Public Anna route guardrails', () => {
     );
   });
 
-  it('accepts bounded public Anna funnel events for backend analytics continuity', async () => {
+  it('accepts canonical anna_lp.cta.* events with frozen contract fields', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/funnel-event').send({
+      eventName: 'anna_lp.cta.click',
+      session_id: 'session-anna-funnel',
+      cta_type: 'demo',
+      language: 'en',
+      channel: 'text',
+      turn_id: 'user-123',
+      source_intent: 'get_started',
+    });
+
+    expect(res.status).toBe(202);
+    expect(res.body.success).toBe(true);
+    expect(recordPublicAnnaFunnelEvent).toHaveBeenCalledWith({
+      eventName: 'anna_lp.cta.click',
+      metadata: {
+        session_id: 'session-anna-funnel',
+        cta_type: 'demo',
+        language: 'en',
+        channel: 'text',
+        turn_id: 'user-123',
+        source_intent: 'get_started',
+        sessionId: 'session-anna-funnel',
+        locale: 'en',
+      },
+    });
+  });
+
+  it('still accepts legacy landing_anna_* events for continuity while migrating', async () => {
     const app = createApp();
 
     const res = await request(app).post('/api/public/anna/funnel-event').send({
       eventName: 'landing_anna_handoff_clicked',
-      sessionId: 'session-anna-funnel',
+      sessionId: 'session-legacy-anna-funnel',
       locale: 'en',
       target: 'demo',
       voiceStatus: 'idle',
@@ -248,7 +278,7 @@ describe('Public Anna route guardrails', () => {
     expect(recordPublicAnnaFunnelEvent).toHaveBeenCalledWith({
       eventName: 'landing_anna_handoff_clicked',
       metadata: {
-        sessionId: 'session-anna-funnel',
+        sessionId: 'session-legacy-anna-funnel',
         locale: 'en',
         source: undefined,
         messageLength: undefined,

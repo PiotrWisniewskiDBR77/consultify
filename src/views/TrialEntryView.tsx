@@ -7,10 +7,12 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { updateAnnaLpCtaContext, readAnnaLpCtaContext } from '@/services/annaLpCtaContext';
+import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 /**
  * TrialEntryView — Phase C: Trial Entry
@@ -30,12 +32,42 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const ctx = readAnnaLpCtaContext();
+    if (!ctx || ctx.cta_type !== 'trial') return;
+    if (ctx.start_recorded_at_ms) return;
+
+    void postPublicAnnaFunnelEvent('anna_lp.cta.start', {
+      session_id: ctx.session_id,
+      cta_type: ctx.cta_type,
+      language: ctx.language,
+      channel: ctx.channel,
+      turn_id: ctx.turn_id,
+      source_intent: ctx.source_intent,
+    });
+    updateAnnaLpCtaContext({ start_recorded_at_ms: Date.now() });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessCode) return;
 
     setIsChecking(true);
     setError(null);
+
+    const ctx = readAnnaLpCtaContext();
+    if (ctx && ctx.cta_type === 'trial') {
+      const nextAttempts = (ctx.submit_attempts || 0) + 1;
+      void postPublicAnnaFunnelEvent('anna_lp.cta.submit_attempt', {
+        session_id: ctx.session_id,
+        cta_type: ctx.cta_type,
+        language: ctx.language,
+        channel: ctx.channel,
+        turn_id: ctx.turn_id,
+        source_intent: ctx.source_intent,
+      });
+      updateAnnaLpCtaContext({ submit_attempts: nextAttempts });
+    }
 
     try {
       // Step 1: Validate Publicly (Privacy-preserving)
@@ -44,6 +76,18 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
       if (!validation.valid) {
         setError('Niepoprawny lub wygasły kod dostępu.');
         setIsChecking(false);
+
+        if (ctx && ctx.cta_type === 'trial') {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
+        }
         return;
       }
 
@@ -53,15 +97,51 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
 
       if (result.ok) {
         toast.success('Dostęp przyznany. Witamy w procesie walidacji.');
+
+        if (ctx && ctx.cta_type === 'trial') {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
+        }
         onStartTrial();
       } else {
         setError(result.error || 'Błąd podczas aktywacji dostępu.');
         setIsChecking(false);
+
+        if (ctx && ctx.cta_type === 'trial') {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
+        }
       }
     } catch (err: any) {
       console.error('Access code validation failed:', err);
       setError('System weryfikacji jest chwilowo niedostępny. Spróbuj później.');
       setIsChecking(false);
+
+      if (ctx && ctx.cta_type === 'trial') {
+        void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
+          session_id: ctx.session_id,
+          cta_type: ctx.cta_type,
+          language: ctx.language,
+          channel: ctx.channel,
+          turn_id: ctx.turn_id,
+          source_intent: ctx.source_intent,
+        });
+        updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
+      }
     }
   };
 

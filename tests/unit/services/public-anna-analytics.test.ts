@@ -13,6 +13,7 @@ describe('publicAnnaAnalytics', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await postPublicAnnaFunnelEvent('landing_anna_message_sent', {
+      session_id: 'session-anna',
       sessionId: 'session-anna',
       locale: 'en',
       source: 'typed',
@@ -26,6 +27,12 @@ describe('publicAnnaAnalytics', () => {
       keepalive: true,
       body: JSON.stringify({
         eventName: 'landing_anna_message_sent',
+        session_id: 'session-anna',
+        cta_type: undefined,
+        language: undefined,
+        channel: undefined,
+        turn_id: undefined,
+        source_intent: undefined,
         sessionId: 'session-anna',
         locale: 'en',
         source: 'typed',
@@ -43,6 +50,7 @@ describe('publicAnnaAnalytics', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await postPublicAnnaFunnelEvent('landing_anna_widget_opened', {
+      session_id: '   ',
       sessionId: '   ',
       locale: 'en',
     });

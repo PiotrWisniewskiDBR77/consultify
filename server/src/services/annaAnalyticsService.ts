@@ -8,10 +8,43 @@ export const PUBLIC_ANNA_FUNNEL_EVENT_NAMES = [
   'landing_anna_handoff_clicked',
 ] as const;
 
-export type PublicAnnaFunnelEventName = (typeof PUBLIC_ANNA_FUNNEL_EVENT_NAMES)[number];
+export type LegacyPublicAnnaFunnelEventName = (typeof PUBLIC_ANNA_FUNNEL_EVENT_NAMES)[number];
+
+export const ANNA_LP_CTA_VERBS = [
+  'impression',
+  'click',
+  'start',
+  'submit_attempt',
+  'submit_success',
+  'submit_error',
+  'retry',
+  'fallback_used',
+] as const;
+
+export type AnnaLpCtaVerb = (typeof ANNA_LP_CTA_VERBS)[number];
+export type AnnaLpCtaEventName = `anna_lp.cta.${AnnaLpCtaVerb}`;
+
+export type PublicAnnaFunnelEventName = LegacyPublicAnnaFunnelEventName | AnnaLpCtaEventName;
 
 type PublicAnnaFunnelMetadata = {
-  sessionId: string;
+  // Canonical (contract)
+  session_id?: string | null;
+  cta_type?: 'demo' | 'trial' | 'contact' | null;
+  language?: 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' | null;
+  channel?: 'text' | 'voice' | null;
+  turn_id?: string | null;
+  source_intent?:
+    | 'learn'
+    | 'evaluate_fit'
+    | 'pricing'
+    | 'security_compliance'
+    | 'get_started'
+    | 'talk_to_human'
+    | 'unknown'
+    | null;
+
+  // Legacy + compatibility
+  sessionId?: string | null;
   locale?: string | null;
   source?: 'typed' | 'suggestion' | null;
   messageLength?: number | null;
@@ -25,18 +58,27 @@ export async function recordPublicAnnaFunnelEvent(args: {
   eventName: PublicAnnaFunnelEventName;
   metadata: PublicAnnaFunnelMetadata;
 }): Promise<void> {
+  const sessionId =
+    String(args.metadata.session_id || '').trim() || String(args.metadata.sessionId || '').trim();
+
   await recordConversionEvent({
     eventType: args.eventName,
     source: 'landing_anna',
     metadata: {
       canonical_event: args.eventName,
-      sessionId: String(args.metadata.sessionId || '').trim() || null,
-      locale: args.metadata.locale || null,
+      session_id: sessionId || null,
+      sessionId: sessionId || null,
+      cta_type: args.metadata.cta_type || args.metadata.target || null,
+      language: args.metadata.language || args.metadata.locale || null,
+      channel: args.metadata.channel || null,
+      turn_id: args.metadata.turn_id || null,
+      source_intent: args.metadata.source_intent || null,
+      locale: args.metadata.locale || args.metadata.language || null,
       sourceDetail: args.metadata.source || null,
       messageLength: args.metadata.messageLength ?? null,
       historyLength: args.metadata.historyLength ?? null,
       fallbackReason: args.metadata.fallbackReason || null,
-      target: args.metadata.target || null,
+      target: args.metadata.target || args.metadata.cta_type || null,
       voiceStatus: args.metadata.voiceStatus || null,
     },
   });
@@ -98,7 +140,11 @@ export async function getPublicAnnaFunnelSummary(days = 30): Promise<{
     byEvent[eventType] = (byEvent[eventType] || 0) + 1;
 
     const locale =
-      typeof metadata.locale === 'string' && metadata.locale.trim() ? metadata.locale.trim() : null;
+      (typeof metadata.language === 'string' && metadata.language.trim()
+        ? metadata.language.trim()
+        : typeof metadata.locale === 'string' && metadata.locale.trim()
+          ? metadata.locale.trim()
+          : null) || null;
     if (locale) {
       localeDistribution[locale] = (localeDistribution[locale] || 0) + 1;
     }
@@ -112,7 +158,11 @@ export async function getPublicAnnaFunnelSummary(days = 30): Promise<{
     }
 
     const handoffTarget =
-      typeof metadata.target === 'string' && metadata.target.trim() ? metadata.target.trim() : null;
+      (typeof metadata.cta_type === 'string' && metadata.cta_type.trim()
+        ? metadata.cta_type.trim()
+        : typeof metadata.target === 'string' && metadata.target.trim()
+          ? metadata.target.trim()
+          : null) || null;
     if (handoffTarget) {
       handoffTargets[handoffTarget] = (handoffTargets[handoffTarget] || 0) + 1;
     }

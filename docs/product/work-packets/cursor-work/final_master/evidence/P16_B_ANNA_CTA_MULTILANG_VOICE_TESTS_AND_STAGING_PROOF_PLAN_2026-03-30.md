@@ -1,7 +1,7 @@
 # P16-B Evidence — Anna LP: CTA + multilang + voice degraded + factfulness posture
 Date: 2026-03-30  
 Packet: **P16-B**  
-State: evidence-first plan (tests + staging proof script) — implement next
+State: **implemented (code + automated tests)**; staging proof script ready
 
 ## Context pack (max 5, SSOT order)
 1. Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -21,14 +21,16 @@ npx vitest run \
   server/src/routes/v8/__tests__/public-anna.routes.test.ts
 ```
 
-### P16-B additions (to be implemented in this packet)
+### P16-B additions (implemented)
 
-After P16-B runtime changes land, add (and keep green):
+Run set:
 
 ```bash
 npx vitest run \
-  server/src/routes/v8/__tests__/p16b-public-anna-cta-funnel.routes.test.ts \
-  server/src/routes/v8/__tests__/p16b-public-anna-factfulness.contract.test.ts
+  server/src/routes/v8/__tests__/public-contact.routes.test.ts \
+  server/src/routes/v8/__tests__/public-anna.citations-contract.test.ts \
+  tests/components/Landing/AnnaLpCtaCompletion.start.test.tsx \
+  tests/components/Landing/AnnaAssistantWidget.guardrails.p16b.test.tsx
 ```
 
 Expected (P16-B):
@@ -38,6 +40,10 @@ Expected (P16-B):
 - **Multilang stability**: PL↔EN (and supported languages) do not cause identity drift; locale controls output language consistently.
 - **Voice degraded posture**: when voice is unavailable/rate-limited, the system falls back to text and preserves context continuity.
 - **Factfulness posture**: when Anna makes “factful” claims, the response includes **citations/evidence pointers** OR an explicit **uncertainty marker** (no overclaim).
+
+Notes:
+- The widget guardrail test asserts language switching does **not** wipe the message transcript.
+- The voice degraded test asserts voice-unavailable triggers a bounded fallback event and continues in text mode.
 
 ---
 

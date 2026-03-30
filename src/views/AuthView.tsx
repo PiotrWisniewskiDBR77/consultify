@@ -1,8 +1,14 @@
 import { AlertCircle, ArrowRight, ChevronLeft, Lock, Sparkles, X } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api, API_URL } from '@/services/api';
+import {
+  clearAnnaLpCtaContext,
+  readAnnaLpCtaContext,
+  updateAnnaLpCtaContext,
+} from '@/services/annaLpCtaContext';
+import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
 
@@ -67,6 +73,23 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
   const quickAccessEnabled = isQuickAccessEnabledHost(window.location.hostname);
 
+  useEffect(() => {
+    if (targetMode !== SessionMode.DEMO) return;
+    const ctx = readAnnaLpCtaContext();
+    if (!ctx || ctx.cta_type !== 'demo') return;
+    if (ctx.start_recorded_at_ms) return;
+
+    void postPublicAnnaFunnelEvent('anna_lp.cta.start', {
+      session_id: ctx.session_id,
+      cta_type: ctx.cta_type,
+      language: ctx.language,
+      channel: ctx.channel,
+      turn_id: ctx.turn_id,
+      source_intent: ctx.source_intent,
+    });
+    updateAnnaLpCtaContext({ start_recorded_at_ms: Date.now() });
+  }, [targetMode]);
+
   // --- QUICK ACCESS BACKDOOR (Dev only) ---
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [quickCode, setQuickCode] = useState('');
@@ -94,6 +117,23 @@ export const AuthView: React.FC<AuthViewProps> = ({
         } else {
           user = await Api.demoLogin();
         }
+
+        if (!('email' in credentials)) {
+          const ctx = readAnnaLpCtaContext();
+          if (ctx && ctx.cta_type === 'demo') {
+            void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
+              session_id: ctx.session_id,
+              cta_type: ctx.cta_type,
+              language: ctx.language,
+              channel: ctx.channel,
+              turn_id: ctx.turn_id,
+              source_intent: ctx.source_intent,
+            });
+            updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
+            clearAnnaLpCtaContext();
+          }
+        }
+
         onAuthSuccess(user);
       } catch (err: any) {
         setError('Quick access failed: ' + err.message);
@@ -173,14 +213,64 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
       setIsDemoLoading(true);
       try {
+        const ctx = readAnnaLpCtaContext();
+        if (ctx && ctx.cta_type === 'demo') {
+          const nextAttempts = (ctx.submit_attempts || 0) + 1;
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_attempt', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          updateAnnaLpCtaContext({ submit_attempts: nextAttempts });
+        }
+
         const { user } = await Api.registerDemo({
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName || undefined,
         });
+
+        if (ctx && ctx.cta_type === 'demo') {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
+          clearAnnaLpCtaContext();
+        }
         onAuthSuccess({ ...user, hasWorkspace: true } as any);
       } catch (err: any) {
         setError(err?.message || 'Demo signup failed');
+
+        const ctx = readAnnaLpCtaContext();
+        if (ctx && ctx.cta_type === 'demo') {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+          const updated = updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
+          if ((updated?.submit_attempts || 0) >= 2) {
+            void postPublicAnnaFunnelEvent('anna_lp.cta.fallback_used', {
+              session_id: ctx.session_id,
+              cta_type: ctx.cta_type,
+              language: ctx.language,
+              channel: ctx.channel,
+              turn_id: ctx.turn_id,
+              source_intent: ctx.source_intent,
+            });
+          }
+        }
       } finally {
         setIsDemoLoading(false);
       }

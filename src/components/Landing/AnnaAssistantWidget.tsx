@@ -10,6 +10,12 @@ import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
+import type {
+  AnnaLpChannel,
+  AnnaLpCtaType,
+  AnnaLpSourceIntent,
+} from '../../services/publicAnnaAnalytics';
+import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
 
 type AnnaMessage = {
   id: string;
@@ -243,6 +249,24 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     contactCta: 'تواصل معنا',
   },
 };
+
+function inferAnnaLpSourceIntent(input: string): AnnaLpSourceIntent {
+  const text = String(input || '').toLowerCase();
+  if (!text.trim()) return 'unknown';
+  if (/\b(price|pricing|cost|cena|koszt|plan|subscription|sla)\b/.test(text)) return 'pricing';
+  if (/\b(security|compliance|gdpr|soc|iso|bezpieczen|bezpieczeń|cert)\b/.test(text))
+    return 'security_compliance';
+  if (/\b(demo|trial|start|sign up|register|get started|zaczac|zacząć)\b/.test(text))
+    return 'get_started';
+  if (/\b(contact|sales|call|talk|konsultant|kontakt|sprzed)\b/.test(text)) return 'talk_to_human';
+  if (/\b(fit|for who|dla kogo|use case|cases|industry|branza|branża)\b/.test(text))
+    return 'evaluate_fit';
+  return 'learn';
+}
+
+function resolveAnnaLpChannel(voiceStatus: VoiceStatus): AnnaLpChannel {
+  return voiceStatus === 'live' ? 'voice' : 'text';
+}
 
 function buildVoiceSystemInstruction(
   lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar',
@@ -499,11 +523,31 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         locale: lang,
       });
       void postPublicAnnaFunnelEvent('landing_anna_widget_opened', {
+        session_id: sessionIdRef.current,
         sessionId: sessionIdRef.current,
         locale: lang,
       });
+
+      const channel = resolveAnnaLpChannel(voiceStatus);
+      const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+      const lastUserContent = String(lastUserMessage?.content || draftPrompt || '');
+      const source_intent = inferAnnaLpSourceIntent(lastUserContent);
+      const turn_id = String(lastUserMessage?.id || 'anna-welcome');
+
+      (['demo', 'trial', 'contact'] as const satisfies readonly AnnaLpCtaType[]).forEach(
+        (cta_type) => {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.impression', {
+            session_id: sessionIdRef.current,
+            cta_type,
+            language: lang,
+            channel,
+            turn_id,
+            source_intent,
+          });
+        }
+      );
     },
-    [isOpen, lang]
+    [isOpen, lang, messages, voiceStatus]
   );
 
   const closeWidget = useCallback(() => {
@@ -514,14 +558,23 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   }, [resetVoiceTranscriptDrafts]);
 
   useEffect(() => {
-    resetVoiceTranscriptDrafts();
-    setMessages([
-      {
-        id: 'anna-welcome',
-        role: 'assistant',
-        content: copy.intro,
-      },
-    ]);
+    const welcomeMessage: AnnaMessage = {
+      id: 'anna-welcome',
+      role: 'assistant',
+      content: copy.intro,
+    };
+
+    setMessages((prev) => {
+      if (prev.length === 0) {
+        resetVoiceTranscriptDrafts();
+        return [welcomeMessage];
+      }
+      if (prev.length === 1 && prev[0]?.id === 'anna-welcome') {
+        resetVoiceTranscriptDrafts();
+        return [welcomeMessage];
+      }
+      return prev;
+    });
   }, [copy.intro, resetVoiceTranscriptDrafts]);
 
   useEffect(() => {
@@ -680,6 +733,17 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     if (!voiceAvailable || !voiceApiKey || typeof window === 'undefined') {
       setVoiceStatus('error');
       setVoiceError(copy.voiceUnavailable);
+      trackFunnelEvent('landing_anna_fallback_shown', {
+        locale: lang,
+        fallbackReason: 'voice_unavailable',
+      });
+      void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+        session_id: sessionIdRef.current,
+        sessionId: sessionIdRef.current,
+        locale: lang,
+        fallbackReason: 'voice_unavailable',
+        voiceStatus: 'error',
+      });
       return;
     }
 
@@ -861,6 +925,17 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
             voiceStartRef.current = 0;
             setVoiceStatus('error');
             setVoiceError(copy.voiceError);
+            trackFunnelEvent('landing_anna_fallback_shown', {
+              locale: lang,
+              fallbackReason: 'voice_error',
+            });
+            void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+              session_id: sessionIdRef.current,
+              sessionId: sessionIdRef.current,
+              locale: lang,
+              fallbackReason: 'voice_error',
+              voiceStatus: 'error',
+            });
             void teardownVoice();
           },
         },
@@ -895,6 +970,17 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       voiceStartRef.current = 0;
       setVoiceStatus('error');
       setVoiceError(copy.voiceError);
+      trackFunnelEvent('landing_anna_fallback_shown', {
+        locale: lang,
+        fallbackReason: 'voice_error',
+      });
+      void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+        session_id: sessionIdRef.current,
+        sessionId: sessionIdRef.current,
+        locale: lang,
+        fallbackReason: 'voice_error',
+        voiceStatus: 'error',
+      });
       await teardownVoice();
     }
   }, [
@@ -961,6 +1047,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       historyLength: history.length,
     });
     void postPublicAnnaFunnelEvent('landing_anna_message_sent', {
+      session_id: sessionIdRef.current,
       sessionId: sessionIdRef.current,
       locale: lang,
       source: preset ? 'suggestion' : 'typed',
@@ -994,6 +1081,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
               fallbackReason: 'rate_limit',
             });
             void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+              session_id: sessionIdRef.current,
               sessionId: sessionIdRef.current,
               locale: lang,
               fallbackReason: 'rate_limit',
@@ -1032,6 +1120,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           fallbackReason: data.fallbackReason.trim(),
         });
         void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+          session_id: sessionIdRef.current,
           sessionId: sessionIdRef.current,
           locale: lang,
           fallbackReason: data.fallbackReason.trim(),
@@ -1059,6 +1148,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         fallbackReason: 'service_unavailable',
       });
       void postPublicAnnaFunnelEvent('landing_anna_fallback_shown', {
+        session_id: sessionIdRef.current,
         sessionId: sessionIdRef.current,
         locale: lang,
         fallbackReason: 'service_unavailable',
@@ -1075,12 +1165,38 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   const triggerHandoff = useCallback(
     (target: 'demo' | 'trial' | 'contact') => {
       void stopVoiceConversation();
+
+      const channel = resolveAnnaLpChannel(voiceStatus);
+      const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+      const lastUserContent = String(lastUserMessage?.content || '');
+      const source_intent = inferAnnaLpSourceIntent(lastUserContent);
+      const turn_id = String(lastUserMessage?.id || 'anna-welcome');
+
+      void postPublicAnnaFunnelEvent('anna_lp.cta.click', {
+        session_id: sessionIdRef.current,
+        cta_type: target,
+        language: lang,
+        channel,
+        turn_id,
+        source_intent,
+      });
+
+      persistAnnaLpCtaContext({
+        session_id: sessionIdRef.current,
+        cta_type: target,
+        language: lang,
+        channel,
+        turn_id,
+        source_intent,
+      });
+
       trackFunnelEvent('landing_anna_handoff_clicked', {
         locale: lang,
         target,
         voiceStatus,
       });
       void postPublicAnnaFunnelEvent('landing_anna_handoff_clicked', {
+        session_id: sessionIdRef.current,
         sessionId: sessionIdRef.current,
         locale: lang,
         target,
@@ -1115,6 +1231,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     [
       closeWidget,
       lang,
+      messages,
       navigate,
       onContactClick,
       onDemoClick,
@@ -1329,8 +1446,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   }}
                   disabled={
                     isLoading ||
-                    actionMode === 'connecting' ||
-                    (actionMode === 'mic' && !voiceAvailable)
+                    actionMode === 'connecting'
                   }
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 ${
                     actionMode === 'stop'

@@ -9,7 +9,7 @@ import {
   MessageSquare,
   Send,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,12 @@ import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidge
 import { DemoButton } from '../../components/Landing/DemoButton';
 import { EntryFooter } from '../../components/Landing/EntryFooter';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
+import {
+  clearAnnaLpCtaContext,
+  readAnnaLpCtaContext,
+  updateAnnaLpCtaContext,
+} from '../../services/annaLpCtaContext';
+import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 
 // WhatsApp icon component
 const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({
@@ -53,7 +59,7 @@ interface FormData {
 }
 
 export const ContactView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<FormData>({
@@ -66,6 +72,22 @@ export const ContactView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ctx = readAnnaLpCtaContext();
+    if (!ctx || ctx.cta_type !== 'contact') return;
+    if (ctx.start_recorded_at_ms) return;
+
+    void postPublicAnnaFunnelEvent('anna_lp.cta.start', {
+      session_id: ctx.session_id,
+      cta_type: ctx.cta_type,
+      language: ctx.language,
+      channel: ctx.channel,
+      turn_id: ctx.turn_id,
+      source_intent: ctx.source_intent,
+    });
+    updateAnnaLpCtaContext({ start_recorded_at_ms: Date.now() });
+  }, []);
 
   const contactTypes = [
     { value: 'general', label: 'General Inquiry', icon: MessageSquare },
@@ -88,16 +110,77 @@ export const ContactView: React.FC = () => {
     setError(null);
 
     try {
-      // TODO: Implement actual form submission to backend
-      // For now, simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const ctx = readAnnaLpCtaContext();
+      if (ctx && ctx.cta_type === 'contact') {
+        const nextAttempts = (ctx.submit_attempts || 0) + 1;
+        void postPublicAnnaFunnelEvent('anna_lp.cta.submit_attempt', {
+          session_id: ctx.session_id,
+          cta_type: ctx.cta_type,
+          language: ctx.language,
+          channel: ctx.channel,
+          turn_id: ctx.turn_id,
+          source_intent: ctx.source_intent,
+        });
+        updateAnnaLpCtaContext({ submit_attempts: nextAttempts });
+      }
 
-      // In production, this would be:
-      // await Api.submitContactForm(formData);
+      const res = await fetch('/api/public/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          locale: i18n.resolvedLanguage || i18n.language || 'en',
+          annaCta: ctx && ctx.cta_type === 'contact' ? ctx : null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as any)?.error || 'Failed to send message');
+      }
 
       setIsSubmitted(true);
+
+      if (ctx && ctx.cta_type === 'contact') {
+        void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
+          session_id: ctx.session_id,
+          cta_type: ctx.cta_type,
+          language: ctx.language,
+          channel: ctx.channel,
+          turn_id: ctx.turn_id,
+          source_intent: ctx.source_intent,
+        });
+        updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
+        clearAnnaLpCtaContext();
+      }
     } catch (err) {
-      setError('Failed to send message. Please try again or email us directly.');
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Failed to send message. Please try again or email us directly.';
+      setError(message);
+
+      const ctx = readAnnaLpCtaContext();
+      if (ctx && ctx.cta_type === 'contact') {
+        void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
+          session_id: ctx.session_id,
+          cta_type: ctx.cta_type,
+          language: ctx.language,
+          channel: ctx.channel,
+          turn_id: ctx.turn_id,
+          source_intent: ctx.source_intent,
+        });
+        const updated = updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
+        if ((updated?.submit_attempts || 0) >= 2) {
+          void postPublicAnnaFunnelEvent('anna_lp.cta.fallback_used', {
+            session_id: ctx.session_id,
+            cta_type: ctx.cta_type,
+            language: ctx.language,
+            channel: ctx.channel,
+            turn_id: ctx.turn_id,
+            source_intent: ctx.source_intent,
+          });
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }

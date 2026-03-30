@@ -187,6 +187,7 @@ import presentationsRoutes from './routes/presentations.routes.js';
 import previewAiRoutes from './routes/preview-ai.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
 import publicAnnaRoutes from './routes/public-anna.routes.js';
+import publicContactRoutes from './routes/public-contact.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
@@ -363,6 +364,7 @@ export class ApiGateway {
       app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
       app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/public/anna', publicAnnaRoutes); // Public landing assistant
+      app.use('/api/public/contact', publicContactRoutes); // Public contact form intake (LP)
       app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes); // Public V8 KB preview/featured
 
       // Core routes
