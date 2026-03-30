@@ -52,6 +52,14 @@ Dependencies: Radar SSOT ✅ (`docs/product/MYWORK_RADAR_V8_SSOT.md`)
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P06-A.md`
 
+### 8) P02-A — Kalendarz interoperability canon (scope approval) (DOCS ONLY)
+
+Goal: freeze calendar interoperability canon (providers, time model objects, recurrence/exceptions doctrine, conflict-safe writes, permission gradients + UI rules, provider lifecycle honesty, error posture) without code changes.
+
+Dependencies: Calendar SSOT ✅ (`docs/product/MYWORK_CALENDAR_V8_SSOT.md`), Foundations ✅
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P02-A.md`
+
 ---
 
 Completion (each agent independently):
