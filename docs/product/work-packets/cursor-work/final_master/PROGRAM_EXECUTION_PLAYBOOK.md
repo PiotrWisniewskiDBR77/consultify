@@ -133,6 +133,7 @@ Release rule:
 Reference:
 
 - Coordination details: `docs/product/work-packets/cursor-work/final_master/EXECUTION_COORDINATION.md`
+- Manager gate: `docs/product/work-packets/cursor-work/final_master/NEXT_PACKET.md`
 
 ---
 

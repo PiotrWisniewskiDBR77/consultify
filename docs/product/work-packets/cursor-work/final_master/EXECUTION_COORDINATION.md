@@ -49,6 +49,19 @@ Release:
 
 ---
 
+## 1.1 Manager gate (agents must not self-select packets)
+
+Before starting any packet, every agent must:
+
+- read `docs/product/work-packets/cursor-work/final_master/NEXT_PACKET.md`
+- verify the packet they plan to run is explicitly listed as “Authorized”
+
+If the packet is not listed, the agent must stop and ask the manager to update `NEXT_PACKET.md`.
+
+This prevents “helpful” agents from starting consumers before foundations (e.g. starting P19-B before P18-A).
+
+---
+
 ## 2. Anti-duplicate “canon-first” rule
 
 When implementing packet `B`:
