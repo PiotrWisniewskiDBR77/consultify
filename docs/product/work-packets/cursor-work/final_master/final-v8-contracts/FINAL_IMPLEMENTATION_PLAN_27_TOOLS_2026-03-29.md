@@ -1,7 +1,8 @@
 # Final Implementation Contract — Tools (Position 27/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P27-A** (Tools canon frozen); P27-B / P27-C not started  
+Last updated: 2026-03-30 (P27-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Narzędzia AI‑driven, wykonywalne przez czat.
@@ -15,7 +16,32 @@ Status: draft (contract wrapper over existing plan)
 - Promotion wyników do artefaktów i obiektów pracy.
 
 ### 2.2 Out-of-scope / non-goals
-- Każde narzędzie z rynku; „everything tool”.
+
+- **Marketplace of arbitrary third-party tools** — no unbounded plug-in model without governance and session contract.
+- **Second Tools “home” or parallel session registry** — one discovery surface under Discovery Tools + one persistence contract (`ToolSession` / API); no duplicate session stores.
+- **Silent AI writes** — no auto-apply of AI changes without propose → review → accept (aligned with P18: **approve(run) ≠ review(artifact)** where artifact review is downstream).
+- **Promotion without traceability** — no bulk “send to initiatives” without lineage to session + sources (consumes artifact registry / Outputs Library; see §2.4).
+- **Replacing Assessment module** — Assessment stays its own contract (**position 28**); Tools canon governs **Discovery Tools** lane unless an explicit convergence packet merges surfaces.
+- **Frozen layout violations** — Workspace strip and module hub rules remain per `docs/ui-standards/FROZEN_LAYOUTS.md`.
+
+### 2.3 Anti-duplicate gate (extend canon — no parallel truth)
+
+P27-B/C MUST **extend** the following — not fork parallel session types, tool lists, or promotion APIs.
+
+| Area | Canon (path) | Rule |
+| --- | --- | --- |
+| Tool catalog + UX intent | `docs/product/TOOLS_CATALOG_V3.md`; `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md` | Library/discovery copy and tab model align with v3 SSOT; new tools extend catalog tables, don’t invent a second catalog.doc. |
+| Standard outputs from tools | `docs/product/UNIVERSAL_TOOL_OUTPUTS_STANDARD_V1.md` | Default promotable output types remain initiative / report / presentation / idea unless `P27-A` explicitly extends the standard. |
+| Client session state (discovery runtime) | `src/store/useToolStore.ts` — `ToolSession`, `createSession`, `hydrateSessionFromApi`, step builders | Extend session shape and steps here or via typed adjuncts; no shadow `ToolSessionV2` store. |
+| Wizard / governed session payloads | `src/components/shared/ToolWizard/types.ts` — `WizardSessionData` (`missingItems`, `review`, `outputs`, `locked`) | Finalize gating and “missingItems” semantics extend this model; align naming with playbook §8.1 P27-A. |
+| API surface | `src/services/api.ts` — `createToolSession`, `listToolSessions`, `getToolSession`, `updateToolSession` | Sessions hydrate/persist through these calls; new endpoints extend server router, don’t duplicate under alternate paths. |
+| Outputs & provenance downstream | Position **19** (`Outputs Library`); Position **18** (trust-state / review) | Promoted artifacts land in governed surfaces; trust badges and review flows consume P18, not a Tools-local trust enum. |
+
+### 2.4 Dependencies (mandatory consumers)
+
+- **P18** — artifact review, visibility, export/trace posture for promoted outputs.
+- **P19** — canonical Outputs Library home for discoverability of promoted report/deck/sheet-class artifacts.
+- **P17** (ArtifactRun) — optional chat-driven plan/execute; Tools sessions remain valid when chat spine is absent (degraded mode explicitly allowed in P27-B tests).
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -89,15 +115,28 @@ Status: draft (contract wrapper over existing plan)
 ### 8.1 Bounded delivery packets
 #### P27-A — Tools family canon + session grammar (scope approval)
 - **Goal**: Tools jako jedna rodzina: discovery→session→result→promotion.
-- **Inputs required**: session state model + governance visibility + output traceability.
-- **Acceptance**: scope zatwierdzony; non-goals jawne; finalize gating (DoD) opisane.
-- **Evidence**: scope approval + linkowane SSOT/bench.
+- **Inputs required**: session state model + governance visibility + output traceability (§2.3–2.4).
+- **Evidence**: scope approval + linkowane SSOT; lock P27-A released; `EXECUTION_INDEX.md` #27 = `approved(scope)`.
+
+##### P27-A — Acceptance checklist (testable)
+
+1. **One Tools family**: Contract names a single grammar (library → session → result → promotion); §2.3 lists concrete repo SSOT to extend.
+2. **Session state**: **Wizard** path uses `WizardSessionData` (`DRAFT` | `IN_PROGRESS` | `REVIEW` | `FINALIZED`) + `review.missingItems`; **Discovery** path uses `ToolSession` in `useToolStore`; P27-B may bridge gaps but must not introduce a second canonical session ID scheme without a reconciliation packet.
+3. **Finalize gating**: “Finalize” / promotion is **blocked** when `missingItems` (or equivalent tool-native incomplete signals) are non-empty — falsifiable in tests in P27-B.
+4. **AI governance**: Changes follow **propose → review → accept**; no silent persistence of AI edits to governed fields; aligns with **P18** separation (run vs artifact review).
+5. **Promotion traceability**: Promoting to initiative / report / presentation / idea records **source session + tool trace** per existing output standard and registry hooks (**P19** lists).
+6. **Anti-duplicate**: §2.3 filled with **concrete** file paths; implementers extend those canons.
+7. **Non-goals**: §2.2 explicitly excludes second registry, ungoverned marketplace, silent writes, frozen-layout breaks.
+8. **Failure / retry**: Contract requires explicit failure state + retry **without duplicating** promoted outputs (P27-B acceptance); scope here only mandates the rule appears in §5 and tasks.
+9. **Assessment boundary**: Tools canon does not subsume **Assessment (28)** unless a future packet says so.
+10. **Authority chain**: Section 3 remains the Wave2 Tools detailed plan entry; this file does not replace it as gap ledger owner.
+
 - **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
   - Freeze session state model + finalize gating (missingItems).
   - Freeze governance visibility (propose/review/accept) and audit requirements.
   - Freeze promotion contract to initiatives/outputs + traceability rules.
 - **DoD**:
-  - Approved(scope): Tools family has one grammar; finalize blocks bad promotion.
+  - `approved(scope)`: checklist above satisfied; index #27 updated; lock released; evidence row §10.
 
 #### P27-B — Session→result→promotion closure
 - **Goal**: sesja nie gubi kontekstu; wyniki mają traceability; promotion do inicjatyw/outputs działa.
@@ -140,7 +179,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P27-A |  |  |  |  |  |
+| P27-A | approved(scope) | `(commit)` | N/A — docs/scope only | N/A | Canon: §2.2–2.4, P27-A checklist; lock P27-A released; EXECUTION_INDEX #27 updated. |
 | P27-B |  |  |  |  |  |
 | P27-C |  |  |  |  |  |
 
