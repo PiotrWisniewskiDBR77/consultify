@@ -1,7 +1,8 @@
 # Final Implementation Contract — Teresa (Position 8/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P08-A** (Teresa canon + boundaries frozen); P08-B / P08-C not started  
+Last updated: 2026-03-30 (P08-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: AI głosowy+tekstowy: pełen kontekst org + narzędzia + web; steruje aplikacją; konsultant/manager/partner/pracownik.
@@ -16,6 +17,144 @@ Status: draft (contract wrapper over existing plan)
 ### 2.2 Out-of-scope / non-goals
 - Fully autonomous workflow engine.
 - Public assistant (to `Anna`).
+
+### 2.3 P08-A canon (Teresa: contextual copilot boundaries — scope approval)
+
+Ta sekcja jest **kanonicznym** kontraktem zakresu dla `P08-A` i blokuje “dopowiadanie w locie”. Jej celem jest zamrożenie:
+
+- P0 surfaces handoff (3–5) + wymagany payload kontekstowy dla każdego targetu,
+- envelope governance akcji (proposal → explicit approval → execution → audit/traces) zgodny z run grammar `P17`,
+- voice posture (availability, degraded, fallback, recovery grammar),
+- posture evidence pointers/citations (albo jawna granica niepewności),
+- hard boundaries vs `Anna`/public assistant oraz “module-owned writes”,
+- anti-duplicate gate (bez równoległych approval lanes; żadnych parallel approvals),
+- posture degraded/error (minimum 8 scenariuszy),
+- acceptance checklist (10+ testowalnych punktów).
+
+#### 2.3.1 P0 handoff targets (frozen, 4) + required context payload
+
+Teresa jest “contextual copilot”: jej podstawową funkcją jest **przeniesienie kontekstu** do właściwego modułu i utrzymanie governancji (bez silent writes).
+
+**P0 targets (handoff surfaces):**
+
+1) `Radar` (P06) — triage cockpit / “why-now” → next action  
+2) `Inicjatywy` (P11) — living object (triage→plan→execute) z write-truth governance  
+3) `Kalendarz` (P02) — time surface + interoperability; żadnych “fake writes”  
+4) `Notatki` (P07) — durable working memory + provenance; capture-first fallback lane
+
+**Common payload (always required) — `teresa_handoff_context`:**
+
+- `origin=teresa`
+- `user_intent` (1–2 zdania)
+- `active_surface` (gdzie user był: module/view/entity ref)
+- `org_context_ref` (org/tenant scope + permissions summary — bounded)
+- `bounded_context_pack[]` (max 5): link/ref do obiektów pracy (initiative/deployment/note/signal/calendar item) + deeplinki
+- `constraints[]` (np. “do not change dates without approval”)
+- `assumptions[]` (jeśli są) + `uncertainty_boundary`:
+  - `missing_inputs[]`
+  - `conflicts[]`
+  - `what_would_change_next_action[]`
+- `evidence_pointers[]` (jeśli Teresa twierdzi “dlaczego/na podstawie czego”)
+- `proposed_next_action`:
+  - `target_module` (`Radar|Inicjatywy|Kalendarz|Notatki`)
+  - `handoff_intent` (`open|create|append`)
+  - `requires_approval` (always `true` for writes)
+- `audit_stub` (minimum): `actor`, `timestamp`, `proposal_id?`
+
+**Per-target required additions (bounded):**
+
+- To `Radar` (P06): `why_now` (2–4 zdania), `time_window`, `triggered_rules[]`, `evidence_pointers[]`, `uncertainty_boundary`, `next_action.safe_fallback` (must exist).  
+- To `Inicjatywy` (P11): `initiative_seed` (`problem_statement`, `proposed_outcome`, `assumptions[]`, `risks[]`, `next_steps[]`, `time_window?`) + deklaracja “proposal-only” (no silent writes).  
+- To `Kalendarz` (P02): `calendar_intent` (what + when + timezone explicit), `permission_gradient_expectation` (free_busy/read/write), `conflict_safe_write_posture` (If-Match/etag or deny) + recovery steps.  
+- To `Notatki` (P07): `notebook_handoff_context` (minimum fields from P07 §2.3.6) + provenance markers (`source`/`user_edit`/`ai_transform`) and `evidence_pointers[]`.
+
+#### 2.3.2 Action governance envelope (proposal → explicit approval → execution → audit/traces)
+
+Teresa nie jest “autonomous engine”. Każda akcja, która zmienia stan systemu, jest objęta envelope (spójne z `P17` run grammar):
+
+- `ask/clarify` → Teresa zbiera brakujące inputy (bounded) i nie zgaduje uprawnień ani faktów.
+- `proposal` → Teresa generuje **strukturalny** plan/diff: co będzie zmienione, gdzie, i dlaczego (z evidence pointers albo uncertainty boundary).
+- `explicit approval` → user musi jawnie zatwierdzić **run** (approve(run) ≠ review(artifact)) przed jakąkolwiek mutacją.
+- `execution` → wykonywane tylko w module-owned lane (Teresa inicjuje, moduł zapisuje); statusy i błędy są jawne.
+- `audit/traces` → każda akcja ma ślad: kto/kiedy/jaki input/jaki wynik; brak “ghost” działań.
+
+Hard rules:
+
+- **No silent writes**: brak auto-apply i brak “background save” AI.
+- **No parallel approvals**: tylko jedna aktywna prośba o approval na użytkownika/sesję; nowe proposal’e muszą anulować/wersjonować poprzednie.
+- **Idempotency posture**: retry nie może tworzyć duplikatów (szczególnie przy create).
+- **Truth-preserving failure**: jeśli audit/traces nie da się zapisać, akcja jest blokowana albo oznaczona jako `degraded(audit_unavailable)` (bez udawania sukcesu).
+
+#### 2.3.3 Voice posture: availability, degraded states, fallback, recovery grammar
+
+Voice jest trybem, nie obietnicą 100%:
+
+- **Availability banner**: Teresa zawsze komunikuje, czy voice jest `available|degraded|unavailable` i dlaczego (np. permissions/device/network).
+- **Fallback to text**: gdy voice jest degraded/unavailable, wszystkie krytyczne akcje przechodzą na tekst (czytelny proposal + “Approve”).
+- **Recovery grammar (frozen phrases/behaviors):**
+  - “Przechodzę na tekst, bo voice jest niestabilny. Oto proposal.”
+  - “Powtórz proszę ostatnią instrukcję” (ASR uncertainty) + show partial transcript.
+  - “Nie mogę wykonać tej akcji bez zatwierdzenia. Powiedz: ‘Zatwierdź’ albo kliknij Approve.”
+  - “Wstrzymuję wykonanie — brak wymaganych danych: {missing_inputs}.”
+
+#### 2.3.4 Evidence pointers / citations posture (or explicit uncertainty boundary)
+
+Teresa może dawać “why” tylko w dwóch trybach:
+
+- **Cited**: wskazuje `evidence_pointers[]` (link/ref do obiektu w app / SSOT / aktywności).
+- **Uncertain**: jawnie mówi, czego nie wie i jakie dane są potrzebne (`missing_inputs[]`, `conflicts[]`).
+
+Zakaz:
+
+- overclaim “wiem, bo tak” bez dowodu lub bez uncertainty boundary,
+- mieszanie opinii z faktem bez oznaczenia.
+
+#### 2.3.5 Hard boundaries: Teresa vs `Anna`/public assistant + module-owned writes
+
+- **Teresa**: działa *wewnątrz produktu* na obiektach organizacji i może inicjować proposal + handoff do modułów.
+- **`Anna`/public assistant**: nie ma dostępu do danych org i nie może być traktowana jako runtime executor; brak “copy/paste policy escape”.
+- **Module-owned writes**: jedynym miejscem, gdzie zachodzą zapisy, są moduły docelowe (Radar/Inicjatywy/Kalendarz/Notatki) zgodnie z ich kanonem. Teresa nie tworzy “własnych” zapisów bocznych ani równoległych modeli.
+
+#### 2.3.6 Anti-duplicate gate (consume P17; no parallel approvals / no parallel grammars)
+
+- Run grammar pochodzi z `P17` i nie jest duplikowana w P08.
+- Handoff payloady mają 1 wspólny rdzeń (`teresa_handoff_context`) i rozszerzenia per target; brak “payload v2” per moduł.
+- Jeśli Teresa wykryje near-duplicate (np. równoległe inicjatywy/notatki dla tego samego problem statement), musi:
+  - zatrzymać wykonanie,
+  - wskazać konflikt,
+  - zaproponować scal/wybór kanonicznego obiektu (bez automatycznego tworzenia duplikatu).
+
+#### 2.3.7 Degraded / error posture — minimum scenarios (8+)
+
+Każdy scenariusz musi mieć: **widoczny stan**, **safe next action**, **brak silent data loss**.
+
+1) **Voice unavailable / mic permission denied** → fallback to text + CTA “Continue in text”.  
+2) **ASR uncertainty / low confidence** → show transcript + ask to confirm; no execution.  
+3) **Approval missing / timed out** → proposal expires; require re-approve; no partial writes.  
+4) **Permission denied in target module** → `blocked(permission)` + safe action: request access / capture in `Notatki`.  
+5) **Tool/action failed** (network/timeout/503) → `degraded(tool_unavailable)` + retry guidance + keep proposal.  
+6) **Stale context / entity not found** → `degraded(stale)` + refresh/readback; never “assume it worked”.  
+7) **Conflict/ETag mismatch** (Calendar write) → `conflict` state + deny overwrite; propose manual resolution steps.  
+8) **Audit/traces unavailable** → block execution or mark `degraded(audit_unavailable)` with explicit warning; never claim completion.  
+9) **Duplicate detected** (near-duplicate initiative/note/signal) → stop and propose merge/select-canonical.  
+10) **Partial data** (e.g. Radar sources 206) → show “partial” + list missing inputs; avoid P0 overclaim.
+
+#### 2.3.8 Acceptance checklist (scope approval) — testable points (10+)
+
+`P08-A` jest `approved(scope)` dopiero gdy:
+
+1) P0 targets list (3–5) jest zamrożona i zawiera co najmniej: Radar/P11/P02/P07 (§2.3.1).  
+2) Każdy target ma wymagany payload: common `teresa_handoff_context` + per-target dodatki (§2.3.1).  
+3) Envelope akcji jest jednoznaczny i zgodny z P17 (proposal→explicit approval→execution→audit/traces) (§2.3.2).  
+4) Zasada approve(run) ≠ review(artifact) jest jawna; brak silent writes (§2.3.2).  
+5) “No parallel approvals” jest twardą regułą (anti-duplicate governance) (§2.3.2 + §2.3.6).  
+6) Voice posture ma availability + fallback to text + recovery grammar (§2.3.3).  
+7) Evidence pointers/citations posture jest jawny, a brak źródeł = uncertainty boundary (§2.3.4).  
+8) Hard boundary vs `Anna`/public assistant jest spisana i nie ma obejść (§2.3.5).  
+9) Module-owned writes są spisane: Teresa nie jest ownerem zapisów, tylko inicjuje handoff (§2.3.5).  
+10) Degraded/error posture ma minimum 8 scenariuszy z safe next action (§2.3.7).  
+11) Anti-duplicate: near-duplicate stop + merge/select-canonical jest obowiązkowe (§2.3.6).  
+12) Evidence ledger ma uzupełniony wiersz `P08-A` (commit ref) w §10.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
