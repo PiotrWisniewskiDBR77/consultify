@@ -315,7 +315,7 @@ Canonical paired families (per V8 Decision W6-3): **Executive Steering Pack**, *
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P24-A | approved(scope) | (filled at commit) | N/A — scope packet | N/A — scope packet | Schema §2.3.1; ownership §2.3.2; gate §2.3.3; foundation §2.3.4; convergence §2.3.5; anti-dup §2.3.6; errors §2.4; checklist §8.1 |
+| P24-A | approved(scope) | `8787580d34` | N/A — scope packet | N/A — scope packet | Schema §2.3.1; ownership §2.3.2; gate §2.3.3; foundation §2.3.4; convergence §2.3.5; anti-dup §2.3.6; errors §2.4; checklist §8.1 |
 | P24-B |  |  |  |  |  |
 | P24-C |  |  |  |  |  |
 
