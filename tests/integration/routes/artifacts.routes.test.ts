@@ -121,6 +121,46 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     });
   });
 
+  it('passes mine queue filter when view=mine', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/artifacts?view=mine&limit=80');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        filters: expect.objectContaining({
+          onlyMine: true,
+          limit: 80,
+        }),
+      })
+    );
+  });
+
+  it('passes needs-review queue filter when view=review', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'reviewer-42', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/artifacts?view=review&limit=200');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'reviewer-42',
+        filters: expect.objectContaining({
+          reviewSharedForUserId: 'reviewer-42',
+          limit: 200,
+        }),
+      })
+    );
+  });
+
   it('returns action metadata on canonical list rows', async () => {
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
