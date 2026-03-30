@@ -16,6 +16,121 @@ Status: draft (contract wrapper over existing plan)
 ### 2.2 Out-of-scope / non-goals
 - Kopiowanie UI liderów; „projektowy everything tool” bez granic.
 
+### 2.3 P11-A canon (write-truth + governance)
+This section freezes the **single canon** for Initiatives. All downstream work must extend this canon (no parallel “initiative_v2”).
+
+#### 2.3.1 Lifecycle states (canonical)
+Lifecycle is **initiative-level**, not packet/program status.
+
+- `intake`: captured from any entry point; not yet ready for planning.
+- `triage`: being clarified (owner, goal/outcome, scope sketch).
+- `planned`: has baseline plan (milestones / deliverables / constraints).
+- `approved`: approved to execute (explicit start signal).
+- `executing`: active delivery; changes are allowed but governed.
+- `blocked`: execution cannot proceed; blockers must be explicit.
+- `delivered`: work outcome delivered (handoffs to Results/KPI may continue).
+- `closed`: operationally closed; only read + reporting (no further execution writes).
+- `archived`: hidden from primary surfaces; retained for audit/history.
+
+Notes:
+- If the product needs finer granularity later, it must be introduced by extending this canon (no separate grammar elsewhere).
+
+#### 2.3.2 Transitions (allowed + guarded)
+Allowed transitions (non-exhaustive but binding):
+
+- `intake` → `triage` (clarification started)
+- `triage` → `planned` (baseline plan created)
+- `planned` → `approved` (explicit approval event)
+- `approved` → `executing` (execution started)
+- `executing` → `blocked` (blocker declared)
+- `blocked` → `executing` (blocker resolved)
+- `executing` → `delivered` (outcome delivered)
+- `delivered` → `closed` (closure decision)
+- `closed` → `archived` (archive)
+
+Hard guards:
+- No “silent” transition: every lifecycle change must record **who/when/why** (audit).
+- No backward transitions unless explicitly specified in a future packet (e.g. `delivered` → `executing` is forbidden in v8 unless a governed “reopen” is added).
+- Any transition that would break read/write coherence must be denied (see 2.3.3 + 2.3.7).
+
+#### 2.3.3 Read/write coherence rules (write-truth canon)
+Principle: **po zapisie wszystkie widoki mówią tę samą prawdę**.
+
+Canonical invariants:
+- **Single canonical Initiative ID** (`initiativeId`) is the join key across all Initiative surfaces and downstream handoffs.
+- A write is considered successful only when:
+  - the **write model** is persisted, and
+  - all declared **read models** (list/detail/preview/rollups) reflect the same lifecycle + key fields.
+
+Coherence contract:
+- After any create/update/transition, the following must agree:
+  - list/table row (status + title + owner + dates),
+  - initiative detail header (same fields),
+  - preview pane summary (same fields),
+  - counters/filters derived from status (no “phantom counts”).
+- If any read-side cannot be updated reliably, the system must:
+  - deny the write, or
+  - save in a clearly marked degraded mode that does not lie (see 2.3.7).
+
+No split truth:
+- Initiative lifecycle grammar must not be redefined in `Wdrożenia`, `KPI`, `Kalendarz` or any other module. Those modules may mirror the current initiative lifecycle **read-only**, but cannot own it.
+
+#### 2.3.4 AI scaffold governance envelope (no silent writes)
+AI can propose changes, but **never** apply them silently.
+
+Envelope states:
+- `proposal`: AI produces a structured proposal payload (diff-like) with citations to the user prompt/context.
+- `review`: user sees the proposal clearly (what will be created/changed) and can edit/trim it.
+- `accept`: only after explicit acceptance the system performs writes.
+
+Audit requirements (minimum):
+- Record: `proposalId`, `initiativeId` (if existing), actor, timestamp, input context references (bounded), and the accepted diff.
+- Store a machine-readable summary of changes (field-level).
+- Provide a visible “AI proposed / user accepted” marker in the activity/audit surface.
+
+Forbidden:
+- background auto-save of AI-generated content without user accept,
+- applying partial subsets without telling the user exactly what was persisted.
+
+#### 2.3.5 Bounded handoff payloads (P03 / P04 / P02)
+Handoff is **bounded**: consumers get enough to link and preserve context, not to redefine initiative truth.
+
+Common payload (always include):
+- `initiativeId` (canonical)
+- `initiativeTitle` (snapshot)
+- `initiativeLifecycleState` (snapshot)
+- `initiativeOwnerId` (if present)
+- `initiativeTimebox` (start/end or target quarter; snapshot if present)
+- `contextPack` (bounded): up to 5 links/refs (e.g., decision, plan baseline, key risks) following playbook rule
+- `handoffAt` timestamp and `handoffBy` actor
+
+To `Wdrożenia` (P03):
+- Add `executionIntent` (what will be executed now) and `initialWorkstreamIds` (if chosen).
+- Consumer rule: Wdrożenia may create execution items linked to `initiativeId`, but cannot mutate initiative lifecycle except via explicit governed actions in Initiatives.
+
+To `KPI` (P04):
+- Add `kpiIntent` (which outcomes/metrics to track) and `measurementWindow` (if known).
+- Consumer rule: KPI tracks measurement linked to `initiativeId`; KPI status cannot override initiative lifecycle.
+
+To `Kalendarz` (P02):
+- Add `calendarIntent` (milestones/events summary) and `milestoneRefs` (if present).
+- Consumer rule: Calendar may render milestones/events; schedule edits do not silently back-write initiative lifecycle without a governed review/accept.
+
+#### 2.3.6 Anti-duplicate gate (canon-first)
+- No parallel entities: **do not** introduce `initiative_v2`, `initiativeStatusV2`, “new initiative grammar” in any other module or file set.
+- Status/lifecycle grammar lives in exactly one place (this canon); other modules consume it.
+- If a near-duplicate is discovered during implementation, it must be recorded as a risk and resolved by extending this canon, not by forking it.
+
+#### 2.3.7 Degraded/error posture (truth-preserving)
+When the system cannot uphold write-truth, it must fail safely.
+
+- **Deny-on-incoherence** (default): reject the write and present an actionable error (“cannot persist safely; try again”) without mutating visible truth.
+- **No partial save without disclosure**: if partial persistence is unavoidable, the UI must explicitly show what is saved vs not saved and keep the initiative in a consistent lifecycle state.
+- **Schema drift guard**: if server schema differs from expected (missing fields/enums), the system must:
+  - preserve `initiativeId` and last-known lifecycle state,
+  - avoid writing unknown enum values,
+  - route the user to a recovery path (read-only + export/log) rather than corrupting lifecycle truth.
+
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_INICJATYWY_2026-03-29.md`
@@ -69,9 +184,19 @@ Status: draft (contract wrapper over existing plan)
 
 ## 5. Evidence plan (DoD)
 ### 5.1 Acceptance criteria
-- Initiative można stworzyć z wielu entry points; ma spójny lifecycle i AI pomaga w decomposition/summary bez łamania governance.
-- Po każdej mutacji: status/plan widoki są spójne (read/write coherence).
-- “Zrób inicjatywę” działa jako governed scaffold: user widzi proposal i akceptuje zmiany (no silent writes).
+Acceptance is **testable** and derived from §2.3 canon.
+
+- [ ] Lifecycle uses exactly the canonical states from §2.3.1 (no parallel grammar).
+- [ ] Every lifecycle transition is explicit and audited (who/when/why).
+- [ ] Initiative can be created from at least 2 entry points and lands in the same canonical `initiativeId`.
+- [ ] After any write, list/table + detail + preview show identical lifecycle + key header fields (no split truth).
+- [ ] Counters/filters based on lifecycle state match the visible rows after save (no phantom counts).
+- [ ] AI scaffold produces a structured `proposal` and never writes silently.
+- [ ] User can review/edit the proposal and must explicitly accept before persistence.
+- [ ] The system records an audit trail for proposal→accept (proposalId, actor, timestamps, accepted diff).
+- [ ] Handoff payloads to `Wdrożenia`/`KPI`/`Kalendarz` include required IDs + bounded context and do not redefine initiative truth.
+- [ ] Degraded mode is truth-preserving: incoherent writes are denied by default; partial saves (if any) are disclosed.
+- [ ] Schema drift does not corrupt lifecycle truth; system preserves last-known lifecycle and offers recovery/read-only posture.
 
 ### 5.2 Tests
 - Integracyjne: create → update → status transition → downstream handoff (`Wdrożenia`/`KPI`) bez utraty kontekstu.
@@ -100,6 +225,7 @@ Status: draft (contract wrapper over existing plan)
   - Freeze lifecycle states + transitions and the read/write coherence rules across views.
   - Freeze AI scaffold governance envelope (proposal→review→accept) + audit requirements.
   - Freeze handoff payload to `Wdrożenia`/`KPI` (bounded).
+  - Implement canon section §2.3 (single source of truth for lifecycle + governance + handoffs).
 - **DoD**:
   - Approved(scope): lifecycle and write-truth are explicit; no silent writes.
 
@@ -144,7 +270,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P11-A |  |  |  |  |  |
+| P11-A | approved(scope) | TBD (fill after commit) | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
 | P11-B |  |  |  |  |  |
 | P11-C |  |  |  |  |  |
 

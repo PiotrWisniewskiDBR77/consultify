@@ -36,6 +36,22 @@ Dependencies: P24-A ✅, P19 ✅, P18-A ✅
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-A.md`
 
+### 4) P11-A — Initiative write-truth canon + scope approval (DOCS ONLY)
+
+Goal: freeze initiative lifecycle + write-truth rules + AI governance envelope + bounded handoffs (no code changes).
+
+Dependencies: (program-wide foundations only; docs-only scope approval)
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P11-A.md`
+
+### 5) P04-A — KPI canon + scope approval (DOCS ONLY)
+
+Goal: freeze KPI vocabulary + KPI↔Finance linkage boundaries + permissions model + closed-loop workflow contract + degraded/error posture + anti-duplicate gates.
+
+Dependencies: Results SSOT ✅, KPI↔Finance linkage SSOT ✅
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P04-A.md`
+
 ---
 
 Completion (each agent independently):
