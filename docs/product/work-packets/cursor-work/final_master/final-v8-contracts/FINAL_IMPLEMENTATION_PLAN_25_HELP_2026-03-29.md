@@ -334,7 +334,7 @@ Acceptance checklist (P25-A scope approval; must-pass dla P25-B/P25-C):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P25-A | approved(scope) |  | N/A (scope) | N/A (scope) | §2.3 canon frozen: entry points, routing, PL/EN posture, content ops baseline, reco payload, degraded acceptance |
+| P25-A | approved(scope) | commit: `161eeae42a` | N/A (scope) | N/A (scope) | §2.3 canon frozen: entry points, routing, PL/EN posture, content ops baseline, reco payload, degraded acceptance |
 | P25-B |  |  |  |  |  |
 | P25-C |  |  |  |  |  |
 
