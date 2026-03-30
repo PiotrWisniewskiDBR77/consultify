@@ -82,7 +82,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 27 | Tools | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_27_TOOLS_2026-03-29.md` | P27-A / P27-B / P27-C | approved(scope) |
 | 28 | Assessment | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md` | P28-A / P28-B / P28-C | draft |
 | 29 | Program partnerski | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` | P29-A / P29-B / P29-C | draft |
-| 30 | Organization | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_30_ORGANIZATION_2026-03-29.md` | P30-A / P30-B / P30-C | draft |
+| 30 | Organization | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_30_ORGANIZATION_2026-03-29.md` | P30-A / P30-B / P30-C | approved(scope) |
 | 31 | Settings | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_31_SETTINGS_2026-03-29.md` | P31-A / P31-B / P31-C | draft |
 | 32 | Admin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_2026-03-29.md` | P32-A / P32-B / P32-C | draft |
 | 33 | Superadmin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_33_SUPERADMIN_2026-03-29.md` | P33-A / P33-B / P33-C | draft |
