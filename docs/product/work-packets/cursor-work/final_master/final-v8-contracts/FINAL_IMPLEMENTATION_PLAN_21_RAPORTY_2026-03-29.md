@@ -273,6 +273,6 @@ A report artifact **extends** `OutputTemplate` (P24 §2.3.1) with report-specifi
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P21-A | `approved(scope)` | `fdcba833f7` | Scope approval — no runtime tests | N/A (scope phase) | Report template-first canon + sources posture frozen; approve(run) ≠ review(artifact) invariant explicit |
-| P21-B | `delivered` | (commit) | `npx vitest run tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts` ✅ | Planned: `docs/product/work-packets/cursor-work/final_master/evidence/P21_B_REPORTS_RUNTIME_E2E_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Bounded: 2 templates via governed ArtifactRun → Outputs Library; originSummary carries `sourcesLedger` + `degradedFlags.no_web`; export audit trace recorded via Outputs ledger |
+| P21-B | `delivered` | `efa7d28f19` | `npx vitest run tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts` ✅ | Planned: `docs/product/work-packets/cursor-work/final_master/evidence/P21_B_REPORTS_RUNTIME_E2E_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Bounded: 2 templates via governed ArtifactRun → Outputs Library; originSummary carries `sourcesLedger` + `degradedFlags.no_web`; export audit trace recorded via Outputs ledger |
 | P21-C |  |  |  |  |  |
 
