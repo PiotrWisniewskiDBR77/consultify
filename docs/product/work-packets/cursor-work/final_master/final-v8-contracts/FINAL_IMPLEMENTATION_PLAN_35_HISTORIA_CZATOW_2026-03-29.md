@@ -1,7 +1,7 @@
 # Final Implementation Contract — Historia czatów (Position 35/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (direct contract over existing plan)
+Status: approved(scope) — P35-A complete (direct contract over existing plan)
 
 ## 1. Executive summary
 - **Intent**: Dobre zarządzanie historią rozmów realizowanych także w aplikacji.
@@ -17,6 +17,102 @@ Status: draft (direct contract over existing plan)
 
 ### 2.2 Out-of-scope / non-goals
 - Budowa osobnego „PM project system” w historii (to inne moduły).
+
+### 2.3 P35-A canon — historia jako biblioteka (history/library) + retrieval boundaries (governed)
+**Cel kanonu**: jedna, spójna “biblioteka rozmów” (threads → sessions → messages) z jasnymi granicami wyszukiwania i retencji, która **konsumuje P34 policy gateway** i nie tworzy równoległych prawd danych.
+
+#### 2.3.1 Object model (thread / session / message) + attachments + metadata + indexes
+- **Thread (conversation / wątek)**:
+  - trwała jednostka biblioteczna; to *to* co użytkownik widzi jako “rozmowę” na liście,
+  - ma własny lifecycle: `active` / `archived` / `deleted` (delete jest destrukcyjny i ma retencję/grace),
+  - ma atrybuty biblioteczne: `title`, `pinnedAt`, `archivedAt`, `deletedAt`, `lastMessageAt`, `chatFolderId?`, `scope` (private vs team/org), `createdByUserId`, `orgId/tenantId`.
+- **Session (sesja wątku)**:
+  - opcjonalny podział thread na odcinki czasu (“ciągłość pracy”); nie jest osobnym wątkiem,
+  - łączy parametry runtime: snapshot modelu/presetu, język/locale, tryb narzędzi, parametry retrieval (ale *nie* politykę),
+  - służy do audytu i analytics (“co było uruchomione gdy powstały wiadomości”), nie do zmiany widoczności.
+- **Message (wiadomość)**:
+  - zawsze przypisana do `threadId` (i opcjonalnie `sessionId`),
+  - role/typ: `user` / `assistant` / `system` / `tool` (bounded; system/tool nie są edytowane przez usera),
+  - treść + stan: streaming/failed/retried; opcjonalne `editedAt` (tylko user content) i `redactionState` (PII/retention),
+  - metadane: `createdAt`, `tokenUsage?`, `language?`, `safetyFlags?`.
+- **Attachments (załączniki / linki w wiadomości)**:
+  - w historii przechowujemy **linki/pointery**, nie równoległy storage:
+    - typy: `file` / `link` / `artifact` / `snapshot` / `reference`,
+    - pola minimalne: `kind`, `targetId/targetUrl`, `displayName`, `mime?`, `sizeBytes?`, `createdAt`, `provenancePointer?`,
+  - brak “ukrytego” uploadu do AI poza governance; użycie załączników w odpowiedzi jest śladowane przez P34 (source ledger).
+- **Metadata (bounded, audytowalne)**:
+  - `visibilityScope` i `accessPolicyVersion` (żeby wiedzieć jaką polityką objęto search/retrieval),
+  - `client` (platforma/appVersion) dla debug,
+  - `retentionPolicy` (np. org retention window) jako jawny atrybut.
+- **Indexes (minimalny zestaw, bez wycieków)**:
+  - listowanie: `(orgId, userId, deletedAt=null, lastMessageAt desc)` dla private,
+  - listowanie folderów: `(orgId, chatFolderId, deletedAt=null, lastMessageAt desc)` dla team,
+  - wyszukiwanie: indeks tytułu + “preview/snippet” + (docelowo) pełnotekst `messages.content` (server-side),
+  - wszystko zawsze z filtrem scope z P34 *przed* rankingiem.
+
+#### 2.3.2 Retrieval/search posture (query/filter, ranking, pagination, retention rules — bounded)
+- **Zasada nadrzędna (policy-first)**: scope resolution i filtry dostępu są rozstrzygane przez **P34 policy gateway** zanim nastąpi jakiekolwiek wyszukiwanie/ranking.
+- **Query + filters (bounded API posture)**:
+  - `q` (tekst), `folderId?`, `pinned?`, `archived?`, `includeDeleted=false` (zawsze default),
+  - `from?` / `to?` (czas), `hasAttachments?`,
+  - brak filtrów, które enumerują cudze dane (np. “show me other users”).
+- **Ranking (bounded, zrozumiały)**:
+  - preferencja: lexical match (title + snippet + message content) + boost recency (`lastMessageAt`) + boost pinned,
+  - brak “semantic ranking” bez jawnego, governowanego włączenia (to byłby osobny, eksplicytny rozszerzający zakres krok).
+- **Pagination (must, stable)**:
+  - cursor-based pagination (np. `cursor=lastMessageAt+threadId`) zamiast offset,
+  - deterministic order; brak duplikatów między stronami; idempotentne “next page”.
+- **Retention (bounded rules)**:
+  - `archive` zachowuje thread i wiadomości (reversible),
+  - `delete` jest destrukcyjny: thread nie jest widoczny w bibliotece; obowiązuje grace window zanim nastąpi final purge,
+  - org może mieć politykę retencji (window) — system respektuje ją i komunikuje użytkownikowi (bez “niespodzianek”).
+
+#### 2.3.3 Governance boundaries (consume P34 gateway; privacy/PII; deletion/retention semantics)
+- **No ungoverned retrieval**:
+  - UI/consumer nie wykonuje “bocznych” zapytań o treść wiadomości poza governowanym entrypointem,
+  - search/retrieval musi przejść przez gateway: filtrowanie dostępu → dopiero potem ranking i snippets.
+- **Privacy/PII posture (bounded, product-safe)**:
+  - historia może zawierać PII użytkownika; system traktuje treść jako dane prywatne/organizacyjne zależnie od scope,
+  - brak cross-tenant/cross-org i brak cross-user private; brak enumeracji istnienia cudzych threadów,
+  - wspieramy “delete my data” w granicach: usunięcie treści + minimalny ślad audytu operacji (bez treści).
+- **Deletion semantics**:
+  - delete wymaga explicit confirmation (destructive),
+  - delete jest co najmniej soft-delete (grace) + final purge; po purge nie ma “restore”,
+  - po delete/purge: usuwamy message content + attachment pointers; zachowujemy minimalny audit event (kto/kiedy/ile).
+
+#### 2.3.4 Anti-duplicate gate — one history truth (no parallel `chat_logs_v2`)
+- **Jedna prawda historii**:
+  - jeden zestaw encji dla: threads / sessions / messages / attachment links / search index,
+  - brak równoległych tabel i endpointów typu `chat_logs_v2`, `threads_v2`, `history2`, “temporary” kopii bez planu migracji.
+- **Jeśli istnieje legacy**:
+  - dopuszczalne: adapter/read-through lub widok kompatybilności,
+  - niedopuszczalne: tworzenie nowego storage “bo szybciej” bez eksplicytnej zgody scope w osobnym pakiecie.
+
+#### 2.3.5 Degraded / error posture (8+ scenarios — bez udawania)
+- **Gateway unavailable / timeout** (P34 down): biblioteka pokazuje listę threadów, ale search “target” przechodzi w tryb ograniczony (np. title-only) z jawnym komunikatem.
+- **Search index stale**: wyniki mogą być niepełne; UI komunikuje “częściowe wyniki”, daje możliwość ponowienia.
+- **Cursor invalid / pagination drift**: UI resetuje paginację do stabilnego punktu (np. od początku) bez crash.
+- **Permission change mid-flight**: thread znika z wyników; UI pokazuje “brak dostępu” bez ujawniania szczegółów.
+- **Thread deleted / not found** (deep-link): UI pokazuje stan “nie istnieje / usunięty” i bezpieczny powrót do biblioteki.
+- **Attachment missing / revoked**: wiadomość pozostaje, ale attachment pokazuje “niedostępny” (bez wycieku dlaczego).
+- **Partial retrieval** (część scope zablokowana): UI nie pokazuje zablokowanych elementów; może pokazać high-level badge “część wyników niedostępna”.
+- **Rate limit / overload**: backoff + retry; UI komunikuje ograniczenia; nie przełącza się na niegouvernowany fallback.
+- **Write conflict** (rename/move/archive): UI odświeża stan z serwera i prosi o ponowienie akcji.
+- **Export/history fetch too large**: system wymusza zawężenie zakresu (date range) lub async export.
+
+#### 2.3.6 Acceptance checklist (P35-A → approved(scope))
+- [ ] Zdefiniowany i nazwany jest **kanoniczny model**: thread/session/message + attachment pointers + metadata.
+- [ ] Jasne lifecycle semantics: `pin` / `archive` / `delete` oraz to, co jest reversible vs destructive.
+- [ ] Folder semantics są rozdzielone od `projectId` (brak folder↔project confusion).
+- [ ] Search ma jawny kontrakt: query + filtry + ranking (bounded) + brak “fake search” bez deklaracji.
+- [ ] Pagination jest cursor-based i stabilna (no duplicates / deterministic order).
+- [ ] Retention i delete semantics są jawne (grace + final purge) i zgodne z privacy.
+- [ ] **P34 policy gateway** jest konsumowany: scope-first, brak ungoverned retrieval/search.
+- [ ] Brak enumeracji cudzych danych: no cross-tenant / cross-org / cross-user private.
+- [ ] Anti-duplicate gate jest jawny: **jedna prawda historii**, brak `chat_logs_v2`.
+- [ ] Degraded/error posture ma 8+ scenariuszy i nie “udaje” wyników.
+- [ ] Evidence ledger row P35-A jest wypełniony jako docs-only (`n/a` dla testów/staging).
+- [ ] `EXECUTION_INDEX` #35 jest ustawiony na `approved(scope)` i lock jest gotowy do release.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -141,7 +237,7 @@ Status: draft (direct contract over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P35-A |  |  |  |  |  |
+| P35-A | approved(scope) |  | n/a (docs-only) | n/a (docs-only) | §2.3 canon frozen: object model + governed retrieval boundaries + anti-duplicate + degraded posture + checklist |
 | P35-B |  |  |  |  |  |
 | P35-C |  |  |  |  |  |
 

@@ -87,5 +87,5 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 32 | Admin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_2026-03-29.md` | P32-A / P32-B / P32-C | approved(scope) |
 | 33 | Superadmin | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_33_SUPERADMIN_2026-03-29.md` | P33-A / P33-B / P33-C | approved(scope) |
 | 34 | Mądrość czata | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_34_MADROSC_CZATA_2026-03-29.md` | P34-A / P34-B / P34-C | approved(scope) |
-| 35 | Historia czatów | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_35_HISTORIA_CZATOW_2026-03-29.md` | P35-A / P35-B / P35-C | draft |
+| 35 | Historia czatów | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_35_HISTORIA_CZATOW_2026-03-29.md` | P35-A / P35-B / P35-C | approved(scope) |
 
