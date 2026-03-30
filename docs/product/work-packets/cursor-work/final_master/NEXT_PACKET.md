@@ -12,30 +12,7 @@ Rules:
 
 ## Authorized packet(s)
 
-### 1) P32-A — Admin cockpit canon + core IA (scope approval)
-
-Goal: freeze one tenant operator cockpit (members/roles + integrations/sync oversight) with explicit boundaries vs Organization (P30), Settings (P31), and Superadmin (P33). No parallel "admin truth" — consume P30 org canon and P31 settings taxonomy.
-
-Dependencies:
-
-- P30-A (Organization canon) — `approved(scope)` (done)
-- P31-A (Settings taxonomy) — `approved(scope)` (done)
-- P18-A (trust-state canon) — `approved(scope)` (done)
-
-Lock:
-
-- create `docs/product/work-packets/cursor-work/final_master/locks/P32-A.md`
-
-Completion:
-
-- update `EXECUTION_INDEX.md` #32 → `approved(scope)`
-- release the lock (`Status: released`)
-
-Notes:
-
-- Admin owns: team membership, role assignment, integration/sync oversight, security policy writes (MFA/SSO/session/password).
-- Admin does NOT own: org identity (P30), personal/module preferences (P31), cross-tenant platform ops (P33).
-- Settings (P31) §2.3.5 explicitly routes security/collaboration writes to Admin — Admin must define those write surfaces.
+**None.** Manager gate: do **not** start a new packet until this section is updated. After review of P32-A, expected next foundation packet is **P33-A** (Superadmin) — authorize it here explicitly before any agent runs.
 
 ## Completed (archive)
 
@@ -46,3 +23,4 @@ Notes:
 | P27-A | approved(scope) | 2026-03-30 |
 | P30-A | approved(scope) | 2026-03-30 |
 | P31-A | approved(scope) | 2026-03-30 |
+| P32-A | approved(scope) | 2026-03-30 |
