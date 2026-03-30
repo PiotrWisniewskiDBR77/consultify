@@ -571,6 +571,47 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
     };
   }
 
+  if (runtime === 'report_template') {
+    const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
+    return {
+      kind: 'document',
+      originRecordId: String(originId),
+      artifactId: raw.artifactId || raw.artifact_id,
+      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      statusKey: delivery,
+      owner: raw.ownerUserId || raw.createdBy || '—',
+      updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
+      reportType:
+        String((raw?.originSummary as any)?.template?.reportType || raw.reportType || 'custom') || 'custom',
+      sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
+      exportFormats: [],
+      governance: baseGov,
+    };
+  }
+
+  if (runtime === 'presentation_template') {
+    const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
+    const outline =
+      (raw?.originSummary as any)?.template?.structureBlueprint?.outline &&
+      Array.isArray((raw?.originSummary as any)?.template?.structureBlueprint?.outline)
+        ? (raw?.originSummary as any)?.template?.structureBlueprint?.outline
+        : [];
+    return {
+      kind: 'presentation',
+      originRecordId: String(originId),
+      artifactId: raw.artifactId || raw.artifact_id,
+      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      statusKey: delivery,
+      owner: raw.ownerUserId || raw.createdBy || '—',
+      updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
+      sourceType: String((raw?.originSummary as any)?.template?.deckType || raw.sourceType || 'tool') as any,
+      sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
+      slideCount: outline.length,
+      exportFormats: [],
+      governance: baseGov,
+    };
+  }
+
   if (runtime === 'sheet') {
     const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
     return {
@@ -1094,41 +1135,84 @@ export function useSheetOutputs() {
 
 // ─── Templates (merged: report + presentation) ───────────────────
 
-function mapReportTemplate(raw: any): TemplateItem {
-  const sections =
-    typeof raw.sections_json === 'string'
-      ? JSON.parse(raw.sections_json || '[]')
-      : raw.sections_json || raw.sections || [];
-  return {
-    id: raw.id,
-    title: raw.name || raw.title || 'Untitled',
-    description: raw.description || '',
-    type: 'report',
-    category: raw.report_type || raw.category || 'custom',
-    scope: raw.is_system ? 'application' : 'organization',
-    status: raw.is_active === false || raw.status === 'archived' ? 'archived' : 'active',
-    updatedAt: raw.updated_at || raw.createdAt || new Date().toISOString(),
-    createdBy: raw.created_by || 'System',
-    sectionCount: Array.isArray(sections) ? sections.length : 0,
-  };
+function mapTemplateStatus(statusRaw: unknown): TemplateItem['status'] {
+  const normalized = String(statusRaw || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'draft') return 'draft';
+  if (normalized === 'deprecated' || normalized === 'archived') return 'archived';
+  if (normalized === 'published' || normalized === 'active') return 'active';
+  return 'active';
 }
 
-function mapPresentationTemplate(raw: any): TemplateItem {
-  const outline =
-    typeof raw.outline_json === 'string'
-      ? JSON.parse(raw.outline_json || '[]')
-      : raw.outline_json || [];
+function mapTemplateScope(scopeRaw: unknown): TemplateItem['scope'] {
+  const normalized = String(scopeRaw || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'user' || normalized === 'personal') return 'personal';
+  if (normalized === 'app' || normalized === 'application' || normalized === 'system') {
+    return 'application';
+  }
+  return 'organization';
+}
+
+const TEMPLATE_CATEGORIES: Array<TemplateItem['category']> = [
+  'R1',
+  'R2',
+  'R3',
+  'R4',
+  'executive_update',
+  'project_kickoff',
+  'initiative_review',
+  'financial_review',
+  'assessment_results',
+  'custom',
+];
+
+function coerceTemplateCategory(value: unknown, fallback: TemplateItem['category'] = 'custom') {
+  const normalized = String(value || '').trim() as TemplateItem['category'];
+  return TEMPLATE_CATEGORIES.includes(normalized) ? normalized : fallback;
+}
+
+function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
+  const template = raw?.originSummary?.template;
+  const outputType = String(raw?.outputType || '').toLowerCase();
+  const resolvedTitle = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
+
+  if (outputType !== 'report' && outputType !== 'presentation') return null;
+  if (!resolvedTitle) return null;
+
+  const metadata = template?.metadata && typeof template.metadata === 'object' ? template.metadata : {};
+  const updatedAt =
+    String((metadata as any).updatedAt || '').trim() ||
+    String(raw?.lastTransitionAt || raw?.createdAt || new Date().toISOString());
+
+  const structureBlueprint =
+    template?.structureBlueprint && typeof template.structureBlueprint === 'object'
+      ? template.structureBlueprint
+      : null;
+  const sections = Array.isArray((structureBlueprint as any)?.sections)
+    ? (structureBlueprint as any).sections
+    : [];
+  const outline = Array.isArray((structureBlueprint as any)?.outline)
+    ? (structureBlueprint as any).outline
+    : [];
+
   return {
-    id: raw.id,
-    title: raw.name || raw.title || 'Untitled',
-    description: raw.description || '',
-    type: 'presentation',
-    category: raw.intent || raw.category || 'custom',
-    scope: raw.is_system ? 'application' : 'organization',
-    status: raw.is_active === false ? 'archived' : 'active',
-    updatedAt: raw.updated_at || new Date().toISOString(),
-    createdBy: raw.created_by || 'System',
-    slideCount: Array.isArray(outline) ? outline.length : 0,
+    id: String(raw.artifactId),
+    title: resolvedTitle,
+    description: String(template?.description || '').trim(),
+    type: outputType === 'report' ? 'report' : 'presentation',
+    category:
+      outputType === 'report'
+        ? coerceTemplateCategory(template?.reportType || template?.outputType || raw?.reportType)
+        : coerceTemplateCategory(template?.deckType || template?.outputType),
+    scope: mapTemplateScope(template?.scope),
+    status: mapTemplateStatus(template?.status),
+    updatedAt,
+    createdBy: String((metadata as any).createdBy || raw?.createdBy || 'System'),
+    sectionCount: outputType === 'report' ? sections.length : undefined,
+    slideCount: outputType === 'presentation' ? outline.length : undefined,
   };
 }
 
@@ -1142,22 +1226,34 @@ export function useTemplates() {
     setLoading(true);
     try {
       const [rptRes, presRes] = await Promise.all([
-        fetch(`${API_URL}/report-builder/templates`, { headers: getHeaders() }),
-        fetch(`${API_URL}/presentations/templates`, { headers: getHeaders() }),
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report`, {
+          headers: getHeaders(),
+        }),
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation`, {
+          headers: getHeaders(),
+        }),
       ]);
 
       const merged: TemplateItem[] = [];
 
       if (rptRes.ok) {
         const rptData = await rptRes.json();
-        const rptList = rptData.templates || rptData.data || [];
-        merged.push(...rptList.map(mapReportTemplate));
+        const rptList = rptData.data || rptData.templates || [];
+        merged.push(
+          ...rptList
+            .map(mapCanonicalTemplateArtifact)
+            .filter((x: TemplateItem | null): x is TemplateItem => Boolean(x))
+        );
       }
 
       if (presRes.ok) {
         const presData = await presRes.json();
         const presList = presData.data || presData.templates || [];
-        merged.push(...presList.map(mapPresentationTemplate));
+        merged.push(
+          ...presList
+            .map(mapCanonicalTemplateArtifact)
+            .filter((x: TemplateItem | null): x is TemplateItem => Boolean(x))
+        );
       }
 
       merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

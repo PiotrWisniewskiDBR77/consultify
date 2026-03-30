@@ -1,12 +1,16 @@
 import { type Request, type Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
+import * as organizationService from '../services/organizationService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../services/v8/executionSpineService.js';
+import * as publishReviewService from '../services/v8/publishReviewService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -37,6 +41,11 @@ function canManageArtifactAccess(params: {
   return (
     normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER'
   );
+}
+
+function canPublishOrgTemplate(roleKey: string | null): boolean {
+  const normalizedRole = String(roleKey || '').toUpperCase();
+  return normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER';
 }
 
 function buildActionTargetPayload(artifact: {
@@ -87,6 +96,32 @@ function buildActionTargetPayload(artifact: {
     };
   }
 
+  if (originRuntime === 'report_template') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/reports/builder?tab=templates&templateArtifactId=${artifact.artifactId}&edit=true`,
+      exportPath: null,
+      deletePath: null,
+      reviewPath,
+      authority: 'report_builder',
+    };
+  }
+
+  if (originRuntime === 'presentation_template') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/presentations/wizard?templateArtifactId=${artifact.artifactId}`,
+      exportPath: null,
+      deletePath: null,
+      reviewPath,
+      authority: 'presentations_runtime',
+    };
+  }
+
   if (originRuntime === 'sheet') {
     return {
       artifactId: artifact.artifactId,
@@ -110,6 +145,48 @@ function buildActionTargetPayload(artifact: {
     reviewPath,
     authority: 'artifact_registry',
   };
+}
+
+async function updateTemplateArtifactPostPublish(params: {
+  artifactId: string;
+  organizationId: string;
+  publishedBy: string;
+}): Promise<void> {
+  const now = new Date().toISOString();
+  const row = await dbGet<{ origin_summary_json: string | null }>(
+    `SELECT origin_summary_json FROM v8_output_artifacts
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [params.artifactId, params.organizationId]
+  );
+  let summary: Record<string, unknown> | null = null;
+  try {
+    summary = row?.origin_summary_json ? (JSON.parse(row.origin_summary_json) as any) : null;
+  } catch {
+    summary = null;
+  }
+
+  const nextSummary = summary && typeof summary === 'object' ? { ...summary } : {};
+  const template = (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
+    ? { ...(nextSummary as any).template }
+    : {};
+  template.status = 'published';
+  template.metadata = {
+    ...(template.metadata && typeof template.metadata === 'object' ? template.metadata : {}),
+    publishedBy: params.publishedBy,
+    publishedAt: now,
+    updatedAt: now,
+  };
+  (nextSummary as any).template = template;
+
+  await dbRun(
+    `UPDATE v8_output_artifacts
+     SET visibility_scope = 'organization',
+         owner_user_id = NULL,
+         origin_summary_json = ?,
+         last_transition_at = ?
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [JSON.stringify(nextSummary), now, params.artifactId, params.organizationId]
+  );
 }
 
 async function buildArtifactTrustPayload(params: {
@@ -246,7 +323,9 @@ router.get(
       originRuntime !== 'report' &&
       originRuntime !== 'presentation' &&
       originRuntime !== 'sheet' &&
-      originRuntime !== 'native_artifact'
+      originRuntime !== 'native_artifact' &&
+      originRuntime !== 'report_template' &&
+      originRuntime !== 'presentation_template'
     ) {
       return res.status(400).json({ error: 'Invalid originRuntime' });
     }
@@ -387,13 +466,34 @@ router.post(
     }
 
     try {
+      const reviewersRaw = Array.isArray(req.body?.reviewers)
+        ? req.body.reviewers.map((value: unknown) => String(value))
+        : [];
+      let reviewers = reviewersRaw;
+
+      // P24-B: for org-scope templates, auto-assign org admins/owners as reviewers
+      // (so the submitter doesn't need to know user IDs).
+      if (reviewers.length === 0 && artifact.artifactFamily === 'template') {
+        const templateScope = String((artifact.originSummary as any)?.template?.scope || '')
+          .trim()
+          .toLowerCase();
+        if (templateScope === 'org' || templateScope === 'organization') {
+          const members = await organizationService.getMembers(organizationId);
+          reviewers = (members || [])
+            .filter((m: any) => {
+              const role = String(m?.role || '').toUpperCase();
+              return role === 'OWNER' || role === 'ADMIN';
+            })
+            .map((m: any) => String(m?.user_id || ''))
+            .filter((id) => Boolean(id) && id !== userId);
+        }
+      }
+
       const started = await artifactRegistryService.startArtifactReview({
         artifactId: artifact.artifactId,
         organizationId,
         actorUserId: userId,
-        reviewers: Array.isArray(req.body?.reviewers)
-          ? req.body.reviewers.map((value: unknown) => String(value))
-          : [],
+        reviewers,
       });
 
       return res.status(200).json({ data: started });
@@ -404,6 +504,269 @@ router.post(
       }
       throw error;
     }
+  })
+);
+
+/**
+ * POST /api/artifacts/:id/save-as-template
+ * Creates a template artifact from an existing output artifact (report / presentation).
+ *
+ * This is the P24-B "save-as-template" entrypoint. It creates a legacy runtime template record
+ * (report_builder_templates / presentation_templates) and registers it as a canonical Outputs artifact
+ * (artifact_family='template') so it can be published/governed via P18/P19 semantics.
+ */
+router.post(
+  '/:id/save-as-template',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const sourceArtifactId = String(req.params.id || '');
+    const name = String(req.body?.name || '').trim();
+    const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
+    const scope = String(req.body?.scope || 'user').trim().toLowerCase(); // user | org
+
+    if (!name) {
+      return res.status(422).json({ error: 'Template name is required' });
+    }
+
+    const source = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: sourceArtifactId,
+      userId,
+      roleKey,
+    });
+    if (!source) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+    if (source.originRuntime !== 'report' && source.originRuntime !== 'presentation') {
+      return res.status(409).json({ error: 'Only report or presentation outputs can be saved as templates' });
+    }
+
+    const templateScope = scope === 'org' ? 'org' : 'user';
+    const templateId = uuidv4();
+
+    if (source.originRuntime === 'report') {
+      const reportId = String(source.originRecordId || '').trim();
+      const reportSvc = await import('../services/reportBuilderService.js');
+      const reportBundle = await reportSvc.getReport(reportId, organizationId);
+      if (!reportBundle) {
+        return res.status(404).json({ error: 'Source report not found' });
+      }
+
+      const sections = (reportBundle.sections || []).map((s: any) => ({
+        key: s.sectionKey,
+        title: s.title,
+        sectionType: s.sectionType,
+        orderIndex: s.orderIndex,
+        enabled: Boolean(s.enabled),
+        required: Boolean(s.required),
+        length: s.length,
+        language: s.language,
+      }));
+
+      await reportSvc.createTemplate({
+        id: templateId,
+        organizationId,
+        name,
+        description,
+        sourceType: String(reportBundle.report.sourceType || 'ASSESSMENT'),
+        reportType: String(reportBundle.report.reportType || 'custom'),
+        sections,
+        defaultOptions: null,
+        isPublic: false,
+        createdBy: userId,
+      });
+
+      const templateArtifact = await artifactRegistryService.registerArtifactOrigin({
+        organizationId,
+        outputType: 'report',
+        artifactFamily: 'template',
+        originRuntime: 'report_template',
+        originRecordId: templateId,
+        titleSnapshot: name,
+        ownerUserId: userId,
+        createdBy: userId,
+        deliveryState: 'draft',
+        visibilityScope: 'private',
+        originSummary: {
+          template: {
+            scope: templateScope,
+            status: 'draft',
+            description,
+            reportType: String(reportBundle.report.reportType || 'custom'),
+            structureBlueprint: { sections: sections.map((s: any) => ({ key: s.key, title: s.title })) },
+            metadata: {
+              createdBy: userId,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              legacyTemplateId: templateId,
+              sourceArtifactId,
+            },
+          },
+        },
+      });
+
+      return res.status(201).json({ data: templateArtifact });
+    }
+
+    // presentation → presentation_templates
+    const deckId = String(source.originRecordId || '').trim();
+    const deckRow = await dbGet<any>(
+      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, organizationId]
+    );
+    if (!deckRow) {
+      return res.status(404).json({ error: 'Source presentation not found' });
+    }
+
+    const outline = (() => {
+      try {
+        return JSON.parse(deckRow.outline_json || '[]');
+      } catch {
+        return [];
+      }
+    })();
+
+    await dbRun(
+      `INSERT INTO presentation_templates (
+        id, organization_id, name, description, deck_type,
+        audience, goal, language_default, confidentiality_default, theme,
+        outline_json, max_slides, min_slides,
+        must_have_intents, recommended_visuals,
+        is_system, is_active, cloned_from, created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        templateId,
+        organizationId,
+        name,
+        description || null,
+        deckRow.deck_type || 'custom',
+        deckRow.audience || 'executive',
+        deckRow.goal || 'inform',
+        deckRow.language || 'en',
+        deckRow.confidentiality || 'internal',
+        deckRow.theme || 'corporate',
+        JSON.stringify(Array.isArray(outline) ? outline : []),
+        25,
+        5,
+        JSON.stringify([]),
+        JSON.stringify([]),
+        userId,
+      ]
+    );
+
+    const templateArtifact = await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'template',
+      originRuntime: 'presentation_template',
+      originRecordId: templateId,
+      titleSnapshot: name,
+      ownerUserId: userId,
+      createdBy: userId,
+      deliveryState: 'draft',
+      visibilityScope: 'private',
+      originSummary: {
+        template: {
+          scope: templateScope,
+          status: 'draft',
+          description,
+          deckType: String(deckRow.deck_type || 'custom'),
+          structureBlueprint: { outline: Array.isArray(outline) ? outline : [] },
+          metadata: {
+            createdBy: userId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            legacyTemplateId: templateId,
+            sourceArtifactId,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json({ data: templateArtifact });
+  })
+);
+
+/**
+ * POST /api/artifacts/:id/publish
+ * Minimal governed publish for template artifacts (P24-B).
+ *
+ * Assumes a publish record already exists (e.g. via POST /:id/start-review).
+ * Transitions reviewable_share → in_review → approved → published, submits a review gate,
+ * and flips the artifact visibility to organization scope.
+ */
+router.post(
+  '/:id/publish',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifactId = String(req.params.id || '');
+    const reviewType = String(req.body?.reviewType || 'peer_review');
+    const comments = typeof req.body?.comments === 'string' ? req.body.comments : null;
+
+    if (!canPublishOrgTemplate(roleKey)) {
+      return res.status(403).json({ error: 'Only admins/owners can publish organization templates' });
+    }
+
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId,
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+    if (artifact.artifactFamily !== 'template') {
+      return res.status(409).json({ error: 'Only template artifacts can be published via this endpoint' });
+    }
+
+    const record = await publishReviewService.getPublishRecord(artifactId, organizationId);
+    if (!record) {
+      return res.status(409).json({ error: 'Publish record missing. Start review first.' });
+    }
+
+    let current = record;
+    if (current.currentState === 'reviewable_share') {
+      current = await publishReviewService.transitionPublishState({
+        recordId: current.recordId,
+        organizationId,
+        newState: 'in_review',
+        actor: userId,
+      });
+    }
+
+    const gate = await publishReviewService.submitReviewGate({
+      artifactId,
+      organizationId,
+      reviewType: reviewType as any,
+      reviewerId: userId,
+      result: 'approved',
+      comments,
+    });
+
+    if (current.currentState === 'in_review') {
+      current = await publishReviewService.transitionPublishState({
+        recordId: current.recordId,
+        organizationId,
+        newState: 'approved',
+        actor: userId,
+      });
+    }
+
+    if (current.currentState === 'approved') {
+      current = await publishReviewService.transitionPublishState({
+        recordId: current.recordId,
+        organizationId,
+        newState: 'published',
+        actor: userId,
+      });
+    }
+
+    await updateTemplateArtifactPostPublish({ artifactId, organizationId, publishedBy: userId });
+
+    res.status(200).json({ data: { publishRecord: current, gate } });
   })
 );
 

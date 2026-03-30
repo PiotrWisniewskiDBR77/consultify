@@ -18,6 +18,12 @@ import { TemplatePickerModal } from '../components/ReportBuilder/TemplatePickerM
 import type { ReportSourceType, SourceOption } from '../components/ReportBuilder/useReportBuilder';
 import { Api } from '../services/api';
 
+function unwrap<T = any>(res: any): T {
+  const d = res?.data;
+  if (d && typeof d === 'object' && 'data' in d) return d.data;
+  return d;
+}
+
 // ==========================================
 // NEW REPORT WIZARD (source → template)
 // ==========================================
@@ -45,6 +51,12 @@ const NewReportWizard: React.FC<{
     initialTemplateId || null
   );
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+
+  React.useEffect(() => {
+    if (initialTemplateId && !selectedTemplateId) {
+      setSelectedTemplateId(initialTemplateId);
+    }
+  }, [initialTemplateId, selectedTemplateId]);
 
   const fetchSources = useCallback(async (type: ReportSourceType) => {
     const resp = await Api.get(`/report-builder/sources/${type.toLowerCase()}`);
@@ -177,6 +189,8 @@ export const ReportBuilderView: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ reportId?: string }>();
   const [searchParams] = useSearchParams();
+  const templateArtifactId = searchParams.get('templateArtifactId');
+  const [resolvedTemplateId, setResolvedTemplateId] = useState<string | null>(null);
 
   const isNew = searchParams.get('new') === 'true';
   const tab = searchParams.get('tab') as 'composer' | 'blocks' | 'templates' | 'profiles' | null;
@@ -187,7 +201,38 @@ export const ReportBuilderView: React.FC = () => {
   const initialSourceType = searchParams.get('sourceType') as ReportSourceType | null;
   const initialSourceId = searchParams.get('sourceId');
   const initialSourceName = searchParams.get('sourceName');
-  const initialTemplateId = searchParams.get('templateId');
+  const initialTemplateId = searchParams.get('templateId') || resolvedTemplateId;
+
+  React.useEffect(() => {
+    let mounted = true;
+    if (!templateArtifactId) {
+      setResolvedTemplateId(null);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    (async () => {
+      try {
+        const res = await Api.get(`/artifacts/${templateArtifactId}`);
+        const payload = unwrap(res) as any;
+        const links = Array.isArray(payload?.originLinks) ? payload.originLinks : [];
+        const primary = links.find(
+          (l: any) => String(l?.originRuntime || '') === 'report_template'
+        );
+        const legacyTemplateId = String(primary?.originRecordId || '').trim();
+        if (mounted) {
+          setResolvedTemplateId(legacyTemplateId || null);
+        }
+      } catch {
+        if (mounted) setResolvedTemplateId(null);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [templateArtifactId]);
 
   // Determine view mode
   const isComposerTab =

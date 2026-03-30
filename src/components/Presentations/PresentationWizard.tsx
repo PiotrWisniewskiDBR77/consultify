@@ -72,16 +72,42 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
     const params = new URLSearchParams(location.search || '');
     const templateId = params.get('templateId');
     const cloneTemplateId = params.get('cloneTemplateId');
+    const templateArtifactId = params.get('templateArtifactId');
+    const cloneTemplateArtifactId = params.get('cloneTemplateArtifactId');
 
-    if (templateId) {
-      setSettings((prev) => ({ ...prev, selectedTemplate: templateId }));
+    async function resolveLegacyTemplateIdFromArtifactId(artifactId: string): Promise<string | null> {
+      try {
+        const res = await Api.get(`/artifacts/${artifactId}`);
+        const data = unwrap(res);
+        const links = Array.isArray(data?.originLinks) ? data.originLinks : [];
+        const primary = links.find(
+          (l: any) => String(l?.originRuntime || '') === 'presentation_template'
+        );
+        const legacy = String(primary?.originRecordId || '').trim();
+        return legacy || null;
+      } catch {
+        return null;
+      }
     }
 
-    if (cloneTemplateId) {
-      // Clone happens server-side; then we select the cloned template.
-      (async () => {
+    (async () => {
+      if (templateArtifactId) {
+        const legacy = await resolveLegacyTemplateIdFromArtifactId(templateArtifactId);
+        if (legacy) {
+          setSettings((prev) => ({ ...prev, selectedTemplate: legacy }));
+        }
+      } else if (templateId) {
+        setSettings((prev) => ({ ...prev, selectedTemplate: templateId }));
+      }
+
+      const cloneIdToUse = cloneTemplateArtifactId
+        ? await resolveLegacyTemplateIdFromArtifactId(cloneTemplateArtifactId)
+        : cloneTemplateId;
+
+      if (cloneIdToUse) {
+        // Clone happens server-side; then we select the cloned template.
         try {
-          const res = await Api.post(`/presentations/templates/${cloneTemplateId}/clone`, {});
+          const res = await Api.post(`/presentations/templates/${cloneIdToUse}/clone`, {});
           const cloneData = unwrap(res);
           const clonedId = cloneData?.id;
           if (clonedId) {
@@ -90,8 +116,8 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
         } catch {
           // non-blocking
         }
-      })();
-    }
+      }
+    })();
   }, [location.search]);
 
   const loadTemplates = async () => {

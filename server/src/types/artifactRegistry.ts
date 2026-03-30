@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ArtifactFamilyValues = ['document', 'presentation', 'sheet'] as const;
+export const ArtifactFamilyValues = ['document', 'presentation', 'sheet', 'template'] as const;
 export type ArtifactFamily = (typeof ArtifactFamilyValues)[number];
 
 export const ArtifactVisibilityScopeValues = [
@@ -17,6 +17,8 @@ export const ArtifactOriginRuntimeValues = [
   'presentation',
   'sheet',
   'native_artifact',
+  'report_template',
+  'presentation_template',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 

@@ -73,7 +73,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     error: presentationsError,
     fetchPresentations,
   } = usePresentations();
-  const { templates, loading: templatesLoading, error: templatesError } = useTemplates();
+  const {
+    templates,
+    loading: templatesLoading,
+    error: templatesError,
+    fetchTemplates,
+  } = useTemplates();
   const actions = useRapActions();
 
   const libraryView =
@@ -889,6 +894,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             templates={templates}
             loading={templatesLoading}
             error={templatesError}
+            onRefresh={fetchTemplates}
           />
         );
       case 'outputs_documents':

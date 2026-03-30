@@ -6,9 +6,11 @@
 
 import { BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { API_URL, getHeaders } from '../../services/api';
 import {
   FilterableTable,
   type FilterChip,
@@ -30,6 +32,7 @@ interface TemplatesTabContentProps {
   templates: TemplateItem[];
   loading: boolean;
   error?: string | null;
+  onRefresh?: () => void;
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -40,11 +43,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   templates,
   loading,
   error,
+  onRefresh,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
     let data = templates;
@@ -135,6 +140,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '140px',
         filterable: true,
         filterOptions: [
+          { value: 'personal', label: isPolish ? 'Osobisty' : 'Personal' },
           { value: 'application', label: isPolish ? 'System' : 'Application' },
           { value: 'organization', label: isPolish ? 'Organizacja' : 'Organization' },
         ],
@@ -144,9 +150,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               ? isPolish
                 ? 'System'
                 : 'Application'
-              : isPolish
-                ? 'Organizacja'
-                : 'Organization'}
+              : row.scope === 'personal'
+                ? isPolish
+                  ? 'Osobisty'
+                  : 'Personal'
+                : isPolish
+                  ? 'Organizacja'
+                  : 'Organization'}
           </span>
         ),
       },
@@ -195,19 +205,51 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       variant: 'primary',
       onClick: () => {
         if (row.type === 'report') {
-          navigate(`/reports/builder?templateId=${row.id}`);
+          navigate(`/reports/builder?new=true&templateArtifactId=${row.id}`);
         } else {
-          navigate(`/presentations/wizard?templateId=${row.id}`);
+          navigate(`/presentations/wizard?templateArtifactId=${row.id}`);
         }
       },
     },
+    ...(row.status === 'draft' && row.scope === 'organization'
+      ? ([
+          {
+            id: 'submit_review',
+            label: t('rap.actions.submitTemplateReview', 'Submit for review'),
+            icon: BookTemplate,
+            variant: 'primary',
+            disabled: submitBusyId === row.id,
+            onClick: async () => {
+              setSubmitBusyId(row.id);
+              try {
+                const startRes = await fetch(`${API_URL}/artifacts/${row.id}/start-review`, {
+                  method: 'POST',
+                  headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ reviewers: [] }),
+                });
+                if (!startRes.ok && startRes.status !== 409) {
+                  throw new Error('Failed to start review');
+                }
+                toast.success(t('rap.toast.reviewStarted', 'Review started'));
+                onRefresh?.();
+              } catch (e: any) {
+                toast.error(
+                  e?.message ? String(e.message) : t('rap.toast.reviewFailed', 'Failed to start review')
+                );
+              } finally {
+                setSubmitBusyId(null);
+              }
+            },
+          } as RowAction,
+        ] as RowAction[])
+      : []),
     {
       id: 'clone',
       label: t('rap.actions.clone', 'Klonuj'),
       icon: Copy,
       onClick: () => {
         if (row.type === 'presentation') {
-          navigate(`/presentations/wizard?cloneTemplateId=${row.id}`);
+          navigate(`/presentations/wizard?cloneTemplateArtifactId=${row.id}`);
         }
       },
     },
@@ -217,7 +259,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       icon: Edit,
       onClick: () => {
         if (row.type === 'report') {
-          navigate(`/reports/builder?templateId=${row.id}&edit=true`);
+          navigate(`/reports/builder?tab=templates&templateArtifactId=${row.id}&edit=true`);
         }
       },
     },

@@ -84,7 +84,14 @@ interface ArtifactRow {
 }
 
 interface ArtifactListRow extends ArtifactRow {
-  origin_runtime: 'report' | 'presentation' | 'sheet' | 'native_artifact' | null;
+  origin_runtime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template'
+    | null;
   origin_record_id: string | null;
   report_title: string | null;
   report_status: string | null;
@@ -105,7 +112,13 @@ interface OriginLinkRow {
   link_id: string;
   artifact_id: string;
   organization_id: string;
-  origin_runtime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  origin_runtime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template';
   origin_record_id: string;
   is_primary_origin: number;
   created_at: string;
@@ -168,6 +181,34 @@ interface PresentationBackfillRow {
   updated_at: string | null;
   source_id: string | null;
   source_refs_json: string | null;
+}
+
+interface ReportTemplateBackfillRow {
+  id: string;
+  organization_id: string | null;
+  name: string | null;
+  description: string | null;
+  report_type: string | null;
+  sections_json: string | null;
+  is_system: number | null;
+  is_active: number | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface PresentationTemplateBackfillRow {
+  id: string;
+  organization_id: string | null;
+  name: string | null;
+  description: string | null;
+  deck_type: string | null;
+  outline_json: string | null;
+  is_system: number | null;
+  is_active: number | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
@@ -319,10 +360,41 @@ export function deriveArtifactValidationSnapshot(params: {
     message: string;
   }>;
 } {
+  const artifactFamily = String((params.artifact as any)?.artifactFamily || '').trim().toLowerCase();
+
   const sourceRefs =
     params.sourceRefs && Array.isArray(params.sourceRefs)
       ? params.sourceRefs
       : sourceRefsFromOriginSummary(params.artifact.originSummary);
+
+  if (artifactFamily === 'template') {
+    const checks: Array<{
+      id: 'title_present' | 'source_grounded' | 'execution_complete';
+      status: 'passed' | 'pending' | 'failed';
+      message: string;
+    }> = [
+      {
+        id: 'title_present',
+        status: String(params.artifact.titleSnapshot || '').trim() ? 'passed' : 'failed',
+        message: 'Template title snapshot is present',
+      },
+      {
+        id: 'source_grounded',
+        status: 'passed',
+        message: 'Templates validate via contract payload (no source grounding required)',
+      },
+      {
+        id: 'execution_complete',
+        status: 'passed',
+        message: 'Templates do not require execution approval before review',
+      },
+    ];
+
+    if (checks.some((check) => check.status === 'failed')) {
+      return { state: 'attention_required', checks };
+    }
+    return { state: 'validated', checks };
+  }
 
   const checks: Array<{
     id: 'title_present' | 'source_grounded' | 'execution_complete';
@@ -849,20 +921,141 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   return inserted;
 }
 
+async function backfillReportTemplatesForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<ReportTemplateBackfillRow>(
+    `SELECT t.id, t.organization_id, t.name, t.description, t.report_type, t.sections_json,
+            t.is_system, t.is_active, t.created_by, t.created_at, t.updated_at
+     FROM report_builder_templates t
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = ?
+      AND l.origin_runtime = 'report_template'
+      AND l.origin_record_id = t.id
+     WHERE (t.organization_id IS NULL OR t.organization_id = ?)
+       AND (t.is_active IS NULL OR t.is_active = 1)
+       AND l.link_id IS NULL`,
+    [organizationId, organizationId],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    const sections = safeJsonParse(row.sections_json, [] as any[]);
+    await registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      artifactFamily: 'template',
+      originRuntime: 'report_template',
+      originRecordId: row.id,
+      titleSnapshot: row.name || 'Untitled report template',
+      ownerUserId: null,
+      createdBy: row.created_by || FALLBACK_ACTOR,
+      deliveryState: 'ready',
+      visibilityScope: 'organization',
+      originSummary: {
+        template: {
+          scope: row.is_system ? 'app' : 'org',
+          status: 'published',
+          description: row.description || '',
+          reportType: row.report_type || 'custom',
+          structureBlueprint: {
+            sections: Array.isArray(sections)
+              ? sections.map((s: any) => ({
+                  key: s?.key || s?.sectionKey || s?.section_key || s?.id || '',
+                  title: s?.title || s?.name || '',
+                }))
+              : [],
+          },
+          metadata: {
+            createdBy: row.created_by || FALLBACK_ACTOR,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            legacyTemplateId: row.id,
+          },
+        },
+      },
+    });
+    inserted++;
+  }
+  return inserted;
+}
+
+async function backfillPresentationTemplatesForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<PresentationTemplateBackfillRow>(
+    `SELECT t.id, t.organization_id, t.name, t.description, t.deck_type, t.outline_json,
+            t.is_system, t.is_active, t.created_by, t.created_at, t.updated_at
+     FROM presentation_templates t
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = ?
+      AND l.origin_runtime = 'presentation_template'
+      AND l.origin_record_id = t.id
+     WHERE (t.organization_id IS NULL OR t.organization_id = ?)
+       AND (t.is_active IS NULL OR t.is_active = TRUE)
+       AND l.link_id IS NULL`,
+    [organizationId, organizationId],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    const outline = safeJsonParse(row.outline_json, [] as any[]);
+    await registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'template',
+      originRuntime: 'presentation_template',
+      originRecordId: row.id,
+      titleSnapshot: row.name || 'Untitled presentation template',
+      ownerUserId: null,
+      createdBy: row.created_by || FALLBACK_ACTOR,
+      deliveryState: 'ready',
+      visibilityScope: 'organization',
+      originSummary: {
+        template: {
+          scope: row.is_system ? 'app' : 'org',
+          status: 'published',
+          description: row.description || '',
+          deckType: row.deck_type || 'custom',
+          structureBlueprint: {
+            outline: Array.isArray(outline) ? outline : [],
+          },
+          metadata: {
+            createdBy: row.created_by || FALLBACK_ACTOR,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            legacyTemplateId: row.id,
+          },
+        },
+      },
+    });
+    inserted++;
+  }
+  return inserted;
+}
+
 export async function ensureBackfilledOutputsForOrg(organizationId: string): Promise<void> {
   const last = backfillWatermark.get(organizationId) || 0;
   const now = Date.now();
   if (now - last < BACKFILL_TTL_MS) return;
 
-  const [reportsInserted, presentationsInserted] = await Promise.all([
+  const [reportsInserted, presentationsInserted, reportTemplatesInserted, presentationTemplatesInserted] =
+    await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
+    backfillReportTemplatesForOrg(organizationId),
+    backfillPresentationTemplatesForOrg(organizationId),
   ]);
 
   backfillWatermark.set(organizationId, now);
-  if (reportsInserted || presentationsInserted) {
+  if (
+    reportsInserted ||
+    presentationsInserted ||
+    reportTemplatesInserted ||
+    presentationTemplatesInserted
+  ) {
     logger.info(
-      `${LOG_PREFIX} Backfilled ${reportsInserted} reports and ${presentationsInserted} presentations for org ${organizationId}`
+      `${LOG_PREFIX} Backfilled ${reportsInserted} reports, ${presentationsInserted} presentations, ` +
+        `${reportTemplatesInserted} report templates, and ${presentationTemplatesInserted} presentation templates ` +
+        `for org ${organizationId}`
     );
   }
 }
@@ -986,6 +1179,10 @@ function matchesViewFilters(
   filters: ArtifactListFilters,
   currentUserId: string
 ): boolean {
+  // Safety: templates are only included when explicitly requested, so Outputs lists
+  // (All/Mine/Needs review) remain artifact-output focused by default.
+  if (!filters.artifactFamily && !filters.reviewSharedForUserId && item.artifactFamily === 'template')
+    return false;
   if (filters.outputType && item.outputType !== filters.outputType) return false;
   if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
   if (filters.visibilityScope && item.visibilityScope !== filters.visibilityScope) return false;
@@ -1182,7 +1379,13 @@ export async function getArtifactForUser(params: {
 
 export async function getArtifactByOrigin(params: {
   organizationId: string;
-  originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  originRuntime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template';
   originRecordId: string;
   userId: string;
   roleKey?: string | null;

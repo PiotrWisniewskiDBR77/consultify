@@ -1,0 +1,160 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useTemplates } from '../../../src/components/ReportsAndPresentations/useRapData';
+
+vi.mock('../../../src/services/api', () => ({
+  API_URL: '/api',
+  getHeaders: () => ({ Authorization: 'Bearer test-token' }),
+  shouldAllowDemoData: () => false,
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback || _key,
+    i18n: { language: 'en' },
+  }),
+}));
+
+describe('useTemplates (canonical artifacts)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('loads templates from canonical /api/artifacts (artifactFamily=template) for report + presentation', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: any) => {
+      const url = String(input);
+      if (!url.startsWith('/api/artifacts')) {
+        throw new Error(`Unexpected fetch URL: ${url}`);
+      }
+      const u = new URL(url, 'http://localhost');
+      const outputType = u.searchParams.get('outputType');
+      const artifactFamily = u.searchParams.get('artifactFamily');
+      if (artifactFamily !== 'template') {
+        return {
+          ok: true,
+          json: async () => ({ data: [] }),
+        } as Response;
+      }
+
+      if (outputType === 'report') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                artifactId: 'tmpl-report-1',
+                outputType: 'report',
+                artifactFamily: 'template',
+                resolvedTitle: 'Steering report template',
+                createdBy: 'user-1',
+                lastTransitionAt: '2026-03-30T10:00:00.000Z',
+                originSummary: {
+                  template: {
+                    scope: 'org',
+                    status: 'published',
+                    description: 'A board-ready steering cadence report.',
+                    reportType: 'R2',
+                    structureBlueprint: {
+                      sections: [
+                        { key: 'exec_summary', title: 'Executive summary' },
+                        { key: 'delivery', title: 'Delivery status' },
+                      ],
+                    },
+                    metadata: {
+                      createdBy: 'user-1',
+                      updatedAt: '2026-03-30T10:00:00.000Z',
+                    },
+                  },
+                },
+              },
+            ],
+          }),
+        } as Response;
+      }
+
+      if (outputType === 'presentation') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                artifactId: 'tmpl-deck-1',
+                outputType: 'presentation',
+                artifactFamily: 'template',
+                resolvedTitle: 'Executive update deck',
+                createdBy: 'user-2',
+                lastTransitionAt: '2026-03-30T11:00:00.000Z',
+                originSummary: {
+                  template: {
+                    scope: 'app',
+                    status: 'published',
+                    description: 'A concise executive update deck.',
+                    deckType: 'executive_update',
+                    structureBlueprint: {
+                      outline: [{ intent: 'title' }, { intent: 'key_findings' }, { intent: 'next_steps' }],
+                    },
+                    metadata: {
+                      createdBy: 'system',
+                      updatedAt: '2026-03-30T11:00:00.000Z',
+                    },
+                  },
+                },
+              },
+            ],
+          }),
+        } as Response;
+      }
+
+      return {
+        ok: true,
+        json: async () => ({ data: [] }),
+      } as Response;
+    });
+
+    const { result } = renderHook(() => useTemplates());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/artifacts?limit=200&artifactFamily=template&outputType=report',
+      { headers: { Authorization: 'Bearer test-token' } }
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/artifacts?limit=200&artifactFamily=template&outputType=presentation',
+      { headers: { Authorization: 'Bearer test-token' } }
+    );
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.templates).toEqual([
+      expect.objectContaining({
+        id: 'tmpl-deck-1',
+        title: 'Executive update deck',
+        type: 'presentation',
+        category: 'executive_update',
+        scope: 'application',
+        status: 'active',
+        slideCount: 3,
+      }),
+      expect.objectContaining({
+        id: 'tmpl-report-1',
+        title: 'Steering report template',
+        type: 'report',
+        category: 'R2',
+        scope: 'organization',
+        status: 'active',
+        sectionCount: 2,
+      }),
+    ]);
+  });
+});
+

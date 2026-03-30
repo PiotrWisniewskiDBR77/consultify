@@ -5,6 +5,8 @@
 
 import {
   Archive,
+  BookTemplate,
+  CheckCircle2,
   Download,
   ExternalLink,
   FileSpreadsheet,
@@ -351,6 +353,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   };
 
   const getRowActions = (row: AggregateRow): RowAction[] => {
+    const isTemplateArtifact = Boolean((row.governance?.originSummary as any)?.template);
     const base: RowAction[] = [
       {
         id: 'open',
@@ -360,6 +363,86 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         onClick: () => openRow(row),
       },
     ];
+
+    if (!isTemplateArtifact && row.artifactId && (row.kind === 'document' || row.kind === 'presentation')) {
+      base.push({
+        id: 'save_as_template',
+        label: t('rap.actions.saveAsTemplate', 'Save as template'),
+        icon: BookTemplate,
+        onClick: async () => {
+          const aid = row.artifactId;
+          if (!aid) return;
+
+          const defaultName = `${row.title} Template`;
+          const name = window.prompt(
+            isPolish ? 'Nazwa nowego wzorca:' : 'New template name:',
+            defaultName
+          );
+          if (!name?.trim()) return;
+          const description = window.prompt(
+            isPolish ? 'Opis (opcjonalnie):' : 'Description (optional):',
+            ''
+          );
+          const scopeIsOrg = window.confirm(
+            isPolish
+              ? 'Czy to ma być wzorzec organizacji (wymaga review)?'
+              : 'Should this be an organization template (requires review)?'
+          );
+
+          try {
+            const res = await fetch(`${API_URL}/artifacts/${aid}/save-as-template`, {
+              method: 'POST',
+              headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: name.trim(),
+                description: String(description || '').trim(),
+                scope: scopeIsOrg ? 'org' : 'user',
+              }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(String(err?.error || 'Failed to save template'));
+            }
+            toast.success(isPolish ? 'Zapisano jako wzorzec' : 'Saved as template');
+            navigate('/presentations?tab=templates');
+          } catch (e: any) {
+            toast.error(e?.message ? String(e.message) : isPolish ? 'Błąd zapisu wzorca' : 'Failed');
+          }
+        },
+      });
+    }
+
+    if (
+      isTemplateArtifact &&
+      row.artifactId &&
+      row.governance?.visibilityScope === 'review_shared' &&
+      (row.governance?.publishState === 'reviewable_share' || row.governance?.publishState === 'in_review')
+    ) {
+      base.push({
+        id: 'approve_template',
+        label: t('rap.actions.approveTemplate', 'Approve & publish'),
+        icon: CheckCircle2,
+        variant: 'primary',
+        onClick: async () => {
+          try {
+            const res = await fetch(`${API_URL}/artifacts/${row.artifactId}/publish`, {
+              method: 'POST',
+              headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reviewType: 'peer_review' }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(String(err?.error || 'Publish failed'));
+            }
+            toast.success(isPolish ? 'Opublikowano' : 'Published');
+            onRefresh();
+          } catch (e: any) {
+            toast.error(e?.message ? String(e.message) : isPolish ? 'Błąd publikacji' : 'Publish failed');
+          }
+        },
+      });
+    }
+
     if (row.kind === 'document') {
       base.push({
         id: 'export',

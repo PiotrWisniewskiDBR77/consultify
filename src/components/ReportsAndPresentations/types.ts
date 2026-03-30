@@ -42,7 +42,7 @@ export type TemplateCategory =
   | 'financial_review'
   | 'assessment_results'
   | 'custom';
-export type TemplateScope = 'application' | 'organization';
+export type TemplateScope = 'personal' | 'application' | 'organization';
 export type TemplateStatus = 'active' | 'archived' | 'draft';
 
 export type ReportType = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
@@ -67,7 +67,13 @@ export interface ArtifactOriginLinkItem {
   linkId: string;
   artifactId: string;
   organizationId: string;
-  originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  originRuntime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template';
   originRecordId: string;
   isPrimaryOrigin: boolean;
   createdAt: string;
