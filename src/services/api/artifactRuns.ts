@@ -19,6 +19,26 @@ export type ArtifactRunStatus =
   | 'completed'
   | 'failed';
 
+export type ArtifactRunPreflightState = 'passed' | 'pending' | 'attention_required';
+
+export interface ArtifactRunPreflight {
+  state: ArtifactRunPreflightState;
+  computedAt: string;
+  checks: Array<{
+    id: 'execution_run_resolvable' | 'plan_supported' | 'materialization_inputs' | 'materialization_target';
+    status: 'passed' | 'pending' | 'failed';
+    message: string;
+  }>;
+}
+
+export interface ArtifactRunFailurePackage {
+  stage: 'preflight' | 'materialize' | 'retry';
+  message: string;
+  occurredAt: string;
+  ghostArtifactsCleanedUp?: boolean;
+  cleanupNotes?: string | null;
+}
+
 export interface ArtifactRunPlan {
   artifactFamily: ArtifactFamily;
   outputType: ArtifactPlanOutputType;
@@ -42,6 +62,14 @@ export interface ArtifactRunRecord {
   proposalId: string | null;
   retryOfRunId: string | null;
   failureReason: string | null;
+  preflight: ArtifactRunPreflight | null;
+  failurePackage: ArtifactRunFailurePackage | null;
+  materializationOrigin:
+    | {
+        originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact' | 'report_template' | 'presentation_template';
+        originRecordId: string;
+      }
+    | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
@@ -162,6 +190,22 @@ export const ArtifactRunsApi = {
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
       res,
       'Failed to retry artifact run'
+    );
+    return json.data;
+  },
+
+  preflight: async (runId: string): Promise<ArtifactRunRecord> => {
+    const res = await fetchWithRetry(
+      `${ARTIFACT_RUNS_BASE}/${encodeURIComponent(runId)}/preflight`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({}),
+      }
+    );
+    const json = await handleResponse<{ data: ArtifactRunRecord }>(
+      res,
+      'Failed to preflight artifact run'
     );
     return json.data;
   },

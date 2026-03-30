@@ -23,6 +23,7 @@ import {
   useV8CreateArtifactRunFromChat,
   useV8ArtifactRunHistory,
   useV8MaterializeArtifactRun,
+  useV8PreflightArtifactRun,
   useV8RetryArtifactRun,
 } from '@/hooks/useV8ArtifactRuns';
 import { useV8CaptureSnapshot, useV8Snapshots } from '@/hooks/useV8Chat';
@@ -138,6 +139,7 @@ export function V8ArtifactRunControl({
   const createRun = useV8CreateArtifactRunFromChat();
   const acceptPlan = useV8AcceptArtifactRunPlan();
   const materializeRun = useV8MaterializeArtifactRun();
+  const preflightRun = useV8PreflightArtifactRun();
   const retryRun = useV8RetryArtifactRun();
   const [isOpen, setIsOpen] = useState(false);
   const [goal, setGoal] = useState(defaultGoal);
@@ -183,6 +185,7 @@ export function V8ArtifactRunControl({
     createRun.isPending ||
     acceptPlan.isPending ||
     materializeRun.isPending ||
+    preflightRun.isPending ||
     retryRun.isPending ||
     submitExecutionReview.isPending ||
     approveExecutionRun.isPending ||
@@ -220,6 +223,15 @@ export function V8ArtifactRunControl({
       setCurrentRun(result.run);
       setCurrentPlan(result.artifactPlan);
       toast.success(t('v8.artifactRun.planCreated', 'Artifact plan created from governed chat'));
+
+      // P17-B: run an explicit preflight stage (separately rendered).
+      try {
+        const preflighted = await preflightRun.mutateAsync(result.run.runId);
+        setCurrentRun(preflighted);
+        setCurrentPlan(preflighted.plan);
+      } catch {
+        // Preflight failures are surfaced via the preflight card / API state; keep planning responsive.
+      }
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -313,6 +325,22 @@ export function V8ArtifactRunControl({
         error instanceof Error
           ? error.message
           : t('v8.artifactRun.materializeFailed', 'Failed to materialize artifact run')
+      );
+    }
+  };
+
+  const handlePreflight = async () => {
+    if (!currentRun?.runId) return;
+    try {
+      const updated = await preflightRun.mutateAsync(currentRun.runId);
+      setCurrentRun(updated);
+      setCurrentPlan(updated.plan);
+      toast.success(t('v8.artifactRun.preflightOk', 'Validation / preflight updated'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.preflightFailed', 'Failed to validate / preflight this run')
       );
     }
   };
@@ -562,6 +590,69 @@ export function V8ArtifactRunControl({
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
+                </div>
+              )}
+              {currentRun.failurePackage && (
+                <div className="mt-1 text-[11px] text-rose-700 dark:text-rose-200">
+                  {t('v8.artifactRun.failureStage', 'Failure stage')}:{' '}
+                  {String(currentRun.failurePackage.stage || 'materialize')}
+                </div>
+              )}
+
+              {currentRun && (
+                <div
+                  data-testid="v8-artifact-run-preflight"
+                  className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-900/60 dark:bg-amber-950/20"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-100">
+                      <ShieldCheck size={15} />
+                      {t('v8.artifactRun.preflightTitle', 'Validation / preflight')}
+                    </div>
+                    <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                      {currentRun.preflight?.state
+                        ? String(currentRun.preflight.state).replace(/_/g, ' ')
+                        : t('v8.artifactRun.preflightNotRun', 'Not run')}
+                    </span>
+                  </div>
+
+                  {currentRun.preflight?.checks && currentRun.preflight.checks.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {currentRun.preflight.checks.map((check) => (
+                        <div
+                          key={check.id}
+                          className="flex items-start justify-between gap-3 text-[11px] text-amber-900 dark:text-amber-100"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{check.id.replace(/_/g, ' ')}</div>
+                            <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
+                              {check.message}
+                            </div>
+                          </div>
+                          <div className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                            {check.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      data-testid="v8-artifact-run-preflight-rerun"
+                      onClick={handlePreflight}
+                      disabled={isBusy || preflightRun.isPending}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-medium text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-900/60 dark:bg-amber-950 dark:text-amber-200 dark:hover:bg-amber-950/35"
+                    >
+                      {preflightRun.isPending ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={14} />
+                      )}
+                      {t('v8.artifactRun.preflightAction', 'Run preflight')}
+                    </button>
+                  </div>
                 </div>
               )}
 

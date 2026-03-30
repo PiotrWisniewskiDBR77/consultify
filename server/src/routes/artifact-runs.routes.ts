@@ -80,6 +80,20 @@ router.post(
 );
 
 router.post(
+  '/:runId/preflight',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req);
+    const run = await artifactRegistryService.preflightArtifactRun({
+      runId: String(req.params.runId || ''),
+      organizationId,
+      actorUserId: userId,
+    });
+    res.status(200).json({ data: run });
+  })
+);
+
+router.post(
   '/:runId/materialize',
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {

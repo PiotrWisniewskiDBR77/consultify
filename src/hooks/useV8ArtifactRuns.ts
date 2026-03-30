@@ -70,6 +70,16 @@ export function useV8RetryArtifactRun() {
   });
 }
 
+export function useV8PreflightArtifactRun() {
+  const queryClient = useQueryClient();
+  return useMutation<ArtifactRunRecord, Error, string>({
+    mutationFn: (runId) => ArtifactRunsApi.preflight(runId),
+    onSuccess: (run) => {
+      queryClient.setQueryData(V8_ARTIFACT_RUN_KEYS.run(run.runId), run);
+    },
+  });
+}
+
 export function useV8MaterializeArtifactRun() {
   const queryClient = useQueryClient();
   return useMutation<

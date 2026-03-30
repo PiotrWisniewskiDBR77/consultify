@@ -146,6 +146,6 @@ Status: draft (contract wrapper over existing plan)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P17-A |  |  |  |  |  |
-| P17-B |  |  |  |  |  |
+| P17-B | delivered | pending | `tests/integration/routes/artifact-runs.routes.preflight-and-failure.sqlite.integration.test.ts` (green); `tests/components/AIChat/V8ArtifactRunControl.test.tsx` (green) | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P17_B_ARTIFACTRUN_VALIDATION_RERUN_FAILURE_E2E_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Explicit `/api/artifact-runs/:runId/preflight` stage + UI preflight panel; failure packaged (`failurePackage`) + retry lineage; best-effort ghost Outputs cleanup by origin. |
 | P17-C |  |  |  |  |  |
 

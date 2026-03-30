@@ -10,6 +10,7 @@ import { V8ArtifactRunControl } from '../../../src/components/AIChat/V8ArtifactR
 const createRunMutateAsync = vi.fn();
 const acceptPlanMutateAsync = vi.fn();
 const materializeRunMutateAsync = vi.fn();
+const preflightRunMutateAsync = vi.fn();
 const retryRunMutateAsync = vi.fn();
 const captureSnapshotMutateAsync = vi.fn();
 const useV8SnapshotsMock = vi.fn();
@@ -62,6 +63,10 @@ vi.mock('../../../src/hooks/useV8ArtifactRuns', () => ({
     mutateAsync: materializeRunMutateAsync,
     isPending: false,
   }),
+  useV8PreflightArtifactRun: () => ({
+    mutateAsync: preflightRunMutateAsync,
+    isPending: false,
+  }),
   useV8RetryArtifactRun: () => ({
     mutateAsync: retryRunMutateAsync,
     isPending: false,
@@ -92,6 +97,7 @@ describe('V8ArtifactRunControl', () => {
     createRunMutateAsync.mockReset();
     acceptPlanMutateAsync.mockReset();
     materializeRunMutateAsync.mockReset();
+    preflightRunMutateAsync.mockReset();
     retryRunMutateAsync.mockReset();
     submitReviewMutateAsync.mockReset();
     approveExecutionRunMutateAsync.mockReset();
@@ -101,6 +107,7 @@ describe('V8ArtifactRunControl', () => {
     useV8ExecutionRunMock.mockReset();
     useV8ExecutionProposalsMock.mockReset();
     useV8ExecutionTransitionsMock.mockReset();
+    preflightRunMutateAsync.mockRejectedValue(new Error('preflight not configured'));
     useV8SnapshotsMock.mockReturnValue({
       data: [{ snapshotId: 'snap-1' }, { snapshotId: 'snap-2' }],
       isLoading: false,
@@ -187,11 +194,53 @@ describe('V8ArtifactRunControl', () => {
         proposalId: null,
         retryOfRunId: null,
         failureReason: null,
+        preflight: null,
+        failurePackage: null,
+        materializationOrigin: null,
         startedAt: '2026-03-24T10:00:00.000Z',
         completedAt: null,
         createdAt: '2026-03-24T10:00:00.000Z',
         updatedAt: '2026-03-24T10:00:00.000Z',
       },
+    });
+    preflightRunMutateAsync.mockResolvedValue({
+      runId: 'run-1',
+      artifactId: null,
+      organizationId: 'org-1',
+      executionRunId: 'exec-1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
+        governancePath: 'execution_spine',
+        visibilityScope: 'project',
+      },
+      runStatus: 'planned',
+      proposalId: null,
+      retryOfRunId: null,
+      failureReason: null,
+      preflight: {
+        state: 'pending',
+        computedAt: '2026-03-24T10:00:01.000Z',
+        checks: [
+          {
+            id: 'execution_run_resolvable',
+            status: 'passed',
+            message: 'Governed execution run is resolvable',
+          },
+        ],
+      },
+      failurePackage: null,
+      materializationOrigin: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: null,
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:00:01.000Z',
     });
     acceptPlanMutateAsync.mockResolvedValue({
       runId: 'run-1',
@@ -214,6 +263,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-7',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: null,
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -240,6 +292,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-7',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: '2026-03-24T10:02:00.000Z',
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -266,6 +321,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: null,
       retryOfRunId: 'run-1',
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:02:00.000Z',
       completedAt: null,
       createdAt: '2026-03-24T10:02:00.000Z',
@@ -288,6 +346,11 @@ describe('V8ArtifactRunControl', () => {
         requestedArtifactFamily: 'document',
         requestedOutputType: 'report',
       }),
+    );
+
+    await waitFor(() => expect(preflightRunMutateAsync).toHaveBeenCalledWith('run-1'));
+    expect(await screen.findByTestId('v8-artifact-run-preflight')).toHaveTextContent(
+      'Validation / preflight',
     );
 
     expect(await screen.findByTestId('v8-artifact-run-summary')).toHaveTextContent(
@@ -432,11 +495,53 @@ describe('V8ArtifactRunControl', () => {
         proposalId: null,
         retryOfRunId: null,
         failureReason: null,
+        preflight: null,
+        failurePackage: null,
+        materializationOrigin: null,
         startedAt: '2026-03-24T10:00:00.000Z',
         completedAt: null,
         createdAt: '2026-03-24T10:00:00.000Z',
         updatedAt: '2026-03-24T10:00:00.000Z',
       },
+    });
+    preflightRunMutateAsync.mockResolvedValue({
+      runId: 'run-sheet-1',
+      artifactId: null,
+      organizationId: 'org-1',
+      executionRunId: 'exec-sheet-1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'sheet',
+        outputType: 'sheet',
+        titleHint: 'Structured sheet draft',
+        governancePath: 'execution_spine',
+        visibilityScope: 'organization',
+      },
+      runStatus: 'planned',
+      proposalId: null,
+      retryOfRunId: null,
+      failureReason: null,
+      preflight: {
+        state: 'pending',
+        computedAt: '2026-03-24T10:00:01.000Z',
+        checks: [
+          {
+            id: 'materialization_target',
+            status: 'pending',
+            message: 'Sheet materialization requires a governed table target',
+          },
+        ],
+      },
+      failurePackage: null,
+      materializationOrigin: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: null,
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:00:01.000Z',
     });
     acceptPlanMutateAsync.mockResolvedValue({
       runId: 'run-sheet-1',
@@ -459,6 +564,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-sheet-1',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: null,
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -485,6 +593,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-sheet-1',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: '2026-03-24T10:02:00.000Z',
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -578,11 +689,53 @@ describe('V8ArtifactRunControl', () => {
         proposalId: null,
         retryOfRunId: null,
         failureReason: null,
+        preflight: null,
+        failurePackage: null,
+        materializationOrigin: null,
         startedAt: '2026-03-24T10:00:00.000Z',
         completedAt: null,
         createdAt: '2026-03-24T10:00:00.000Z',
         updatedAt: '2026-03-24T10:00:00.000Z',
       },
+    });
+    preflightRunMutateAsync.mockResolvedValue({
+      runId: 'run-p1',
+      artifactId: null,
+      organizationId: 'org-1',
+      executionRunId: 'exec-p1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'presentation',
+        outputType: 'presentation',
+        titleHint: 'Executive board deck',
+        governancePath: 'execution_spine',
+        visibilityScope: 'private',
+      },
+      runStatus: 'planned',
+      proposalId: null,
+      retryOfRunId: null,
+      failureReason: null,
+      preflight: {
+        state: 'pending',
+        computedAt: '2026-03-24T10:00:01.000Z',
+        checks: [
+          {
+            id: 'materialization_inputs',
+            status: 'pending',
+            message: 'Presentation materialization may require explicit sourceType/sourceId',
+          },
+        ],
+      },
+      failurePackage: null,
+      materializationOrigin: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: null,
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:00:01.000Z',
     });
     acceptPlanMutateAsync.mockResolvedValue({
       runId: 'run-p1',
@@ -605,6 +758,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-p1',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: null,
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -631,6 +787,9 @@ describe('V8ArtifactRunControl', () => {
       proposalId: 'proposal-p1',
       retryOfRunId: null,
       failureReason: null,
+      preflight: null,
+      failurePackage: null,
+      materializationOrigin: null,
       startedAt: '2026-03-24T10:00:00.000Z',
       completedAt: '2026-03-24T10:02:00.000Z',
       createdAt: '2026-03-24T10:00:00.000Z',
@@ -701,6 +860,9 @@ describe('V8ArtifactRunControl', () => {
         proposalId: 'proposal-7',
         retryOfRunId: null,
         failureReason: null,
+        preflight: null,
+        failurePackage: null,
+        materializationOrigin: null,
         startedAt: '2026-03-24T10:00:00.000Z',
         completedAt: null,
         createdAt: '2026-03-24T10:00:00.000Z',
