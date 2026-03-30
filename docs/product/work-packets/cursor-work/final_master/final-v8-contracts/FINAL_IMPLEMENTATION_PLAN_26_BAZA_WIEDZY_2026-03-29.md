@@ -1,7 +1,7 @@
 # Final Implementation Contract — Baza wiedzy (Position 26/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (shared-sourced contract; extracted scope for position 26)
+Status: approved(scope) (P26-A locked; canon + ops + AI grounding)
 
 ## 1. Executive summary
 - **Intent**: Narzędzie edukacyjno‑sprzedażowe: LP + prawy panel + kontekst narzędzi; 50 tekstów + grafiki; tagi; linkowanie do newsletter/social; promowane przez Annę/Teresę.
@@ -15,6 +15,111 @@ Status: draft (shared-sourced contract; extracted scope for position 26)
 
 ### 2.2 Out-of-scope / non-goals
 - Pełna „Edukacja/Academy” jako osobny moduł.
+
+### 2.3 P26-A canon (KB as one curated knowledge product)
+
+This section freezes the operator-grade canon for Knowledge Base (KB): **one** knowledge product integrated with Help (P25) and AI discovery, with explicit taxonomy, content ops, and honest degraded behavior.
+
+#### 2.3.1 KB object model (runtime + ops)
+
+- **Article**: atomic unit of knowledge (one URL, one canonical topic). Must support:
+  - **id** (stable, never reused), **slug** (URL), **title**, **summary/lede**, **body**, **hero/graphics references** (optional), **readingTime** (derived), **status** (draft/published/deprecated), **visibility** (public/in-app/internal), **createdAt/updatedAt**, **owner**.
+  - **taxonomy bindings**: `collectionIds[]`, `tagIds[]`.
+  - **discovery bindings**: `surfaceBindings[]` (where this article is allowed to appear: LP / Help entry / right panel / AI recommendations).
+  - **relations**: `relatedArticleIds[]` (bounded, curated; not “infinite scroll”).
+- **Collection**: curated folder/series that explains “what is here” and “what to read next”.
+  - `id`, `slug`, `title`, `description`, `order`, `parentCollectionId?` (optional), `visibility`, `featured?`.
+  - Collections are the primary IA spine; tags do not replace them.
+- **Tag**: cross-cutting facet for filtering and discovery; must be bounded and operator-owned.
+  - `id`, `slug`, `label`, `description?`, `kind` (e.g. domain/tool/concept/stage), `synonyms[]`, `visibility`.
+- **Source**: evidence pointer for why a statement exists (internal doc / benchmark / customer input / release note).
+  - Captured as a pointer, not a guarantee of truth; used for “no overclaim”.
+- **Version**: KB is mutable, but must be auditable.
+  - Canon: every published article has `version` + last change reason; breaking updates require explicit update note.
+- **Translation (PL/EN)**: KB must be bilingual with safe fallback.
+  - Canon: `articleId` + `locale` produce a localized payload.
+  - Rule: lack of translation must trigger a clear degraded state (see 2.3.6), never silent language mixing.
+
+#### 2.3.2 Taxonomy + search/discovery posture (operator-grade)
+
+- **Single taxonomy, multiple surfaces**: one KB taxonomy drives:
+  - LP knowledge entry, Help entrypoints, KB browse/search, right-panel contextual reading lane, AI recommendation linking.
+- **Discovery contract**:
+  - **Browse** starts from Collections (IA), not from tags.
+  - **Search** is fast, tolerant (synonyms), and returns results with clear scopes (collection/tag context).
+  - **Tags** are facets, not IA; they refine browse/search.
+  - **Related/Next** is curated (bounded list), not purely algorithmic.
+- **Indexing posture**:
+  - “Index stale” is a first-class degraded mode; user must still be able to browse via IA and open canonical featured collections.
+- **Operator controls**:
+  - Featured collections/tags and “surface bindings” are explicit knobs; no implicit auto-promotion across surfaces.
+
+#### 2.3.3 Content ops baseline (ownership + lifecycle)
+
+- **Ownership**:
+  - Every published article has an **owner** (person/team) and a **review cadence** (time-boxed).
+  - Collections also have owners (IA is a product, not only metadata).
+- **Lifecycle**:
+  - States: `draft` → `published` → `deprecated` → `redirected/archived`.
+  - Deprecation must include: reason + replacement pointer (article/collection) when available.
+- **Update policy**:
+  - No silent meaning-changes: substantial edits update version and log “what changed”.
+  - Minimal bar for publish: title + lede + body + taxonomy bindings + surface bindings + locale coverage posture.
+- **Redirect posture**:
+  - Prefer **redirects** over deletions; preserve inbound links (newsletter/social).
+  - If content is removed, replace with a clear “this moved” canonical page and pointers.
+
+#### 2.3.4 Grounding contract for AI (Anna/Teresa)
+
+AI must recommend KB content using an explicit payload that is auditable and does not overclaim.
+
+- **Recommendation payload contract (context → article ids → rationale)**:
+  - **context**:
+    - `surface` (LP / Help / tool-right-panel / chat), `toolContext?`, `userIntent?`, `language` (PL/EN), `constraints` (time/role).
+  - **candidates**:
+    - `articleIds[]` (ordered), optional `collectionIds[]`.
+  - **rationale**:
+    - For each id: 1–3 bullets “why this fits the context”, plus any explicit limits/assumptions.
+  - **nextStep** (optional): what to do after reading (bounded; no invented promises).
+- **Citations / evidence pointers posture (no overclaim)**:
+  - AI may point to `source` pointers (internal or benchmark) as “why we recommend”, but must not claim correctness beyond what KB states.
+  - If unsure: AI must prefer “I might be wrong” posture and route to canonical collections.
+
+#### 2.3.5 Anti-duplicate gate (KB ≠ Help, but integrated)
+
+- **No two knowledge products**:
+  - Help (P25) defines **entrypoints** and contextual “help” surfaces.
+  - KB (P26) defines the **curated knowledge system** (taxonomy + content ops + discovery).
+  - They must share **one** taxonomy and **one** article identity namespace.
+- **Integration rule**:
+  - Help surfaces may *route into KB* using KB article/collection ids; they must not clone content into a separate “help KB”.
+- **Duplicate detection** (operator gate):
+  - If a new article overlaps an existing one: merge/redirect; do not publish parallel topics with different ids.
+
+#### 2.3.6 Degraded / error posture + acceptance checklist (P26-A)
+
+Degraded modes are part of user trust; they must be explicit and safe.
+
+- **Degraded modes (non-exhaustive)**:
+  - Missing article id → show “content moved/removed” with redirect pointers + route to canonical collection.
+  - Missing translation (requested locale) → show explicit language fallback (PL↔EN) with a banner; never mix sections silently.
+  - Stale index/search unavailable → fall back to browse via Collections + featured tags; show “search temporarily limited”.
+  - Empty results for tag/collection → show “no content yet” + nearest alternatives + “request topic” posture (bounded).
+  - Surface binding disallows an article in this surface → do not show it; fall back to allowed featured content.
+  - Deprecated article opened → show deprecation notice + replacement pointer.
+
+- **Acceptance checklist (scope approval; 10+)**:
+  - [ ] Article/Collection/Tag/Source/Version/Translation canon defined (this section) and referenced as SSOT for P26-B.
+  - [ ] PL/EN posture is explicit, including missing-translation behavior.
+  - [ ] Taxonomy posture is explicit: Collections = IA spine; Tags = facets; Related/Next is curated.
+  - [ ] “Where content appears” is governed via surface bindings (LP/Help/right panel/AI).
+  - [ ] Content ops ownership is explicit for both Articles and Collections.
+  - [ ] Lifecycle states are defined with deprecation + redirect posture (no destructive deletes as default).
+  - [ ] Update policy forbids silent meaning-changes; versioning + change reason exists.
+  - [ ] AI recommendation payload contract is explicit (context → ids → rationale) and auditable.
+  - [ ] AI citations posture is bounded (pointers, no overclaim, uncertainty routing to canon).
+  - [ ] Anti-duplicate gate prevents “Help KB” vs “KB KB”; one namespace + shared taxonomy.
+  - [ ] Degraded modes are enumerated for missing article, missing translation, stale index/search, and empty results.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
