@@ -197,7 +197,7 @@ Versioning: bump `ORGANIZATION_CONTEXT_SCHEMA_VERSION` only via packet; downstre
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P30-A | approved(scope) | (this commit) | N/A — scope packet | N/A — scope packet | SSOT §2.3 + checklist §8.1; B/C deliver code+evidence |
+| P30-A | approved(scope) | `5bd825c2e0` | N/A — scope packet | N/A — scope packet | SSOT §2.3 + checklist §8.1; B/C deliver code+evidence |
 | P30-B |  |  |  |  |  |
 | P30-C |  |  |  |  |  |
 
