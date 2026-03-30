@@ -54,11 +54,11 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | # | Position | Contract (bundle) | Packets (baseline) | Status |
 |---:|---|---|---|---|
 | 01 | Integracja | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_01_INTEGRACJA_2026-03-29.md` | P01-A / P01-B / P01-C | draft |
-| 02 | Kalendarz | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_02_KALENDARZ_2026-03-29.md` | P02-A / P02-B / P02-C | draft |
+| 02 | Kalendarz | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_02_KALENDARZ_2026-03-29.md` | P02-A / P02-B / P02-C | approved(scope) |
 | 03 | Wdrożenia | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_03_WDROZENIA_2026-03-29.md` | P03-A / P03-B / P03-C | draft |
 | 04 | KPI | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_04_KPI_2026-03-29.md` | P04-A / P04-B / P04-C | approved(scope) |
-| 05 | Finanse | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_05_FINANSE_2026-03-29.md` | P05-A / P05-B / P05-C | draft |
-| 06 | Radar | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_06_RADAR_2026-03-29.md` | P06-A / P06-B / P06-C | draft |
+| 05 | Finanse | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_05_FINANSE_2026-03-29.md` | P05-A / P05-B / P05-C | approved(scope) |
+| 06 | Radar | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_06_RADAR_2026-03-29.md` | P06-A / P06-B / P06-C | approved(scope) |
 | 07 | Notatnik | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_07_NOTATNIK_2026-03-29.md` | P07-A / P07-B / P07-C | draft |
 | 08 | Teresa | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_08_TERESA_2026-03-29.md` | P08-A / P08-B / P08-C | draft |
 | 09 | Ankiety | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_09_ANKIETY_2026-03-29.md` | P09-A / P09-B / P09-C | draft |
