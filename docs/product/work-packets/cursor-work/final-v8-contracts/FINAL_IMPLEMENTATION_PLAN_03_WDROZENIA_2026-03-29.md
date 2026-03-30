@@ -288,7 +288,7 @@ Kontrakt wymaga (minimum):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P03-A | `approved(scope)` |  | Scope approval — no runtime tests | N/A (scope phase) | Control tower canon + one-truth boundaries frozen; bounded interventions; degraded posture |
+| P03-A | `approved(scope)` | `fa9ab5e05b` | Scope approval — no runtime tests | N/A (scope phase) | Control tower canon + one-truth boundaries frozen; bounded interventions; degraded posture |
 | P03-B |  |  |  |  |  |
 | P03-C |  |  |  |  |  |
 
