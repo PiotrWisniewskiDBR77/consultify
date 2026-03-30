@@ -59,7 +59,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 04 | KPI | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_04_KPI_2026-03-29.md` | P04-A / P04-B / P04-C | approved(scope) |
 | 05 | Finanse | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_05_FINANSE_2026-03-29.md` | P05-A / P05-B / P05-C | approved(scope) |
 | 06 | Radar | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_06_RADAR_2026-03-29.md` | P06-A / P06-B / P06-C | approved(scope) |
-| 07 | Notatnik | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_07_NOTATNIK_2026-03-29.md` | P07-A / P07-B / P07-C | draft |
+| 07 | Notatnik | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_07_NOTATNIK_2026-03-29.md` | P07-A / P07-B / P07-C | approved(scope) |
 | 08 | Teresa | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_08_TERESA_2026-03-29.md` | P08-A / P08-B / P08-C | draft |
 | 09 | Ankiety | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_09_ANKIETY_2026-03-29.md` | P09-A / P09-B / P09-C | draft |
 | 10 | Wnioski w Interview | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_10_WNIOSKI_W_INTERVIEW_2026-03-29.md` | P10-A / P10-B / P10-C | draft |

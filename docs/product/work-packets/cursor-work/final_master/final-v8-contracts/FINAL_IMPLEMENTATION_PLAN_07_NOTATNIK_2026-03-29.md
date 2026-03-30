@@ -16,6 +16,179 @@ Status: draft (contract wrapper over existing plan)
 ### 2.2 Out-of-scope / non-goals
 - Kopiowanie pełnego Notion „databases-as-product” 1:1.
 
+### 2.3 P07-A canon (scope approval)
+
+Ta sekcja jest **kanonicznym** kontraktem zakresu dla `P07-A` i blokuje “dopowiadanie w locie”. Jej celem jest zamrożenie:
+
+- bounded entry points (capture/open),
+- trwałej tożsamości notatki i stabilnych linków,
+- języka provenance (źródło vs edycja usera vs transformacja AI) bez “silent loss”,
+- baseline dla attachment/upload lifecycle,
+- baseline dla search (operator-grade, bounded),
+- semantics linkowania i payloadów handoff downstream (Radar/Inicjatywy/Teresa),
+- anti-duplicate gate,
+- posture degraded/error (minimum 8 scenariuszy),
+- checklisty akceptacyjnej (testowalne punkty).
+
+#### 2.3.1 Surfaces: bounded entry points (capture + open)
+
+**Capture (create note) — dopuszczone wejścia (bounded):**
+- `My Work > Notebook` — “New note” / quick capture.
+- “Add to Notebook” z innych kontekstów pracy (jako akcja pomocnicza, nie nowy moduł): `Chat`, `Inicjatywy`, `Wdrożenia`, `Radar`, `Interview` (wnioski), `Tools` (jeśli generują artefakt/fragment, który ma trafić do pamięci roboczej).
+- Capture connectors (z SSOT): `web_clipper`, `email_forward`, `upload/import`, `api_import` (bounded do istniejących konektorów / ich deklaracji w planie).
+
+**Open (read/edit) — dopuszczone wejścia (bounded):**
+- z listy Notebook (search/list),
+- z wyników search,
+- z backlinków / linked artifacts (context panel),
+- z deeplinku (stable link).
+
+**Zakaz (anti-parallel):**
+- brak osobnego “top-level modułu” poza `My Work`,
+- brak “dead inbox”: każdy capture musi dawać natychmiastowy, jawny następny krok (link/convert/move-to-active), zamiast gromadzić się w ukrytej kolejce.
+
+#### 2.3.2 Durable identity for note + stable links
+
+**Durable identity (minimum):**
+- notatka ma **kanoniczny, niezmienny** identyfikator `note_id` (UUID).
+- `title`, `status`, `maturity`, `tags` i powiązania mogą się zmieniać — **link nie może** zależeć od tych pól.
+
+**Stable links (minimum):**
+- wewnętrzny deeplink do notatki musi być stabilny i prowadzić do właściwego kontekstu w `My Work` (zgodnie z kanonem list/preview/open).
+- linkowanie “note ↔ note” i “note ↔ artifact” musi wspierać backlinks i **degraded** zachowanie, gdy target nie istnieje / user nie ma uprawnień (nigdy “martwy link bez informacji”).
+
+#### 2.3.3 Provenance language (source vs user edit vs AI transform) — no silent loss
+
+W `Notatka v8` provenance jest obowiązkowa i jawna. Minimalne rozróżnienie:
+
+- **`source`**: treść/metadane pochodzące ze źródła capture (np. web/email/import), cytaty, external references, oraz pochodzenie attachmentów (nazwa/typ/źródło).
+- **`user_edit`**: ręczna edycja usera (w tym dodane bloki, zmiany tytułu/metadata).
+- **`ai_transform`**: propozycje/transformacje generowane przez AI na podstawie jawnie wskazanych inputów (note blocks/attachments/links). AI nie jest “ghost author”.
+
+**Zasady zamrożone (P0):**
+- brak `silent overwrite` i brak `silent delete` w notatce.
+- AI może tylko: `observe -> propose -> review -> accept/reject` (zgodnie z SSOT).
+- każdy output AI musi mieć **input pointers** (na jakich źródłach pracował) i minimalny audit trail (actor, note_id, operation type, timestamp, resolution).
+- eksport/transformacja (np. markdown) nie może “zgubić provenance” — jeśli format nie wspiera pełnych metadanych, musi zachować co najmniej jednoznaczne markery (np. `source:` / `AI:`) + link do oryginału.
+
+#### 2.3.4 Attachment / upload lifecycle baseline — statuses, error taxonomy, retry, “what next”
+
+Attachment to nie “blob wrzucony do treści”, tylko obiekt z lifecycle i recovery. Baseline:
+
+**Statuses (minimum, user-visible):**
+- `queued`
+- `uploading`
+- `processing` (np. AV scan / transcoding / indexing)
+- `available`
+- `failed`
+- `blocked(policy)` (np. typ pliku / size / compliance)
+
+**Error taxonomy (minimum, user-visible category):**
+- `network` / `timeout`
+- `size_limit` / `quota_exceeded`
+- `type_unsupported`
+- `permission_denied`
+- `virus_scan` (quarantine)
+- `storage_unavailable`
+- `processing_failed`
+- `unknown`
+
+**Retry & safety:**
+- retryable errors muszą mieć jawne CTA: “Retry upload” (bez silent drop).
+- retry musi być idempotentny (żadnych “podwójnych” attachmentów bez intencji usera).
+- jeśli `processing` trwa długo: UI ma pokazać stan i “co dalej” (wait / cancel / retry / contact).
+
+**“What next” guidance (minimum):**
+- każdy `failed` / `blocked(policy)` stan musi mieć tekst: co poszło źle, co user może zrobić teraz, i jak nie stracić pracy w notatce (np. zachowanie referencji do pliku + metadanych).
+
+#### 2.3.5 Search baseline (operator-grade, bounded)
+
+Search dla Notebook ma być “operator-grade”, ale **bounded** (bez kopiowania pełnej gramatyki Evernote).
+
+**Query (minimum):**
+- `q` (free text)
+- filtry (bounded, zgodne z SSOT modelu domenowego): `status`, `maturity`, `tags`, `type`, `owner`, `visibility`, `has_attachments`, `linked_artifact_type`, `linked_artifact_id`, `capture_source`, `updated_at_range`
+
+**Operator hints (optional but bounded, v8 baseline):**
+- `tag:<name>`
+- `type:<note_type>`
+- `status:<inbox|active|converted|archived>`
+- `maturity:<seed|growing|mature|actionable>`
+- `owner:<me|user_id>`
+- `source:<web_clipper|email_forward|upload|api_import>`
+- `has:attachment`
+
+**Result contract (minimum):**
+- wynik zawsze zwraca: `note_id`, `title`, `snippet` (z highlight), `match_kind` (keyword/semantic/metadata), `updated_at`, oraz podstawowe metadata (status/maturity/tags/has_attachments/linked_artifacts_count).
+
+**Anti-duplicate (hard):**
+- brak “search index v2”. Search bazuje na kanonicznym FTS/embeddings torze, bez równoległych indeksów per moduł.
+
+#### 2.3.6 Linking + downstream handoff payload (Notebook → Radar / Inicjatywy / Teresa)
+
+Linking i handoff nie mogą przenosić “gołego tekstu bez kontekstu”. Minimalny payload wspólny:
+
+**Common (`notebook_handoff_context`) — wymagane zawsze:**
+- `origin=notebook`
+- `note_id`
+- `note_deeplink` (stable)
+- `title`
+- `summary` (≤ 6 bullets; może być AI, ale z provenance)
+- `tags[]`, `status`, `maturity`, `note_type?`
+- `capture_source` + bounded `capture_metadata`
+- `linked_artifacts[]` (type, id, deeplink)
+- `attachments[]` (attachment_id, filename, status, download_ref/preview_ref)
+- `evidence_pointers[]` (block/attachment refs; bez gubienia provenance)
+- `uncertainty_boundary` + `missing_inputs[]` (jeśli coś jest niepewne)
+- `owner` + `last_updated_at`
+
+**To `Radar` (P06) — wymagane dodatkowo:**
+- `radar_signal_suggestion`: `category`, `why_now`, `priority_hint`, `evidence_pointers[]`, `open_questions[]`, `missing_inputs[]`
+
+**To `Inicjatywy` (P11) — wymagane dodatkowo:**
+- `initiative_seed`: `problem_statement`, `proposed_outcome`, `assumptions[]`, `risks[]`, `next_steps[]`, `time_window?`
+
+**To `Teresa` (P08) — wymagane dodatkowo:**
+- `assistant_context`: `user_intent`, `constraints[]`, `do_not_assume[]`, `allowed_actions[]`, `citations[]` (evidence pointers)
+
+#### 2.3.7 Anti-duplicate gate (hard)
+
+Zabronione w `P07` (bez osobnego, jawnego packetu):
+- równoległy system attachmentów/uploader (Notebook ma używać jednego kanonicznego lifecycle’u),
+- równoległy “search v2 index”,
+- równoległy “dead inbox” (osobna kolejka capture poza `status=inbox`),
+- równoległy model linków (druga reprezentacja relacji note↔artifact).
+
+#### 2.3.8 Degraded / error posture — minimum scenarios (8+)
+
+Każdy scenariusz musi mieć: **stan widoczny**, **safe next action**, **brak silent data loss**.
+
+1) **Upload failed: network/timeout** → status `failed(network)` + CTA “Retry”, bez utraty referencji do pliku.  
+2) **Upload blocked: policy/size/type** → `blocked(policy)` + jasny powód + “what next” (zmień plik/rozmiar/zapytaj admina).  
+3) **Processing stuck/slow** → `processing` + komunikat + opcja “wait / cancel / retry later”.  
+4) **Preview/readback unavailable** → attachment widoczny, ale z bannerem “preview unavailable”; safe action: download/open externally.  
+5) **Semantic search degraded** → banner “semantic unavailable” + fallback do keyword search (bez “0 results” jako silent failure).  
+6) **Index stale / delayed** (note świeżo edytowana) → banner “results may be delayed” + opcja “refresh”.  
+7) **Deeplink target missing** → strona degraded: “note not found / deleted” + fallback: search by id + activity pointers.  
+8) **Link target permission denied** → link widoczny, ale oznaczony `degraded(permission)` + instrukcja “request access / capture context”.  
+9) **Concurrent edit conflict** → jawny conflict resolution (wersje), bez silent overwrite.  
+10) **AI unavailable** → AI actions disabled z wyjaśnieniem; user edit i core notebook działa dalej.  
+
+#### 2.3.9 Acceptance checklist (scope approval) — testable points (10+)
+
+`P07-A` jest `approved(scope)` dopiero gdy:
+1) Wejścia capture/open są **bounded** i spisane (§2.3.1).  
+2) `note_id` jako durable identity + stable deeplink jest zamrożony (§2.3.2).  
+3) Provenance language (`source` vs `user_edit` vs `ai_transform`) jest jednoznaczny i ma zasady “no silent loss” (§2.3.3).  
+4) Attachment lifecycle ma stany + error taxonomy + retry + “what next” (§2.3.4).  
+5) Search baseline ma deklarowane filtry + minimalny kontrakt wyników + brak “search v2” (§2.3.5).  
+6) Linking + handoff payload ma wymagane pola wspólne i per-target (Radar/Inicjatywy/Teresa) (§2.3.6).  
+7) Anti-duplicate gate jest jawny (attachments/search/inbox/links) (§2.3.7).  
+8) Degraded posture ma minimum 8 scenariuszy z safe next action (§2.3.8).  
+9) Non-goals są jawne (brak Notion DB parity, brak nowego modułu, brak silent AI writing).  
+10) Kontrakt nie tworzy równoległej prawdy względem SSOT/benchmark (sekcja 3 pozostaje authority chain).  
+11) Evidence ledger ma uzupełniony wiersz `P07-A` (commit ref) w §10.  
+
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_NOTATKI_2026-03-29.md`
