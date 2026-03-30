@@ -109,6 +109,13 @@ Status: draft (contract wrapper over existing plan)
   - Implement operator workflow create→collect→review→lock→export (bounded).
   - Implement logic validation/preview (if in scope) or enforce explicit non-goal in UI.
   - Add integration/regression tests (5.2) and run staging flow (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Create a new survey (bounded template) and publish it.
+  2. Submit 2–3 responses (include one partial/duplicate if in scope) and open the operator review view.
+  3. Verify submission states are explicit + next actions exist (resolve/mark invalid/continue).
+  4. Lock/close the collection and confirm submissions become read-only truth.
+  5. Export results and verify export artifact/state is visible (bounded).
+  6. Trigger handoff to `Wnioski w Interview` and verify the insight lane receives evidence pointers.
 - **DoD**:
   - Lifecycle is governed; locked truth is real; export/handoff works end-to-end.
 

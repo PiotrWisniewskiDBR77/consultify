@@ -100,6 +100,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement 1+ gated cross-tenant actions with confirmations and explicit partial-failure handling.
   - Implement root walk-through navigation + AI/connector branches (bounded).
   - Add integration/regression tests and run staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Open Superadmin root and navigate to branch #1 (e.g., tenant/user search).
+  2. Perform a read-only cross-tenant lookup and verify boundaries are explicit.
+  3. Initiate one gated action; confirm confirmation/approval UI appears with clear “what will happen”.
+  4. Execute the action and verify audit event is recorded; then simulate partial failure and verify degraded state.
+  5. Navigate to branch #2 (AI ops / connector ops) and verify visibility is mounted (bounded).
 - **DoD**:
   - Cross-tenant operations are safe, audytowalne, and have clear degraded states.
 

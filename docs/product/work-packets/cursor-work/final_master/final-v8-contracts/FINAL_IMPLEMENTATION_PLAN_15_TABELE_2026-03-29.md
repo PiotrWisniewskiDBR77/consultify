@@ -114,6 +114,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement the mini-OS lane end-to-end (2 tables + relation + views + interface) on one truth.
   - Implement schema change behavior with predictable readback or explicit degraded state.
   - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Create a base with 2 tables and a relation; add fields; create linked records.
+  2. Create 2 saved views and 1 form/interface (bounded); verify all surfaces reflect the same truth.
+  3. Use AI: describe→plan→preview/diff→approve→materialize (no silent writes).
+  4. Change schema (rename/add/remove bounded field) and verify views/interfaces update predictably or show explicit degraded.
+  5. Check permissions/lock (bounded) and confirm denied actions are explicit.
 - **DoD**:
   - Mini-OS demo passes; schema drift posture is honest; AI materialization is governed.
 

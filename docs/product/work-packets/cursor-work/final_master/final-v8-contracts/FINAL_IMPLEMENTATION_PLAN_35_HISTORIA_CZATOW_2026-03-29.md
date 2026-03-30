@@ -107,6 +107,13 @@ Status: draft (direct contract over existing plan)
   - Implement full lifecycle actions with consistent states (archive≠delete) and deep-links.
   - Implement server-side search target with pagination/filters; prove it’s not “fake search”.
   - Add integration/security regression tests and run staging demo (10 threads).
+- **Staging proof script (click-by-click)**:
+  1. Create 10 conversations; rename a few; pin/star some; move them into folders.
+  2. Archive 2 threads and verify archive state is distinct from delete; unarchive one.
+  3. Attempt delete and verify destructive confirmation is required and explicit.
+  4. Use search target (server-side) with a filter/pagination; verify results include archived/non-archived as per rules.
+  5. Open a deep-link to an archived thread and verify it loads with correct state.
+  6. Test team folder permissions: user without access gets denial + guidance; no leakage.
 - **DoD**:
   - Organize→search→revisit works; permissions prevent leakage; tests pass.
 

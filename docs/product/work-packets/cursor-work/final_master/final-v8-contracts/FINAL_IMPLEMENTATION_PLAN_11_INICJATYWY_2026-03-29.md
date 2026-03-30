@@ -111,6 +111,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement create/update/status transitions and enforce coherent readback across views.
   - Implement schema drift guards (bounded) to preserve status truth.
   - Add integration tests + staging demo (5.3) (2 entry points).
+- **Staging proof script (click-by-click)**:
+  1. Create an initiative from entry point A (e.g., module link) and from entry point B (e.g., Radar/Notes) and confirm both land in the same truth.
+  2. Add a plan/decomposition and change status; verify list + detail views agree after save.
+  3. Trigger AI scaffold (“zrób inicjatywę”), review proposal, accept, and verify no silent writes beyond the proposal.
+  4. Handoff to `Wdrożenia` and confirm context is preserved (correct initiative selected, correct lane).
+  5. Make a bounded schema change and verify guards prevent status truth loss (or explicit degraded state).
 - **DoD**:
   - After each write, all declared views agree; handoff preserves context.
 

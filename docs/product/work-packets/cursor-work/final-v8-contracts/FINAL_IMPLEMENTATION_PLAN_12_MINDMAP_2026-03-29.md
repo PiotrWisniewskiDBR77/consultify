@@ -107,6 +107,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement toolbelt closure and stable state transitions (undo/redo included where declared).
   - Add stress/regression for large maps; ensure no “lost branches”.
   - Run staging demos (manual build + AI propose) (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Create a new mindmap and build a 3-level structure manually (10–20 nodes).
+  2. Reparent/move branches, collapse/expand, and use undo/redo; confirm state trust (no “teleporting” nodes).
+  3. Export/readback (bounded) and verify structure integrity.
+  4. Use AI: “zrób mindmap z briefu” → preview/diff → accept; then manually edit again without glitches.
+  5. Stress: expand to a larger map and verify selection/navigation remain calm.
 - **DoD**:
   - Large-map stability proven; AI proposals are reviewable; core loop stays calm.
 

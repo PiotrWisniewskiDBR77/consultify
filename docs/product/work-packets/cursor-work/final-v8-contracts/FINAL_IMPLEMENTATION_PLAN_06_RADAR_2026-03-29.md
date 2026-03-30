@@ -109,6 +109,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement 3 signal archetypes with explainability + next action.
   - Implement landing with preserved context in target modules (bounded).
   - Add contract tests for payload + integration tests for handoff clicks (5.2).
+- **Staging proof script (click-by-click)**:
+  1. Open `Radar` and pick 3 different signal types (P0 archetypes).
+  2. For each signal: open detail and verify rationale + evidence pointers + uncertainty boundary.
+  3. Click “next action” and verify landing in the target module preserves context (filters/selection).
+  4. Return to Radar and verify the signal’s state updates appropriately (bounded).
+  5. Trigger a missing-data/conflict case and verify honest degraded messaging (no overclaim).
 - **DoD**:
   - Staging demo passes; uncertainty boundaries are visible; no overclaim.
 

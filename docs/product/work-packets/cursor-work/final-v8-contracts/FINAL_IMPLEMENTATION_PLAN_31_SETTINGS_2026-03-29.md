@@ -100,6 +100,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement “find→change→observe impact” for 3 settings (personal/tenant/module).
   - Implement audit trail and permission denial guidance.
   - Add integration/regression tests and run staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Open Settings and locate a personal setting via taxonomy; change it and verify visible runtime impact.
+  2. Locate a tenant setting; attempt change as non-owner and verify denial + guidance.
+  3. Change the tenant setting as allowed role and verify impact in the declared surface.
+  4. Locate a module setting; change it and verify impact + audit event.
+  5. Confirm each setting shows scope + who can change it (no ambiguity).
 - **DoD**:
   - Impact visibility is real; permission boundaries are enforced; audit exists.
 

@@ -101,6 +101,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement review/publish state machine (bounded) and stable handoff to initiatives.
   - Ensure evidence pointers persist across edits; add contract tests for payload stability.
   - Run staging demo (5.3) with 2 findings of different confidence.
+- **Staging proof script (click-by-click)**:
+  1. Open an insight draft sourced from a survey/interview run.
+  2. Create 2 findings with different confidence levels and attach evidence pointers (responses/exports/attachments).
+  3. Move the artifact through review → publish and verify state badges are explicit.
+  4. Edit a finding after publish (if allowed) and verify evidence pointers remain intact (or explicit rule blocks).
+  5. Use “handoff to initiative” and confirm the initiative receives context + links (no loss of meaning).
 - **DoD**:
   - Handoff is stable; evidence pointers persist; confidence/limits visible and consistent.
 

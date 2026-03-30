@@ -104,6 +104,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement end-to-end partner journey and ensure portal vs operator tower alignment.
   - Implement exceptional path (hold/review) with clear remediation and audit.
   - Add integration/regression tests and run staging demos (happy + exceptional).
+- **Staging proof script (click-by-click)**:
+  1. As a partner: apply and submit required info; verify state moves to a clear next step.
+  2. As operator: approve/activate; verify partner portal and operator tower show the same status.
+  3. Complete one enablement step and confirm “what next” is explicit (bounded).
+  4. Accrue/see earnings in partner view and verify operator sees the same ledger entry.
+  5. Trigger an exceptional path (hold/review) and verify partner messaging + operator resolution + audit.
 - **DoD**:
   - Portal and operator tower never disagree; exceptional paths are recoverable and audytowalne.
 

@@ -130,6 +130,13 @@ Status: draft (contract wrapper over existing plan)
   - Implement the E2E KPI workflow states and transitions (bounded).
   - Implement KPI→Finance consequence and ensure no split-truth.
   - Add integration + workflow regression tests (6.2).
+- **Staging proof script (click-by-click)**:
+  1. Open `KPI` and locate a KPI with a discrepancy signal (or create one in staging data).
+  2. Enter the report/scorecard flow and confirm states + “next action” are explicit.
+  3. Start reconciliation and set/observe reconciliation state transitions (bounded).
+  4. Drill down into finance consequence and confirm linkage is consistent (no split-truth).
+  5. Create/trigger an execution follow-up and verify context is preserved.
+  6. Repeat with a “targets” scenario: set a target → view target vs actual → attach comment/plan (bounded).
 - **DoD**:
   - “Discrepancy” demo passes; tests pass; next action is always explicit.
 

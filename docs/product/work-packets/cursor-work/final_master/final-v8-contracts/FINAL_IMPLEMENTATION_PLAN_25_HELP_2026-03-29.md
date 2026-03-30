@@ -113,6 +113,12 @@ Status: draft (shared-sourced contract; extracted scope for position 25)
   - Implement contextual entry points and search→article→next action routing for 3 surfaces.
   - Implement Teresa/Anna linking to exact articles with visible source.
   - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. From surface #1 (e.g., Tools), open contextual help and verify the recommended article matches the context.
+  2. Search within help, open an article, and follow “next action” routing back to the correct surface.
+  3. Repeat for surfaces #2 and #3 (e.g., Interview/Outputs).
+  4. Switch PL↔EN and verify fallback behavior for missing translations is explicit.
+  5. Trigger Teresa/Anna guidance to an exact article and verify the link targets the correct article id.
 - **DoD**:
   - Help works contextually; missing content has safe fallback; guidance is source-linked.
 

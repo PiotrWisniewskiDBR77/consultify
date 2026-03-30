@@ -117,6 +117,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement generate→reopen→continue→review→export end-to-end (bounded).
   - Implement export retry/recovery and audit events; add integration/regression tests (5.2).
   - Run staging demos (5.3) including reopen from library.
+- **Staging proof script (click-by-click)**:
+  1. Generate a deck from template/brief and confirm it lands in Outputs Library with lineage.
+  2. Reopen the deck from library and continue editing; verify structure continuity.
+  3. Move the deck to a review state and verify badges/next action cues are explicit.
+  4. Export to PDF/PPTX (bounded) and verify export event is recorded; then simulate export failure and verify retry/recovery (no ghost artifacts).
+  5. Return to library and confirm open/reopen shows the same trust-state and export history.
 - **DoD**:
   - Continuation preserves structure; export is audytowalny with recovery; lineage visible.
 

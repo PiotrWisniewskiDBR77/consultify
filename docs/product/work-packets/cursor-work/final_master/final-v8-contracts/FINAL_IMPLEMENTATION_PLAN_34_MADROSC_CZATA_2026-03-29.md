@@ -125,6 +125,13 @@ Status: draft (direct contract over existing plan)
   - Implement used/blocked source ledger and show it (or explicit “no sources” degraded).
   - Implement promotion state machine with review and preserved provenance.
   - Add security regression tests (no leakage) and run staging demos (3 queries + promotion).
+- **Staging proof script (click-by-click)**:
+  1. Ask a private-only question and verify only private sources are used; source ledger shows used/blocked lists.
+  2. Ask an org-only question and verify org corpus is used; confirm no private leakage.
+  3. Ask a mixed query and verify scope resolution is explicit (what was allowed vs blocked).
+  4. Promote one private item to org: submit promotion → review → approve; verify provenance preserved.
+  5. Re-run the org query and confirm promoted content is retrievable from org corpus with correct ledger.
+  6. Trigger “no sources/no access” and verify honest degraded fallback (no overclaim).
 - **DoD**:
   - No leakage proven; promotion is governed; consumers cannot bypass gateway.
 

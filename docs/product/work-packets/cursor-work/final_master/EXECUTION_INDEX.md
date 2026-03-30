@@ -32,15 +32,24 @@ References:
 To minimize rework and prevent duplicate truths, ship in this order:
 
 - **Foundation (trust + home + governance)**: 18 → 19 → 27 → 30 → 31 → 32 → 33
+  - Why: these define the single product truth for artifacts, provenance, promotion, tenancy, settings, and operator guardrails. Everything else consumes them.
 - **Program-wide generation surfaces (consume foundation)**: 24 → 21 → 20 → 17
+  - Why: templates + reports + presentations + run grammar must land in Outputs and be governed by provenance; otherwise we create parallel “libraries”.
 - **KIMI net-new (blocked by evidence mapping)**: 22 → 23 (only after P22-A/P23-A are approved)
+  - Why: strict “no guessing” dependency on evidence mapping; otherwise we ship the wrong UX contract.
 - **Execution spine**: 11 → 03 → 04 → 05 → 06 → 02 → 07 → 08
+  - Why: initiatives→execution→kpi/finance→radar→calendar→notes→copilot form the operational loop; ordering prevents split-truth and shallow handoffs.
 - **Collection + insights**: 09 → 10
+  - Why: collection must produce governed evidence before insights can be audited and promoted downstream.
 - **Help/KB**: 25 → 26
+  - Why: Help establishes contextual entrypoints; KB scales content ops + taxonomy and routing.
 - **Partner lane**: 29
+  - Why: lifecycle + earnings ledger is its own governed truth; should reuse org/settings/admin foundations.
 - **Public assistant**: 16
+  - Why: depends on hard boundaries + citations/uncertainty posture; should not precede governance foundations.
 - **Chat lane**: 34 → 35
-- **Remaining modules**: follow the same dependency-first rule using each contract’s section 3/9.
+  - Why: wisdom (policy gateway) before history (library/search) to avoid ungoverned retrieval.
+- **Remaining modules**: apply the same dependency-first logic using each contract’s section 3 (authority chain) and section 9 (risks/decisions).
 
 | # | Position | Contract (bundle) | Packets (baseline) | Status |
 |---:|---|---|---|---|

@@ -133,7 +133,20 @@ Reference:
 
 ---
 
-## 8. Evidence ledger format (copy-paste)
+## 8. Evidence-first rule (tests + staging script before coding)
+
+Before starting any `P<NN>-B` work (core runtime):
+
+- the contract must include:
+  - the exact **tests** to run (what + where),
+  - a **staging proof script** (3–8 click-by-click steps),
+  - the evidence ledger rows to fill.
+
+If the tests/proof script are not written, you are still in `P<NN>-A` (scope approval), not in `P<NN>-B`.
+
+---
+
+## 9. Evidence ledger format (copy-paste)
 
 Add entries to the module’s `## 10. Evidence ledger` as you verify packets.
 

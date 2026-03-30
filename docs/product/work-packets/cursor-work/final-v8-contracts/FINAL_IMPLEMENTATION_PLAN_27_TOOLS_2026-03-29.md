@@ -107,6 +107,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement E2E for 2 tool archetypes: discovery→session→result→promotion (bounded).
   - Implement failure packaging + retry without duplicating outputs.
   - Add integration/regression tests and run staging demos (2 archetypes + promotion).
+- **Staging proof script (click-by-click)**:
+  1. Open Tools Library, pick tool archetype #1, start a session, and complete a bounded workflow to produce a result.
+  2. Review/finalize and promote the result to an initiative/output; verify traceability links back to the session.
+  3. Reopen the session and verify state is consistent (no lost context).
+  4. Repeat for tool archetype #2.
+  5. Trigger a tool failure and verify explicit failure state + retry without duplicate results.
 - **DoD**:
   - Sessions preserve context; results are traceable; promotions are governed and reliable.
 

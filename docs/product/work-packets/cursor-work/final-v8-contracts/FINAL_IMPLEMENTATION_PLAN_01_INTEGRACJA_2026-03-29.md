@@ -166,6 +166,13 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
   - Implement connect→completion proof and post-connect recovery flows (reauth/retry).
   - Implement run history + jobs-in-error list + drill-down to tracing artifacts (bounded).
   - Add integration tests for lifecycle + error→state mapping (7.2).
+- **Staging proof script (click-by-click)**:
+  1. Open `Integracja` control plane and pick one declared provider (P0).
+  2. Connect (authorize) and confirm “completion proof” state is visible.
+  3. Open run history / jobs list; verify at least one successful run is visible.
+  4. Induce a recoverable failure (e.g., expired/revoked token) and observe `requires_action`.
+  5. Execute recovery (reauth/retry) and verify return to `healthy` + audit updated.
+  6. Open a failed job drill-down and confirm debug/tracing pointers are accessible (bounded).
 - **DoD**:
   - E2E flow works for declared providers; failure and recovery are product states (not logs).
   - Tests + staging proof are ready to attach to evidence ledger.

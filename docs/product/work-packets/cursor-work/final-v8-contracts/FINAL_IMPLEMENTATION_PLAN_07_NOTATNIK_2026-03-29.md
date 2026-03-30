@@ -115,6 +115,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement E2E flow capture→attach→index/search→open→link-out (bounded).
   - Implement upload error taxonomy + retry; ensure no silent drop.
   - Add integration tests and run staging attachment demo (5.2/5.3).
+- **Staging proof script (click-by-click)**:
+  1. Capture a new note from a non-note surface (bounded entry point).
+  2. Attach a file and observe upload status; open preview/readback.
+  3. Search for the note (and/or attachment text/metadata if in scope) and open it from results.
+  4. Create a link-out to a work object (Radar/Inicjatywy) and verify context is preserved on landing.
+  5. Induce an upload failure and verify retry + “what next” (no silent drop).
 - **DoD**:
   - Search+linking works; attachments are reliable; provenance language is consistent.
 

@@ -103,6 +103,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement builder toolbelt + semantic readback + export/readback (bounded).
   - Implement invalid structure handling with clear error + recovery path.
   - Add integration+contract tests and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Create a process with start → activity → gateway → branch → end (bounded object types).
+  2. Connect nodes, label edges, adjust layout; use undo/redo; verify semantic readback stays intact.
+  3. Export/readback (bounded) and verify types/labels are preserved.
+  4. Trigger an invalid structure (bounded rule) and verify a clear error + recovery guidance.
+  5. Use AI: “zrób flow” → preview → apply; then manually edit without losing semantics.
 - **DoD**:
   - Manual + AI flows preserve semantics; invalid cases are recoverable; tests pass.
 

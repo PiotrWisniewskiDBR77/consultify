@@ -104,6 +104,12 @@ Status: draft (shared-sourced contract; KIMI reference present)
   - Implement the E2E lifecycle and prove persistence/reopen (bounded).
   - Implement export failure recovery + retry without ghost artifacts.
   - Add integration/regression tests and run staging demos (happy + failure).
+- **Staging proof script (click-by-click)**:
+  1. From brief, materialize a sheet and confirm it persists (appears in library/listing).
+  2. Close and reopen the sheet; verify data is intact and state is consistent.
+  3. Export/convert (bounded) and confirm audit/export ledger exists (18/19).
+  4. Simulate export failure and verify retry/recovery (no ghost artifacts).
+  5. If split-screen is in scope: run the KIMI-style chat↔sheet flow and verify mapped actions/states.
 - **DoD**:
   - Reopen is real; export is reliable with recovery; tests pass on bounded “large sheet”.
 

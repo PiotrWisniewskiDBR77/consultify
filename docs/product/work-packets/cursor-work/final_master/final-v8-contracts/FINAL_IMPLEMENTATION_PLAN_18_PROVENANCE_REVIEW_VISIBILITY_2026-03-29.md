@@ -108,6 +108,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement click-through lineage (run→tool calls→output) as first-class.
   - Implement export audit that respects visibility; add integration/regression tests (5.2).
   - Run staging demos (5.3) and capture evidence.
+- **Staging proof script (click-by-click)**:
+  1. Open an artifact in Outputs/Preview and locate trust-state badges (stage/visibility/export).
+  2. Click lineage: open run id → tool calls → output pointers (bounded).
+  3. Change stage (e.g., validated/reviewed) and verify the badge updates consistently across list + preview + open.
+  4. Export/share (bounded) and confirm export event is recorded and does not bypass visibility.
+  5. Attempt access with insufficient role and verify denial is explicit (no leakage).
 - **DoD**:
   - Lineage is visible and consistent; exports are audytowalne and do not bypass visibility.
 

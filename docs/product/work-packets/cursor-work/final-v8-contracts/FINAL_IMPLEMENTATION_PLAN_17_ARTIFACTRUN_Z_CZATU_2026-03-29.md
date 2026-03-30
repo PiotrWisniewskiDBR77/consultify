@@ -112,6 +112,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement explicit validation/preflight stage and render it distinctly.
   - Implement failure packaging + retry/rerun with preserved lineage (bounded).
   - Add integration/regression tests (5.2) and run failure staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. In chat, request an artifact that requires a run (bounded format).
+  2. Observe plan → approve(run) and confirm validation/preflight is shown as a distinct stage.
+  3. Let the run materialize and open the artifact; verify lineage is visible.
+  4. Trigger a failure (e.g., missing permission/tool error) and confirm status is `failed` with recovery guidance.
+  5. Retry/rerun and verify no duplicate “ghost” artifacts appear; lineage links to the rerun.
 - **DoD**:
   - Retry never duplicates artifacts; lineage is visible; statuses are consistent across surfaces.
 

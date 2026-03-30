@@ -110,6 +110,13 @@ Status: draft (contract wrapper over existing plan)
   - Implement E2E lane: import→analysis→mutation→readback (bounded).
   - Ensure KPI↔Finance truth stays coherent on declared paths.
   - Add regression for mutation→refresh and import validation failure paths (5.2).
+- **Staging proof script (click-by-click)**:
+  1. Import a bounded sample dataset and confirm import status + validation feedback is visible.
+  2. Run analysis (bounded L1/L2/L3 scope) and capture a clear readback.
+  3. Execute one declared mutation and confirm audit/traceability exists.
+  4. Refresh and verify readback reflects the mutation (no stale views).
+  5. Cross-check KPI readback on the declared linkage path (no split-truth).
+  6. Trigger an import failure/warning and verify degraded state + recommended next action.
 - **DoD**:
   - Staging E2E passes; errors are visible with “what next”; tests pass.
 

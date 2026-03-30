@@ -107,6 +107,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement public Q&A→CTA completion + event capture.
   - Implement multilang + voice degraded states (rate-limit/unavailable) with safe fallback.
   - Add integration+contract tests (5.2) and run 3-scenario staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Open public Anna surface in PL and ask: “Co to jest Consultify?” → verify CTA appears.
+  2. Complete CTA (demo/trial/contact) and verify event capture is recorded (bounded).
+  3. Switch to EN and repeat a “fit for X” question; verify no identity drift and correct CTA.
+  4. Trigger voice on; then simulate voice unavailable/rate-limited and verify degraded fallback to text preserves context.
+  5. Ask a factful question and verify citations/evidence pointers exist (or explicit uncertainty marker).
 - **DoD**:
   - CTA is measurable; multilingual is stable; voice fallback preserves context; citations/uncertainty enforced.
 

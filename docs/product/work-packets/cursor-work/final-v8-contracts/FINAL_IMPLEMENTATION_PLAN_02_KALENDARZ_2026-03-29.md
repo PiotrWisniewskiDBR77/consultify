@@ -163,6 +163,13 @@ Kontrakt wymaga (minimum):
   - Implement incremental sync + recovery (OAuth expired / permission revoked) per provider.
   - Implement recurring events mapping (occurrences+exceptions) with correctness tests.
   - Implement conflict-safe writes where declared; surface conflict as product state.
+- **Staging proof script (click-by-click)**:
+  1. Connect one declared calendar provider and confirm initial sync completes.
+  2. Create a recurring event with an exception (edit one instance) on the provider side.
+  3. Refresh/sync and verify the series + exception are represented correctly (no instance explosion).
+  4. Trigger OAuth expiry/revocation and verify `requires_action` + recovery guidance.
+  5. Re-auth and verify incremental sync resumes without data loss.
+  6. If write/bidir is declared: attempt an edit with stale ETag/If-Match and verify conflict is a product state (no silent overwrite).
 - **DoD**:
   - Provider runbook passes; recurrence exceptions do not lose data; permissions are enforced in UI/API.
   - Evidence artifacts ready for ledger (tests + staging proof).

@@ -125,6 +125,13 @@ Status: draft (contract wrapper over existing plan)
   - Implement 3 cross-surface scenarios with preserved context (bounded).
   - Implement tool/action envelope with audit/traces visible.
   - Add integration tests for handoff payload + contract tests for tool envelope (5.2).
+- **Staging proof script (click-by-click)**:
+  1. In chat, trigger a governed proposal that targets a specific module surface (P0 list).
+  2. Review the proposal (what will change) and explicitly approve execution.
+  3. Verify landing in the target module preserves context and shows expected state/result.
+  4. Repeat for 3 distinct target surfaces.
+  5. Open audit/traces and confirm the action is recorded (who/what/when/outcome) (bounded).
+  6. Trigger a denied/tool-error case and verify degraded state + safe next step.
 - **DoD**:
   - Cross-surface flows pass; users see what will happen before it happens; audit is visible.
 

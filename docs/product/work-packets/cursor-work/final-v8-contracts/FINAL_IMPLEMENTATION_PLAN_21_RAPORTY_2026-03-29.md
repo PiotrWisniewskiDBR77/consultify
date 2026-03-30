@@ -108,6 +108,12 @@ Status: draft (shared-sourced contract; dedicated plan pending extraction)
   - Implement E2E flow for 2 templates: generate→library→reopen/continue→export (bounded).
   - Implement no-web fallback path with explicit degraded state.
   - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Pick template #1, set parameters, generate report via plan→approve(run); confirm artifact lands in Outputs Library with template id.
+  2. Reopen/continue the report and verify changes persist (bounded).
+  3. Export the report and confirm export ledger/audit is recorded.
+  4. Pick template #2 and repeat end-to-end.
+  5. Run a “no-web” or tool-error scenario and verify explicit degraded state + safe fallback draft (no overclaim).
 - **DoD**:
   - Templates produce durable artifacts; sources are visible or explicitly absent; exports audited.
 

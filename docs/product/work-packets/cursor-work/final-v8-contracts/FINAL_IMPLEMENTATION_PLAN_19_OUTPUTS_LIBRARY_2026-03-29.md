@@ -113,6 +113,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement multi-format landing + discoverability for declared types (bounded).
   - Implement queues + preview/open/reopen coherence; ensure trust-state matches everywhere.
   - Add integration tests (5.2) and run staging demo (5.3) (4 types + needs review).
+- **Staging proof script (click-by-click)**:
+  1. Materialize or seed 4 different artifact types and verify they all appear in Outputs Library.
+  2. Use filters/queues to open “needs review” and confirm owner/reviewer badges are consistent.
+  3. Single-click preview an artifact; then open full view; then reopen from library — verify trust-state matches everywhere.
+  4. Change review/owner state and confirm list + preview + open update coherently.
+  5. Export/share (bounded) and verify provenance/export event is visible (via position 18).
 - **DoD**:
   - Library behaves as one home; open/reopen never contradict preview; export/share audited (via 18).
 

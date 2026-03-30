@@ -112,6 +112,12 @@ Status: draft (KIMI reference present) + missing dedicated plan
   - Implement the bounded split-screen workflow exactly per mapped evidence.
   - Ensure provenance/trust-state + library convergence (18/19) and no ghost outputs on export.
   - Add integration/regression tests from section 5; record split-screen staging proof.
+- **Staging proof script (click-by-click)**:
+  1. Start Wordy split-screen: chat on one side, doc on the other (as per KIMI mapping).
+  2. Generate a doc from chat, then edit in the doc pane; verify state/shortcuts match mapped evidence.
+  3. Add a comment / track-change action (bounded) and confirm it is visible and predictable.
+  4. Export; then simulate export failure and verify retry/recovery (no ghost outputs).
+  5. Optional save-to-library: save output, open in Outputs Library, reopen, and confirm lineage/trust-state are consistent (18/19).
 - **DoD**:
   - Split-screen recording demonstrates evidence-aligned behavior; exports and optional save are audytowalne.
 

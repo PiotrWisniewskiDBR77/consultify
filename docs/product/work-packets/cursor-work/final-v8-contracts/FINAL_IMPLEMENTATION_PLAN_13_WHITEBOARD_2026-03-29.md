@@ -107,6 +107,11 @@ Status: draft (contract wrapper over existing plan)
   - Implement operator-safe toolbelt and 1 workshop scenario end-to-end (bounded).
   - Implement AI co-building flow with preview and audit events (bounded).
   - Add integration tests and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Create a new board; add shapes/stickies; group/align; zoom/fit; undo/redo to verify operator-safe toolbelt.
+  2. Run the workshop scenario: facilitate from “start” to “handoff” (bounded target, e.g., Notes/Initiatives).
+  3. Use AI co-building: generate a layout → preview → apply; verify audit event exists (bounded).
+  4. Export/readback (bounded) and confirm output is usable for handoff.
 - **DoD**:
   - Workshop scenario completes with bounded handoff; toolbelt is reliable; demos recorded.
 

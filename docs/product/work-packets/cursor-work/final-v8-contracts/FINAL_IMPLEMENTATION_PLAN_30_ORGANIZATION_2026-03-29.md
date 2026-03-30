@@ -99,6 +99,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement downstream reads for 2 surfaces; verify immediate consistency.
   - Implement conflict/permission errors with clear guidance (no silent drift).
   - Add integration tests and run staging demos (5.3).
+- **Staging proof script (click-by-click)**:
+  1. As owner, edit org profile/defaults and save; verify audit is recorded (bounded).
+  2. Open downstream surface #1 and confirm updated org fields render consistently.
+  3. Open downstream surface #2 and confirm the same truth (no duplicate fields, no drift).
+  4. Change a member role and verify permissions change immediately with explicit UI feedback.
+  5. Attempt an unauthorized change and verify denial + guidance (no silent failure).
 - **DoD**:
   - Downstream surfaces reflect org changes; conflicts are explicit; audit exists.
 

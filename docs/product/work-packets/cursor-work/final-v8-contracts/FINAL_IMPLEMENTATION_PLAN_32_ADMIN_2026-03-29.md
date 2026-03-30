@@ -103,6 +103,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement invite/assign role/verify access/remove flows with clear denial guidance.
   - Implement integration status + remediation path (bounded).
   - Add integration/regression tests and run staging cockpit walkthrough demo.
+- **Staging proof script (click-by-click)**:
+  1. Open Admin cockpit and navigate to Members.
+  2. Invite a user, assign a role, and verify access changes in a declared surface.
+  3. Remove the user and confirm access is revoked; audit events are visible (bounded).
+  4. Open Integrations/Sync status; verify at least one integration shows a clear health state.
+  5. Trigger a remediation flow (bounded) and confirm status updates and errors are explicit.
 - **DoD**:
   - Core admin ops work end-to-end; audit is emitted; integrations are operator-visible.
 

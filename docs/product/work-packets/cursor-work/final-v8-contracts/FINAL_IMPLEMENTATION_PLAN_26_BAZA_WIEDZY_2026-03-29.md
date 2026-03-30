@@ -103,6 +103,12 @@ Status: draft (shared-sourced contract; extracted scope for position 26)
   - Implement browse/filter/search with IA+tags and related/next content behavior (bounded).
   - Implement right panel/LP mapping for 3 tool contexts; implement degraded fallback.
   - Add integration/regression tests and run staging demos (3 tools + routing).
+- **Staging proof script (click-by-click)**:
+  1. Open KB browse and navigate IA; filter by tags; confirm content discovery works.
+  2. Search for a seeded article and open it; verify related/next content links are coherent (bounded).
+  3. For tool context #1: open the tool and verify right panel/LP recommends the correct KB content.
+  4. Repeat for tool contexts #2 and #3.
+  5. Remove/miss content for a context and verify explicit degraded fallback (no empty mystery).
 - **DoD**:
   - Contextual routing is correct and audytowalne; missing content has safe fallback.
 

@@ -137,6 +137,13 @@ Kontrakt wymaga (minimum):
   - Implement detect→drill-down→intervene loop for P0 queue types (late/blocked/overload).
   - Implement post-write refresh so summary and detail never disagree (bounded).
   - Add integration+regression tests from 7.2 and run staging demo 7.3.
+- **Staging proof script (click-by-click)**:
+  1. Open `Wdrożenia` control tower and filter to a P0 queue (e.g., `blocked` or `overloaded`).
+  2. Pick one item and open drill-down; confirm “why” is explicit (deps/workload/baseline).
+  3. Perform one intervention (reassign/smooth/replan/status change) within approved scope.
+  4. Return to control tower list and verify the item’s status/health reflects the write (no split-truth).
+  5. Verify at least one blast-radius cue (what else is affected) is visible (bounded).
+  6. Capture before/after evidence (list + detail) showing post-write coherence.
 - **DoD**:
   - Interventions change the same truth across declared views; blast radius is visible (bounded).
 

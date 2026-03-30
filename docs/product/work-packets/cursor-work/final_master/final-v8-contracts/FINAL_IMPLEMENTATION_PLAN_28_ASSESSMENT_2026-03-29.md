@@ -106,6 +106,12 @@ Status: draft (contract wrapper over existing plan)
   - Implement 1 methodology end-to-end on the unified workbench (bounded).
   - Implement degraded states for missing evidence with explicit “what next”.
   - Add integration/regression + contract tests and run staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Choose one methodology and start an assessment run in the workbench.
+  2. Capture evidence inputs (bounded) and observe scoring with explainable rationale.
+  3. Trigger a missing-evidence case and verify degraded state + “what next” guidance.
+  4. Generate AI interpretation as proposal → review → accept/reject; verify differences are visible.
+  5. Promote results to an initiative/report and verify traceability (run→artifact→promotion).
 - **DoD**:
   - Methodology run is explainable; results can be promoted with traceability; demos recorded.
 

@@ -115,6 +115,11 @@ Status: draft (shared-sourced contract; dedicated template contract may be extra
   - Implement choose→generate→reopen/continue flow for 1 report + 1 deck (bounded).
   - Implement save-as-template with review payload and publish to org; enforce scopes.
   - Add integration/regression tests and run publish+reuse staging demo (5.3).
+- **Staging proof script (click-by-click)**:
+  1. Browse templates, select one, inspect fit, and generate a report (template-first).
+  2. Reopen/continue the output; verify template id and structure persist.
+  3. Save output as template; review payload; publish to org scope (no silent publish).
+  4. Switch user (or simulate another member) and reuse the published template; verify permissions/scope enforcement.
 - **DoD**:
   - Templates are reusable across users (org scope) with governed publish; scopes are enforced.
 
