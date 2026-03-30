@@ -64,7 +64,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 09 | Ankiety | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_09_ANKIETY_2026-03-29.md` | P09-A / P09-B / P09-C | draft |
 | 10 | Wnioski w Interview | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_10_WNIOSKI_W_INTERVIEW_2026-03-29.md` | P10-A / P10-B / P10-C | approved(scope) |
 | 11 | Inicjatywy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_11_INICJATYWY_2026-03-29.md` | P11-A / P11-B / P11-C | approved(scope) |
-| 12 | Mindmap | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_12_MINDMAP_2026-03-29.md` | P12-A / P12-B / P12-C | draft |
+| 12 | Mindmap | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_12_MINDMAP_2026-03-29.md` | P12-A / P12-B / P12-C | approved(scope) |
 | 13 | Whiteboard | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_13_WHITEBOARD_2026-03-29.md` | P13-A / P13-B / P13-C | draft |
 | 14 | Proces flow | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_14_PROCES_FLOW_2026-03-29.md` | P14-A / P14-B / P14-C | draft |
 | 15 | Tabele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_15_TABELE_2026-03-29.md` | P15-A / P15-B / P15-C | draft |
