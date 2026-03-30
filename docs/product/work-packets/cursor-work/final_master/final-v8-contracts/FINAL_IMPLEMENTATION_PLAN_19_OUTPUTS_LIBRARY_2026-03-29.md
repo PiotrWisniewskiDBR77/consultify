@@ -188,6 +188,6 @@ If implementers find a near-duplicate store or route, **stop** — record in §9
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P19-A | approved(scope) | `2d0f958aff` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
-| P19-B | in progress | (see commit after push) | `npx vitest run tests/unit/components/ReportsAndPresentations/outputsLibraryTabQuery.test.ts tests/unit/components/ReportsAndPresentations/artifactNavigation.test.ts` → pass | pending | Queue `?tab=` single module; My Work bridge uses same; aggregate **Open** uses `getArtifactPath` when no explicit `openPath`. Lock: `locks/P19-B.md`. Remaining: full 4-type staging + integration suite per §5.2. |
+| P19-B | in progress | `ac3ca221a7` | `npx vitest run tests/unit/components/ReportsAndPresentations/outputsLibraryTabQuery.test.ts tests/unit/components/ReportsAndPresentations/artifactNavigation.test.ts` → pass | pending | Queue `?tab=` single module; My Work bridge uses same; aggregate **Open** uses `getArtifactPath` when no explicit `openPath`. Lock: `locks/P19-B.md`. Remaining: full 4-type staging + integration suite per §5.2. |
 | P19-C |  |  |  |  |  |
 
