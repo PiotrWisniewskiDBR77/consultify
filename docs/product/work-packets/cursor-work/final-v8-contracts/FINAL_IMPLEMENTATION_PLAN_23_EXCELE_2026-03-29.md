@@ -219,7 +219,7 @@ Każdy scenariusz musi: (a) zatrzymać silent apply, (b) zostawić artefakt w pr
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P23-A | approved(scope) |  | N/A — docs/scope only | N/A | Canon §2.3; evidence mapping §6 (with explicit **MISSING INPUT**); governance + anti-duplicate §7; degraded/error posture §7.1; checklist §7.2. |
+| P23-A | approved(scope) | `67589fb7f5` | N/A — docs/scope only | N/A | Canon §2.3; evidence mapping §6 (with explicit **MISSING INPUT**); governance + anti-duplicate §7; degraded/error posture §7.1; checklist §7.2. |
 | P23-B |  |  |  |  |  |
 | P23-C |  |  |  |  |  |
 
