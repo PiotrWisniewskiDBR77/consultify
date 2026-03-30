@@ -204,7 +204,7 @@ Last updated: 2026-03-30 (P18-A scope closure)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P18-A | approved(scope) | `(commit)` | N/A — docs/scope only | N/A | Canon §2.3–2.6; P18-A checklist; anti-duplicate §2.6; lock P18-A released; EXECUTION_INDEX #18 updated. |
+| P18-A | approved(scope) | `0123538bb5` | N/A — docs/scope only | N/A | Canon §2.3–2.6; P18-A checklist; anti-duplicate §2.6; lock P18-A released; EXECUTION_INDEX #18 updated. |
 | P18-B |  |  |  |  |  |
 | P18-C |  |  |  |  |  |
 
