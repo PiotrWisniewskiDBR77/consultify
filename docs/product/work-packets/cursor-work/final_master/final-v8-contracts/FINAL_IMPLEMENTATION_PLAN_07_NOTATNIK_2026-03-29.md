@@ -321,7 +321,7 @@ Każdy scenariusz musi mieć: **stan widoczny**, **safe next action**, **brak si
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P07-A |  |  |  |  |  |
+| P07-A | approved(scope) | `6761b7b279` | N/A — docs/scope only | N/A | Scope frozen: §2.3 canon (capture/provenance/attachments/search/linking+handoff); EXECUTION_INDEX #07 updated; lock P07-A created. |
 | P07-B |  |  |  |  |  |
 | P07-C |  |  |  |  |  |
 
