@@ -194,7 +194,7 @@ Handoff is a **structured evidence bundle** (not an insight):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P09-A | approved(scope) |  | docs-only (canon freeze) | n/a | commit hash added after merge/commit |
+| P09-A | approved(scope) | 75bda211fc | docs-only (canon freeze) | n/a | scope canon + execution index flip |
 | P09-B |  |  |  |  |  |
 | P09-C |  |  |  |  |  |
 
