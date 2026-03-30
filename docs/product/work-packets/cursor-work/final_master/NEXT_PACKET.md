@@ -12,7 +12,32 @@ Rules:
 
 ## Authorized packet(s)
 
-**None.** Manager gate: do **not** start a new packet until this section is updated. Foundation layer (18→19→27→30→31→32→33) is now **complete** at `approved(scope)`. Next wave: manager decides which consumer packets to authorize.
+### 1) P24-A — Template runtime canon + ownership/permissions (scope approval)
+
+Goal: freeze template-as-runtime-contract (structure + defaults + rules) with explicit ownership (user / org / app), publish/review gate, and family convergence for report + deck templates. Templates live in Outputs (P19) and consume foundation (P18 provenance, P27 tools, P30 org).
+
+Dependencies:
+
+- P19-A/B/C (Outputs Library) — `verified(evidence)` (done)
+- P18-A (Provenance/trust) — `approved(scope)` (done)
+- P27-A (Tools) — `approved(scope)` (done)
+- P30-A (Organization) — `approved(scope)` (done)
+
+Lock:
+
+- create `docs/product/work-packets/cursor-work/final_master/locks/P24-A.md`
+
+Completion:
+
+- update `EXECUTION_INDEX.md` #24 → `approved(scope)`
+- release the lock (`Status: released`)
+
+Notes:
+
+- Templates land in Outputs Library (P19) — no parallel "template store" outside Outputs.
+- Template publish must be governed (review payload, no silent publish).
+- Org branding defaults come from P30 reuse fields (ResolvedOrganizationContext.profile).
+- This is the first Generation surface packet — starts the consumer wave.
 
 ## Completed (archive)
 
