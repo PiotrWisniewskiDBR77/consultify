@@ -323,7 +323,7 @@ Kontrakt wymaga (minimum):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P02-A | approved(scope) | TBD (commit) | n/a (scope approval; docs only) | n/a (scope approval; docs only) | Interoperability canon frozen in §2.3 (providers/modes, time model objects, recurrence doctrine, conflict-safe writes, permission gradients, lifecycle, error posture). |
+| P02-A | approved(scope) | 2e7c505698 | n/a (scope approval; docs only) | n/a (scope approval; docs only) | Interoperability canon frozen in §2.3 (providers/modes, time model objects, recurrence doctrine, conflict-safe writes, permission gradients, lifecycle, error posture). |
 | P02-B |  |  |  |  |  |
 | P02-C |  |  |  |  |  |
 
