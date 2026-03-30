@@ -179,7 +179,7 @@ P27-B/C MUST **extend** the following — not fork parallel session types, tool 
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P27-A | approved(scope) | `(commit)` | N/A — docs/scope only | N/A | Canon: §2.2–2.4, P27-A checklist; lock P27-A released; EXECUTION_INDEX #27 updated. |
+| P27-A | approved(scope) | `d3d10e6e1a` | N/A — docs/scope only | N/A | Canon: §2.2–2.4, P27-A checklist; lock P27-A released; EXECUTION_INDEX #27 updated. |
 | P27-B |  |  |  |  |  |
 | P27-C |  |  |  |  |  |
 
