@@ -1,0 +1,80 @@
+# Final Implementation Contract — Anna (Position 16/35)
+Date: 2026-03-29  
+Owner: Product + Engineering  
+Status: draft (contract wrapper over existing plan)
+
+## 1. Executive summary
+- **Intent**: Ma dostać pełniejszy kontekst DBR77+produkty; rozwój wiedzy sterowalny w Superadmin (Virtual Workers).
+- **Primary users**: public/external entry (LP) + sales/discovery.
+- **Success metric**: bezpieczny public guide z mierzalną konwersją, multilang, i jawnie ograniczonym voice; bez mieszania tożsamości z `Teresa`.
+
+## 2. Scope
+### 2.1 In-scope
+- Public Q&A w granicach public knowledge.
+- CTA handoff (demo/trial/contact) + funnel instrumentation.
+- Multilang i voice resilience (declared lanes).
+
+### 2.2 Out-of-scope / non-goals
+- Pełny autonomous public sales agent.
+- Wewnętrzny copilot (to `Teresa`).
+
+## 3. Authority chain (SSOT)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_ANNA_2026-03-29.md`
+- SSOT: `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md`
+- Benchmark (chat expectations): `docs/product/CHAT_V8_BENCHMARK.md`
+
+## 4. Softs inspirations (benchmark apps)
+### 4.1 Primary benchmark family (SSOT)
+- Plan modułu wskazuje `Softs/0 Czat` + `Softs/KIMI` jako benchmark family (`WAVE1_FINAL_IMPLEMENTATION_PLAN_ANNA_2026-03-29.md`).
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **OpenAI / ChatGPT (memory, voice, web search posture)**:
+  - `Softs/0 Czat/Open Ai help.zip :: Open Ai help/help.openai.com/en/articles/8983136-what-is-memory.html` (Memory: “Saved Memories” vs “Chat history”; personalizacja między rozmowami).
+  - `Softs/0 Czat/Open Ai help.zip :: Open Ai help/help.openai.com/en/articles/8400625-voice-mode-faq.html` (Voice Mode FAQ: capabilities + limitations; voice jako mode z ograniczeniami).
+  - `Softs/0 Czat/Open Ai help.zip :: Open Ai help/help.openai.com/en/articles/10093903-chatgpt-search-for-enterprise-and-edu.html` (ChatGPT Search: odpowiedzi z linkami do źródeł; “fast, timely answers”).
+  - `Softs/0 Czat/Open Ai help.zip :: Open Ai help/help.openai.com/en/articles/5955598-is-api-usage-subject-to-any-rate-limits.html` (rate limits: produkcyjny constraint; potrzebne degraded/fallback).
+- **Claude (citations + long-running context management)**:
+  - `Softs/0 Czat/Cloude doc.zip :: Cloude doc/platform.claude.com/cookbook/misc-using-citations.html` (citations: weryfikowalne wskazania źródeł przy pracy na dokumentach).
+  - `Softs/0 Czat/Cloude doc.zip :: Cloude doc/platform.claude.com/cookbook/tool-use-automatic-context-compaction.html` (context compaction: długie workflow bez degradacji pamięci).
+- **KIMI (deliverable-driven agent + deep research)**:
+  - `Softs/KIMI/Docs/www.kimi.com/en/agent.html` (agent: “turns ideas into deliverables… generates docs/sheets/reports”).
+  - `Softs/KIMI/Docs/www.kimi.com/en/deep-research.html` (deep research: rozbija pytania, szuka szeroko, daje long-form report).
+  - `Softs/KIMI/Screens/` (UI behavior reference dla “public agent front door”).
+
+### 4.3 Missing input (must remain explicit)
+- **Perplexity**: brak bezpośredniego Softs corpus dla Perplexity → “research/source transparency” opieramy na `ChatGPT Search` + citations patterns, bez deklaracji Perplexity parity.
+
+### 4.4 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “public AI front door z bezpiecznymi granicami + mierzalnym handoff”, nie “pełny autonomous sales agent”.**
+
+- **Public answer boundaries + safe knowledge posture**:
+  - Anna zostaje w public knowledge (jak w SSOT) i ma jawne refusal/degraded modes.
+- **Voice as a governed mode (OpenAI Voice FAQ)**:
+  - Voice ma jawne availability, ograniczenia, oraz bezpieczny fallback do tekstu.
+  - Voice nie może powodować identity drift ani obiecywać rzeczy poza public lane.
+- **Memory posture (OpenAI Memory)**:
+  - Jawnie rozdzielone: co jest pamięcią rozmowy (personalization), a co jest “prawdą produktu”.
+  - Możliwość ograniczenia/wyłączenia pamięci w public surface (bez “magicznego pamiętania”).
+- **Search + citations posture (ChatGPT Search + Claude citations)**:
+  - Gdy Anna “twierdzi fakty”: daje evidence pointers (linki/źródła) albo jawnie oznacza niepewność.
+- **Deliverable-driven framing (KIMI)**:
+  - Anna pracuje “deliverable-first”: odpowiedź → proponowany next step → CTA (demo/trial/contact) z jasnym uzasadnieniem.
+- **Long-running resilience (context compaction + rate limits)**:
+  - Dłuższe rozmowy i ograniczenia runtime nie degraduja w “losowe odpowiedzi”; istnieją jawne degraded states.
+
+## 5. Evidence plan (DoD)
+### 5.1 Acceptance criteria
+- CTA i event grammar są mierzalne; multilang działa bez identity drift; voice ma jasne fallback states.
+- Public boundaries są stabilne: Anna nie miesza się z `Teresa` i nie wycieka do internal lanes.
+- Jeśli Anna podaje fakty: ma evidence pointers (linki/citations) albo jawnie oznacza ograniczenie.
+
+### 5.2 Tests
+- Integracyjne: public Q&A → CTA (demo/trial/contact) → event capture (funnel) + retry behavior.
+- Regression: voice unavailable / rate-limited → czytelny fallback do tekstu + zachowanie kontekstu.
+- Contract tests: “factful answer” → czy istnieją citations/evidence pointers albo uncertainty marker.
+
+### 5.3 Staging proof checklist
+- Demo: 3 scenariusze public: (1) “co to jest Consultify”, (2) “czy to pasuje do X”, (3) “jak zacząć” → CTA completion + eventy.
+- Demo: voice on/off + degraded state + fallback bez identity drift.
+

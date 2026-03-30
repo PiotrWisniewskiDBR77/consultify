@@ -1,0 +1,76 @@
+# Final Implementation Contract — Proces flow (Position 14/35)
+Date: 2026-03-29  
+Owner: Product + Engineering  
+Status: draft (contract wrapper over existing plan)
+
+## 1. Executive summary
+- **Intent**: Jak Mindmap/Whiteboard: UX budowania + komplet narzędzi; AI współbuduje.
+- **Primary users**: konsultanci/PMO (modelowanie procesu).
+- **Success metric**: procesy da się budować i modyfikować bez „braków narzędzi”, a AI działa jako governed co-builder.
+
+## 2. Scope
+### 2.1 In-scope
+- Toolset i UX budowania flow.
+- AI propose→review dla zmian w diagramie.
+
+### 2.2 Out-of-scope / non-goals
+- Kopiowanie UI vendorów 1:1.
+
+## 3. Authority chain (SSOT)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_PROCES_FLOW_2026-03-29.md`
+
+## 4. Softs inspirations (benchmark apps)
+### 4.1 Primary benchmark family (SSOT)
+- Plan modułu wskazuje `Softs/0 Diagramy` jako primary benchmark family (`WAVE1_FINAL_IMPLEMENTATION_PLAN_PROCES_FLOW_2026-03-29.md`).
+
+### 4.2 Local Softs evidence (concrete artifacts)
+- **Lucid (BPMN semantics + configurable shapes)**:
+  - `Softs/0 Diagramy/Lucid/developer.lucid.co/docs/bpmn-20-library-si.html` (BPMN 2.0 Library: shape properties i semantyka).
+  - `Softs/0 Diagramy/Lucid/developer.lucid.co/docs/bpmn-shapes-reference-si.html` (BPMN Shapes Reference: “highly configurable” shapes; visual reference zachowania właściwości).
+  - `Softs/0 Diagramy/Lucid/developer.lucid.co/docs/custom-shape-libraries.html` (custom shape libraries: drag from libraries; extensibility posture).
+- **Mermaid (text-to-diagram / structured flow authoring)**:
+  - `Softs/0 Miro/Mermaid.zip` (diagram DSL: flowchart/state/sequences; wzorzec dla AI “generate flow from prompt”).
+- **Canvas adjacency (for UX/toolbelt, not semantics)**:
+  - `Softs/0 Whiteboard/Tldraw.zip` oraz `Softs/0 Miro/Miiro doc.zip` jako referencje narzędzi canvas (zoom/pan/selection/snapping), ale **nie** jako substytut BPMN semantyki.
+
+### 4.3 Parity checklist vs Softs (approval-grade)
+**Parity oznacza “process semantics > generic canvas”, nie “pełny BPM suite”.**
+
+- **BPMN-adjacent semantic base (Lucid BPMN)**:
+  - Proces nie składa się tylko z “shape’ów” — ma typy (activity/event/gateway/data object) i czytelne znaczenia.
+  - Właściwości obiektów (np. typ aktywności, markery) są jawne i stabilne, a UI pokazuje znaczenie.
+- **Configurable shapes + reference behavior (Lucid shapes reference)**:
+  - System ma przewidywalne zachowanie właściwości kształtów; użytkownik rozumie “co oznacza ten symbol”.
+- **Extensibility posture (Lucid custom shape libraries)**:
+  - Jeśli rozszerzamy bibliotekę: robimy to w sposób kompatybilny z “shape library” mental model (biblioteki, drag-drop, definicje).
+- **Text-to-flow generation (Mermaid adjacency)**:
+  - AI potrafi wygenerować proces z promptu (DSL/structured representation) i zamienić go w diagram jako propozycję (preview → apply).
+- **Governance after semantics (Wave1 doctrine)**:
+  - Walidacja/governance ma sens dopiero, gdy semantyka jest wystarczająco mocna (nie “checkboxy na losowych shape’ach”).
+
+### 4.4 Gap ledger vs Softs (what we are missing — derived from current plans)
+Źródło prawdy “co mamy / czego brakuje” to: `WAVE1_FINAL_IMPLEMENTATION_PLAN_PROCES_FLOW_2026-03-29.md` + `PROCESS_FLOW_V8_READINESS_AUDIT.md`.
+
+| Capability cluster (Softs parity target) | What Softs implies | Current truth (per plan) | Gap statement (contract requirement) | Priority |
+| --- | --- | --- | --- | --- |
+| Semantic depth | process mental model | “semantic depth still light” | Wzmocnić typy obiektów + znaczenia + readback semantyki | P0 |
+| BPMN/interoperability | recognizable mapping | “BPMN/interoperability not mature enough” | Ustalić BPMN-adjacent mapping + export/import assumptions (bounded) | P0 |
+| Toolset/UX completeness | build without missing tools | (contract intent) | Domknąć builder toolbelt: connectors, labels, layout ops, selection, undo/redo | P0 |
+| Governance layering | validate after semantics | “governance later” | Dodać minimalną walidację dopiero po semantyce (bounded) | P1
+
+## 5. Evidence plan (DoD)
+### 5.1 Acceptance criteria
+- User może zbudować i edytować proces end-to-end; AI potrafi „zrób flow” jako propozycję.
+- Diagram komunikuje semantykę (typy obiektów + znaczenie), nie jest “losowym rysunkiem”.
+- BPMN/interoperability posture jest jawne (bounded): co wspieramy, jak eksportujemy/importujemy, gdzie są granice.
+
+### 5.2 Tests
+- Integracyjne: create activity/event/gateway → connect → label → re-layout/move → undo/redo → export/readback.
+- Contract tests: AI proposal (DSL/structured) → preview → apply; semantyka zachowana.
+- Regression: invalid structure (np. brak start/end tam gdzie wymagane w bounded rules) → czytelny błąd i “co dalej”.
+
+### 5.3 Staging proof checklist
+- Demo: “zbuduj proces” (manual) + modyfikacje + export/readback.
+- Demo: AI “zrób flow” → preview → apply → ręczna korekta bez utraty semantyki.
+
