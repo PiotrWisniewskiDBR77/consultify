@@ -375,7 +375,7 @@ UI guideline:
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P06-A |  |  |  |  |  |
+| P06-A | approved(scope) | 90c7b4973b | n/a (docs-only) | n/a | Canon frozen: ranking grammar + why-now payload + handoff + degraded/error posture |
 | P06-B |  |  |  |  |  |
 | P06-C |  |  |  |  |  |
 
