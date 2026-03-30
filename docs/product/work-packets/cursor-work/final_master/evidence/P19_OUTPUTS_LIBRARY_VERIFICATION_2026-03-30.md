@@ -39,4 +39,4 @@ Optional capture: short screen recording or screenshots of steps 2–4 attached 
 
 ## Ledger
 
-- P19-C closure commit: `93a30d1f04` on branch `ws/c-artifact-evidence`.
+- P19-C verification batch: `93a30d1f04`; ledger SHA annotation: `2ee56f5cfd` (branch `ws/c-artifact-evidence`).

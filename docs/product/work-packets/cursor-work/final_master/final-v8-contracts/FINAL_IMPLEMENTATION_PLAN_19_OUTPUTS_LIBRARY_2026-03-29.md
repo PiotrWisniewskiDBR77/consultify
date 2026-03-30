@@ -189,6 +189,6 @@ If implementers find a near-duplicate store or route, **stop** — record in §9
 | --- | --- | --- | --- | --- | --- |
 | P19-A | approved(scope) | `2d0f958aff` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
 | P19-B | delivered | `ac3ca221a7` | `npx vitest run tests/components/ReportsAndPresentations/useRapData.canonicalArtifacts.test.tsx tests/unit/components/ReportsAndPresentations/outputsLibraryTabQuery.test.ts tests/unit/components/ReportsAndPresentations/artifactNavigation.test.ts tests/integration/routes/artifacts.routes.test.ts` → 32 passed | `final_master/evidence/P19_OUTPUTS_LIBRARY_VERIFICATION_2026-03-30.md` § staging script | Tab query SSOT; My Work bridge; `resolveArtifactOpenPath` → `getArtifactPath` fallback; HTTP queue filters covered in integration tests. Lock **P19-B** released. |
-| P19-C | verified(evidence) | `93a30d1f04` | same vitest bundle as P19-B row | same evidence doc | Closure: ledger + index #19; locks **P19-C** released; integration tests for `view=mine` / `view=review`. |
+| P19-C | verified(evidence) | `93a30d1f04` / `2ee56f5cfd` | same vitest bundle as P19-B row | same evidence doc | Closure: ledger + index #19; locks **P19-C** released; integration tests for `view=mine` / `view=review`. |
 
 
