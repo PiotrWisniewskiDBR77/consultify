@@ -70,3 +70,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: owner zmienia podstawowe org defaults + widoczny efekt w 2 downstream surfaces.
 - Demo: member/role change → natychmiastowy efekt permissions + audit trace (bounded).
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Organization SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P30-A — Organization canon + reuse contract (scope approval)
+- **Goal**: jedna tenant prawda (profile/ownership/defaults/trust) + stable reuse fields dla modułów.
+- **Inputs required**: schema + ownership boundaries; member/role baseline.
+- **Acceptance**: scope zatwierdzony; downstream reuse contract spisany; degraded/error posture jawne.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P30-B — Downstream reuse + roles/trust closure
+- **Goal**: org defaults i role są konsumowane spójnie przez downstream (bounded).
+- **Acceptance**: 2 downstream surfaces odzwierciedlają zmiany; conflicts z Settings/Admin są czytelne.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P30-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw profile/defaults, potem role/trust controls i integracje (P1).
+
+### 8.3 Rollback plan
+- Wyłącz write dla risk controls; zachowaj read-only; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: downstream tworzą “alternatywną prawdę org”.
+- Ryzyko: niejawne ownership boundaries (security/regulatory).
+- Decyzje: minimalny zestaw reuse fields i ich stabilność wersji.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P30-A |  |  |  |  |  |
+| P30-B |  |  |  |  |  |
+| P30-C |  |  |  |  |  |
+

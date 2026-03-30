@@ -86,3 +86,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: capture→link→AI propose→accept (z jawnym provenance) + downstream handoff do `Radar` albo `Inicjatywy`.
 - Demo: attachment lifecycle (upload → preview/readback → search hit → open).
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P07-A — Notebook canon + scope approval
+- **Goal**: notebook jako durable working memory (capture+search+linking), bez “Notion DB parity”.
+- **Inputs required**: decyzje o linking/provenance minimal; attachment lifecycle baseline.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent provenance loss” zasady spisane.
+- **Evidence**: scope approval + linkowane SSOT/benchmark.
+
+#### P07-B — Capture/search/linking closure + attachment lifecycle
+- **Goal**: E2E capture→attach→index/search→open→link-out bez utraty kontekstu.
+- **Acceptance**: upload ma status + retry; search jest operator-grade (w zadeklarowanym baseline).
+- **Evidence**: integracyjne testy + staging demo “attachment lifecycle”.
+
+#### P07-C — Verification + rollout
+- **Goal**: telemetry + regresje + staging proof; rollout bez rozjechania linków.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Inkrementalnie: najpierw capture+readback, potem AI propose/review i downstream handoffs.
+
+### 8.3 Rollback plan
+- Wyłącz AI assist/handoff; zachowaj dostęp do notatek i linków; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: “martwy inbox” (capture bez routingu do pracy).
+- Ryzyko: upload bez recovery → utrata zaufania.
+- Decyzje: minimalny zakres OCR/indexing vs jawne ograniczenia.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P07-A |  |  |  |  |  |
+| P07-B |  |  |  |  |  |
+| P07-C |  |  |  |  |  |
+

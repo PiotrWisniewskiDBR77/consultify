@@ -101,3 +101,47 @@ Status: draft (contract wrapper over existing plan)
 - Demo “discrepancy”: KPI signal → report → reconciliation state → finance consequence drill-down → execution follow-up.
 - Demo “targets”: ustaw target → odczytaj “target vs actual” → zapisz komentarz/plan działań w scorecard/report.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 6.
+
+### 8.1 Bounded delivery packets
+#### P04-A — KPI canon + scope approval
+- **Goal**: jedna gramatyka KPI (grid/chart/targets) + jasne non-goals (BI parity).
+- **Inputs required**: SSOT linkage KPI↔Finance; decyzja o minimalnych workflows report/reconciliation.
+- **Acceptance**: scope jest zatwierdzony; user rozumie “co KPI zmienia” (signal → report → action).
+- **Evidence**: checklist scope approval + zlinkowane SSOT.
+
+#### P04-B — Core workflow closure (signal→report→reconciliation→action)
+- **Goal**: domknąć workflow i stany (w deklarowanym zakresie).
+- **Acceptance**: user przechodzi E2E bez “domyślania”; nie ma split-truth na KPI↔Finance.
+- **Evidence**: testy integracyjne linkage + staging demo “discrepancy”.
+
+#### P04-C — Verification + rollout
+- **Goal**: dopiąć telemetry, regresje i staging proof; przygotować bezpieczny rollout/rollback.
+- **Acceptance**: wszystko spełnia bar `verified(evidence)` z playbooka.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Feature-flag / gradual exposure; prefer “read-first” zanim włączymy mutacje szeroko.
+- Brak silent scope merge z `Finanse` i `Wdrożenia`.
+
+### 8.3 Rollback plan
+- Wyłącz flagi; utrzymaj read access i audit; nie wykonuj destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: KPI stanie się “dashboardem” bez zamkniętej pętli (signal→action).
+- Ryzyko: split-truth KPI↔Finance poza zadeklarowanym lane.
+- Decyzje: minimalny zakres reconciliation (stany + owner + next action).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P04-A |  |  |  |  |  |
+| P04-B |  |  |  |  |  |
+| P04-C |  |  |  |  |  |
+

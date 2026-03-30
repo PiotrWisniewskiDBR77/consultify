@@ -84,3 +84,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 4 różne typy artefaktów w bibliotece + “needs review” queue + open/reopen.
 - Demo: external share / export → widoczny event w trust ledger (pozycja 18).
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Wave2 SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P19-A — Library canon (one home) + taxonomy/queues (scope approval)
+- **Goal**: Outputs Library jako canonical home; taxonomy/queues/owner/review jako stabilny kontrakt.
+- **Inputs required**: trust-state schema (pozycja 18); list/preview/open coherence rules.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no second registry” zasada spisana.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P19-B — Multi-format convergence + preview/open/reopen closure
+- **Goal**: wiele typów artefaktów na jednej prawdzie; preview/open/reopen bez sprzeczności.
+- **Acceptance**: 4 typy działają; queues “needs review” i badges spójne; export/share audytowalne.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P19-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw list/preview/open spójność, potem family convergence rozszerzenia (P1).
+
+### 8.3 Rollback plan
+- Wyłącz nowe queues/badges; zachowaj read-only listing; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: druga prawda (inne “home”).
+- Ryzyko: sprzeczne zachowanie open/reopen vs preview.
+- Decyzje: minimalny zestaw queues i ich semantyka “next action”.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P19-A |  |  |  |  |  |
+| P19-B |  |  |  |  |  |
+| P19-C |  |  |  |  |  |
+

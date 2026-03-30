@@ -83,3 +83,46 @@ Status: draft (KIMI reference present) + missing dedicated plan
 - Nagranie: split-screen chat↔doc: generate → edit → export → optional save → reopen.
 - Checklist: każdy krok ma “evidence pointer” do konkretnego screen lub doc reference w `Softs/KIMI`.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain: see section 3 + missing-input gate (playbook).
+- KIMI evidence pointers: see section 4 (no guessing rule).
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P22-A — KIMI-style mapping + scope approval (blocking gate)
+- **Goal**: przygotować approval-grade mapping KIMI Wordy (screen-by-screen) i zamrozić scope.
+- **Inputs required**: kompletne `Softs/KIMI` evidence dla deklarowanych flows + decyzja o optional save-to-library.
+- **Acceptance**: “zero interpretacji”; wszystkie akcje/stany mają evidence pointer; non-goals jawne.
+- **Evidence**: linkowane screens + spisane actions/states.
+
+#### P22-B — Split-screen doc workflow closure (bounded)
+- **Goal**: generate→edit→comment/track-change (bounded)→export→optional save→reopen zgodnie z KIMI evidence.
+- **Acceptance**: flow działa end-to-end; brak ghost outputs; provenance spójne z pozycją 18/19.
+- **Evidence**: integracyjne testy + nagranie split-screen.
+
+#### P22-C — Verification + rollout
+- **Goal**: regresje (export failures) + staging proof + rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw minimalny flow P0 zgodny z evidence; dopiero potem rozszerzenia edycji (P1).
+
+### 8.3 Rollback plan
+- Wyłącz edycję/track-change; zachowaj read-only i export; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: brak dedykowanego planu KIMI → nie wolno implementować “na czuja”.
+- Ryzyko: optional save tworzy split-truth vs `Outputs Library`.
+- Decyzje: minimalny zakres track-changes/comments i jego ograniczenia.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P22-A |  |  |  |  |  |
+| P22-B |  |  |  |  |  |
+| P22-C |  |  |  |  |  |
+

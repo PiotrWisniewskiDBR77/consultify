@@ -77,3 +77,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 1 metodologia end-to-end (z branching/scoring) + promotion do inicjatyw.
 - Demo: AI insights proposal → review → accept/reject + widoczna różnica w final report.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Assessment SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P28-A — Assessment family canon + workbench grammar (scope approval)
+- **Goal**: jeden shell i język Assessment (workbench + scoring/evidence) z jawnej governance.
+- **Inputs required**: scoring rationale + evidence pointers contract; promotion target (initiatives/reports).
+- **Acceptance**: scope zatwierdzony; non-goals jawne; AI interpretacja = propose→review→accept.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P28-B — Methodology run→evidence→score→interpret→promote closure
+- **Goal**: domknąć E2E metodologię na jednym workbench.
+- **Acceptance**: branching/scoring jest explainable; degraded (missing evidence) daje “what next”.
+- **Evidence**: integracyjne testy + staging demo 1 metodologii.
+
+#### P28-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw 1 metodologia P0, potem rozszerzenia family packaging (P1).
+
+### 8.3 Rollback plan
+- Wyłącz AI interpretacje/promotions; zachowaj workbench read-only; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: scoring jako black box (brak zaufania).
+- Ryzyko: brak jednego workbench → rodzina niespójna.
+- Decyzje: minimalny scoring grammar i format evidence pointers.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P28-A |  |  |  |  |  |
+| P28-B |  |  |  |  |  |
+| P28-C |  |  |  |  |  |
+

@@ -75,3 +75,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 1 partner end-to-end (apply→activate→enable→earn) + operator view.
 - Demo: exceptional path (hold/review) + partner messaging + operator resolution.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Partner Program SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P29-A — Partner lifecycle canon + earnings ledger (scope approval)
+- **Goal**: staged lifecycle apply→activate→enable→grow→earn z jedną prawdą partner+operator.
+- **Inputs required**: status model + earnings ledger schema + holds/exceptions rules.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; messaging i remediation posture spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P29-B — Portal + operator tower truth alignment closure
+- **Goal**: partner widzi to samo co operator; enablement i earnings są audytowalne.
+- **Acceptance**: end-to-end partner działa; exceptional path (hold/review) ma jasne kroki.
+- **Evidence**: integracyjne testy + staging demo (happy + exceptional).
+
+#### P29-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw lifecycle+ledger (P0), potem enablement packaging (P1) i rozbudowa.
+
+### 8.3 Rollback plan
+- Wyłącz accrual/payout; zachowaj status read-only + audit; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: sprzeczne statusy partner vs operator (utrata zaufania).
+- Ryzyko: earnings bez audytu (compliance).
+- Decyzje: minimalny model earnings (credits vs payouts) i jego stany.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P29-A |  |  |  |  |  |
+| P29-B |  |  |  |  |  |
+| P29-C |  |  |  |  |  |
+

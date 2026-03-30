@@ -78,3 +78,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 2 różne tool types end-to-end (różne archetypy workspace) + promotion do inicjatyw.
 - Demo: AI propose → review → accept + trace view (bounded) dla 1 sesji.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Tools SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P27-A — Tools family canon + session grammar (scope approval)
+- **Goal**: Tools jako jedna rodzina: discovery→session→result→promotion.
+- **Inputs required**: session state model + governance visibility + output traceability.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; finalize gating (DoD) opisane.
+- **Evidence**: scope approval + linkowane SSOT/bench.
+
+#### P27-B — Session→result→promotion closure
+- **Goal**: sesja nie gubi kontekstu; wyniki mają traceability; promotion do inicjatyw/outputs działa.
+- **Acceptance**: 2 tool archetypy działają end-to-end; failure state ma retry bez duplikacji.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P27-C — Verification + rollout
+- **Goal**: telemetry, regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw P0 archetypy + governance, potem downstream promotion hardening (P1).
+
+### 8.3 Rollback plan
+- Wyłącz promotion; zachowaj sesje + wyniki; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: Tools jako “kolekcja mini-app” bez wspólnej gramatyki.
+- Ryzyko: finalize bez gatingu → promotion “śmieci” do downstream.
+- Decyzje: minimalny session state model i “missingItems”.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P27-A |  |  |  |  |  |
+| P27-B |  |  |  |  |  |
+| P27-C |  |  |  |  |  |
+

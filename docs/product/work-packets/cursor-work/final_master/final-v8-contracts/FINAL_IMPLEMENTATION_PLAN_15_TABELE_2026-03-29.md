@@ -85,3 +85,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: “zbuduj mini-OS” (2 tabele + relacja + 2 views + 1 form/interface) + operacje na rekordach.
 - Demo: NL→schema proposal→approval→materialization + późniejsza edycja bez utraty spójności.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (readiness/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P15-A — Singular relational grammar (scope approval)
+- **Goal**: jedna gramatyka: schema→records→views→interfaces (bounded), bez Airtable parity.
+- **Inputs required**: decyzje o minimalnym modelu relacyjnym + permissions/lock semantics.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “schema drift posture” spisana.
+- **Evidence**: scope approval + linkowane benchmarki/readiness.
+
+#### P15-B — Base→records→views→forms/interfaces closure
+- **Goal**: domknąć mini-OS lane (2 tables + relation + views + interface) na jednej prawdzie.
+- **Acceptance**: schema change ma przewidywalny readback (lub jawny degraded); AI plan ma preview/diff.
+- **Evidence**: integracyjne testy + staging demo “mini-OS”.
+
+#### P15-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw schema+records+views, potem interfaces/forms (P1) i governance hardening.
+
+### 8.3 Rollback plan
+- Wyłącz AI materialization; zachowaj read-only i eksport; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: brak jednej gramatyki relacyjnej (produkt rozjechany).
+- Ryzyko: schema drift psuje views/interfaces bez czytelnego degraded.
+- Decyzje: minimalny zakres form/interfaces + ich governance.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P15-A |  |  |  |  |  |
+| P15-B |  |  |  |  |  |
+| P15-C |  |  |  |  |  |
+

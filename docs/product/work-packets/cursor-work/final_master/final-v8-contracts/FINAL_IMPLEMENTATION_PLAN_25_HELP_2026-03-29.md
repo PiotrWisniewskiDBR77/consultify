@@ -84,3 +84,46 @@ Status: draft (shared-sourced contract; extracted scope for position 25)
 - Demo: 3 surfaces (np. `Tools`, `Interview`, `Outputs`) → contextual help → artykuł → next action.
 - Demo: PL/EN przełączenie + Teresa guidance bez driftu.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Help/KB SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P25-A — Help canon + content ops baseline (scope approval)
+- **Goal**: contextual help jako produkt runtime + content ops (seed/owner/lifecycle).
+- **Inputs required**: entry points per surface; recommendation payload contract; PL/EN posture.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; degraded state dla missing article/tłumaczeń spisany.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P25-B — Contextual entry points + recommendation closure
+- **Goal**: entry point→search→article→next action routing + Teresa/Anna guidance z źródłem.
+- **Acceptance**: 3 surfaces działają; brak artykułu daje czytelny degraded + fallback.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P25-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw kontekstowe entry points, potem rekomendacje “smart” (P0 bounded), potem rozbudowa (P1).
+
+### 8.3 Rollback plan
+- Wyłącz rekomendacje; zachowaj search/browse; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: Help jako repo-docs, nie runtime produkt.
+- Ryzyko: brak content ops → KB się starzeje natychmiast.
+- Decyzje: minimalny seed i ownership model per moduł.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P25-A |  |  |  |  |  |
+| P25-B |  |  |  |  |  |
+| P25-C |  |  |  |  |  |
+

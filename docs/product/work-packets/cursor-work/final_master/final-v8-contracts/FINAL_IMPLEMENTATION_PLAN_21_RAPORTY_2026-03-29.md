@@ -79,3 +79,46 @@ Status: draft (shared-sourced contract; dedicated plan pending extraction)
 - Demo: 2 template’y raportu → wygeneruj → reopen/continue → export; oba w library.
 - Demo: report z web sources + report bez web (fallback) → różnice są jawne i nie overclaim.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Wave2 SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P21-A — Report template-first canon + sources posture (scope approval)
+- **Goal**: raport jako template-first deliverable z evidence pointers (bounded), bez “doc suite parity”.
+- **Inputs required**: template selection + parameters; sources/citations posture; degraded rules (no-web).
+- **Acceptance**: scope zatwierdzony; non-goals jawne; approve(run) ≠ review(artifact) spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P21-B — Template→plan→approve→artifact→library→continue closure
+- **Goal**: E2E flow + reopen/continue + export audit.
+- **Acceptance**: no-web fallback jest uczciwy; sources są jawne (albo ograniczenie).
+- **Evidence**: integracyjne testy + staging demo 2 template’ów.
+
+#### P21-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw template-first, potem rozszerzenia sources/degraded (P1) i polish.
+
+### 8.3 Rollback plan
+- Wyłącz web/search; zachowaj draft generation; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: raport overclaim bez źródeł.
+- Ryzyko: no-web/tool errors bez jawnego degraded.
+- Decyzje: minimalny zakres exportów i ich audyt.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P21-A |  |  |  |  |  |
+| P21-B |  |  |  |  |  |
+| P21-C |  |  |  |  |  |
+

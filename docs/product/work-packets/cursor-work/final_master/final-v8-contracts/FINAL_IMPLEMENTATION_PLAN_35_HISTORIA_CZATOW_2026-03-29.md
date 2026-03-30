@@ -78,3 +78,46 @@ Status: draft (direct contract over existing plan)
 - Demo: organize (folders + pin + archive) → search → revisit (open→continue) na min. 10 rozmowach.
 - Demo: team folder permissions (user bez dostępu) → denial + guidance; brak leakage.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Chat history SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P35-A — Thread lifecycle canon + scope boundaries (scope approval)
+- **Goal**: kompletna biblioteka rozmów: lifecycle + folder semantics + personal/team scopes.
+- **Inputs required**: destructive actions confirmation posture; permission model dla team folders; search target posture.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; archive≠delete i pin semantics spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P35-B — Lifecycle + search target closure
+- **Goal**: create/rename/pin/move/archive/unarchive/delete + search (baseline + target) z pagination/filters.
+- **Acceptance**: 10 rozmów da się organizować i wyszukiwać; deep-links działają; brak leakage.
+- **Evidence**: integracyjne testy + staging demo organize→search→revisit.
+
+#### P35-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw personal folders + lifecycle, potem team folders permissions (P1) i search target hardening.
+
+### 8.3 Rollback plan
+- Wyłącz destructive delete; zachowaj archive; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: “search udawany” (client-only) bez deklaracji granic.
+- Ryzyko: team folders permissions leakage.
+- Decyzje: minimalny zakres search target (fields + filters) jako P0.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P35-A |  |  |  |  |  |
+| P35-B |  |  |  |  |  |
+| P35-C |  |  |  |  |  |
+

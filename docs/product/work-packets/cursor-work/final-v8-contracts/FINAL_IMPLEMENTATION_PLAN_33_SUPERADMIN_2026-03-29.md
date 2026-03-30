@@ -71,3 +71,46 @@ Status: draft (contract wrapper over existing plan)
 ### 5.3 Staging proof checklist
 - Demo: root walk-through + 2 branches (AI ops + tenant/user search) + jedna gated akcja z audit.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Superadmin SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P33-A — Root control plane canon + guardrails (scope approval)
+- **Goal**: root + mounted branches jako jeden control plane; cross-tenant ops z guardrails/approvals.
+- **Inputs required**: permissions model + approvals posture; audit baseline; emergency/degraded rules.
+- **Acceptance**: scope zatwierdzony; boundaries z Organization/Admin/Settings jawne; no “hidden paths”.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P33-B — Cross-tenant actions + audit closure
+- **Goal**: gated akcje działają; partial failure jest czytelny; audit jest kompletny.
+- **Acceptance**: operator wykonuje min. 1 gated akcję z potwierdzeniem; AI/connector ops są wpięte jako jawne gałęzie.
+- **Evidence**: integracyjne testy + staging demo root walk-through.
+
+#### P33-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw read-only visibility + navigation, potem gated actions (P0) i rozszerzenia (P1).
+
+### 8.3 Rollback plan
+- Wyłącz gated actions; zachowaj visibility; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: operator ma za dużo mocy bez guardrails (incydenty).
+- Ryzyko: scope blur (Admin vs Superadmin).
+- Decyzje: minimalny zestaw cross-tenant akcji P0 i ich approvals.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P33-A |  |  |  |  |  |
+| P33-B |  |  |  |  |  |
+| P33-C |  |  |  |  |  |
+

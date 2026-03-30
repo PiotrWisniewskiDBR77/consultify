@@ -83,3 +83,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 1 format artefaktu end-to-end + rerun + refresh.
 - Demo: failure scenario (np. brak uprawnień) → recovery + lineage zachowane.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Wave2 SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P17-A — Run grammar canon + stage separation (scope approval)
+- **Goal**: jedna gramatyka runów: plan→approve→run→materialize, z jawnie oddzielonym validation.
+- **Inputs required**: status model + audit; approve(run) ≠ review(artifact) boundary.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; failure packaging i rerun semantics spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P17-B — Validation + rerun/failure closure
+- **Goal**: domknąć preflight/validation i czytelne failure/retry bez duplikacji artefaktów.
+- **Acceptance**: failure ma recovery; lineage jest zachowane; statusy są widoczne i niesprzeczne.
+- **Evidence**: integracyjne testy + staging demo failure.
+
+#### P17-C — Verification + rollout
+- **Goal**: telemetry, regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw 1–2 formaty artefaktów (P0), potem family convergence (P1).
+
+### 8.3 Rollback plan
+- Wyłącz approve/run; pozostaw plan + readback; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: validation miesza się z review (trust chaos).
+- Ryzyko: retry tworzy ghost artifacts.
+- Decyzje: minimalny zestaw statusów i ich UI badges.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P17-A |  |  |  |  |  |
+| P17-B |  |  |  |  |  |
+| P17-C |  |  |  |  |  |
+

@@ -78,3 +78,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 3 scenariusze public: (1) “co to jest Consultify”, (2) “czy to pasuje do X”, (3) “jak zacząć” → CTA completion + eventy.
 - Demo: voice on/off + degraded state + fallback bez identity drift.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (public SSOT): see section 3.
+- Softs inspirations/parity: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P16-A — Public assistant canon + boundaries (scope approval)
+- **Goal**: public-facing copilot z CTA + mierzalnym event grammar; bez mieszania z `Teresa`.
+- **Inputs required**: public boundaries; CTA taxonomy; citations/uncertainty posture.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; privacy/memory/voice boundaries spisane.
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P16-B — CTA + multilang + voice degraded closure
+- **Goal**: public Q&A → CTA → event capture; multilang i voice z jawnie zdefiniowanym degraded state.
+- **Acceptance**: CTA działa i jest mierzalne; factful answers mają citations albo uncertainty marker.
+- **Evidence**: integracyjne testy + staging demo 3 scenariuszy.
+
+#### P16-C — Verification + rollout
+- **Goal**: regresje (rate limit / voice) + staging proof + rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Stopniowo: najpierw tekst + CTA, potem voice; feature flags per capability.
+
+### 8.3 Rollback plan
+- Wyłącz voice i “factful mode”; zachowaj bezpieczne Q&A + CTA; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: public assistant “przebija” do internal lanes.
+- Ryzyko: brak citations/uncertainty → overclaim.
+- Decyzje: minimalna lista CTA i ich tracking eventy.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P16-A |  |  |  |  |  |
+| P16-B |  |  |  |  |  |
+| P16-C |  |  |  |  |  |
+

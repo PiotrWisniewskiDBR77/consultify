@@ -1,0 +1,119 @@
+# Final V8 — Execution Playbook (SSOT for delivery)
+
+Date: 2026-03-30  
+Scope: operational rules to deliver **all 35 positions** without losing context and without “paper-complete” drift.
+
+This playbook is **execution SSOT**. If a per-module contract conflicts with this playbook on process (gates, evidence format, packet anatomy), this playbook wins.
+
+---
+
+## 1. The unit of work: a bounded delivery packet
+
+Every position is delivered as **bounded packets**. A packet is the smallest unit that can be:
+
+- approved (scope),
+- implemented,
+- proven (tests + staging proof),
+- rolled out safely,
+- recorded in evidence ledger.
+
+Packet naming:
+
+- `P<NN>-A`, `P<NN>-B`, `P<NN>-C` … where `<NN>` is position number (01–35).
+
+Minimum packet anatomy:
+
+- **Context pack** (max 5 links)
+- **Inputs required** (what must exist before starting)
+- **Acceptance checklist** (product must-pass)
+- **Evidence checklist** (what proofs we will attach)
+- **Rollback posture** (how to revert safely)
+
+---
+
+## 2. Status model (program-wide)
+
+We use exactly these states:
+
+- `draft`
+- `approved(scope)`
+- `in progress`
+- `delivered`
+- `verified(evidence)`
+
+Meaning:
+
+- **approved(scope)**: scope is explicit, non-goals are explicit, missing inputs are listed, packet boundaries exist.
+- **delivered**: functionality works in the declared scope (but evidence may still be incomplete).
+- **verified(evidence)**: evidence ledger is complete for the delivered scope (tests + staging proof + audit notes).
+
+No position is considered “done” until it is **verified(evidence)**.
+
+---
+
+## 3. The two gates that prevent context loss
+
+### 3.1 Missing-input gate (No guessing)
+
+If a position/packet requires competitor-specific behavior (“100% KIMI style”, Gamma-like, etc.), it cannot enter `in progress` unless:
+
+- the competitor reference is linked (local `Softs/` evidence pointer or SSOT benchmark),
+- the contract states what is **bounded** vs **non-goal**,
+- degraded modes are defined (what we do when the reference is missing/partial).
+
+### 3.2 Evidence gate (Done = evidence)
+
+A packet cannot move to `verified(evidence)` unless the evidence ledger contains:
+
+- commit/PR reference,
+- test proof (command + result summary),
+- staging proof (video/screen + what it demonstrates),
+- operator notes (what changed + known limits).
+
+---
+
+## 4. Context pack rule (max 5 links, always the same order)
+
+Every packet starts with a context pack, in this order:
+
+1. Master index: `FINAL_V8_MASTER_PLAN_2026-03-29.md`
+2. Position contract (this module file)
+3. Detailed plan / SSOT (section 3 Authority chain)
+4. Benchmark / Softs parity evidence (section 4)
+5. Dependencies and boundaries (section 2.3 + section 9 risks/decisions)
+
+If you need more links, you are not ready — split the packet.
+
+---
+
+## 5. Handoff contract (producer → consumer)
+
+Where one position depends on another, the dependency must be explicit:
+
+- **Producer output**: what is produced (surface / behavior / payload)
+- **Consumer assumption**: what is assumed
+- **Version rule**: what happens when producer changes
+
+No “soft dependency by hope”.
+
+---
+
+## 6. Change control (scope discipline)
+
+- If new scope appears during work, it must be recorded as:
+  - `Out-of-scope` (explicitly not in this packet), or
+  - a new packet `P<NN>-X` with its own acceptance + evidence.
+- Never merge scopes silently between positions (program rule).
+
+---
+
+## 7. Evidence ledger format (copy-paste)
+
+Add entries to the module’s `## 10. Evidence ledger` as you verify packets.
+
+```markdown
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| PNN-A | verified(evidence) | <link> | <command + outcome> | <video/screen link> | <1–3 bullets> |
+```
+

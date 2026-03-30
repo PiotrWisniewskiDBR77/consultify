@@ -88,3 +88,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: “generate→continue→review→export” z widocznym lineage i zapisanym export eventem.
 - Demo: reopen z `Outputs Library` + kontynuacja z czata (approve(run) vs review separation).
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Wave2 SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P20-A — Deck lifecycle canon + review/export grammar (scope approval)
+- **Goal**: durable deck identity + reopen/continue; jawny review/export state.
+- **Inputs required**: Outputs Library convergence (pozycja 19) + trust-state (pozycja 18).
+- **Acceptance**: scope zatwierdzony; non-goals jawne; export limits + recovery posture spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P20-B — Generate→continue→review→export closure
+- **Goal**: domknąć E2E lifecycle + export audit.
+- **Acceptance**: continue nie gubi struktury; export ma recovery path; lineage widoczne.
+- **Evidence**: integracyjne testy + staging demo (reopen z library).
+
+#### P20-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw reopen/continue + review grammar, potem eksport resilience (P1) i rozszerzenia.
+
+### 8.3 Rollback plan
+- Wyłącz export; zachowaj reopen/continue; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: brak continuation depth (deck “zdycha” po wygenerowaniu).
+- Ryzyko: export failure tworzy ghost artifacts.
+- Decyzje: minimalny zakres exportów (PDF/PPTX) i ich ograniczenia.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P20-A |  |  |  |  |  |
+| P20-B |  |  |  |  |  |
+| P20-C |  |  |  |  |  |
+

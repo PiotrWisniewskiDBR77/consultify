@@ -74,3 +74,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: “zbuduj proces” (manual) + modyfikacje + export/readback.
 - Demo: AI “zrób flow” → preview → apply → ręczna korekta bez utraty semantyki.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (readiness/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P14-A — Semantics + interoperability posture (scope approval)
+- **Goal**: proces jako semantyczny model (typy/znaczenia), nie rysunek.
+- **Inputs required**: BPMN-adjacent mapping (bounded) + export/import assumptions.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; walidacja layered dopiero po semantyce (bounded).
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P14-B — Builder toolbelt + semantic readback closure
+- **Goal**: connectors/labels/layout/undo/redo + stabilna semantyka + export/readback.
+- **Acceptance**: diagram komunikuje semantykę; invalid structure ma czytelny błąd i recovery.
+- **Evidence**: integracyjne testy + staging demo (manual + AI).
+
+#### P14-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw semantyka+toolbelt, potem governance/validation rozszerzenia (P1).
+
+### 8.3 Rollback plan
+- Wyłącz AI proposal; zachowaj read/edit manual; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: brak semantyki (użytkownik nie rozumie diagramu).
+- Ryzyko: niejawna interoperacyjność (BPMN) → overclaim.
+- Decyzje: minimalny zestaw typów obiektów i ich znaczeń.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P14-A |  |  |  |  |  |
+| P14-B |  |  |  |  |  |
+| P14-C |  |  |  |  |  |
+

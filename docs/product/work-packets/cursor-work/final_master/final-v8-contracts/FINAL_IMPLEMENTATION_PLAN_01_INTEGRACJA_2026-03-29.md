@@ -137,7 +137,35 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
 - Dodatkowe minimum: run_started, run_succeeded, run_retry_scheduled, drift_detected, mapping_changed, secret_rotated (jeśli dotyczy).
 
 ## 8. Delivery plan
-- Packetizacja zgodnie z `WAVE1_FINAL_IMPLEMENTATION_PLAN_INTEGRACJA_2026-03-29.md`.
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Detailed plan/SSOT: `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_INTEGRACJA_2026-03-29.md`
+- Benchmark doctrine: `docs/product/SYNC_PLATFORM_BENCHMARK_V8.md`
+- Evidence plan: see section 7.
+
+### 8.1 Bounded delivery packets
+#### P01-A — Control-plane canon + object model (scope approval)
+- **Goal**: spójny model obiektów (provider/connection/workflow/run) + lifecycle language.
+- **Inputs required**: decyzja o declared providers (P0) + minimalny run/job surface.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; degraded/recovery grammar spisana.
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P01-B — Lifecycle closure (connect→monitor→recover)
+- **Goal**: onboarding + completion proof + post-connect operacyjność (run history, errors, retry).
+- **Acceptance**: induced failure→requires_action→recovery działa; operator ma “next action” per obiekt.
+- **Evidence**: integracyjne testy + staging demo (section 7.3).
+
+#### P01-C — Verification + rollout
+- **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw 1–2 providery P0 + run history + recovery; dopiero potem rozszerzenia (mapping/secrets governance).
+
+### 8.3 Rollback plan
+- Wyłącz write/sync operations; zachowaj read-only statusy + audit; bez destrukcji danych.
 
 ## 9. Risks / open questions / decisions
 - Ryzyko: „settings page” zamiast control-plane; brak job/run modelu; zbyt dużo provider-specific wyjątków.
@@ -145,7 +173,9 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
 - Ryzyko: brak jednej gramatyki lifecycle (każdy provider “inaczej”) → chaos w UI i wsparciu.
 
 ## 10. Evidence ledger (fill after delivery)
-- PRs:
-- Staging proof:
-- Test runs:
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P01-A |  |  |  |  |  |
+| P01-B |  |  |  |  |  |
+| P01-C |  |  |  |  |  |
 

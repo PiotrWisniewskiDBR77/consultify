@@ -71,3 +71,46 @@ Status: draft (contract wrapper over existing plan)
 ### 5.3 Staging proof checklist
 - Demo: 3 setting changes (1 personal, 1 tenant, 1 module) → widoczny impact + audit trail (bounded).
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Settings SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P31-A — Settings taxonomy + ownership model (scope approval)
+- **Goal**: jedno root IA: user/tenant/module scopes + ownership/inheritance rules.
+- **Inputs required**: settings registry schema + permission gates; impact metadata baseline.
+- **Acceptance**: scope zatwierdzony; boundaries z Organization/Admin/Superadmin jawne; non-goals jawne.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P31-B — Runtime impact visibility closure
+- **Goal**: znaleźć ustawienie → zmienić (jeśli wolno) → zobaczyć impact w runtime (bounded).
+- **Acceptance**: 3 zmiany (personal/tenant/module) mają widoczny efekt + audit; denial ma guidance.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P31-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw taxonomy+registry, potem impact tooling (P0) i rozszerzenia (P1).
+
+### 8.3 Rollback plan
+- Wyłącz write dla tenant/module settings; zachowaj read-only; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: settings “wszystko wszędzie” bez IA (nieużywalne).
+- Ryzyko: brak impact language → przypadkowe rozjechanie runtime.
+- Decyzje: minimalny zestaw settings z impact metadata jako P0.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P31-A |  |  |  |  |  |
+| P31-B |  |  |  |  |  |
+| P31-C |  |  |  |  |  |
+

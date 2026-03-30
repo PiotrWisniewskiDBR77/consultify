@@ -80,3 +80,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: „signal → why → next action → landing w module docelowym” (3 różne typy sygnałów).
 - Demo: “uncertainty boundary”: brak danych / conflict → Radar pokazuje ograniczenie i bezpieczną akcję.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P06-A — Radar canon + prioritization grammar (scope approval)
+- **Goal**: Radar jako decyzyjny cockpit (triage), nie wykres.
+- **Inputs required**: ranking grammar + “why-now” payload contract; handoff targets.
+- **Acceptance**: zatwierdzony zakres; non-goals jawne; degraded/uncertainty zasady spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P06-B — Signal→action continuity (handoff closure)
+- **Goal**: domknąć triage→handoff z zachowaniem kontekstu.
+- **Acceptance**: 3 typy sygnałów mają “next action” i prawidłowy landing w module docelowym.
+- **Evidence**: integracyjne testy handoff + staging demo.
+
+#### P06-C — Verification + rollout
+- **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Włączaj inkrementalnie: najpierw read-only ranking + explainability, potem write/handoff hardening.
+
+### 8.3 Rollback plan
+- Wyłącz Radar routing/handoff; pozostaw fallback do “neutral view”; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: UI “sexy” bez prawdy rankingowej (decyzyjnie bezużyteczne).
+- Ryzyko: brak explainability → brak zaufania.
+- Decyzje: minimalny zestaw sygnałów P0 i ich owners.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P06-A |  |  |  |  |  |
+| P06-B |  |  |  |  |  |
+| P06-C |  |  |  |  |  |
+

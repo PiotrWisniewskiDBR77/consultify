@@ -109,7 +109,35 @@ Kontrakt wymaga (minimum):
 - Demo “control tower” w 3 krokach: detect → drill-down → intervene → verify post-write coherence.
 
 ## 8. Delivery plan
-- Packetizacja zgodnie z planem szczegółowym; incremental rollout (P0 control tower → P1 baseline/variance & smoothing).
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Detailed plan/SSOT: `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_WDROZENIA_2026-03-29.md`
+- Benchmark: `docs/product/EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+- Evidence plan: see section 7.
+
+### 8.1 Bounded delivery packets
+#### P03-A — Control tower canon + write-truth boundaries (scope approval)
+- **Goal**: control tower jako lane (health/overload/risk/deps) + jasne granice (nie PM suite).
+- **Inputs required**: one execution truth model + minimalny dependency/workload/baseline vocabulary.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no split-brain” zasada spisana.
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P03-B — Detect→drill-down→intervene→verify closure
+- **Goal**: domknąć interwencję i post-write coherence w deklarowanym zakresie.
+- **Acceptance**: po mutacji wszystkie deklarowane widoki mówią tę samą prawdę; blast radius jest widoczny (bounded).
+- **Evidence**: integracyjne testy write→refresh + staging demo (7.3).
+
+#### P03-C — Verification + rollout
+- **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Inkrementalnie: P0 control tower + write-truth, potem P1 baseline/variance i smoothing.
+
+### 8.3 Rollback plan
+- Wyłącz write/interwencje; zachowaj read-only control tower; bez destrukcji danych.
 
 ## 9. Risks / open questions / decisions
 - Ryzyko: ładne wykresy bez interwencji; workload bez realnego smoothing; baseline bez uczciwej semantyki.
@@ -117,4 +145,9 @@ Kontrakt wymaga (minimum):
 - Ryzyko: “portfolio” bez granic → wchłonięcie inicjatyw i KPI (zakresowe rozmycie).
 
 ## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P03-A |  |  |  |  |  |
+| P03-B |  |  |  |  |  |
+| P03-C |  |  |  |  |  |
 

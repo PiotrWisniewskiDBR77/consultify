@@ -96,3 +96,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: voice on/off + degraded state + fallback do tekstu.
 - Demo: tool/action proposal → user approval → wykonanie → audit/traces visible.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P08-A — Teresa canon + boundaries (scope approval)
+- **Goal**: contextual copilot (propose→accept), nie autonomous engine.
+- **Inputs required**: handoff contract do kluczowych surfaces; voice degraded rules; audit/traces baseline.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; governance (proposal/approval) jest spisana.
+- **Evidence**: scope approval + linkowane benchmark/SSOT.
+
+#### P08-B — Cross-surface handoff + action governance closure
+- **Goal**: realny handoff do modułów + tool/action envelope z audytem.
+- **Acceptance**: 3 scenariusze cross-surface działają; proposal→approval→execution nie gubi kontekstu.
+- **Evidence**: integracyjne testy + staging demo “tool/action proposal”.
+
+#### P08-C — Voice + continuity verification + rollout
+- **Goal**: dopiąć voice continuity (bounded) + telemetry + regresje.
+- **Acceptance**: voice ma jawne degraded/fallback; historia zachowana; bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw tekst + handoff, potem voice; feature flags per capability.
+
+### 8.3 Rollback plan
+- Wyłącz voice/actions; zachowaj chat continuity i audit; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: overclaim “autonomous” (niszczy zaufanie).
+- Ryzyko: brak jednego envelope action governance → chaos i brak audytu.
+- Decyzje: które surfaces są P0 dla handoff (pierwsza lista).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P08-A |  |  |  |  |  |
+| P08-B |  |  |  |  |  |
+| P08-C |  |  |  |  |  |
+

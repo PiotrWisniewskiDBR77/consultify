@@ -81,3 +81,46 @@ Status: draft (contract wrapper over existing plan)
 - Staging E2E: import → analysis (L1/L2/L3) → mutation → KPI readback.
 - Demo “error taxonomy”: import failure/warning → widoczny stan + rekomendowana akcja.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P05-A — Finance lane canon + scope approval
+- **Goal**: bounded “consequence-management lane” z jasnym zakresem (bez ERP parity).
+- **Inputs required**: KPI↔Finance linkage SSOT; decyzje o wersjonowaniu (current vs actual).
+- **Acceptance**: scope zatwierdzony; non-goals jawne; brak silent scope creep.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P05-B — Import→analysis→mutation→readback closure
+- **Goal**: domknąć deklarowane ścieżki E2E bez split-truth.
+- **Acceptance**: mutacje odświeżają właściwe runtime; KPI readback jest spójny; error taxonomy jest uczciwa.
+- **Evidence**: integracyjne testy linkage + staging E2E.
+
+#### P05-C — Verification + rollout
+- **Goal**: telemetry, regresje, staging proof, bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Prefer incremental rollout per sub-lane; chronić KPI truth i audyt.
+
+### 8.3 Rollback plan
+- Wyłącz mutacje/flagę; zachowaj read-only wgląd + audit; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: “ładne raporty” bez audytowalnej mutacji.
+- Ryzyko: import error taxonomy niespójna → ukryta korupcja danych.
+- Decyzje: minimalny zakres versioning i switchover semantics.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P05-A |  |  |  |  |  |
+| P05-B |  |  |  |  |  |
+| P05-C |  |  |  |  |  |
+

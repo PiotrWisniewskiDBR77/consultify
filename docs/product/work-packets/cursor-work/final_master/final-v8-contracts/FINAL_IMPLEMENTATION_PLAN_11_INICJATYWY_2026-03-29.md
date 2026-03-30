@@ -82,3 +82,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: “create initiative” (min. 2 entry points) → plan → status change → handoff do `Wdrożenia`.
 - Demo: AI scaffold (“zrób inicjatywę”) → review → accept → widoki spójne po zapisie.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P11-A — Initiative write-truth canon + scope approval
+- **Goal**: jeden lifecycle + jedna prawda (read/write coherence), bez “Jira parity”.
+- **Inputs required**: status grammar + audit/log baseline; handoff do `Wdrożenia`.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent writes” spisane.
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P11-B — Lifecycle transitions + downstream spine closure
+- **Goal**: create→update→status transition→handoff z zachowaniem kontekstu.
+- **Acceptance**: widoki po zapisie są spójne; schema drift ma guards (bounded).
+- **Evidence**: integracyjne testy + staging demo (2 entry points).
+
+#### P11-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw write-truth i lifecycle, potem “PM polish” (P1) i rozszerzenia.
+
+### 8.3 Rollback plan
+- Wyłącz AI scaffold i automaty; zachowaj CRUD+read; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: write-truth nie dogania read → “system kłamie”.
+- Ryzyko: schema drift psuje status truth.
+- Decyzje: minimalny zestaw statusów i ich konsekwencje (handoff).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P11-A |  |  |  |  |  |
+| P11-B |  |  |  |  |  |
+| P11-C |  |  |  |  |  |
+

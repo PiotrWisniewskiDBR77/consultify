@@ -78,3 +78,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: 1 scenariusz warsztatowy (facilitation) od startu do “handoff” (np. do `Notatki` lub `Inicjatywy` jeśli zadeklarowane).
 - Demo: AI co-building na boardzie: wygeneruj układ → review → apply.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (readiness/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P13-A — Board canon + toolbelt baseline (scope approval)
+- **Goal**: core board z facilitation cues, bez “Miro/Figma whiteboard parity”.
+- **Inputs required**: minimalny toolbelt + facilitation baseline + export/readback assumptions.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; bounded collab (jeśli w zakresie) spisany.
+- **Evidence**: scope approval + linkowane benchmarki.
+
+#### P13-B — Core toolbelt + facilitation flow closure
+- **Goal**: selection/navigation/undo/redo/export + warsztatowy flow P0.
+- **Acceptance**: board jest operator-safe; scenariusz warsztatowy kończy się handoff (bounded).
+- **Evidence**: integracyjne testy + staging demo (warsztat + AI co-building).
+
+#### P13-C — Verification + rollout
+- **Goal**: regresje, telemetry, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw toolbelt+export, potem collab hardening (P1).
+
+### 8.3 Rollback plan
+- Wyłącz AI co-building/collab; zachowaj read/edit manual; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: brak “operator-safe” toolbelt (undo/redo/export).
+- Ryzyko: facilitation bez jasnego “co dalej” (brak wartości).
+- Decyzje: minimalny zakres collab/presence (albo jawny non-goal).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P13-A |  |  |  |  |  |
+| P13-B |  |  |  |  |  |
+| P13-C |  |  |  |  |  |
+

@@ -74,3 +74,46 @@ Status: draft (shared-sourced contract; extracted scope for position 26)
 - Demo: 3 przykładowe narzędzia → prawy panel → właściwe treści + tag navigation.
 - Demo: newsletter/social link opens correct article + trackable referral.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Help/KB SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P26-A — KB canon + IA/tags + content ops (scope approval)
+- **Goal**: KB jako runtime produkt (IA+tags+ops), nie “folder z linkami”.
+- **Inputs required**: content ops pipeline (seed/owner/lifecycle) + IA/tags model + contextual routing contract.
+- **Acceptance**: scope zatwierdzony; deliverable “seed 50” jest konkretny (nie zamiar); degraded states spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P26-B — IA/tags + contextual surfaces closure
+- **Goal**: browse/filter/search + right panel/LP mapping per context + routing przez Annę/Teresę (bounded).
+- **Acceptance**: 3 narzędzia mają poprawny kontekstowy routing; brak treści → czytelny degraded + fallback.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P26-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw IA+seed + browse/search, potem contextual routing i rekomendacje (P1).
+
+### 8.3 Rollback plan
+- Wyłącz rekomendacje/routing; zachowaj browse/search; bez destrukcji treści.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: seed bez ownership → KB natychmiast się starzeje.
+- Ryzyko: chaos taksonomii (nie wiadomo “gdzie treść się pokazuje”).
+- Decyzje: minimalny model tagów i mapping do surfaces.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P26-A |  |  |  |  |  |
+| P26-B |  |  |  |  |  |
+| P26-C |  |  |  |  |  |
+

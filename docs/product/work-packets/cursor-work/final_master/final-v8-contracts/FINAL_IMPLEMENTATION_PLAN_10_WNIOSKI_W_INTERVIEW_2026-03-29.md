@@ -72,3 +72,46 @@ Status: draft (contract wrapper over existing plan)
 ### 5.3 Staging proof checklist
 - Demo: „survey/interview → insight → initiative handoff” z co najmniej 2 findingami o różnych confidence levels.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (readiness/SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P10-A — Insight artifact canon + scope approval
+- **Goal**: insight jako audytowalny artefakt (finding/evidence/limits/next action).
+- **Inputs required**: confidence/limits contract + evidence pointers; handoff do `Inicjatywy`.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no overclaim” zasada spisana.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P10-B — Review/publish + handoff closure
+- **Goal**: draft→review→publish state + stable handoff do inicjatywy.
+- **Acceptance**: user przechodzi finding→initiative bez utraty sensu; evidence pointers nie znikają po edycji.
+- **Evidence**: integracyjne testy + staging demo.
+
+#### P10-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw read-only artifact + review, potem automatyzacje/AI assist (jeśli P1).
+
+### 8.3 Rollback plan
+- Wyłącz publish/handoff automations; zachowaj read access do insightów; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: insight bez evidence pointers (nieaudytowalny).
+- Ryzyko: mylenie “collection done” z “insight ready”.
+- Decyzje: minimalna skala confidence levels + ich semantyka.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P10-A |  |  |  |  |  |
+| P10-B |  |  |  |  |  |
+| P10-C |  |  |  |  |  |
+

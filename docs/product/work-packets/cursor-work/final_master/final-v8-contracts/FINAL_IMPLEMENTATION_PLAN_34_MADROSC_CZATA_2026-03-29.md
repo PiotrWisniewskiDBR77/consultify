@@ -96,3 +96,46 @@ Status: draft (direct contract over existing plan)
 - Demo: promotion workflow (private→org) + review + potem retrieval z org corpus.
 - Demo: degraded mode (no access / no sources) → jawny fallback bez overclaim.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Chat wisdom SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P34-A — Retrieval policy gateway canon (scope approval)
+- **Goal**: policy-first RAG: gateway jako jedyna droga + jawny source ledger + brak leakage.
+- **Inputs required**: scope resolution rules (private/org/tenant) + used/blocked source schema + promotion workflow.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; security posture i degraded states spisane.
+- **Evidence**: scope approval + linkowane SSOT/bench.
+
+#### P34-B — Source ledger + promotion workflow closure
+- **Goal**: odpowiedzi grounded mają sources; private→org promotion jest gated (review) i zachowuje provenance.
+- **Acceptance**: 3 query scenariusze działają; promotion działa; konsumenci AI nie omijają gateway.
+- **Evidence**: security/regression tests + staging demos.
+
+#### P34-C — Verification + observability + rollout
+- **Goal**: retrieval traces + evaluation harness (bounded) + staging proof + rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony; operator ma minimalną observability.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw gateway + security, potem promotion, potem evaluation/observability (P1) stopniowo.
+
+### 8.3 Rollback plan
+- Wyłącz org retrieval/promotion; zachowaj private-only; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: leakage private→org / cross-tenant (P0 security).
+- Ryzyko: brak jawnego source ledger → brak zaufania i audytu.
+- Decyzje: minimalny format source records (url/id/type/version) i retention.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P34-A |  |  |  |  |  |
+| P34-B |  |  |  |  |  |
+| P34-C |  |  |  |  |  |
+

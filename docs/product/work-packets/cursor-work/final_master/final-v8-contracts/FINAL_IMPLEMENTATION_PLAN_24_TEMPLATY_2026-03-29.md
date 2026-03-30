@@ -86,3 +86,46 @@ Status: draft (shared-sourced contract; dedicated template contract may be extra
 - Demo: template-first generation dla 1 report + 1 deck (ten sam template family, jeśli zadeklarowane).
 - Demo: save output as template → review payload → publish to org scope → reuse przez innego usera.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (template runtime SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P24-A — Template runtime canon + ownership/permissions (scope approval)
+- **Goal**: templates jako runtime kontrakt (structure+defaults+rules) z jasnym ownership (user/org/app).
+- **Inputs required**: permissions model + publish/review posture; rodzina report+deck templates.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent publish” zasada spisana.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P24-B — Template-first generation + save-as-template closure
+- **Goal**: choose template→generate→reopen/continue→save-as-template→review→publish→reuse.
+- **Acceptance**: org/personal scopes nie mieszają się; generator respektuje template kontrakt.
+- **Evidence**: integracyjne testy + staging demo publish+reuse.
+
+#### P24-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw browse+select+generate, potem save-as-template/publish (P0) i rekomendacje (P1).
+
+### 8.3 Rollback plan
+- Wyłącz publish; zachowaj browse+generate; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: templates jako galeria (bez runtime kontraktu).
+- Ryzyko: scope confusion (org vs personal) → incydenty.
+- Decyzje: minimalny zestaw quality rules i trust metadata.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P24-A |  |  |  |  |  |
+| P24-B |  |  |  |  |  |
+| P24-C |  |  |  |  |  |
+

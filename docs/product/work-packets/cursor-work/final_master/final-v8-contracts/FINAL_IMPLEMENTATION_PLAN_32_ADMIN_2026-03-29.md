@@ -74,3 +74,46 @@ Status: draft (contract wrapper over existing plan)
 ### 5.3 Staging proof checklist
 - Demo: tenant admin cockpit walkthrough (members/roles + integrations status) + audit evidence.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Admin SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P32-A — Admin cockpit canon + core IA (scope approval)
+- **Goal**: Admin jako jeden cockpit (members/roles + integrations/sync) z jasnymi boundaries.
+- **Inputs required**: role model + audit baseline; integration status model + remediation posture.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; error/denial states spisane.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P32-B — Membership/role ops + integration oversight closure
+- **Goal**: invite→role→access + revoke; integracje mają status i remediation.
+- **Acceptance**: core flows działają; insufficient permissions daje guidance; audit eventy są emitowane.
+- **Evidence**: integracyjne testy + staging demo cockpit walkthrough.
+
+#### P32-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw members/roles (P0), potem sync oversight (P1).
+
+### 8.3 Rollback plan
+- Wyłącz integracje ops; zachowaj read-only; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: admin jako “zbiór linków” bez jednego cockpit IA.
+- Ryzyko: brak audit lub denial guidance → operacyjny chaos.
+- Decyzje: minimalny zestaw integracji i ich statusy P0.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P32-A |  |  |  |  |  |
+| P32-B |  |  |  |  |  |
+| P32-C |  |  |  |  |  |
+

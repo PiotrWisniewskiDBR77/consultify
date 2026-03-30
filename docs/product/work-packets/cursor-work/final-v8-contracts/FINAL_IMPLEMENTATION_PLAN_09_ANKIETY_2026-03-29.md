@@ -80,3 +80,46 @@ Status: draft (contract wrapper over existing plan)
 - Staging run „create → collect → review state → export → handoff”.
 - Demo logic: przynajmniej 1 ankieta z branching/skip (albo jawny non-goal w implementacji) + proof walidacji.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (detailed plan/flow): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P09-A — Collection lane canon + scope approval
+- **Goal**: ankiety jako governed collection lane (nie insight engine).
+- **Inputs required**: submission status grammar + handoff do `Wnioski w Interview`.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; operator workflow opisany.
+- **Evidence**: scope approval + linkowane źródła.
+
+#### P09-B — Operator workflow + submission governance closure
+- **Goal**: create/run/review submissions + locked truth + export.
+- **Acceptance**: lifecycle działa E2E; logika (jeśli w zakresie) jest walidowalna przed publikacją.
+- **Evidence**: integracyjne testy + staging run.
+
+#### P09-C — Verification + rollout
+- **Goal**: regresje, telemetry, staging proof; bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Inkrementalnie: najpierw operator workflow + governance, potem logika advanced (jeśli P1).
+
+### 8.3 Rollback plan
+- Wyłącz publikację nowych ankiet/flows; zachowaj odczyt submissions + export; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: survey udaje insight (scope drift).
+- Ryzyko: brak jasnej semantyki submission states → chaos operatora.
+- Decyzje: minimalny zakres branching/quotas (albo jawny non-goal).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P09-A |  |  |  |  |  |
+| P09-B |  |  |  |  |  |
+| P09-C |  |  |  |  |  |
+

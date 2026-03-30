@@ -134,7 +134,35 @@ Kontrakt wymaga (minimum):
 - Demo: “overload day” → workload panel → rekomendowana akcja → przejście do właściwego obiektu pracy.
 
 ## 8. Delivery plan
-- Packetizacja zgodnie z planem szczegółowym.
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Detailed plan/SSOT: `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_KALENDARZ_2026-03-29.md`
+- Benchmark: `docs/product/MYWORK_CALENDAR_V8_BENCHMARK.md`
+- Evidence plan: see section 7.
+
+### 8.1 Bounded delivery packets
+#### P02-A — Interoperability canon (scope approval)
+- **Goal**: canonical time model + identity + recurrence + permission gradients (bounded) bez UI parity.
+- **Inputs required**: declared providers + deklaracja read vs write/bidir + conflict model.
+- **Acceptance**: scope zatwierdzony; non-goals jawne; recurrence correctness i conflict-safe writes rules spisane.
+- **Evidence**: scope approval + linkowane standardy/bench.
+
+#### P02-B — Sync + recurrence + recovery closure
+- **Goal**: connect→initial sync→incremental sync→recovery + recurring events (exceptions) correctness.
+- **Acceptance**: OAuth expired i conflict są stanami produktu; permission gradients są respektowane w UI.
+- **Evidence**: integracyjne testy per provider + staging runbook (7.3).
+
+#### P02-C — Verification + rollout
+- **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw read + recovery + recurrence correctness (P0), potem write/bidir (tylko jeśli deklarowane).
+
+### 8.3 Rollback plan
+- Wyłącz write/bidir; zachowaj read-only overlay i source statusy; bez destrukcji danych.
 
 ## 9. Risks / open questions / decisions
 - Ryzyko: traktować sync jako export-only; brak recurrence correctness; brak jasnych permission gradients.
@@ -142,5 +170,9 @@ Kontrakt wymaga (minimum):
 - Ryzyko: “ładny month grid” bez recovery, bez incremental correctness, bez conflict modelu.
 
 ## 10. Evidence ledger (fill after delivery)
-- PRs / staging proof / test runs:
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P02-A |  |  |  |  |  |
+| P02-B |  |  |  |  |  |
+| P02-C |  |  |  |  |  |
 

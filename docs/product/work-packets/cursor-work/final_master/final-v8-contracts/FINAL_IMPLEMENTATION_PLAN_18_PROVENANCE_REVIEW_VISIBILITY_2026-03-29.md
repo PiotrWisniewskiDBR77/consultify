@@ -79,3 +79,46 @@ Status: draft (contract wrapper over existing plan)
 - Demo: artefakt pochodzący z runu ma lineage widoczne i klikalne; citations/evidence pointers tam gdzie dotyczy.
 - Demo: export eventy są widoczne (kto/kiedy/co) i nie łamią visibility.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain (Wave2 SSOT): see section 3.
+- Softs parity + gaps: see section 4.
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P18-A — Trust-state canon + exposure consistency (scope approval)
+- **Goal**: jedna gramatyka trust-state/stage/visibility spójna w library/preview/export.
+- **Inputs required**: schema payload (source/run/stage/visibility/export ledger); stage language.
+- **Acceptance**: scope zatwierdzony; approve(run) ≠ review(artifact) jest nienaruszalne.
+- **Evidence**: scope approval + linkowane SSOT.
+
+#### P18-B — End-to-end traceability closure
+- **Goal**: run→tool→output traceability jako first-class + spójny export audit.
+- **Acceptance**: lineage jest klikalne; export event nie łamie visibility; stage separation jest jasna.
+- **Evidence**: integracyjne testy + staging demo lineage+export.
+
+#### P18-C — Verification + rollout
+- **Goal**: regresje, staging proof, rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw payload+badges (read surfaces), potem rozszerzenia traceability depth (P1).
+
+### 8.3 Rollback plan
+- Wyłącz nowe badges/exports; zachowaj read-only lineage; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: sprzeczna prawda trust-state w różnych surfaces.
+- Ryzyko: export omija visibility (compliance issue).
+- Decyzje: minimalny zestaw stages i ich mapping do UI.
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P18-A |  |  |  |  |  |
+| P18-B |  |  |  |  |  |
+| P18-C |  |  |  |  |  |
+

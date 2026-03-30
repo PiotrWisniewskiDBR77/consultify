@@ -75,3 +75,46 @@ Status: draft (shared-sourced contract; KIMI reference present)
 - Demo: “z briefu → sheet” + reopen + export (1 happy path).
 - Demo: split-screen flow: chat plan/tasklist → preview → download; każdy krok ma evidence pointer do `Softs/KIMI`.
 
+## 8. Delivery plan
+### 8.0 Context pack (read first)
+- Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
+- Execution playbook: `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- Authority chain: see section 3 + missing-input gate (playbook).
+- KIMI evidence pointers: see section 4 (no guessing rule).
+- Evidence plan: see section 5.
+
+### 8.1 Bounded delivery packets
+#### P23-A — Sheet canon + honest limits (scope approval)
+- **Goal**: arkusz z uczciwym kontraktem (create/persist/reopen/export) bez Excel parity.
+- **Inputs required**: KIMI mapping (actions/states) + decyzja o persistence/reopen semantics.
+- **Acceptance**: scope zatwierdzony; honest limits jawne w UI; “zero interpretacji” w KIMI flows.
+- **Evidence**: scope approval + evidence pointers do KIMI screens.
+
+#### P23-B — Lifecycle closure (materialize→persist→reopen→export)
+- **Goal**: domknąć najważniejszą ścieżkę E2E i udowodnić persistence.
+- **Acceptance**: duży arkusz (bounded) nie gubi danych; export failure ma retry bez ghost artifacts.
+- **Evidence**: integracyjne testy + staging demo (happy + failure).
+
+#### P23-C — Verification + rollout
+- **Goal**: regresje + staging proof + rollout/rollback.
+- **Acceptance**: bar `verified(evidence)` spełniony.
+- **Evidence**: wypełniony evidence ledger (sekcja 10).
+
+### 8.2 Rollout strategy
+- Najpierw lifecycle (P0), potem split-screen UX polish (P1).
+
+### 8.3 Rollback plan
+- Wyłącz edycję advanced i split-screen extras; zachowaj read-only + export; bez destrukcji danych.
+
+## 9. Risks / open questions / decisions
+- Ryzyko: “sheet” bez realnego reopen/persistence (papierowy feature).
+- Ryzyko: overclaim Excel parity (złe oczekiwania).
+- Decyzje: minimalny zakres formuł/formatów (albo jawny non-goal).
+
+## 10. Evidence ledger (fill after delivery)
+| Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
+| --- | --- | --- | --- | --- | --- |
+| P23-A |  |  |  |  |  |
+| P23-B |  |  |  |  |  |
+| P23-C |  |  |  |  |  |
+
