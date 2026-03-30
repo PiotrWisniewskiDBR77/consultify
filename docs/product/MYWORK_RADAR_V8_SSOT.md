@@ -336,3 +336,58 @@ Not baseline for `v8`:
 One object keeps one canonical state across Home, Calendar, and Inbox. Surfaces may show different projections, not different truths. Deduplication by canonical object identity; state updates propagate to all surfaces.
 
 Radar signals that are promoted to tasks, decisions, or other canonical objects must reflect the canonical state of those objects. If a promoted object is triaged in Inbox or rescheduled in Calendar, Radar's view of that object must update accordingly.
+
+---
+
+## 15. P06-A canon (ranking + why-now + handoff) — SSOT sync
+
+This section mirrors the frozen canon in the P06 contract:
+
+- `docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_06_RADAR_2026-03-29.md` (§2.3)
+
+### 15.1 Stable categories
+
+Radar uses exactly these stable categories:
+
+- `Execution (Delivery)`
+- `Decision / Alignment`
+- `Finance / KPI`
+- `Governance / Compliance`
+- `External change / Opportunity`
+
+No “Misc / Interesting” bucket is allowed.
+
+### 15.2 Prioritization grammar (P0 is explainable, deterministic)
+
+Radar is a triage cockpit. For every surfaced signal, the user can always see:
+
+- why it matters now (why-now),
+- evidence pointers + freshness,
+- uncertainty boundary (missing/conflict/stale),
+- next action (target module + fallback).
+
+P0 is computed via:
+
+- hard-gate rules for unavoidable urgency (compliance deadlines, critical blockers, decision windows),
+- otherwise a deterministic score over impact/urgency/scope/confidence/freshness/actionability,
+- tie-breakers that prefer hard-gates and clearer next actions,
+- anti-duplicate merge (avoid “more items” as output).
+
+### 15.3 Handoff contract (Radar → downstream)
+
+Radar hands off context (not a new truth) to:
+
+- `Inicjatywy` (P11) for decisions / alignment / plan changes,
+- `Wdrożenia` (P03) for execution steps (blockers, milestones),
+- `Notatki` (P07) for capturing briefs, assumptions, open questions.
+
+Downstream modules preserve `radar_handoff_context` and must not recompute a parallel “P0”.
+
+### 15.4 Degraded rules + anti-duplicate gate
+
+If data is missing, conflicting, stale, or access is blocked, Radar shows a degraded/blocked state with a safe next action (no overclaim).
+
+Radar must not become a second Inbox:
+
+- Radar is the single ranking truth (`P0/P1/P2`) and “why-now”.
+- Inbox remains the enforcement/escalation surface.
