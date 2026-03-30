@@ -316,6 +316,6 @@ Canonical paired families (per V8 Decision W6-3): **Executive Steering Pack**, *
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P24-A | approved(scope) | `8787580d34` | N/A — scope packet | N/A — scope packet | Schema §2.3.1; ownership §2.3.2; gate §2.3.3; foundation §2.3.4; convergence §2.3.5; anti-dup §2.3.6; errors §2.4; checklist §8.1 |
-| P24-B |  |  |  |  |  |
+| P24-B | delivered | `42e2a699b7` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/unit/hooks/useTemplates.canonicalArtifacts.test.tsx` — **pass** | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P24-B_TEMPLATE_RUNTIME_VERIFICATION_2026-03-30.md` (not yet executed) | Bounded: templates are canonical `v8_output_artifacts` entries; org publish requires review+admin approval; presentation template “edit” remains bounded to wizard entrypoints |
 | P24-C |  |  |  |  |  |
 
