@@ -1,7 +1,8 @@
 # Final Implementation Contract — Kalendarz (Position 2/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P02-A** (calendar interoperability canon frozen); P02-B / P02-C not started  
+Last updated: 2026-03-30 (P02-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Praca z terminami + koordynacja z kalendarzami innych aplikacji.

@@ -1,7 +1,8 @@
 # Final Implementation Contract — Finanse (Position 5/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P05-A** (finance lane canon frozen); P05-B / P05-C not started  
+Last updated: 2026-03-30 (P05-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Poprawa modeli (import + dane historyczne) + analityka 1/2/3 poziomów + pełne narzędzia pracy z modelem.

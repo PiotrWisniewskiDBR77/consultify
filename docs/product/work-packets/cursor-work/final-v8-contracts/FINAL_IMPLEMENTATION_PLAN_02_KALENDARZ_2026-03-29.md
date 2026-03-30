@@ -1,7 +1,8 @@
 # Final Implementation Contract — Kalendarz (Position 2/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P02-A** (calendar interoperability canon frozen); P02-B / P02-C not started  
+Last updated: 2026-03-30 (P02-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Praca z terminami + koordynacja z kalendarzami innych aplikacji.
@@ -19,7 +20,132 @@ Status: draft (contract wrapper over existing plan)
 - Autonomiczny scheduler “AI decyduje za użytkownika” (oddzielny program).
 - “Export-only” udający sync (to jest anty-cel; jeśli deklarujemy write/bidir, musi istnieć conflict-safe write + recovery).
 
-### 2.3 Assumptions
+### 2.3 P02-A canon (interoperability — scope approval)
+Ta sekcja jest **kanonem interoperacyjności**: co deklarujemy jako prawdę produktową dla integracji kalendarzy i jak unikamy “papierowego sync”.
+
+#### 2.3.1 Declared providers (Wave 1 declaration)
+Deklarujemy dokładnie te rodziny providerów (bez “other_external” jako obejścia):
+
+| Provider | Read | Write | Bidir | Notes (bounded truth) |
+| --- | --- | --- | --- | --- |
+| Google Calendar (API + CalDAV guide) | ✅ | ✅ (bounded) | ✅ (bounded) | Write/bidir dotyczy wyłącznie zdarzeń, dla których mamy **jawne uprawnienie i edit authority**; conditional writes oparte o `etag` / `If-Match` tam, gdzie dostępne. |
+| Microsoft 365 / Outlook (Graph) | ✅ | ✅ (bounded) | ✅ (bounded) | Conditional writes oparte o `@odata.etag` (If-Match) i bezpieczne create (`transactionId`) tam, gdzie dostępne. |
+| CalDAV (generic) | ✅ | ❌ (not declared) | ❌ (not declared) | Wave 1: deklarujemy read + recurrence correctness + lifecycle honesty; write/bidir dla CalDAV wymaga osobnego rozszerzenia scope (ACL/ETag variability). |
+
+**Bounded rule:** “write/bidir” nigdy nie oznacza “edytujemy wszystko wszędzie”. Oznacza “edytujemy tylko te obiekty, dla których mamy prawa i potrafimy wykonać konflikt-safe write + recovery”.
+
+#### 2.3.2 Canonical time model (contract objects)
+Model jest wspólny i **nie wolno go duplikować per provider** (anti-duplicate gate). Obiekty kanoniczne:
+
+- **`CalendarSource`** (external source connection)
+  - `calendarSourceId` (durable)
+  - `provider`: `google` | `microsoft` | `caldav`
+  - `accountRef`: (kto jest właścicielem połączenia: user/seat)
+  - `selectedCalendars[]`: provider calendar refs (np. `calendarId`, `uri`)
+  - `declaredMode`: `read` | `write` | `bidir`
+  - `effectiveMode`: `read` | `write` | `bidir` (wynik uprawnień + stanu provider lifecycle)
+  - `permissionGradient`: `free_busy` | `read` | `write` | `delegate`
+  - `lifecycleState`: `connected` | `degraded` | `requires_action` | `blocked` | `recoverable`
+  - `requiresActionReason?`
+  - `lastOkAt?`, `lastSyncAt?`
+  - `syncCheckpoint`: `SyncCheckpoint`
+  - `lastError?` (normalized)
+
+- **`CalendarItem`** (unified time item; internal + external)
+  - `calendarItemId` (durable)
+  - `itemType`: internal (`task_due`, `initiative_milestone`, …) | `external_event`
+  - `sourceSystem`: `consultify` | `google_calendar` | `outlook_calendar` | `caldav`
+  - `sourceObjectRef`: internal entity ref OR external identity (provider id + iCal `UID` where available)
+  - `title?` (may be empty for privacy-limited items)
+  - `startAt`, `endAt?`, `allDay`
+  - `timezone?` (explicit; never inferred silently)
+  - `visibilityClass`: `free_busy_only` | `details`
+  - `editAuthority`: `none` | `local_only` | `remote_owner` | `delegate`
+  - `recurrenceModel?`: `RecurrenceModel` (for series/instances/exceptions)
+  - `syncState`: `in_sync` | `pending` | `conflict` | `blocked` | `stale`
+
+- **`RecurrenceModel`** (series master + instances + exceptions)
+  - `seriesMasterRef` (provider series id / iCal UID)
+  - `rrule?`, `rdate?`, `exdate?` (iCalendar semantics)
+  - `exceptions[]`: keyed by `recurrenceId` / provider exception id
+  - `materializationRule`: “instances are materialized only for a requested window”
+
+- **`SyncCheckpoint`** (incremental cursor + integrity guards)
+  - `cursor?`: provider cursor (`syncToken` / `deltaLink` / `ctag`)
+  - `rangeWatermark`: `{ startAt, endAt }` for window-based sync fallback
+  - `lastFullSyncAt?`, `lastIncrementalSyncAt?`
+  - `integrityGuards[]`: provider-specific invariants (np. “cursor invalid → full resync + visible state”)
+
+#### 2.3.3 Recurrence + exceptions doctrine (correctness)
+Prawda kanoniczna:
+
+- **Series master ≠ instance ≠ exception**: model musi rozróżniać zbiór (series), pojedynczą instancję (occurrence) i wyjątek (override/cancel).
+- **No instance explosion**: nie wolno “rozwinąć” serii do nieograniczonej listy instancji w storage; instancje materializujemy **tylko w oknie zapytania/UI**.
+- **No silent loss**: wyjątki (np. edycja jednej instancji) nie mogą ginąć przy incremental sync ani przy fallback full resync.
+- **Correct mapping**: iCalendar `RECURRENCE-ID` (oraz Graph `occurrences` + `exceptions`) mapujemy do `exceptions[]` bez zgadywania.
+- **Cancellation truth**: odwołana instancja lub usunięty master skutkuje stanem produktu (np. `stale`/`blocked`) — nie “zniknięciem bez śladu”.
+
+#### 2.3.4 Conflict-safe writes model (no overwrite)
+Jeśli `effectiveMode` zawiera write:
+
+- **Conditional writes** są obowiązkowe: `ETag` / `If-Match` (CalDAV/Google) i `@odata.etag` (Graph) tam, gdzie dostępne.
+- **Conflict is product state**: konflikt (`precondition failed` / etag mismatch / 409) → `syncState=conflict` + jawna instrukcja dla użytkownika/operatora. Nie ma silent overwrite.
+- **Idempotent-ish create**: tam, gdzie provider oferuje mechanizm (np. Graph `transactionId`), używamy go, aby uniknąć duplikatów po retry.
+
+#### 2.3.5 Permission gradients + UI affordance rules (no fake edit)
+Gradient uprawnień jest częścią modelu produktu (nie tylko integracji):
+
+- `free_busy`: UI może pokazać blok zajętości bez detali; brak tytułów i uczestników.
+- `read`: UI pokazuje detale dozwolone, ale wszystkie akcje edycji są **wyłączone**.
+- `write`: UI pokazuje edycję tylko dla obiektów z `editAuthority != none`.
+- `delegate`: UI pokazuje “on behalf of” i wyraźnie komunikuje kontekst delegacji.
+
+**Hard rule:** UI nie może “udawać edycji” (np. pozwolić zmienić pola lokalnie, jeśli provider write jest niedostępny). Jeśli akcja jest niedozwolona, kontrola jest disabled + opis powodu (permissions/lifecycle).
+
+#### 2.3.6 Provider lifecycle honesty (states + recovery)
+Każde `CalendarSource` ma jawny lifecycle:
+
+- `connected`: sync działa, cursor/etag aktualne.
+- `degraded`: częściowa funkcjonalność (np. rate limit, partial window) — produkt komunikuje ograniczenia.
+- `requires_action`: potrzebna akcja użytkownika (reauth, ponowne nadanie scope, wybór kalendarzy).
+- `recoverable`: błąd, który system może naprawić retry/backoff/full resync (bez udziału usera), ale stan jest widoczny.
+- `blocked`: brak możliwości działania (np. policy/tenant restriction, permanent auth failure) — wymaga interwencji operatora.
+
+Recovery steps (minimum):
+- OAuth expired → `requires_action` → reauth → full resync (jeśli cursor invalid) → `connected`.
+- Scope revoked/insufficient → `requires_action` z listą brakujących uprawnień → re-consent → resync.
+- Cursor invalidated → `recoverable` → full resync w kontrolowanym oknie + jawny “stale until complete”.
+
+#### 2.3.7 Anti-duplicate gate (program rule)
+- Zakaz “export-only pretending sync” (deklarowane write/bidir musi mieć conditional write + conflict state + recovery).
+- Zakaz “parallel time model per provider” — `CalendarItem`/`RecurrenceModel`/`SyncCheckpoint` są wspólne.
+
+#### 2.3.8 Error posture (min scenarios)
+System musi jawnie mapować błędy providerów na stany produktu (source/item) i recovery:
+
+1) OAuth token expired → `requires_action` (source)  
+2) Consent revoked / invalid_grant → `requires_action` (source)  
+3) Insufficient scopes / forbidden → `blocked` lub `requires_action` (source)  
+4) Rate limit / throttling → `degraded` (source) + backoff; bez “fake freshness”  
+5) Cursor invalid / deltaLink expired / syncToken invalid → `recoverable` (source) → full resync  
+6) Conditional write failed (etag mismatch / 412 / 409) → `conflict` (item) — bez overwrite  
+7) Series master deleted or changed → `stale`/`blocked` (items in series) + audit note; bez silent disappearance  
+8) Timezone / invalid recurrence rule edge → `degraded` (item) + safe fallback (display as raw) + operator note  
+
+#### 2.3.9 Acceptance checklist (10+ testable points)
+- Provider list jest zamknięty do: Google/Microsoft/CalDAV (bez “other external” jako obejścia).
+- Dla każdego providera jest jawna deklaracja read/write/bidir i bounded truth (co to znaczy).
+- `CalendarSource` ma lifecycle i `permissionGradient` oraz `declaredMode` ≠ `effectiveMode`.
+- `CalendarItem` przechowuje durable external identity (provider id + UID gdzie dostępne).
+- Recurrence: series master/instance/exception są rozróżnione w modelu; wyjątki nie giną.
+- Brak instance explosion: instancje są materializowane tylko w oknie zapytania/UI.
+- Conditional writes są wymagane tam, gdzie write jest deklarowane; bez unconditional overwrite.
+- Konflikt jest stanem produktu (`syncState=conflict`) i jest widoczny w UI (no silent overwrite).
+- Permission gradients są respektowane w UI: brak “fake edit” przy read/free_busy.
+- Source lifecycle jest widoczny użytkownikowi wraz z recovery steps (requires_action/recoverable/blocked).
+- Anti-duplicate gate jest spełniony: brak “export-only pretending sync” i brak per-provider równoległego modelu czasu.
+
+### 2.4 Assumptions
 - Integracja credential/runtime jest spójna z `Integracja` (position 1) i szerzej z `Synchronizacja`.
 
 ## 3. Authority chain (SSOT)
@@ -198,7 +324,7 @@ Kontrakt wymaga (minimum):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P02-A |  |  |  |  |  |
+| P02-A | approved(scope) | 2e7c505698 | n/a (scope approval; docs only) | n/a (scope approval; docs only) | Interoperability canon frozen in §2.3 (providers/modes, time model objects, recurrence doctrine, conflict-safe writes, permission gradients, lifecycle, error posture). |
 | P02-B |  |  |  |  |  |
 | P02-C |  |  |  |  |  |
 
