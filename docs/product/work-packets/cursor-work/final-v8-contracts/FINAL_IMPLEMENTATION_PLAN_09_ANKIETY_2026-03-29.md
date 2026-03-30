@@ -1,7 +1,7 @@
 # Final Implementation Contract — Ankiety (Position 9/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: approved(scope) — P09-A (governed collection lane canon)
 
 ## 1. Executive summary
 - **Intent**: Generalnie ok; ewentualnie poprawa UI/UX.
@@ -17,6 +17,57 @@ Status: draft (contract wrapper over existing plan)
 ### 2.2 Out-of-scope / non-goals
 - Full assessment orchestration.
 - Full reporting/analytics suite.
+
+### 2.3 Canon (P09-A) — governed collection lane (NOT an insight engine)
+**Primary doctrine**: Ankiety is a **collection lane** that produces **governed submissions** and a **handoff payload** into `Wnioski w Interview` (P10). It does **not** compute, rank, or narrate “insights”.
+
+#### 2.3.1 Submission status grammar (canonical)
+Statuses apply to **submissions** (responses), not “insights”.
+
+| Status | Meaning (operator truth) | Operator next action | Notes / invariants |
+| --- | --- | --- | --- |
+| `pending` | submission started but not yet confirmed complete | wait / remind / monitor | may progress to `partial` or `complete` |
+| `partial` | captured incomplete response; usable only with explicit “incomplete” flag | continue / request completion / mark invalid | must preserve captured data (no silent discard) |
+| `complete` | respondent finished; payload is structurally valid | review / lock when collection closes / export | still may become `duplicate` by idempotency rules |
+| `invalid` | structurally unusable (failed validation, tampering, impossible path) | mark invalid (with reason) | invalid must carry a reason code/message |
+| `duplicate` | detected duplicate of an existing submission (idempotency violation / re-delivery) | merge/ignore/resolve per policy | duplicates must never create double-counted handoff |
+| `locked` | read-only “truth” after collection close / operator lock | none (read/export/handoff only) | once locked: no edits to answers; only annotations |
+
+#### 2.3.2 Operator workflow posture (canonical, bounded)
+- **Survey lifecycle**: draft → publish → collect → review queue (state-driven) → close collection → `locked` truth → export → handoff to P10.
+- **Review queue** is driven by status: `partial`, `invalid`, `duplicate` require explicit operator resolution or explicit “accept as-is” policy.
+- **Lock** is the governance gate: after lock, all downstream consumers treat submissions as immutable evidence.
+
+#### 2.3.3 Branching / skip posture (scope-frozen)
+- **Supported (bounded)**: conditional branching / skip logic based on prior answers (single-pass, acyclic). The operator can **preview** the pathing before publish.
+- **Not promised in P09-A**: quotas, randomized blocks, complex scoring, loops, multi-language orchestration, “logic map” parity beyond a minimal preview.
+- **Validation expectation**: before publish, the system must detect and block obvious dead-ends / unreachable required questions (or explicitly downgrade to warning + publish-with-known-limits).
+
+#### 2.3.4 Handoff payload to P10 (`Wnioski w Interview`) — canonical contract
+Handoff is a **structured evidence bundle** (not an insight):
+- **Identity**: `surveyId`, `submissionId`, optional `respondentId` / external reference, timestamps (started/submitted/locked).
+- **Governance**: submission status (`complete`/`partial`/`invalid`/`duplicate`/`locked`), validation summary, operator resolution notes (if any).
+- **Content**: normalized answers (typed), attachments references (if any), consent flags where applicable.
+- **Provenance pointers**: export artifact reference (CSV/XLSX/zip if applicable), audit trail pointers, and the upstream survey version published at time of submission.
+- **Delivery semantics**: handoff must be **idempotent** (same `submissionId` cannot create multiple P10 items).
+
+#### 2.3.5 Anti-duplicate posture (explicit)
+- Assume upstream delivery can be **at-least-once** (retries/re-delivery); design for idempotency.
+- Canonical rule: duplicates are detected via **stable idempotency key** (`submissionId` preferred; otherwise composite key policy must be declared).
+- Duplicate handling must produce one governed outcome: **no double-counting**, and handoff remains a single truth.
+
+#### 2.3.6 Degraded modes / errors (explicit)
+- **Network / save failures**: allow `partial` capture; never silently drop.
+- **Validation failures**: force `invalid` with reason; allow operator review.
+- **Handoff failures**: preserve retryable job state; do not “lose” a `locked` submission; surface operator-visible failure state.
+- **Export failures**: explicit error state with retry; export artifact references must be consistent with locked truth.
+
+#### 2.3.7 Acceptance checklist (P09-A = approved(scope))
+- [ ] Ankiety is explicitly framed as **collection lane**, not insight engine (non-goal is explicit).
+- [ ] Canonical submission statuses are defined and mapped to operator next actions.
+- [ ] Branching posture is explicit: what’s supported vs not promised, and validation/preview expectation is stated.
+- [ ] Handoff payload to P10 is explicit (identity + governance + content + provenance + idempotency).
+- [ ] Anti-duplicate and degraded/error posture is explicit and does not create double truth.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -143,7 +194,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P09-A |  |  |  |  |  |
+| P09-A | approved(scope) |  | docs-only (canon freeze) | n/a | commit hash added after merge/commit |
 | P09-B |  |  |  |  |  |
 | P09-C |  |  |  |  |  |
 
