@@ -290,7 +290,7 @@ Every action marked **gated** in §2.3.1 must satisfy all four guardrail columns
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P33-A | approved(scope) | (filled at commit) | N/A — scope packet | N/A — scope packet | Root IA §2.3.1; guardrails §2.3.2; boundaries §2.3.3; emergency §2.3.4; anti-dup §2.3.5; errors §2.4; checklist §8.1 |
+| P33-A | approved(scope) | `c714bf3dae` | N/A — scope packet | N/A — scope packet | Root IA §2.3.1; guardrails §2.3.2; boundaries §2.3.3; emergency §2.3.4; anti-dup §2.3.5; errors §2.4; checklist §8.1 |
 | P33-B |  |  |  |  |  |
 | P33-C |  |  |  |  |  |
 
