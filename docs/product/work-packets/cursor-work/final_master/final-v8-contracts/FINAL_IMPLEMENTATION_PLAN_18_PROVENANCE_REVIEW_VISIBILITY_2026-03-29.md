@@ -205,6 +205,6 @@ Last updated: 2026-03-31 (P18-B runtime closure)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P18-A | approved(scope) | `0123538bb5` | N/A — docs/scope only | N/A | Canon §2.3–2.6; P18-A checklist; anti-duplicate §2.6; lock P18-A released; EXECUTION_INDEX #18 updated. |
-| P18-B | delivered | `TBD` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/integration/routes/v8.execution.routes.test.ts` — PASS | `docs/product/work-packets/cursor-work/final_master/evidence/P18-B_PROVENANCE_LINEAGE_EXPORT_AUDIT_VERIFICATION_2026-03-30.md` | Click-through lineage (run → tool calls → output pointers) in Outputs Preview; export endpoints enforce visibility and record completed export traces; deny-by-default for non-visible runs (no leakage). |
+| P18-B | delivered | `354be3330c` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/integration/routes/v8.execution.routes.test.ts` — PASS | `docs/product/work-packets/cursor-work/final_master/evidence/P18-B_PROVENANCE_LINEAGE_EXPORT_AUDIT_VERIFICATION_2026-03-30.md` | Click-through lineage (run → tool calls → output pointers) in Outputs Preview; export endpoints enforce visibility and record completed export traces; deny-by-default for non-visible runs (no leakage). |
 | P18-C |  |  |  |  |  |
 

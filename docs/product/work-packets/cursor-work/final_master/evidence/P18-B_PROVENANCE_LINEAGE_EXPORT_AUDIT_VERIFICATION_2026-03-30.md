@@ -70,4 +70,4 @@ Expected:
 ## Evidence capture (fill during closeout)
 - Tests: `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/integration/routes/v8.execution.routes.test.ts` — PASS (21 tests)
 - Staging: script above (manual run pending; requires two real users + real artifact/run)
-- Commit: TBD
+- Commit: `354be3330c`
