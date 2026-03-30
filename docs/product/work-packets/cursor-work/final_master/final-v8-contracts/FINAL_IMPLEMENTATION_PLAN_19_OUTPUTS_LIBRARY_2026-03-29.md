@@ -1,7 +1,8 @@
 # Final Implementation Contract — Outputs Library (Position 19/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P19-A** (library canon frozen); P19-B / P19-C not started  
+Last updated: 2026-03-30 (P19-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Jedno miejsce na efekty pracy (tabele/excel, word, prezentacje, raporty); wyszukiwanie + automatyczne tworzenie i wysyłanie.
@@ -15,8 +16,35 @@ Status: draft (contract wrapper over existing plan)
 - Preview/open/reopen spójne z registry truth.
 
 ### 2.2 Out-of-scope / non-goals
-- Pełny office authoring suite.
-- Drugi outputs shell / drugi registry.
+
+**Product non-goals (explicit)**
+
+- **Full DAM / media asset management** — no canonical “second library” for files, versions, or rights that competes with artifact truth.
+- **Second Outputs Library, second artifact registry, or alternate “home”** — no parallel listing surfaces that own a different membership or lifecycle than the library contract.
+- **Duplicate routing or open paths** — no second deep-link scheme for the same `ArtifactRef` (see anti-duplicate gate).
+- **Library-defined trust-state** — stages, approval vs review, visibility, and export posture come **only** from Position **18** (P18-A canon); the library **displays** them, it does **not** invent enums or substates.
+- **Office-grade authoring suite** — parity target is discovery, ownership, review queues, preview/open/reopen, and convergence of formats into **one** home (see §4 Softs), not feature parity with desktop office.
+- **Changing frozen shell layouts** — list + preview must follow `docs/ui-standards/FROZEN_LAYOUTS.md` (e.g. App Table + Preview: single click = preview, double / explicit open = full); no extra toolbars between topbar and table.
+
+### 2.3 Anti-duplicate gate (extend canon — no parallel truth)
+
+P19-B/C implementation MUST **extend** the following existing SSOT and code — not introduce competing tables, registries, flags, or route families without a new reconciliation packet.
+
+| Area | Canon (path) | Rule |
+| --- | --- | --- |
+| Artifact identity & deep links | `docs/product/ARTIFACT_LINKING_V5_SSOT.md` — `Artifact`, `ArtifactRef`, `ArtifactIndex`; `src/utils/artifactLinks.ts` — `getArtifactPath()` | One `ArtifactRef` → one primary URL shape for **open** / **reopen**; preview uses the same underlying identity. |
+| Module × artifact closure | `docs/modules/MODULE_ROUTING_ARCHITECTURE.md` — canonical outputs by module | Taxonomy / “by type” aligns with this closed list; extensions go through docs + change control, not ad-hoc UI-only types. |
+| Tool output vocabulary (Tools lane) | `docs/product/UNIVERSAL_TOOL_OUTPUTS_STANDARD_V1.md` | Default output types for Tools remain the declared set; library lists them; no shadow type registry. |
+| Home → library bridge (queue navigation) | `src/components/MyWork/Home/homeV2Types.ts` — `outputs_all` / `outputs_mine` / `outputs_review`; `src/components/MyWork/MyWorkHub.tsx` — navigates to `/presentations?tab=...` | **Extend** this semantic bridge to full multi-format library; do not add a separate “my outputs” registry. |
+| App table + preview behavior | `docs/ui-standards/FROZEN_LAYOUTS.md`; `docs/ui-standards/03-modules/app-table-standard.md` | Single click = preview, double / primary open = full; Command Row discipline preserved. |
+| Trust / provenance / review | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_18_PROVENANCE_REVIEW_VISIBILITY_2026-03-29.md` (P18-A) | **approve(run) ≠ review(artifact)**; trust badges and audit visibility consume P18 only. |
+
+If implementers find a near-duplicate store or route, **stop** — record in §9 and reconcile via an explicit packet, per §2.3 playbook.
+
+### 2.4 Dependency: Position 18 (mandatory)
+
+- **P19-A** assumes **P18-A** delivers the **trust-state canon** (vocabulary, separation of run approval vs artifact review, exposure rules).
+- The Outputs Library **must not** define a competing trust model; any queue labeled **Needs review** maps to **artifact** review semantics from P18, not to “approve run” UI.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -95,15 +123,28 @@ Status: draft (contract wrapper over existing plan)
 ### 8.1 Bounded delivery packets
 #### P19-A — Library canon (one home) + taxonomy/queues (scope approval)
 - **Goal**: Outputs Library jako canonical home; taxonomy/queues/owner/review jako stabilny kontrakt.
-- **Inputs required**: trust-state schema (pozycja 18); list/preview/open coherence rules.
-- **Acceptance**: scope zatwierdzony; non-goals jawne; “no second registry” zasada spisana.
-- **Evidence**: scope approval + linkowane SSOT.
+- **Inputs required**: P18-A trust-state canon; list/preview/open coherence rules (`FROZEN_LAYOUTS` + app table standard).
+- **Evidence**: scope approval + linkowane SSOT; lock P19-A released; `EXECUTION_INDEX.md` #19 = `approved(scope)`.
+
+##### P19-A — Acceptance checklist (testable)
+
+1. **One home**: Contract states a single canonical Outputs Library home; §2.3 lists SSOT to extend; **no** second registry / alternate “truth” for membership.
+2. **Minimal queues — semantics**: **Mine** (artifacts where the current user is owner or primary author per existing model); **Needs review** (artifacts awaiting **artifact** review per P18 — not run approval); **By type / taxonomy** (filter dimension aligned with `MODULE_ROUTING_ARCHITECTURE` + declared artifact families). Each queue maps to one coherent filter contract (tabs/query params or documented equivalent).
+3. **Owner vs reviewer**: UI language distinguishes **owner** (accountability) and **reviewer** (review obligation); **next-action cues** are tied to queue semantics (e.g. “needs your review” vs “your draft”).
+4. **Preview vs open vs reopen**: **Single click** → preview; **double click or explicit Open** → full detail; **reopen from library** uses the same route/`getArtifactPath` identity as primary open — **no** contradictory paths for the same `ArtifactRef`.
+5. **Trust-state display only**: Library surfaces read trust-state from **P18**; no new trust enum or stage model owned by P19.
+6. **Approve(run) ≠ review(artifact)**: Contract and queues make the separation falsifiable; “Needs review” cannot mean “pending run approval”.
+7. **Anti-duplicate**: §2.3 is filled with **concrete** repo paths; implementers extend those canons.
+8. **Non-goals**: §2.2 explicitly excludes full DAM, second library, library-local trust-state, and frozen-layout violations.
+9. **Home bridge alignment**: Existing `outputs_all` / `outputs_mine` / `outputs_review` navigation remains consistent with queue names above or is migrated without duplicating home (documented in P19-B if code moves).
+10. **Authority chain intact**: Section 3 links remain the Wave2 SSOT for gap ledger; this file does not fork detailed plan ownership.
+
 - **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
   - Freeze taxonomy/queues (mine/review/type) + owner/reviewer language and next-action cues.
   - Freeze list/preview/open/reopen coherence rules (no contradictory paths).
   - Freeze dependency on trust-state schema (position 18) and “one home” invariant.
 - **DoD**:
-  - Approved(scope): library is the canonical home and contract is stable (queues/badges/coherence).
+  - `approved(scope)`: library is the canonical home and contract is stable (queues/badges/coherence); P19-A acceptance checklist satisfied; index #19 updated.
 
 #### P19-B — Multi-format convergence + preview/open/reopen closure
 - **Goal**: wiele typów artefaktów na jednej prawdzie; preview/open/reopen bez sprzeczności.
@@ -146,7 +187,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P19-A |  |  |  |  |  |
+| P19-A | approved(scope) | `30c484be6b` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
 | P19-B |  |  |  |  |  |
 | P19-C |  |  |  |  |  |
 
