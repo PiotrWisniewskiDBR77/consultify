@@ -306,7 +306,7 @@ The product must fail safely and guide recovery (10+):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P14-A | approved(scope) | COMMIT_REF_PENDING | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: semantic object types + readback, BPMN/interoperability posture, validation layering, toolbelt boundaries, AI proposal contract (no silent apply), anti-duplicate gate, degraded posture + acceptance checklist |
+| P14-A | approved(scope) | 6f39e6de91 | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: semantic object types + readback, BPMN/interoperability posture, validation layering, toolbelt boundaries, AI proposal contract (no silent apply), anti-duplicate gate, degraded posture + acceptance checklist |
 | P14-B |  |  |  |  |  |
 | P14-C |  |  |  |  |  |
 
