@@ -255,6 +255,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
       ? dtPendingConfirm.confirm
       : (msg as any).metadata?.deepThinkingConfirm;
+  const policyDecision = (msg as any).metadata?.policyDecision;
+  const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
+    ? ((msg as any).metadata.policyNotices as any[])
+    : [];
+  const policyUncertaintyNotice =
+    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty') ||
+    policyNotices.find((n: any) => n?.kind === 'uncertainty') ||
+    null;
+  const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
 
   return (
     <div
@@ -334,6 +343,50 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <div
                 className={`${isDeepThinkingConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
               >
+                {/* Policy gateway (P34-B): refusal + uncertainty visibility */}
+                {isPolicyRefusal && (
+                  <div className="not-prose mb-3 p-3 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-950/30">
+                    <div className="text-xs font-semibold text-rose-800 dark:text-rose-200">
+                      {t('policy.refusal.title', 'Request blocked by policy')}
+                    </div>
+                    {String(policyDecision?.rationale || '').trim() ? (
+                      <div className="mt-1 text-[11px] text-rose-700 dark:text-rose-300">
+                        {String(policyDecision.rationale).trim()}
+                      </div>
+                    ) : null}
+                    {Array.isArray(policyDecision?.refusal?.nextSteps) &&
+                    policyDecision.refusal.nextSteps.length ? (
+                      <div className="mt-2 text-[11px] text-rose-700 dark:text-rose-300">
+                        <div className="font-medium">
+                          {t('policy.refusal.nextSteps', 'What to do next')}
+                        </div>
+                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                          {policyDecision.refusal.nextSteps.slice(0, 6).map((s: any, i: number) => (
+                            <li key={i}>{String(s || '').trim()}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                {!isPolicyRefusal && policyUncertaintyNotice && (
+                  <div className="not-prose mb-3 p-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/25">
+                    <div className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                      {t('policy.uncertainty.title', 'Uncertainty marker')}
+                    </div>
+                    <div className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+                      {String(
+                        policyUncertaintyNotice?.message ||
+                          t(
+                            'policy.uncertainty.body',
+                            'This response includes factual claims without sufficient citations from available sources.'
+                          )
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Deep Thinking: Research progress (SSE events) */}
                 {(msg as any).metadata?.researchVisibility?.items && (
                   <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>

@@ -1319,6 +1319,39 @@ router.post(
     let chatRunId: string | null = null;
     let pipelineMeta: any = null;
     const dtStatesEmitted: string[] = [];
+    // Policy gateway (P34-B): decision payload + evidence/citation enforcement
+    let policyDecision: any = null;
+    const policyNotices: any[] = [];
+    let collectedCitations: any[] = [];
+
+    const mergeCitations = (prev: any[], next: any[]) => {
+      const out: any[] = [];
+      const seen = new Map<string, any>();
+      const keyOf = (c: any) =>
+        String(
+          c?.id ||
+            c?.link ||
+            c?.reference ||
+            c?.url ||
+            c?.title ||
+            `${c?.type || 'citation'}:${JSON.stringify(c).slice(0, 120)}`
+        );
+      const add = (c: any) => {
+        if (!c) return;
+        const k = keyOf(c);
+        if (!k) return;
+        if (seen.has(k)) {
+          seen.set(k, { ...(seen.get(k) || {}), ...(c || {}) });
+          return;
+        }
+        const merged = c;
+        seen.set(k, merged);
+        out.push(merged);
+      };
+      (Array.isArray(prev) ? prev : []).forEach(add);
+      (Array.isArray(next) ? next : []).forEach(add);
+      return out;
+    };
 
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
@@ -1744,8 +1777,149 @@ router.post(
         if (payload.type === 'dt_state' && typeof payload.state === 'string') {
           dtStatesEmitted.push(payload.state);
         }
+        // Capture citations for post-stream evidence enforcement
+        if (payload.type === 'citations' && Array.isArray((payload as any).citations)) {
+          collectedCitations = mergeCitations(collectedCitations, (payload as any).citations);
+        }
+        // Capture policy notices for persistence/audit (best-effort)
+        if (payload.type === 'policy_notice') {
+          policyNotices.push(payload as any);
+        }
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
+
+      // --------------------------------------------------------
+      // Policy gateway (P34-B): allow/deny + rationale + citations/uncertainty posture
+      // --------------------------------------------------------
+      emitSSE({
+        type: 'thought',
+        step: 'policy',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Sprawdzam politykę bezpieczeństwa i wymagania dowodowe…'
+          : 'Checking safety policy and evidence requirements…',
+      });
+      try {
+        const polMod = await import('../services/ai/chatPolicyGateway.js');
+        const { evaluateChatPolicyDecision } = (polMod as any) || {};
+        if (typeof evaluateChatPolicyDecision === 'function') {
+          const polRes = await evaluateChatPolicyDecision({
+            message: String(message || ''),
+            language,
+            organizationId: req.organizationId || null,
+            userId: req.userId || null,
+            projectId,
+            privateMode: Boolean(privateMode),
+            aiModes: aiModes || null,
+            knowledgeSources: knowledgeSources || null,
+          });
+
+          policyDecision = polRes?.decision || null;
+          const sanitizedMessage =
+            typeof polRes?.sanitizedMessage === 'string' ? String(polRes.sanitizedMessage) : '';
+          if (sanitizedMessage && sanitizedMessage !== String(message || '').trim()) {
+            try {
+              // Keep user-visible message unchanged; only sanitize what goes to the LLM/pipeline.
+              (pipelineRequest as any).prompt = sanitizedMessage;
+            } catch {
+              // ignore
+            }
+          }
+        }
+      } catch (polErr: any) {
+        logger.warn('[AI Stream] Policy gateway unavailable:', polErr?.message || String(polErr));
+        policyDecision = null;
+      }
+
+      if (policyDecision) {
+        emitSSE({ type: 'policy_decision', decision: policyDecision });
+        if (chatRunId) {
+          import('../services/ai/chatTraceService.js')
+            .then((m: any) => (m.default || m).addEvent(chatRunId, 'policy_decision', policyDecision))
+            .catch(() => {
+              /* ignore */
+            });
+        }
+      }
+
+      // Deny: enforce refusal UX early and terminate stream deterministically.
+      if (policyDecision && policyDecision.allowed === false) {
+        const refusal = policyDecision?.refusal || {};
+        const msg = String(refusal?.userMessage || '').trim();
+        const steps = Array.isArray(refusal?.nextSteps) ? refusal.nextSteps : [];
+        const refusalText = [
+          msg || (language?.startsWith('pl') ? 'Nie mogę spełnić tej prośby.' : "I can't comply with that request."),
+          steps.length
+            ? (language?.startsWith('pl') ? '\n\n**Co dalej:**\n' : '\n\n**What to do next:**\n') +
+              steps.slice(0, 6).map((s: any) => `- ${String(s || '').trim()}`).join('\n')
+            : '',
+        ]
+          .filter(Boolean)
+          .join('');
+
+        // Emit a structured refusal event for UI, plus plain text chunk to ensure the bubble renders.
+        emitSSE({
+          type: 'policy_refusal',
+          decisionId: policyDecision?.id || null,
+          category: policyDecision?.category || null,
+          rationale: policyDecision?.rationale || null,
+          message: msg || null,
+          nextSteps: steps || [],
+        });
+
+        accumulatedContent = refusalText;
+        if (isClientConnected && !res.destroyed) {
+          try {
+            res.write(`data: ${JSON.stringify({ text: refusalText })}\n\n`);
+            res.write('data: [DONE]\n\n');
+          } catch {
+            /* ignore */
+          }
+        }
+
+        streamCompleted = true;
+        clearInterval(heartbeatInterval);
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            await (svcMod.default || svcMod).completeRun({
+              runId: chatRunId,
+              status: 'blocked',
+              pipelineTraceId: pipelineMeta?.traceId || null,
+              modelProvider: pipelineMeta?.provider || null,
+              modelId: pipelineMeta?.model || null,
+              tier: selectedTier || null,
+              outputText: refusalText,
+              dtStates: dtStatesEmitted,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        return res.end();
+      }
+
+      // Allow: enforce evidence posture at the prompt level (bounded).
+      if (policyDecision?.allowed === true && policyDecision?.evidence?.required) {
+        try {
+          const evidenceAddon = [
+            '## EVIDENCE & CITATIONS (Policy gateway)',
+            '- If you state factual claims (numbers, dates, “X is true”), you MUST either:',
+            '  (a) cite available evidence inline using [1], [2] (KB/web/attachments citations), OR',
+            '  (b) explicitly mark uncertainty and give a concrete verification plan.',
+            '- Never pretend you used sources you do not have.',
+          ].join('\n');
+          (pipelineRequest as any).options = {
+            ...(pipelineRequest as any).options,
+            systemInstruction:
+              String(((pipelineRequest as any).options as any)?.systemInstruction || '') +
+              `\n\n${evidenceAddon}\n`,
+          };
+        } catch {
+          // ignore
+        }
+      }
 
       // T120: Private mode / retention — memory injection must be gated.
       // Also: Deep Thinking autonomy should not inject memory add-ons into the system instruction.
@@ -3075,6 +3249,124 @@ router.post(
             }
 
             // ================================================================
+            // Post-stream: Policy evidence enforcement (P34-B)
+            // If response is factful and we lack citations, append explicit uncertainty marker.
+            // ================================================================
+            if (
+              policyDecision?.allowed === true &&
+              policyDecision?.evidence?.required === true &&
+              policyDecision?.evidence?.uncertaintyMarkerRequiredIfInsufficientEvidence === true
+            ) {
+              try {
+                const cvMod = await import('../services/ai/claimCitationValidator.js');
+                const extractClaims = (cvMod as any).extractClaims;
+                const matchClaimsToCitations = (cvMod as any).matchClaimsToCitations;
+                const validateClaimCitations = (cvMod as any).validateClaimCitations;
+
+                if (
+                  typeof extractClaims === 'function' &&
+                  typeof matchClaimsToCitations === 'function' &&
+                  typeof validateClaimCitations === 'function'
+                ) {
+                  const citationsForValidator = (Array.isArray(collectedCitations)
+                    ? collectedCitations
+                    : []
+                  )
+                    .slice(0, 24)
+                    .map((c: any, idx: number) => ({
+                      id: String(c?.id || `cit_${idx}`),
+                      excerpt: typeof c?.excerpt === 'string' ? String(c.excerpt) : undefined,
+                      startOffset: typeof c?.startOffset === 'number' ? c.startOffset : undefined,
+                      endOffset: typeof c?.endOffset === 'number' ? c.endOffset : undefined,
+                    }));
+
+                  const baseClaims = extractClaims(String(accumulatedContent || ''));
+                  const matchedClaims = matchClaimsToCitations(
+                    baseClaims,
+                    citationsForValidator,
+                    String(accumulatedContent || '')
+                  );
+                  const policy = policyDecision?.evidence?.claimCitationPolicy || {};
+                  const validation = validateClaimCitations(matchedClaims, policy);
+
+                  emitSSE({
+                    type: 'policy_validation',
+                    decisionId: policyDecision?.id || null,
+                    validation: {
+                      totalClaims: validation?.totalClaims,
+                      citedClaims: validation?.citedClaims,
+                      uncitedClaims: validation?.uncitedClaims,
+                      coverageScore: validation?.coverageScore,
+                      passesPolicy: validation?.passesPolicy,
+                      policyViolations: validation?.policyViolations,
+                    },
+                  });
+
+                  if (validation && validation.passesPolicy === false) {
+                    const isPl = Boolean(language?.startsWith('pl'));
+                    const violations = Array.isArray(validation.policyViolations)
+                      ? validation.policyViolations
+                      : [];
+                    const marker = isPl
+                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
+                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
+
+                    emitSSE({
+                      type: 'policy_notice',
+                      kind: 'uncertainty',
+                      decisionId: policyDecision?.id || null,
+                      message: isPl
+                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
+                        : 'Insufficient citations — explicit uncertainty marker added.',
+                      violations: violations.slice(0, 6),
+                    });
+
+                    if (chatRunId) {
+                      import('../services/ai/chatTraceService.js')
+                        .then((m: any) =>
+                          (m.default || m).addEvent(chatRunId, 'policy_evidence', {
+                            passesPolicy: false,
+                            policyViolations: violations,
+                            totalClaims: validation?.totalClaims,
+                            citedClaims: validation?.citedClaims,
+                            uncitedClaims: validation?.uncitedClaims,
+                            coverageScore: validation?.coverageScore,
+                          })
+                        )
+                        .catch(() => {
+                          /* ignore */
+                        });
+                    }
+
+                    // Append marker as a final visible chunk (bounded, additive)
+                    accumulatedContent += marker;
+                    try {
+                      res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
+                    } catch {
+                      /* ignore */
+                    }
+                  } else if (chatRunId) {
+                    import('../services/ai/chatTraceService.js')
+                      .then((m: any) =>
+                        (m.default || m).addEvent(chatRunId, 'policy_evidence', {
+                          passesPolicy: true,
+                          totalClaims: validation?.totalClaims,
+                          citedClaims: validation?.citedClaims,
+                          uncitedClaims: validation?.uncitedClaims,
+                          coverageScore: validation?.coverageScore,
+                        })
+                      )
+                      .catch(() => {
+                        /* ignore */
+                      });
+                  }
+                }
+              } catch (evErr: any) {
+                logger.debug('[AI Stream] Policy evidence enforcement skipped:', evErr?.message);
+              }
+            }
+
+            // ================================================================
             // Post-stream: Cost monitoring (best-effort, non-blocking)
             // ================================================================
             try {
@@ -3195,6 +3487,80 @@ router.post(
               }
             } catch {
               /* ignore */
+            }
+
+            // Policy evidence enforcement (P34-B) for non-stream response
+            if (
+              policyDecision?.allowed === true &&
+              policyDecision?.evidence?.required === true &&
+              policyDecision?.evidence?.uncertaintyMarkerRequiredIfInsufficientEvidence === true
+            ) {
+              try {
+                const cvMod = await import('../services/ai/claimCitationValidator.js');
+                const extractClaims = (cvMod as any).extractClaims;
+                const matchClaimsToCitations = (cvMod as any).matchClaimsToCitations;
+                const validateClaimCitations = (cvMod as any).validateClaimCitations;
+
+                if (
+                  typeof extractClaims === 'function' &&
+                  typeof matchClaimsToCitations === 'function' &&
+                  typeof validateClaimCitations === 'function'
+                ) {
+                  const citationsForValidator = (Array.isArray(collectedCitations)
+                    ? collectedCitations
+                    : []
+                  )
+                    .slice(0, 24)
+                    .map((c: any, idx: number) => ({
+                      id: String(c?.id || `cit_${idx}`),
+                      excerpt: typeof c?.excerpt === 'string' ? String(c.excerpt) : undefined,
+                    }));
+
+                  const baseClaims = extractClaims(String(nonStreamContent || ''));
+                  const matchedClaims = matchClaimsToCitations(
+                    baseClaims,
+                    citationsForValidator,
+                    String(nonStreamContent || '')
+                  );
+                  const policy = policyDecision?.evidence?.claimCitationPolicy || {};
+                  const validation = validateClaimCitations(matchedClaims, policy);
+
+                  emitSSE({
+                    type: 'policy_validation',
+                    decisionId: policyDecision?.id || null,
+                    validation: {
+                      totalClaims: validation?.totalClaims,
+                      citedClaims: validation?.citedClaims,
+                      uncitedClaims: validation?.uncitedClaims,
+                      coverageScore: validation?.coverageScore,
+                      passesPolicy: validation?.passesPolicy,
+                      policyViolations: validation?.policyViolations,
+                    },
+                  });
+
+                  if (validation && validation.passesPolicy === false) {
+                    const isPl = Boolean(language?.startsWith('pl'));
+                    const marker = isPl
+                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
+                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
+
+                    emitSSE({
+                      type: 'policy_notice',
+                      kind: 'uncertainty',
+                      decisionId: policyDecision?.id || null,
+                      message: isPl
+                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
+                        : 'Insufficient citations — explicit uncertainty marker added.',
+                      violations: (validation?.policyViolations || []).slice(0, 6),
+                    });
+
+                    // Also emit the marker as a final text chunk for visibility.
+                    res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
+                  }
+                }
+              } catch {
+                /* ignore */
+              }
             }
 
             try {

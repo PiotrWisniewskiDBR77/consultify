@@ -351,7 +351,12 @@ type StreamOptions = {
     fullText: string,
     thinking: ThinkingStep[],
     artifacts: Artifact[],
-    meta?: { citations?: any[]; sessionId?: string }
+    meta?: {
+      citations?: any[];
+      sessionId?: string;
+      policyDecision?: any;
+      policyNotices?: any[];
+    }
   ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
@@ -390,6 +395,8 @@ export type UseAIStreamReturn = {
   streamedContent: string;
   thinkingSteps: ThinkingStep[];
   citations: any[];
+  policyDecision: any | null;
+  policyNotices: any[];
   deepThinkingState: any | null;
   researchProgress: any | null;
   researchVisibility: any | null;
@@ -498,6 +505,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [lastError, setLastError] = useState<Error | null>(null);
   const [citations, setCitations] = useState<any[]>([]);
+  const [policyDecision, setPolicyDecision] = useState<any | null>(null);
+  const [policyNotices, setPolicyNotices] = useState<any[]>([]);
   const [retryInfo, setRetryInfo] = useState<{
     attempt: number;
     maxRetries: number;
@@ -549,6 +558,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setThinkingSteps([]);
     setDeepThinkingState(null);
     setCitations([]);
+    setPolicyDecision(null);
+    setPolicyNotices([]);
     setResearchProgress(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
@@ -829,12 +840,25 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         options.onStreamDone?.(fullText, currentThinking, parsedArtifacts, {
           citations,
           sessionId: streamSessionIdRef.current || undefined,
+          policyDecision,
+          policyNotices,
         });
       };
 
       const handleEvent = (evt: any) => {
         if (abortRef.current.aborted) return;
         if (!evt || typeof evt !== 'object') return;
+
+        // Policy gateway: decision + notices (refusal/uncertainty)
+        if (evt.type === 'policy_decision') {
+          const d = (evt as any)?.decision ?? evt;
+          setPolicyDecision(d);
+          return;
+        }
+        if (evt.type === 'policy_notice') {
+          setPolicyNotices((prev) => [...(Array.isArray(prev) ? prev : []), evt]);
+          return;
+        }
 
         if (evt.type === 'citations') {
           const e = evt as CitationsEvent;
@@ -1347,6 +1371,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     streamedContent,
     thinkingSteps,
     citations,
+    policyDecision,
+    policyNotices,
     deepThinkingState,
     researchProgress,
     researchVisibility,

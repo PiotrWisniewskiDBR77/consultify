@@ -703,6 +703,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     clearLastError,
     isStreaming,
     streamedContent,
+    policyDecision,
+    policyNotices,
     researchProgress,
     researchVisibility,
     deepThinkingState,
@@ -737,19 +739,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               citations: meta?.citations,
               streamSessionId: meta?.sessionId,
               extra:
-                aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                aiConfig?.deepResearch ||
+                (aiConfig as any)?.marketResearch ||
+                meta?.policyDecision ||
+                (meta?.policyNotices && meta.policyNotices.length)
                   ? {
-                      options: [
-                        { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                        { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                        {
-                          id: 'dt-challenge',
-                          label: 'Challenge this conclusion',
-                          value: 'Challenge this conclusion',
-                        },
-                      ],
-                      multiSelect: false,
-                      deepThinking: { kind: 'report' },
+                      ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                        ? {
+                            options: [
+                              { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                              { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                              {
+                                id: 'dt-challenge',
+                                label: 'Challenge this conclusion',
+                                value: 'Challenge this conclusion',
+                              },
+                            ],
+                            multiSelect: false,
+                            deepThinking: { kind: 'report' },
+                          }
+                        : {}),
+                      ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
+                        ? {
+                            policyDecision: meta?.policyDecision,
+                            policyNotices: meta?.policyNotices,
+                          }
+                        : {}),
                     }
                   : undefined,
             }),
@@ -780,9 +795,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 },
               ],
               multiSelect: false,
-              metadata: { deepThinking: { kind: 'report' } },
             } as any)
           : {}),
+        metadata: {
+          ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+            ? { deepThinking: { kind: 'report' } }
+            : {}),
+          ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
+          ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
+        },
       });
 
       // Auto-read AI response if enabled (speak only remaining text not already spoken during streaming)
@@ -1106,6 +1127,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             deepThinkingState,
             researchProgress,
             researchVisibility,
+            policyDecision,
+            policyNotices,
           },
         },
       ];
@@ -1121,6 +1144,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     deepThinkingState,
     researchProgress,
     researchVisibility,
+    policyDecision,
+    policyNotices,
   ]);
 
   const latestUserGoalHint = useMemo(() => {
