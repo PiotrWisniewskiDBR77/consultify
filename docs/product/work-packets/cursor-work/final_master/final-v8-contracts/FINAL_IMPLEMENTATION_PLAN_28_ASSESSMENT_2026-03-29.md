@@ -91,16 +91,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: scoring rationale + evidence pointers contract; promotion target (initiatives/reports).
 - **Acceptance**: scope zatwierdzony; non-goals jawne; AI interpretacja = propose→review→accept.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze assessment shell/workbench grammar (state model + evidence capture + scoring).
+  - Freeze scoring rationale and explainability rules (no black box).
+  - Freeze promotion contract to initiatives/reports with traceability (bounded).
+- **DoD**:
+  - Approved(scope): workbench and scoring governance are explicit and testable.
 
 #### P28-B — Methodology run→evidence→score→interpret→promote closure
 - **Goal**: domknąć E2E metodologię na jednym workbench.
 - **Acceptance**: branching/scoring jest explainable; degraded (missing evidence) daje “what next”.
 - **Evidence**: integracyjne testy + staging demo 1 metodologii.
+- **Tasks**:
+  - Implement 1 methodology end-to-end on the unified workbench (bounded).
+  - Implement degraded states for missing evidence with explicit “what next”.
+  - Add integration/regression + contract tests and run staging demo (5.3).
+- **DoD**:
+  - Methodology run is explainable; results can be promoted with traceability; demos recorded.
 
 #### P28-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P28-A/B/C.
+  - Validate rollback: disable AI interpretations/promotions; preserve workbench read-only.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw 1 metodologia P0, potem rozszerzenia family packaging (P1).

@@ -95,16 +95,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: KPI↔Finance linkage SSOT; decyzje o wersjonowaniu (current vs actual).
 - **Acceptance**: scope zatwierdzony; non-goals jawne; brak silent scope creep.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze bounded lanes (import/analysis/mutation/readback) and explicit non-goals.
+  - Freeze versioning semantics (current vs actual) and reconciliation boundaries.
+  - Freeze error taxonomy + recovery posture for imports and mutations.
+- **DoD**:
+  - Approved(scope): finance lane is explicit, audytowalny, and KPI linkage is bounded.
 
 #### P05-B — Import→analysis→mutation→readback closure
 - **Goal**: domknąć deklarowane ścieżki E2E bez split-truth.
 - **Acceptance**: mutacje odświeżają właściwe runtime; KPI readback jest spójny; error taxonomy jest uczciwa.
 - **Evidence**: integracyjne testy linkage + staging E2E.
+- **Tasks**:
+  - Implement E2E lane: import→analysis→mutation→readback (bounded).
+  - Ensure KPI↔Finance truth stays coherent on declared paths.
+  - Add regression for mutation→refresh and import validation failure paths (5.2).
+- **DoD**:
+  - Staging E2E passes; errors are visible with “what next”; tests pass.
 
 #### P05-C — Verification + rollout
 - **Goal**: telemetry, regresje, staging proof, bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proofs (5.3) and fill ledger rows P05-A/B/C.
+  - Validate rollback: disable mutations; preserve read-only + audit.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Prefer incremental rollout per sub-lane; chronić KPI truth i audyt.

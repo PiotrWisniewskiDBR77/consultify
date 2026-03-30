@@ -85,16 +85,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: permissions model + approvals posture; audit baseline; emergency/degraded rules.
 - **Acceptance**: scope zatwierdzony; boundaries z Organization/Admin/Settings jawne; no “hidden paths”.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze mounted branches list (P0) and their boundaries vs tenant-level admin.
+  - Freeze guardrails: approvals/confirmations + emergency/degraded posture.
+  - Freeze audit requirements for all sensitive actions (no silent success).
+- **DoD**:
+  - Approved(scope): control plane boundaries and guardrails are explicit and enforceable.
 
 #### P33-B — Cross-tenant actions + audit closure
 - **Goal**: gated akcje działają; partial failure jest czytelny; audit jest kompletny.
 - **Acceptance**: operator wykonuje min. 1 gated akcję z potwierdzeniem; AI/connector ops są wpięte jako jawne gałęzie.
 - **Evidence**: integracyjne testy + staging demo root walk-through.
+- **Tasks**:
+  - Implement 1+ gated cross-tenant actions with confirmations and explicit partial-failure handling.
+  - Implement root walk-through navigation + AI/connector branches (bounded).
+  - Add integration/regression tests and run staging demo (5.3).
+- **DoD**:
+  - Cross-tenant operations are safe, audytowalne, and have clear degraded states.
 
 #### P33-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P33-A/B/C.
+  - Validate rollback: disable gated actions; preserve read-only visibility.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw read-only visibility + navigation, potem gated actions (P0) i rozszerzenia (P1).

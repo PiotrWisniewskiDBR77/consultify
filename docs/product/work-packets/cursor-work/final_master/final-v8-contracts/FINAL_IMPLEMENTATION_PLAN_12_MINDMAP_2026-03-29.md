@@ -92,16 +92,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: decyzje o minimalnym toolbelt + branch-state semantics.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “what changed” cues spisane.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze minimal toolbelt and the calm core-loop rules (selection/navigation/branch ops).
+  - Freeze branch-state semantics + “what changed” readback cues.
+  - Freeze AI proposal contract (preview/diff, accept/reject) (bounded).
+- **DoD**:
+  - Approved(scope): calm loop and toolbelt are explicit; no “missing buttons” for P0 lane.
 
 #### P12-B — Builder toolbelt + state trust closure
 - **Goal**: domknąć minimalny toolbelt + stabilny state/readback.
 - **Acceptance**: duże mapy nie glitchują; AI proposals są reviewable (preview/diff).
 - **Evidence**: stress/regression + staging demo (manual + AI).
+- **Tasks**:
+  - Implement toolbelt closure and stable state transitions (undo/redo included where declared).
+  - Add stress/regression for large maps; ensure no “lost branches”.
+  - Run staging demos (manual build + AI propose) (5.3).
+- **DoD**:
+  - Large-map stability proven; AI proposals are reviewable; core loop stays calm.
 
 #### P12-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P12-A/B/C.
+  - Validate rollback: disable AI co-building; preserve manual read/edit.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw core loop + toolbelt, potem bounded collab cues (P1).

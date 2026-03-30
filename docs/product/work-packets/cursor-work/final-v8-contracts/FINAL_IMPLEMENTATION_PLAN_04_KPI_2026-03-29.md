@@ -115,16 +115,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: SSOT linkage KPI↔Finance; decyzja o minimalnych workflows report/reconciliation.
 - **Acceptance**: scope jest zatwierdzony; user rozumie “co KPI zmienia” (signal → report → action).
 - **Evidence**: checklist scope approval + zlinkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze KPI vocabulary: signal/target/trend/report/reconciliation/next action.
+  - Freeze KPI↔Finance linkage boundaries (what’s in-lane vs non-goal).
+  - Freeze permission rules (who edits targets vs who views).
+- **DoD**:
+  - Approved(scope): KPI loop is explicit (signal→report→reconcile→action) and bounded.
 
 #### P04-B — Core workflow closure (signal→report→reconciliation→action)
 - **Goal**: domknąć workflow i stany (w deklarowanym zakresie).
 - **Acceptance**: user przechodzi E2E bez “domyślania”; nie ma split-truth na KPI↔Finance.
 - **Evidence**: testy integracyjne linkage + staging demo “discrepancy”.
+- **Tasks**:
+  - Implement the E2E KPI workflow states and transitions (bounded).
+  - Implement KPI→Finance consequence and ensure no split-truth.
+  - Add integration + workflow regression tests (6.2).
+- **DoD**:
+  - “Discrepancy” demo passes; tests pass; next action is always explicit.
 
 #### P04-C — Verification + rollout
 - **Goal**: dopiąć telemetry, regresje i staging proof; przygotować bezpieczny rollout/rollback.
 - **Acceptance**: wszystko spełnia bar `verified(evidence)` z playbooka.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proofs (6.3) and fill evidence ledger rows P04-A/B/C.
+  - Validate rollout/rollback (read-first posture; flags).
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Feature-flag / gradual exposure; prefer “read-first” zanim włączymy mutacje szeroko.

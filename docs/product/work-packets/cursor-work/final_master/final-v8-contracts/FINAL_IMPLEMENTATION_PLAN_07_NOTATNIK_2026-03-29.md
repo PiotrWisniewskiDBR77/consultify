@@ -100,16 +100,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: decyzje o linking/provenance minimal; attachment lifecycle baseline.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent provenance loss” zasady spisane.
 - **Evidence**: scope approval + linkowane SSOT/benchmark.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze linking + provenance minimal contract (what is source vs AI transform).
+  - Freeze attachment lifecycle baseline (status/error/retry) and search baseline scope.
+  - Freeze downstream handoff payload expectations (Radar/Inicjatywy) (bounded).
+- **DoD**:
+  - Approved(scope): capture/search/linking/attachments scope is explicit and testable.
 
 #### P07-B — Capture/search/linking closure + attachment lifecycle
 - **Goal**: E2E capture→attach→index/search→open→link-out bez utraty kontekstu.
 - **Acceptance**: upload ma status + retry; search jest operator-grade (w zadeklarowanym baseline).
 - **Evidence**: integracyjne testy + staging demo “attachment lifecycle”.
+- **Tasks**:
+  - Implement E2E flow capture→attach→index/search→open→link-out (bounded).
+  - Implement upload error taxonomy + retry; ensure no silent drop.
+  - Add integration tests and run staging attachment demo (5.2/5.3).
+- **DoD**:
+  - Search+linking works; attachments are reliable; provenance language is consistent.
 
 #### P07-C — Verification + rollout
 - **Goal**: telemetry + regresje + staging proof; rollout bez rozjechania linków.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proofs (5.3) and fill ledger rows P07-A/B/C.
+  - Validate rollback: disable AI/handoff; preserve notes + links.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Inkrementalnie: najpierw capture+readback, potem AI propose/review i downstream handoffs.

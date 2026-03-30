@@ -102,16 +102,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: Outputs Library convergence (pozycja 19) + trust-state (pozycja 18).
 - **Acceptance**: scope zatwierdzony; non-goals jawne; export limits + recovery posture spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze deck lifecycle states (draft/reviewed/exported) + reopen/continue semantics.
+  - Freeze review/export grammar + limits + recovery posture (no ghost artifacts).
+  - Freeze convergence rules with Outputs Library (19) and trust-state (18).
+- **DoD**:
+  - Approved(scope): continuation and review/export semantics are explicit and testable.
 
 #### P20-B — Generate→continue→review→export closure
 - **Goal**: domknąć E2E lifecycle + export audit.
 - **Acceptance**: continue nie gubi struktury; export ma recovery path; lineage widoczne.
 - **Evidence**: integracyjne testy + staging demo (reopen z library).
+- **Tasks**:
+  - Implement generate→reopen→continue→review→export end-to-end (bounded).
+  - Implement export retry/recovery and audit events; add integration/regression tests (5.2).
+  - Run staging demos (5.3) including reopen from library.
+- **DoD**:
+  - Continuation preserves structure; export is audytowalny with recovery; lineage visible.
 
 #### P20-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P20-A/B/C.
+  - Validate rollback: disable export; preserve reopen/continue.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw reopen/continue + review grammar, potem eksport resilience (P1) i rozszerzenia.

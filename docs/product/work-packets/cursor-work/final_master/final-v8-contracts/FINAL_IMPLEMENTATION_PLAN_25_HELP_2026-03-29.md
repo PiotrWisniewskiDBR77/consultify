@@ -98,16 +98,33 @@ Status: draft (shared-sourced contract; extracted scope for position 25)
 - **Inputs required**: entry points per surface; recommendation payload contract; PL/EN posture.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; degraded state dla missing article/tłumaczeń spisany.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze entry points per surface + routing rules (bounded).
+  - Freeze content ops baseline (seed/owner/lifecycle/update posture) and PL/EN fallback rules.
+  - Freeze recommendation payload contract (context→article ids→rationale) (bounded).
+- **DoD**:
+  - Approved(scope): contextual help is a runtime product; degraded states are explicit and testable.
 
 #### P25-B — Contextual entry points + recommendation closure
 - **Goal**: entry point→search→article→next action routing + Teresa/Anna guidance z źródłem.
 - **Acceptance**: 3 surfaces działają; brak artykułu daje czytelny degraded + fallback.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement contextual entry points and search→article→next action routing for 3 surfaces.
+  - Implement Teresa/Anna linking to exact articles with visible source.
+  - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **DoD**:
+  - Help works contextually; missing content has safe fallback; guidance is source-linked.
 
 #### P25-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P25-A/B/C.
+  - Validate rollback: disable recommendations; preserve browse/search.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw kontekstowe entry points, potem rekomendacje “smart” (P0 bounded), potem rozbudowa (P1).

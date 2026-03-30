@@ -88,16 +88,33 @@ Status: draft (shared-sourced contract; extracted scope for position 26)
 - **Inputs required**: content ops pipeline (seed/owner/lifecycle) + IA/tags model + contextual routing contract.
 - **Acceptance**: scope zatwierdzony; deliverable “seed 50” jest konkretny (nie zamiar); degraded states spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze IA/tags model and the mapping “where content appears” (LP/right panel/AI).
+  - Freeze content ops pipeline (seed 50 + ownership + lifecycle + update policy).
+  - Freeze contextual routing contract (tool context→recommended articles) (bounded).
+- **DoD**:
+  - Approved(scope): KB is deliverable-driven (seed 50) and routing/taxonomy are explicit.
 
 #### P26-B — IA/tags + contextual surfaces closure
 - **Goal**: browse/filter/search + right panel/LP mapping per context + routing przez Annę/Teresę (bounded).
 - **Acceptance**: 3 narzędzia mają poprawny kontekstowy routing; brak treści → czytelny degraded + fallback.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement browse/filter/search with IA+tags and related/next content behavior (bounded).
+  - Implement right panel/LP mapping for 3 tool contexts; implement degraded fallback.
+  - Add integration/regression tests and run staging demos (3 tools + routing).
+- **DoD**:
+  - Contextual routing is correct and audytowalne; missing content has safe fallback.
 
 #### P26-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P26-A/B/C.
+  - Validate rollback: disable routing/recommendations; preserve browse/search.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw IA+seed + browse/search, potem contextual routing i rekomendacje (P1).

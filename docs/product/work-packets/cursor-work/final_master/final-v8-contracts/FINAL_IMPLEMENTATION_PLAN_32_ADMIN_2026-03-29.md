@@ -88,16 +88,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: role model + audit baseline; integration status model + remediation posture.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; error/denial states spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze cockpit IA (members/roles + integrations/sync) and boundaries vs Org/Settings/Superadmin.
+  - Freeze role model + audit requirements + denial/error taxonomy.
+  - Freeze integration status model + remediation posture (bounded).
+- **DoD**:
+  - Approved(scope): admin flows are discoverable, safe, and audytowalne by design.
 
 #### P32-B — Membership/role ops + integration oversight closure
 - **Goal**: invite→role→access + revoke; integracje mają status i remediation.
 - **Acceptance**: core flows działają; insufficient permissions daje guidance; audit eventy są emitowane.
 - **Evidence**: integracyjne testy + staging demo cockpit walkthrough.
+- **Tasks**:
+  - Implement invite/assign role/verify access/remove flows with clear denial guidance.
+  - Implement integration status + remediation path (bounded).
+  - Add integration/regression tests and run staging cockpit walkthrough demo.
+- **DoD**:
+  - Core admin ops work end-to-end; audit is emitted; integrations are operator-visible.
 
 #### P32-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P32-A/B/C.
+  - Validate rollback: disable integration ops; preserve read-only cockpit visibility.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw members/roles (P0), potem sync oversight (P1).

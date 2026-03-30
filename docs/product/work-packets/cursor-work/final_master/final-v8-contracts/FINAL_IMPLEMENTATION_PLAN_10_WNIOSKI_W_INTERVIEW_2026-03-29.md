@@ -86,16 +86,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: confidence/limits contract + evidence pointers; handoff do `Inicjatywy`.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no overclaim” zasada spisana.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze artifact structure (finding/evidence/limits/next action) and confidence levels semantics.
+  - Freeze evidence pointers rules (what is linkable; how we prevent “source loss” on edits).
+  - Freeze handoff payload to `Inicjatywy` (what context travels, bounded).
+- **DoD**:
+  - Approved(scope): “no overclaim” is enforceable; artifact is audytowalny and testable.
 
 #### P10-B — Review/publish + handoff closure
 - **Goal**: draft→review→publish state + stable handoff do inicjatywy.
 - **Acceptance**: user przechodzi finding→initiative bez utraty sensu; evidence pointers nie znikają po edycji.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement review/publish state machine (bounded) and stable handoff to initiatives.
+  - Ensure evidence pointers persist across edits; add contract tests for payload stability.
+  - Run staging demo (5.3) with 2 findings of different confidence.
+- **DoD**:
+  - Handoff is stable; evidence pointers persist; confidence/limits visible and consistent.
 
 #### P10-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P10-A/B/C.
+  - Validate rollback: disable publish/handoff automations; preserve read-only insights.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw read-only artifact + review, potem automatyzacje/AI assist (jeśli P1).

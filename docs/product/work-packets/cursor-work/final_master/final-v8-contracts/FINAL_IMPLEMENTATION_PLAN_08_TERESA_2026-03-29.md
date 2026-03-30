@@ -110,16 +110,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: handoff contract do kluczowych surfaces; voice degraded rules; audit/traces baseline.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; governance (proposal/approval) jest spisana.
 - **Evidence**: scope approval + linkowane benchmark/SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze P0 target surfaces for handoff + required context payload.
+  - Freeze action governance envelope (proposal→approval→execution→audit).
+  - Freeze voice degraded rules + boundaries vs `Anna` and internal lanes.
+- **DoD**:
+  - Approved(scope): proposal governance and handoff targets are explicit and testable.
 
 #### P08-B — Cross-surface handoff + action governance closure
 - **Goal**: realny handoff do modułów + tool/action envelope z audytem.
 - **Acceptance**: 3 scenariusze cross-surface działają; proposal→approval→execution nie gubi kontekstu.
 - **Evidence**: integracyjne testy + staging demo “tool/action proposal”.
+- **Tasks**:
+  - Implement 3 cross-surface scenarios with preserved context (bounded).
+  - Implement tool/action envelope with audit/traces visible.
+  - Add integration tests for handoff payload + contract tests for tool envelope (5.2).
+- **DoD**:
+  - Cross-surface flows pass; users see what will happen before it happens; audit is visible.
 
 #### P08-C — Voice + continuity verification + rollout
 - **Goal**: dopiąć voice continuity (bounded) + telemetry + regresje.
 - **Acceptance**: voice ma jawne degraded/fallback; historia zachowana; bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Verify voice on/off + degraded fallback in staging and capture proof (5.3).
+  - Fill ledger rows P08-A/B/C; validate rollback to text-only + audit preserved.
+- **DoD**:
+  - Status `verified(evidence)` with complete evidence ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw tekst + handoff, potem voice; feature flags per capability.

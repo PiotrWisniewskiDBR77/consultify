@@ -147,16 +147,35 @@ Kontrakt wymaga (minimum):
 - **Inputs required**: declared providers + deklaracja read vs write/bidir + conflict model.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; recurrence correctness i conflict-safe writes rules spisane.
 - **Evidence**: scope approval + linkowane standardy/bench.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze providers + declare read vs write/bidir (per provider).
+  - Freeze recurrence + exceptions doctrine (series/instance mapping) and conflict model (conditional writes).
+  - Freeze permission gradients (free/busy/read/write/delegate) and UI affordances rules.
+- **DoD**:
+  - Approved(scope): interoperability rules are explicit; no “export-only pretending sync”.
+  - Recurrence correctness and conflict-safe writes have testable acceptance statements.
 
 #### P02-B — Sync + recurrence + recovery closure
 - **Goal**: connect→initial sync→incremental sync→recovery + recurring events (exceptions) correctness.
 - **Acceptance**: OAuth expired i conflict są stanami produktu; permission gradients są respektowane w UI.
 - **Evidence**: integracyjne testy per provider + staging runbook (7.3).
+- **Tasks**:
+  - Implement incremental sync + recovery (OAuth expired / permission revoked) per provider.
+  - Implement recurring events mapping (occurrences+exceptions) with correctness tests.
+  - Implement conflict-safe writes where declared; surface conflict as product state.
+- **DoD**:
+  - Provider runbook passes; recurrence exceptions do not lose data; permissions are enforced in UI/API.
+  - Evidence artifacts ready for ledger (tests + staging proof).
 
 #### P02-C — Verification + rollout
 - **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Execute staging runbook (7.3), capture proof, and fill ledger rows P02-A/B/C.
+  - Validate rollback: disable write/bidir; preserve read-only overlay.
+- **DoD**:
+  - Status `verified(evidence)` with complete evidence ledger and known limits recorded.
 
 ### 8.2 Rollout strategy
 - Najpierw read + recovery + recurrence correctness (P0), potem write/bidir (tylko jeśli deklarowane).

@@ -93,16 +93,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: schema payload (source/run/stage/visibility/export ledger); stage language.
 - **Acceptance**: scope zatwierdzony; approve(run) ≠ review(artifact) jest nienaruszalne.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze trust payload schema (source/run/stage/visibility/export ledger) and mapping to UI badges.
+  - Freeze stage language (validation/review/ready) and exposure rules across surfaces.
+  - Freeze approval(run) vs review(artifact) invariants.
+- **DoD**:
+  - Approved(scope): trust-state is consistent by design; stage separation is explicit and testable.
 
 #### P18-B — End-to-end traceability closure
 - **Goal**: run→tool→output traceability jako first-class + spójny export audit.
 - **Acceptance**: lineage jest klikalne; export event nie łamie visibility; stage separation jest jasna.
 - **Evidence**: integracyjne testy + staging demo lineage+export.
+- **Tasks**:
+  - Implement click-through lineage (run→tool calls→output) as first-class.
+  - Implement export audit that respects visibility; add integration/regression tests (5.2).
+  - Run staging demos (5.3) and capture evidence.
+- **DoD**:
+  - Lineage is visible and consistent; exports are audytowalne and do not bypass visibility.
 
 #### P18-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Fill ledger rows P18-A/B/C with commits, test runs, staging proofs.
+  - Validate rollback: disable new badges/exports; preserve read-only lineage.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw payload+badges (read surfaces), potem rozszerzenia traceability depth (P1).

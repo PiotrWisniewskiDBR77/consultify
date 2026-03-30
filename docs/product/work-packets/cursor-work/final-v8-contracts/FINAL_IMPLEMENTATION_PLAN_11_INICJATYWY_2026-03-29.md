@@ -96,16 +96,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: status grammar + audit/log baseline; handoff do `Wdrożenia`.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent writes” spisane.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze lifecycle states + transitions and the read/write coherence rules across views.
+  - Freeze AI scaffold governance envelope (proposal→review→accept) + audit requirements.
+  - Freeze handoff payload to `Wdrożenia`/`KPI` (bounded).
+- **DoD**:
+  - Approved(scope): lifecycle and write-truth are explicit; no silent writes.
 
 #### P11-B — Lifecycle transitions + downstream spine closure
 - **Goal**: create→update→status transition→handoff z zachowaniem kontekstu.
 - **Acceptance**: widoki po zapisie są spójne; schema drift ma guards (bounded).
 - **Evidence**: integracyjne testy + staging demo (2 entry points).
+- **Tasks**:
+  - Implement create/update/status transitions and enforce coherent readback across views.
+  - Implement schema drift guards (bounded) to preserve status truth.
+  - Add integration tests + staging demo (5.3) (2 entry points).
+- **DoD**:
+  - After each write, all declared views agree; handoff preserves context.
 
 #### P11-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P11-A/B/C.
+  - Validate rollback: disable AI scaffold/automations; preserve CRUD+read.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw write-truth i lifecycle, potem “PM polish” (P1) i rozszerzenia.

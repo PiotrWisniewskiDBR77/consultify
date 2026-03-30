@@ -89,16 +89,33 @@ Status: draft (shared-sourced contract; KIMI reference present)
 - **Inputs required**: KIMI mapping (actions/states) + decyzja o persistence/reopen semantics.
 - **Acceptance**: scope zatwierdzony; honest limits jawne w UI; “zero interpretacji” w KIMI flows.
 - **Evidence**: scope approval + evidence pointers do KIMI screens.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze honest limits language (no Excel parity) and where it is shown in UI.
+  - Freeze persistence/reopen semantics and the bounded KIMI actions/states mapping.
+  - Freeze export/convert posture + audit linkage (18/19) (bounded).
+- **DoD**:
+  - Approved(scope): lifecycle is explicit and honest limits are enforceable (no overclaim).
 
 #### P23-B — Lifecycle closure (materialize→persist→reopen→export)
 - **Goal**: domknąć najważniejszą ścieżkę E2E i udowodnić persistence.
 - **Acceptance**: duży arkusz (bounded) nie gubi danych; export failure ma retry bez ghost artifacts.
 - **Evidence**: integracyjne testy + staging demo (happy + failure).
+- **Tasks**:
+  - Implement the E2E lifecycle and prove persistence/reopen (bounded).
+  - Implement export failure recovery + retry without ghost artifacts.
+  - Add integration/regression tests and run staging demos (happy + failure).
+- **DoD**:
+  - Reopen is real; export is reliable with recovery; tests pass on bounded “large sheet”.
 
 #### P23-C — Verification + rollout
 - **Goal**: regresje + staging proof + rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P23-A/B/C.
+  - Validate rollback: disable advanced features; preserve read-only + export.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw lifecycle (P0), potem split-screen UX polish (P1).

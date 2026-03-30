@@ -99,16 +99,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: decyzje o minimalnym modelu relacyjnym + permissions/lock semantics.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “schema drift posture” spisana.
 - **Evidence**: scope approval + linkowane benchmarki/readiness.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze minimal relational model (schema/records/views/interfaces) and “explainable grammar”.
+  - Freeze permissions/lock semantics and schema drift posture (degraded vs automatic updates).
+  - Freeze AI plan→approve→materialize contract (no silent writes).
+- **DoD**:
+  - Approved(scope): one relational grammar is explicit and testable; non-goals clear.
 
 #### P15-B — Base→records→views→forms/interfaces closure
 - **Goal**: domknąć mini-OS lane (2 tables + relation + views + interface) na jednej prawdzie.
 - **Acceptance**: schema change ma przewidywalny readback (lub jawny degraded); AI plan ma preview/diff.
 - **Evidence**: integracyjne testy + staging demo “mini-OS”.
+- **Tasks**:
+  - Implement the mini-OS lane end-to-end (2 tables + relation + views + interface) on one truth.
+  - Implement schema change behavior with predictable readback or explicit degraded state.
+  - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **DoD**:
+  - Mini-OS demo passes; schema drift posture is honest; AI materialization is governed.
 
 #### P15-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P15-A/B/C.
+  - Validate rollback: disable AI materialization; preserve read-only and export.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw schema+records+views, potem interfaces/forms (P1) i governance hardening.

@@ -92,16 +92,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: public boundaries; CTA taxonomy; citations/uncertainty posture.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; privacy/memory/voice boundaries spisane.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze public boundaries (data, memory, internal lanes separation) and “no Teresa mixing”.
+  - Freeze CTA taxonomy + measurable event grammar (funnel).
+  - Freeze factfulness posture: citations/evidence pointers vs explicit uncertainty.
+- **DoD**:
+  - Approved(scope): public assistant contract is explicit; privacy/voice/memory limits are enforceable.
 
 #### P16-B — CTA + multilang + voice degraded closure
 - **Goal**: public Q&A → CTA → event capture; multilang i voice z jawnie zdefiniowanym degraded state.
 - **Acceptance**: CTA działa i jest mierzalne; factful answers mają citations albo uncertainty marker.
 - **Evidence**: integracyjne testy + staging demo 3 scenariuszy.
+- **Tasks**:
+  - Implement public Q&A→CTA completion + event capture.
+  - Implement multilang + voice degraded states (rate-limit/unavailable) with safe fallback.
+  - Add integration+contract tests (5.2) and run 3-scenario staging demo (5.3).
+- **DoD**:
+  - CTA is measurable; multilingual is stable; voice fallback preserves context; citations/uncertainty enforced.
 
 #### P16-C — Verification + rollout
 - **Goal**: regresje (rate limit / voice) + staging proof + rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P16-A/B/C.
+  - Validate rollback: disable voice/factful mode; preserve safe Q&A + CTA.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Stopniowo: najpierw tekst + CTA, potem voice; feature flags per capability.

@@ -100,16 +100,33 @@ Status: draft (shared-sourced contract; dedicated template contract may be extra
 - **Inputs required**: permissions model + publish/review posture; rodzina report+deck templates.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no silent publish” zasada spisana.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze template payload schema (id/scope/blueprint/quality rules/brand defaults).
+  - Freeze ownership+permissions model (user/org/app) + publish/review gate (no silent publish).
+  - Freeze family convergence rules for report+deck templates (bounded).
+- **DoD**:
+  - Approved(scope): templates are runtime contracts (not gallery) and publish is governed.
 
 #### P24-B — Template-first generation + save-as-template closure
 - **Goal**: choose template→generate→reopen/continue→save-as-template→review→publish→reuse.
 - **Acceptance**: org/personal scopes nie mieszają się; generator respektuje template kontrakt.
 - **Evidence**: integracyjne testy + staging demo publish+reuse.
+- **Tasks**:
+  - Implement choose→generate→reopen/continue flow for 1 report + 1 deck (bounded).
+  - Implement save-as-template with review payload and publish to org; enforce scopes.
+  - Add integration/regression tests and run publish+reuse staging demo (5.3).
+- **DoD**:
+  - Templates are reusable across users (org scope) with governed publish; scopes are enforced.
 
 #### P24-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P24-A/B/C.
+  - Validate rollback: disable publish; preserve browse+generate.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw browse+select+generate, potem save-as-template/publish (P0) i rekomendacje (P1).

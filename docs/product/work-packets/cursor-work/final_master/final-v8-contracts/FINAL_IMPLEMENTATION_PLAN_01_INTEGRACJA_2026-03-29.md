@@ -150,16 +150,35 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
 - **Inputs required**: decyzja o declared providers (P0) + minimalny run/job surface.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; degraded/recovery grammar spisana.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze declared providers (P0) + map provider→objects (connection/workflow/run).
+  - Define status grammar per object (connected/degraded/requires_action/blocked/recoverable).
+  - Define operator “next action” surfaces (health + jobs-in-error + drill-down).
+- **DoD**:
+  - Approved(scope): object model + lifecycle language are explicit and bounded.
+  - Missing-input resolved for declared providers (no guessing on semantics).
 
 #### P01-B — Lifecycle closure (connect→monitor→recover)
 - **Goal**: onboarding + completion proof + post-connect operacyjność (run history, errors, retry).
 - **Acceptance**: induced failure→requires_action→recovery działa; operator ma “next action” per obiekt.
 - **Evidence**: integracyjne testy + staging demo (section 7.3).
+- **Tasks**:
+  - Implement connect→completion proof and post-connect recovery flows (reauth/retry).
+  - Implement run history + jobs-in-error list + drill-down to tracing artifacts (bounded).
+  - Add integration tests for lifecycle + error→state mapping (7.2).
+- **DoD**:
+  - E2E flow works for declared providers; failure and recovery are product states (not logs).
+  - Tests + staging proof are ready to attach to evidence ledger.
 
 #### P01-C — Verification + rollout
 - **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Run tests, execute staging demos (7.3), and fill evidence ledger rows P01-A/B/C.
+  - Validate rollout/rollback (flags; safe read-only fallback).
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits recorded.
 
 ### 8.2 Rollout strategy
 - Najpierw 1–2 providery P0 + run history + recovery; dopiero potem rozszerzenia (mapping/secrets governance).

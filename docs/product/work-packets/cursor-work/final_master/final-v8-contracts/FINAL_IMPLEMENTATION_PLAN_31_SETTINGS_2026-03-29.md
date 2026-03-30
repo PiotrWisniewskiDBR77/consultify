@@ -85,16 +85,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: settings registry schema + permission gates; impact metadata baseline.
 - **Acceptance**: scope zatwierdzony; boundaries z Organization/Admin/Superadmin jawne; non-goals jawne.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze settings taxonomy (root IA) and scope/ownership/inheritance rules.
+  - Freeze permission gates + denial guidance posture (no silent failure).
+  - Freeze impact metadata baseline (which settings must show runtime impact).
+- **DoD**:
+  - Approved(scope): taxonomy makes settings findable and safe; ownership boundaries are explicit.
 
 #### P31-B — Runtime impact visibility closure
 - **Goal**: znaleźć ustawienie → zmienić (jeśli wolno) → zobaczyć impact w runtime (bounded).
 - **Acceptance**: 3 zmiany (personal/tenant/module) mają widoczny efekt + audit; denial ma guidance.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement “find→change→observe impact” for 3 settings (personal/tenant/module).
+  - Implement audit trail and permission denial guidance.
+  - Add integration/regression tests and run staging demo (5.3).
+- **DoD**:
+  - Impact visibility is real; permission boundaries are enforced; audit exists.
 
 #### P31-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P31-A/B/C.
+  - Validate rollback: disable tenant/module writes; preserve read-only registry.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw taxonomy+registry, potem impact tooling (P0) i rozszerzenia (P1).

@@ -97,16 +97,33 @@ Status: draft (KIMI reference present) + missing dedicated plan
 - **Inputs required**: kompletne `Softs/KIMI` evidence dla deklarowanych flows + decyzja o optional save-to-library.
 - **Acceptance**: “zero interpretacji”; wszystkie akcje/stany mają evidence pointer; non-goals jawne.
 - **Evidence**: linkowane screens + spisane actions/states.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Enumerate KIMI screens/artifacts used and link them (no guessing).
+  - Extract actions/states/shortcuts into an approval-grade mapping (screen-by-screen).
+  - Freeze optional save-to-library semantics vs Outputs Library (no split-truth).
+- **DoD**:
+  - Approved(scope): KIMI mapping is complete for declared flows; missing inputs explicitly block work.
 
 #### P22-B — Split-screen doc workflow closure (bounded)
 - **Goal**: generate→edit→comment/track-change (bounded)→export→optional save→reopen zgodnie z KIMI evidence.
 - **Acceptance**: flow działa end-to-end; brak ghost outputs; provenance spójne z pozycją 18/19.
 - **Evidence**: integracyjne testy + nagranie split-screen.
+- **Tasks**:
+  - Implement the bounded split-screen workflow exactly per mapped evidence.
+  - Ensure provenance/trust-state + library convergence (18/19) and no ghost outputs on export.
+  - Add integration/regression tests from section 5; record split-screen staging proof.
+- **DoD**:
+  - Split-screen recording demonstrates evidence-aligned behavior; exports and optional save are audytowalne.
 
 #### P22-C — Verification + rollout
 - **Goal**: regresje (export failures) + staging proof + rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Fill ledger rows P22-A/B/C with commits, tests, and split-screen proof.
+  - Validate rollback: disable advanced edit/track-change; preserve read-only + export.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw minimalny flow P0 zgodny z evidence; dopiero potem rozszerzenia edycji (P1).

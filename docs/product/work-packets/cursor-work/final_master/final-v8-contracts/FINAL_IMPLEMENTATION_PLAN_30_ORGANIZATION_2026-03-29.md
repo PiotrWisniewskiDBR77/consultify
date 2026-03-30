@@ -84,16 +84,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: schema + ownership boundaries; member/role baseline.
 - **Acceptance**: scope zatwierdzony; downstream reuse contract spisany; degraded/error posture jawne.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze org schema (profile/defaults/trust) and ownership boundaries.
+  - Freeze downstream reuse contract (which fields propagate; versioning posture).
+  - Freeze member/role baseline and degraded/error posture for conflicts.
+- **DoD**:
+  - Approved(scope): org truth is single and reusable; boundaries are enforceable.
 
 #### P30-B — Downstream reuse + roles/trust closure
 - **Goal**: org defaults i role są konsumowane spójnie przez downstream (bounded).
 - **Acceptance**: 2 downstream surfaces odzwierciedlają zmiany; conflicts z Settings/Admin są czytelne.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement downstream reads for 2 surfaces; verify immediate consistency.
+  - Implement conflict/permission errors with clear guidance (no silent drift).
+  - Add integration tests and run staging demos (5.3).
+- **DoD**:
+  - Downstream surfaces reflect org changes; conflicts are explicit; audit exists.
 
 #### P30-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P30-A/B/C.
+  - Validate rollback: disable risk-control writes; preserve read-only org truth.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw profile/defaults, potem role/trust controls i integracje (P1).

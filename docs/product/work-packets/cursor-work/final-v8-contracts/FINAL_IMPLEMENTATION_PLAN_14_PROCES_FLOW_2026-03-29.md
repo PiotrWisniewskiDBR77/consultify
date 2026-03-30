@@ -88,16 +88,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: BPMN-adjacent mapping (bounded) + export/import assumptions.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; walidacja layered dopiero po semantyce (bounded).
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze semantic object types + meaning + readback rules (bounded).
+  - Freeze BPMN-adjacent mapping posture (what we support vs non-goal) + export/import assumptions.
+  - Freeze validation layering (semantic-first; then bounded rules).
+- **DoD**:
+  - Approved(scope): semantics and interoperability claims are explicit and bounded (no overclaim).
 
 #### P14-B — Builder toolbelt + semantic readback closure
 - **Goal**: connectors/labels/layout/undo/redo + stabilna semantyka + export/readback.
 - **Acceptance**: diagram komunikuje semantykę; invalid structure ma czytelny błąd i recovery.
 - **Evidence**: integracyjne testy + staging demo (manual + AI).
+- **Tasks**:
+  - Implement builder toolbelt + semantic readback + export/readback (bounded).
+  - Implement invalid structure handling with clear error + recovery path.
+  - Add integration+contract tests and run staging demos (5.3).
+- **DoD**:
+  - Manual + AI flows preserve semantics; invalid cases are recoverable; tests pass.
 
 #### P14-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P14-A/B/C.
+  - Validate rollback: disable AI proposals; preserve manual read/edit.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw semantyka+toolbelt, potem governance/validation rozszerzenia (P1).

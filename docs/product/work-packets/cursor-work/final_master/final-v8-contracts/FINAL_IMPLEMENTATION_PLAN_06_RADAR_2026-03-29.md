@@ -94,16 +94,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: ranking grammar + “why-now” payload contract; handoff targets.
 - **Acceptance**: zatwierdzony zakres; non-goals jawne; degraded/uncertainty zasady spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze ranking grammar + “why-now” payload (rationale/evidence/uncertainty).
+  - Freeze handoff targets and required context payload for each target module.
+  - Freeze degraded rules (missing data/conflict) and non-goals.
+- **DoD**:
+  - Approved(scope): triage contract is explicit and handoff payload is testable.
 
 #### P06-B — Signal→action continuity (handoff closure)
 - **Goal**: domknąć triage→handoff z zachowaniem kontekstu.
 - **Acceptance**: 3 typy sygnałów mają “next action” i prawidłowy landing w module docelowym.
 - **Evidence**: integracyjne testy handoff + staging demo.
+- **Tasks**:
+  - Implement 3 signal archetypes with explainability + next action.
+  - Implement landing with preserved context in target modules (bounded).
+  - Add contract tests for payload + integration tests for handoff clicks (5.2).
+- **DoD**:
+  - Staging demo passes; uncertainty boundaries are visible; no overclaim.
 
 #### P06-C — Verification + rollout
 - **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proofs (5.3) and fill ledger rows P06-A/B/C.
+  - Validate rollback: disable routing/handoff; preserve neutral view.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Włączaj inkrementalnie: najpierw read-only ranking + explainability, potem write/handoff hardening.

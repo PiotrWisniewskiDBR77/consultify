@@ -110,16 +110,33 @@ Status: draft (direct contract over existing plan)
 - **Inputs required**: scope resolution rules (private/org/tenant) + used/blocked source schema + promotion workflow.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; security posture i degraded states spisane.
 - **Evidence**: scope approval + linkowane SSOT/bench.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze scope resolution rules (private/org/tenant) and the leakage prevention posture.
+  - Freeze source ledger schema (used_sources/blocked_sources + rationale) and retention posture.
+  - Freeze promotion workflow (private→org) with review gate (no silent sharing).
+- **DoD**:
+  - Approved(scope): gateway is the single entrypoint; security rules are explicit and testable.
 
 #### P34-B — Source ledger + promotion workflow closure
 - **Goal**: odpowiedzi grounded mają sources; private→org promotion jest gated (review) i zachowuje provenance.
 - **Acceptance**: 3 query scenariusze działają; promotion działa; konsumenci AI nie omijają gateway.
 - **Evidence**: security/regression tests + staging demos.
+- **Tasks**:
+  - Implement used/blocked source ledger and show it (or explicit “no sources” degraded).
+  - Implement promotion state machine with review and preserved provenance.
+  - Add security regression tests (no leakage) and run staging demos (3 queries + promotion).
+- **DoD**:
+  - No leakage proven; promotion is governed; consumers cannot bypass gateway.
 
 #### P34-C — Verification + observability + rollout
 - **Goal**: retrieval traces + evaluation harness (bounded) + staging proof + rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony; operator ma minimalną observability.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Deliver bounded observability: retrieval traces + minimal eval harness; capture staging proof.
+  - Fill ledger rows P34-A/B/C; validate rollback to private-only mode if needed.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw gateway + security, potem promotion, potem evaluation/observability (P1) stopniowo.

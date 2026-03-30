@@ -92,16 +92,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: minimalny toolbelt + facilitation baseline + export/readback assumptions.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; bounded collab (jeśli w zakresie) spisany.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze minimal toolbelt (selection/navigation/undo/redo/export) and facilitation baseline cues.
+  - Freeze export/readback assumptions and (if in scope) collab/presence boundaries.
+  - Freeze AI co-building proposal contract (preview/apply/reject) (bounded).
+- **DoD**:
+  - Approved(scope): operator-safe toolbelt and facilitation flow are explicit; non-goals clear.
 
 #### P13-B — Core toolbelt + facilitation flow closure
 - **Goal**: selection/navigation/undo/redo/export + warsztatowy flow P0.
 - **Acceptance**: board jest operator-safe; scenariusz warsztatowy kończy się handoff (bounded).
 - **Evidence**: integracyjne testy + staging demo (warsztat + AI co-building).
+- **Tasks**:
+  - Implement operator-safe toolbelt and 1 workshop scenario end-to-end (bounded).
+  - Implement AI co-building flow with preview and audit events (bounded).
+  - Add integration tests and run staging demos (5.3).
+- **DoD**:
+  - Workshop scenario completes with bounded handoff; toolbelt is reliable; demos recorded.
 
 #### P13-C — Verification + rollout
 - **Goal**: regresje, telemetry, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P13-A/B/C.
+  - Validate rollback: disable AI/collab; preserve manual board read/edit.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw toolbelt+export, potem collab hardening (P1).

@@ -94,16 +94,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: submission status grammar + handoff do `Wnioski w Interview`.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; operator workflow opisany.
 - **Evidence**: scope approval + linkowane źródła.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze submission status grammar (pending/partial/complete/invalid/locked) and operator next actions.
+  - Freeze branching/skip posture (supported vs non-goal) + validation/preview expectations.
+  - Freeze handoff payload to `Wnioski w Interview` (what evidence travels).
+- **DoD**:
+  - Approved(scope): collection lane boundaries and governance are explicit and testable.
 
 #### P09-B — Operator workflow + submission governance closure
 - **Goal**: create/run/review submissions + locked truth + export.
 - **Acceptance**: lifecycle działa E2E; logika (jeśli w zakresie) jest walidowalna przed publikacją.
 - **Evidence**: integracyjne testy + staging run.
+- **Tasks**:
+  - Implement operator workflow create→collect→review→lock→export (bounded).
+  - Implement logic validation/preview (if in scope) or enforce explicit non-goal in UI.
+  - Add integration/regression tests (5.2) and run staging flow (5.3).
+- **DoD**:
+  - Lifecycle is governed; locked truth is real; export/handoff works end-to-end.
 
 #### P09-C — Verification + rollout
 - **Goal**: regresje, telemetry, staging proof; bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P09-A/B/C.
+  - Validate rollback: disable publishing; preserve submissions read+export.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Inkrementalnie: najpierw operator workflow + governance, potem logika advanced (jeśli P1).

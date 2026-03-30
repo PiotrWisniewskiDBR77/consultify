@@ -98,16 +98,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: trust-state schema (pozycja 18); list/preview/open coherence rules.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no second registry” zasada spisana.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze taxonomy/queues (mine/review/type) + owner/reviewer language and next-action cues.
+  - Freeze list/preview/open/reopen coherence rules (no contradictory paths).
+  - Freeze dependency on trust-state schema (position 18) and “one home” invariant.
+- **DoD**:
+  - Approved(scope): library is the canonical home and contract is stable (queues/badges/coherence).
 
 #### P19-B — Multi-format convergence + preview/open/reopen closure
 - **Goal**: wiele typów artefaktów na jednej prawdzie; preview/open/reopen bez sprzeczności.
 - **Acceptance**: 4 typy działają; queues “needs review” i badges spójne; export/share audytowalne.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement multi-format landing + discoverability for declared types (bounded).
+  - Implement queues + preview/open/reopen coherence; ensure trust-state matches everywhere.
+  - Add integration tests (5.2) and run staging demo (5.3) (4 types + needs review).
+- **DoD**:
+  - Library behaves as one home; open/reopen never contradict preview; export/share audited (via 18).
 
 #### P19-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P19-A/B/C.
+  - Validate rollback: disable new queues/badges; preserve read-only listing.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw list/preview/open spójność, potem family convergence rozszerzenia (P1).

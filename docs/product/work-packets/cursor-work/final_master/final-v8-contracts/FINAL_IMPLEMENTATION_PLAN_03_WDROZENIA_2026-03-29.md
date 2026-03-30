@@ -122,16 +122,33 @@ Kontrakt wymaga (minimum):
 - **Inputs required**: one execution truth model + minimalny dependency/workload/baseline vocabulary.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; “no split-brain” zasada spisana.
 - **Evidence**: scope approval + linkowane benchmarki.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze bounded control tower scope (queues + drill-down + interventions list).
+  - Freeze “one execution truth” rules: which writes exist and what must refresh.
+  - Freeze baseline/forecast/variance vocabulary + dependency blast-radius readback (bounded).
+- **DoD**:
+  - Approved(scope): no PM-suite scope drift; write-truth and non-goals are explicit.
 
 #### P03-B — Detect→drill-down→intervene→verify closure
 - **Goal**: domknąć interwencję i post-write coherence w deklarowanym zakresie.
 - **Acceptance**: po mutacji wszystkie deklarowane widoki mówią tę samą prawdę; blast radius jest widoczny (bounded).
 - **Evidence**: integracyjne testy write→refresh + staging demo (7.3).
+- **Tasks**:
+  - Implement detect→drill-down→intervene loop for P0 queue types (late/blocked/overload).
+  - Implement post-write refresh so summary and detail never disagree (bounded).
+  - Add integration+regression tests from 7.2 and run staging demo 7.3.
+- **DoD**:
+  - Interventions change the same truth across declared views; blast radius is visible (bounded).
 
 #### P03-C — Verification + rollout
 - **Goal**: telemetry + regresje + staging proof; bezpieczny rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof, run tests, fill ledger rows P03-A/B/C.
+  - Validate flags and rollback to read-only control tower.
+- **DoD**:
+  - Status `verified(evidence)` with complete evidence ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Inkrementalnie: P0 control tower + write-truth, potem P1 baseline/variance i smoothing.

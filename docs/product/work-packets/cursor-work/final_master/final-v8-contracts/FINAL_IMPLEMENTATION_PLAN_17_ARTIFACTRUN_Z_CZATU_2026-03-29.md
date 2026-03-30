@@ -97,16 +97,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: status model + audit; approve(run) ≠ review(artifact) boundary.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; failure packaging i rerun semantics spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze run status model + stage language (validation vs execution vs materialized).
+  - Freeze approval(run) vs review(artifact) boundary (UI + payload).
+  - Freeze rerun/failure semantics and “no ghost artifacts” rule.
+- **DoD**:
+  - Approved(scope): run grammar and stage separation are explicit and testable.
 
 #### P17-B — Validation + rerun/failure closure
 - **Goal**: domknąć preflight/validation i czytelne failure/retry bez duplikacji artefaktów.
 - **Acceptance**: failure ma recovery; lineage jest zachowane; statusy są widoczne i niesprzeczne.
 - **Evidence**: integracyjne testy + staging demo failure.
+- **Tasks**:
+  - Implement explicit validation/preflight stage and render it distinctly.
+  - Implement failure packaging + retry/rerun with preserved lineage (bounded).
+  - Add integration/regression tests (5.2) and run failure staging demo (5.3).
+- **DoD**:
+  - Retry never duplicates artifacts; lineage is visible; statuses are consistent across surfaces.
 
 #### P17-C — Verification + rollout
 - **Goal**: telemetry, regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P17-A/B/C.
+  - Validate rollback: disable approve/run; preserve plan + readback.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw 1–2 formaty artefaktów (P0), potem family convergence (P1).

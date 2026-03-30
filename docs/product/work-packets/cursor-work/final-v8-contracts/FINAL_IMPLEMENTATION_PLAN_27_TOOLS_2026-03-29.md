@@ -92,16 +92,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: session state model + governance visibility + output traceability.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; finalize gating (DoD) opisane.
 - **Evidence**: scope approval + linkowane SSOT/bench.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze session state model + finalize gating (missingItems).
+  - Freeze governance visibility (propose/review/accept) and audit requirements.
+  - Freeze promotion contract to initiatives/outputs + traceability rules.
+- **DoD**:
+  - Approved(scope): Tools family has one grammar; finalize blocks bad promotion.
 
 #### P27-B — Session→result→promotion closure
 - **Goal**: sesja nie gubi kontekstu; wyniki mają traceability; promotion do inicjatyw/outputs działa.
 - **Acceptance**: 2 tool archetypy działają end-to-end; failure state ma retry bez duplikacji.
 - **Evidence**: integracyjne testy + staging demo.
+- **Tasks**:
+  - Implement E2E for 2 tool archetypes: discovery→session→result→promotion (bounded).
+  - Implement failure packaging + retry without duplicating outputs.
+  - Add integration/regression tests and run staging demos (2 archetypes + promotion).
+- **DoD**:
+  - Sessions preserve context; results are traceable; promotions are governed and reliable.
 
 #### P27-C — Verification + rollout
 - **Goal**: telemetry, regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P27-A/B/C.
+  - Validate rollback: disable promotion; preserve sessions + results.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw P0 archetypy + governance, potem downstream promotion hardening (P1).

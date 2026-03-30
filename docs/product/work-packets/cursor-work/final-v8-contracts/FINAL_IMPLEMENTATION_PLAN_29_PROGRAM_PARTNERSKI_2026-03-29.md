@@ -89,16 +89,33 @@ Status: draft (contract wrapper over existing plan)
 - **Inputs required**: status model + earnings ledger schema + holds/exceptions rules.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; messaging i remediation posture spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze partner lifecycle state machine (apply→activate→enable→grow→earn).
+  - Freeze earnings ledger schema + holds/exceptions + audit requirements.
+  - Freeze partner messaging + remediation rules (bounded).
+- **DoD**:
+  - Approved(scope): partner+operator see one truth; earnings are audytowalne by design.
 
 #### P29-B — Portal + operator tower truth alignment closure
 - **Goal**: partner widzi to samo co operator; enablement i earnings są audytowalne.
 - **Acceptance**: end-to-end partner działa; exceptional path (hold/review) ma jasne kroki.
 - **Evidence**: integracyjne testy + staging demo (happy + exceptional).
+- **Tasks**:
+  - Implement end-to-end partner journey and ensure portal vs operator tower alignment.
+  - Implement exceptional path (hold/review) with clear remediation and audit.
+  - Add integration/regression tests and run staging demos (happy + exceptional).
+- **DoD**:
+  - Portal and operator tower never disagree; exceptional paths are recoverable and audytowalne.
 
 #### P29-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P29-A/B/C.
+  - Validate rollback: disable accrual/payout; preserve status read-only + audit.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw lifecycle+ledger (P0), potem enablement packaging (P1) i rozbudowa.

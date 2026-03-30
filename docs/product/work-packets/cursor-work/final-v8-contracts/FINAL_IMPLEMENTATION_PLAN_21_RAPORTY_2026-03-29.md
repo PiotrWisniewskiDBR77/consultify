@@ -93,16 +93,33 @@ Status: draft (shared-sourced contract; dedicated plan pending extraction)
 - **Inputs required**: template selection + parameters; sources/citations posture; degraded rules (no-web).
 - **Acceptance**: scope zatwierdzony; non-goals jawne; approve(run) ≠ review(artifact) spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze template-first flow (select→params→plan→approve) and required template metadata.
+  - Freeze sources/citations posture and no-web degraded rules (no overclaim).
+  - Freeze convergence with Outputs Library (19) + trust-state (18).
+- **DoD**:
+  - Approved(scope): template-first + sources posture are explicit and testable.
 
 #### P21-B — Template→plan→approve→artifact→library→continue closure
 - **Goal**: E2E flow + reopen/continue + export audit.
 - **Acceptance**: no-web fallback jest uczciwy; sources są jawne (albo ograniczenie).
 - **Evidence**: integracyjne testy + staging demo 2 template’ów.
+- **Tasks**:
+  - Implement E2E flow for 2 templates: generate→library→reopen/continue→export (bounded).
+  - Implement no-web fallback path with explicit degraded state.
+  - Add integration/regression tests (5.2) and run staging demos (5.3).
+- **DoD**:
+  - Templates produce durable artifacts; sources are visible or explicitly absent; exports audited.
 
 #### P21-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P21-A/B/C.
+  - Validate rollback: disable web/search; preserve safe draft generation.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw template-first, potem rozszerzenia sources/degraded (P1) i polish.

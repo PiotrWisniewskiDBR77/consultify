@@ -92,16 +92,33 @@ Status: draft (direct contract over existing plan)
 - **Inputs required**: destructive actions confirmation posture; permission model dla team folders; search target posture.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; archive≠delete i pin semantics spisane.
 - **Evidence**: scope approval + linkowane SSOT.
+- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
+  - Freeze lifecycle actions (create/rename/pin/move/archive/unarchive/delete) and confirmation posture.
+  - Freeze personal vs team folder semantics + permission gates + degraded states.
+  - Freeze search target posture (server-side) + pagination/filters (bounded).
+- **DoD**:
+  - Approved(scope): lifecycle and search are explicit and testable; destructive actions are gated.
 
 #### P35-B — Lifecycle + search target closure
 - **Goal**: create/rename/pin/move/archive/unarchive/delete + search (baseline + target) z pagination/filters.
 - **Acceptance**: 10 rozmów da się organizować i wyszukiwać; deep-links działają; brak leakage.
 - **Evidence**: integracyjne testy + staging demo organize→search→revisit.
+- **Tasks**:
+  - Implement full lifecycle actions with consistent states (archive≠delete) and deep-links.
+  - Implement server-side search target with pagination/filters; prove it’s not “fake search”.
+  - Add integration/security regression tests and run staging demo (10 threads).
+- **DoD**:
+  - Organize→search→revisit works; permissions prevent leakage; tests pass.
 
 #### P35-C — Verification + rollout
 - **Goal**: regresje, staging proof, rollout/rollback.
 - **Acceptance**: bar `verified(evidence)` spełniony.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
+- **Tasks**:
+  - Capture staging proof and fill ledger rows P35-A/B/C.
+  - Validate rollback: disable destructive delete; preserve archive + read-only access.
+- **DoD**:
+  - Status `verified(evidence)` with complete ledger entries and known limits.
 
 ### 8.2 Rollout strategy
 - Najpierw personal folders + lifecycle, potem team folders permissions (P1) i search target hardening.
