@@ -151,6 +151,10 @@ async function updateTemplateArtifactPostPublish(params: {
   artifactId: string;
   organizationId: string;
   publishedBy: string;
+  reviewedBy: string;
+  reviewedAt: string;
+  publishState: string;
+  validationState: string;
 }): Promise<void> {
   const now = new Date().toISOString();
   const row = await dbGet<{ origin_summary_json: string | null }>(
@@ -172,6 +176,13 @@ async function updateTemplateArtifactPostPublish(params: {
   template.status = 'published';
   template.metadata = {
     ...(template.metadata && typeof template.metadata === 'object' ? template.metadata : {}),
+    provenanceStamp: {
+      source: params.publishedBy,
+      reviewedBy: params.reviewedBy,
+      reviewedAt: params.reviewedAt,
+      publishState: params.publishState,
+      validationState: params.validationState,
+    },
     publishedBy: params.publishedBy,
     publishedAt: now,
     updatedAt: now,
@@ -465,6 +476,17 @@ router.post(
       return res.status(404).json({ error: 'Artifact not found' });
     }
 
+    // P24-C rollback posture: allow disabling template review without disabling browse/generate.
+    if (
+      artifact.artifactFamily === 'template' &&
+      String(process.env.V8_TEMPLATES_REVIEW_ENABLED || 'true').toLowerCase() === 'false'
+    ) {
+      return res.status(503).json({
+        error:
+          'Template review is temporarily disabled (rollback posture). Please retry later.',
+      });
+    }
+
     try {
       const reviewersRaw = Array.isArray(req.body?.reviewers)
         ? req.body.reviewers.map((value: unknown) => String(value))
@@ -722,6 +744,35 @@ router.post(
       return res.status(409).json({ error: 'Only template artifacts can be published via this endpoint' });
     }
 
+    // P24-C rollback posture: disable template publish without disabling browse/generate.
+    if (String(process.env.V8_TEMPLATES_PUBLISH_ENABLED || 'true').toLowerCase() === 'false') {
+      return res.status(503).json({
+        error: 'Template publishing is temporarily disabled (rollback posture). Please retry later.',
+      });
+    }
+
+    const templateScope = String((artifact.originSummary as any)?.template?.scope || '')
+      .trim()
+      .toLowerCase();
+    if (templateScope !== 'org' && templateScope !== 'organization' && templateScope !== 'app' && templateScope !== 'application') {
+      return res.status(409).json({
+        error: 'Only organization/system templates can be published. Create an org-scope template first.',
+      });
+    }
+
+    // P24 contract: fail-closed when provenance stamp cannot be minted (simulate P18 outage).
+    if (
+      (templateScope === 'org' ||
+        templateScope === 'organization' ||
+        templateScope === 'app' ||
+        templateScope === 'application') &&
+      String(process.env.V8_PROVENANCE_STAMP_ENABLED || 'true').toLowerCase() === 'false'
+    ) {
+      return res.status(503).json({
+        error: 'Provenance stamp unavailable (P18). Publishing is blocked (fail closed). Please retry later.',
+      });
+    }
+
     const record = await publishReviewService.getPublishRecord(artifactId, organizationId);
     if (!record) {
       return res.status(409).json({ error: 'Publish record missing. Start review first.' });
@@ -764,7 +815,15 @@ router.post(
       });
     }
 
-    await updateTemplateArtifactPostPublish({ artifactId, organizationId, publishedBy: userId });
+    await updateTemplateArtifactPostPublish({
+      artifactId,
+      organizationId,
+      publishedBy: userId,
+      reviewedBy: userId,
+      reviewedAt: new Date().toISOString(),
+      publishState: current.currentState,
+      validationState: 'validated',
+    });
 
     res.status(200).json({ data: { publishRecord: current, gate } });
   })

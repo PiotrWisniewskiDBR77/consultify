@@ -59,6 +59,9 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
   app.use('/api/artifacts', artifactsRouter);
 
   beforeEach(() => {
+    delete process.env.V8_TEMPLATES_REVIEW_ENABLED;
+    delete process.env.V8_TEMPLATES_PUBLISH_ENABLED;
+    delete process.env.V8_PROVENANCE_STAMP_ENABLED;
     verifyTokenMock.mockReset();
     getArtifactForUserMock.mockReset();
     listArtifactsForUserMock.mockReset();
@@ -231,6 +234,53 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         authority: 'presentations_runtime',
       },
     });
+  });
+
+  it('blocks template start-review when V8_TEMPLATES_REVIEW_ENABLED=false (rollback posture)', async () => {
+    process.env.V8_TEMPLATES_REVIEW_ENABLED = 'false';
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'tmpl-1',
+      artifactFamily: 'template',
+      originSummary: { template: { scope: 'org' } },
+    });
+
+    const res = await request(app).post('/api/artifacts/tmpl-1/start-review').send({ reviewers: [] });
+    expect(res.status).toBe(503);
+    expect(startArtifactReviewMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks template publish when V8_TEMPLATES_PUBLISH_ENABLED=false (rollback posture)', async () => {
+    process.env.V8_TEMPLATES_PUBLISH_ENABLED = 'false';
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'admin-1', organizationId: 'org-1', role: 'ADMIN' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'tmpl-2',
+      artifactFamily: 'template',
+      originSummary: { template: { scope: 'org' } },
+    });
+
+    const res = await request(app).post('/api/artifacts/tmpl-2/publish').send({ reviewType: 'peer_review' });
+    expect(res.status).toBe(503);
+  });
+
+  it('fails closed when provenance stamp is unavailable for org template publish', async () => {
+    process.env.V8_PROVENANCE_STAMP_ENABLED = 'false';
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'admin-1', organizationId: 'org-1', role: 'ADMIN' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'tmpl-3',
+      artifactFamily: 'template',
+      originSummary: { template: { scope: 'org' } },
+    });
+
+    const res = await request(app).post('/api/artifacts/tmpl-3/publish').send({ reviewType: 'peer_review' });
+    expect(res.status).toBe(503);
+    expect(String(res.body?.error || '')).toContain('Provenance stamp unavailable');
   });
 
   it('allows access grant mutation for artifact owners', async () => {
