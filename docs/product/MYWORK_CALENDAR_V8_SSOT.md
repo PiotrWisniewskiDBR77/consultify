@@ -158,6 +158,26 @@ The calendar must clearly distinguish:
 
 No UI may imply full bidirectional sync if only partial or read-style integration exists.
 
+### 7.1 Declared providers + sync modes (canon)
+Canonical provider family list (no “other_external” escape hatch):
+
+| Provider | Read | Write | Bidir | Bounded truth |
+| --- | --- | --- | --- | --- |
+| Google Calendar | ✅ | ✅ (bounded) | ✅ (bounded) | Write/bidir only for items with explicit permissions + edit authority; conditional writes (etag/If-Match) where available; conflicts are product state (no overwrite). |
+| Microsoft 365 / Outlook | ✅ | ✅ (bounded) | ✅ (bounded) | Conditional writes via `@odata.etag` (If-Match) where available; safe create via `transactionId` where available; conflicts are product state. |
+| CalDAV (generic) | ✅ | ❌ (not declared) | ❌ (not declared) | Wave 1 declares read + recurrence correctness + lifecycle honesty; write/bidir requires separate scoped approval due to ACL/ETag variability. |
+
+### 7.2 Recurrence + exceptions correctness (doctrine)
+- Series master ≠ instance ≠ exception; exceptions are never silently lost.
+- No instance explosion: materialize occurrences only for requested windows; store rules + exceptions canonically.
+
+### 7.3 Conflict-safe writes + permission gradients (doctrine)
+- If write is enabled, it must be conditional (ETag/If-Match where available); conflicts become product state, never silent overwrite.
+- Permission gradients (free/busy → read → write → delegate) must be reflected in UI; UI must not “fake edit”.
+
+### 7.4 Provider lifecycle honesty (doctrine)
+Each source connection must present lifecycle truth: `connected` / `degraded` / `requires_action` / `recoverable` / `blocked`, with explicit recovery steps (reauth, scope restore, full resync when cursor invalid).
+
 ---
 
 ## 8. View doctrine
