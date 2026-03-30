@@ -21,7 +21,176 @@ Status: draft (contract wrapper over existing plan)
 - Zastąpienie kontraktu integracji “page’em ustawień” bez operator-grade lifecycle (to jest anty-cel).
 - Zmiana architektury platformy sync jako warunek wstępny (kontrakt wymaga stabilnej gramatyki lifecycle i obserwowalności; re-arch jest osobnym zakresem).
 
-### 2.3 Assumptions
+### 2.3 P01-A canon (control-plane canon + object model)
+
+Ta sekcja jest **zamrożonym kanonem** dla `Integracja` jako control plane. Każda implementacja (`P01-B+`) musi:
+- rozszerzać poniższy model (bez równoległych prawd),
+- używać tej samej gramatyki stanów (bez provider-specific ad-hoc stanów),
+- prowadzić operatora po tych samych powierzchniach “health → runs → recovery”.
+
+#### 2.3.1 Declared P0 providers (explicit list)
+
+P01-A deklaruje P0 tylko dla rodzin providerów, które mają pełny sens “connect → complete → monitor → recover” w Wave1/near-term lane i są spójne z benchmark + readiness.
+
+- **Google Workspace**: Google Calendar, Google Drive
+- **Microsoft 365 (Microsoft Graph)**: Outlook Calendar, OneDrive/SharePoint, Microsoft Teams
+- **Slack**
+- **Jira Cloud (Atlassian)**
+- **Generic Webhooks + API keys** (first‑party integration endpoints, inbound/outbound deliveries)
+
+Jawny non-goal w P01-A: **nie deklarujemy** jako P0 “non‑Jira Tier‑A peer” (np. Asana vs Monday) dopóki wybór nie zostanie rozstrzygnięty w osobnym bounded pakiecie (nie ma “one of” w kanonie).
+
+#### 2.3.2 Object model (frozen)
+
+Model obiektów jest identyczny na wszystkich powierzchniach (UI, API, audit, obserwowalność). Nie wolno “sklejać” obiektów w jeden ekran bez zachowania rozdziału prawdy.
+
+1) **`provider_catalog_item`** (platform / catalog)
+- Co to jest: wpis w katalogu providerów (vendor + capability + polityki + dozwolone auth modele).
+- Po co: definiuje, co jest możliwe, dozwolone i jak to wygląda (także dla operatora i supportu).
+
+2) **`connection`** (tenant binding + credential)
+- Co to jest: instancja połączenia tenantu do konkretnego `provider_catalog_item` + referencja do credential/secrets.
+- Po co: to “źródło prawdy” o tym, czy tenant jest połączony i czy połączenie jest zdrowe/bezpieczne.
+
+3) **`workflow` / `sync`** (design-time definition)
+- Co to jest: definicja “co robimy” na danym `connection` (zakres, mapping, tryb: schedule/webhook/manual, enable/disable).
+- Po co: rozdziela “mamy połączenie” od “mamy włączoną synchronizację / publikację”.
+
+4) **`run` / `job`** (runtime execution record)
+- Co to jest: niezmienny rekord wykonania `workflow` (trigger, start/end, outcome, error class, retry/replay, trace pointers).
+- Po co: daje operatorowi historię, listę błędów i możliwość korelacji z tracingiem bez zgadywania.
+
+Relacje (kanoniczne):
+`provider_catalog_item` \(1\) → `connection` \(N\) → `workflow` \(N\) → `run` \(N\).
+
+#### 2.3.3 Lifecycle grammar (frozen per object)
+
+Każdy stan MUSI mieć: **meaning**, **consequence**, **next action**, **owner** (tenant vs platform).
+
+##### A) `provider_catalog_item` (platform-owned)
+
+| State | Meaning | Consequence | Next action | Owner |
+| --- | --- | --- | --- | --- |
+| `draft/setup` | provider jeszcze nie jest “published” lub jest w przygotowaniu | tenant nie może tworzyć połączeń; brak obietnic runtime | platform publikuje albo usuwa z kanonu | platform |
+| `connected` | provider jest aktywny i dopuszczony do użycia | można tworzyć `connection`; statusy są raportowane spójnie | monitorowanie + polityki | platform |
+| `degraded` | provider-wide problem (incydent, częściowa niedostępność, podwyższona latencja) | nowe i bieżące `run` mogą failować; UI musi pokazać degraded jako vendor-wide | opisać incydent + expected recovery window | platform |
+| `requires_action` | platform musi wykonać pracę (np. zmiana scopes, certs, app registration) żeby provider działał dalej | wszystkie affected `connection` muszą dostać czytelny reason; runs mogą być wstrzymane | wykonać action + opublikować runbook | platform |
+| `recovered` | provider wrócił do normy po incydencie | UI może pokazać “Recovered” jako świeży event; stan docelowy wraca do `connected` | zamknąć incydent, zostawić audit | platform |
+| `blocked` | provider jest globalnie zablokowany (policy, deprecation, security incident) | brak możliwości użycia; wszystkie connections przechodzą do `blocked` z reason | operator decyzja: unblock / migrate / deprecate | platform |
+
+##### B) `connection` (tenant-owned, platform-enforced)
+
+| State | Meaning | Consequence | Next action | Owner |
+| --- | --- | --- | --- | --- |
+| `draft/setup` | tenant rozpoczął setup, ale nie ma completion proof | brak gwarancji działania; `workflow` nie może wejść w `connected` | dokończyć setup + przejść verify/test | tenant |
+| `connected` | połączenie jest zweryfikowane (token/scopes/tenant reachability) | `workflow` może być włączony; runs mają prawo startować | monitorować + utrzymać zdrowie | tenant |
+| `degraded` | połączenie działa częściowo lub niestabilnie (np. transient refresh failures, partial reachability) | runs mogą być ograniczone albo opóźnione; musi istnieć reason | retry/auto-recovery; jeśli nie wraca → eskalacja | platform (auto) + tenant (info) |
+| `requires_action` | wymagana akcja człowieka (reauth, consent, scope fix) | runs zależne od połączenia są wstrzymane lub failują pre-check | rozpocząć reauth; po reauth obowiązkowy verify/test | tenant |
+| `recovered` | połączenie przeszło recovery (reauth lub fix) i przeszło verify/test | UI pokazuje “Recovered” jako świeży event; stan docelowy wraca do `connected` | opcjonalnie replay zaległych runs | tenant + platform |
+| `blocked` | połączenie nie może działać (policy disallow, provider blocked, org disabled) | brak możliwości uruchomienia runs; workflow nie może się włączyć | operator/admin decyzja: unblock / disconnect | platform + tenant admin |
+
+##### C) `workflow` / `sync` (tenant-owned definition)
+
+| State | Meaning | Consequence | Next action | Owner |
+| --- | --- | --- | --- | --- |
+| `draft/setup` | workflow istnieje, ale nie spełnia wymogów (mapping, scope, verification) | nie wolno “udawać enabled”; brak runs | uzupełnić mapping/scope → verify/test | tenant |
+| `connected` | workflow jest enabled i przechodzi pre-check na `connection` | runs mogą startować; monitoring aktywny | normalne operowanie | tenant |
+| `degraded` | workflow ma problem, ale jest **recoverable** (np. rate limit/backoff, transient provider errors) | runs mogą się opóźniać; UI musi pokazać degraded + reason | poczekać/auto-retry; jeśli trwa za długo → requires_action | platform (auto) + tenant (visibility) |
+| `requires_action` | workflow wymaga ręcznej interwencji (mapping drift, permission change, repeated permanent failures) | runs są wstrzymane lub kierowane do “jobs in error” | naprawić mapping/config → verify/test → enable/replay | tenant |
+| `recovered` | workflow wrócił do działania po manual recovery | UI pokazuje “Recovered”; stan docelowy wraca do `connected` | opcjonalny replay zaległych | tenant |
+| `blocked` | workflow jest świadomie zablokowany (pause, safety gate, policy) | brak runs | odblokować lub usunąć; zachować audit | tenant + platform (policy) |
+
+##### D) `run` / `job` (runtime record, platform-owned execution)
+
+`run` ma również runtime statusy (queued/running/succeeded/failed), ale control-plane mapuje je na poniższą gramatykę, żeby operator widział “co dalej”.
+
+| State | Meaning | Consequence | Next action | Owner |
+| --- | --- | --- | --- | --- |
+| `draft/setup` | run jest utworzony i czeka na pre-check lub zasoby | brak wyniku; nie wolno pokazywać jako “success” | poczekać; jeśli utknął → diagnoza | platform |
+| `connected` | run wykonuje się lub jest w normalnym przebiegu | w toku; raportuje progress | obserwować; ewentualnie cancel (bounded) | platform |
+| `degraded` | run jest retryowany / backoff / częściowo wykonany; **recoverable** | opóźnienie; może przejść do success bez akcji usera | poczekać; jeśli retry exhausted → requires_action | platform |
+| `requires_action` | run jest w dead-letter/quarantine albo permanent failure wymagającym decyzji | brak automatycznego powrotu | operator/tenant wybiera replay, fix, lub close | tenant (dla mapping/permissions) + platform (dla infra) |
+| `recovered` | run został zreplayowany i zakończył się sukcesem po failure | zapis audit “recovered” + korelacja do wcześniejszego run | brak; wraca do normalnego monitoringu | platform |
+| `blocked` | run jest zablokowany przez parent state (connection/workflow `requires_action`/`blocked`) | run nie może wystartować | napraw parent (reauth/mapping) → replay | tenant + platform |
+
+#### 2.3.4 Frozen operator surfaces (minimum)
+
+Minimalny operator-grade zestaw powierzchni (bez rozszerzania UI o równoległe “run truth”):
+
+1) **Provider health list**
+- Widok: tabela/lista providerów z agregacją po tenant `connection` + `workflow`.
+- Filtry (must): `requires_action`, `degraded`, `blocked`.
+- Kolumny (minimum): provider family, impacted connections, impacted workflows, last run, current state, reason, **next action**, owner.
+
+2) **Jobs-in-error**
+- Widok: kolejka `run` w `requires_action` (failed permanent / dead-letter).
+- Must show: error class/category, first seen, last attempt, retry count, affected workflow + connection, owner.
+
+3) **Run history + drill-down**
+- Widok: historia runów per workflow oraz globalnie (bounded time window).
+- Drill-down (bounded): timestamps, trigger, outcome, error summary, retry/replay actions (jeśli dozwolone), oraz **tracing pointers** (np. correlation id / trace id / log stream pointer) — bez prób budowy pełnego APM w UI.
+
+#### 2.3.5 Onboarding “completion proof” doctrine (no guessing)
+
+Onboarding jest zawsze trójfazowy i jawny:
+`setup` → `verify/test` → `enable`.
+
+Zasady:
+- `connected` wolno pokazać dopiero po `verify/test` (token/scopes + reachability + minimal operation proof).
+- “verify/test” tworzy artefakt dowodu: co najmniej jeden `run` typu `test` z wynikiem + zapisanym pointerem do diagnostyki.
+- `enable` oznacza, że workflow jest włączony i ma jasne zasady triggerów (schedule/webhook/manual) — brak “włączone ale nie wiadomo czy działa”.
+
+#### 2.3.6 Recovery doctrine (bounded)
+
+1) **Reauth**
+- Trigger: `connection.requires_action` z reason kategoryzowanym (revoked/expired/scope_reduced/tenant_unreachable).
+- Zasada: reauth nie niszczy mappingów/workflow; po reauth zawsze `verify/test` przed powrotem do `connected`.
+
+2) **Retry vs replay**
+- `retry`: automatyczne, tylko dla recoverable klas błędów (rate limit, transient outage, timeouts) z backoff.
+- `replay`: świadome, manualne powtórzenie runu po naprawie (reauth/mapping); musi być idempotent-safe i zapisane w audit.
+
+3) **Drift detection**
+- Drift (schema/mapping) jest osobnym reason i prowadzi do `workflow.requires_action` (nie “cichy fail”).
+- Po naprawie driftu obowiązuje `verify/test` przed enable/replay.
+
+#### 2.3.7 Anti-duplicate gate (must)
+
+- Nie wolno zakończyć na “settings page only” — control plane musi mieć health + runs + recovery.
+- Nie wolno dodawać provider-specific stanów poza kanoniczną gramatyką (stany = kanon; reason = szczegół).
+- Nie wolno budować równoległej prawdy o runach (np. osobna tabela/strona z innym statusem niż `run`).
+- Każda akcja recovery musi prowadzić do jednego SSOT (connection/workflow/run) i być audytowalna.
+
+#### 2.3.8 Error posture (minimum scenarios)
+
+Co najmniej poniższe scenariusze muszą mapować się na obiekt + stan + owner + next action (bez “unknown error” jako jedynej kategorii):
+
+1) **Reauth required (consent revoked / invalid_grant)** → `connection.requires_action` → next: reauth → owner: tenant
+2) **Rate limit (429 / vendor throttling)** → `run.degraded (recoverable)` → next: wait/backoff → owner: platform
+3) **Permission revoked / scopes reduced (403)** → `connection.requires_action` → next: reauth/consent with scopes → owner: tenant (+ platform policy visibility)
+4) **Mapping drift / schema change** → `workflow.requires_action` → next: review mapping + verify/test → owner: tenant
+5) **Run failed (transient timeout / network)** → `run.degraded (recoverable)` → next: auto-retry → owner: platform
+6) **Run failed (permanent validation / bad config)** → `run.requires_action` → next: fix config/mapping, replay → owner: tenant
+7) **Provider outage** → `provider_catalog_item.degraded` → next: platform incident + comms → owner: platform
+8) **Webhook delivery failure (410/401/invalid endpoint)** → `workflow.degraded` → next: retry/backoff; jeśli trwa → `workflow.requires_action` → owner: tenant + platform
+9) **Org policy blocks provider** → `connection.blocked` → next: unblock/policy change or disconnect → owner: platform + tenant admin
+
+#### 2.3.9 Acceptance checklist (P01-A scope approval) — testable
+
+- [ ] P0 providers są wymienione jawnie (bez “one of”) i ograniczone do declared list.
+- [ ] Object model zawiera dokładnie: `provider_catalog_item`, `connection`, `workflow(sync)`, `run(job)`.
+- [ ] Każdy obiekt ma zamrożoną gramatykę: `draft/setup → connected → degraded → requires_action → recovered` (+ `blocked`/`recoverable` gdzie potrzebne).
+- [ ] Każdy stan ma: meaning, consequence, next action, owner (tenant vs platform).
+- [ ] Operator surfaces minimum są zamrożone: provider health list + jobs-in-error + run history + drill-down.
+- [ ] Filtry provider health list zawierają: requires_action / degraded / blocked.
+- [ ] Drill-down runa zawiera bounded tracing pointers (correlation/trace/log pointers) bez budowy “full APM UI”.
+- [ ] Onboarding completion proof jest jawne: `setup → verify/test → enable`, bez zgadywania.
+- [ ] Recovery doctrine obejmuje: reauth, retry/replay, drift detection (bounded).
+- [ ] Anti-duplicate gate jest jawnie zapisany (no settings-only; no provider-specific states; no parallel run truth).
+- [ ] Error posture zawiera min. 8 scenariuszy z mapowaniem na obiekt+stan+owner+next action.
+- [ ] Wiersz evidence ledger `P01-A` jest wypełniony commit ref po closeout pakietu.
+
+### 2.4 Assumptions
 - `Synchronizacja` (position  — Wave2) rozszerza broad platformę; `Integracja` utrzymuje spójny, bounded control plane.
 
 ## 3. Authority chain (SSOT)
