@@ -258,7 +258,7 @@ Degraded behavior is part of the contract (no “silent fail”):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P29-A | approved(scope) |  | n/a (docs-only) | n/a (docs-only) | Canon frozen: lifecycle + ledger semantics + boundaries + audit + degraded + checklist |
+| P29-A | approved(scope) | `669b6ef4eb` | n/a (docs-only) | n/a (docs-only) | Canon frozen: lifecycle + ledger semantics + boundaries + audit + degraded + checklist |
 | P29-B |  |  |  |  |  |
 | P29-C |  |  |  |  |  |
 
