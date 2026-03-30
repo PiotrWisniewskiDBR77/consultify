@@ -7,7 +7,7 @@ Rules:
 - Agents **must not self-select** a packet unless it is listed below.
 - If a packet is not listed here, it is **not authorized** to start (even if it looks "obvious").
 - **Open docs mode**: manager has authorized **all remaining PNN-A (scope)** packets so documentation agents don’t block on the gate.
-- **Coding is still gated**: `P<NN>-B` / `P<NN>-C` remain manager-authorized one-by-one.
+- **Coding is still gated**: `P<NN>-B` / `P<NN>-C` are authorized only in the “Runtime” section below.
 
 ---
 
@@ -140,6 +140,22 @@ Goal: freeze chat history library + retrieval/search posture with governance bou
 Dependencies: P34 wisdom gateway recommended first.
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-A.md`
+
+---
+
+## Authorized packet(s) — RUNTIME (PNN-B/PNN-C only)
+
+### 1) P24-B — Templaty: template-first generation + save-as-template (core runtime)
+
+Goal: deliver template runtime in Outputs (P19) with governed publish/review gate and reuse.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P24-B.md`
+
+### 2) P25-B — Help: contextual entry points + recommendation closure (core runtime)
+
+Goal: deliver contextual help entry points on 3 surfaces + search→article→next-action routing + PL/EN degraded fallback + recommendation payload v1 for Teresa/Anna deep-linking.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P25-B.md`
 
 ---
 
