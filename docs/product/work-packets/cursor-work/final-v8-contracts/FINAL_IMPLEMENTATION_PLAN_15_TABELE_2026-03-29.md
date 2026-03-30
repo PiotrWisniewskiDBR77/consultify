@@ -1,7 +1,7 @@
 # Final Implementation Contract — Tabele (Position 15/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: approved(scope) (P15-A canon frozen; docs-only)
 
 ## 1. Executive summary
 - **Intent**: Pełna logika Airtable: tabele zwykłe/relacyjne + AI współbuduje jak konkurencja.
@@ -16,6 +16,211 @@ Status: draft (contract wrapper over existing plan)
 
 ### 2.2 Out-of-scope / non-goals
 - Budowa klona Airtable/Coda; kopiowanie UI.
+
+### 2.3 P15-A canon (singular relational grammar + scope approval)
+
+This section is the **scope-approval canon** for Tables v8. It freezes **one relational grammar** so later packets do not invent parallel “truths” (per-module config tables, bespoke record models, or silent AI mutations).
+
+#### 2.3.1 Singular relational grammar: the objects (and what they are not)
+Everything in Tables is one of these objects; everything else is a projection, operation, or permission wrapper.
+
+- **Base**: a governed container for multi-table work (membership + permissions + audit boundary).
+- **Table**: a named collection of records with a schema (fields) inside a base.
+- **Field**: typed schema definition belonging to exactly one table (with options + constraints).
+- **Record**: a row instance in a table; the canonical data truth (views/forms/interfaces never create a second truth).
+- **Relation**: linked-record semantics connecting records across tables (implemented via relation-capable fields + reciprocal semantics).
+- **View**: a saved, named projection over a table (filter/sort/group + visible fields/layout).
+- **Form**: a bounded input surface that creates (or updates, if later approved) records in a table.
+- **Interface**: a curated operator/consumer surface built on the same base/table/view/record truth (no duplicate storage).
+
+Identifiers (frozen):
+- Every object above has a **stable immutable ID** (UUID/ULID) and a mutable display name (where applicable).
+- All references across objects use IDs (never names) to survive renames.
+
+#### 2.3.2 Schema canon (base → tables → fields)
+Schema is a governed layer; schema changes are never “just UI”.
+
+Field types (canonical posture):
+- **Primitive**: text, longText, number, currency, percent, boolean, date, datetime, singleSelect, multiSelect, email, url, phone.
+- **People/refs**: user (workspace user reference), org (optional), createdBy/updatedBy (system).
+- **Files**: attachment (file references, not embedded blobs in schema).
+- **Computed**: formula, lookup, rollup.
+- **Relational**: linkedRecord (relation-capable field).
+
+Constraints (baseline, P0):
+- **Required** (record cannot be saved if missing).
+- **Unique** (within table; canonical enforcement server-side).
+- **Default value** (applies on record create).
+- **Validation** (type-specific: e.g. number ranges, date bounds, select options).
+- **Read-only/system** (createdAt/updatedAt/createdBy/updatedBy not directly editable).
+
+Schema edit operations (explicit):
+- Add field / rename field / change field type (bounded, may be destructive) / configure options / remove field (destructive).
+- Destructive operations require explicit warnings and produce auditable events (see 2.3.6 + 2.3.9).
+
+#### 2.3.3 Records canon (CRUD + record object semantics)
+Records are the canonical truth. Views/forms/interfaces are projections and workflows over the same record set.
+
+Record operations (P0):
+- **Create**: create a record (manual or via form; AI only via governed apply).
+- **Read**: grid/record-detail readback always reflects the same underlying truth.
+- **Update**: update field values subject to type validation and permissions.
+- **Delete**: delete record (soft-delete vs hard-delete is implementation detail, but user-facing semantics must be explicit).
+
+Record identity & audit posture:
+- Record has stable ID and tableId.
+- Minimum system fields are assumed: createdAt, updatedAt, createdBy, updatedBy (even if not always visible in every view).
+
+#### 2.3.4 Relations canon (linked records semantics + explainability)
+Relations are first-class because they define cross-table truth.
+
+Semantics (frozen):
+- A relation is represented by a **linkedRecord field** that stores a set of target record IDs.
+- Every relation has an explainable **reciprocal posture**:
+  - **Bidirectional (default)**: linking A→B implies B has a reciprocal view of the link (via reciprocal field or implicit backref).
+  - **Unidirectional (P1)**: only if explicitly approved later; not assumed for P15-B closure.
+
+Cardinality posture (product truth):
+- Baseline storage is **many-to-many** (a link field can point to multiple records).
+- **One-to-many / one-to-one** are expressed as constraints on top of the same mechanism:
+  - one-to-one: enforce max 1 link on both sides,
+  - one-to-many: enforce max 1 link on the “many” side (or the inverse, depending on declared direction).
+- Cardinality constraints, if enabled, must be enforced server-side and explained in UI (clear error on violation).
+
+Referential integrity (bounded, P0):
+- Link values must always point to existing records; stale links resolve to explicit degraded placeholders (see 2.3.8).
+- Deleting a record must define what happens to incoming links:
+  - baseline: links to the deleted record become invalid and surface as a degraded placeholder until cleaned (no silent data rewrite),
+  - optional (P1): cascading unlink with explicit approval.
+
+Explainability rule:
+- User can always answer: “what table do these linked records come from?”, “is it one-to-many or many-to-many?”, “what happens when a record is deleted?”
+
+#### 2.3.5 Views canon (saved views + query discipline)
+Views are the operating system layer: stable saved projections, not ephemeral filters.
+
+View object (P0):
+- Saved view belongs to a table and has its own stable ID.
+- Baseline view config includes:
+  - **filters** (field/operator/value),
+  - **sorts** (field + direction),
+  - **grouping** (0..1 grouping key baseline; multi-level grouping is P1),
+  - **visible fields/columns** (order + hidden fields),
+  - optional view type metadata (grid/kanban/timeline/etc. as available in the product).
+
+View semantics (frozen):
+- A view never changes the underlying record truth; it only changes what is displayed and how it is queried.
+- Saved view changes are auditable and permissioned separately from record edits (see 2.3.7).
+
+#### 2.3.6 Forms & interfaces canon (bounded P0 vs explicit P1)
+Forms/interfaces are part of Tables OS only if they sit on the same truth.
+
+P0 (bounded, required for P15-B lane closure):
+- **Form (create-record)**:
+  - targets exactly one table,
+  - has an ordered list of fields + per-field required/visible posture,
+  - performs type validation and constraint checks on submit,
+  - creates a record and returns a stable record link (or success receipt).
+- **Interface (curated surface)**:
+  - targets base/table/view and surfaces records without duplicating them,
+  - may be read-only by default; bounded field edits are allowed only if permissions permit,
+  - must include “source of truth” pointers (which base/table/view am I looking at?).
+
+P1 (explicitly not required unless later approved):
+- Update-record forms, multi-step forms/workflows, public forms with complex auth, interface page-builder parity, cross-table dashboards, custom components library.
+
+#### 2.3.7 Permissions + lock semantics (frozen)
+We freeze “who can mutate what” to prevent accidental schema corruption and silent governance drift.
+
+Roles/postures (conceptual; exact role names may differ, but semantics must hold):
+- **Base owner/admin**: can change base membership and all permissions; can edit schema, views, interfaces.
+- **Schema editor**: can add/rename/remove/change fields; can create/modify relations.
+- **Data editor**: can create/update/delete records (subject to field-level restrictions).
+- **View editor**: can create/rename/modify saved views (filters/sorts/group/visible fields).
+- **Interface builder**: can create/modify interfaces (curated surfaces) but cannot change schema unless also schema editor.
+- **Viewer**: read-only across records and views; cannot mutate schema/views/interfaces.
+- **Form submitter (bounded)**: can create records via a specific form if explicitly allowed; cannot browse base by default.
+
+Lock semantics (truth posture):
+- **Schema lock** (table-level): schema becomes read-only for non-admins; record operations may still be allowed.
+- **View lock** (view-level): a view can be locked to prevent accidental edits to its configuration; record edits in that view may still be allowed.
+- **Interface lock** (interface-level): interface config becomes read-only; underlying records remain governed by record permissions.
+- Locks must be **enforced server-side** and reflected in UI as explicit “read-only/locked” cues (no silent failures).
+
+#### 2.3.8 Schema drift posture (rename/remove impacts)
+Schema drift must be predictable. When automatic repair is unsafe, we degrade explicitly.
+
+Rename field (predictable update, P0):
+- References update by field ID; displayed name changes everywhere (views, forms, interfaces, formulas) without breaking.
+
+Remove field (explicit degraded state, P0):
+- If a view/form/interface references a removed field:
+  - it surfaces as **Missing field** (with the removed field’s last-known name if available),
+  - the surface remains readable, but configuration edits require resolving the missing reference,
+  - record data for that field is not silently re-mapped to another field.
+
+Type change (bounded, may be destructive):
+- If a type change would invalidate existing data or downstream computed fields, it must:
+  - require explicit approval,
+  - produce a preview/diff (counts of affected records),
+  - and on failure, remain atomic (no partial silent corruption).
+
+Relations drift:
+- If a relation target table/field is removed, dependent lookup/rollup fields degrade explicitly (“Broken relation”) until repaired.
+
+#### 2.3.9 AI governed contract (describe → plan → preview/diff → approve → materialize; NO silent writes)
+AI is a governed builder. It may propose changes, but never applies them silently.
+
+Workflow (mandatory):
+1. **Describe** (user intent in NL)
+2. **Plan** (AI proposal payload)
+3. **Preview/diff** (human-reviewable changes)
+4. **Approve / Reject** (explicit user action)
+5. **Materialize** (apply operations with audit + rollback posture)
+
+Plan payload must include (minimum):
+- **Targets**: baseId, tableIds (existing) and/or newTable specs.
+- **Schema ops**: fields to add/rename/remove/change type, with full type configs + constraints.
+- **Relations ops**: linkedRecord fields to add/configure; reciprocal semantics; cardinality constraints if any.
+- **Views ops**: saved views to create/update (filters/sorts/grouping/visible fields).
+- **Forms/interfaces ops**: only within P0 bounds unless explicitly flagged as P1 and rejected by default.
+- **Diff summary**: counts of adds/renames/removes; risk flags for destructive ops.
+- **Atomicity statement**: apply is atomic; any failure produces no partial write.
+
+Audit/log requirements (frozen):
+- Every apply creates an auditable event containing: actor, timestamp, object IDs touched, operations list, before/after snapshot pointers, and outcome (success/failure + reason).
+- The UI must expose a human-readable “what changed” summary after apply.
+
+#### 2.3.10 Anti-duplicate gate (one Tables OS canon)
+- Do **not** create per-module “config tables” or parallel storage that re-implements Tables semantics.
+- If another module needs structured data, it must either:
+  - use Tables OS (base/table/fields/records/views), or
+  - explicitly propose a new canon as a separate packet and get scope approval.
+
+#### 2.3.11 Error/degraded posture (minimum scenarios)
+Minimum scenarios that must be handled with explicit, recoverable UX posture:
+1. **Permission denied (schema edit)**: operation blocked; explain which permission is required.
+2. **Permission denied (record edit/delete)**: no partial edits; show read-only state.
+3. **Schema lock active**: schema UI is read-only; attempts to mutate show “locked” reason.
+4. **View/interface config drift** (missing field): surfaces “Missing field” and a repair action.
+5. **Relation integrity violation** (cardinality constraint): link blocked with a clear error.
+6. **Stale version / concurrency mismatch**: reject with refresh required; preserve user context.
+7. **AI plan invalid** (fails validation): cannot approve/apply; show validation errors and allow regenerate.
+8. **AI apply failure**: atomic rollback; show what failed; proposal remains to retry or discard.
+9. **Query/view execution error**: show degraded state; record truth remains accessible.
+10. **Large base performance degradation**: degrade animations/rendering; never drop records/links silently.
+
+#### 2.3.12 Acceptance checklist (scope approval; testable)
+- [ ] I can explain the canon objects: base, table, field, record, relation, view, form, interface (and that records are the truth).
+- [ ] Every object has a stable ID; renames do not break references.
+- [ ] Field types and constraints are explicit (required/unique/default/validation) and enforced server-side.
+- [ ] I can create/read/update/delete records (subject to permissions) and see consistent readback across surfaces.
+- [ ] Linked records are explainable and consistent; cardinality constraints (if enabled) are enforced with clear errors.
+- [ ] Views are saved objects with filters/sorts/grouping/visible fields; changing a view never mutates record truth.
+- [ ] Forms create records with validation; interfaces are curated surfaces on the same truth (no duplicate data).
+- [ ] Locks (schema/view/interface) produce explicit read-only cues and are enforced server-side.
+- [ ] Schema drift is predictable: rename updates cleanly; remove/type-change produces explicit degraded state or previewed destructive change.
+- [ ] AI never performs silent writes; every change goes through plan → preview/diff → explicit approve → atomic apply with audit log.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -147,7 +352,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P15-A |  |  |  |  |  |
+| P15-A | approved(scope) |  | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: relational grammar + permissions/locks + drift posture + AI no-silent-writes contract + anti-duplicate gate + degraded posture + acceptance checklist |
 | P15-B |  |  |  |  |  |
 | P15-C |  |  |  |  |  |
 
