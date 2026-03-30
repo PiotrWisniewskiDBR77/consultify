@@ -272,7 +272,7 @@ A report artifact **extends** `OutputTemplate` (P24 §2.3.1) with report-specifi
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P21-A | `approved(scope)` | (filled at commit) | Scope approval — no runtime tests | N/A (scope phase) | Report template-first canon + sources posture frozen; approve(run) ≠ review(artifact) invariant explicit |
+| P21-A | `approved(scope)` | `fdcba833f7` | Scope approval — no runtime tests | N/A (scope phase) | Report template-first canon + sources posture frozen; approve(run) ≠ review(artifact) invariant explicit |
 | P21-B |  |  |  |  |  |
 | P21-C |  |  |  |  |  |
 
