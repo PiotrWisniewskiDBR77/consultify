@@ -12,45 +12,29 @@ Rules:
 
 ## Authorized packet(s) — PARALLEL BATCH
 
-### 1) P03-A — Wdrożenia: control tower canon + write-truth boundaries (scope approval)
+### 1) P01-A — Integracja: control-plane canon + object model (scope approval)
 
-Goal: freeze operator-grade execution control tower (queues + drill-down + interventions) with explicit one-truth rules (no split-brain) and bounded dependency/blast-radius vocabulary.
+Goal: freeze the operator-grade integration control plane: explicit object model (provider/connection/workflow/run), lifecycle grammar, and recovery states (connect → complete → monitor → recover).
 
-Dependencies: P11-A ✅ (approved(scope) recommended), Foundations ✅
+Dependencies: benchmark + readiness SSOT (`SYNC_PLATFORM_BENCHMARK_V8.md`, `EXTERNAL_SYNC_READINESS_AUDIT_V8.md`)
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P03-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P01-A.md`
 
-### 2) P05-A — Finanse: finance lane canon + scope approval
+### 2) P07-A — Notatnik: notebook canon + scope approval
 
-Goal: freeze bounded consequence-management lane (import→analysis→mutation→readback) with KPI↔Finance coherence, versioning semantics, and import/mutation error taxonomy (no silent corruption).
+Goal: freeze notebook as durable working memory (capture + search + linking + attachments lifecycle) with explicit provenance language and bounded downstream handoffs.
 
-Dependencies: Results linkage SSOT ✅, Foundations ✅
+Dependencies: `NOTATKA_V8_SSOT.md` + benchmark (`NOTATKA_V8_BENCHMARK.md`)
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P05-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P07-A.md`
 
-### 3) P06-A — Radar: prioritization grammar + handoff canon (scope approval)
+### 3) P08-A — Teresa: copilot canon + boundaries (scope approval)
 
-Goal: freeze ranking grammar + “why-now” payload contract (rationale/evidence/uncertainty) and handoff payloads to downstream modules (Initiatives/Execution/Notes).
+Goal: freeze Teresa as contextual copilot (proposal→approval→execution→audit) with P0 handoff targets, voice degraded rules, and clear boundaries vs Anna/public assistant.
 
-Dependencies: Radar SSOT ✅, Foundations ✅
+Dependencies: chat benchmark + Wave2 AI OS context (`CHAT_V8_BENCHMARK.md`, `WAVE2_FINAL_IMPLEMENTATION_PLAN_AGENTS_KIMI_PROMPTS_PALANTIR_2026-03-29.md`)
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P06-A.md`
-
-### 6) P05-A — Finance lane canon + scope approval (DOCS ONLY)
-
-Goal: freeze bounded finance lanes (import→analysis→mutation→readback), KPI↔Finance coherence boundary, versioning semantics (current vs actual), error taxonomy + recovery posture, anti-duplicate gate, and degraded modes.
-
-Dependencies: P04-A ✅ (approved(scope)), Finance SSOT ✅, KPI↔Finance linkage SSOT ✅
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P05-A.md`
-
-### 7) P06-A — Radar canon + prioritization grammar (DOCS ONLY)
-
-Goal: freeze Radar ranking/prioritization grammar + “why-now” payload contract + handoff payload to `Inicjatywy`/`Wdrożenia`/`Notatki` + degraded/error posture + anti-duplicate gate.
-
-Dependencies: Radar SSOT ✅ (`docs/product/MYWORK_RADAR_V8_SSOT.md`)
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P06-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P08-A.md`
 
 ### 8) P02-A — Kalendarz interoperability canon (scope approval) (DOCS ONLY)
 
@@ -88,3 +72,7 @@ Completion (each agent independently):
 | P21-A | approved(scope) | 2026-03-30 |
 | P11-A | approved(scope) | 2026-03-30 |
 | P04-A | approved(scope) | 2026-03-30 |
+| P02-A | approved(scope) | 2026-03-30 |
+| P03-A | approved(scope) | 2026-03-30 |
+| P05-A | approved(scope) | 2026-03-30 |
+| P06-A | approved(scope) | 2026-03-30 |
