@@ -1,7 +1,8 @@
 # Final Implementation Contract — KPI (Position 4/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P04-A** (KPI canon + scope approval frozen); P04-B / P04-C not started  
+Last updated: 2026-03-30 (P04-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: KPI są dobrze opisane — teraz trzeba je dobrze zbudować.
@@ -111,16 +112,91 @@ Status: draft (contract wrapper over existing plan)
 
 ### 8.1 Bounded delivery packets
 #### P04-A — KPI canon + scope approval
-- **Goal**: jedna gramatyka KPI (grid/chart/targets) + jasne non-goals (BI parity).
-- **Inputs required**: SSOT linkage KPI↔Finance; decyzja o minimalnych workflows report/reconciliation.
-- **Acceptance**: scope jest zatwierdzony; user rozumie “co KPI zmienia” (signal → report → action).
-- **Evidence**: checklist scope approval + zlinkowane SSOT.
-- **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
-  - Freeze KPI vocabulary: signal/target/trend/report/reconciliation/next action.
-  - Freeze KPI↔Finance linkage boundaries (what’s in-lane vs non-goal).
-  - Freeze permission rules (who edits targets vs who views).
-- **DoD**:
-  - Approved(scope): KPI loop is explicit (signal→report→reconcile→action) and bounded.
+- **Goal**: zatwierdzić scope KPI jako **closed-loop Results lane** (nie BI suite) oraz zamrozić kanon: vocabulary, linkage boundaries, permissions, workflow contract, degraded/error posture, anti-duplicate gates.
+- **Inputs required**: `RESULTS_V8_SSOT.md` + `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md` (authority chain, doctrine).
+- **DoD**: `approved(scope)` gdy poniższy kanon jest jednoznaczny i testowalny (akceptacja + non-goals + degraded).
+
+##### 8.1A Frozen KPI vocabulary (canon)
+These terms are product-contract vocabulary (no synonyms in core UX copy / APIs / docs without an explicit mapping):
+
+- **signal**: detection that a KPI requires inspection (e.g., deviation, freshness issue, discrepancy vs Finance interpretation). Signal never equals “a chart”.
+- **target**: governed expectation for a KPI over a defined window; has owner + change history; is not a “forecast”.
+- **trend**: direction-of-change over a declared window + aggregation method (explicit); trend is not the same as performance vs target.
+- **report / scorecard**: operator artifact that snapshots KPI state + context + commentary + explicit next actions; not a slide deck and not a BI dashboard.
+- **reconciliation**: governed comparison of Results KPI truth vs Finance interpretation/model truth when linkage exists (statusful, owned, explained; never silent).
+- **next action**: explicit follow-up decision and assignment created from inspection/report/reconciliation; cannot be omitted when a signal exists.
+
+##### 8.1B Frozen KPI → Finance linkage boundaries (in-lane vs non-goal)
+Reference doctrine: `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md` + Results SSOT reconciliation ownership (W6-5).
+
+- **In-lane (KPI owns)**:
+  - KPI truth (definition, values, freshness, deviations) stays governed in Results.
+  - Link metadata exists as governed objects (link mode + rationale + status).
+  - Reconciliation **trigger + primary runtime anchor** starts in Results.
+  - Discrepancy visibility is explicit (difference summary + alignment checks + notes).
+- **In-lane (Finance owns)**:
+  - Finance interpretation, finance model truth, CFO review semantics and finance-side resolution.
+- **Non-goals / out-of-lane**:
+  - No “merge into one number”: Results values must not be overwritten by Finance models, and Finance models must not be overwritten by Results values.
+  - No parallel “finance truth” inside KPI (no budget/model editor in KPI).
+  - No BI-suite parity as a path to resolve discrepancy (no “just chart it” as reconciliation).
+
+##### 8.1C Frozen permissions model (targets/definitions vs view/comment)
+Minimum permission envelope (exact role names may map to existing RBAC later, but semantics are frozen here):
+
+- **KPI Owner / Results Operator (edit)**:
+  - Can edit KPI definition (name, description, formula metadata, slices/dimensions *if in-scope*), can set/edit targets, can start and manage reconciliation from Results, can create/assign next actions.
+- **Finance Owner / Finance Analyst (edit finance-side only)**:
+  - Can edit finance artifacts and provide finance interpretation, can update reconciliation notes/status from finance side where the workflow allows, cannot overwrite KPI truth.
+- **Viewer (read)**:
+  - Can view KPI, targets, reports/scorecards, linkage status, reconciliation status and history.
+- **Commenter (read + comment)**:
+  - Viewer rights + can comment on reports/scorecards/reconciliation threads, cannot edit definitions or targets.
+
+Hard rules:
+- Target edits and definition edits are never available to plain viewers/commenters.
+- Permission denied must be explicit (no silent “UI disappears” without an explanation state).
+
+##### 8.1D Frozen “closed-loop” workflow contract
+Canonical workflow (must be supported end-to-end in bounded scope):
+
+`signal → inspect → report/scorecard → reconcile (optional, if linkage/discrepancy) → next action`
+
+Contract rules:
+- A **signal** must always lead to an **explicit operator decision** (either “acknowledged with reason” or “next action created”).
+- A **report/scorecard** is the durable operator artifact; it carries snapshot context + commentary + action plan.
+- **Reconciliation** is required when linkage exists and discrepancy is detected (or when operator explicitly requests it).
+- **Next action** must be assignable and traceable to the originating KPI + report (no orphan actions).
+
+##### 8.1E Anti-duplicate gate (prevent drift)
+This packet freezes anti-duplicate constraints:
+
+- No BI-suite drift: KPI is not a dashboard builder; dashboards/wallboards remain separate surfaces and must consume governed metric truth.
+- No parallel finance truth: KPI cannot become a finance model editor or shadow ledger.
+- No “charts-only KPI”: charting without report/scorecard + next action semantics is considered incomplete (anti-goal).
+- One vocabulary: “signal/target/trend/report/reconciliation/next action” are canonical across Results/Reports/Presentations consumers.
+
+##### 8.1F Degraded / error posture (must be explicit states)
+When the system cannot provide the ideal loop, it must degrade visibly with a clear next step:
+
+- **Missing data**: show “missing/stale/untrusted” state + last refresh + source explanation; disable misleading trend/target comparisons.
+- **Discrepancy unresolved**: keep reconciliation state visible (e.g., `pending`, `requires review`); block “close as resolved” without an owner action.
+- **Linkage unavailable**: show “link missing/unavailable” with rationale; allow creating an operational report/next action without finance linkage.
+- **Permission denied**: show explicit denied state and what capability is blocked (edit target / edit definition / manage reconciliation), without leaking restricted details.
+
+##### 8.1G Acceptance checklist (scope approval, testable)
+- [ ] Vocabulary is frozen and used consistently: signal/target/trend/report(or scorecard)/reconciliation/next action are defined and non-overlapping.
+- [ ] KPI is explicitly a closed-loop lane, not a BI suite; BI parity is declared out-of-scope.
+- [ ] KPI truth vs finance model truth boundary is explicit and non-collapsing (no silent overwrite either way).
+- [ ] Linkage is explicitly optional and supports at least interpretation/driver/review/realization patterns (as per linkage SSOT).
+- [ ] Reconciliation ownership rule is frozen: Results starts reconciliation, Finance resolves finance-side meaning.
+- [ ] Permissions semantics are frozen for: edit definition, edit targets, view, comment, manage reconciliation (Results vs Finance).
+- [ ] “Permission denied” has explicit degraded UX posture (no silent disappearance).
+- [ ] “Missing data” has explicit degraded UX posture (freshness/source shown; no misleading trend).
+- [ ] “Discrepancy unresolved” has explicit degraded UX posture (status visible; cannot be silently cleared).
+- [ ] “Linkage unavailable” has explicit degraded UX posture (operational loop continues without finance linkage).
+- [ ] Anti-duplicate gates are explicit: no BI-suite drift, no parallel finance truth, no charts-only KPI.
+- [ ] The canonical workflow contract is explicit: signal → inspect → report/scorecard → reconcile → next action (with reconciliation optional only when linkage/discrepancy doesn’t apply).
 
 #### P04-B — Core workflow closure (signal→report→reconciliation→action)
 - **Goal**: domknąć workflow i stany (w deklarowanym zakresie).
