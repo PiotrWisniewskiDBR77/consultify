@@ -51,6 +51,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -671,8 +672,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { i18n, t } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
   const isPolish = lang === 'pl';
+  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
+    useHelpSidePanel();
+
+  const openContextualHelp = useCallback(() => {
+    setKnowledgeModuleIdOverride('discovery-tools');
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   // UI State
   const [activeTab, setActiveTab] = useState<ModuleTab>(normalizedInitialTab);
@@ -4502,6 +4511,18 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         commandRowContent={CommandRowContent}
         primaryCta={PrimaryCta}
         availableViewModes={['table']}
+        toolControl={
+          <button
+            type="button"
+            onClick={openContextualHelp}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+            data-testid="contextual-help-entry-tools"
+            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+          >
+            <Sparkles size={16} />
+            <span>{t('help.entrypoint.contextual', 'Help')}</span>
+          </button>
+        }
         rightControls={
           <div className="flex items-center gap-2">
             {activeTab === 'library' ? null : StatusFilterDropdown}

@@ -8,7 +8,9 @@ import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate } from 'react-router-dom';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useKnowledgeArticle, useTrackArticleView } from '../../hooks/useKnowledge';
 
 // ============================================
@@ -88,9 +90,12 @@ interface KnowledgeArticleViewProps {
 }
 
 export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug, onBack }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { setOpen: setHelpOpen } = useHelpSidePanel();
   const { data: article, isLoading, error } = useKnowledgeArticle(slug);
   const { mutate: trackView } = useTrackArticleView();
+  const isPolish = i18n.language?.startsWith('pl');
 
   // Track view on mount
   useEffect(() => {
@@ -118,11 +123,29 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug
           onClick={onBack}
           className="mt-4 px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700"
         >
-          ← {t('common.back', 'Back')}
+          ← {t('help.knowledge.backToSearch', 'Search help')}
         </button>
       </div>
     );
   }
+
+  const nextActionRoute = (() => {
+    const raw = (article as any)?.next_action;
+    if (!raw) return '';
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return typeof parsed === 'object' && parsed ? String((parsed as any).route || '').trim() : '';
+      } catch {
+        return '';
+      }
+    }
+    return typeof raw === 'object' ? String((raw as any).route || '').trim() : '';
+  })();
+  const isFallback =
+    Boolean((article as any)?.is_fallback) ||
+    (String((article as any)?.requested_language || '') === 'pl' &&
+      String((article as any)?.resolved_language || '') === 'en');
 
   return (
     <div className="flex flex-col h-full">
@@ -150,6 +173,13 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
+        {/* Explicit PL degraded + EN fallback */}
+        {isPolish && isFallback && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            {t('help.knowledge.missingTranslationBanner', 'Brak wersji PL — wyświetlamy EN')}
+          </div>
+        )}
+
         {/* Meta */}
         <div className="flex items-center gap-4 text-xs text-slate-500 mb-4">
           <span className="flex items-center gap-1">
@@ -165,6 +195,34 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug
         {/* Video */}
         {article.video_url && (
           <VideoPlayer url={article.video_url} poster={article.thumbnail_url} />
+        )}
+
+        {/* Next action (if defined) */}
+        {nextActionRoute ? (
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => {
+                setHelpOpen(false);
+                navigate(nextActionRoute);
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+              data-testid="help-next-action"
+            >
+              {t('help.knowledge.nextAction', 'Next action')}
+            </button>
+          </div>
+        ) : (
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => setHelpOpen(false)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-white/[0.04] transition-colors"
+              data-testid="help-back-to-surface"
+            >
+              {t('help.knowledge.backToSurface', 'Back to work')}
+            </button>
+          </div>
         )}
 
         {/* Markdown Content */}

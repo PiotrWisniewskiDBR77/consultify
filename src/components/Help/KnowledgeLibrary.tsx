@@ -64,6 +64,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
   return (
     <button
       onClick={() => onClick(article.slug)}
+      data-testid={`help-article-card-${article.slug}`}
       className="w-full text-left p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
     >
       {/* Thumbnail */}
@@ -84,6 +85,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
           {article.category_name}
         </span>
         {article.is_featured && <Star size={12} className="text-amber-500 fill-amber-500" />}
+        {(article as any)?.is_fallback && (article as any)?.resolved_language && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 text-[10px] font-semibold uppercase">
+            {String((article as any).resolved_language).toUpperCase()}
+          </span>
+        )}
       </div>
 
       {/* Title */}
@@ -213,6 +219,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('help.knowledge.searchPlaceholder', 'Search articles...')}
+            data-testid="help-knowledge-search"
             className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           {searchQuery && (

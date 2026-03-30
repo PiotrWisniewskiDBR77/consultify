@@ -10,6 +10,7 @@ import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
 import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
+import { HelpDeepLinkListener } from '../components/Help/HelpDeepLinkListener';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
 import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
@@ -171,6 +172,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
+      <HelpDeepLinkListener />
       <HelpSidePanel />
       <DocumentSidePanel />
       <FeedbackSidePanel />

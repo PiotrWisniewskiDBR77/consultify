@@ -234,12 +234,20 @@ type RenderGuide = {
 
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
   const navigate = useNavigate();
   const { isDesktop, isMobile, isTablet } = useDeviceType();
 
-  const { isOpen, setOpen, activeTab, setActiveTab, help, knowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    isOpen,
+    setOpen,
+    activeTab,
+    setActiveTab,
+    help,
+    knowledgeModuleIdOverride,
+    knowledgeArticleSlugOverride,
+    setKnowledgeArticleSlugOverride,
+  } = useHelpSidePanel();
   const currentView = useAppStore((s) => s.currentView);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
@@ -699,8 +707,11 @@ export const HelpSidePanel: React.FC = () => {
                 currentDocument.relatedKnowledgeModuleId ||
                 help.moduleId
               }
-              initialArticleSlug={selectedGuideArticle}
-              onBack={() => setSelectedGuideArticle(null)}
+              initialArticleSlug={selectedGuideArticle || knowledgeArticleSlugOverride}
+              onBack={() => {
+                setSelectedGuideArticle(null);
+                setKnowledgeArticleSlugOverride(null);
+              }}
             />
           )}
         </div>

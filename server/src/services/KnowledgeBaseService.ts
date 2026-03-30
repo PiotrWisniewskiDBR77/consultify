@@ -26,6 +26,9 @@ export interface KbCategory {
   name?: string;
   description?: string;
   article_count?: number;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 export interface KbArticle {
@@ -42,6 +45,7 @@ export interface KbArticle {
   video_teaser_url?: string;
   related_modules: string[];
   target_audience: string[];
+  next_action?: unknown | null;
   created_at: string;
   updated_at?: string;
   // Translation fields
@@ -53,6 +57,9 @@ export interface KbArticle {
   category_slug?: string;
   category_name?: string;
   category_icon?: string;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 export interface KbArticleListItem {
@@ -67,6 +74,9 @@ export interface KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 // ============================================
@@ -74,6 +84,12 @@ export interface KbArticleListItem {
 // ============================================
 
 class KnowledgeBaseService {
+  private resolveLanguage(language: string, hasRequestedTranslation: boolean) {
+    const requested = language || 'en';
+    const resolved = requested === 'en' || hasRequestedTranslation ? requested : 'en';
+    return { requested_language: requested, resolved_language: resolved, is_fallback: resolved !== requested };
+  }
+
   /**
    * Get all active categories with translations
    */
@@ -87,6 +103,7 @@ class KnowledgeBaseService {
       const sql = `
         SELECT 
           c.id, c.slug, c.icon, c.sort_order, c.is_active, c.is_public, c.created_at,
+          t.name as requested_name,
           COALESCE(t.name, te.name) as name,
           COALESCE(t.description, te.description) as description,
           (SELECT COUNT(*) FROM kb_articles a WHERE a.category_id = c.id AND a.status = 'published') as article_count
@@ -98,11 +115,15 @@ class KnowledgeBaseService {
       `;
 
       const rows = await dbAll(sql, [language]);
-      return rows.map((row: any) => ({
-        ...row,
-        is_active: Boolean(row.is_active),
-        is_public: Boolean(row.is_public),
-      }));
+      return rows.map((row: any) => {
+        const { requested_name, ...rest } = row;
+        return {
+          ...rest,
+          ...this.resolveLanguage(language, Boolean(requested_name)),
+          is_active: Boolean(row.is_active),
+          is_public: Boolean(row.is_public),
+        };
+      });
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting categories:', error);
       return [];
@@ -152,9 +173,18 @@ class KnowledgeBaseService {
       }
 
       if (search) {
-        whereConditions.push(`(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?)`);
+        whereConditions.push(
+          `((t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?) OR (te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?))`
+        );
         const searchPattern = `%${search}%`;
-        queryParams.push(searchPattern, searchPattern, searchPattern);
+        queryParams.push(
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          searchPattern
+        );
       }
 
       const whereClause = whereConditions.join(' AND ');
@@ -165,6 +195,7 @@ class KnowledgeBaseService {
         FROM kb_articles a
         JOIN kb_categories c ON a.category_id = c.id
         LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
         WHERE ${whereClause}
       `;
       const countResult = (await dbGet(countSql, [language, ...queryParams])) as any;
@@ -174,6 +205,7 @@ class KnowledgeBaseService {
       const dataSql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+          t.title as requested_title,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           c.slug as category_slug,
@@ -193,10 +225,14 @@ class KnowledgeBaseService {
       const articles = await dbAll(dataSql, [language, language, ...queryParams, limit, offset]);
 
       return {
-        articles: articles.map((row: any) => ({
-          ...row,
-          is_featured: Boolean(row.is_featured),
-        })),
+        articles: articles.map((row: any) => {
+          const { requested_title, ...rest } = row;
+          return {
+            ...rest,
+            ...this.resolveLanguage(language, Boolean(requested_title)),
+            is_featured: Boolean(row.is_featured),
+          };
+        }),
         total,
       };
     } catch (error) {
@@ -213,6 +249,8 @@ class KnowledgeBaseService {
       const sql = `
         SELECT 
           a.*,
+          t.title as requested_title,
+          t.content as requested_content,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           COALESCE(t.content, te.content) as content,
@@ -233,9 +271,66 @@ class KnowledgeBaseService {
 
       if (!row) return null;
 
+      const { requested_title, requested_content, next_action: nextActionRaw, ...rest } = row;
+
+      // Mock DB (E2E) doesn't evaluate COALESCE/JOIN expressions — best-effort fill via translations table.
+      // This also makes the endpoint resilient if join-based fields are missing for any reason.
+      let hasRequestedTranslation = Boolean(requested_title) || Boolean(requested_content);
+      let title = rest.title as any;
+      let summary = rest.summary as any;
+      let content = rest.content as any;
+      let video_script = rest.video_script as any;
+
+      if (!title || !content) {
+        const requested = (await dbGet(
+          `SELECT title, summary, content, video_script
+           FROM kb_article_translations
+           WHERE article_id = ? AND language = ?
+           LIMIT 1`,
+          [rest.id, language]
+        )) as any;
+        if (requested?.title || requested?.content) {
+          hasRequestedTranslation = true;
+          title = requested.title ?? title;
+          summary = requested.summary ?? summary;
+          content = requested.content ?? content;
+          video_script = requested.video_script ?? video_script;
+        }
+
+        if (!title || !content) {
+          const en = (await dbGet(
+            `SELECT title, summary, content, video_script
+             FROM kb_article_translations
+             WHERE article_id = ? AND language = 'en'
+             LIMIT 1`,
+            [rest.id]
+          )) as any;
+          title = en?.title ?? title;
+          summary = en?.summary ?? summary;
+          content = en?.content ?? content;
+          video_script = en?.video_script ?? video_script;
+        }
+      }
+
+      const langMeta = this.resolveLanguage(language, hasRequestedTranslation);
+      let parsedNextAction: unknown | null = null;
+      if (typeof nextActionRaw === 'string' && nextActionRaw.trim()) {
+        try {
+          parsedNextAction = JSON.parse(nextActionRaw);
+        } catch {
+          parsedNextAction = null;
+        }
+      }
+
       // Parse JSON arrays
       return {
-        ...row,
+        ...rest,
+        title,
+        summary,
+        content,
+        video_script,
+        ...langMeta,
+        next_action: parsedNextAction,
         is_featured: Boolean(row.is_featured),
         is_public: Boolean(row.is_public),
         related_modules: JSON.parse(row.related_modules || '[]'),
@@ -256,6 +351,7 @@ class KnowledgeBaseService {
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           a.video_teaser_url,
+          t.title as requested_title,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           c.slug as category_slug,
@@ -273,10 +369,14 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, limit]);
-      return articles.map((row: any) => ({
-        ...row,
-        is_featured: Boolean(row.is_featured),
-      }));
+      return articles.map((row: any) => {
+        const { requested_title, ...rest } = row;
+        return {
+          ...rest,
+          ...this.resolveLanguage(language, Boolean(requested_title)),
+          is_featured: Boolean(row.is_featured),
+        };
+      });
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting public preview:', error);
       return [];
@@ -295,6 +395,7 @@ class KnowledgeBaseService {
       const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+          t.title as requested_title,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           c.slug as category_slug,
@@ -312,10 +413,14 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, `%"${moduleId}"%`, limit]);
-      return articles.map((row: any) => ({
-        ...row,
-        is_featured: Boolean(row.is_featured),
-      }));
+      return articles.map((row: any) => {
+        const { requested_title, ...rest } = row;
+        return {
+          ...rest,
+          ...this.resolveLanguage(language, Boolean(requested_title)),
+          is_featured: Boolean(row.is_featured),
+        };
+      });
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting contextual articles:', error);
       return [];
@@ -336,6 +441,7 @@ class KnowledgeBaseService {
       const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+          t.title as requested_title,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           c.slug as category_slug,
@@ -370,10 +476,14 @@ class KnowledgeBaseService {
         limit,
       ]);
 
-      return articles.map((row: any) => ({
-        ...row,
-        is_featured: Boolean(row.is_featured),
-      }));
+      return articles.map((row: any) => {
+        const { requested_title, ...rest } = row;
+        return {
+          ...rest,
+          ...this.resolveLanguage(language, Boolean(requested_title)),
+          is_featured: Boolean(row.is_featured),
+        };
+      });
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error searching articles:', error);
       return [];
@@ -416,6 +526,7 @@ class KnowledgeBaseService {
       const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+          t.title as requested_title,
           COALESCE(t.title, te.title) as title,
           COALESCE(t.summary, te.summary) as summary,
           c.slug as category_slug,
@@ -433,10 +544,14 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, limit]);
-      return articles.map((row: any) => ({
-        ...row,
-        is_featured: Boolean(row.is_featured),
-      }));
+      return articles.map((row: any) => {
+        const { requested_title, ...rest } = row;
+        return {
+          ...rest,
+          ...this.resolveLanguage(language, Boolean(requested_title)),
+          is_featured: Boolean(row.is_featured),
+        };
+      });
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting featured articles:', error);
       return [];

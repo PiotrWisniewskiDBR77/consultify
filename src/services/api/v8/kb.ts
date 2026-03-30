@@ -30,6 +30,9 @@ export interface V8KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 export interface V8KbArticle extends V8KbArticleListItem {
@@ -39,6 +42,7 @@ export interface V8KbArticle extends V8KbArticleListItem {
   related_modules: string[];
   target_audience: string[];
   category_id: string;
+  next_action?: unknown | null;
 }
 
 export const V8KnowledgeBaseApi = {

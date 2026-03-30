@@ -125,6 +125,8 @@ interface HelpContextValue {
   // Knowledge Base contextual override (e.g. per tool_type)
   knowledgeModuleIdOverride: string | null;
   setKnowledgeModuleIdOverride: (moduleId: string | null) => void;
+  knowledgeArticleSlugOverride: string | null;
+  setKnowledgeArticleSlugOverride: (slug: string | null) => void;
   helpDocumentIdOverride: string | null;
   setHelpDocumentIdOverride: (documentId: string | null) => void;
 }
@@ -158,6 +160,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isHelpSidePanelOpen = activeSidePanel === 'HELP';
   const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
   const [knowledgeModuleIdOverride, setKnowledgeModuleIdOverride] = useState<string | null>(null);
+  const [knowledgeArticleSlugOverride, setKnowledgeArticleSlugOverride] = useState<string | null>(null);
   const [helpDocumentIdOverride, setHelpDocumentIdOverride] = useState<string | null>(null);
 
   // Toggle help side panel
@@ -181,6 +184,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!isHelpSidePanelOpen) {
       setKnowledgeModuleIdOverride(null);
+      setKnowledgeArticleSlugOverride(null);
       setHelpDocumentIdOverride(null);
     }
   }, [isHelpSidePanelOpen]);
@@ -379,6 +383,8 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         knowledgeModuleIdOverride,
         setKnowledgeModuleIdOverride,
+        knowledgeArticleSlugOverride,
+        setKnowledgeArticleSlugOverride,
         helpDocumentIdOverride,
         setHelpDocumentIdOverride,
       }}
@@ -426,6 +432,8 @@ export const useHelpSidePanel = () => {
     getHelpForView,
     knowledgeModuleIdOverride,
     setKnowledgeModuleIdOverride,
+    knowledgeArticleSlugOverride,
+    setKnowledgeArticleSlugOverride,
     helpDocumentIdOverride,
     setHelpDocumentIdOverride,
   } = useHelp();
@@ -440,6 +448,8 @@ export const useHelpSidePanel = () => {
     getHelpForView,
     knowledgeModuleIdOverride,
     setKnowledgeModuleIdOverride,
+    knowledgeArticleSlugOverride,
+    setKnowledgeArticleSlugOverride,
     helpDocumentIdOverride,
     setHelpDocumentIdOverride,
   };

@@ -7,6 +7,7 @@
 
 import {
   BookTemplate,
+  CircleHelp,
   FileText,
   Filter,
   Inbox,
@@ -19,6 +20,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -45,9 +47,18 @@ import {
 } from './useRapData';
 
 export const ReportsAndPresentationsHub: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const isPolish = i18n.language?.startsWith('pl');
+  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
+    useHelpSidePanel();
+
+  const openContextualHelp = useCallback(() => {
+    setKnowledgeModuleIdOverride('outputs');
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   const initialTab = useMemo<RapTab>(() => {
     const params = new URLSearchParams(location.search || '');
@@ -973,6 +984,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
+        toolControl={
+          <button
+            type="button"
+            onClick={openContextualHelp}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+            data-testid="contextual-help-entry-outputs"
+            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+          >
+            <CircleHelp size={16} />
+            <span>{t('help.entrypoint.contextual', 'Help')}</span>
+          </button>
+        }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
       >

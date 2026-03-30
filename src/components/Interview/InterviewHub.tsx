@@ -21,6 +21,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -56,6 +57,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -376,9 +378,17 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser } = useAppStore();
+  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
+    useHelpSidePanel();
+
+  const openContextualHelp = useCallback(() => {
+    setKnowledgeModuleIdOverride('interview');
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   // Permissions hook
   const {
@@ -5432,6 +5442,20 @@ Return ONLY the answer text (no markdown fences).`;
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                 />
               </div>
+            )}
+
+            {/* Tool slot: Contextual Help (P25-B) */}
+            {!activeDocumentId && (
+              <button
+                type="button"
+                onClick={openContextualHelp}
+                className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+                data-testid="contextual-help-entry-interview"
+              >
+                <CircleHelp size={16} />
+                <span>{t('help.entrypoint.contextual', 'Help')}</span>
+              </button>
             )}
 
             {activeTab === 'templates' && !activeDocumentId && (

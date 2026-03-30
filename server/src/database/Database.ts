@@ -183,7 +183,12 @@ function createMockDatabase(): MockDatabase {
       .map((x) => x.trim())
       .filter(Boolean);
 
-  const countPlaceholders = (value: string) => (String(value || '').match(/\?/g) || []).length;
+  const countPlaceholders = (value: string) => {
+    const s = String(value || '');
+    const q = (s.match(/\?/g) || []).length;
+    const pg = (s.match(/\$\d+/g) || []).length;
+    return q + pg;
+  };
 
   const parseTableNameAfter = (sql: string, keyword: string): string | null => {
     const s = normalizeSql(sql);
@@ -288,7 +293,7 @@ function createMockDatabase(): MockDatabase {
       const col = cols[i] || `col_${i}`;
       const tok = valueTokens[i] || '?';
       const tokLower = tok.toLowerCase();
-      if (tok.includes('?')) {
+      if (tok.includes('?') || /^\$\d+$/.test(tok.trim())) {
         row[col] = params?.[pIdx++];
       } else if (tokLower.includes('current_timestamp') || tokLower.includes('now()')) {
         row[col] = nowIso();
@@ -337,7 +342,7 @@ function createMockDatabase(): MockDatabase {
 
     const wherePart = normalizeSql(sql).slice(whereIdx + 7);
     const rows = store.tables.get(table)!;
-    const whereMatches = Array.from(wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*\?/gi));
+    const whereMatches = Array.from(wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*(\?|\$\d+)/gi));
     if (!whereMatches.length) return false;
 
     let setParamCount = 0;
@@ -409,20 +414,44 @@ function createMockDatabase(): MockDatabase {
     let rows = [...allRows];
     if (s.includes('where')) {
       const wherePart = normalizeSql(sql).split(/\bwhere\b/i)[1] || '';
-      const equalityMatches = Array.from(
-        wherePart.matchAll(/\b(id|idea_id|user_id|organization_id)\s*=\s*\?/gi)
-      );
+      const allowed = new Set([
+        'id',
+        'idea_id',
+        'user_id',
+        'organization_id',
+        'run_id',
+        'slug',
+        'status',
+        'article_id',
+        'category_id',
+        'language',
+      ]);
 
-      equalityMatches.forEach((match, index) => {
+      const equalityMatches = Array.from(
+        wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*(\?|\$\d+)/gi)
+      ).filter((m) => allowed.has(String(m[1] || '').toLowerCase()));
+
+      let sequentialParamIndex = 0;
+      const resolveExpected = (placeholder: string) => {
+        if (placeholder === '?') return params?.[sequentialParamIndex++];
+        if (/^\$\d+$/.test(placeholder)) {
+          const idx = Number.parseInt(placeholder.slice(1), 10);
+          return params?.[idx - 1];
+        }
+        return undefined;
+      };
+
+      equalityMatches.forEach((match) => {
         const column = String(match[1] || '').toLowerCase();
-        const expected = params?.[index];
+        const placeholder = String(match[2] || '?').trim();
+        const expected = resolveExpected(placeholder);
         rows = rows.filter((row) => {
           const actual = row[column];
-          return actual != null && String(actual) === String(expected);
+          return actual != null && expected != null && String(actual) === String(expected);
         });
       });
 
-      if (!equalityMatches.length && s.includes('organization_id = ?')) {
+      if (!equalityMatches.length && (s.includes('organization_id = ?') || s.includes('organization_id = $1'))) {
         const orgId = params?.[0];
         rows = rows.filter(
           (r) => r.organization_id != null && String(r.organization_id) === String(orgId)

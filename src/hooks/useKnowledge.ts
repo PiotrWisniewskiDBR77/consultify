@@ -22,6 +22,9 @@ export interface KbCategory {
   description?: string;
   article_count: number;
   is_public: boolean;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 export interface KbArticleListItem {
@@ -37,6 +40,9 @@ export interface KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  requested_language?: string;
+  resolved_language?: string;
+  is_fallback?: boolean;
 }
 
 export interface KbArticle extends KbArticleListItem {
@@ -46,6 +52,7 @@ export interface KbArticle extends KbArticleListItem {
   related_modules: string[];
   target_audience: string[];
   category_id: string;
+  next_action?: unknown | null;
 }
 
 // ============================================
@@ -54,6 +61,15 @@ export interface KbArticle extends KbArticleListItem {
 
 const API_BASE = '/api/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
+
+function normalizeKbLang(raw: string | undefined | null): string {
+  const lang = String(raw || '').trim().toLowerCase();
+  if (!lang) return 'en';
+  if (lang === 'pl' || lang.startsWith('pl-')) return 'pl';
+  if (lang === 'en' || lang.startsWith('en-')) return 'en';
+  // KB currently guarantees EN + PL; keep the API stable for the help runtime.
+  return 'en';
+}
 
 async function fetchPublicBridgeArticles(path: 'public' | 'featured', lang: string, limit: number) {
   const res = await fetch(`${PUBLIC_V8_KB_BASE}/${path}?lang=${lang}&limit=${limit}`);
@@ -229,7 +245,7 @@ function getSessionId(): string {
  */
 export function useKnowledgeCategories(includePrivate = false) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-categories', lang, includePrivate],
@@ -252,7 +268,7 @@ export function useKnowledgeArticles(
   } = {}
 ) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-articles', lang, params],
@@ -266,7 +282,7 @@ export function useKnowledgeArticles(
  */
 export function useKnowledgeArticle(slug: string | undefined) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-article', slug, lang],
@@ -281,7 +297,7 @@ export function useKnowledgeArticle(slug: string | undefined) {
  */
 export function useKnowledgePublicPreview(limit = 3) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-public', lang, limit],
@@ -295,7 +311,7 @@ export function useKnowledgePublicPreview(limit = 3) {
  */
 export function useKnowledgeFeatured(limit = 4) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-featured', lang, limit],
@@ -309,7 +325,7 @@ export function useKnowledgeFeatured(limit = 4) {
  */
 export function useKnowledgeSearch(query: string, limit = 10) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-search', query, lang, limit],
@@ -324,7 +340,7 @@ export function useKnowledgeSearch(query: string, limit = 10) {
  */
 export function useKnowledgeContextual(moduleId: string | undefined, token?: string) {
   const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
+  const lang = normalizeKbLang(i18n.language);
 
   return useQuery({
     queryKey: ['kb-contextual', moduleId, lang],
