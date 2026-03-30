@@ -73,7 +73,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 18 | Provenance/Review/Visibility | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_18_PROVENANCE_REVIEW_VISIBILITY_2026-03-29.md` | P18-A / P18-B / P18-C | approved(scope) |
 | 19 | Outputs Library | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_19_OUTPUTS_LIBRARY_2026-03-29.md` | P19-A / P19-B / P19-C | verified(evidence) |
 | 20 | Prezentacje | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_20_PREZENTACJE_2026-03-29.md` | P20-A / P20-B / P20-C | approved(scope) |
-| 21 | Raporty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_21_RAPORTY_2026-03-29.md` | P21-A / P21-B / P21-C | approved(scope) |
+| 21 | Raporty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_21_RAPORTY_2026-03-29.md` | P21-A / P21-B / P21-C | delivered |
 | 22 | Wordy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_22_WORDY_2026-03-29.md` | P22-A / P22-B / P22-C | approved(scope) |
 | 23 | Excele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md` | P23-A / P23-B / P23-C | approved(scope) |
 | 24 | Templaty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_24_TEMPLATY_2026-03-29.md` | P24-A / P24-B / P24-C | approved(scope) |

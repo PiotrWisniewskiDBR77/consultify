@@ -791,6 +791,23 @@ export async function createReport(params: CreateReportParams): Promise<{
   // Log activity
   await logActivity(reportId, 'CREATED', createdBy, { sourceType, sourceId });
 
+  const configSourcesLedger = (config as any)?.sourcesLedger;
+  const sourcesLedger =
+    Array.isArray(configSourcesLedger) && configSourcesLedger.length > 0
+      ? configSourcesLedger
+      : [
+          {
+            sourceType,
+            sourceId,
+            sourceName: sourceName || null,
+            sourceFramework: sourceFramework || null,
+          },
+        ];
+  const degradedFlags =
+    config && typeof (config as any).degradedFlags === 'object' && (config as any).degradedFlags
+      ? (config as any).degradedFlags
+      : null;
+
   try {
     await artifactRegistryService.registerArtifactOrigin({
       organizationId,
@@ -813,6 +830,8 @@ export async function createReport(params: CreateReportParams): Promise<{
         sourceId,
         reportType,
         templateId: templateIdToUse || null,
+        sourcesLedger,
+        degradedFlags,
         nativeStatus: 'CONFIGURING',
         sourceTable: 'report_builder_reports',
       },
