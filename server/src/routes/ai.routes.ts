@@ -3249,6 +3249,121 @@ router.post(
             }
 
             // ================================================================
+            // Post-stream: Source ledger (P34-B)
+            // Provide a stable, non-leaky "used vs blocked" ledger for the UI/audit.
+            // ================================================================
+            try {
+              const rawCitations = Array.isArray(collectedCitations) ? collectedCitations : [];
+              const used_sources = (() => {
+                const out: any[] = [];
+                const seen = new Set<string>();
+                for (let i = 0; i < rawCitations.length; i += 1) {
+                  const c: any = rawCitations[i];
+                  if (!c) continue;
+                  const id = String(c?.id || '').trim();
+                  const type = String(c?.type || 'document').trim() || 'document';
+                  const title = String(c?.title || '').trim();
+                  const reference = String(c?.reference || c?.url || '').trim();
+                  const link = String(c?.link || '').trim();
+                  const key = `${type}:${id || reference || link || title}`.slice(0, 220);
+                  if (!key || seen.has(key)) continue;
+                  seen.add(key);
+                  out.push({
+                    id: id || null,
+                    type,
+                    title: title || null,
+                    reference: reference || null,
+                    link: link || null,
+                  });
+                  if (out.length >= 24) break;
+                }
+                return out;
+              })();
+
+              const blocked_sources = (() => {
+                const out: any[] = [];
+                const add = (category: string, reason: string) =>
+                  out.push({ category, reason, detail: null });
+
+                // Never enumerate forbidden objects; only high-level categories.
+                add('cross_tenant', 'forbidden_by_policy');
+                add('other_user_private', 'forbidden_by_policy');
+
+                if (privateMode === true) {
+                  add('org_shared', 'private_mode_enabled');
+                }
+
+                if (knowledgeSources && typeof knowledgeSources === 'object') {
+                  if ((knowledgeSources as any).pmoDocuments === false) add('pmo_documents', 'disabled_by_user');
+                  if ((knowledgeSources as any).projectData === false) add('project_data', 'disabled_by_user');
+                  if ((knowledgeSources as any).organizationData === false)
+                    add('organization_data', 'disabled_by_user');
+                }
+
+                return out.slice(0, 16);
+              })();
+
+              const degraded =
+                used_sources.length === 0
+                  ? { mode: 'no_sources', reason: 'no_citations_collected' }
+                  : null;
+
+              emitSSE({
+                type: 'source_ledger',
+                decisionId: policyDecision?.id || null,
+                used_sources,
+                blocked_sources,
+                degraded,
+                scope_resolution: {
+                  privateMode: Boolean(privateMode),
+                  knowledgeSources: knowledgeSources || {},
+                },
+              });
+
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'source_ledger', {
+                      used_sources_count: used_sources.length,
+                      blocked_sources_count: blocked_sources.length,
+                      degraded,
+                      scope_resolution: {
+                        privateMode: Boolean(privateMode),
+                        knowledgeSources: knowledgeSources || {},
+                      },
+                    })
+                  )
+                  .catch(() => {
+                    /* ignore */
+                  });
+              }
+
+              // Honest degraded path: if evidence is required but we have no sources, make it explicit.
+              if (
+                degraded &&
+                policyDecision?.allowed === true &&
+                policyDecision?.evidence?.required === true
+              ) {
+                const isPl = Boolean(language?.startsWith('pl'));
+                const marker = isPl
+                  ? `\n\n---\n**Bez źródeł:** Nie znalazłem w dostępnych źródłach wystarczających materiałów, żeby to zweryfikować. Jeśli dołączysz dokument/link lub wypromujesz wiedzę do organizacji, doprecyzuję.\n`
+                  : `\n\n---\n**No sources:** I couldn't find sufficient evidence in the available sources to verify this. If you attach/paste a document/link or promote knowledge to the organization scope, I can refine.\n`;
+                emitSSE({
+                  type: 'policy_notice',
+                  kind: 'no_sources',
+                  decisionId: policyDecision?.id || null,
+                  message: isPl
+                    ? 'Brak źródeł w dozwolonym zakresie — dodano jawny marker.'
+                    : 'No sources in allowed scope — explicit marker added.',
+                });
+                // Emit as a final text chunk for visibility (same semantics as uncertainty marker).
+                res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
+              }
+            } catch {
+              // Non-critical — never break the stream on ledger generation.
+            }
+
+            // ================================================================
             // Post-stream: Policy evidence enforcement (P34-B)
             // If response is factful and we lack citations, append explicit uncertainty marker.
             // ================================================================

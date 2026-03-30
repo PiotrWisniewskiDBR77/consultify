@@ -128,5 +128,40 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     expect(screen.getByText('Citations were insufficient.')).toBeInTheDocument();
     expect(screen.queryByText('Request blocked by policy')).not.toBeInTheDocument();
   });
+
+  it('renders no-sources notice and a non-leaky blocked-scope ledger when present', () => {
+    const msg = {
+      id: 'm-ai-no-sources',
+      role: 'ai',
+      content: 'A general answer',
+      timestamp: new Date(),
+      isStreaming: false,
+      metadata: {
+        policyDecision: { allowed: true },
+        policyNotices: [
+          {
+            type: 'policy_notice',
+            kind: 'no_sources',
+            message: 'No sources in allowed scope — explicit marker added.',
+          },
+        ],
+        sourceLedger: {
+          type: 'source_ledger',
+          used_sources: [],
+          blocked_sources: [{ category: 'other_user_private', reason: 'forbidden_by_policy' }],
+          degraded: { mode: 'no_sources', reason: 'no_citations_collected' },
+        },
+      },
+    } as any;
+
+    render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
+
+    expect(screen.getByText('No sources found')).toBeInTheDocument();
+    expect(screen.getByText('No sources in allowed scope — explicit marker added.')).toBeInTheDocument();
+    expect(screen.getByText('Source ledger')).toBeInTheDocument();
+    expect(screen.getByText(/other_user_private/i)).toBeInTheDocument();
+    // Ledger must not enumerate any forbidden object identifiers.
+    expect(screen.queryByText(/doc_/i)).not.toBeInTheDocument();
+  });
 });
 

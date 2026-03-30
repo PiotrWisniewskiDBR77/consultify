@@ -231,6 +231,6 @@ Status: approved(scope) — P34-A complete (direct contract over existing plan)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P34-A | approved(scope) |  | n/a (docs-only) | n/a (docs-only) | §2.3 canon frozen; runtime evidence belongs to P34-B/C |
-| P34-B | delivered | `b7ce044c27` | Contract: `tests/unit/backend/chatPolicyGateway.contract.test.ts` (PASS). UI: `tests/components/AIChat/MessageRenderer.policy.test.tsx` (PASS). | `final_master/evidence/P34-B_POLICY_GATEWAY_RUNTIME_VERIFICATION_2026-03-30.md` | Bounded heuristic evidence posture; additive uncertainty marker on insufficient citations. No history/search (P35). |
+| P34-B | delivered | TBD (commit) | `npx vitest run server/src/services/ai/__tests__/chatPolicyGateway.contract.test.ts server/src/routes/v8/__tests__/retrieval.memory.routes.test.ts tests/components/AIChat/MessageRenderer.policy.test.tsx` → PASS (11/11) | Script captured: `final_master/evidence/P34_B_SOURCE_LEDGER_AND_PROMOTION_RUNTIME_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` (steps 1–6) | Bounded v1 ledger: `type=source_ledger` + non-leaky `blocked_sources[]`; promotion uses memory promotion seam under `/api/v8/retrieval/memory/promotions*`. No history/search (P35). |
 | P34-C |  |  |  |  |  |
 

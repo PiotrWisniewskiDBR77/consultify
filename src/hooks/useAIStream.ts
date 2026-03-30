@@ -356,6 +356,7 @@ type StreamOptions = {
       sessionId?: string;
       policyDecision?: any;
       policyNotices?: any[];
+      sourceLedger?: any;
     }
   ) => void;
   onStreamError?: (error: Error) => void;
@@ -397,6 +398,7 @@ export type UseAIStreamReturn = {
   citations: any[];
   policyDecision: any | null;
   policyNotices: any[];
+  sourceLedger: any | null;
   deepThinkingState: any | null;
   researchProgress: any | null;
   researchVisibility: any | null;
@@ -507,6 +509,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [citations, setCitations] = useState<any[]>([]);
   const [policyDecision, setPolicyDecision] = useState<any | null>(null);
   const [policyNotices, setPolicyNotices] = useState<any[]>([]);
+  const [sourceLedger, setSourceLedger] = useState<any | null>(null);
   const [retryInfo, setRetryInfo] = useState<{
     attempt: number;
     maxRetries: number;
@@ -560,6 +563,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setCitations([]);
     setPolicyDecision(null);
     setPolicyNotices([]);
+    setSourceLedger(null);
     setResearchProgress(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
@@ -842,6 +846,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           sessionId: streamSessionIdRef.current || undefined,
           policyDecision,
           policyNotices,
+          sourceLedger,
         });
       };
 
@@ -857,6 +862,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         }
         if (evt.type === 'policy_notice') {
           setPolicyNotices((prev) => [...(Array.isArray(prev) ? prev : []), evt]);
+          return;
+        }
+        if (evt.type === 'source_ledger') {
+          setSourceLedger(evt);
           return;
         }
 
@@ -1373,6 +1382,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     citations,
     policyDecision,
     policyNotices,
+    sourceLedger,
     deepThinkingState,
     researchProgress,
     researchVisibility,

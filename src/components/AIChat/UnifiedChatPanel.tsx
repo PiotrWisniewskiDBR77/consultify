@@ -742,6 +742,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 aiConfig?.deepResearch ||
                 (aiConfig as any)?.marketResearch ||
                 meta?.policyDecision ||
+                meta?.sourceLedger ||
                 (meta?.policyNotices && meta.policyNotices.length)
                   ? {
                       ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
@@ -765,6 +766,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                             policyNotices: meta?.policyNotices,
                           }
                         : {}),
+                      ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
                     }
                   : undefined,
             }),
@@ -803,6 +805,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             : {}),
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
           ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
+          ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
         },
       });
 

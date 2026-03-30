@@ -259,9 +259,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
     ? ((msg as any).metadata.policyNotices as any[])
     : [];
+  const sourceLedger = (msg as any).metadata?.sourceLedger || null;
   const policyUncertaintyNotice =
     policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty') ||
     policyNotices.find((n: any) => n?.kind === 'uncertainty') ||
+    null;
+  const policyNoSourcesNotice =
+    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources') ||
+    policyNotices.find((n: any) => n?.kind === 'no_sources') ||
     null;
   const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
 
@@ -386,6 +391,54 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 )}
+
+                {!isPolicyRefusal && policyNoSourcesNotice && (
+                  <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30">
+                    <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {t('policy.noSources.title', 'No sources found')}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                      {String(
+                        policyNoSourcesNotice?.message ||
+                          t(
+                            'policy.noSources.body',
+                            'This answer could not be verified against available sources in your allowed scope.'
+                          )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!isPolicyRefusal &&
+                  sourceLedger &&
+                  Array.isArray((sourceLedger as any).blocked_sources) &&
+                  (sourceLedger as any).blocked_sources.length > 0 && (
+                    <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/25">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                        {t('policy.sourceLedger.title', 'Source ledger')}
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                        {t(
+                          'policy.sourceLedger.blockedLabel',
+                          'Blocked scopes (high-level):'
+                        )}
+                      </div>
+                      <ul className="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
+                        {(sourceLedger as any).blocked_sources.slice(0, 8).map((b: any, i: number) => (
+                          <li key={i}>
+                            {String(b?.category || 'blocked')}
+                            {b?.reason ? ` (${String(b.reason)})` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                      {sourceLedger?.degraded?.mode ? (
+                        <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                          {t('policy.sourceLedger.degraded', 'Degraded mode:')}{' '}
+                          <span className="font-medium">{String(sourceLedger.degraded.mode)}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
 
                 {/* Deep Thinking: Research progress (SSE events) */}
                 {(msg as any).metadata?.researchVisibility?.items && (

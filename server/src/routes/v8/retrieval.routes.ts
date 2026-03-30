@@ -1,11 +1,12 @@
 import type { Response } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import type { CandidateSource } from '../../services/v8/governedRetrievalService.js';
 import * as governedRetrievalService from '../../services/v8/governedRetrievalService.js';
+import * as knowledgeRetrievalService from '../../services/v8/knowledgeRetrievalService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -182,6 +183,128 @@ router.get(
       organizationId
     );
     return res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+// ==========================================
+// Working memory + promotion (P34-B)
+// ==========================================
+
+const CreateWorkingMemoryEntryBodySchema = z.object({
+  conversationId: z.string().uuid(),
+  memoryType: z.enum(['ephemeral', 'session', 'user_private_durable', 'organization_durable']),
+  content: z.string().min(1).max(20_000),
+  sourceRef: z.string().max(500).nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+});
+
+const RequestPromotionBodySchema = z.object({
+  sourceEntryId: z.string().uuid(),
+  targetMemoryType: z.enum(['user_private_durable', 'organization_durable']),
+  provenanceRef: z.string().min(1).max(500),
+});
+
+const ResolvePromotionBodySchema = z.object({
+  status: z.enum(['approved', 'rejected']),
+});
+
+function isPromotionReviewerRole(userRole?: string, isSuperAdmin?: boolean): boolean {
+  if (isSuperAdmin) return true;
+  const role = String(userRole || '').toUpperCase();
+  return role.includes('ADMIN') || role === 'OWNER' || role === 'SUPERADMIN';
+}
+
+router.get(
+  '/memory/entries',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const conversationId = String(req.query.conversationId || '').trim();
+    if (!conversationId) {
+      return res.status(400).json({
+        error: 'conversationId query parameter is required',
+        code: 'MISSING_QUERY_PARAM',
+      });
+    }
+
+    const data = await knowledgeRetrievalService.getWorkingMemory(conversationId, organizationId);
+    return res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+router.post(
+  '/memory/entries',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    try {
+      const body = CreateWorkingMemoryEntryBodySchema.parse(req.body || {});
+      const data = await knowledgeRetrievalService.createWorkingMemoryEntry({
+        conversationId: body.conversationId,
+        organizationId,
+        memoryType: body.memoryType,
+        content: body.content,
+        sourceRef: body.sourceRef ?? null,
+        expiresAt: body.expiresAt ?? null,
+      });
+      return res.status(201).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleRetrievalError(err, res, 'Invalid working memory entry parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/memory/promotions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const body = RequestPromotionBodySchema.parse(req.body || {});
+      const data = await knowledgeRetrievalService.requestMemoryPromotion({
+        organizationId,
+        sourceEntryId: body.sourceEntryId,
+        targetMemoryType: body.targetMemoryType,
+        provenanceRef: body.provenanceRef,
+        requestedBy: userId,
+      });
+      return res.status(201).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleRetrievalError(err, res, 'Invalid promotion request parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/memory/promotions/:requestId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole, isSuperAdmin } = getV8Context(req);
+    if (!isPromotionReviewerRole(userRole, isSuperAdmin)) {
+      return res.status(403).json({
+        error: 'Insufficient permissions to resolve promotions',
+        code: 'PROMOTION_REVIEW_FORBIDDEN',
+      });
+    }
+
+    const requestId = String(req.params.requestId || '').trim();
+    if (!requestId) {
+      return res.status(400).json({ error: 'Invalid requestId', code: 'VALIDATION_ERROR' });
+    }
+
+    try {
+      const body = ResolvePromotionBodySchema.parse(req.body || {});
+      const data = await knowledgeRetrievalService.resolveMemoryPromotion(
+        requestId,
+        body.status,
+        userId
+      );
+      return res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleRetrievalError(err, res, 'Invalid promotion resolution parameters');
+      if (handled) return handled;
+      throw err;
+    }
   })
 );
 
