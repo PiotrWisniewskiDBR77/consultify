@@ -370,7 +370,7 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P01-A |  |  |  |  |  |
+| P01-A | approved(scope) | e69b1f9c77e4676caa53d979bce116eb2d7483a8 | n/a (docs-only scope approval) | n/a | §2.3 canon frozen (P0 providers, object model, lifecycle grammar, operator surfaces, recovery doctrine) |
 | P01-B |  |  |  |  |  |
 | P01-C |  |  |  |  |  |
 
