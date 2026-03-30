@@ -268,7 +268,7 @@ To mark `P05-A` as `approved(scope)`, the following must be true (testable state
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P05-A |  |  |  |  |  |
+| P05-A | `approved(scope)` | `5ef9e3bd1f` | Scope approval — no runtime tests | N/A (scope phase) | Finance lane canon frozen: lanes, KPI↔Finance boundary, versioning, error taxonomy + recovery, anti-duplicate gate, degraded posture |
 | P05-B |  |  |  |  |  |
 | P05-C |  |  |  |  |  |
 

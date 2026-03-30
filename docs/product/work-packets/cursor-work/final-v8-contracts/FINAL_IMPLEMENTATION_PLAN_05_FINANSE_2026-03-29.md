@@ -18,6 +18,130 @@ Status: draft (contract wrapper over existing plan)
 - “Piękne raporty” bez audytowalnej mutacji i bez spójności z KPI (anty-cel).
 - Przejęcie ownership finansów “na całej platformie” (tylko zadeklarowane sub-lanes Wave 1).
 
+### 2.3 P05-A canon (Finance lane canon + scope approval)
+
+This section is **scope-canon** for Finance packets. It freezes:
+- bounded lanes (what exists in Wave 1),
+- cross-module coherence boundary (KPI ↔ Finance),
+- versioning semantics (current vs actual),
+- error taxonomy + recovery posture,
+- anti-duplicate gates (no parallel finance truths),
+- degraded modes and testable acceptance points.
+
+#### 2.3.1 Bounded lanes (one declared canon)
+Finance is a **bounded lane system**, not “anything finance-like”.
+
+Canonical lane order (Wave 1):
+1. **Import** → ingest + validate + map source datasets into model-ready form
+2. **Analysis** (L1/L2/L3) → run bounded analysis levels on declared model truth
+3. **Mutation** → governed changes to declared finance model state (never silent)
+4. **Readback** → stable, reviewable outputs + linkage back to Results/KPI context where declared
+
+Rules:
+- Each lane must have an explicit **entry**, **exit**, and **state** (no invisible “magic background” work).
+- Finance lanes must remain auditable: who/what/when + outcome.
+
+Explicit non-goals (re-stated as canon guards):
+- No ERP / accounting suite parity.
+- No “pretty reports” that bypass auditability, mutation traceability, or KPI coherence.
+- No platform-wide finance ownership beyond declared Wave 1 sub-lanes.
+
+#### 2.3.2 KPI ↔ Finance coherence boundary (freeze)
+We freeze the “results → consequence” boundary so the product never creates split-truth.
+
+Ownership boundary (SSOT: `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`):
+- **Results/KPI owns**:
+  - KPI metric truth (values, cadence, validation in Results)
+  - initiating reconciliation workflow when KPI ↔ Finance diverge
+  - presenting KPI-facing context and linkage status
+- **Finance owns**:
+  - finance interpretation and finance model truth (planning/versions/mutations)
+  - CFO review semantics and finance-side resolution
+  - finance-side audit posture for mutations and model state
+- **Shared**:
+  - reconciliation as a governed cross-module process (explicit, never hidden)
+
+One-truth rule (“results → consequence”):
+- Results values are **not overwritten** by finance estimates.
+- Finance model state is **not overwritten** by KPI values.
+- The system explains linkage and divergence via governed linkage/reconciliation objects, not by silently collapsing values.
+
+#### 2.3.3 Versioning semantics (freeze, bounded)
+We freeze the minimum semantics required for “current vs actual” and switchover posture.
+
+Canonical semantics:
+- **`actual`**:
+  - represents realized / committed truth for a closed window (post-review posture)
+  - is stable; changes require governed correction (audit-required) rather than silent edits
+- **`current`**:
+  - represents the working view (forecast / planned / in-progress model state)
+  - is the default target for controlled mutation inside declared lanes
+
+Switchover posture:
+- A switchover is an explicit event/date boundary where a window becomes “actual”.
+- Switchover must be visible and reviewable (no hidden background flips).
+
+Reconciliation boundary (bounded):
+- Reconciliation is required when Results KPI truth and Finance interpretation diverge materially on a declared linkage path.
+- Reconciliation explains divergence (timing/scope/unit/formula/model-staleness), it does not hide it.
+
+#### 2.3.4 Error taxonomy + recovery posture (freeze)
+We freeze an operator-grade error posture for import and mutation.
+
+Import action completion taxonomy (evidence pointers in Softs / Apiary mirror):
+- Import outcomes must surface a stable status family:
+  - **completed**
+  - **completed_with_warnings**
+  - **failed**
+  - (optional operational states) queued / running / cancelled
+- Import must expose **completion / failure / warning codes** as user-visible evidence (not logs-only).
+  - Evidence pointer: `Softs/0 Analiza finansowa/Apiary.zip :: Apiary/.../completion-failure-and-data-error-warning-codes-for-import-and-export-actions.html`
+
+Recovery posture (imports):
+- `completed_with_warnings`: data may be partially usable; system must show “what is impacted” and recommended next action (fix mapping / fix source / retry).
+- `failed`: no partial mutation is allowed downstream; system stays in safe degraded state (read-only + previous good state remains).
+
+Mutation failure posture:
+- Any mutation failure must create an **audit event** and result in a **safe degraded state**:
+  - no silent corruption,
+  - no partial writes presented as success,
+  - user sees failure cause category + “what next” action.
+
+#### 2.3.5 Anti-duplicate gate (no parallel finance truths)
+We freeze an anti-duplicate gate to prevent “parallel finance truth tables” and split-truth outside declared lanes.
+
+Rules:
+- No parallel “finance truth tables” outside this lane grammar.
+- No second “KPI-finance mapping truth” outside the linkage SSOT and declared linkage objects.
+- Any new finance object family must be justified as an extension of canon (not a shadow system) and recorded in section 9 risks/decisions before P05-B starts.
+
+#### 2.3.6 Degraded / error posture (minimum scenarios)
+Finance must degrade safely. Minimum scenarios (at least one user-visible state + next action each):
+1. **Import mapping missing/invalid** → import blocked; show required mapping fields; suggest fix + retry.
+2. **Import completed with warnings** → allow analysis in “warning posture”; highlight impacted rows/fields; suggest remediation.
+3. **Import failed** → keep last good model snapshot; block mutation; show failure code family + retry path.
+4. **Source dataset schema drift** → detect mismatch; offer mapping update workflow; do not auto-adapt silently.
+5. **Stale model / stale linkage** (KPI link out of date) → mark linkage stale; require refresh/reconcile before showing “consequence confirmed”.
+6. **Mutation conflict / concurrency** → prevent unsafe write; create audit event; require retry on latest model state.
+7. **Permission denied / locked review window** → mutation disabled; keep read-only; show which role/state blocks action.
+8. **Switchover misconfigured** → block “actual” finalize; require explicit correction; do not flip version automatically.
+9. **Reconciliation mismatch** (timing/scope/unit/formula) → show mismatch category; allow notes + acknowledge path; do not auto-force equality.
+
+#### 2.3.7 Acceptance checklist (scope approval, testable)
+To mark `P05-A` as `approved(scope)`, the following must be true (testable statements):
+1. Import→analysis(L1/L2/L3)→mutation→readback lane order is explicit and referenced as canon (this section).
+2. Finance non-goals are explicit and include “no ERP/accounting suite” and “no pretty reports without audit”.
+3. KPI ↔ Finance ownership boundary is explicit (Results owns KPI truth + reconciliation trigger; Finance owns model truth + finance-side resolution).
+4. The system posture explicitly forbids silent overwrite of Results KPI values by Finance and vice-versa.
+5. Version semantics define `current` vs `actual` with an explicit switchover boundary and audit-required correction posture.
+6. Reconciliation is explicitly required to explain divergence; it cannot be hidden or silently resolved.
+7. Import completion taxonomy includes at minimum: completed / completed_with_warnings / failed, and codes are treated as first-class evidence (user-visible).
+8. Import failure posture explicitly blocks downstream mutation and preserves last known good state.
+9. Mutation failure posture explicitly requires audit logging and safe degraded state (no partial silent corruption).
+10. Anti-duplicate gate explicitly forbids parallel finance truth tables and split-truth outside declared lanes.
+11. Degraded posture lists at least 7 scenarios with user-visible state + recommended next action.
+12. Dependencies for P05-B later are clear: P04-A must remain `approved(scope)` and linkage SSOT remains authority.
+
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_FINANSE_2026-03-29.md`
@@ -144,7 +268,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P05-A |  |  |  |  |  |
+| P05-A | `approved(scope)` | `5ef9e3bd1f` | Scope approval — no runtime tests | N/A (scope phase) | Finance lane canon frozen: lanes, KPI↔Finance boundary, versioning, error taxonomy + recovery, anti-duplicate gate, degraded posture |
 | P05-B |  |  |  |  |  |
 | P05-C |  |  |  |  |  |
 
