@@ -237,7 +237,7 @@ Statuses are **enumerated** (no parallel vocab per connector):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P32-A | approved(scope) | (filled at commit) | N/A — scope packet | N/A — scope packet | Cockpit IA §2.3.1; roles §2.3.2; boundaries §2.3.3; integrations §2.3.4; errors §2.4; anti-dup §2.3.5 |
+| P32-A | approved(scope) | `c509364f38` | N/A — scope packet | N/A — scope packet | Cockpit IA §2.3.1; roles §2.3.2; boundaries §2.3.3; integrations §2.3.4; errors §2.4; anti-dup §2.3.5 |
 | P32-B |  |  |  |  |  |
 | P32-C |  |  |  |  |  |
 
