@@ -62,6 +62,20 @@ This prevents “helpful” agents from starting consumers before foundations (e
 
 ---
 
+## 1.2 Preflight checklist (must pass before any work)
+
+Before writing code or docs for a packet:
+
+- Confirm the packet is authorized in `final_master/NEXT_PACKET.md`.
+- Confirm the lock exists and matches the packet.
+- Check `EXECUTION_INDEX.md` for dependency readiness (foundation packets not `draft`).
+- Confirm you are extending canon (list the canonical entities/paths you will touch).
+- Confirm evidence-first: tests + staging proof script are written before `P<NN>-B` work.
+
+If any preflight item fails: stop and escalate to manager (update `NEXT_PACKET.md` first).
+
+---
+
 ## 2. Anti-duplicate “canon-first” rule
 
 When implementing packet `B`:

@@ -29,3 +29,7 @@ Completion:
 - update `EXECUTION_INDEX.md` #18 → `approved(scope)`
 - release the lock (`Status: released`)
 
+Notes:
+
+- Outputs Library (#19) is already progressing in runtime; P18-A must be shipped next to make the trust-state dependency explicit and prevent drift.
+

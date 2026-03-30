@@ -98,6 +98,20 @@ No “soft dependency by hope”.
 
 ---
 
+## 5.1 Dependency readiness gate (no consumer before foundation)
+
+Before starting a consumer packet, verify dependencies are ready in `EXECUTION_INDEX.md`:
+
+- Starting any `P<NN>-B` or `P<NN>-C` requires all declared dependencies’ `Pxx-A` to be at least `approved(scope)`.
+- Marking a packet as `delivered` or `verified(evidence)` is not allowed if a required dependency is still `draft`.
+
+If a dependency is missing, the correct action is:
+
+- pause the consumer packet (keep lock, add “paused pending dependency” note), and
+- run the missing producer `Pxx-A` first.
+
+---
+
 ## 6. Change control (scope discipline)
 
 - If new scope appears during work, it must be recorded as:
