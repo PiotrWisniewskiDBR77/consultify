@@ -187,7 +187,7 @@ If implementers find a near-duplicate store or route, **stop** — record in §9
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P19-A | approved(scope) | `30c484be6b` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
+| P19-A | approved(scope) | `2d0f958aff` | N/A — docs/scope only | N/A | Scope frozen: §2.2–2.4, P19-A checklist; anti-duplicate §2.3; EXECUTION_INDEX #19 updated; lock P19-A released. |
 | P19-B |  |  |  |  |  |
 | P19-C |  |  |  |  |  |
 
