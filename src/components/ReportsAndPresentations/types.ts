@@ -130,6 +130,11 @@ export interface ArtifactGovernanceSummary {
   executionAuthority?: 'execution_spine';
   accessGrants?: ArtifactAccessGrantItem[];
   originLinks?: ArtifactOriginLinkItem[];
+  lineagePaths?: {
+    runPath: string;
+    toolUsagePath: string;
+    outputsPath: string;
+  } | null;
 }
 
 export interface TemplateItem {

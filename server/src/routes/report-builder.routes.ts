@@ -3371,8 +3371,23 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
+    const roleKey = req.user?.role ? String(req.user.role) : null;
     const { template, language, version, confidentiality } = req.query;
     const useV2 = version === '2' || version === 'v2';
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId,
+      originRuntime: 'report',
+      originRecordId: id,
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
 
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
@@ -3542,6 +3557,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     await recordCanonicalExportTrace({
       organizationId,
       userId,
+      roleKey,
       reportId: id,
       format: 'pptx',
     }).catch(() => null);

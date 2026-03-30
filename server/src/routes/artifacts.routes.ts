@@ -227,6 +227,14 @@ async function buildArtifactTrustPayload(params: {
     sourceRefs: artifact.sourceRefs,
   });
 
+  const lineagePaths = artifact.executionRunId
+    ? {
+        runPath: `/v8/execution/runs/${artifact.executionRunId}`,
+        toolUsagePath: `/v8/execution/runs/${artifact.executionRunId}/tool-usage`,
+        outputsPath: `/v8/execution/runs/${artifact.executionRunId}/outputs`,
+      }
+    : null;
+
   return {
     artifactId: artifact.artifactId,
     outputType: artifact.outputType,
@@ -247,6 +255,7 @@ async function buildArtifactTrustPayload(params: {
     originLinks: links,
     accessGrants: grants,
     exportHistory,
+    lineagePaths,
     openPath: actionTarget.openPath,
     exportPath: actionTarget.exportPath,
     authority: actionTarget.authority,

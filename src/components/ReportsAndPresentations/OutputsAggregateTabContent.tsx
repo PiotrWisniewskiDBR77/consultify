@@ -19,6 +19,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
@@ -38,7 +45,7 @@ import {
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { resolveArtifactOpenPath } from './artifactNavigation';
-import type { UnifiedOutputRow } from './types';
+import type { ArtifactGovernanceSummary, UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
 
 function rowKey(row: UnifiedOutputRow): string {
@@ -138,6 +145,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const [selectedGovernance, setSelectedGovernance] = useState<
     UnifiedOutputRow['governance'] | null
   >(null);
+  const [lineageOpen, setLineageOpen] = useState(false);
+  const [lineageLoading, setLineageLoading] = useState(false);
+  const [lineageError, setLineageError] = useState<string | null>(null);
+  const [lineageRunId, setLineageRunId] = useState<string | null>(null);
+  const [lineageRun, setLineageRun] = useState<any | null>(null);
+  const [lineageToolUsage, setLineageToolUsage] = useState<any | null>(null);
+  const [lineageOutputs, setLineageOutputs] = useState<any[] | null>(null);
   const translate = useCallback(
     (key: string, fallback?: string) => t(key, { defaultValue: fallback ?? key }),
     [t]
@@ -161,6 +175,64 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       }
     },
     [isEnabled, isPolish, navigate]
+  );
+
+  const resetLineage = useCallback(() => {
+    setLineageLoading(false);
+    setLineageError(null);
+    setLineageRunId(null);
+    setLineageRun(null);
+    setLineageToolUsage(null);
+    setLineageOutputs(null);
+  }, []);
+
+  const openLineage = useCallback(
+    async (params: { executionRunId: string; lineagePaths?: ArtifactGovernanceSummary['lineagePaths'] }) => {
+      const runId = String(params.executionRunId || '').trim();
+      if (!runId) return;
+
+      const lineagePaths = params.lineagePaths || null;
+      const runPath = String(lineagePaths?.runPath || `/v8/execution/runs/${runId}`);
+      const toolUsagePath = String(
+        lineagePaths?.toolUsagePath || `/v8/execution/runs/${runId}/tool-usage`
+      );
+      const outputsPath = String(lineagePaths?.outputsPath || `/v8/execution/runs/${runId}/outputs`);
+
+      setLineageOpen(true);
+      setLineageLoading(true);
+      setLineageError(null);
+      setLineageRunId(runId);
+      setLineageRun(null);
+      setLineageToolUsage(null);
+      setLineageOutputs(null);
+
+      try {
+        const [runRes, toolRes, outputsRes] = await Promise.all([
+          fetch(`${API_URL}${runPath}`, { headers: getHeaders() }),
+          fetch(`${API_URL}${toolUsagePath}`, { headers: getHeaders() }),
+          fetch(`${API_URL}${outputsPath}?limit=50`, { headers: getHeaders() }),
+        ]);
+
+        const runJson = runRes.ok ? await runRes.json() : null;
+        const toolJson = toolRes.ok ? await toolRes.json() : null;
+        const outputsJson = outputsRes.ok ? await outputsRes.json() : null;
+
+        setLineageRun(runJson?.data || null);
+        setLineageToolUsage(toolJson?.data || null);
+        setLineageOutputs(Array.isArray(outputsJson?.data) ? outputsJson.data : []);
+
+        if (!runRes.ok || !toolRes.ok || !outputsRes.ok) {
+          setLineageError(
+            t('rap.outputs.preview.lineageLoadFailed', 'Could not load full lineage for this run')
+          );
+        }
+      } catch {
+        setLineageError(t('rap.outputs.preview.lineageLoadFailed', 'Could not load full lineage for this run'));
+      } finally {
+        setLineageLoading(false);
+      }
+    },
+    [t]
   );
 
   const tableRows: AggregateRow[] = useMemo(
@@ -543,6 +615,10 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           executionAuthority: payload.executionAuthority || 'execution_spine',
           accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
           originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
+          lineagePaths:
+            payload.lineagePaths && typeof payload.lineagePaths === 'object'
+              ? payload.lineagePaths
+              : null,
         });
       } catch {
         if (isMounted) setSelectedGovernance(selectedItem?.governance || null);
@@ -606,6 +682,171 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
   return (
     <div className="h-full overflow-hidden">
+      <Dialog
+        open={lineageOpen}
+        onOpenChange={(open) => {
+          setLineageOpen(open);
+          if (!open) resetLineage();
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t('rap.outputs.preview.lineageTitle', 'Run lineage')}</DialogTitle>
+            <DialogDescription>
+              {t('rap.outputs.preview.lineageRunId', 'Execution run')}: {lineageRunId || '—'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+            {lineageLoading ? (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                <Loader2 size={16} className="animate-spin" />
+                {t('rap.outputs.preview.lineageLoading', 'Loading lineage…')}
+              </div>
+            ) : null}
+            {lineageError ? (
+              <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 p-3 text-amber-900 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+                {lineageError}
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageRun', 'Run')}
+                </div>
+                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                  {formatLabel(lineageRun?.state || lineageRun?.runState || lineageRun?.status)}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageCreatedAt', 'Created')}:{' '}
+                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                    {String(lineageRun?.createdAt || lineageRun?.created_at || '—')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageToolCalls', 'Tool calls')}
+                </div>
+                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                  {Array.isArray(lineageToolUsage?.invocations)
+                    ? lineageToolUsage.invocations.length
+                    : 0}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageTraces', 'Traces')}:{' '}
+                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                    {Array.isArray(lineageToolUsage?.traces) ? lineageToolUsage.traces.length : 0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageOutputs', 'Outputs')}
+                </div>
+                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                  {Array.isArray(lineageOutputs) ? lineageOutputs.length : 0}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageVisibility', 'Visibility enforced')}
+                </div>
+              </div>
+            </div>
+
+            {Array.isArray(lineageToolUsage?.invocations) && lineageToolUsage.invocations.length ? (
+              <div className="rounded-lg border border-slate-200/70 p-3 dark:border-slate-700/70">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageToolCallsList', 'Tool calls')}
+                </div>
+                <div className="mt-2 space-y-2">
+                  {lineageToolUsage.invocations.slice(0, 8).map((inv: any, idx: number) => (
+                    <div
+                      key={String(inv.invocationId || inv.id || idx)}
+                      className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">
+                          {String(inv.toolName || inv.tool || inv.name || 'tool')}
+                        </div>
+                        <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                          {String(inv.createdAt || inv.created_at || inv.timestamp || '')}
+                        </div>
+                      </div>
+                      <div className="ml-3 shrink-0 text-[11px] text-slate-500 dark:text-slate-400">
+                        {formatLabel(inv.status || inv.resultStatus || inv.state)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {Array.isArray(lineageOutputs) && lineageOutputs.length ? (
+              <div className="rounded-lg border border-slate-200/70 p-3 dark:border-slate-700/70">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('rap.outputs.preview.lineageOutputsList', 'Output pointers')}
+                </div>
+                <div className="mt-2 space-y-2">
+                  {lineageOutputs.slice(0, 12).map((out: any, idx: number) => {
+                    const originRecordId = String(out.originRecordId || '').trim();
+                    const outputType = String(out.outputType || '').trim();
+                    const kind =
+                      outputType === 'presentation'
+                        ? 'presentation'
+                        : outputType === 'sheet'
+                          ? 'sheet'
+                          : 'document';
+                    const openPath =
+                      kind === 'sheet' || !originRecordId
+                        ? null
+                        : resolveArtifactOpenPath({ kind, originRecordId, governance: null });
+
+                    return (
+                      <div
+                        key={String(out.artifactId || out.originRecordId || idx)}
+                        className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate font-medium">
+                            {String(out.resolvedTitle || out.titleSnapshot || out.originTitle || 'Output')}
+                          </div>
+                          <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                            {String(out.artifactFamily || out.outputType || out.originRuntime || '—')} ·{' '}
+                            {String(out.visibilityScope || '—')}
+                          </div>
+                        </div>
+                        <div className="ml-3 shrink-0">
+                          {kind === 'sheet' && originRecordId ? (
+                            <button
+                              type="button"
+                              onClick={() => void openGovernedSheetRow(originRecordId)}
+                              className="rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
+                            >
+                              {t('rap.outputs.preview.download', 'Download')}
+                            </button>
+                          ) : openPath ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(openPath)}
+                              className="rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
+                            >
+                              {t('rap.outputs.preview.open', 'Open')}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <TableWithPreviewLayout<AggregateRow>
         selectedId={selectedId}
         selectedItem={previewItem}
@@ -694,6 +935,20 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {item.governance?.executionRunId || '—'}
               </span>
+              {item.governance?.executionRunId ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openLineage({
+                      executionRunId: item.governance?.executionRunId || '',
+                      lineagePaths: item.governance?.lineagePaths || null,
+                    })
+                  }
+                  className="ml-2 inline-flex items-center rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
+                >
+                  {t('rap.outputs.preview.trace', 'Trace')}
+                </button>
+              ) : null}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.exports', 'Exports')}:{' '}

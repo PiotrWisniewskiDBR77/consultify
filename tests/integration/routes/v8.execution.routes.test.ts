@@ -18,6 +18,8 @@ const mockCompleteRun = vi.fn();
 const mockReplanFromRejection = vi.fn();
 const mockResolveProposalsBatch = vi.fn();
 const mockResolveProposal = vi.fn();
+const mockGetToolUsageByRun = vi.fn();
+const mockListArtifactsForUserByExecutionRunId = vi.fn();
 
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
   getRunsByOrg: (...args: unknown[]) => mockGetRunsByOrg(...args),
@@ -38,20 +40,29 @@ vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
   resolveProposal: (...args: unknown[]) => mockResolveProposal(...args),
 }));
 
+vi.mock('../../../server/src/services/v8/toolGovernanceService.js', () => ({
+  getToolUsageByRun: (...args: unknown[]) => mockGetToolUsageByRun(...args),
+}));
+
+vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
+  listArtifactsForUserByExecutionRunId: (...args: unknown[]) =>
+    mockListArtifactsForUserByExecutionRunId(...args),
+}));
+
 import executionRoutes from '../../../server/src/routes/v8/execution.routes.js';
 
 const ORG = '11111111-1111-4111-8111-111111111111';
 const UID = '22222222-2222-4222-8222-222222222222';
 const RUN_ID = '33333333-3333-4333-8333-333333333333';
 
-function createApp(): Express {
+function createApp(userRole: string = 'ADMIN'): Express {
   const app = express();
   app.use(express.json());
   app.use((req: any, _res, next) => {
     req.v8Context = {
       organizationId: ORG,
       userId: UID,
-      userRole: 'ADMIN',
+      userRole,
       isSuperAdmin: false,
     };
     next();
@@ -70,6 +81,8 @@ describe('Execution Routes (/api/v8/execution)', () => {
       state: 'planning',
     });
     mockGetProposalsByRun.mockResolvedValue([{ proposalId: 'prop-1' }, { proposalId: 'prop-2' }]);
+    mockGetToolUsageByRun.mockResolvedValue({ invocations: [], traces: [] });
+    mockListArtifactsForUserByExecutionRunId.mockResolvedValue([{ artifactId: 'art-1' }]);
   });
 
   it('lists active runs through the governed execution route', async () => {
@@ -132,5 +145,49 @@ describe('Execution Routes (/api/v8/execution)', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ proposalId: 'prop-1', status: 'approved' });
     expect(mockResolveProposal).toHaveBeenCalledWith('prop-1', 'approved', UID);
+  });
+
+  it('returns tool usage for a run when run is visible to the user', async () => {
+    mockListArtifactsForUserByExecutionRunId.mockResolvedValue([{ artifactId: 'art-1' }]);
+    mockGetToolUsageByRun.mockResolvedValue({
+      invocations: [{ invocationId: 'inv-1', toolId: 'tool-1', approvalResult: 'allowed' }],
+      traces: [],
+    });
+
+    const res = await request(createApp('USER')).get(`/api/v8/execution/runs/${RUN_ID}/tool-usage`);
+
+    expect(res.status).toBe(200);
+    expect(mockGetToolUsageByRun).toHaveBeenCalledWith(RUN_ID, ORG);
+    expect(res.body.data.invocations.length).toBe(1);
+  });
+
+  it('denies tool usage when run is not visible to a non-privileged user (no leakage)', async () => {
+    mockListArtifactsForUserByExecutionRunId.mockResolvedValue([]);
+
+    const res = await request(createApp('USER')).get(`/api/v8/execution/runs/${RUN_ID}/tool-usage`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RUN_NOT_FOUND');
+    expect(mockGetToolUsageByRun).not.toHaveBeenCalled();
+  });
+
+  it('returns output pointers for a run when visible', async () => {
+    mockListArtifactsForUserByExecutionRunId.mockResolvedValue([
+      { artifactId: 'art-1', outputType: 'report', originRecordId: 'report-1', resolvedTitle: 'Report 1' },
+    ]);
+
+    const res = await request(createApp('USER')).get(`/api/v8/execution/runs/${RUN_ID}/outputs?limit=10`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBe(1);
+  });
+
+  it('denies output pointers when run is not visible to a non-privileged user (no leakage)', async () => {
+    mockListArtifactsForUserByExecutionRunId.mockResolvedValue([]);
+
+    const res = await request(createApp('USER')).get(`/api/v8/execution/runs/${RUN_ID}/outputs?limit=10`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RUN_NOT_FOUND');
   });
 });

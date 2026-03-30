@@ -366,6 +366,11 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         reviewGateCount: 2,
         executionRunId: 'exec-9',
         executionState: 'completed',
+        lineagePaths: {
+          runPath: '/v8/execution/runs/exec-9',
+          toolUsagePath: '/v8/execution/runs/exec-9/tool-usage',
+          outputsPath: '/v8/execution/runs/exec-9/outputs',
+        },
         canManageAccess: false,
         manageAccessPath: '/api/artifacts/art-9/access',
         exportHistory: [

@@ -967,10 +967,13 @@ export async function getToolUsageByRun(
   const invocations = (invocationRows || []).map(rowToInvocation);
 
   const traceRows = await dbAll<TraceRow>(
-    `SELECT * FROM v8_tool_invocation_traces
-     WHERE execution_run_id = ?
-     ORDER BY timestamp ASC`,
-    [runId],
+    `SELECT t.* FROM v8_tool_invocation_traces t
+     INNER JOIN v8_tool_invocation_log i
+       ON i.invocation_id = t.invocation_id
+     WHERE t.execution_run_id = ?
+       AND i.organization_id = ?
+     ORDER BY t.timestamp ASC`,
+    [runId, organizationId],
     { fallback: true }
   );
 

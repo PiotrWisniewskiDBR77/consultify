@@ -4,7 +4,9 @@ import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import * as artifactRegistryService from '../../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../../services/v8/executionSpineService.js';
+import * as toolGovernanceService from '../../services/v8/toolGovernanceService.js';
 import {
   type ProposalStatus,
   ProposalStatusValues,
@@ -34,6 +36,11 @@ function isRunState(value: string): value is RunState {
 
 function isResolvableProposalStatus(value: string): value is ProposalStatus {
   return (RESOLVABLE_PROPOSAL_STATUSES as readonly string[]).includes(value);
+}
+
+function isPrivilegedRole(role: string | null | undefined): boolean {
+  const normalized = String(role || '').toUpperCase();
+  return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
 }
 
 function handleExecutionError(
@@ -83,6 +90,32 @@ async function ensureRunExists(runId: string, organizationId: string, res: Respo
     return null;
   }
   return run;
+}
+
+async function ensureRunVisibleToUser(params: {
+  runId: string;
+  organizationId: string;
+  userId: string;
+  userRole: string;
+  res: Response;
+}): Promise<boolean> {
+  if (isPrivilegedRole(params.userRole)) return true;
+
+  const visible = await artifactRegistryService.listArtifactsForUserByExecutionRunId({
+    organizationId: params.organizationId,
+    executionRunId: params.runId,
+    userId: params.userId,
+    roleKey: params.userRole,
+    limit: 1,
+  });
+
+  if (visible.length > 0) return true;
+
+  params.res.status(404).json({
+    error: `Run ${params.runId} not found`,
+    code: 'RUN_NOT_FOUND',
+  });
+  return false;
 }
 
 async function ensureProposalBelongsToRun(
@@ -153,6 +186,54 @@ router.get(
     const run = await ensureRunExists(req.params.runId, organizationId, res);
     if (!run) return;
     return res.json({ data: run, meta: { version: 'v8' } });
+  })
+);
+
+router.get(
+  '/runs/:runId/tool-usage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const run = await ensureRunExists(req.params.runId, organizationId, res);
+    if (!run) return;
+
+    const ok = await ensureRunVisibleToUser({
+      runId: req.params.runId,
+      organizationId,
+      userId,
+      userRole,
+      res,
+    });
+    if (!ok) return;
+
+    const data = await toolGovernanceService.getToolUsageByRun(req.params.runId, organizationId);
+    return res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+router.get(
+  '/runs/:runId/outputs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const run = await ensureRunExists(req.params.runId, organizationId, res);
+    if (!run) return;
+
+    const limit = parseLimit(req.query.limit, 50);
+    const data = await artifactRegistryService.listArtifactsForUserByExecutionRunId({
+      organizationId,
+      executionRunId: req.params.runId,
+      userId,
+      roleKey: userRole,
+      limit,
+    });
+
+    if (!isPrivilegedRole(userRole) && data.length === 0) {
+      return res.status(404).json({
+        error: `Run ${req.params.runId} not found`,
+        code: 'RUN_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data, meta: { version: 'v8' } });
   })
 );
 

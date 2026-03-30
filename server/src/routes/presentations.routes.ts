@@ -38,6 +38,7 @@ function getUserId(req: any): string {
 async function recordCanonicalDeckExportTrace(params: {
   organizationId: string;
   userId: string;
+  roleKey: string | null;
   deckId: string;
   format: 'pdf' | 'pptx';
 }) {
@@ -46,7 +47,7 @@ async function recordCanonicalDeckExportTrace(params: {
     originRuntime: 'presentation',
     originRecordId: params.deckId,
     userId: params.userId,
-    roleKey: null,
+    roleKey: params.roleKey,
   });
   if (!artifact?.artifactId) return;
   await reportsPresModelService.recordCompletedExport(
@@ -628,7 +629,22 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    const roleKey = req.user?.role ? String(req.user.role) : null;
+    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
+
+    // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId: orgId,
+      originRuntime: 'presentation',
+      originRecordId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Export not available' });
+    }
+
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
@@ -649,6 +665,7 @@ router.get(
       organizationId: orgId,
       userId,
       deckId: req.params.id,
+      roleKey,
       format: 'pptx',
     }).catch(() => null);
     res.sendFile(path.resolve(deck.export_path));
@@ -661,7 +678,21 @@ router.get(
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    const roleKey = req.user?.role ? String(req.user.role) : null;
+    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
+
+    // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId: orgId,
+      originRuntime: 'presentation',
+      originRecordId: String(deckId || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
 
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
@@ -709,6 +740,14 @@ router.get(
       format: 'pdf',
     }).catch(() => null);
     doc.end();
+
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId,
+      roleKey,
+      format: 'pdf',
+    }).catch(() => null);
   })
 );
 
