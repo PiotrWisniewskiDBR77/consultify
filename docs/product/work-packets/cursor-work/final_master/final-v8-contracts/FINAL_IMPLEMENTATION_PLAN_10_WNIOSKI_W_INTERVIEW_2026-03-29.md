@@ -277,7 +277,7 @@ Co najmniej poniższe scenariusze muszą mieć jawne UI + audit + operator next 
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P10-A |  |  |  |  |  |
+| P10-A | approved(scope) | f15dda63af0afed396a6b282ac179560103015ba | n/a (docs-only scope approval) | n/a | §2.3 canon frozen (artifact structure, confidence semantics, evidence pointers rules, P11 handoff payload, anti-duplicate gate, degraded posture, acceptance checklist) |
 | P10-B |  |  |  |  |  |
 | P10-C |  |  |  |  |  |
 
