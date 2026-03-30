@@ -10,12 +10,17 @@ Authority: `PROGRAM_EXECUTION_PLAYBOOK.md` (this doc operationalizes it).
 
 ### Tasks (must do)
 - Confirm `Context pack` is correct (max 5 links, correct order).
+- Confirm coordination posture: lock workflow + canon-first rule (`EXECUTION_COORDINATION.md`).
 - Freeze **bounded scope**: in-scope, non-goals, assumptions.
 - Declare **dependencies** and the handoff contract (producer→consumer).
 - Convert Softs parity + gaps into **approval-grade acceptance checklist** (5–15 bullets).
 - Define **degraded modes** for missing inputs / partial availability (no overclaim).
 - Define **evidence requirements** for PNN-B/PNN-C (tests + staging proof artifacts).
 - Define rollout posture (flags, gradual exposure) and rollback posture (safe revert).
+-
+- Anti-duplicate gate (must be explicit):
+  - list existing canonical entities/flags/registries this packet will extend,
+  - declare “no parallel entity” rule for anything that looks duplicative.
 
 ### DoD (exit criteria)
 - Scope is approved as **explicit boundaries** (no silent scope creep).
@@ -28,6 +33,7 @@ Authority: `PROGRAM_EXECUTION_PLAYBOOK.md` (this doc operationalizes it).
 ## Packet PNN-B — Core runtime closure (build what was approved)
 
 ### Tasks (must do)
+- Confirm a single-writer lock exists for this packet (`locks/P<NN>-<X>.md`).
 - Implement the bounded functionality (only what PNN-A approved).
 - Add/extend automated tests required by the contract (integration + regression + contract tests).
 - Ensure cross-surface coherence (no split-truth; state/permissions consistent).
@@ -44,6 +50,7 @@ Authority: `PROGRAM_EXECUTION_PLAYBOOK.md` (this doc operationalizes it).
 ## Packet PNN-C — Verification, rollout, evidence
 
 ### Tasks (must do)
+- Release the lock only after evidence is complete.
 - Run required test suite; capture outputs (command + summary).
 - Execute staging proof checklist; capture evidence (video/screens + what it proves).
 - Fill `Evidence ledger` row(s) for PNN-A/B/C with links and notes.

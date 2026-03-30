@@ -14,6 +14,34 @@ Status legend:
 
 > Recommended packet baseline for every position: `P<NN>-A` (canon+scope), `P<NN>-B` (core runtime), `P<NN>-C` (evidence+rollout).
 
+## Start rules (to prevent parallel worlds)
+
+Before starting any packet (`in progress`):
+
+- create a single-writer lock: `docs/product/work-packets/cursor-work/final_master/locks/P<NN>-<X>.md`
+- follow canon-first rule (extend existing entities; no duplicates)
+- define evidence upfront (tests + staging proof) and only then code
+
+References:
+
+- `docs/product/work-packets/cursor-work/final_master/PROGRAM_EXECUTION_PLAYBOOK.md`
+- `docs/product/work-packets/cursor-work/final_master/EXECUTION_COORDINATION.md`
+
+## Recommended execution order (dependency-first)
+
+To minimize rework and prevent duplicate truths, ship in this order:
+
+- **Foundation (trust + home + governance)**: 18 → 19 → 27 → 30 → 31 → 32 → 33
+- **Program-wide generation surfaces (consume foundation)**: 24 → 21 → 20 → 17
+- **KIMI net-new (blocked by evidence mapping)**: 22 → 23 (only after P22-A/P23-A are approved)
+- **Execution spine**: 11 → 03 → 04 → 05 → 06 → 02 → 07 → 08
+- **Collection + insights**: 09 → 10
+- **Help/KB**: 25 → 26
+- **Partner lane**: 29
+- **Public assistant**: 16
+- **Chat lane**: 34 → 35
+- **Remaining modules**: follow the same dependency-first rule using each contract’s section 3/9.
+
 | # | Position | Contract (bundle) | Packets (baseline) | Status |
 |---:|---|---|---|---|
 | 01 | Integracja | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_01_INTEGRACJA_2026-03-29.md` | P01-A / P01-B / P01-C | draft |

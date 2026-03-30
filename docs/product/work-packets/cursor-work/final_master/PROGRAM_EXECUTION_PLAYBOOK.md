@@ -107,7 +107,33 @@ No “soft dependency by hope”.
 
 ---
 
-## 7. Evidence ledger format (copy-paste)
+## 7. Concurrency control (no parallel implementations)
+
+Goal: prevent “parallel worlds” (duplicate entities, competing migrations, conflicting feature flags) and ensure every agent knows the **environment already exists**.
+
+Rules:
+
+- **Single-writer rule**: at any time, a given packet (`P<NN>-X`) has exactly one active implementer.
+- **Lock required**: before starting `in progress` for a packet, create a lock file under:
+  - `docs/product/work-packets/cursor-work/final_master/locks/P<NN>-<X>.md`
+- **No duplicate entities**: never create a “new thing” if a canon exists (tables, enums, routes, flags, registries). Extend the canon; if unclear, stop and resolve in `P<NN>-A`.
+- **No silent divergences**: every packet work must be traceable to one branch/PR and one evidence ledger row.
+
+Lock file content (minimum):
+
+- Packet ID, owner, branch name, start date/time, intended scope statement (1–3 bullets), links to contract and evidence ledger row.
+
+Release rule:
+
+- Lock is removed (or marked `released`) only when the packet is `verified(evidence)`.
+
+Reference:
+
+- Coordination details: `docs/product/work-packets/cursor-work/final_master/EXECUTION_COORDINATION.md`
+
+---
+
+## 8. Evidence ledger format (copy-paste)
 
 Add entries to the module’s `## 10. Evidence ledger` as you verify packets.
 
