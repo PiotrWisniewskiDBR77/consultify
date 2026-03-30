@@ -42,7 +42,10 @@ Started: YYYY-MM-DD HH:MM
 
 Release:
 
-- mark `Status: released` and/or delete the lock file only after `verified(evidence)`.
+- mark `Status: released` and/or delete the lock file when the packet reaches its **terminal state**:
+  - `P<NN>-A` → `approved(scope)`
+  - `P<NN>-B` → `delivered`
+  - `P<NN>-C` → `verified(evidence)`
 
 ---
 

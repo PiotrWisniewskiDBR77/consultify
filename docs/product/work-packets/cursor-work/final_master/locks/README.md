@@ -6,7 +6,10 @@ Workflow:
 
 1. Before starting `P<NN>-<X>` (moving it to `in progress`), create `P<NN>-<X>.md`.
 2. If the lock exists and is active, do not start.
-3. Release only after `verified(evidence)`.
+3. Release when the packet reaches terminal state:
+   - `P<NN>-A` → `approved(scope)`
+   - `P<NN>-B` → `delivered`
+   - `P<NN>-C` → `verified(evidence)`
 
 See: `docs/product/work-packets/cursor-work/final_master/EXECUTION_COORDINATION.md`
 

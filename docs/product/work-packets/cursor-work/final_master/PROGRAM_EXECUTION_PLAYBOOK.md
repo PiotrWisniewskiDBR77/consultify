@@ -125,7 +125,10 @@ Lock file content (minimum):
 
 Release rule:
 
-- Lock is removed (or marked `released`) only when the packet is `verified(evidence)`.
+- Lock is removed (or marked `released`) when the packet reaches its **terminal state**:
+  - `P<NN>-A` → `approved(scope)` (scope + evidence-first artifacts written)
+  - `P<NN>-B` → `delivered` (core runtime works in bounded scope; tests pass)
+  - `P<NN>-C` → `verified(evidence)` (evidence ledger complete + staging proof attached)
 
 Reference:
 
