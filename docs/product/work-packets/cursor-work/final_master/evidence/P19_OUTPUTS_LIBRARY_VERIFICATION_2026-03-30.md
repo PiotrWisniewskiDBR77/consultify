@@ -36,3 +36,7 @@ Optional capture: short screen recording or screenshots of steps 2–4 attached 
 
 - Fourth “materialized type” in a single aggregate row set is **registry runtime** (`report` | `presentation` | `sheet`). Additional lanes (**Documents**, **Sheets**, **Templates** tabs) cover other discoverability paths inside the same hub shell.
 - `native_artifact` runtime rows are not yet mapped in the aggregate UI mapper; they may still appear via typed list endpoints as the registry evolves.
+
+## Ledger
+
+- P19-C closure commit: `93a30d1f04` on branch `ws/c-artifact-evidence`.
