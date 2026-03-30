@@ -298,7 +298,7 @@ Każdy scenariusz musi mieć: **widoczny stan**, **safe next action**, **brak si
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P08-A |  |  |  |  |  |
+| P08-A | approved(scope) | `272838d28d` | N/A — docs/scope only | N/A | Scope frozen: §2.3 canon (P0 handoff targets+payload, governance envelope per P17, voice posture, evidence/uncertainty boundaries, hard boundaries vs Anna/public assistant + module-owned writes, anti-duplicate gate, degraded scenarios, acceptance checklist); EXECUTION_INDEX #08 updated; lock takeover recorded. |
 | P08-B |  |  |  |  |  |
 | P08-C |  |  |  |  |  |
 
