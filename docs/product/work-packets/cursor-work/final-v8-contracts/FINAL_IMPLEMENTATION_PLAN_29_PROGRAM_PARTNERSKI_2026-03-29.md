@@ -7,7 +7,7 @@ Last updated: 2026-03-30 (P29-A scope closure)
 ## 1. Executive summary
 - **Intent**: Portal+LP; darmowe konto partnera z limitami; AI‑driven narzędzia; rozliczanie i zachęcanie do partnerstwa.
 - **Primary users**: partnerzy + operatorzy programu (platform/tenant ops zależnie od modelu).
-- **Success metric**: jawny lifecycle partnera (apply→activate→enable→grow→earn) + spójność partner-facing vs operator truth.
+- **Success metric**: jawny lifecycle partnera (**onboard→activate→earn→payout**) + spójność partner-facing vs operator truth (opcjonalne sub‑fazy: apply/enable/grow jako copy/UX, ale nie osobne “źródła prawdy”).
 
 ## 2. Scope
 ### 2.1 In-scope
@@ -31,6 +31,11 @@ Minimalne stany (kanoniczne nazwy; UI może użyć copy-friendly etykiet, ale ma
 - **activate**: partner jest aktywowany do programu (ma dostęp do narzędzi referral + może zacząć “earn”).
 - **earn**: partner ma włączone naliczanie i widzi ledger earnings + dostępność do payout (z wyjątkami: hold/review).
 - **payout**: partner składa request payout; operator wykonuje approval + wypłatę; partner widzi payout history i outcome.
+
+**Optional sub‑phases (non-canonical):**
+
+- UI/plan może używać etapów typu **apply / enable / grow** jako **sub‑fazy** w ramach `onboard` i/lub `earn` (np. “apply” jako część onboard checklist; “enable/grow” jako część earn/enablement).
+- Te sub‑fazy **nie są** równoległą maszyną stanów ani drugim źródłem prawdy: nie mogą powodować sprzecznych statusów partner vs operator i muszą mapować się 1:1 do kanonicznego stanu lifecycle.
 
 **Invariants (must hold):**
 
@@ -206,7 +211,7 @@ Degraded behavior is part of the contract (no “silent fail”):
 
 ### 8.1 Bounded delivery packets
 #### P29-A — Partner lifecycle canon + earnings ledger (scope approval)
-- **Goal**: staged lifecycle apply→activate→enable→grow→earn z jedną prawdą partner+operator.
+- **Goal**: lifecycle canon **onboard→activate→earn→payout** z jedną prawdą partner+operator (sub‑fazy apply/enable/grow są dozwolone wyłącznie jako UI/enablement copy mapujące się do kanonu).
 - **Inputs required**: status model + earnings ledger schema + holds/exceptions rules.
 - **Acceptance**: scope zatwierdzony; non-goals jawne; messaging i remediation posture spisane.
 - **Evidence**: scope approval + linkowane SSOT.
