@@ -1,7 +1,7 @@
 # Final Implementation Contract — Assessment (Position 28/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: approved(scope) (P28-A canon frozen; docs-only)
 
 ## 1. Executive summary
 - **Intent**: Assessment AI‑driven, wykonywalne przez czat.
@@ -16,6 +16,150 @@ Status: draft (contract wrapper over existing plan)
 
 ### 2.2 Out-of-scope / non-goals
 - Parity z każdą metodologią/diagnostic platform w 1 kroku.
+
+### 2.3 P28-A canon (assessment object model + lifecycle + governance)
+
+Poniższy kanon jest **zamrożonym kontraktem** dla Assessment jako jednej spójnej rodziny (workbench + scoring + interpretacja + promotion) i jest podstawą dla P28-B/P28-C.
+
+Wymusza:
+
+- **brak “silent scoring”** (scoring/interpretacja są zawsze jawne jako *propozycje do review*),
+- **jedną prawdę o read-only / locked** (definicje i runy mają wyraźne stany edycji),
+- **bounded handoffs** do `Results/Outputs` oraz do `Wnioski w Interview` (bez zastępowania tych modułów).
+
+#### 2.3.1 Assessment object model (frozen; minimal nouns)
+
+Assessment jest “workbench‑run artifact family” z rozdzieleniem: **definition** (co to za metodologia) vs **run** (konkretne wykonanie w czasie).
+
+Minimalny model pojęciowy (must-exist w payloadach i UI vocabulary):
+
+1) **AssessmentDefinition** (metodologia / template)
+- Identity: `assessment_definition_id`, `methodology_id`, `version`
+- Purpose: “co badamy” + “jak interpretujemy” (bez implementacji “survey builder”)
+- Governance: publikacja definicji tworzy **read-only** wersję (immutable by default)
+
+2) **AssessmentRun** (sesja / instancja wykonania)
+- Identity: `assessment_run_id`, `assessment_definition_id@version`, `org_id`, `started_by`, `started_at`
+- State: `run_state` (np. `draft` / `running` / `awaiting_evidence` / `ready_for_review` / `completed` / `failed`)
+- Context: bounded “context snapshot” (linki do wejść, nie kopie prawdy)
+
+3) **EvidenceItem / EvidencePointer** (wejścia, które wspierają scoring/interpretację)
+- Evidence jest **links-first** (pointers do źródeł); jeśli przechowujemy excerpt, to jako audytowy “captured excerpt”
+- Evidence może być niekompletne → wtedy system wchodzi w jawny degraded state (2.3.6)
+
+4) **ScoreProposal** (proponowany wynik + uzasadnienie)
+- Pola: `score_value(s)`, `scoring_rationale`, `evidence_pointers[]`, `assumptions[]`, `confidence` (bounded)
+- Status: zawsze oznaczony jako `proposal` dopóki user nie wykona review action
+
+5) **InterpretationProposal** (proponowana interpretacja / “AI insights” w assessment)
+- Zasada: interpretacja jest propozycją, nie “final truth”; UI musi umożliwiać accept/reject/override (bez overclaim)
+- Pola: `summary`, `key_findings (bounded)`, `limits`, `next_actions (bounded)`, `links` do ScoreProposal/Evidence
+
+6) **PromotionTrace** (ślad przekazania downstream)
+- Każda promocja tworzy trace: `from_assessment_run_id` → `target_artifact_ref` (Results/Outputs) lub `target_insight_ref` (P10) + timestamp + actor
+
+#### 2.3.2 Lifecycle (definition + run) — states and invariants (frozen)
+
+**AssessmentDefinition lifecycle**:
+
+- `draft` → `published(read-only@version)` → `deprecated` (optional)
+- Publish jest punktem, po którym definicja w tej wersji staje się **immutable**; zmiany = nowa wersja.
+
+**AssessmentRun lifecycle** (bounded; minimal):
+
+- `draft` (setup / choose methodology)  
+- `running` (capturing evidence)  
+- `awaiting_evidence` (jawny brak wymaganych evidence / inputs)  
+- `score_proposed` (ScoreProposal istnieje, ale nie jest zatwierdzony)  
+- `reviewed` (user action: accept/reject/override scoring + interpretacji)  
+- `completed` (run zakończony; results gotowe do promotion)  
+- `failed` (error; run zachowuje audyt i “what next”)
+
+Invarianty (must):
+
+- **approve(run) ≠ review(artifact)**: review dotyczy *wyniku i interpretacji* runu; publish/review artefaktów downstream jest osobną osią (Position 18).
+- Run nie może przeskoczyć do `completed` bez jawnego “reviewed” albo jawnego “accepted with missing evidence” (degraded, z widocznymi limits).
+
+#### 2.3.3 Governance: no silent scoring + explainability rules (frozen)
+
+Governance jest kontraktem: user zawsze widzi *co system proponuje* i *dlaczego*.
+
+Zasady (must):
+
+- **No silent scoring**: system nie może w tle “ustawić score” bez pokazania ScoreProposal + rationale.
+- **Propose → review → accept/reject/override**: zarówno scoring jak i interpretacja przechodzą przez jawny review action.
+- **Explainability**: każde ScoreProposal zawiera `scoring_rationale` i listę evidence pointers; brak evidence → jawny degraded state (2.3.6).
+- **No overclaim**: interpretacja zawsze zawiera `limits` i jawne assumptions; UI nie renderuje jej jako “facts”.
+- **Auditability**: zmiany w score/interpretation (override) zapisują: kto, kiedy, co zmienił, i dlaczego (reason).
+
+#### 2.3.4 Permissions + lock/read-only truth (single truth)
+
+Assessment musi mieć jedną, spójną semantykę edycji i widoczności:
+
+- **Definition publish lock**: `published(read-only@version)` jest read-only dla zwykłych edycji; zmiany wymagają nowej wersji definicji.
+- **Run immutability on completion**: `completed` run jest read-only (inputs i evidence pointers nie są “przepisywane”); dozwolone są jedynie audytowe adnotacje/komentarze (bez zmiany historycznej prawdy).
+- **Visibility / exposure**: konsumuje kanon Position 18 (`Trust-state`): widoczność i review/publish downstream nie są “assessment-local”.
+- **Permission denied** stany są jawne (nie ukrywamy istnienia runu bez komunikatu); UI oferuje “what next” (poproś ownera/admina, export link-only).
+
+#### 2.3.5 Bounded handoffs to `Results/Outputs` and to `Wnioski w Interview` (no parallel truths)
+
+Assessment jest producentem *bounded payload* i traceability, nie właścicielem prawdy downstream.
+
+Handoff 1 — do `Results/Outputs` (Position 19):
+
+- Assessment może promować wynik do **artefaktu** (np. raport/summary) jako `ArtifactRef` z `PromotionTrace`.
+- Outputs Library jest jedynym “home” dla artefaktu; assessment przechowuje tylko link + provenance.
+
+Handoff 2 — do `Wnioski w Interview` (Position 10):
+
+- Assessment może promować **kandydaty findingów** jako *proposals* do Insight artifactu (P10), z evidence pointers i limits.
+- Insight pozostaje kanonicznym artefaktem wnioskowania (confidence/limits/evidence rules); assessment nie tworzy “insight v2”.
+
+Bounded payload rule (must):
+
+- payload zawsze zawiera: `assessment_run_id`, `assessment_definition_id@version`, `score_proposal`, `interpretation_proposal`, `evidence_pointers[]`, `limits`, `promotion_trace`.
+
+#### 2.3.6 Anti-duplicate gates (assessment ≠ survey; assessment ≠ insight replacement)
+
+Zasady anty-duplikacji (must):
+
+- Assessment **nie jest survey builderem** ani zastępstwem `Ankiety` (Position 09):
+  - collection/submissions lifecycle i operator workflow są własnością `Ankiety` (P09),
+  - assessment może konsumować zebrane odpowiedzi jako evidence pointers (links-first).
+- Assessment **nie jest insight engine** ani zastępstwem `Wnioski` (Position 10):
+  - “findings” w assessment są *proposals* powiązanymi z runem,
+  - kanoniczna struktura insight (finding/evidence/limits/confidence) i handoff do inicjatyw pozostaje w P10.
+- Zakaz “parallel truth”: nie wolno tworzyć alternatywnego “Results/Insights home” w assessment; downstream homes są kanoniczne.
+
+#### 2.3.7 Error / degraded posture (explicit) + acceptance checklist (10+)
+
+Degraded stany muszą być jawne, spokojne i prowadzić do bezpiecznego następnego kroku — bez udawania kompletności.
+
+Minimum scenarios (must):
+
+1) **Missing required evidence** → `awaiting_evidence` + lista braków + “what next” (co dodać / skąd wziąć).  
+2) **Evidence pointer broken / permission loss** → pointer zostaje, oznaczony `unavailable`; UI nie ukrywa luki.  
+3) **Score cannot be computed** (missing inputs / validation fail) → brak ScoreProposal + jasny komunikat + retry guidance.  
+4) **Interpretation blocked** (brak score lub brak evidence) → interpretacja disabled; UI mówi dlaczego (no silent fallback).  
+5) **Review action denied** (brak uprawnień) → read-only view + “request access”.  
+6) **Promotion denied** (brak uprawnień do Outputs/Insights) → link-only/export suggestion; brak “ghost artifacts”.  
+7) **Downstream error** (promotion failure) → zachowany draft payload + retry; brak duplikatów promocji.  
+8) **Run failed** (tool/runtime error) → `failed` state z audytem + “resume/retry” posture.  
+
+Acceptance checklist (P28-A scope approval; must-pass dla P28-B/P28-C):
+
+1) Assessment ma rozdzielony model: Definition vs Run (2.3.1).  
+2) Publish definicji tworzy read-only version; zmiany = nowa wersja (2.3.2).  
+3) Run lifecycle ma jawne `awaiting_evidence` i nie “przeskakuje” bez review (2.3.2).  
+4) Scoring jest zawsze jawny jako ScoreProposal; brak silent scoring (2.3.3).  
+5) Interpretacja jest proposal; UI wspiera review: accept/reject/override (2.3.3).  
+6) Explainability: ScoreProposal ma rationale + evidence pointers; brak evidence → degraded (2.3.3, 2.3.7).  
+7) Locked/read-only truth: completed run jest read-only; definicja published jest immutable (2.3.4).  
+8) Handoff do Outputs/Results jest bounded i ma PromotionTrace; Outputs jest jedynym home (2.3.5).  
+9) Handoff do Insights jest bounded i tworzy proposals; Insight canon pozostaje w P10 (2.3.5).  
+10) Anti-duplicate: assessment ≠ survey builder; assessment ≠ insight replacement (2.3.6).  
+11) Permission denied i broken evidence pointers są jawne, z “what next” (2.3.4, 2.3.7).  
+12) Degraded/error posture obejmuje min. 8 scenariuszy i nie tworzy ghost artifacts (2.3.7).  
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -139,7 +283,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P28-A |  |  |  |  |  |
+| P28-A | approved(scope) | `TBD` | N/A — docs/scope only | N/A | Canon §2.3 (object model/lifecycle/governance + no silent scoring + bounded handoffs); EXECUTION_INDEX #28 updated; SSOT copy synced; lock P28-A released. |
 | P28-B |  |  |  |  |  |
 | P28-C |  |  |  |  |  |
 
