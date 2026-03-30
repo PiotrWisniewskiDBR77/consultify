@@ -1,7 +1,8 @@
 # Final Implementation Contract — Provenance / review / visibility (Position 18/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P18-A** (trust-state canon frozen); P18-B / P18-C not started  
+Last updated: 2026-03-30 (P18-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Pełne traceability myśli i kontekstu (trust grammar artefaktów).
@@ -14,8 +15,56 @@ Status: draft (contract wrapper over existing plan)
 - Konsystencja sygnałów w `Outputs Library` i preview/open.
 
 ### 2.2 Out-of-scope / non-goals
-- Global redesign całego permissions systemu.
-- Zlanie run approval z artifact review.
+
+- **Global IAM / permissions redesign** — trust-state describes *exposure truth* for artifacts, not a new org-wide RBAC product.
+- **Merging approve(run) with review(artifact)** — forbidden; see §2.5.
+- **Second trust-state API or shadow “trust v2” JSON** — extend `GET /api/artifacts/:id/trust-state` and registry-derived fields; no parallel endpoint family for the same artifact without a reconciliation packet.
+- **Surfaces inventing their own stage enums** — UI may only map **bounded** stage language in §2.4; new literals require contract/version bump (P18-A change control).
+- **Frozen layout changes** — badges live inside existing shells (library preview, artifact shell); no new bars from `FROZEN_LAYOUTS.md`.
+
+### 2.3 Trust-state canon — minimum payload (P18-A freeze)
+
+**Conceptual pillars (product language)** — every governed artifact must be describable along these five dimensions (implementation may bundle fields):
+
+| Pillar | Meaning (canonical) | Primary implementation shape today (extend, don’t fork) |
+| --- | --- | --- |
+| **source** | Where meaning came from (human/AI/initiative/chat/context), evidence pointers | `sourceRefs`, `originLinks`, `originSummary` on trust payload + registry row |
+| **run_id** | Governing execution / plan-run identifier when artifact is run-mediated | `executionRunId`, `executionState`, `contextSnapshotId` |
+| **stage** | Lifecycle: validation gate, publish/review gate, readiness — **distinct axes** | `validationState` + `validationChecks`; `publishState` + `reviewGateCount` / `reviewers`; `executionState` for run spine |
+| **visibility** | Who may see / collaborate / review-share | `visibilityScope`, `accessGrants`, `canManageAccess`, `manageAccessPath`, `projectId` |
+| **export_ledger** | what was exported, by whom, outcome | `exportHistory` (list of export traces); `exportPath` as current *capability* hint, not a substitute for ledger |
+
+**Authoritative read model (single home):** `GET /api/artifacts/:id/trust-state` returns the trust bundle; list surfaces consume registry rows **plus** the same trust fields where denormalized. Library preview may refresh trust-state client-side but **must not** define competing semantics.
+
+### 2.4 Stage language + UI badges (bounded)
+
+**Axes (do not collapse):**
+
+- **Execution spine** — `executionState` (from `execution_spine` / run): e.g. pending / running / completed / failed — shown only as **run** posture, never labeled “artifact review complete”.
+- **Validation** — `validationState` + `validationChecks`: preconditions before promotion/review; badges: validated / pending / attention_required.
+- **Publish / artifact review** — `publishState`, `reviewGateCount`, `reviewers`: human governance of the artifact; badges map to **review** vocabulary, not run approval.
+
+**UI mapping rule:** badges in Outputs Library preview and artifact shells map **at most one** badge per axis per row region, or a compact multi-chip layout documented in Wave2 plan — no surface may swap execution badges for publish badges.
+
+**Authority labels (frozen strings on payload):** `reviewAuthority: 'artifact_review'`, `executionAuthority: 'execution_spine'` — surfaces display both where relevant; they are not interchangeable.
+
+### 2.5 Invariant: **approve(run) ≠ review(artifact)**
+
+- **approve(run)** — user/system action that allows an **execution run** to proceed or complete (spine, tool/agent run); reflected in `executionState` and related run APIs.
+- **review(artifact)** — human governance of **artifact publish quality / visibility transitions**; reflected in `publishState`, reviewers, and `/api/artifacts/:id/start-review` (and successors).
+- **Hard rule:** UI copy, API naming, and tests must **never** use “approved” for both in the same breath without disambiguation; P18-B contract tests must include a regression that toggling one axis does not silently imply the other.
+
+### 2.6 Anti-duplicate gate (extend — no v2 beside v1)
+
+| Area | Canon (path) | Rule |
+| --- | --- | --- |
+| HTTP trust read | `server/src/routes/artifacts.routes.ts` — `buildArtifactTrustPayload`, `GET /:id/trust-state` | Extend payload fields here + `artifactRegistryService`; no second trust JSON route for the same `artifactId`. |
+| Registry + validation snapshot | `server/src/services/v8/artifactRegistryService.ts` — `deriveArtifactValidationSnapshot` and list row mapping | Single derivation for validation state; consumers import this truth. |
+| Export history | `server/src/services/v8/reportsPresModelService.ts` — `getExportHistory` (as used by trust payload) | **export_ledger** back end; extend tables/services, don’t add a shadow “export audit v2”. |
+| Client governance summary | `src/components/ReportsAndPresentations/types.ts` — `ArtifactGovernanceSummary` | Align new fields with trust-state response; one TS shape for preview + tables. |
+| Outputs Library preview | `src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx` — fetch `.../trust-state` | Merge into preview **only** from this API; no alternate trust URL per artifact type in P18-B without packet. |
+| Artifact identity SSOT | `docs/product/ARTIFACT_LINKING_V5_SSOT.md`; `src/utils/artifactLinks.ts` | Deep links and `ArtifactRef` stay canonical; trust layers attach to identity, don’t fork routes. |
+| Contract tests | `tests/integration/routes/artifacts.routes.test.ts` — `trust-state` expectations | Extend assertions here for schema stability; no duplicate schema spec in ad-hoc fixtures. |
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -90,15 +139,29 @@ Status: draft (contract wrapper over existing plan)
 ### 8.1 Bounded delivery packets
 #### P18-A — Trust-state canon + exposure consistency (scope approval)
 - **Goal**: jedna gramatyka trust-state/stage/visibility spójna w library/preview/export.
-- **Inputs required**: schema payload (source/run/stage/visibility/export ledger); stage language.
-- **Acceptance**: scope zatwierdzony; approve(run) ≠ review(artifact) jest nienaruszalne.
-- **Evidence**: scope approval + linkowane SSOT.
+- **Inputs required**: §2.3–2.6; Wave2 detailed plan; `NEXT_PACKET.md` authorization.
+- **Evidence**: scope approval + linkowane SSOT; lock P18-A released; `EXECUTION_INDEX.md` #18 = `approved(scope)`; ledger §10.
+
+##### P18-A — Acceptance checklist (testable)
+
+1. **Minimum pillars**: Contract defines **source**, **run_id**, **stage**, **visibility**, **export_ledger** with explicit mapping to current trust payload fields (§2.3 table).
+2. **Single read API**: `GET /api/artifacts/:id/trust-state` is the **authoritative** trust bundle for an artifact id; surfaces extend consumption, not parallel schemas (§2.6).
+3. **Stage axes separated**: Validation (`validationState`/`validationChecks`), publish/review (`publishState`/reviewers/gates), and execution (`executionState`/`executionRunId`) are **three distinct** concepts in contract copy (§2.4).
+4. **Badge mapping bounded**: UI chips/badges must map to §2.4 axes without swapping execution labels for publish labels (falsifiable in P18-B staging).
+5. **Invariant explicit**: §2.5 states **approve(run) ≠ review(artifact)** with definitions; forbidden to merge in UI/API naming without disambiguation.
+6. **Authority strings**: Payload carries `reviewAuthority` vs `executionAuthority` as non-interchangeable; surfaces that show trust must preserve both meanings where applicable.
+7. **export_ledger**: `exportHistory` is the audit trail shape; `exportPath` is capability, not a substitute for ledger entries (§2.3).
+8. **Anti-duplicate**: §2.6 lists **concrete** repo files to extend; no `trust-state-v2` route without reconciliation packet.
+9. **Non-goals**: §2.2 excludes second API, shadow enums, IAM redesign, frozen-layout breaks.
+10. **Outputs Library alignment**: Consumers (e.g. Outputs preview) use trust-state merge only — already reflected in anti-duplicate row for `OutputsAggregateTabContent.tsx`.
+11. **Foundation ordering**: `EXECUTION_INDEX` lists **18** as the first foundation trust anchor; **P18-A** (scope only) does not require prior completion of 17/19/27 — downstream positions consume this canon once frozen.
+
 - **Tasks** (see library: `docs/product/work-packets/cursor-work/final_master/PACKET_TASKS_AND_DOD_LIBRARY.md`):
   - Freeze trust payload schema (source/run/stage/visibility/export ledger) and mapping to UI badges.
   - Freeze stage language (validation/review/ready) and exposure rules across surfaces.
   - Freeze approval(run) vs review(artifact) invariants.
 - **DoD**:
-  - Approved(scope): trust-state is consistent by design; stage separation is explicit and testable.
+  - `approved(scope)`: §2.3–2.6 + checklist above; index #18; lock released.
 
 #### P18-B — End-to-end traceability closure
 - **Goal**: run→tool→output traceability jako first-class + spójny export audit.
@@ -141,7 +204,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P18-A |  |  |  |  |  |
+| P18-A | approved(scope) | `(commit)` | N/A — docs/scope only | N/A | Canon §2.3–2.6; P18-A checklist; anti-duplicate §2.6; lock P18-A released; EXECUTION_INDEX #18 updated. |
 | P18-B |  |  |  |  |  |
 | P18-C |  |  |  |  |  |
 
