@@ -154,7 +154,7 @@ This contract must not create a parallel “public Anna truth”. It only approv
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P16-A | approved(scope) |  |  |  | Canon frozen in `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` §2.3; docs-only scope approval. |
+| P16-A | approved(scope) | f972557204 |  |  | Canon frozen in `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` §2.3; docs-only scope approval. |
 | P16-B |  |  |  |  |  |
 | P16-C |  |  |  |  |  |
 
