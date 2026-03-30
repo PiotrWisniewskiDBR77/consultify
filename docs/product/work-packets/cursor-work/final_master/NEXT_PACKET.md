@@ -12,45 +12,45 @@ Rules:
 
 ## Authorized packet(s) — PARALLEL BATCH
 
-### 1) P21-A — Report template-first canon + sources posture (scope approval)
+### 1) P03-A — Wdrożenia: control tower canon + write-truth boundaries (scope approval)
 
-Goal: freeze report as template-first deliverable with evidence pointers, degraded/no-web posture, approve(run) vs review(artifact) separation.
+Goal: freeze operator-grade execution control tower (queues + drill-down + interventions) with explicit one-truth rules (no split-brain) and bounded dependency/blast-radius vocabulary.
 
-Dependencies: P24-A ✅, P19 ✅, P18-A ✅, P30-A ✅
+Dependencies: P11-A ✅ (approved(scope) recommended), Foundations ✅
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P21-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P03-A.md`
 
-### 2) P20-A — Deck lifecycle canon + review/export grammar (scope approval)
+### 2) P05-A — Finanse: finance lane canon + scope approval
 
-Goal: freeze durable deck identity + reopen/continue + review/export state + export resilience. Decks consume Templates (P24), land in Outputs (P19), carry provenance (P18).
+Goal: freeze bounded consequence-management lane (import→analysis→mutation→readback) with KPI↔Finance coherence, versioning semantics, and import/mutation error taxonomy (no silent corruption).
 
-Dependencies: P24-A ✅, P19 ✅, P18-A ✅, P30-A ✅
+Dependencies: Results linkage SSOT ✅, Foundations ✅
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P20-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P05-A.md`
 
-### 3) P17-A — Run grammar canon + stage separation (scope approval)
+### 3) P06-A — Radar: prioritization grammar + handoff canon (scope approval)
 
-Goal: freeze one run grammar (plan→approve→run→materialize) with validation/preflight as distinct stage, approve(run) vs review(artifact) boundary, rerun/failure semantics. ArtifactRun consumes Outputs (P19), Provenance (P18), Templates (P24).
+Goal: freeze ranking grammar + “why-now” payload contract (rationale/evidence/uncertainty) and handoff payloads to downstream modules (Initiatives/Execution/Notes).
 
-Dependencies: P24-A ✅, P19 ✅, P18-A ✅
+Dependencies: Radar SSOT ✅, Foundations ✅
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P06-A.md`
 
-### 4) P11-A — Initiative write-truth canon + scope approval (DOCS ONLY)
+### 6) P05-A — Finance lane canon + scope approval (DOCS ONLY)
 
-Goal: freeze initiative lifecycle + write-truth rules + AI governance envelope + bounded handoffs (no code changes).
+Goal: freeze bounded finance lanes (import→analysis→mutation→readback), KPI↔Finance coherence boundary, versioning semantics (current vs actual), error taxonomy + recovery posture, anti-duplicate gate, and degraded modes.
 
-Dependencies: (program-wide foundations only; docs-only scope approval)
+Dependencies: P04-A ✅ (approved(scope)), Finance SSOT ✅, KPI↔Finance linkage SSOT ✅
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P11-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P05-A.md`
 
-### 5) P04-A — KPI canon + scope approval (DOCS ONLY)
+### 7) P06-A — Radar canon + prioritization grammar (DOCS ONLY)
 
-Goal: freeze KPI vocabulary + KPI↔Finance linkage boundaries + permissions model + closed-loop workflow contract + degraded/error posture + anti-duplicate gates.
+Goal: freeze Radar ranking/prioritization grammar + “why-now” payload contract + handoff payload to `Inicjatywy`/`Wdrożenia`/`Notatki` + degraded/error posture + anti-duplicate gate.
 
-Dependencies: Results SSOT ✅, KPI↔Finance linkage SSOT ✅
+Dependencies: Radar SSOT ✅ (`docs/product/MYWORK_RADAR_V8_SSOT.md`)
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P04-A.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P06-A.md`
 
 ---
 
@@ -61,7 +61,7 @@ Completion (each agent independently):
 - sync contract to SSOT copy
 - commit + push
 
-**Note**: If git push fails due to concurrent push, pull and retry. Each agent touches only its own contract file + one row in EXECUTION_INDEX.
+**Note**: If git push fails due to concurrent push, run `git pull --rebase` and retry. Each agent touches only its own contract file + one row in EXECUTION_INDEX.
 
 ## Completed (archive)
 
@@ -75,3 +75,8 @@ Completion (each agent independently):
 | P32-A | approved(scope) | 2026-03-30 |
 | P33-A | approved(scope) | 2026-03-30 |
 | P24-A | approved(scope) | 2026-03-30 |
+| P17-A | approved(scope) | 2026-03-30 |
+| P20-A | approved(scope) | 2026-03-30 |
+| P21-A | approved(scope) | 2026-03-30 |
+| P11-A | approved(scope) | 2026-03-30 |
+| P04-A | approved(scope) | 2026-03-30 |
