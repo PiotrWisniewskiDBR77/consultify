@@ -303,7 +303,7 @@ Last updated: 2026-03-30 (P20-A scope closure)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P20-A | approved(scope) |  | N/A — scope packet | N/A — scope packet | Canon frozen in §2.3–2.11 + P20-A checklist; lock P20-A released; EXECUTION_INDEX #20 updated. |
+| P20-A | approved(scope) | `dc30ec2170` | N/A — scope packet | N/A — scope packet | Canon frozen in §2.3–2.11 + P20-A checklist; lock P20-A released; EXECUTION_INDEX #20 updated. |
 | P20-B |  |  |  |  |  |
 | P20-C |  |  |  |  |  |
 
