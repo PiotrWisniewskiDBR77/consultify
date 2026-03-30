@@ -1,7 +1,8 @@
 # Final Implementation Contract — Wdrożenia (Position 3/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P03-A** (control tower canon + write-truth boundaries frozen); P03-B / P03-C not started  
+Last updated: 2026-03-30 (P03-A scope closure)
 
 ## 1. Executive summary
 - **Intent**: Zarządzanie pracą wielu zadań i inicjatyw: ryzyko, obciążenia, zasoby.
@@ -21,6 +22,105 @@ Status: draft (contract wrapper over existing plan)
 
 ### 2.3 Assumptions
 - Zależności: `Inicjatywy`, `KPI`, `Kalendarz`, `Tabele` (jako data surfaces), `Provenance` (dla trust outputów).
+
+### 2.4 P03-A — Control tower canon + write-truth boundaries (scope approval)
+
+P03-A freezes **execution control tower** as a bounded operator lane: **queues → drill-down → intervention → consistent readback**. It explicitly prevents PM-suite drift and split-brain execution truth.
+
+#### 2.4.1 Control tower queues (bounded canon)
+
+Canonical queues (no additional “dashboard widgets” in P03-A):
+
+- **late**: work whose **forecast finish** is in the past (or baseline finish if forecast is missing), and the work is not complete.
+- **at-risk**: work trending toward lateness based on bounded signals: dependency risk, overload window, baseline/forecast variance, stale aging, missing baseline/estimate.
+- **blocked**: work waiting on an explicit blocker (dependency edge or decision) where the blocker is named.
+- **overloaded**: owner/team capacity exceeded in a defined window (day/week/month) by forecasted effort/workload.
+- **stale**: work aging beyond a threshold without meaningful state movement.
+
+#### 2.4.2 Drill-down contract (“why” + “what next”)
+
+Every queue item must support drill-down with two bounded outputs:
+
+- **Why** (must be explicit; no narrative-only):
+  - dependency: “blocked by X”
+  - workload: “overloaded in window W”
+  - baseline/forecast: “variance vs baseline = …” or “missing baseline”
+  - missing estimate/effort: “cannot compute overload credibly”
+  - stale aging: last meaningful change timestamp
+- **What next** (must map 1:1 to intervention actions in §2.4.3 and must state what will change in readback after the write).
+
+#### 2.4.3 Interventions list (bounded; no PM-suite drift)
+
+Allowed operator actions (writes) from control tower:
+
+- **reassign**: change owner/team of the canonical work item.
+- **smooth**: move work within a bounded schedule window to reduce overload (schedule-aware; not a full plan redesign).
+- **replan**: update **forecast** dates/effort for the canonical work item (baseline is preserved; see §2.4.5).
+- **escalate**: create/attach an explicit governed follow-up (risk/decision/approval request) visible as a blocker/needs-decision signal.
+
+Non-goals (explicit):
+
+- building a parallel planning suite,
+- absorbing initiative planning or KPI ownership,
+- adding unbounded dashboards that do not end in a bounded action.
+
+#### 2.4.4 One execution truth rules (writes + mandatory refresh)
+
+Control tower is a **view** over the canonical execution graph. Declared writes and mandatory readback refresh (no split-brain):
+
+| Write (operator action) | Canon object mutated | Must refresh (mandatory readback surfaces) |
+| --- | --- | --- |
+| `reassign` | work item owner/team | queues + drill-down + any visible rollup in the same session |
+| `smooth` | forecast allocation/window | queues + overload window readback + drill-down |
+| `replan` | forecast dates/effort | queues + baseline/variance readback + drill-down |
+| `escalate` | governed follow-up linked to work | queues + drill-down (“needs decision / blocked”) |
+| dependency link/unlink (bounded) | dependency edge (`blocking` / `waiting_on`) | blocked queue + drill-down (“blocked by”) + affects-next cue |
+
+Rule: after any declared write, **summary queues and drill-down must agree**. If readback cannot be made consistent, we enter degraded posture (§2.4.8).
+
+#### 2.4.5 Baseline / forecast / variance vocabulary (honest missing-baseline posture)
+
+Single vocabulary across execution surfaces:
+
+- **baseline**: preserved committed reference (original start/finish or milestone); never silently overwritten.
+- **forecast**: current best estimate (mutable via replan/smooth).
+- **variance**: delta between forecast and baseline (start and finish variance).
+
+Missing input rules:
+
+- **missing baseline**: do not compute variance; show “Missing baseline” explicitly.
+- **missing estimate**: overload calculations degrade; do not fake precision.
+
+#### 2.4.6 Dependency graph semantics (blocking/waiting + bounded blast radius)
+
+Dependency edge vocabulary:
+
+- `blocking`: upstream blocks downstream.
+- `waiting_on`: downstream waits on upstream.
+
+Bounded blast radius readback (“affects next”):
+
+- show **immediate downstream** nodes that become at-risk/late because this node is blocked/late,
+- bound is **1-hop** in P03-A (not full critical path).
+
+#### 2.4.7 Anti-duplicate gate (no parallel execution runtime)
+
+Hard rules:
+
+- no execution-control objects separate from the canonical tasks/initiatives/decisions graph,
+- no parallel status vocabularies for queues vs drill-down vs rollups,
+- no parallel dependency model for control tower.
+
+If near-duplicates are detected, record them in §9 as a risk and split a reconciliation packet (out of P03-A scope).
+
+#### 2.4.8 Degraded / error posture (explicit; no silent divergence)
+
+When one-truth readback cannot be guaranteed, control tower must be honest:
+
+- **write denied** (permissions/locks): interventions disabled; drill-down shows reason and “what next”.
+- **partial refresh failure**: banner “Some views may be stale”; drill-down shows last refresh timestamp; explicit retry.
+- **stale data**: show “last refreshed at” on queues and drill-down.
+- **missing baseline / missing estimate**: show degraded confidence; do not compute variance/overload as if data existed.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -96,10 +196,12 @@ Kontrakt wymaga (minimum):
 
 ## 7. Evidence plan (DoD)
 ### 7.1 Acceptance criteria
-- Po każdej mutacji (reassign/smooth/replan/status change) control tower i detail pokazują tę samą prawdę (brak split-brain).
-- Overload jest wykrywalny w oknach czasowych i prowadzi do realnej akcji (smoothing/reassign).
-- Zależności pokazują “blocked” + “affects next” (blast radius) na deklarowanym zakresie.
-- Baseline vs forecast jest jawne; variance jest widoczne; brak baseline nie jest ukrywany.
+- Po każdej mutacji (reassign/smooth/replan/escalate/dependency) control tower i drill-down pokazują tę samą prawdę (brak split-brain).
+- Queues są bounded do: late / at-risk / blocked / overloaded / stale (bez dashboard sprawl).
+- Overload jest wykrywalny w oknach czasowych (day/week/month) i prowadzi do realnej akcji (smooth/reassign).
+- Zależności pokazują “blocked by” + “affects next” (bounded blast radius, 1-hop).
+- Baseline vs forecast jest jawne; variance jest widoczne; brak baseline jest jawny (bez udawania precyzji).
+- Degraded posture jest jawne: write denied, partial refresh failure, stale data, missing baseline/estimate.
 
 ### 7.2 Tests
 - Integracyjne: write → refresh → summary/detail agree (dla kluczowych mutacji).
@@ -163,6 +265,21 @@ Kontrakt wymaga (minimum):
 ### 8.3 Rollback plan
 - Wyłącz write/interwencje; zachowaj read-only control tower; bez destrukcji danych.
 
+### 8.4 P03-A — Acceptance checklist (testable; 10+ points)
+
+1. [ ] Canon queue set is exactly: `late`, `at-risk`, `blocked`, `overloaded`, `stale` (§2.4.1).
+2. [ ] Each queue has a bounded definition and is not a generic dashboard widget (§2.4.1).
+3. [ ] Drill-down always includes explicit “why” causes and bounded “what next” actions (§2.4.2).
+4. [ ] Interventions list is frozen to: reassign / smooth / replan / escalate (no PM-suite drift) (§2.4.3).
+5. [ ] One execution truth rules are explicit: declared writes + mandatory refresh surfaces (no split-brain) (§2.4.4).
+6. [ ] Baseline/forecast/variance vocabulary is explicit and baseline is preserved (§2.4.5).
+7. [ ] Missing baseline posture is explicit; variance is not computed when baseline is missing (§2.4.5).
+8. [ ] Missing estimate posture is explicit; overload degrades rather than faking precision (§2.4.5).
+9. [ ] Dependency edge vocabulary is frozen to `blocking` and `waiting_on` only (§2.4.6).
+10. [ ] “Affects next” readback exists and is bounded to 1-hop blast radius (§2.4.6).
+11. [ ] Anti-duplicate gate is explicit: no parallel runtime/status/dependency truth (§2.4.7).
+12. [ ] Degraded/error posture is explicit: write denied, partial refresh failure, stale data, missing baseline/estimate (§2.4.8).
+
 ## 9. Risks / open questions / decisions
 - Ryzyko: ładne wykresy bez interwencji; workload bez realnego smoothing; baseline bez uczciwej semantyki.
 - Ryzyko: rozbudowa operator UI zanim write truth jest stabilna (maskowanie problemu wizualnie).
@@ -171,7 +288,7 @@ Kontrakt wymaga (minimum):
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P03-A |  |  |  |  |  |
+| P03-A | `approved(scope)` |  | Scope approval — no runtime tests | N/A (scope phase) | Control tower canon + one-truth boundaries frozen; bounded interventions; degraded posture |
 | P03-B |  |  |  |  |  |
 | P03-C |  |  |  |  |  |
 
