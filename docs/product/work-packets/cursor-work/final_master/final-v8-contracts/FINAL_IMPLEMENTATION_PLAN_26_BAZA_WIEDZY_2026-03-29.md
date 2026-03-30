@@ -260,7 +260,7 @@ Degraded modes are part of user trust; they must be explicit and safe.
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P26-A | approved(scope) | `6f9ce23112` | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: KB object model, taxonomy/search/discovery posture, content ops baseline, AI grounding payload + citations posture, anti-duplicate gate, degraded modes + checklist |
+| P26-A | approved(scope) | `00ec148c6b` | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: KB object model, taxonomy/search/discovery posture, content ops baseline, AI grounding payload + citations posture, anti-duplicate gate, degraded modes + checklist |
 | P26-B |  |  |  |  |  |
 | P26-C |  |  |  |  |  |
 
