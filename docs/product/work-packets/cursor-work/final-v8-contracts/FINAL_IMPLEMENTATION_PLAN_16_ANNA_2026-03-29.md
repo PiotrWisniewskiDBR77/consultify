@@ -1,7 +1,7 @@
 # Final Implementation Contract — Anna (Position 16/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: approved(scope) (P16-A canon frozen; docs-only)
 
 ## 1. Executive summary
 - **Intent**: Ma dostać pełniejszy kontekst DBR77+produkty; rozwój wiedzy sterowalny w Superadmin (Virtual Workers).
@@ -17,6 +17,20 @@ Status: draft (contract wrapper over existing plan)
 ### 2.2 Out-of-scope / non-goals
 - Pełny autonomous public sales agent.
 - Wewnętrzny copilot (to `Teresa`).
+
+### 2.3 P16-A canon (public assistant canon + boundaries)
+
+The public assistant canon for Anna LP is frozen in the SSOT:
+- `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` → **§2.3 P16-A canon**
+
+This contract must not create a parallel “public Anna truth”. It only approves the scope and points to the canonical rules:
+- public boundaries (public knowledge only), refusal rules, no internal lane leakage
+- “no Teresa mixing” rule (identity separation)
+- CTA taxonomy + measurable event grammar (demo/trial/contact) + retry posture
+- factfulness posture (citations/evidence pointers OR explicit uncertainty marker)
+- memory + privacy posture (no “magic memory”)
+- voice posture (availability/degraded states; fallback to text; no identity drift)
+- anti-duplicate gate + degraded scenarios + acceptance checklist
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -140,7 +154,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P16-A |  |  |  |  |  |
+| P16-A | approved(scope) |  |  |  | Canon frozen in `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` §2.3; docs-only scope approval. |
 | P16-B |  |  |  |  |  |
 | P16-C |  |  |  |  |  |
 
