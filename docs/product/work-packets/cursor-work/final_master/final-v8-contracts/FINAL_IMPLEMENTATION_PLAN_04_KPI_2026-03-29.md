@@ -241,7 +241,7 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P04-A |  |  |  |  |  |
+| P04-A | approved(scope) | 99eb08e9aa | n/a (docs-only) | n/a (docs-only) | KPI canon + scope frozen; no runtime changes in this packet. |
 | P04-B |  |  |  |  |  |
 | P04-C |  |  |  |  |  |
 
