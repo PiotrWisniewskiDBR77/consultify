@@ -438,6 +438,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [serverResults, setServerResults] = useState<Conversation[] | null>(null);
   const [serverSearchLoading, setServerSearchLoading] = useState(false);
   const [searchPartial, setSearchPartial] = useState(false);
+  const [searchScopeBlocked, setSearchScopeBlocked] = useState(0);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Trigger server-side search when query is >= 3 chars (debounced)
@@ -447,6 +448,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     if (!searchQuery || searchQuery.length < 3) {
       setServerResults(null);
       setSearchPartial(false);
+      setSearchScopeBlocked(0);
       return;
     }
 
@@ -456,9 +458,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
         const result = await serverSearch({ q: searchQuery, limit: 30 });
         setServerResults(result.conversations);
         setSearchPartial(result.partial || false);
+        setSearchScopeBlocked((result as any).scopeBlocked || 0);
       } catch {
         setServerResults(null);
         setSearchPartial(true);
+        setSearchScopeBlocked(0);
       } finally {
         setServerSearchLoading(false);
       }
@@ -745,6 +749,14 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     <div className="mb-2 px-2.5 py-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40">
                       <p className="text-[11px] text-amber-700 dark:text-amber-400">
                         {t('aiChat.partialResults', 'Results may be incomplete. Try again later.')}
+                      </p>
+                    </div>
+                  )}
+                  {/* E7: Scope-blocked results indicator */}
+                  {searchScopeBlocked > 0 && (
+                    <div className="mb-2 px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('aiChat.scopeBlocked', '{{count}} result(s) hidden due to access restrictions.', { count: searchScopeBlocked })}
                       </p>
                     </div>
                   )}

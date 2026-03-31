@@ -1508,11 +1508,28 @@ router.get(
         nextCursor = `${ts}|${last.id}`;
       }
 
+      // E7: Partial retrieval — count scope-blocked results so UI can show badge
+      let scopeBlocked = 0;
+      if (!teamReadAllowed && req.organizationId) {
+        try {
+          const blockedCount = await dbGet(
+            `SELECT COUNT(*) as cnt FROM conversations c
+             LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id
+             WHERE cp.scope = 'team' AND cp.organization_id = ?
+             AND c.deleted_at IS NULL
+             AND (c.title ILIKE ? OR c.last_message_preview ILIKE ?)`,
+            [req.organizationId, searchPattern, searchPattern]
+          );
+          scopeBlocked = (blockedCount as any)?.cnt || 0;
+        } catch { /* non-blocking */ }
+      }
+
       return res.json({
         conversations: page,
         query,
         nextCursor,
         hasMore,
+        scopeBlocked,
       });
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);
@@ -1694,6 +1711,127 @@ router.post(
       return res.status(201).json(session);
     } catch (err: any) {
       logger.error('[Conversations] Create session error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== EXPORT CONVERSATION (§2.3.5 E10) ====================
+
+const ExportQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  format: z.enum(['json', 'markdown', 'text']).optional(),
+});
+
+router.get(
+  '/:id/export',
+  verifyToken,
+  validateParams(ConversationIdParamSchema),
+  validateQuery(ExportQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { from, to, format: exportFormat } = req.query as Record<string, string | undefined>;
+
+    try {
+      const conversation = await findAccessibleConversation(id, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      // Enforce date range for large conversations (§2.3.5 E10)
+      const msgCount = (conversation as any).message_count || 0;
+      const MAX_EXPORT_WITHOUT_RANGE = 500;
+      if (msgCount > MAX_EXPORT_WITHOUT_RANGE && !from && !to) {
+        return res.status(400).json({
+          error: 'Too many messages for full export. Please specify a date range (from/to).',
+          code: 'EXPORT_TOO_LARGE',
+          messageCount: msgCount,
+          maxWithoutRange: MAX_EXPORT_WITHOUT_RANGE,
+          hint: 'Add ?from=YYYY-MM-DD&to=YYYY-MM-DD to narrow the export scope.',
+        });
+      }
+
+      let whereClause = `WHERE cm.conversation_id = ?`;
+      const params: string[] = [id];
+
+      if (from) {
+        whereClause += ` AND cm.created_at >= ?`;
+        params.push(from);
+      }
+      if (to) {
+        whereClause += ` AND cm.created_at <= ?`;
+        params.push(to);
+      }
+
+      const messages = await dbAll(
+        `SELECT cm.role, cm.content, cm.message_type, cm.model_used, cm.created_at,
+                COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name
+         FROM conversation_messages cm
+         LEFT JOIN users u ON cm.author_user_id = u.id
+         ${whereClause}
+         ORDER BY cm.created_at ASC
+         LIMIT 2000`,
+        params
+      );
+
+      // Fetch attachments for exported messages
+      let attachments: any[] = [];
+      try {
+        attachments = (await dbAll(
+          `SELECT cma.message_id, cma.kind, cma.display_name, cma.target_url, cma.mime
+           FROM conversation_message_attachments cma
+           WHERE cma.conversation_id = ?
+           ORDER BY cma.created_at ASC`,
+          [id]
+        )) || [];
+      } catch { /* table may not exist */ }
+
+      const fmt = exportFormat || 'json';
+      const conv = conversation as any;
+
+      if (fmt === 'markdown') {
+        let md = `# ${conv.title || 'Conversation'}\n\n`;
+        md += `**Created:** ${conv.created_at}\n`;
+        md += `**Messages:** ${(messages as any[]).length}\n\n---\n\n`;
+        for (const msg of messages as any[]) {
+          const role = msg.role === 'user' ? (msg.author_name || 'User') : 'AI';
+          md += `### ${role} — ${msg.created_at}\n\n${msg.content}\n\n`;
+          const msgAttachments = attachments.filter((a: any) => a.message_id === msg.id);
+          if (msgAttachments.length > 0) {
+            md += `**Attachments:** ${msgAttachments.map((a: any) => a.display_name).join(', ')}\n\n`;
+          }
+          md += `---\n\n`;
+        }
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${conv.title || 'conversation'}.md"`);
+        return res.send(md);
+      }
+
+      if (fmt === 'text') {
+        let txt = `${conv.title || 'Conversation'}\n${'='.repeat(40)}\n\n`;
+        for (const msg of messages as any[]) {
+          const role = msg.role === 'user' ? (msg.author_name || 'User') : 'AI';
+          txt += `[${msg.created_at}] ${role}:\n${msg.content}\n\n`;
+        }
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${conv.title || 'conversation'}.txt"`);
+        return res.send(txt);
+      }
+
+      // Default: JSON
+      return res.json({
+        conversation: {
+          id: conv.id,
+          title: conv.title,
+          createdAt: conv.created_at,
+          language: conv.language,
+        },
+        messages,
+        attachments,
+        exportedAt: new Date().toISOString(),
+        dateRange: { from: from || null, to: to || null },
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Export error:', err);
       return res.status(500).json({ error: err.message });
     }
   })

@@ -250,6 +250,51 @@ describe('P35-B: useConversationStore — History Library', () => {
     });
   });
 
+  describe('New Actions (notifyModelChange, exportConversation, purgeConversation)', () => {
+    it('has notifyModelChange action', () => {
+      const state = useConversationStore.getState();
+      expect(typeof state.notifyModelChange).toBe('function');
+    });
+
+    it('has exportConversation action', () => {
+      const state = useConversationStore.getState();
+      expect(typeof state.exportConversation).toBe('function');
+    });
+
+    it('purgeConversation removes from local state', async () => {
+      const mockDelete = vi.fn().mockResolvedValueOnce({});
+      const { Api } = await import('../../src/services/api');
+      (Api as any).delete = mockDelete;
+
+      useConversationStore.setState({
+        conversations: [
+          { id: 'c1', title: 'Keep', archived: false, starred: false },
+          { id: 'c2', title: 'Purge me', archived: false, starred: false, deletedAt: '2026-01-01' },
+        ] as any[],
+        activeConversationId: 'c2',
+      });
+
+      const state = useConversationStore.getState();
+      await state.purgeConversation('c2');
+      const after = useConversationStore.getState();
+      expect(after.conversations.find((c: any) => c.id === 'c2')).toBeUndefined();
+      expect(after.activeConversationId).toBeNull();
+    });
+
+    it('serverSearch returns scopeBlocked count', async () => {
+      mockApi.get.mockResolvedValueOnce({
+        conversations: [],
+        nextCursor: null,
+        hasMore: false,
+        scopeBlocked: 3,
+      });
+
+      const state = useConversationStore.getState();
+      const result = await state.serverSearch({ q: 'test' });
+      expect((result as any).scopeBlocked).toBe(3);
+    });
+  });
+
   describe('chatFolderId vs projectId Separation', () => {
     it('Conversation type has both chatProjectId and projectId (distinct fields)', () => {
       const conv = {

@@ -386,6 +386,31 @@ interface ConversationState {
   getConversationsByProject: (projectId: string) => Conversation[];
 
   /**
+   * Notify the store that the AI model/preset changed mid-conversation.
+   * Creates a new session on the backend to track the runtime snapshot (§2.3.1).
+   */
+  notifyModelChange: (params: {
+    modelId?: string;
+    presetId?: string;
+    locale?: string;
+    toolsEnabled?: string[];
+  }) => Promise<void>;
+
+  /**
+   * Export a conversation (§2.3.5 E10).
+   */
+  exportConversation: (id: string, params?: {
+    from?: string;
+    to?: string;
+    format?: 'json' | 'markdown' | 'text';
+  }) => Promise<any>;
+
+  /**
+   * Purge own data — hard-delete a conversation (§2.3.3 delete-my-data).
+   */
+  purgeConversation: (id: string) => Promise<void>;
+
+  /**
    * Server-side search with cursor pagination and filters.
    * Returns results from the backend search endpoint.
    */
@@ -766,6 +791,28 @@ export const useConversationStore = create<ConversationState>()(
           });
 
           const newMessage = mapApiMessage(result);
+
+          // Persist attachment pointers if message had attachments in metadata (§2.3.1)
+          const msgAttachments = message.metadata?.attachments;
+          if (Array.isArray(msgAttachments) && msgAttachments.length > 0 && newMessage.id) {
+            for (const att of msgAttachments) {
+              try {
+                await Api.post(
+                  `/conversations/${conversationId}/messages/${newMessage.id}/attachments`,
+                  {
+                    kind: att.kind || 'file',
+                    displayName: att.filename || att.name || 'attachment',
+                    targetId: att.docId || null,
+                    targetUrl: att.sourceUrl || att.url || null,
+                    mime: att.mimeType || null,
+                    sizeBytes: att.size || null,
+                  }
+                );
+              } catch {
+                // Non-blocking: attachment pointer persistence is best-effort
+              }
+            }
+          }
 
           set((state) => {
             const isActive = state.activeConversationId === conversationId;
@@ -1165,17 +1212,59 @@ export const useConversationStore = create<ConversationState>()(
             nextCursor: result?.nextCursor || null,
             hasMore: result?.hasMore || false,
             partial: false,
+            scopeBlocked: result?.scopeBlocked || 0,
           };
         } catch (err: any) {
           console.error('[ConversationStore] Server search error:', err);
-          // Degraded posture (§2.3.5 E2/E8): return partial flag so UI can show "partial results"
           const status = err?.response?.status || err?.status;
           if (status === 429) {
-            // Rate limited — signal to UI
-            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true };
+            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true, scopeBlocked: 0 };
           }
-          // Gateway/search unavailable — fall back to empty with partial flag
-          return { conversations: [], nextCursor: null, hasMore: false, partial: true };
+          return { conversations: [], nextCursor: null, hasMore: false, partial: true, scopeBlocked: 0 };
+        }
+      },
+
+      notifyModelChange: async (params) => {
+        const { activeConversationId } = get();
+        if (!activeConversationId) return;
+        try {
+          await Api.post(`/conversations/${activeConversationId}/sessions`, params);
+        } catch (err) {
+          console.warn('[ConversationStore] Failed to create session on model change:', err);
+        }
+      },
+
+      exportConversation: async (id, params) => {
+        try {
+          const qs = new URLSearchParams();
+          if (params?.from) qs.set('from', params.from);
+          if (params?.to) qs.set('to', params.to);
+          if (params?.format) qs.set('format', params.format);
+          const queryStr = qs.toString();
+          const url = `/conversations/${id}/export${queryStr ? `?${queryStr}` : ''}`;
+          return await Api.get(url);
+        } catch (err: any) {
+          console.error('[ConversationStore] Export error:', err);
+          throw err;
+        }
+      },
+
+      purgeConversation: async (id) => {
+        try {
+          await Api.delete(`/conversations/${id}?force=true`);
+          set((state) => {
+            const newConversations = state.conversations.filter((c) => c.id !== id);
+            return {
+              conversations: newConversations,
+              groupedConversations: groupConversations(newConversations),
+              activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+              activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
+              _activeConversationState: state.activeConversationId === id ? null : state._activeConversationState,
+            };
+          });
+        } catch (err) {
+          console.error('[ConversationStore] Purge error:', err);
+          throw err;
         }
       },
 

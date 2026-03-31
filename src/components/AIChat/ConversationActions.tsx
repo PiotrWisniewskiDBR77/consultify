@@ -47,6 +47,8 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
     unarchiveConversation,
     deleteConversation,
     renameConversation,
+    exportConversation,
+    purgeConversation,
   } = useConversationStore();
 
   // Handle click outside
@@ -265,6 +267,40 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
             )}
           </button>
 
+          {/* Export conversation (§2.3.5 E10) */}
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+              onOpenChange?.(false);
+              try {
+                const result = await exportConversation(conversation.id, { format: 'markdown' });
+                if (typeof result === 'string') {
+                  const blob = new Blob([result], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${conversation.title || 'conversation'}.md`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              } catch (err: any) {
+                if (err?.response?.data?.code === 'EXPORT_TOO_LARGE') {
+                  window.alert(t('aiChat.exportTooLarge', 'This conversation is too large for full export. Please use date filters.'));
+                }
+              }
+            }}
+            className="
+                            w-full flex items-center gap-2 px-3 py-2 text-sm
+                            text-slate-700 dark:text-slate-300
+                            hover:bg-slate-100 dark:hover:bg-navy-700
+                            transition-colors
+                        "
+          >
+            <Download size={14} />
+            {t('aiChat.actions.export', 'Export')}
+          </button>
+
           {/* Divider */}
           <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
 
@@ -291,6 +327,31 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
             <Trash2 size={14} />
             {t('aiChat.actions.delete', 'Delete')}
           </button>
+
+          {/* Purge / Delete My Data (§2.3.3 — self-service permanent removal) */}
+          {conversation.deletedAt && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const msg = t(
+                  'aiChat.confirmPurge',
+                  `Permanently delete "${conversation.title || 'this conversation'}"?\n\nAll messages and attachments will be irreversibly removed. An audit record will be kept. This CANNOT be undone.`
+                );
+                if (window.confirm(msg)) {
+                  handleAction(() => purgeConversation(conversation.id));
+                }
+              }}
+              className="
+                              w-full flex items-center gap-2 px-3 py-2 text-sm
+                              text-red-700 dark:text-red-300 font-medium
+                              hover:bg-red-100 dark:hover:bg-red-900/30
+                              transition-colors
+                          "
+            >
+              <Trash2 size={14} />
+              {t('aiChat.actions.purge', 'Permanently Delete')}
+            </button>
+          )}
         </div>
       )}
 

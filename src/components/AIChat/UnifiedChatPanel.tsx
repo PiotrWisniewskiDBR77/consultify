@@ -331,6 +331,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     chatLanguageByConversationId,
     _activeConversationState,
     _activeConversationStateMessage,
+    notifyModelChange,
+    exportConversation,
+    purgeConversation,
   } = useConversationStore();
 
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
@@ -488,6 +491,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setContextSavedMessageIds(new Set());
     setContextSaveBusyMessageId(null);
   }, [activeConversationId]);
+
+  // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
+  const prevModelRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentModel = (aiConfig as any)?.selectedModelId ?? null;
+    if (prevModelRef.current !== null && currentModel !== prevModelRef.current && activeConversationId) {
+      void notifyModelChange({
+        modelId: currentModel || undefined,
+        presetId: (aiConfig as any)?.selectedTier || undefined,
+        locale: draftChatLanguage || undefined,
+      });
+    }
+    prevModelRef.current = currentModel;
+  }, [(aiConfig as any)?.selectedModelId, activeConversationId, notifyModelChange, draftChatLanguage]);
 
   // Ref for incremental TTS (defined here, used in effects after useAIStream)
   const spokenCharsRef = useRef(0);

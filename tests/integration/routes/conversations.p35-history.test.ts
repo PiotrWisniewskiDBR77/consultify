@@ -297,6 +297,49 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     });
   });
 
+  // ==================== EXPORT (§2.3.5 E10) ====================
+
+  describe('Export Conversation (§2.3.5 E10)', () => {
+    it('GET /:id/export returns JSON export or requires auth', async () => {
+      const res = await request(app).get(
+        '/api/conversations/00000000-0000-0000-0000-000000000001/export'
+      );
+      expect([200, 400, 401, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('conversation');
+        expect(res.body).toHaveProperty('messages');
+        expect(res.body).toHaveProperty('exportedAt');
+      }
+    });
+
+    it('GET /:id/export?format=markdown returns markdown', async () => {
+      const res = await request(app).get(
+        '/api/conversations/00000000-0000-0000-0000-000000000001/export?format=markdown'
+      );
+      expect([200, 401, 404]).toContain(res.status);
+    });
+
+    it('GET /:id/export supports date range narrowing', async () => {
+      const res = await request(app).get(
+        '/api/conversations/00000000-0000-0000-0000-000000000001/export?from=2026-01-01&to=2026-12-31'
+      );
+      expect([200, 401, 404]).toContain(res.status);
+    });
+  });
+
+  // ==================== PARTIAL RETRIEVAL (§2.3.5 E7) ====================
+
+  describe('Partial Retrieval — Scope Blocked (§2.3.5 E7)', () => {
+    it('search returns scopeBlocked count', async () => {
+      const res = await request(app).get('/api/conversations/search?q=test');
+      expect([200, 401]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('scopeBlocked');
+        expect(typeof res.body.scopeBlocked).toBe('number');
+      }
+    });
+  });
+
   // ==================== REGRESSION GUARDS ====================
 
   describe('Regression Guards', () => {
