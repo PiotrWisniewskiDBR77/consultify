@@ -23,6 +23,7 @@ import PartnerCommissionService from '../../services/partnerCommissionService.js
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
+  isPartnerPayoutDestinationComplete,
   updatePartnerPayoutSettings,
 } from '../../services/partnerPayoutSettingsService.js';
 import PartnerProgramLedgerService from '../../services/partnerProgramLedgerService.js';
@@ -151,6 +152,24 @@ router.post(
       });
     }
     try {
+      const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
+      if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
+        let whatNext: string[] = [
+          'Uzupełnij dane wypłaty: PUT /api/v8/partner/payout-settings (konto i metoda), potem ponów request fazy payout.',
+        ];
+        try {
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
+          whatNext = [...whatNext, ...d.whatNext];
+        } catch {
+          /* ignore */
+        }
+        return res.status(409).json({
+          error: 'Complete payout settings before requesting payout phase',
+          code: 'P29_PAYOUT_SETTINGS_INCOMPLETE',
+          whatNext,
+          meta: partnerProgramMeta(req, partnerOrgId),
+        });
+      }
       const result = await PartnerProgramLedgerService.transitionLifecycle({
         partnerOrgId,
         toPhase: 'payout',

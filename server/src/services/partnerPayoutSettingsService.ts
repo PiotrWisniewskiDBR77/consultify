@@ -76,6 +76,20 @@ function getAccountLastFour(details: PartnerPayoutAccountDetails): string | null
   return normalizedIban.slice(-4) || null;
 }
 
+/**
+ * P29-C: partner może żądać fazy payout tylko przy kompletnej destynacji wypłaty (FINAL 29 §2.3.6).
+ */
+export function isPartnerPayoutDestinationComplete(settings: PartnerPayoutSettings): boolean {
+  const acc = settings.payoutAccount;
+  if (!acc) return false;
+  const holder = acc.accountHolderName?.trim();
+  const iban = acc.iban?.replace(/\s+/g, '').trim();
+  if (settings.payoutMethod === 'BANK_TRANSFER') {
+    return Boolean(holder && iban);
+  }
+  return Boolean(holder);
+}
+
 export async function getPartnerPayoutSettings(
   partnerOrgId: string
 ): Promise<PartnerPayoutSettings> {
