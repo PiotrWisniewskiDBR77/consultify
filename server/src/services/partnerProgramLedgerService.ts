@@ -246,10 +246,47 @@ const LIFECYCLE_EDGES: Record<
   payout: { earn: { actor: 'operator' } },
 };
 
+/**
+ * P29-C §2.3.5: dual-control threshold — kwoty powyżej progu lub first payout wymagają
+ * jawnego `elevatedRiskConfirmed: true` w `sourceRef` wpisu payout.approved / payout.executed.
+ */
+const DUAL_CONTROL_PAYOUT_THRESHOLD = 1000;
+
+export function requiresDualControl(
+  entryType: PartnerLedgerEntryType,
+  amount: number,
+  isFirstPayout: boolean
+): boolean {
+  if (entryType !== 'payout.approved' && entryType !== 'payout.executed') return false;
+  if (isFirstPayout) return true;
+  return Math.abs(amount) >= DUAL_CONTROL_PAYOUT_THRESHOLD;
+}
+
 export class PartnerProgramLedgerService {
   static async appendEntry(input: AppendLedgerEntryInput): Promise<{ id: string; duplicate?: boolean }> {
     const db = getDatabase();
     await ensurePartnerProgramSchema(db);
+
+    if (requiresDualControl(input.entryType, input.amount, false)) {
+      const prevPayout = await DbPromise.get<{ id: string }>(
+        db,
+        `SELECT id FROM partner_program_ledger WHERE partner_org_id = ? AND entry_type = 'payout.executed' LIMIT 1`,
+        [input.partnerOrgId]
+      );
+      const isFirst = !prevPayout;
+      if (requiresDualControl(input.entryType, input.amount, isFirst)) {
+        const confirmed = (input.sourceRef as Record<string, unknown> | undefined)?.elevatedRiskConfirmed;
+        if (!confirmed) {
+          throw Object.assign(
+            new Error(
+              `Dual-control required for ${input.entryType} (amount=${input.amount}, firstPayout=${isFirst}). Pass sourceRef.elevatedRiskConfirmed = true.`
+            ),
+            { code: 'P29_DUAL_CONTROL_REQUIRED', amount: input.amount, isFirstPayout: isFirst }
+          );
+        }
+      }
+    }
+
     if (input.idempotencyKey) {
       const existing = await DbPromise.get<{ id: string }>(
         db,
@@ -364,9 +401,20 @@ export class PartnerProgramLedgerService {
       reasonCode: string | null;
       note: string | null;
     } | null;
+    degraded?: { reason: string; snapshotAt: string };
   }> {
     const runtime = await this.getOrCreateRuntime(partnerOrgId);
-    const balances = await this.getBalances(partnerOrgId);
+
+    let balances: PartnerProgramBalances;
+    let degraded: { reason: string; snapshotAt: string } | undefined;
+    try {
+      balances = await this.getBalances(partnerOrgId);
+    } catch (e) {
+      logger.warn('[PartnerProgramLedger] getBalances failed — returning zero snapshot', e);
+      balances = { grossEarned: 0, paidOut: 0, heldAmount: 0, availableToPayout: 0, currency: 'EUR' };
+      degraded = { reason: 'ledger_unavailable', snapshotAt: new Date().toISOString() };
+    }
+
     const latestHold = balances.heldAmount > 0 ? await this.getLatestHoldPlaced(partnerOrgId) : null;
     const activeHoldForGuidance =
       latestHold && balances.heldAmount > 0
@@ -391,7 +439,7 @@ export class PartnerProgramLedgerService {
             note: audience === 'operator' ? latestHold.note : null,
           }
         : null;
-    return { runtime, balances, whatNext, hold };
+    return { runtime, balances, whatNext, hold, ...(degraded ? { degraded } : {}) };
   }
 
   static async getOrCreateRuntime(partnerOrgId: string): Promise<{

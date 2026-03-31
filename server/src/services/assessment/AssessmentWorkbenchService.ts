@@ -6,6 +6,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import * as artifactRegistryService from '../v8/artifactRegistryService.js';
+import logger from '../../utils/Logger.js';
 
 export const P28_WORKBENCH_CONTRACT_VERSION = 'p28_workbench_v1' as const;
 
@@ -703,6 +705,42 @@ export class AssessmentWorkbenchService {
       detail: `${input.targetKind}:${input.targetRef}`,
     });
     await persistState(assessmentId, organizationId, state);
+
+    if (input.targetKind === 'outputs_artifact') {
+      try {
+        const payload = buildBoundedPromotionPayload(state);
+        await artifactRegistryService.registerArtifactOrigin({
+          organizationId,
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'report',
+          originRecordId: assessmentId,
+          titleSnapshot: `Assessment ${state.assessmentDefinitionRef.methodologyId} — ${assessmentId}`,
+          ownerUserId: userId,
+          createdBy: userId,
+          deliveryState: 'draft',
+          visibilityScope: 'organization',
+          originSummary: {
+            sourceType: 'ASSESSMENT',
+            sourceId: assessmentId,
+            nativeStatus: 'completed',
+            promotionTraceId: trace.id,
+            assessmentDefinitionId: payload.assessment_definition_id,
+            limits: payload.limits,
+          },
+        });
+        state.audit.push({
+          at: nowIso(),
+          actorId: userId,
+          action: 'promotion_artifact_registered',
+          detail: `outputs_library:${assessmentId}`,
+        });
+        await persistState(assessmentId, organizationId, state);
+      } catch (e) {
+        logger.warn('[AssessmentWorkbench] promotion artifact registration failed (non-blocking)', e);
+      }
+    }
+
     return state;
   }
 

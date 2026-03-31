@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * P28-C verification smoke (static): regresje + dowód rollout C.
+ * P28-C verification smoke (static): regresje + handoff P19 + dowód rollout C.
  * Uruchom: npx tsx server/scripts/smoke-p28-workbench-c.ts
  */
 import fs from 'node:fs';
@@ -22,8 +22,10 @@ function main(): void {
   const evidence = read('docs/product/work-packets/cursor-work/final_master/evidence/P28_C_VERIFICATION_ROLLOUT_2026-03-31.md');
   const service = read('server/src/services/assessment/AssessmentWorkbenchService.ts');
 
-  ok('P28-C: regression test file covers promotion guard + RUN_READ_ONLY', regression.includes('P28_PROMOTION_GUARD') && regression.includes('P28_RUN_READ_ONLY'));
-  ok('P28-C: evidence doc documents rollback + staging', evidence.includes('Rollback') && evidence.includes('staging'));
+  ok('P28-C: regression test covers promotion guard + RUN_READ_ONLY', regression.includes('P28_PROMOTION_GUARD') && regression.includes('P28_RUN_READ_ONLY'));
+  ok('P28-C: regression test covers P19 handoff (registerArtifactOrigin)', regression.includes('registerArtifactOrigin') && regression.includes('promotion_artifact_registered'));
+  ok('P28-C: evidence doc documents handoff + staging', evidence.includes('Outputs Library') && evidence.includes('staging'));
+  ok('P28-C: workbench imports artifactRegistryService for P19 handoff', service.includes('artifactRegistryService'));
   ok('P28-C: workbench still exposes read-only guards', service.includes('P28_RUN_READ_ONLY'));
 }
 

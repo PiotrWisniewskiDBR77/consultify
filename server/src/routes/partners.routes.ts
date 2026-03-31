@@ -2262,6 +2262,7 @@ superAdminPartnerRouter.get(
           balances: detail.balances,
           whatNext: detail.whatNext,
           hold: detail.hold,
+          ...(detail.degraded ? { degraded: detail.degraded } : {}),
           recentLedgerEntries: entries,
         },
       });
