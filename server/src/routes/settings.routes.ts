@@ -4572,4 +4572,111 @@ async function logSettingsChange(
   }
 }
 
+// ==========================================
+// SETTINGS REGISTRY — P31 §2.3.2-§2.3.6
+// ==========================================
+
+router.get(
+  '/registry',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { default: registryService } = await import('../services/settingsRegistryService.js');
+    const scope = req.query.scope as string | undefined;
+    const owner = req.query.owner as string | undefined;
+
+    let keys = registryService.getRegistry();
+    if (scope) keys = keys.filter(k => k.scope === scope);
+    if (owner) keys = keys.filter(k => k.ownerContract === owner);
+
+    res.json({ keys, total: keys.length });
+  })
+);
+
+router.get(
+  '/registry/:key/metadata',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { default: registryService } = await import('../services/settingsRegistryService.js');
+    const meta = registryService.getKeyMetadata(req.params.key);
+    if (!meta) {
+      const denial = registryService.buildDenialResponse(req.params.key, 'not_found');
+      return res.status(denial.status).json(denial);
+    }
+    res.json(meta);
+  })
+);
+
+router.get(
+  '/registry/:key/resolve',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { default: registryService } = await import('../services/settingsRegistryService.js');
+    const userId = req.userId || req.user?.id;
+    const orgId = req.user?.organizationId;
+
+    try {
+      const result = await registryService.resolveEffectiveValue(req.params.key, userId!, orgId);
+      res.json(result);
+    } catch {
+      const denial = registryService.buildDenialResponse(req.params.key, 'resolver_unavailable');
+      return res.status(denial.status).json(denial);
+    }
+  })
+);
+
+router.put(
+  '/registry/:key',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { default: registryService } = await import('../services/settingsRegistryService.js');
+    const userRole = req.user?.role || 'member';
+    const routing = registryService.checkWriteRouting(req.params.key, userRole);
+
+    if (!routing.allowed) {
+      const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
+      return res.status(denial.status).json({ ...denial, guidance: routing.guidance, routeTo: routing.routeTo });
+    }
+
+    const meta = registryService.getKeyMetadata(req.params.key);
+    if (meta?.confirmationGate && !req.body.confirmed) {
+      return res.status(428).json({
+        code: 'CONFIRMATION_REQUIRED',
+        message: `Changing "${req.params.key}" requires confirmation. ${meta.impactLanguage}`,
+        impactLanguage: meta.impactLanguage,
+        impactedSurface: meta.impactedSurface,
+      });
+    }
+
+    const userId = req.userId || req.user?.id;
+    const { value } = req.body;
+
+    if (meta?.scope === 'personal') {
+      await dbRun(
+        'INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = CURRENT_TIMESTAMP',
+        [userId, `settings:${req.params.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        { fallback: false }
+      );
+    } else {
+      const storeKey = meta?.scope === 'tenant' ? `tenant:${req.user?.organizationId}:${req.params.key}` : req.params.key;
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+        [storeKey, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        { fallback: false }
+      );
+    }
+
+    // Audit log (best-effort)
+    try {
+      const crypto = await import('crypto');
+      await dbRun(
+        'INSERT INTO settings_audit_log (id, user_id, category, setting_key, action, old_value, new_value) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [crypto.randomUUID(), userId, meta?.scope || 'personal', req.params.key, 'updated', null, String(value)],
+        { fallback: true }
+      );
+    } catch { /* audit best-effort */ }
+
+    res.json({ success: true, key: req.params.key, scope: meta?.scope, impactLanguage: meta?.impactLanguage });
+  })
+);
+
 export default router;
