@@ -4,7 +4,7 @@
  * Two-column layout with sidebar navigation (matching Settings pattern)
  */
 
-import { Menu, MessageSquare, X } from 'lucide-react';
+import { Menu, MessageSquare, Share2, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -76,6 +76,9 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
   integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
   api: { title: 'API', subtitle: 'Manage API keys and access' },
   feedback: { title: 'Feedback', subtitle: 'View and manage user feedback' },
+  members: { title: 'Members & Roles', subtitle: 'Manage organization members, roles, and access' },
+  collaboration: { title: 'Collaboration Controls', subtitle: 'Configure guest access, external sharing, and collaboration policies' },
+  'sync-hub': { title: 'Sync Hub', subtitle: 'Monitor integration sync status and remediation' },
 };
 
 // Simple Feedback View Component
@@ -161,6 +164,46 @@ const AdminFeedbackView: React.FC = () => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Members & Directory Panel — P32 §2.3
+const AdminMembersPanel: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('admin.members.title', 'Members & Directory')}
+        </h3>
+      </div>
+      <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-xl">
+        <Users className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <p className="text-slate-500 dark:text-slate-400">
+          {t('admin.members.placeholder', 'Member management coming soon. Use organization settings to manage members.')}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Collaboration Controls Panel — P32 §2.3
+const AdminCollaborationPanel: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('admin.collaboration.title', 'Collaboration Controls')}
+        </h3>
+      </div>
+      <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-xl">
+        <Share2 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <p className="text-slate-500 dark:text-slate-400">
+          {t('admin.collaboration.placeholder', 'Guest access, external sharing, and collaboration policies configuration coming soon.')}
+        </p>
+      </div>
     </div>
   );
 };
@@ -272,6 +315,12 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <ApiKeysManagementView />;
       case 'feedback':
         return <AdminFeedbackView />;
+      case 'members':
+        return <AdminMembersPanel />;
+      case 'collaboration':
+        return <AdminCollaborationPanel />;
+      case 'sync-hub':
+        return <UnifiedSyncHub />;
       default:
         return <OrganizationProfileForm currentUser={currentUser} />;
     }

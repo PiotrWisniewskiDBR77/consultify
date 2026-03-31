@@ -25,8 +25,10 @@ import {
   MessageSquare,
   Palette,
   Receipt,
+  Share2,
   Shield,
   Sparkles,
+  Users,
   Wallet,
   Webhook,
 } from 'lucide-react';
@@ -52,7 +54,10 @@ export type AdminSettingsSection =
   | 'initiative-sections'
   | 'integrations'
   | 'api'
-  | 'feedback';
+  | 'feedback'
+  | 'members'
+  | 'collaboration'
+  | 'sync-hub';
 
 interface NavItem {
   id: AdminSettingsSection;
@@ -92,6 +97,18 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   // Navigation groups configuration - matching Settings structure
   const navGroups: NavGroup[] = useMemo(
     () => [
+      {
+        id: 'members-roles',
+        label: t('admin.sidebar.groups.membersRoles', 'MEMBERS & ROLES'),
+        defaultOpen: true,
+        items: [
+          {
+            id: 'members',
+            label: t('admin.tabs.members', 'Members & Directory'),
+            icon: Users,
+          },
+        ],
+      },
       {
         id: 'organization-settings',
         label: t('admin.sidebar.groups.organization', 'ORGANIZATION'),
@@ -153,6 +170,22 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             id: 'audit',
             label: t('admin.tabs.audit', 'Audit'),
             icon: FileText,
+          },
+        ],
+      },
+      {
+        id: 'collaboration-settings',
+        label: t('admin.sidebar.groups.collaboration', 'COLLABORATION'),
+        items: [
+          {
+            id: 'collaboration',
+            label: t('admin.tabs.collaboration', 'Collaboration Controls'),
+            icon: Share2,
+          },
+          {
+            id: 'sync-hub',
+            label: t('admin.tabs.syncHub', 'Sync Hub'),
+            icon: Webhook,
           },
         ],
       },

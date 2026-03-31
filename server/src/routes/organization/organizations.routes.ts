@@ -12,6 +12,7 @@ const OrganizationController = OrganizationControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import adminAuditService from '../../services/adminAuditService.js';
 import {
   AddMemberSchema,
   CreateOrganizationSchema,
@@ -72,24 +73,63 @@ router.get('/:orgId/members', OrganizationController.getMembers);
 
 /**
  * POST /api/organizations/:orgId/members
- * Add member to organization
+ * Add member to organization (with audit logging)
  */
-router.post('/:orgId/members', validateBody(AddMemberSchema), OrganizationController.addMember);
+router.post('/:orgId/members', validateBody(AddMemberSchema), async (req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = function (body: any) {
+    if (res.statusCode < 400) {
+      adminAuditService.logAction({
+        adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+        actionType: 'add_member',
+        details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
+      }).catch(() => {});
+    }
+    return originalJson(body);
+  } as any;
+  return OrganizationController.addMember(req, res, next);
+});
 
 /**
  * PATCH /api/organizations/:orgId/members/:memberId/role
- * Update member role
+ * Update member role (with audit logging)
  */
 router.patch(
   '/:orgId/members/:memberId/role',
   validateBody(UpdateMemberRoleSchema),
-  OrganizationController.updateMemberRole
+  async (req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = function (body: any) {
+      if (res.statusCode < 400) {
+        adminAuditService.logAction({
+          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+          actionType: 'update_member_role',
+          details: { orgId: req.params.orgId, memberId: req.params.memberId, role: req.body, isSensitive: true },
+        }).catch(() => {});
+      }
+      return originalJson(body);
+    } as any;
+    return OrganizationController.updateMemberRole(req, res, next);
+  }
 );
 
 /**
  * DELETE /api/organizations/:orgId/members/:memberId
- * Remove member from organization
+ * Remove member from organization (with audit logging)
  */
-router.delete('/:orgId/members/:memberId', OrganizationController.removeMember);
+router.delete('/:orgId/members/:memberId', async (req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = function (body: any) {
+    if (res.statusCode < 400) {
+      adminAuditService.logAction({
+        adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+        actionType: 'remove_member',
+        details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
+      }).catch(() => {});
+    }
+    return originalJson(body);
+  } as any;
+  return OrganizationController.removeMember(req, res, next);
+});
 
 export default router;
