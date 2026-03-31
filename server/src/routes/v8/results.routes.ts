@@ -1134,4 +1134,541 @@ router.post(
   })
 );
 
+// ────────────────────────────────────────────────────────────────
+// P04 — KPI Workflow Canon endpoints
+// ────────────────────────────────────────────────────────────────
+
+import {
+  P04_KPI_WORKFLOW_CONTRACT,
+  computeKpiHealthPosture,
+  canPerformKpiAction,
+  KPI_WORKFLOW_TRANSITIONS,
+  P04_ACCEPTANCE_CHECKLIST,
+  KPI_ANTI_DUPLICATE_RULES,
+  LINKAGE_PATTERNS,
+  KPI_PERMISSION_MATRIX,
+  type KpiDegradedPosture,
+  type KpiSignal,
+  type KpiNextAction,
+  type KpiReport,
+  type KpiReconciliation,
+  type KpiTarget,
+  type KpiTrend,
+  type KpiPermissionRole,
+  type KpiWorkflowState,
+  type KpiHealthStatus,
+} from '../../services/v8/kpiWorkflowCanon.js';
+
+const p04Meta = () => ({ version: 'v8' as const, contract: P04_KPI_WORKFLOW_CONTRACT });
+
+/**
+ * GET /workflow/signals — Active KPI signals for the org.
+ * Aggregates deviations + freshness + discrepancy signals.
+ */
+router.get(
+  '/workflow/signals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    const deviations: Array<Record<string, unknown>> = await dbAll(
+      `SELECT dc.id, dc.kpi_id, dc.severity, dc.status, dc.deviation_summary, dc.detected_at, dc.created_at
+       FROM kpi_deviation_cases dc
+       JOIN initiative_kpis ik ON ik.id = dc.kpi_id
+       WHERE ik.organization_id = ? AND dc.status NOT IN ('CLOSED', 'RESOLVED')
+       ORDER BY dc.created_at DESC
+       LIMIT 200`,
+      [organizationId]
+    );
+
+    const signals: KpiSignal[] = deviations.map((d) => ({
+      signalId: String(d.id),
+      kpiId: String(d.kpi_id),
+      signalType: 'deviation' as const,
+      severity: (String(d.severity || 'medium').toLowerCase() as KpiSignal['severity']),
+      summary: String(d.deviation_summary || `Deviation on KPI ${d.kpi_id}`),
+      detectedAt: String(d.detected_at || d.created_at),
+    }));
+
+    return res.json({ data: { signals, count: signals.length }, meta: p04Meta() });
+  })
+);
+
+/**
+ * GET /workflow/kpi/:kpiId/inspect — Inspection payload for a single KPI.
+ * Returns target, trend, health posture, open signals, and available actions.
+ */
+router.get(
+  '/workflow/kpi/:kpiId/inspect',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { kpiId } = req.params;
+
+    const kpi = await dbGet(
+      `SELECT ik.*, ik.id as kpi_id,
+              COALESCE(ik.name, ik.id) as name,
+              ik.target_value, ik.baseline_value, ik.latest_value,
+              ik.measurement_frequency, ik.updated_at, ik.created_at
+       FROM initiative_kpis ik
+       WHERE ik.id = ? AND ik.organization_id = ?`,
+      [kpiId, organizationId]
+    );
+
+    if (!kpi) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'KPI_NOT_FOUND',
+      });
+    }
+
+    const recentMeasurements: Array<Record<string, unknown>> = await dbAll(
+      `SELECT value, measured_at, period_start, period_end
+       FROM kpi_time_series
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY measured_at DESC LIMIT 12`,
+      [kpiId, organizationId]
+    );
+
+    const openSignals: Array<Record<string, unknown>> = await dbAll(
+      `SELECT id, severity, status, deviation_summary, detected_at
+       FROM kpi_deviation_cases
+       WHERE kpi_id = ? AND status NOT IN ('CLOSED', 'RESOLVED')`,
+      [kpiId]
+    );
+
+    const reconciliation = await dbGet(
+      `SELECT reconciliation_id, kpi_id, finance_ref, reconciliation_status, initiated_by
+       FROM v8_kpi_finance_reconciliations
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+      [kpiId, organizationId]
+    );
+
+    const target: KpiTarget = {
+      kpiId: String(kpi.kpi_id),
+      targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+      baselineValue: kpi.baseline_value != null ? Number(kpi.baseline_value) : null,
+    };
+
+    const points = recentMeasurements.map((m) => ({
+      period: String(m.period_start || m.measured_at || ''),
+      actualValue: m.value != null ? Number(m.value) : null,
+      targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+      deviation: m.value != null && kpi.target_value != null
+        ? Number(m.value) - Number(kpi.target_value)
+        : null,
+    }));
+
+    let direction: KpiTrend['direction'] = 'insufficient_data';
+    if (points.length >= 2) {
+      const first = points[points.length - 1]?.actualValue;
+      const last = points[0]?.actualValue;
+      if (first != null && last != null) {
+        const delta = last - first;
+        if (Math.abs(delta) < 0.001) direction = 'stable';
+        else direction = delta > 0 ? 'improving' : 'declining';
+      }
+    }
+
+    const trend: KpiTrend = {
+      kpiId: String(kpi.kpi_id),
+      direction,
+      window: `last_${points.length}_periods`,
+      aggregation: 'last',
+      points,
+    };
+
+    const healthPosture = computeKpiHealthPosture({
+      currentValue: kpi.latest_value != null ? Number(kpi.latest_value) : null,
+      targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+      updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
+      financeLinked: !!reconciliation,
+      reconciliationStatus: reconciliation
+        ? (String(reconciliation.reconciliation_status) as 'pending' | 'reconciled' | 'disputed' | 'escalated')
+        : null,
+    });
+
+    const signals: KpiSignal[] = openSignals.map((s) => ({
+      signalId: String(s.id),
+      kpiId: String(kpi.kpi_id),
+      signalType: 'deviation' as const,
+      severity: String(s.severity || 'medium').toLowerCase() as KpiSignal['severity'],
+      summary: String(s.deviation_summary || 'Deviation detected'),
+      detectedAt: String(s.detected_at || ''),
+    }));
+
+    return res.json({
+      data: {
+        kpiId: String(kpi.kpi_id),
+        name: String(kpi.name),
+        target,
+        trend,
+        healthPosture,
+        openSignals: signals,
+        reconciliation: reconciliation
+          ? {
+              reconciliationId: String(reconciliation.reconciliation_id),
+              status: String(reconciliation.reconciliation_status),
+              financeRef: String(reconciliation.finance_ref),
+            }
+          : null,
+        workflowHint: signals.length > 0
+          ? 'Signal detected — create report or assign next action'
+          : 'No open signals',
+      },
+      meta: p04Meta(),
+    });
+  })
+);
+
+/**
+ * POST /workflow/kpi/:kpiId/next-action — Create a next action from signal/report/reconciliation.
+ */
+router.post(
+  '/workflow/kpi/:kpiId/next-action',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { kpiId } = req.params;
+    const { title, sourceType, sourceRef, assigneeId, dueDate } = req.body || {};
+
+    if (!title || !sourceType || !sourceRef) {
+      return res.status(400).json({
+        error: 'title, sourceType, and sourceRef are required',
+        code: 'KPI_NEXT_ACTION_MISSING_FIELDS',
+      });
+    }
+
+    const validSourceTypes = ['signal', 'report', 'reconciliation', 'manual'];
+    if (!validSourceTypes.includes(sourceType)) {
+      return res.status(400).json({
+        error: `sourceType must be one of: ${validSourceTypes.join(', ')}`,
+        code: 'KPI_NEXT_ACTION_INVALID_SOURCE_TYPE',
+      });
+    }
+
+    const actionId = uuidv4();
+    await dbRun(
+      `INSERT INTO kpi_deviation_actions (id, case_id, title, owner_user_id, due_date, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'OPEN', datetime('now'), datetime('now'))`,
+      [actionId, sourceRef, title, assigneeId || userId || null, dueDate || null]
+    );
+
+    const action: KpiNextAction = {
+      actionId,
+      kpiId,
+      sourceType,
+      sourceRef,
+      title,
+      assigneeId: assigneeId || userId || null,
+      dueDate: dueDate || null,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+    };
+
+    return res.json({ data: action, meta: { ...p04Meta(), contract: P04_KPI_WORKFLOW_CONTRACT } });
+  })
+);
+
+/**
+ * GET /workflow/kpi/:kpiId/health — Degraded posture for a single KPI (§8.1F).
+ */
+router.get(
+  '/workflow/kpi/:kpiId/health',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { kpiId } = req.params;
+
+    const kpi = await dbGet(
+      `SELECT id, latest_value, target_value, updated_at
+       FROM initiative_kpis
+       WHERE id = ? AND organization_id = ?`,
+      [kpiId, organizationId]
+    );
+
+    if (!kpi) {
+      return res.status(404).json({ error: 'KPI not found', code: 'KPI_NOT_FOUND' });
+    }
+
+    const reconciliation = await dbGet(
+      `SELECT reconciliation_status FROM v8_kpi_finance_reconciliations
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+      [kpiId, organizationId]
+    );
+
+    const posture = computeKpiHealthPosture({
+      currentValue: kpi.latest_value != null ? Number(kpi.latest_value) : null,
+      targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+      updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
+      financeLinked: !!reconciliation,
+      reconciliationStatus: reconciliation
+        ? (String(reconciliation.reconciliation_status) as 'pending' | 'reconciled' | 'disputed' | 'escalated')
+        : null,
+    });
+
+    const messages: Record<KpiDegradedPosture, string> = {
+      nominal: 'KPI is operating normally',
+      missing_data: 'KPI has missing current or target value — trend/target comparisons disabled',
+      stale_data: 'KPI data is stale (>30 days since last update) — results may be unreliable',
+      discrepancy_unresolved: 'KPI has an unresolved discrepancy with Finance — reconciliation required',
+      linkage_unavailable: 'KPI has finance linkage but reconciliation data is unavailable',
+      permission_denied: 'You do not have permission to access this KPI',
+    };
+
+    const health: KpiHealthStatus = {
+      kpiId: String(kpi.id),
+      posture,
+      message: messages[posture],
+      lastRefreshedAt: kpi.updated_at ? String(kpi.updated_at) : null,
+    };
+
+    return res.json({ data: health, meta: p04Meta() });
+  })
+);
+
+/**
+ * GET /workflow/org-health — Org-wide KPI health summary (§8.1F).
+ */
+router.get(
+  '/workflow/org-health',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    const kpis: Array<Record<string, unknown>> = await dbAll(
+      `SELECT ik.id, ik.latest_value, ik.target_value, ik.updated_at
+       FROM initiative_kpis ik
+       WHERE ik.organization_id = ?`,
+      [organizationId]
+    );
+
+    const reconciliations: Array<Record<string, unknown>> = await dbAll(
+      `SELECT kpi_id, reconciliation_status
+       FROM v8_kpi_finance_reconciliations
+       WHERE organization_id = ?
+       ORDER BY created_at DESC`,
+      [organizationId]
+    );
+
+    const reconMap = new Map<string, string>();
+    for (const r of reconciliations) {
+      const kid = String(r.kpi_id);
+      if (!reconMap.has(kid)) reconMap.set(kid, String(r.reconciliation_status));
+    }
+
+    const postureCount: Record<KpiDegradedPosture, number> = {
+      nominal: 0,
+      missing_data: 0,
+      stale_data: 0,
+      discrepancy_unresolved: 0,
+      linkage_unavailable: 0,
+      permission_denied: 0,
+    };
+
+    for (const kpi of kpis) {
+      const posture = computeKpiHealthPosture({
+        currentValue: kpi.latest_value != null ? Number(kpi.latest_value) : null,
+        targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+        updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
+        financeLinked: reconMap.has(String(kpi.id)),
+        reconciliationStatus: (reconMap.get(String(kpi.id)) as 'pending' | 'reconciled' | 'disputed' | 'escalated') || null,
+      });
+      postureCount[posture]++;
+    }
+
+    const unresolvedSignals: Array<Record<string, unknown>> = await dbAll(
+      `SELECT COUNT(*) as cnt FROM kpi_deviation_cases dc
+       JOIN initiative_kpis ik ON ik.id = dc.kpi_id
+       WHERE ik.organization_id = ? AND dc.status NOT IN ('CLOSED', 'RESOLVED')`,
+      [organizationId]
+    );
+
+    return res.json({
+      data: {
+        totalKpis: kpis.length,
+        postureBreakdown: postureCount,
+        unresolvedSignals: Number(unresolvedSignals[0]?.cnt ?? 0),
+        degradedCount: kpis.length - postureCount.nominal,
+      },
+      meta: p04Meta(),
+    });
+  })
+);
+
+/**
+ * GET /workflow/contract — Returns the P04 contract metadata for introspection.
+ */
+router.get(
+  '/workflow/contract',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.json({
+      data: {
+        contract: P04_KPI_WORKFLOW_CONTRACT,
+        vocabulary: ['signal', 'target', 'trend', 'report', 'reconciliation', 'next_action'],
+        workflowStates: [...KPI_WORKFLOW_TRANSITIONS.signal_detected, 'signal_detected'],
+        linkagePatterns: [...LINKAGE_PATTERNS],
+        permissions: KPI_PERMISSION_MATRIX,
+        antiDuplicateRules: KPI_ANTI_DUPLICATE_RULES,
+        acceptanceChecklist: P04_ACCEPTANCE_CHECKLIST,
+      },
+      meta: p04Meta(),
+    });
+  })
+);
+
+// ==========================================
+// P04-B: Reconciliation HTTP endpoints (wiring existing service)
+// ==========================================
+
+router.post(
+  '/reconciliations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { kpiId, financeRef } = req.body || {};
+    if (!kpiId) return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
+
+    const { initiateReconciliation } = await import('../../services/v8/resultsROIService.js');
+    const result = await initiateReconciliation({
+      organizationId,
+      kpiId: String(kpiId),
+      financeRef: financeRef ? String(financeRef) : `finance:${kpiId}`,
+      initiatedBy: 'results',
+    });
+    return res.json({ data: result, meta: resultsWriteMeta() });
+  })
+);
+
+router.put(
+  '/reconciliations/:reconciliationId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const reconciliationId = req.params.reconciliationId?.trim();
+    const { status } = req.body || {};
+    if (!reconciliationId)
+      return res.status(400).json({ error: 'reconciliationId required', code: 'P04_RECONCILIATION_ID_REQUIRED' });
+    if (!status) return res.status(400).json({ error: 'status required', code: 'P04_STATUS_REQUIRED' });
+
+    const { resolveReconciliation } = await import('../../services/v8/resultsROIService.js');
+    const result = await resolveReconciliation(reconciliationId, organizationId, status);
+    return res.json({ data: result, meta: resultsWriteMeta() });
+  })
+);
+
+// P04-B: KPI Signals (closed-loop workflow)
+
+router.get(
+  '/signals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { getKpiSignals } = await import('../../services/v8/resultsROIService.js');
+    const filters: Record<string, string> = {};
+    if (req.query.kpiId) filters.kpiId = String(req.query.kpiId);
+    if (req.query.status) filters.status = String(req.query.status);
+    if (req.query.signalType) filters.signalType = String(req.query.signalType);
+    const signals = await getKpiSignals(organizationId, filters);
+    return res.json({ data: signals, meta: resultsMeta() });
+  })
+);
+
+router.post(
+  '/signals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { kpiId, signalType, severity, description, evidencePointers } = req.body || {};
+    if (!kpiId || !signalType)
+      return res.status(400).json({ error: 'kpiId and signalType required', code: 'P04_SIGNAL_PARAMS_REQUIRED' });
+
+    const { createKpiSignal } = await import('../../services/v8/resultsROIService.js');
+    const signal = await createKpiSignal({
+      organizationId,
+      kpiId: String(kpiId),
+      signalType,
+      severity: severity || 'medium',
+      description: description || '',
+      evidencePointers: Array.isArray(evidencePointers) ? evidencePointers : [],
+    });
+    return res.json({ data: signal, meta: resultsWriteMeta() });
+  })
+);
+
+router.post(
+  '/signals/:signalId/acknowledge',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const signalId = req.params.signalId?.trim();
+    if (!signalId) return res.status(400).json({ error: 'signalId required', code: 'P04_SIGNAL_ID_REQUIRED' });
+
+    const { acknowledgeKpiSignal } = await import('../../services/v8/resultsROIService.js');
+    const signal = await acknowledgeKpiSignal(signalId, organizationId, userId, req.body?.reason || '');
+    return res.json({ data: signal, meta: resultsWriteMeta() });
+  })
+);
+
+// P04-B: Next Actions
+
+router.get(
+  '/next-actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { getKpiNextActions } = await import('../../services/v8/resultsROIService.js');
+    const filters: Record<string, string> = {};
+    if (req.query.kpiId) filters.kpiId = String(req.query.kpiId);
+    if (req.query.signalId) filters.signalId = String(req.query.signalId);
+    if (req.query.status) filters.status = String(req.query.status);
+    const actions = await getKpiNextActions(organizationId, filters);
+    return res.json({ data: actions, meta: resultsMeta() });
+  })
+);
+
+router.post(
+  '/next-actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { signalId, kpiId, actionType, description, assignedTo, financeConsequenceRef, executionFollowUpRef } =
+      req.body || {};
+    if (!signalId || !kpiId || !actionType)
+      return res.status(400).json({ error: 'signalId, kpiId, actionType required', code: 'P04_ACTION_PARAMS_REQUIRED' });
+
+    const { createKpiNextAction } = await import('../../services/v8/resultsROIService.js');
+    const action = await createKpiNextAction({
+      organizationId,
+      signalId: String(signalId),
+      kpiId: String(kpiId),
+      actionType,
+      description: description || '',
+      assignedTo: assignedTo || undefined,
+      createdBy: userId,
+      financeConsequenceRef: financeConsequenceRef || undefined,
+      executionFollowUpRef: executionFollowUpRef || undefined,
+    });
+    return res.json({ data: action, meta: resultsWriteMeta() });
+  })
+);
+
+router.post(
+  '/next-actions/:actionId/complete',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const actionId = req.params.actionId?.trim();
+    if (!actionId) return res.status(400).json({ error: 'actionId required', code: 'P04_ACTION_ID_REQUIRED' });
+
+    const { completeKpiNextAction } = await import('../../services/v8/resultsROIService.js');
+    await completeKpiNextAction(actionId, organizationId);
+    return res.json({ data: { success: true }, meta: resultsWriteMeta() });
+  })
+);
+
+// P04-B: KPI Workflow Status (degraded states)
+
+router.get(
+  '/kpis/:kpiId/workflow-status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const kpiId = req.params.kpiId?.trim();
+    if (!kpiId) return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
+
+    const { getKpiWorkflowStatus } = await import('../../services/v8/resultsROIService.js');
+    const status = await getKpiWorkflowStatus(kpiId, organizationId);
+    return res.json({ data: status, meta: resultsMeta() });
+  })
+);
+
 export default router;

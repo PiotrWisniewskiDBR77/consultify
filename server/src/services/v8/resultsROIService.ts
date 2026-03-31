@@ -1658,3 +1658,332 @@ export async function getResultsDashboard(
     recentReviewPacks,
   };
 }
+
+// ==========================================
+// P04-B: CLOSED-LOOP WORKFLOW (signal→report→reconciliation→action)
+// ==========================================
+
+export type KpiSignalType =
+  | 'deviation'
+  | 'target_drift'
+  | 'data_quality'
+  | 'reconciliation_needed'
+  | 'freshness';
+export type NextActionStatus = 'pending' | 'acknowledged' | 'action_created' | 'dismissed';
+
+export interface KpiSignal {
+  signalId: string;
+  organizationId: string;
+  kpiId: string;
+  signalType: KpiSignalType;
+  severity: DeviationSeverity;
+  description: string;
+  evidencePointers: string[];
+  nextActionStatus: NextActionStatus;
+  nextActionRef: string | null;
+  acknowledgedBy: string | null;
+  acknowledgedAt: string | null;
+  createdAt: string;
+}
+
+export interface KpiNextAction {
+  actionId: string;
+  organizationId: string;
+  signalId: string;
+  kpiId: string;
+  actionType: 'reconcile' | 'investigate' | 'escalate' | 'create_initiative' | 'update_target';
+  description: string;
+  assignedTo: string | null;
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  financeConsequenceRef: string | null;
+  executionFollowUpRef: string | null;
+  createdBy: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export async function createKpiSignal(params: {
+  organizationId: string;
+  kpiId: string;
+  signalType: KpiSignalType;
+  severity: DeviationSeverity;
+  description: string;
+  evidencePointers?: string[];
+}): Promise<KpiSignal> {
+  const signalId = uuidv4();
+  const now = new Date().toISOString();
+  const signal: KpiSignal = {
+    signalId,
+    organizationId: params.organizationId,
+    kpiId: params.kpiId,
+    signalType: params.signalType,
+    severity: params.severity,
+    description: params.description,
+    evidencePointers: params.evidencePointers || [],
+    nextActionStatus: 'pending',
+    nextActionRef: null,
+    acknowledgedBy: null,
+    acknowledgedAt: null,
+    createdAt: now,
+  };
+
+  await dbRun(
+    `INSERT INTO v8_kpi_signals (
+      signal_id, organization_id, kpi_id, signal_type, severity,
+      description, evidence_pointers, next_action_status, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      signal.signalId,
+      signal.organizationId,
+      signal.kpiId,
+      signal.signalType,
+      signal.severity,
+      signal.description,
+      JSON.stringify(signal.evidencePointers),
+      signal.nextActionStatus,
+      signal.createdAt,
+    ]
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Created KPI signal ${signalId} type=${params.signalType} for KPI ${params.kpiId}`
+  );
+  return signal;
+}
+
+export async function getKpiSignals(
+  organizationId: string,
+  filters?: { kpiId?: string; status?: NextActionStatus; signalType?: KpiSignalType }
+): Promise<KpiSignal[]> {
+  let sql = `SELECT * FROM v8_kpi_signals WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
+
+  if (filters?.kpiId) {
+    sql += ` AND kpi_id = ?`;
+    params.push(filters.kpiId);
+  }
+  if (filters?.status) {
+    sql += ` AND next_action_status = ?`;
+    params.push(filters.status);
+  }
+  if (filters?.signalType) {
+    sql += ` AND signal_type = ?`;
+    params.push(filters.signalType);
+  }
+  sql += ` ORDER BY created_at DESC`;
+
+  const rows = await dbAll<any>(sql, params, { fallback: true });
+  return (rows || []).map((r: any) => ({
+    signalId: r.signal_id,
+    organizationId: r.organization_id,
+    kpiId: r.kpi_id,
+    signalType: r.signal_type,
+    severity: r.severity,
+    description: r.description,
+    evidencePointers: safeJsonParse(r.evidence_pointers, []),
+    nextActionStatus: r.next_action_status,
+    nextActionRef: r.next_action_ref || null,
+    acknowledgedBy: r.acknowledged_by || null,
+    acknowledgedAt: r.acknowledged_at || null,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function acknowledgeKpiSignal(
+  signalId: string,
+  organizationId: string,
+  userId: string,
+  _reason: string
+): Promise<KpiSignal> {
+  const now = new Date().toISOString();
+  await dbRun(
+    `UPDATE v8_kpi_signals SET next_action_status = 'acknowledged', acknowledged_by = ?, acknowledged_at = ?
+     WHERE signal_id = ? AND organization_id = ?`,
+    [userId, now, signalId, organizationId]
+  );
+  const signals = await getKpiSignals(organizationId, { kpiId: undefined });
+  const found = signals.find((s) => s.signalId === signalId);
+  if (!found) throw Object.assign(new Error('Signal not found'), { code: 'P04_SIGNAL_NOT_FOUND' });
+  return found;
+}
+
+export async function createKpiNextAction(params: {
+  organizationId: string;
+  signalId: string;
+  kpiId: string;
+  actionType: KpiNextAction['actionType'];
+  description: string;
+  assignedTo?: string;
+  createdBy: string;
+  financeConsequenceRef?: string;
+  executionFollowUpRef?: string;
+}): Promise<KpiNextAction> {
+  const actionId = uuidv4();
+  const now = new Date().toISOString();
+  const action: KpiNextAction = {
+    actionId,
+    organizationId: params.organizationId,
+    signalId: params.signalId,
+    kpiId: params.kpiId,
+    actionType: params.actionType,
+    description: params.description,
+    assignedTo: params.assignedTo || null,
+    status: 'open',
+    financeConsequenceRef: params.financeConsequenceRef || null,
+    executionFollowUpRef: params.executionFollowUpRef || null,
+    createdBy: params.createdBy,
+    createdAt: now,
+    completedAt: null,
+  };
+
+  await dbRun(
+    `INSERT INTO v8_kpi_next_actions (
+      action_id, organization_id, signal_id, kpi_id, action_type,
+      description, assigned_to, status, finance_consequence_ref,
+      execution_follow_up_ref, created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      action.actionId,
+      action.organizationId,
+      action.signalId,
+      action.kpiId,
+      action.actionType,
+      action.description,
+      action.assignedTo,
+      action.status,
+      action.financeConsequenceRef,
+      action.executionFollowUpRef,
+      action.createdBy,
+      action.createdAt,
+    ]
+  );
+
+  await dbRun(
+    `UPDATE v8_kpi_signals SET next_action_status = 'action_created', next_action_ref = ?
+     WHERE signal_id = ? AND organization_id = ?`,
+    [actionId, params.signalId, params.organizationId]
+  );
+
+  logger.info(`${LOG_PREFIX} Created next action ${actionId} for signal ${params.signalId}`);
+  return action;
+}
+
+export async function getKpiNextActions(
+  organizationId: string,
+  filters?: { kpiId?: string; signalId?: string; status?: string }
+): Promise<KpiNextAction[]> {
+  let sql = `SELECT * FROM v8_kpi_next_actions WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
+  if (filters?.kpiId) {
+    sql += ` AND kpi_id = ?`;
+    params.push(filters.kpiId);
+  }
+  if (filters?.signalId) {
+    sql += ` AND signal_id = ?`;
+    params.push(filters.signalId);
+  }
+  if (filters?.status) {
+    sql += ` AND status = ?`;
+    params.push(filters.status);
+  }
+  sql += ` ORDER BY created_at DESC`;
+
+  const rows = await dbAll<any>(sql, params, { fallback: true });
+  return (rows || []).map((r: any) => ({
+    actionId: r.action_id,
+    organizationId: r.organization_id,
+    signalId: r.signal_id,
+    kpiId: r.kpi_id,
+    actionType: r.action_type,
+    description: r.description,
+    assignedTo: r.assigned_to || null,
+    status: r.status,
+    financeConsequenceRef: r.finance_consequence_ref || null,
+    executionFollowUpRef: r.execution_follow_up_ref || null,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+    completedAt: r.completed_at || null,
+  }));
+}
+
+export async function completeKpiNextAction(actionId: string, organizationId: string): Promise<void> {
+  const now = new Date().toISOString();
+  await dbRun(
+    `UPDATE v8_kpi_next_actions SET status = 'completed', completed_at = ?
+     WHERE action_id = ? AND organization_id = ?`,
+    [now, actionId, organizationId]
+  );
+}
+
+export type KpiWorkflowDegradedReason =
+  | 'missing_data'
+  | 'discrepancy_unresolved'
+  | 'linkage_unavailable'
+  | 'permission_denied';
+
+export interface KpiWorkflowStatus {
+  kpiId: string;
+  organizationId: string;
+  workflowState: 'ready' | 'degraded';
+  degradedReasons: Array<{ reason: KpiWorkflowDegradedReason; detail: string; nextAction: string }>;
+  openSignals: number;
+  pendingActions: number;
+  reconciliationHealth: ReconciliationHealthSummary;
+}
+
+export async function getKpiWorkflowStatus(
+  kpiId: string,
+  organizationId: string
+): Promise<KpiWorkflowStatus> {
+  const signals = await getKpiSignals(organizationId, { kpiId });
+  const actions = await getKpiNextActions(organizationId, { kpiId });
+  let reconciliationHealth: ReconciliationHealthSummary;
+  try {
+    reconciliationHealth = await getReconciliationHealth(organizationId);
+  } catch {
+    reconciliationHealth = {
+      organizationId,
+      total: 0,
+      byStatus: { pending: 0, reconciled: 0, disputed: 0, escalated: 0 },
+      unresolvedCount: 0,
+      averageResolutionHours: null,
+    };
+  }
+
+  const degradedReasons: KpiWorkflowStatus['degradedReasons'] = [];
+
+  const kpi = await dbGet<any>(
+    `SELECT current_value, target_value, updated_at FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`,
+    [kpiId, organizationId],
+    { fallback: true }
+  ).catch(() => null);
+
+  if (!kpi || kpi.current_value == null) {
+    degradedReasons.push({
+      reason: 'missing_data',
+      detail: 'KPI has no current value recorded',
+      nextAction: 'Record a measurement via POST /api/v8/results/kpis/:kpiId/time-series',
+    });
+  }
+
+  if (reconciliationHealth.unresolvedCount > 0) {
+    degradedReasons.push({
+      reason: 'discrepancy_unresolved',
+      detail: `${reconciliationHealth.unresolvedCount} unresolved reconciliation(s)`,
+      nextAction: 'Resolve via PUT /api/v8/results/reconciliations/:id/resolve',
+    });
+  }
+
+  const openSignals = signals.filter((s) => s.nextActionStatus === 'pending').length;
+  const pendingActions = actions.filter((a) => a.status === 'open' || a.status === 'in_progress').length;
+
+  return {
+    kpiId,
+    organizationId,
+    workflowState: degradedReasons.length > 0 ? 'degraded' : 'ready',
+    degradedReasons,
+    openSignals,
+    pendingActions,
+    reconciliationHealth,
+  };
+}

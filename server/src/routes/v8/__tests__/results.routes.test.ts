@@ -9,6 +9,15 @@ const mockGetROIPortfolioSummary = vi.fn();
 const mockGetROIInitiativeDetail = vi.fn();
 const mockGetResultsKpiCatalog = vi.fn();
 const mockGetResultsKpiDrawerDetail = vi.fn();
+const mockInitiateReconciliation = vi.fn();
+const mockResolveReconciliation = vi.fn();
+const mockGetKpiSignals = vi.fn();
+const mockCreateKpiSignal = vi.fn();
+const mockAcknowledgeKpiSignal = vi.fn();
+const mockGetKpiNextActions = vi.fn();
+const mockCreateKpiNextAction = vi.fn();
+const mockCompleteKpiNextAction = vi.fn();
+const mockGetKpiWorkflowStatus = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
@@ -24,6 +33,15 @@ vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsKpiDrawerDetail: (...args: unknown[]) => mockGetResultsKpiDrawerDetail(...args),
   getROIPortfolioSummary: (...args: unknown[]) => mockGetROIPortfolioSummary(...args),
   getROIInitiativeDetail: (...args: unknown[]) => mockGetROIInitiativeDetail(...args),
+  initiateReconciliation: (...args: unknown[]) => mockInitiateReconciliation(...args),
+  resolveReconciliation: (...args: unknown[]) => mockResolveReconciliation(...args),
+  getKpiSignals: (...args: unknown[]) => mockGetKpiSignals(...args),
+  createKpiSignal: (...args: unknown[]) => mockCreateKpiSignal(...args),
+  acknowledgeKpiSignal: (...args: unknown[]) => mockAcknowledgeKpiSignal(...args),
+  getKpiNextActions: (...args: unknown[]) => mockGetKpiNextActions(...args),
+  createKpiNextAction: (...args: unknown[]) => mockCreateKpiNextAction(...args),
+  completeKpiNextAction: (...args: unknown[]) => mockCompleteKpiNextAction(...args),
+  getKpiWorkflowStatus: (...args: unknown[]) => mockGetKpiWorkflowStatus(...args),
 }));
 
 vi.mock('../../../services/results/kpiReportSnapshotService.js', () => ({
@@ -118,6 +136,8 @@ function createApp(): Express {
 
 const ORG = '00000000-0000-4000-8000-000000000099';
 const UID = 'user-results-v8';
+/** Valid UUID for InitiateReconciliationParamsSchema.kpiId */
+const KPI_UUID = '11111111-1111-4111-8111-111111111111';
 
 describe('V8 results read-only routes', () => {
   beforeEach(() => {
@@ -199,6 +219,87 @@ describe('V8 results read-only routes', () => {
     mockUpdateSectionContent.mockResolvedValue(undefined);
     mockUpdateReportStatus.mockResolvedValue(undefined);
     mockHandleTimeSeriesRecorded.mockResolvedValue({ eval: { status: 'GREEN', severity: null } });
+    mockInitiateReconciliation.mockResolvedValue({
+      reconciliationId: 'rec-1',
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      financeRef: `finance:${KPI_UUID}`,
+      reconciliationStatus: 'pending',
+      initiatedBy: 'results',
+      createdAt: '2026-03-31T00:00:00.000Z',
+      updatedAt: '2026-03-31T00:00:00.000Z',
+    });
+    mockResolveReconciliation.mockResolvedValue({
+      reconciliationId: 'rec-1',
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      financeRef: `finance:${KPI_UUID}`,
+      reconciliationStatus: 'reconciled',
+      initiatedBy: 'results',
+      createdAt: '2026-03-31T00:00:00.000Z',
+      updatedAt: '2026-03-31T00:00:01.000Z',
+    });
+    mockGetKpiSignals.mockResolvedValue([]);
+    mockCreateKpiSignal.mockResolvedValue({
+      signalId: 'sig-1',
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      signalType: 'deviation',
+      severity: 'medium',
+      description: 'test',
+      evidencePointers: [],
+      nextActionStatus: 'pending',
+      nextActionRef: null,
+      acknowledgedBy: null,
+      acknowledgedAt: null,
+      createdAt: '2026-03-31T00:00:00.000Z',
+    });
+    mockAcknowledgeKpiSignal.mockResolvedValue({
+      signalId: 'sig-1',
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      signalType: 'deviation',
+      severity: 'medium',
+      description: 'test',
+      evidencePointers: [],
+      nextActionStatus: 'acknowledged',
+      nextActionRef: null,
+      acknowledgedBy: UID,
+      acknowledgedAt: '2026-03-31T00:00:00.000Z',
+      createdAt: '2026-03-31T00:00:00.000Z',
+    });
+    mockGetKpiNextActions.mockResolvedValue([]);
+    mockCreateKpiNextAction.mockResolvedValue({
+      actionId: 'act-1',
+      organizationId: ORG,
+      signalId: 'sig-1',
+      kpiId: KPI_UUID,
+      actionType: 'reconcile',
+      description: 'Reconcile',
+      assignedTo: null,
+      status: 'open',
+      financeConsequenceRef: 'fin:1',
+      executionFollowUpRef: null,
+      createdBy: UID,
+      createdAt: '2026-03-31T00:00:00.000Z',
+      completedAt: null,
+    });
+    mockCompleteKpiNextAction.mockResolvedValue(undefined);
+    mockGetKpiWorkflowStatus.mockResolvedValue({
+      kpiId: KPI_UUID,
+      organizationId: ORG,
+      workflowState: 'ready',
+      degradedReasons: [],
+      openSignals: 0,
+      pendingActions: 0,
+      reconciliationHealth: {
+        organizationId: ORG,
+        total: 0,
+        byStatus: { pending: 0, reconciled: 0, disputed: 0, escalated: 0 },
+        unresolvedCount: 0,
+        averageResolutionHours: null,
+      },
+    });
     mockDbGet.mockResolvedValue({ measurement_frequency: 'MONTHLY' });
     mockDbAll.mockResolvedValue([{ name: 'current_value' }]);
     mockDbRun.mockResolvedValue({ changes: 1 });
@@ -652,5 +753,159 @@ describe('V8 results read-only routes', () => {
         UID,
       ])
     );
+  });
+
+  it('POST /api/v8/results/reconciliations returns 400 when kpiId missing', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/reconciliations').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('P04_KPI_ID_REQUIRED');
+    expect(mockInitiateReconciliation).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/results/reconciliations delegates to initiateReconciliation', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/reconciliations').send({ kpiId: KPI_UUID });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.reconciliationId).toBe('rec-1');
+    expect(mockInitiateReconciliation).toHaveBeenCalledWith({
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      financeRef: `finance:${KPI_UUID}`,
+      initiatedBy: 'results',
+    });
+  });
+
+  it('PUT /api/v8/results/reconciliations/:id/resolve returns 400 when status missing', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/results/reconciliations/rec-1/resolve').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('P04_STATUS_REQUIRED');
+    expect(mockResolveReconciliation).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/results/reconciliations/:id/resolve delegates to resolveReconciliation', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/results/reconciliations/rec-1/resolve')
+      .send({ status: 'reconciled' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.reconciliationStatus).toBe('reconciled');
+    expect(mockResolveReconciliation).toHaveBeenCalledWith('rec-1', ORG, 'reconciled');
+  });
+
+  it('GET /api/v8/results/signals delegates to getKpiSignals with query filters', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/signals')
+      .query({ kpiId: KPI_UUID, status: 'pending', signalType: 'deviation' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(mockGetKpiSignals).toHaveBeenCalledWith(ORG, {
+      kpiId: KPI_UUID,
+      status: 'pending',
+      signalType: 'deviation',
+    });
+  });
+
+  it('POST /api/v8/results/signals returns 400 when kpiId or signalType missing', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/signals').send({ kpiId: KPI_UUID });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('P04_SIGNAL_PARAMS_REQUIRED');
+    expect(mockCreateKpiSignal).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/results/signals delegates to createKpiSignal', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/signals').send({
+      kpiId: KPI_UUID,
+      signalType: 'data_quality',
+      severity: 'high',
+      description: 'Gap',
+      evidencePointers: ['ev:1'],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.signalId).toBe('sig-1');
+    expect(mockCreateKpiSignal).toHaveBeenCalledWith({
+      organizationId: ORG,
+      kpiId: KPI_UUID,
+      signalType: 'data_quality',
+      severity: 'high',
+      description: 'Gap',
+      evidencePointers: ['ev:1'],
+    });
+  });
+
+  it('POST /api/v8/results/signals/:signalId/acknowledge delegates to acknowledgeKpiSignal', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/results/signals/sig-1/acknowledge')
+      .send({ reason: 'reviewed' });
+
+    expect(res.status).toBe(200);
+    expect(mockAcknowledgeKpiSignal).toHaveBeenCalledWith('sig-1', ORG, UID, 'reviewed');
+  });
+
+  it('GET /api/v8/results/next-actions delegates to getKpiNextActions', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/next-actions')
+      .query({ kpiId: KPI_UUID, signalId: 'sig-1', status: 'open' });
+
+    expect(res.status).toBe(200);
+    expect(mockGetKpiNextActions).toHaveBeenCalledWith(ORG, {
+      kpiId: KPI_UUID,
+      signalId: 'sig-1',
+      status: 'open',
+    });
+  });
+
+  it('POST /api/v8/results/next-actions delegates to createKpiNextAction with finance refs', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/next-actions').send({
+      signalId: 'sig-1',
+      kpiId: KPI_UUID,
+      actionType: 'reconcile',
+      description: 'Align with Finance',
+      financeConsequenceRef: 'fin:ledger:1',
+      executionFollowUpRef: 'exec:task:2',
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockCreateKpiNextAction).toHaveBeenCalledWith({
+      organizationId: ORG,
+      signalId: 'sig-1',
+      kpiId: KPI_UUID,
+      actionType: 'reconcile',
+      description: 'Align with Finance',
+      assignedTo: undefined,
+      createdBy: UID,
+      financeConsequenceRef: 'fin:ledger:1',
+      executionFollowUpRef: 'exec:task:2',
+    });
+  });
+
+  it('POST /api/v8/results/next-actions/:actionId/complete delegates to completeKpiNextAction', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/next-actions/act-1/complete').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockCompleteKpiNextAction).toHaveBeenCalledWith('act-1', ORG);
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/workflow-status delegates to getKpiWorkflowStatus', async () => {
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/results/kpis/${KPI_UUID}/workflow-status`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.workflowState).toBe('ready');
+    expect(mockGetKpiWorkflowStatus).toHaveBeenCalledWith(KPI_UUID, ORG);
   });
 });
