@@ -27,11 +27,7 @@ Goal: deliver full thread lifecycle + server-side search target with pagination/
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-B.md`
 
-### 2) P20-B — Prezentacje: Gamma-style split-screen deck generation + preview + export (core runtime)
-
-Goal: deliver KIMI-style split-screen chat↔deck workflow: generate deck from chat (step-by-step with task progress), preview (live deck cards), export PDF/PPTX, reopen from Outputs Library. Reuse existing `KimiWorkspaceShell` + `useKimiArtifactPipeline` + `presentationGeneratorService` + `DeckBuilder` components. Integrate with P18 (provenance), P19 (Outputs Library), P24 (templates). No silent apply.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P20-B.md`
+*(P20-B and P20-C completed — see archive below)*
 
 *(P22-C and P23-C completed — see archive below)*
 
@@ -90,3 +86,4 @@ Completion (each agent independently):
 | P22-C | verified(evidence) | 2026-03-31 |
 | P23-C | verified(evidence) | 2026-03-31 |
 | P20-B | delivered | 2026-03-31 |
+| P20-C | verified(evidence) | 2026-03-31 |
