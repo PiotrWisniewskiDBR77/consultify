@@ -348,7 +348,21 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
     if (lane === 'prezentacje' && origin?.originRecordId) {
       const deckId = origin.originRecordId;
-      Api.get(`/presentations/decks/${deckId}`)
+
+      const generateAndFetch = async () => {
+        try {
+          await Api.post(`/presentations/generate/deck`, {
+            deckId,
+            outline: [],
+            setup: { goal: lastGoal, selectedTemplate: '' },
+          });
+        } catch {
+          // generation may already be done or endpoint may not match — continue to fetch
+        }
+        return Api.get(`/presentations/decks/${deckId}`);
+      };
+
+      generateAndFetch()
         .then((deckData: any) => {
           const slides: Array<{
             slideId: string;
@@ -375,6 +389,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               bulletPoints,
             });
           }
+          const deckStatus = deckData?.status || deckData?.export_path ? 'exported' : 'draft';
           setPreview({
             type: 'deck',
             title,
@@ -383,9 +398,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             kpiItems: [
               { label: 'Slides', value: String(slides.length) },
               { label: 'Format', value: 'PPTX / PDF' },
-              { label: 'Status', value: 'Ready' },
+              { label: 'Status', value: deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft' },
             ],
             deckId,
+            deckStatus: deckData?.export_path ? 'exported' : (deckData?.status || 'draft'),
             deckSlides: slides,
           });
           setContentGenerated(true);
@@ -478,7 +494,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       }
       setContentGenerated(true);
     }
-  }, [effectiveStatus, currentRun, lane]);
+  }, [effectiveStatus, currentRun, lane, lastGoal]);
 
   const startGeneration = useCallback(
     async (goal: string) => {

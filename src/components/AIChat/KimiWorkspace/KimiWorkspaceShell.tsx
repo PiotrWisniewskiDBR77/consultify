@@ -59,6 +59,7 @@ export interface ArtifactPreview {
     rows: Array<Record<string, unknown>>;
   };
   deckId?: string;
+  deckStatus?: 'draft' | 'reviewed' | 'exported' | string;
   deckSlides?: Array<{
     slideId: string;
     intent: string;
@@ -78,6 +79,7 @@ interface KimiWorkspaceShellProps {
   onReplay?: () => void;
   onRemix?: () => void;
   onDownload?: () => void;
+  onDownloadPdf?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
   onStartGeneration?: (goal: string) => Promise<void>;
@@ -232,6 +234,7 @@ function ArtifactPreviewPane({
   lane,
   isGenerating,
   onDownload,
+  onDownloadPdf,
   onPreviewFile,
   onAllFiles,
   onStartGeneration,
@@ -240,6 +243,7 @@ function ArtifactPreviewPane({
   lane: KimiLane;
   isGenerating: boolean;
   onDownload?: () => void;
+  onDownloadPdf?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
   onStartGeneration?: (goal: string) => Promise<void>;
@@ -352,6 +356,16 @@ function ArtifactPreviewPane({
           )}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {onDownloadPdf && (
+            <button
+              onClick={onDownloadPdf}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
+              title="Export PDF"
+            >
+              <FileText size={12} />
+              <span>PDF</span>
+            </button>
+          )}
           {onDownload && (
             <button
               onClick={onDownload}
@@ -465,14 +479,26 @@ function ArtifactPreviewPane({
             )}
           </div>
         )}
-      </div>
-
-      {/* Sheet tabs (for xlsx) */}
         {preview.type === 'deck' && (
           <div className="space-y-4">
             {preview.summary && (
               <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-                <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
+                  {preview.deckStatus && (
+                    <span
+                      className={`ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                        preview.deckStatus === 'exported' || preview.deckStatus === 'ready'
+                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                          : preview.deckStatus === 'reviewed'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                            : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {preview.deckStatus === 'ready' ? 'Exported' : preview.deckStatus.charAt(0).toUpperCase() + preview.deckStatus.slice(1)}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             {preview.kpiItems && preview.kpiItems.length > 0 && (
@@ -558,7 +584,10 @@ function ArtifactPreviewPane({
             )}
           </div>
         )}
-        {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
+      </div>
+
+      {/* Sheet tabs (for xlsx) */}
+      {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
         <div className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0">
           {preview.sheetNames.map((name, i) => (
             <button
@@ -618,6 +647,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   onReplay,
   onRemix,
   onDownload,
+  onDownloadPdf,
   onPreviewFile,
   onAllFiles,
   onStartGeneration,
@@ -675,6 +705,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
           lane={lane}
           isGenerating={isGenerating}
           onDownload={onDownload}
+          onDownloadPdf={onDownloadPdf}
           onPreviewFile={onPreviewFile}
           onAllFiles={onAllFiles}
           onStartGeneration={onStartGeneration}
