@@ -52,6 +52,10 @@ export interface ArtifactPreview {
   sheetNames?: string[];
   summary?: string;
   kpiItems?: Array<{ label: string; value: string }>;
+  tableData?: {
+    columns: string[];
+    rows: Array<Record<string, unknown>>;
+  };
 }
 
 interface KimiWorkspaceShellProps {
@@ -227,6 +231,18 @@ function ArtifactPreviewPane({
   const config = LANE_CONFIG[lane];
   const Icon = config.icon;
   const [activeSheet, setActiveSheet] = useState(0);
+  const [goalInput, setGoalInput] = React.useState('');
+  const [isStarting, setIsStarting] = React.useState(false);
+
+  const handleGenerate = React.useCallback(async () => {
+    if (!goalInput.trim() || !onStartGeneration) return;
+    setIsStarting(true);
+    try {
+      await onStartGeneration(goalInput.trim());
+    } finally {
+      setIsStarting(false);
+    }
+  }, [goalInput, onStartGeneration]);
 
   if (isGenerating && !preview) {
     return (
@@ -249,19 +265,6 @@ function ArtifactPreviewPane({
       </div>
     );
   }
-
-  const [goalInput, setGoalInput] = React.useState('');
-  const [isStarting, setIsStarting] = React.useState(false);
-
-  const handleGenerate = React.useCallback(async () => {
-    if (!goalInput.trim() || !onStartGeneration) return;
-    setIsStarting(true);
-    try {
-      await onStartGeneration(goalInput.trim());
-    } finally {
-      setIsStarting(false);
-    }
-  }, [goalInput, onStartGeneration]);
 
   if (!preview || preview.type === 'none') {
     return (
@@ -346,6 +349,19 @@ function ArtifactPreviewPane({
             title={preview.title}
           />
         )}
+        {preview.type === 'pdf' && !preview.url && (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <div className="text-center space-y-3">
+              <FileText size={48} className="mx-auto text-slate-400 dark:text-slate-500" />
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {preview.title}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t('kimi.docReady', 'Document ready — use Preview File or Download')}
+              </p>
+            </div>
+          </div>
+        )}
         {preview.type === 'xlsx' && (
           <div className="space-y-4">
             {preview.summary && (
@@ -368,17 +384,62 @@ function ArtifactPreviewPane({
                 ))}
               </div>
             )}
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-                <FileSpreadsheet size={48} className="mx-auto mb-3 opacity-50" />
-                <p className="text-sm font-medium">
-                  {t('kimi.xlsxPreview', 'Spreadsheet preview')}
-                </p>
-                <p className="text-xs mt-1">
-                  {preview.fileName || 'spreadsheet.xlsx'}
-                </p>
+            {preview.tableData && preview.tableData.columns.length > 0 ? (
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-navy-700/50">
+                        {preview.tableData.columns.map((col) => (
+                          <th
+                            key={col}
+                            className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-navy-600 whitespace-nowrap"
+                          >
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.tableData.rows.slice(0, 25).map((row, ri) => (
+                        <tr
+                          key={ri}
+                          className="border-b border-slate-100 dark:border-navy-700/50 hover:bg-slate-50 dark:hover:bg-navy-700/30"
+                        >
+                          {preview.tableData!.columns.map((col) => (
+                            <td
+                              key={col}
+                              className="px-3 py-1.5 text-slate-700 dark:text-slate-300 whitespace-nowrap max-w-[200px] truncate"
+                            >
+                              {String(row[col] ?? '')}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {preview.tableData.rows.length > 25 && (
+                  <div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500 text-center border-t border-slate-200 dark:border-navy-700">
+                    {t('kimi.showingRows', 'Showing 25 of {{total}} rows', {
+                      total: preview.tableData.rows.length,
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  <FileSpreadsheet size={48} className="mx-auto mb-3 opacity-50" />
+                  <p className="text-sm font-medium">
+                    {t('kimi.xlsxPreview', 'Spreadsheet preview')}
+                  </p>
+                  <p className="text-xs mt-1">
+                    {preview.fileName || 'spreadsheet.xlsx'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

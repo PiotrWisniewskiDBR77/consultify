@@ -93,6 +93,8 @@ export enum AppView {
   DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
   PRESENTATIONS = 'PRESENTATIONS', // Presentations library
   MEETING = 'MEETING', // Meeting workspace
+  WORDY = 'WORDY', // KIMI-style document generation workspace (P22)
+  EXCELE = 'EXCELE', // KIMI-style spreadsheet generation workspace (P23)
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',

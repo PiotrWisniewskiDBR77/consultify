@@ -17,6 +17,8 @@ import {
   ClipboardList,
   CreditCard,
   Factory,
+  FileSpreadsheet,
+  FileText,
   LayoutDashboard,
   Lightbulb,
   Map,
@@ -115,6 +117,20 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.outputsLibrary', 'Outputs'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
+    },
+    // 10. Wordy — KIMI-style document generation (P22)
+    {
+      id: 'MODULE_WORDY',
+      label: t('sidebar.wordy', 'Wordy'),
+      icon: React.createElement(FileText, { size: 20 }),
+      viewId: AppView.WORDY,
+    },
+    // 11. Excele — KIMI-style spreadsheet generation (P23)
+    {
+      id: 'MODULE_EXCELE',
+      label: t('sidebar.excele', 'Excele'),
+      icon: React.createElement(FileSpreadsheet, { size: 20 }),
+      viewId: AppView.EXCELE,
     },
     {
       id: 'MODULE_MEETING',

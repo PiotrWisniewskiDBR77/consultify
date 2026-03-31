@@ -3,9 +3,10 @@
  * to the real V8 artifact run pipeline (create → preflight → accept → review → materialize).
  *
  * Maps pipeline states to TaskStep[] for the progress bar and manages preview state.
+ * After materialization, triggers content generation and builds real preview URLs.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import type {
@@ -28,6 +29,8 @@ import {
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
+import { Api } from '@/services/api';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
 
@@ -75,12 +78,14 @@ const PIPELINE_STEPS = [
   { id: 'review', label: 'Submit for review' },
   { id: 'approve', label: 'Approve execution' },
   { id: 'materialize', label: 'Materialize artifact' },
+  { id: 'generate', label: 'Generate content' },
 ] as const;
 
 function mapRunToSteps(
   effectiveStatus: ArtifactRunRecord['runStatus'] | null,
   hasSnapshot: boolean,
-  hasPlan: boolean
+  hasPlan: boolean,
+  contentGenerated: boolean
 ): TaskStep[] {
   if (!hasSnapshot && !hasPlan && !effectiveStatus) {
     return PIPELINE_STEPS.map((s) => ({ id: s.id, label: s.label, status: 'pending' as const }));
@@ -152,18 +157,25 @@ function mapRunToSteps(
   if (effectiveStatus === 'approved_for_apply') {
     steps.push({ id: 'approve', label: 'Approve execution', status: 'completed' });
     steps.push({ id: 'materialize', label: 'Materialize artifact', status: 'running' });
+    steps.push({ id: 'generate', label: 'Generate content', status: 'pending' });
     return steps;
   }
 
   if (effectiveStatus === 'applying') {
     steps.push({ id: 'approve', label: 'Approve execution', status: 'completed' });
     steps.push({ id: 'materialize', label: 'Materialize artifact', status: 'running' });
+    steps.push({ id: 'generate', label: 'Generate content', status: 'pending' });
     return steps;
   }
 
   if (effectiveStatus === 'completed') {
     steps.push({ id: 'approve', label: 'Approve execution', status: 'completed' });
     steps.push({ id: 'materialize', label: 'Materialize artifact', status: 'completed' });
+    steps.push({
+      id: 'generate',
+      label: 'Generate content',
+      status: contentGenerated ? 'completed' : 'running',
+    });
     return steps;
   }
 
@@ -187,6 +199,53 @@ function mapRunToSteps(
     }))
   );
   return steps;
+}
+
+async function fetchSheetPreviewData(
+  tableId: string
+): Promise<{
+  sheetNames: string[];
+  kpiItems: Array<{ label: string; value: string }>;
+  rows: Array<Record<string, unknown>>;
+  columns: string[];
+}> {
+  try {
+    const [tableInfo, recordsResult] = await Promise.all([
+      TablePlatformApi.getTable(tableId),
+      TablePlatformApi.listRecords(tableId, { pageSize: 50 }),
+    ]);
+
+    const records = Array.isArray(recordsResult?.records)
+      ? recordsResult.records
+      : Array.isArray(recordsResult)
+        ? recordsResult
+        : [];
+
+    const columns: string[] = [];
+    if (records.length > 0) {
+      const firstRow = records[0]?.data || records[0] || {};
+      for (const key of Object.keys(firstRow)) {
+        if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+          columns.push(key);
+        }
+      }
+    }
+
+    const tableName = tableInfo?.name || 'Sheet1';
+    const rowCount = recordsResult?.total ?? records.length;
+
+    return {
+      sheetNames: [tableName],
+      kpiItems: [
+        { label: 'Rows', value: String(rowCount) },
+        { label: 'Columns', value: String(columns.length) },
+      ],
+      rows: records.slice(0, 50).map((r: any) => r?.data || r || {}),
+      columns,
+    };
+  } catch {
+    return { sheetNames: ['Sheet1'], kpiItems: [], rows: [], columns: [] };
+  }
 }
 
 export interface KimiPipelineState {
@@ -230,6 +289,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const [currentRun, setCurrentRun] = useState<ArtifactRunRecord | null>(null);
   const [currentPlan, setCurrentPlan] = useState<ArtifactRunPlan | null>(null);
   const [preview, setPreview] = useState<ArtifactPreview | null>(null);
+  const [contentGenerated, setContentGenerated] = useState(false);
+  const [lastGoal, setLastGoal] = useState('');
+  const contentGenerationTriggered = useRef(false);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   const latestSnapshot =
@@ -258,40 +320,96 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       mapRunToSteps(
         effectiveStatus,
         !!latestSnapshot?.snapshotId,
-        !!currentPlan
+        !!currentPlan,
+        contentGenerated
       ),
-    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan]
+    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan, contentGenerated]
   );
 
   const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
   const isGenerating =
-    !!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed';
-  const isCompleted = effectiveStatus === 'completed';
+    (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed') ||
+    (effectiveStatus === 'completed' && !contentGenerated);
+  const isCompleted = effectiveStatus === 'completed' && contentGenerated;
   const isFailed = effectiveStatus === 'failed';
 
   useEffect(() => {
-    if (isCompleted && currentRun) {
-      const title = currentRun.plan.titleHint || (lane === 'wordy' ? 'Document' : 'Spreadsheet');
+    if (effectiveStatus !== 'completed' || !currentRun || contentGenerationTriggered.current) {
+      return;
+    }
+    contentGenerationTriggered.current = true;
+
+    const origin = currentRun.materializationOrigin;
+    const title = currentRun.plan.titleHint || (lane === 'wordy' ? 'Document' : 'Spreadsheet');
+
+    if (lane === 'wordy' && origin?.originRecordId) {
+      const reportId = origin.originRecordId;
+      Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
+        .then(() => {
+          const pdfUrl = `/api/report-builder/reports/${reportId}/export/pdf`;
+          setPreview({
+            type: 'pdf',
+            title,
+            url: pdfUrl,
+            fileName: `${title.replace(/\s+/g, '_')}.pdf`,
+          });
+          setContentGenerated(true);
+        })
+        .catch(() => {
+          setPreview({
+            type: 'pdf',
+            title,
+            url: `/api/report-builder/reports/${reportId}/export/pdf`,
+            fileName: `${title.replace(/\s+/g, '_')}.pdf`,
+          });
+          setContentGenerated(true);
+        });
+    } else if (lane === 'excele' && origin?.originRecordId) {
+      const tableId = origin.originRecordId;
+      fetchSheetPreviewData(tableId)
+        .then((data) => {
+          setPreview({
+            type: 'xlsx',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+            summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
+            kpiItems: data.kpiItems,
+            sheetNames: data.sheetNames,
+            tableData: { columns: data.columns, rows: data.rows },
+          });
+          setContentGenerated(true);
+        })
+        .catch(() => {
+          setPreview({
+            type: 'xlsx',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+            summary: `Spreadsheet "${title}" generated.`,
+            kpiItems: [],
+            sheetNames: ['Sheet1'],
+          });
+          setContentGenerated(true);
+        });
+    } else {
       if (lane === 'wordy') {
         setPreview({
           type: 'pdf',
           title,
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
-          pageCount: undefined,
         });
       } else {
-        const origin = currentRun.materializationOrigin;
         setPreview({
           type: 'xlsx',
           title,
           fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-          summary: `Spreadsheet "${title}" generated successfully.`,
+          summary: `Spreadsheet "${title}" generated.`,
           kpiItems: [],
           sheetNames: ['Sheet1'],
         });
       }
+      setContentGenerated(true);
     }
-  }, [isCompleted, currentRun, lane]);
+  }, [effectiveStatus, currentRun, lane]);
 
   const startGeneration = useCallback(
     async (goal: string) => {
@@ -299,6 +417,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         toast.error('No active conversation. Start a chat first.');
         return;
       }
+
+      setLastGoal(goal);
+      contentGenerationTriggered.current = false;
+      setContentGenerated(false);
 
       try {
         let snapshotId = latestSnapshot?.snapshotId;
@@ -405,14 +527,22 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, [currentRun, effectiveStatus, acceptPlan, submitReview, materializeRun, outputType]);
 
   const handleReplay = useCallback(() => {
+    contentGenerationTriggered.current = false;
     setCurrentRun(null);
     setCurrentPlan(null);
     setPreview(null);
-  }, []);
+    setContentGenerated(false);
+    if (lastGoal) {
+      void startGeneration(lastGoal);
+    }
+  }, [lastGoal, startGeneration]);
 
   const handleRemix = useCallback(() => {
+    contentGenerationTriggered.current = false;
+    setCurrentRun(null);
+    setCurrentPlan(null);
     setPreview(null);
-    toast.success('Modify your prompt and regenerate');
+    setContentGenerated(false);
   }, []);
 
   const handleDownload = useCallback(async () => {

@@ -3,11 +3,14 @@
  *
  * Split-screen: chat left ↔ PDF/doc preview right.
  * Wired to the real V8 artifact run pipeline via useKimiArtifactPipeline.
+ * Auto-triggers pipeline when user sends first message in chat.
  *
  * SSOT: FINAL_IMPLEMENTATION_PLAN_22_WORDY_2026-03-29.md
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
+
+import { useConversationStore } from '@/store/useConversationStore';
 
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
@@ -26,8 +29,12 @@ Format your final output as a well-structured document with proper headings, par
 
 export const WordyView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('wordy');
+  const { activeMessages } = useConversationStore();
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
+  const autoTriggered = useRef(false);
+  const startRef = useRef(pipeline.startGeneration);
+  startRef.current = pipeline.startGeneration;
 
   useEffect(() => {
     if (!pipeline.isGenerating || pipeline.isBusy) return undefined;
@@ -37,6 +44,19 @@ export const WordyView: React.FC = () => {
     return () => clearInterval(timer);
   }, [pipeline.isGenerating, pipeline.isBusy]);
 
+  useEffect(() => {
+    if (autoTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    const userMessages = activeMessages.filter((m) => m.role === 'user');
+    const aiMessages = activeMessages.filter((m) => m.role === 'ai');
+    if (userMessages.length >= 1 && aiMessages.length >= 1) {
+      const firstUserMsg = userMessages[0].content;
+      if (firstUserMsg && firstUserMsg.trim().length > 5) {
+        autoTriggered.current = true;
+        void startRef.current(firstUserMsg.trim());
+      }
+    }
+  }, [activeMessages, pipeline.currentRun, pipeline.isGenerating]);
+
   const handlePreviewFile = useCallback(() => {
     if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
       const reportId = pipeline.currentRun.materializationOrigin.originRecordId;
@@ -45,7 +65,7 @@ export const WordyView: React.FC = () => {
   }, [pipeline.currentRun]);
 
   const handleAllFiles = useCallback(() => {
-    window.open('/reports-hub', '_blank');
+    window.open('/presentations', '_blank');
   }, []);
 
   return (
