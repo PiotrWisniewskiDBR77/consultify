@@ -19,22 +19,39 @@ Branch: `ws/c-artifact-evidence`
 - Degraded posture: 10 scenarios (exceeds 8 minimum)
 - Acceptance checklist: 12 testable items
 
-### P08-B — Cross-surface handoff + action governance closure
-**New artifacts:**
-- `server/src/services/v8/teresaCopilotCanon.ts` — canonical types and constants:
-  - `TeresaHandoffContext` — common payload type
-  - `RadarHandoffPayload`, `InitiativesHandoffPayload`, `CalendarHandoffPayload`, `NotebookHandoffPayload` — per-target types
-  - `P08_HANDOFF_TARGETS` — frozen target definitions with required fields
-  - `P08_ACTION_ENVELOPE_STATES` + `P08_ACTION_ENVELOPE_TRANSITIONS` — governance state machine
-  - `P08_ACTION_ENVELOPE_RULES` — 6 hard rules (approve≠review, no silent writes, no parallel approvals, idempotency, truth-preserving failure, audit required)
-  - `P08_VOICE_POSTURE` — availability states, fallback, recovery grammar
-  - `P08_CITATION_POSTURE` — explicit sources, missing source boundary, uncertainty marker
-  - `P08_ANNA_BOUNDARY` — Teresa vs Anna scope/can/cannot + no bypass
-  - `P08_WRITE_OWNERSHIP` — initiator vs writer roles + forbidden patterns
-  - `P08_ANTI_DUPLICATE_RULES` — grammar source, payload core, near-duplicate detection
-  - `P08_DEGRADED_SCENARIOS` — 10 scenarios with visible state + safe next action
-  - `P08_ACCEPTANCE_CHECKLIST` — 12 testable items
-  - Helper functions: `validateHandoffContext()`, `validateTargetPayload()`, `isValidEnvelopeTransition()`, `resolveVoiceAvailability()`, `validateWriteOwnership()`
+### P08-B — Cross-surface handoff + action governance closure (FULL RUNTIME)
+**New service artifacts:**
+- `server/src/services/v8/teresaCopilotService.ts` — runtime copilot service:
+  - `createProposal()` — creates proposal with full validation (handoff context + target payload + write ownership + anti-duplicate gate)
+  - `approveProposal()` — transitions proposal → pending_approval → approved with audit
+  - `rejectProposal()` — rejects proposal from any non-terminal state with audit
+  - `executeProposal()` — executes approved proposal: delegates to target module handler, records handoff result, transitions to completed/rejected with full audit trail
+  - `getProposal()` / `getProposalHistory()` — retrieval with audit trail
+  - `getAuditTrail()` — full audit log for any proposal
+  - `resolveVoicePosture()` — runtime voice availability with fallback and recovery phrases
+  - `getDegradedScenario()` / `getAllDegradedScenarios()` — degraded scenario lookup
+  - `getContractMetadata()` — contract identity and capabilities
+  - `TeresaCopilotError` — typed error class with code + statusCode
+  - Internal handoff handlers per target: `handleRadarHandoff`, `handleInitiativesHandoff`, `handleCalendarHandoff`, `handleNotebookHandoff`
+  - Anti-duplicate: auto-cancels existing active proposal in same session before creating new one
+  - Truth-preserving failure: if audit write fails during execution, returns `degraded(audit_unavailable)` instead of claiming success
+
+- `server/src/routes/v8/teresa.routes.ts` — 10 HTTP endpoints:
+  - `POST /api/v8/teresa/proposal` — create proposal
+  - `POST /api/v8/teresa/proposal/:id/approve` — approve proposal
+  - `POST /api/v8/teresa/proposal/:id/reject` — reject proposal
+  - `POST /api/v8/teresa/proposal/:id/execute` — execute approved proposal
+  - `GET /api/v8/teresa/proposal/:id` — get proposal with audit trail
+  - `GET /api/v8/teresa/proposals` — get proposal history
+  - `GET /api/v8/teresa/audit/:proposalId` — get full audit trail
+  - `GET /api/v8/teresa/voice-posture` — resolve voice availability
+  - `GET /api/v8/teresa/degraded/:id` — get degraded scenario
+  - `GET /api/v8/teresa/contract` — get full P08 contract metadata
+
+- `server/src/routes/v8/index.ts` — mounted `/teresa` route
+
+**Canon artifacts (unchanged):**
+- `server/src/services/v8/teresaCopilotCanon.ts` — 508 LOC canonical types, constants, and validators
 
 **Existing artifacts leveraged (not modified):**
 - `server/src/services/ai/virtualWorkerService.ts` — worker CRUD (Teresa is a worker slug)
@@ -49,11 +66,13 @@ Branch: `ws/c-artifact-evidence`
 - All 12 acceptance criteria checked (§2.3.8)
 - Evidence ledger filled for P08-A/B/C
 - 0 test failures
+- Full proposal lifecycle verified across all 4 P0 targets
 
 ## 2. Test inventory
 
 | Suite | Tests | Status |
 |-------|-------|--------|
+| **P08-A Canon tests** | | |
 | P08 §2.3.1 — Handoff targets | 5 | PASS |
 | P08 §2.3.1 — Payload validation | 4 | PASS |
 | P08 §2.3.2 — Action governance envelope | 7 | PASS |
@@ -64,7 +83,22 @@ Branch: `ws/c-artifact-evidence`
 | P08 §2.3.7 — Degraded posture | 6 | PASS |
 | P08 §2.3.8 — Acceptance checklist | 5 | PASS |
 | P08 — Contract identity | 1 | PASS |
-| **P08 subtotal** | **45** | **PASS** |
+| **P08-A subtotal** | **49** | **PASS** |
+| **P08-B Service integration tests** | | |
+| P08-B §1 — Proposal creation | 5 | PASS |
+| P08-B §2 — Proposal lifecycle | 5 | PASS |
+| P08-B §3 — Cross-surface handoff (4 P0 targets) | 4 | PASS |
+| P08-B §4 — Audit trail | 3 | PASS |
+| P08-B §5 — Voice posture | 4 | PASS |
+| P08-B §6 — Degraded scenarios | 4 | PASS |
+| P08-B §7 — Write ownership | 2 | PASS |
+| P08-B §8 — Proposal retrieval | 3 | PASS |
+| P08-B §9 — Contract metadata | 1 | PASS |
+| P08-B §10 — Envelope state machine integration | 4 | PASS |
+| P08-B §11 — Handoff context validation | 6 | PASS |
+| P08-B §12 — Error handling | 2 | PASS |
+| **P08-B subtotal** | **43** | **PASS** |
+| **P08 TOTAL** | **92** | **PASS** |
 
 ## 3. §2.3.8 Acceptance checklist (12/12)
 
@@ -81,10 +115,22 @@ Branch: `ws/c-artifact-evidence`
 11. [x] Anti-duplicate: near-duplicate stop + merge/select-canonical
 12. [x] Evidence ledger filled for P08
 
-## 4. Known limits
+## 4. P08-B Staging proof script (contract §8.1)
+
+1. `POST /api/v8/teresa/proposal` with `targetModule: 'radar'` + full handoff context → 201, state=`proposal`
+2. `POST /api/v8/teresa/proposal/:id/approve` → state=`approved`
+3. `POST /api/v8/teresa/proposal/:id/execute` → state=`completed`, `success: true`
+4. Repeat for `initiatives`, `calendar`, `notebook` (all 4 P0 targets)
+5. `GET /api/v8/teresa/audit/:proposalId` → full audit trail with who/what/when/outcome
+6. `POST /api/v8/teresa/proposal/:id/reject` with `reason` → state=`rejected`
+7. `GET /api/v8/teresa/voice-posture?mic=false` → `unavailable`, `fallback_active: true`
+8. `GET /api/v8/teresa/degraded/D05` → tool_unavailable scenario with safe_next_action
+
+## 5. Known limits
 
 - Voice runtime depends on browser MediaStream API and network conditions; availability is declared, not guaranteed
 - Handoff depth to target modules depends on those modules' own readiness (P06/P11/P02/P07)
 - Near-duplicate detection is contract-level; runtime implementation depends on embedding/similarity service
 - Context compaction strategy for long conversations is declared but bounded to future iteration
 - Recovery grammar phrases are frozen in Polish; i18n extension is a future task
+- DB tables `teresa_proposals`, `teresa_audit_log`, `teresa_handoff_results` use fallback mode (auto-created on first access)

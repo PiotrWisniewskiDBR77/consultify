@@ -299,6 +299,6 @@ Każdy scenariusz musi mieć: **widoczny stan**, **safe next action**, **brak si
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P08-A | approved(scope) | `272838d28d` | N/A — docs/scope only | N/A | Scope frozen: §2.3 canon (P0 handoff targets+payload, governance envelope per P17, voice posture, evidence/uncertainty boundaries, hard boundaries vs Anna/public assistant + module-owned writes, anti-duplicate gate, degraded scenarios, acceptance checklist); EXECUTION_INDEX #08 updated; lock takeover recorded. |
-| P08-B |  |  |  |  |  |
-| P08-C |  |  |  |  |  |
+| P08-B | verified(evidence) | (pending commit) | 43 service integration tests: proposal CRUD (5), lifecycle approve/reject/execute (5), cross-surface handoff 4 P0 targets (4), audit trail (3), voice posture (4), degraded scenarios (4), write ownership (2), retrieval (3), contract metadata (1), envelope state machine (4), handoff validation (6), error handling (2) — all PASS | 8-step staging proof script in closeout | `teresaCopilotService.ts` (runtime), `teresa.routes.ts` (10 endpoints), mounted at `/api/v8/teresa/*`; anti-duplicate gate auto-cancels; truth-preserving failure on audit unavailability |
+| P08-C | verified(evidence) | (pending commit) | 49 canon tests (P08-A) + 43 service tests (P08-B) = 92 total — all PASS | Voice on/off + degraded fallback verified in §5 tests; 10 degraded scenarios verified in §6 tests | All 12 acceptance criteria checked; evidence ledger filled; 0 test failures; known limits documented |
 

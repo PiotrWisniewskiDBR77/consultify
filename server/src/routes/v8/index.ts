@@ -29,6 +29,7 @@ import radarTriageRoutes from './radar-triage.routes.js';
 import resultsRoutes from './results.routes.js';
 import retrievalRoutes from './retrieval.routes.js';
 import syncRoutes from './sync.routes.js';
+import teresaRoutes from './teresa.routes.js';
 
 const v8Router = Router();
 
@@ -68,5 +69,6 @@ v8Router.use('/radar-triage', radarTriageRoutes);
 v8Router.use('/results', resultsRoutes);
 v8Router.use('/partner', partnerRoutes);
 v8Router.use('/sync', syncRoutes);
+v8Router.use('/teresa', teresaRoutes);
 
 export default v8Router;
