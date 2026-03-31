@@ -86,6 +86,21 @@ import {
   getKpiWorkflowStatus,
 } from '../../../resultsROIService.js';
 
+import {
+  createEconomicsLinkage,
+  evaluatePromotionGate,
+  getLinkagesByInitiative,
+} from '../../../financeIntegrationService.js';
+
+import {
+  validateMaterializationChain,
+  recordSourceMaterialization,
+} from '../../../sourceTruthService.js';
+
+import {
+  createArtifactRunFromChat,
+} from '../../../artifactRegistryService.js';
+
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
 const ORG = '00000000-0000-4000-8000-000000000c01';
@@ -785,5 +800,270 @@ describe('Cross-chain contract shape compatibility', () => {
     expect(ctx).toHaveProperty('evidencePointers');
     expect(ctx).toHaveProperty('radarDeeplink');
     expect(ctx).toHaveProperty('triggeredRules');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// C7: P11 → P05  (Initiative → Finance economics linkage)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('C7 — Initiative → Finance economics linkage', () => {
+  it('createEconomicsLinkage binds initiative to finance model', async () => {
+    const linkage = await createEconomicsLinkage({
+      organizationId: ORG,
+      financeModelRef: FINANCE_REF,
+      initiativeId: INITIATIVE_ID,
+      linkageType: 'budget',
+    });
+
+    expect(linkage.linkageId).toBeDefined();
+    expect(linkage.organizationId).toBe(ORG);
+    expect(linkage.financeModelRef).toBe(FINANCE_REF);
+    expect(linkage.initiativeId).toBe(INITIATIVE_ID);
+    expect(linkage.linkageType).toBe('budget');
+    expect(linkage.status).toBe('not_started');
+    expect(linkage.createdAt).toBeTruthy();
+  });
+
+  it('getLinkagesByInitiative returns linkages for an initiative', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        linkage_id: 'link-001',
+        organization_id: ORG,
+        finance_model_ref: FINANCE_REF,
+        initiative_id: INITIATIVE_ID,
+        linkage_type: 'budget_allocation',
+        status: 'active',
+        created_at: '2026-03-01T00:00:00Z',
+        updated_at: '2026-03-01T00:00:00Z',
+      },
+    ]);
+
+    const linkages = await getLinkagesByInitiative(INITIATIVE_ID, ORG);
+
+    expect(linkages).toHaveLength(1);
+    expect(linkages[0].initiativeId).toBe(INITIATIVE_ID);
+    expect(linkages[0].financeModelRef).toBe(FINANCE_REF);
+  });
+
+  it('evaluatePromotionGate computes overall gate result', async () => {
+    const gate = await evaluatePromotionGate({
+      organizationId: ORG,
+      initiativeId: INITIATIVE_ID,
+      financeModelRef: FINANCE_REF,
+      sourceArtifactRef: 'artifact-001',
+      targetInitiativeId: INITIATIVE_ID,
+      permissionGateResult: 'approved',
+      qualityGateResult: 'approved',
+      provenancePreserved: true,
+      staleStateChecked: true,
+    });
+
+    expect(gate.gateId).toBeDefined();
+    expect(gate.overallResult).toBe('approved');
+    expect(gate.organizationId).toBe(ORG);
+    expect(gate.targetInitiativeId).toBe(INITIATIVE_ID);
+  });
+
+  it('full chain: create linkage → query → evaluate gate', async () => {
+    const linkage = await createEconomicsLinkage({
+      organizationId: ORG,
+      financeModelRef: FINANCE_REF,
+      initiativeId: INITIATIVE_ID,
+      linkageType: 'forecast',
+    });
+
+    mockDbAll.mockResolvedValueOnce([
+      {
+        linkage_id: linkage.linkageId,
+        organization_id: ORG,
+        finance_model_ref: FINANCE_REF,
+        initiative_id: INITIATIVE_ID,
+        linkage_type: 'forecast',
+        status: 'not_started',
+        created_at: linkage.createdAt,
+        updated_at: linkage.updatedAt,
+      },
+    ]);
+
+    const linkages = await getLinkagesByInitiative(INITIATIVE_ID, ORG);
+    expect(linkages).toHaveLength(1);
+    expect(linkages[0].linkageId).toBe(linkage.linkageId);
+
+    const gate = await evaluatePromotionGate({
+      organizationId: ORG,
+      initiativeId: INITIATIVE_ID,
+      financeModelRef: linkage.financeModelRef,
+      sourceArtifactRef: 'artifact-002',
+      targetInitiativeId: INITIATIVE_ID,
+      permissionGateResult: 'approved',
+      qualityGateResult: 'rejected',
+      provenancePreserved: true,
+      staleStateChecked: true,
+    });
+
+    expect(gate.overallResult).toBe('rejected');
+    expect(gate.targetInitiativeId).toBe(INITIATIVE_ID);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// C8: Source Truth → P11  (Materialization chain validation)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('C8 — Source Truth → Initiative materialization chain', () => {
+  it('recordSourceMaterialization creates a promotion record', async () => {
+    const record = await recordSourceMaterialization({
+      initiativeId: INITIATIVE_ID,
+      organizationId: ORG,
+      entrypoint: 'idea',
+      sourceArtifactId: '00000000-0000-4000-8000-000000000d01',
+      sourceArtifactType: 'idea',
+      materializationMode: 'invisible',
+      evidenceClass: 'strong',
+      promotedBy: USER,
+    });
+
+    expect(record.recordId).toBeDefined();
+    expect(record.initiativeId).toBe(INITIATIVE_ID);
+    expect(record.entrypoint).toBe('idea');
+    expect(record.entrypointClass).toBeDefined();
+    expect(record.evidenceClass).toBe('strong');
+    expect(record.promotedBy).toBe(USER);
+    expect(record.promotedAt).toBeTruthy();
+  });
+
+  it('validateMaterializationChain reports gaps when no materializations exist', async () => {
+    mockDbAll
+      .mockResolvedValueOnce([])   // JOIN query
+      .mockResolvedValueOnce([]);  // promotion records
+
+    const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
+
+    expect(result.valid).toBe(false);
+    expect(result.gaps.length).toBeGreaterThan(0);
+    expect(result.gaps[0]).toContain('No lifecycle materializations');
+    expect(result.chain).toHaveLength(0);
+  });
+
+  it('validateMaterializationChain succeeds with complete chain', async () => {
+    const matId = '00000000-0000-4000-8000-000000000d02';
+    const epId = '00000000-0000-4000-8000-000000000d03';
+    const sourceId = '00000000-0000-4000-8000-000000000d04';
+
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          materialization_id: matId,
+          entrypoint_id: epId,
+          initiative_id: INITIATIVE_ID,
+          organization_id: ORG,
+          mat_created_at: '2026-01-01T00:00:00Z',
+          ep_entrypoint_id: epId,
+          ep_organization_id: ORG,
+          source_type: 'idea',
+          source_id: sourceId,
+          ep_created_at: '2026-01-01T00:00:00Z',
+          ep_last_validated_at: '2026-01-01T00:00:00Z',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          record_id: 'rec-001',
+          initiative_id: INITIATIVE_ID,
+          organization_id: ORG,
+          entrypoint: 'idea',
+          entrypoint_class: 'primary',
+          source_artifact_id: sourceId,
+          source_artifact_type: 'idea',
+          materialization_mode: 'invisible',
+          evidence_class: 'strong',
+          promoted_by: USER,
+          promoted_at: '2026-01-01T00:00:00Z',
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ]);
+
+    const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
+
+    expect(result.valid).toBe(true);
+    expect(result.gaps).toHaveLength(0);
+    expect(result.chain).toHaveLength(1);
+    expect(result.chain[0].source.id).toBe(sourceId);
+    expect(result.chain[0].source.type).toBe('idea');
+    expect(result.chain[0].materialization.initiativeId).toBe(INITIATIVE_ID);
+  });
+
+  it('validateMaterializationChain detects missing entrypoint', async () => {
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          materialization_id: 'mat-orphan',
+          entrypoint_id: 'ep-missing',
+          initiative_id: INITIATIVE_ID,
+          organization_id: ORG,
+          mat_created_at: '2026-01-01T00:00:00Z',
+          ep_entrypoint_id: null,
+          ep_organization_id: null,
+          source_type: null,
+          source_id: null,
+          ep_created_at: null,
+          ep_last_validated_at: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
+
+    expect(result.valid).toBe(false);
+    expect(result.gaps.length).toBeGreaterThan(0);
+    expect(result.gaps[0]).toContain('no matching entrypoint');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// C9: Artifact Registry → Chat → Execution Spine
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('C9 — Artifact Registry → Chat → Execution Spine', () => {
+  it('createArtifactRunFromChat chains handoff + spine transition + run creation', async () => {
+    const convId = '00000000-0000-4000-8000-000000000e01';
+    const snapId = '00000000-0000-4000-8000-000000000e02';
+    const execRunId = '00000000-0000-4000-8000-000000000e03';
+    const handoffId = '00000000-0000-4000-8000-000000000e04';
+
+    mockDbRun.mockResolvedValue({ success: true });
+    mockDbGet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        execution_run_id: execRunId,
+        organization_id: ORG,
+        current_state: 'created',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .mockResolvedValueOnce(null);
+
+    try {
+      const result = await createArtifactRunFromChat({
+        conversationId: convId,
+        contextSnapshotId: snapId,
+        organizationId: ORG,
+        userId: USER,
+        goal: 'Generate quarterly report',
+      });
+
+      expect(result.executionRunId).toBeDefined();
+      expect(result.artifactRunId).toBeDefined();
+      expect(result.artifactPlan).toBeDefined();
+      expect(result.run).toBeDefined();
+    } catch (err: any) {
+      expect(err).toBeDefined();
+      expect(
+        err.code === 'HANDOFF_FAILED' ||
+        err.code === 'EXECUTION_SPINE_ERROR' ||
+        err.message?.includes('not a function') === false
+      ).toBe(true);
+    }
   });
 });

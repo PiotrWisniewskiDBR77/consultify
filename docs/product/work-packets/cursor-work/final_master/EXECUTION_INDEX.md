@@ -100,5 +100,5 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | Task | Status | Details |
 |------|--------|---------|
 | Fix planning.routes.test.ts 4th-arg mismatch | ✅ done | `getInitiativeGateReadinessRead` called with 4 args (incl. `role`), test expected 3 — fixed |
-| Cross-module handoff integration test suite | ✅ done | 31 tests in `t2-flows/crossModuleHandoffFlow.test.ts` covering 6 chains: C1 P09→P10→P11, C2 P06→P11/P03, C3 P08→targets, C4 P07→targets, C5 P11→P03/P04/P02, C6 P04↔P05 |
+| Cross-module handoff integration test suite | ✅ done | **40 tests** in `t2-flows/crossModuleHandoffFlow.test.ts` covering **9 chains**: C1 P09→P10→P11, C2 P06→P11/P03, C3 P08→targets, C4 P07→targets, C5 P11→P03/P04/P02, C6 P04↔P05, **C7 P11→P05 economics linkage**, **C8 Source Truth→P11 materialization chain**, **C9 Artifact→Chat→Execution spine** |
 
