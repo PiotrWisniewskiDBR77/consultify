@@ -65,6 +65,7 @@ async function getTeamProjectForConversation(conversationId: string): Promise<{
 /**
  * Check if user can access a conversation (personal ownership OR team membership).
  * Returns the conversation row if accessible, null otherwise.
+ * Includes soft-deleted conversations (caller decides how to handle deleted_at).
  */
 async function findAccessibleConversation(
   conversationId: string,
@@ -226,6 +227,9 @@ router.get(
         whereClause += `)`;
       }
 
+      // Exclude soft-deleted conversations by default
+      whereClause += ` AND c.deleted_at IS NULL`;
+
       if (archived !== undefined) {
         whereClause += ' AND c.archived = ?';
         params.push(archived === 'true');
@@ -380,8 +384,21 @@ router.get(
       const conversation = await findAccessibleConversation(id, req.userId!, req.organizationId);
 
       if (!conversation) {
-        return res.status(404).json({ error: 'Conversation not found' });
+        return res.status(404).json({ error: 'Conversation not found', state: 'not_found' });
       }
+
+      // Deep-link state: soft-deleted conversation
+      if (conversation.deleted_at) {
+        return res.json({
+          ...conversation,
+          messages: [],
+          _state: 'deleted',
+          _stateMessage: 'This conversation has been deleted.',
+        });
+      }
+
+      // Deep-link state: archived conversation (still accessible, just flagged)
+      const conversationState = conversation.archived ? 'archived' : 'active';
 
       // Get messages (include author info for team display)
       const messages = await dbAll(
@@ -401,6 +418,7 @@ router.get(
       return res.json({
         ...conversation,
         messages,
+        _state: conversationState,
       });
     } catch (err: any) {
       logger.error('[Conversations] Get error:', err);
@@ -501,7 +519,7 @@ router.patch(
   })
 );
 
-// ==================== DELETE CONVERSATION ====================
+// ==================== DELETE CONVERSATION (soft-delete with grace) ====================
 
 router.delete(
   '/:id',
@@ -509,9 +527,9 @@ router.delete(
   validateParams(ConversationIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const forceHard = req.query.force === 'true';
 
     try {
-      // Verify access (personal or team)
       const existing = (await findAccessibleConversation(
         id,
         req.userId!,
@@ -522,7 +540,6 @@ router.delete(
         return res.status(404).json({ error: 'Conversation not found' });
       }
 
-      // For team conversations, check manage_thread permission
       const teamProject = await getTeamProjectForConversation(id);
       if (teamProject) {
         const isCreator = existing.created_by === req.userId;
@@ -537,12 +554,32 @@ router.delete(
         }
       }
 
-      // Messages will be cascade deleted via FK
-      await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
+      if (forceHard && existing.deleted_at) {
+        // Final purge: hard-delete a previously soft-deleted conversation
+        await dbRun('DELETE FROM conversation_messages WHERE conversation_id = ?', [id]);
+        await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
+        logger.info(`[Conversations] Hard-deleted (purge): ${id} by user ${req.userId}`);
+        return res.json({ success: true, deleted: id, purged: true });
+      }
 
-      logger.info(`[Conversations] Deleted: ${id} by user ${req.userId}`);
+      // Soft-delete: set deleted_at timestamp (grace window)
+      const now = new Date().toISOString();
+      try {
+        await dbRun(
+          `UPDATE conversations SET deleted_at = ?, updated_at = ? WHERE id = ?`,
+          [now, now, id]
+        );
+      } catch {
+        // deleted_at column may not exist yet — fall back to hard delete
+        await dbRun('DELETE FROM conversation_messages WHERE conversation_id = ?', [id]);
+        await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
+        logger.info(`[Conversations] Hard-deleted (no deleted_at column): ${id} by user ${req.userId}`);
+        return res.json({ success: true, deleted: id, purged: true });
+      }
 
-      return res.json({ success: true, deleted: id });
+      logger.info(`[Conversations] Soft-deleted: ${id} by user ${req.userId}`);
+
+      return res.json({ success: true, deleted: id, softDeleted: true, deletedAt: now });
     } catch (err: any) {
       logger.error('[Conversations] Delete error:', err);
       return res.status(500).json({ error: err.message });
@@ -1042,7 +1079,14 @@ router.post(
           break;
 
         case 'delete':
-          await dbRun(`DELETE FROM conversations WHERE id IN (${ownedPlaceholders})`, ownedIds);
+          try {
+            await dbRun(
+              `UPDATE conversations SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id IN (${ownedPlaceholders})`,
+              ownedIds
+            );
+          } catch {
+            await dbRun(`DELETE FROM conversations WHERE id IN (${ownedPlaceholders})`, ownedIds);
+          }
           break;
       }
 
@@ -1245,45 +1289,127 @@ router.post(
   })
 );
 
-// ==================== SEARCH BY CONTENT ====================
+// ==================== SEARCH BY CONTENT (server-side target) ====================
+
+const SearchQuerySchema = z.object({
+  q: z.string().min(2).max(200),
+  folderId: z.string().uuid().optional(),
+  pinned: z.enum(['true', 'false']).optional(),
+  archived: z.enum(['true', 'false']).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  hasAttachments: z.enum(['true', 'false']).optional(),
+  cursor: z.string().optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+});
 
 router.get(
   '/search',
   verifyToken,
+  validateQuery(SearchQuerySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const query = ((req.query.q as string) || '').trim();
+    const {
+      q,
+      folderId,
+      pinned,
+      archived,
+      from,
+      to,
+      cursor: cursorParam,
+      limit: limitStr,
+    } = req.query as Record<string, string | undefined>;
+
+    const query = (q || '').trim();
     if (!query || query.length < 2) {
-      return res.json({ conversations: [] });
+      return res.json({ conversations: [], query: '', nextCursor: null });
     }
+
+    const limit = Math.min(parseInt(limitStr || '20', 10), 50);
 
     try {
       const searchPattern = `%${query}%`;
 
-      // Search in conversation titles and message content
+      // Scope: personal + team (same logic as list endpoint)
+      let whereClause = `WHERE (c.user_id = ?`;
+      const params: (string | boolean)[] = [req.userId!];
+
+      if (req.organizationId) {
+        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
+        params.push(req.organizationId);
+      }
+      whereClause += `)`;
+
+      // Exclude soft-deleted by default
+      whereClause += ` AND c.deleted_at IS NULL`;
+
+      // Search in title, preview, and message content
+      whereClause += ` AND (c.title ILIKE ? OR c.last_message_preview ILIKE ? OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND cm2.content ILIKE ?))`;
+      params.push(searchPattern, searchPattern, searchPattern);
+
+      // Filters
+      if (folderId) {
+        whereClause += ` AND c.chat_project_id = ?`;
+        params.push(folderId);
+      }
+      if (pinned !== undefined) {
+        whereClause += ` AND c.starred = ?`;
+        params.push(pinned === 'true');
+      }
+      if (archived !== undefined) {
+        whereClause += ` AND c.archived = ?`;
+        params.push(archived === 'true');
+      }
+      if (from) {
+        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) >= ?`;
+        params.push(from);
+      }
+      if (to) {
+        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) <= ?`;
+        params.push(to);
+      }
+
+      // Cursor-based pagination: cursor = "lastMessageAt|id"
+      if (cursorParam) {
+        const [cursorTs, cursorId] = cursorParam.split('|');
+        if (cursorTs && cursorId) {
+          whereClause += ` AND (COALESCE(c.last_message_at, c.updated_at) < ? OR (COALESCE(c.last_message_at, c.updated_at) = ? AND c.id < ?))`;
+          params.push(cursorTs, cursorTs, cursorId);
+        }
+      }
+
+      const fromClause = `FROM conversations c LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id`;
+
+      // Boost: pinned first, then recency
+      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
+
       const results = (await dbAll(
-        `SELECT DISTINCT c.id, c.title, c.updated_at, c.project_id, c.is_starred,
-                c.pmo_context, c.title_source
-         FROM conversations c
-         LEFT JOIN conversation_messages cm ON cm.conversation_id = c.id
-         WHERE c.user_id = ?
-           AND c.is_archived = 0
-           AND (c.title LIKE ? OR cm.content LIKE ?)
-         ORDER BY c.updated_at DESC
-         LIMIT 20`,
-        [req.userId!, searchPattern, searchPattern]
+        `SELECT DISTINCT c.id, c.title, c.title_source, c.project_id, c.chat_project_id,
+                c.starred, c.archived, c.pmo_context, c.language,
+                c.message_count, c.last_message_preview, c.last_message_at,
+                c.created_at, c.updated_at,
+                cp.scope as chat_project_scope
+         ${fromClause}
+         ${whereClause}
+         ${orderClause}
+         LIMIT ?`,
+        [...params, limit + 1]
       )) as any[];
 
+      const hasMore = results.length > limit;
+      const page = hasMore ? results.slice(0, limit) : results;
+
+      let nextCursor: string | null = null;
+      if (hasMore && page.length > 0) {
+        const last = page[page.length - 1];
+        const ts = last.last_message_at || last.updated_at;
+        nextCursor = `${ts}|${last.id}`;
+      }
+
       return res.json({
-        conversations: results.map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          updatedAt: c.updated_at,
-          projectId: c.project_id,
-          isStarred: c.is_starred === 1,
-          titleSource: c.title_source,
-          pmoContext: c.pmo_context ? JSON.parse(c.pmo_context) : null,
-        })),
+        conversations: page,
         query,
+        nextCursor,
+        hasMore,
       });
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);

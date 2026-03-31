@@ -268,15 +268,16 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
           {/* Divider */}
           <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
 
-          {/* Delete */}
+          {/* Delete (destructive — requires explicit confirmation) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (
-                window.confirm(
-                  t('aiChat.confirmDelete', 'Are you sure you want to delete this conversation?')
-                )
-              ) {
+              const title = conversation.title || 'this conversation';
+              const msg = t(
+                'aiChat.confirmDeleteDestructive',
+                `Delete "${title}"?\n\nThis action is destructive. The conversation will be moved to trash and permanently removed after 30 days. This cannot be undone.`
+              );
+              if (window.confirm(msg)) {
                 handleAction(() => deleteConversation(conversation.id));
               }
             }}

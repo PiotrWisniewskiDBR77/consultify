@@ -374,6 +374,25 @@ interface ConversationState {
   searchConversations: (query: string) => Conversation[];
   getConversationsByProject: (projectId: string) => Conversation[];
 
+  /**
+   * Server-side search with cursor pagination and filters.
+   * Returns results from the backend search endpoint.
+   */
+  serverSearch: (params: {
+    q: string;
+    folderId?: string;
+    pinned?: boolean;
+    archived?: boolean;
+    from?: string;
+    to?: string;
+    cursor?: string;
+    limit?: number;
+  }) => Promise<{
+    conversations: Conversation[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }>;
+
   // ==================== UNIFIED CHAT ACTIONS ====================
   /**
    * Set the display mode (full/split/collapsed)
@@ -496,6 +515,17 @@ export const useConversationStore = create<ConversationState>()(
         _inflightFetchConversationById[id] = (async () => {
           try {
             const result = await Api.getConversation(id);
+
+            // Handle deep-link states: deleted conversation
+            if (result?._state === 'deleted') {
+              set({
+                activeConversationId: id,
+                activeMessages: [],
+                isLoading: false,
+              });
+              return;
+            }
+
             const messages = (result?.messages || []).map(mapApiMessage);
             set((state) => {
               const fromApiRaw = result?.language;
@@ -508,7 +538,6 @@ export const useConversationStore = create<ConversationState>()(
                 activeConversationId: id,
                 activeMessages: messages,
                 isLoading: false,
-                // Ensure we always have a language for the selected conversation
                 draftChatLanguage: resolved,
                 chatLanguageByConversationId: {
                   ...state.chatLanguageByConversationId,
@@ -516,8 +545,18 @@ export const useConversationStore = create<ConversationState>()(
                 },
               };
             });
-          } catch (err) {
+          } catch (err: any) {
             console.error('[ConversationStore] Fetch conversation error:', err);
+            // Handle 403 (team permission denied) and 404 (not found)
+            const status = err?.response?.status || err?.status;
+            if (status === 403 || status === 404) {
+              set({
+                activeConversationId: null,
+                activeMessages: [],
+                isLoading: false,
+              });
+              return;
+            }
             set({ isLoading: false });
           }
         })().finally(() => {
@@ -1029,6 +1068,30 @@ export const useConversationStore = create<ConversationState>()(
       getConversationsByProject: (projectId) => {
         const { conversations } = get();
         return conversations.filter((c) => c.projectId === projectId);
+      },
+
+      serverSearch: async (params) => {
+        try {
+          const qs = new URLSearchParams();
+          qs.set('q', params.q);
+          if (params.folderId) qs.set('folderId', params.folderId);
+          if (params.pinned !== undefined) qs.set('pinned', String(params.pinned));
+          if (params.archived !== undefined) qs.set('archived', String(params.archived));
+          if (params.from) qs.set('from', params.from);
+          if (params.to) qs.set('to', params.to);
+          if (params.cursor) qs.set('cursor', params.cursor);
+          if (params.limit) qs.set('limit', String(params.limit));
+
+          const result = await Api.get(`/conversations/search?${qs.toString()}`);
+          return {
+            conversations: (result?.conversations || []).map(mapApiConversation),
+            nextCursor: result?.nextCursor || null,
+            hasMore: result?.hasMore || false,
+          };
+        } catch (err) {
+          console.error('[ConversationStore] Server search error:', err);
+          return { conversations: [], nextCursor: null, hasMore: false };
+        }
       },
 
       // ==================== UNIFIED CHAT ACTIONS ====================

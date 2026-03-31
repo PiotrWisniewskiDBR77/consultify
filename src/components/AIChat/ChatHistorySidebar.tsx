@@ -31,7 +31,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -433,13 +433,47 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  // Filter conversations based on search
+  // Server-side search state
+  const { serverSearch } = useConversationStore();
+  const [serverResults, setServerResults] = useState<Conversation[] | null>(null);
+  const [serverSearchLoading, setServerSearchLoading] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Trigger server-side search when query is >= 3 chars (debounced)
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    if (!searchQuery || searchQuery.length < 3) {
+      setServerResults(null);
+      return;
+    }
+
+    setServerSearchLoading(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const result = await serverSearch({ q: searchQuery, limit: 30 });
+        setServerResults(result.conversations);
+      } catch {
+        setServerResults(null);
+      } finally {
+        setServerSearchLoading(false);
+      }
+    }, 400);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery, serverSearch]);
+
+  // Filter conversations based on search (client-side for short queries, server-side for longer)
   const filteredConversations = searchQuery
-    ? conversations.filter(
-        (c) =>
-          c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.lastMessagePreview?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? serverResults !== null
+      ? serverResults
+      : conversations.filter(
+          (c) =>
+            c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.lastMessagePreview?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     : conversations;
 
   // Group filtered conversations
@@ -683,8 +717,15 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 </div>
               )
             ) : searchQuery ? (
-              /* Search mode: show flat grouped results */
-              visibleGroups.length === 0 ? (
+              /* Search mode: show flat grouped results (server-side when available) */
+              serverSearchLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                    {t('aiChat.searching', 'Searching...')}
+                  </span>
+                </div>
+              ) : visibleGroups.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
                     <Search size={20} className="text-slate-400 dark:text-slate-500" />

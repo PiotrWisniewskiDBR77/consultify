@@ -21,11 +21,9 @@ If a scope packet truly needs a redo, re-open it explicitly here with a fresh ma
 
 ## Authorized packet(s) — RUNTIME (PNN-B/PNN-C only)
 
-### 1) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
+*(No active runtime packets — all authorized work completed. See archive below.)*
 
-Goal: deliver full thread lifecycle + server-side search target with pagination/filters + team folder permission denials (no leakage), with integration/security tests + staging demo.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-B.md`
+*(P35-B and P35-C completed — see archive below)*
 
 *(P20-B and P20-C completed — see archive below)*
 
@@ -87,3 +85,5 @@ Completion (each agent independently):
 | P23-C | verified(evidence) | 2026-03-31 |
 | P20-B | delivered | 2026-03-31 |
 | P20-C | verified(evidence) | 2026-03-31 |
+| P35-B | delivered | 2026-03-31 |
+| P35-C | verified(evidence) | 2026-03-31 |
