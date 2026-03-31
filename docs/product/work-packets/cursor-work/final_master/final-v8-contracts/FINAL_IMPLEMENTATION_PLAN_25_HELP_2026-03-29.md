@@ -1,7 +1,7 @@
 # Final Implementation Contract — Help (Position 25/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P25-A** (help canon frozen); **P25-B** `delivered`; **P25-C** `verified(evidence)`
+Status: verified(evidence) — P25-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Kontekstowy help; spójny język; dostępny dla Anny i Teresy.

@@ -1,8 +1,8 @@
 # Final Implementation Contract — Excele (Position 23/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P23-A** (Excele lane canon + evidence mapping frozen); P23-B / P23-C not started  
-Last updated: 2026-03-30 (P23-A scope closure)
+Status: verified(evidence) — P23-A/B/C/D complete  
+Last updated: 2026-03-31 (P23-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: 100% KIMI: split-screen chat↔excel; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI.

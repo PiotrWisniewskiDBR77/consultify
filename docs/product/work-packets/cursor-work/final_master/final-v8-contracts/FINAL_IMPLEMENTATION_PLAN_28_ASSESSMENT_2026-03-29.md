@@ -1,7 +1,7 @@
 # Final Implementation Contract — Assessment (Position 28/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P28-A canon frozen; docs-only)
+Status: verified(evidence) — P28-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Assessment AI‑driven, wykonywalne przez czat.

@@ -1,8 +1,8 @@
 # Final Implementation Contract — Prezentacje (Position 20/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P20-A** (deck lifecycle canon + review/export grammar frozen); P20-B / P20-C not started  
-Last updated: 2026-03-30 (P20-A scope closure)
+Status: verified(evidence) — P20-A/B/C complete  
+Last updated: 2026-03-31 (P20-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Gamma‑like: generacja+edycja; export PPT/PDF; zarządzanie generatorem; edycja z poziomu czata.

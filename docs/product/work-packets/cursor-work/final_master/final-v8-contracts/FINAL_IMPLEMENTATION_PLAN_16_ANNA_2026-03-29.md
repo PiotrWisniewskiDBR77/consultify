@@ -1,7 +1,7 @@
 # Final Implementation Contract — Anna (Position 16/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P16-A** (public assistant canon frozen); **P16-B** `delivered`; **P16-C** `verified(evidence)`
+Status: verified(evidence) — P16-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Ma dostać pełniejszy kontekst DBR77+produkty; rozwój wiedzy sterowalny w Superadmin (Virtual Workers).

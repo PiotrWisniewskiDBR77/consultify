@@ -1,8 +1,8 @@
 # Final Implementation Contract — Program partnerski (Position 29/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P29-A canon frozen; docs-only)
-Last updated: 2026-03-30 (P29-A scope closure)
+Status: verified(evidence) — P29-A/B/C complete
+Last updated: 2026-03-31 (P29-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Portal+LP; darmowe konto partnera z limitami; AI‑driven narzędzia; rozliczanie i zachęcanie do partnerstwa.

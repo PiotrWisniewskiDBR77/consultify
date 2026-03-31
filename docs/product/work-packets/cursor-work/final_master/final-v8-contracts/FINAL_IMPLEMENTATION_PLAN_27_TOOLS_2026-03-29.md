@@ -1,8 +1,8 @@
 # Final Implementation Contract — Tools (Position 27/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P27-A** (Tools canon frozen); P27-B / P27-C not started  
-Last updated: 2026-03-30 (P27-A scope closure)
+Status: verified(evidence) — P27-A/B/C complete  
+Last updated: 2026-03-31 (P27-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Narzędzia AI‑driven, wykonywalne przez czat.

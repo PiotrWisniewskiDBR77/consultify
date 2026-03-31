@@ -1,7 +1,7 @@
 # Final Implementation Contract — ArtifactRun z czatu (Position 17/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P17-A** (run grammar canon frozen); **P17-B** `delivered`; **P17-C** `verified(evidence)`
+Status: verified(evidence) — P17-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Chat/Teresa pracuje z aplikacją (głos+tekst): rozumie ekran, robi pracę w UI i bazach.

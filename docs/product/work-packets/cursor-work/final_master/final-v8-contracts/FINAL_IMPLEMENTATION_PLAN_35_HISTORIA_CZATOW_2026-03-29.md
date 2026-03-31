@@ -1,7 +1,7 @@
 # Final Implementation Contract — Historia czatów (Position 35/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) — P35-A complete (direct contract over existing plan)
+Status: verified(evidence) — P35-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Dobre zarządzanie historią rozmów realizowanych także w aplikacji.

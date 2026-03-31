@@ -1,8 +1,8 @@
 # Final Implementation Contract — Raporty (Position 21/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: **P21-A** `approved(scope)` (scope closure); **P21-B** `delivered` (runtime + tests); **P21-C** `verified(evidence)`  
-Last updated: 2026-03-31 (P21-C closeout)
+Status: verified(evidence) — P21-A/B/C complete  
+Last updated: 2026-03-31 (P21-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Gamma‑like raporty: template-first deliverable artifact with evidence pointers, governed generation, and honest degraded posture.

@@ -1,8 +1,8 @@
 # Final Implementation Contract — Provenance / review / visibility (Position 18/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P18-A** (trust-state canon frozen); **P18-B** `delivered`; **P18-C** `verified(evidence)`  
-Last updated: 2026-03-31 (P18-C closeout)
+Status: verified(evidence) — P18-A/B/C complete  
+Last updated: 2026-03-31 (P18-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Pełne traceability myśli i kontekstu (trust grammar artefaktów).

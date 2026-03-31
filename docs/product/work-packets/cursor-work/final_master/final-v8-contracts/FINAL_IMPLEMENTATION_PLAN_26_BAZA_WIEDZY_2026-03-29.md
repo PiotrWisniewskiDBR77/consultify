@@ -1,7 +1,7 @@
 # Final Implementation Contract — Baza wiedzy (Position 26/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P26-A locked; canon + ops + AI grounding)
+Status: verified(evidence) — P26-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Narzędzie edukacyjno‑sprzedażowe: LP + prawy panel + kontekst narzędzi; 50 tekstów + grafiki; tagi; linkowanie do newsletter/social; promowane przez Annę/Teresę.

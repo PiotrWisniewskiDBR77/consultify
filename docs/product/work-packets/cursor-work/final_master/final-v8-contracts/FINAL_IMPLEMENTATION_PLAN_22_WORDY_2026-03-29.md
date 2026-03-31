@@ -1,7 +1,7 @@
 # Final Implementation Contract — Wordy (Position 22/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) — Wordy KIMI-style docs lane canon frozen; evidence mapping present with MISSING INPUT flags (no guessing)
+Status: verified(evidence) — P22-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: 100% KIMI: split-screen chat↔word; generuj/edytuj; zapis do Outputs opcjonalny; zero zgadywania bez referencji KIMI.
