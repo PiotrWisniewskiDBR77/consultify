@@ -1,7 +1,7 @@
 # Final Implementation Contract — Help (Position 25/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P25-A** (help canon frozen); **P25-B** `delivered`; P25-C not started
+Status: `approved(scope)` for **P25-A** (help canon frozen); **P25-B** `delivered`; **P25-C** `verified(evidence)`
 
 ## 1. Executive summary
 - **Intent**: Kontekstowy help; spójny język; dostępny dla Anny i Teresy.
@@ -336,5 +336,5 @@ Acceptance checklist (P25-A scope approval; must-pass dla P25-B/P25-C):
 | --- | --- | --- | --- | --- | --- |
 | P25-A | approved(scope) | commit: `161eeae42a` | N/A (scope) | N/A (scope) | §2.3 canon frozen: entry points, routing, PL/EN posture, content ops baseline, reco payload, degraded acceptance |
 | P25-B | delivered | `c06e33e746` | Playwright: `tests/e2e/smoke/help-contextual-entrypoints.spec.ts` (5/5 pass); Vitest: `server/src/routes/v8/__tests__/help.routes.test.ts` (pass) | Manual script + steps: `docs/product/work-packets/cursor-work/final_master/evidence/P25-B_CONTEXTUAL_HELP_RUNTIME_VERIFICATION_2026-03-30.md` | Deep-link params cleared after processing; E2E uses mock DB seed minimum for deterministic KB. |
-| P25-C |  |  |  |  |  |
+| P25-C | verified(evidence) | `98bf75bf8a` | Playwright: `tests/e2e/smoke/help-contextual-entrypoints.spec.ts` (5/5 pass, rerun green after closeout repairs); Vitest: `server/src/routes/v8/__tests__/help.routes.test.ts` (pass) | `docs/product/work-packets/cursor-work/final_master/evidence/P25-C_CONTEXTUAL_HELP_CLOSEOUT_2026-03-31.md` | Closeout verified the full contextual Help loop on Tools/Interview/Outputs plus degraded missing-article and PL fallback paths; runtime now degrades safely when primer metadata or surface bootstrap are imperfect. |
 

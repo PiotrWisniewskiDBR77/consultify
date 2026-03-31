@@ -45,13 +45,7 @@ Goal: capture reports staging proof, validate rollback, and fill ledger rows P21
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P21-C.md`
 
-### 5) P34-C — Mądrość czata: verification + observability + rollout closeout
-
-Goal: capture retrieval traces/eval harness evidence, validate rollback to private-only mode, and fill ledger rows P34-A/B/C so position 34 can move from `delivered` to `verified(evidence)`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P34-C.md`
-
-### 6) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
+### 5) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
 
 Goal: deliver full thread lifecycle + server-side search target with pagination/filters + team folder permission denials (no leakage), with integration/security tests + staging demo.
 
@@ -100,3 +94,5 @@ Completion (each agent independently):
 | P24-B | delivered | 2026-03-30 |
 | P25-B | delivered | 2026-03-30 |
 | P34-B | delivered | 2026-03-30 |
+| P25-C | verified(evidence) | 2026-03-31 |
+| P34-C | verified(evidence) | 2026-03-31 |

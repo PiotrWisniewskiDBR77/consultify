@@ -1,7 +1,7 @@
 # Final Implementation Contract — Mądrość czata (Position 34/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P34-A** (policy gateway canon frozen); **P34-B** `delivered`; P34-C not started
+Status: `approved(scope)` for **P34-A** (policy gateway canon frozen); **P34-B** `delivered`; **P34-C** `verified(evidence)`
 
 ## 1. Executive summary
 - **Intent**: Konkurencyjność: kontekst, reasoning, research; żeby chat był tak dobry jak konkurencja (bez udawania).
@@ -232,5 +232,5 @@ Status: `approved(scope)` for **P34-A** (policy gateway canon frozen); **P34-B**
 | --- | --- | --- | --- | --- | --- |
 | P34-A | approved(scope) |  | n/a (docs-only) | n/a (docs-only) | §2.3 canon frozen; runtime evidence belongs to P34-B/C |
 | P34-B | delivered | `72d5abcd3d` | `npx vitest run server/src/services/ai/__tests__/chatPolicyGateway.contract.test.ts server/src/routes/v8/__tests__/retrieval.memory.routes.test.ts tests/components/AIChat/MessageRenderer.policy.test.tsx` → PASS (11/11) | Script captured: `final_master/evidence/P34_B_SOURCE_LEDGER_AND_PROMOTION_RUNTIME_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` (steps 1–6) | Bounded v1 ledger: `type=source_ledger` + non-leaky `blocked_sources[]`; promotion uses memory promotion seam under `/api/v8/retrieval/memory/promotions*`. No history/search (P35). |
-| P34-C |  |  |  |  |  |
+| P34-C | verified(evidence) | `98bf75bf8a` | `npx vitest run server/src/services/v8/__tests__/v8-operator-monitoring.test.ts server/src/services/ai/__tests__/chatPolicyGateway.contract.test.ts server/src/routes/v8/__tests__/retrieval.memory.routes.test.ts tests/components/AIChat/MessageRenderer.policy.test.tsx` → PASS (21/21) | `docs/product/work-packets/cursor-work/final_master/evidence/P34-C_POLICY_GATEWAY_OBSERVABILITY_CLOSEOUT_2026-03-31.md` | Closeout verified the normalized operator metrics contract, refusal/uncertainty UX, non-leaky retrieval/promotion routes, and bounded observability endpoints required for rollout. |
 
