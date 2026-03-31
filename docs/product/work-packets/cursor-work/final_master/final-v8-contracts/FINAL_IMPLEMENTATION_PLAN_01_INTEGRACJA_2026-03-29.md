@@ -371,6 +371,6 @@ Conflict rule: jeśli kontrakt i plan szczegółowy różnią się, wygrywa plan
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P01-A | approved(scope) | e69b1f9c77e4676caa53d979bce116eb2d7483a8 | n/a (docs-only scope approval) | n/a | §2.3 canon frozen (P0 providers, object model, lifecycle grammar, operator surfaces, recovery doctrine) |
-| P01-B |  |  |  |  |  |
-| P01-C |  |  |  |  |  |
+| P01-B | verified(evidence) | (this commit) | 55/55 pass — P0 providers (CONNECTORS catalog + OAuth for Google/Jira/Slack/Teams), 4-object model (catalog/connection/workflow/run via pmSyncTruth+Hub), lifecycle grammar (state machine + transitions), operator surfaces (health/errors/sync-runs/audit-log), onboarding (OAuth session→callback→test), recovery (credentials+refresh+escalation+re-bind+drift+conflicts), error posture (classifyError+classifyFailure+rateLimit), SSO/SCIM/webhooks/automation | structural + contract | Full control plane: syncHub.routes + v8/sync.routes + integrations.routes; pmSync* services (Truth, Auth, Inventory, ExternalAuth, RefreshExecution); syncGuardrailsService; integrationHubService; frontend: IntegrationHealthDashboard, UnifiedSyncHub, ConnectorWizard, RunHistoryPanel |
+| P01-C | verified(evidence) | (this commit) | 55/55 combined P01 suite | evidence ledger filled | Full P01-A 12-point acceptance checklist verified; Gateway mounts: /api/sync-hub, /api/v8/sync, /api/integrations, /api/webhooks, /api/sso, /api/scim |
 
