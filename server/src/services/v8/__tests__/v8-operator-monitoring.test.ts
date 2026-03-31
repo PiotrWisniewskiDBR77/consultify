@@ -60,9 +60,10 @@ vi.mock('../../../services/v8/shadowModeService.js', () => ({
 vi.mock('../../../utils/v8MetricsStore.js', () => ({
   recordV8Request: vi.fn(),
   getV8MetricsSnapshot: vi.fn().mockReturnValue({
-    v8RequestCount: 250,
-    v8ErrorCount: 5,
-    v8TotalLatencyMs: 30000,
+    requests: 250,
+    errors: 5,
+    avgLatencyMs: 120,
+    uptime: 12345,
   }),
 }));
 

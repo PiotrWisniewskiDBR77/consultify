@@ -279,6 +279,11 @@ async function ensureP25bKbSeedMinimum(): Promise<void> {
       '{"route":"/discovery-tools"}',
     ]
   );
+  await DbPromise.run(
+    `UPDATE kb_articles SET next_action = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    ['{"route":"/discovery-tools"}', 'kb-art-p25b-tools-primer'],
+    { fallback: false }
+  );
 
   await ensure(
     `SELECT id FROM kb_article_translations WHERE id = ?`,
@@ -349,6 +354,11 @@ Użyj przycisku u góry artykułu, aby wrócić do Tools.`,
       '{"route":"/interview"}',
     ]
   );
+  await DbPromise.run(
+    `UPDATE kb_articles SET next_action = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    ['{"route":"/interview"}', 'kb-art-p25b-interview-primer'],
+    { fallback: false }
+  );
 
   await ensure(
     `SELECT id FROM kb_article_translations WHERE id = ?`,
@@ -403,6 +413,11 @@ Użyj Help, aby znaleźć wskazówki, a potem kontynuuj pracę przez **Next acti
       '{"route":"/presentations"}',
     ]
   );
+  await DbPromise.run(
+    `UPDATE kb_articles SET next_action = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    ['{"route":"/presentations"}', 'kb-art-p25b-outputs-primer'],
+    { fallback: false }
+  );
 
   await ensure(
     `SELECT id FROM kb_article_translations WHERE id = ?`,
@@ -456,6 +471,11 @@ Użyj Help, aby wyszukać artykuł, a potem kontynuuj przez **Next action**.`,
       '["all"]',
       '{"route":"/discovery-tools"}',
     ]
+  );
+  await DbPromise.run(
+    `UPDATE kb_articles SET next_action = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    ['{"route":"/discovery-tools"}', 'kb-art-p25b-en-only'],
+    { fallback: false }
   );
 
   await ensure(

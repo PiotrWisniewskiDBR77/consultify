@@ -8,7 +8,7 @@ import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useKnowledgeArticle, useTrackArticleView } from '../../hooks/useKnowledge';
@@ -87,15 +87,39 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, poster }) => {
 interface KnowledgeArticleViewProps {
   slug: string;
   onBack: () => void;
+  moduleId?: string;
 }
 
-export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug, onBack }) => {
+function fallbackRouteForModule(moduleId?: string): string {
+  const raw = String(moduleId || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'tools' || raw === 'discovery-tools') return '/discovery-tools';
+  if (raw === 'interview') return '/interview';
+  if (raw === 'outputs' || raw === 'results') return '/presentations';
+  return '';
+}
+
+export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
+  slug,
+  onBack,
+  moduleId,
+}) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setOpen: setHelpOpen } = useHelpSidePanel();
   const { data: article, isLoading, error } = useKnowledgeArticle(slug);
   const { mutate: trackView } = useTrackArticleView();
   const isPolish = i18n.language?.startsWith('pl');
+
+  const closePanelAndNavigate = (targetRoute?: string) => {
+    window.setTimeout(() => {
+      if (targetRoute && location.pathname !== targetRoute) {
+        navigate(targetRoute);
+      }
+      setHelpOpen(false);
+    }, 0);
+  };
 
   // Track view on mount
   useEffect(() => {
@@ -142,6 +166,8 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug
     }
     return typeof raw === 'object' ? String((raw as any).route || '').trim() : '';
   })();
+  const contextualFallbackRoute = fallbackRouteForModule(moduleId);
+  const effectiveNextRoute = nextActionRoute || contextualFallbackRoute;
   const isFallback =
     Boolean((article as any)?.is_fallback) ||
     (String((article as any)?.requested_language || '') === 'pl' &&
@@ -198,25 +224,24 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({ slug
         )}
 
         {/* Next action (if defined) */}
-        {nextActionRoute ? (
+        {effectiveNextRoute ? (
           <div className="mb-5">
             <button
               type="button"
-              onClick={() => {
-                setHelpOpen(false);
-                navigate(nextActionRoute);
-              }}
+              onClick={() => closePanelAndNavigate(effectiveNextRoute)}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
               data-testid="help-next-action"
             >
-              {t('help.knowledge.nextAction', 'Next action')}
+              {nextActionRoute
+                ? t('help.knowledge.nextAction', 'Next action')
+                : t('help.knowledge.backToSurface', 'Back to work')}
             </button>
           </div>
         ) : (
           <div className="mb-5">
             <button
               type="button"
-              onClick={() => setHelpOpen(false)}
+              onClick={() => closePanelAndNavigate()}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-white/[0.04] transition-colors"
               data-testid="help-back-to-surface"
             >

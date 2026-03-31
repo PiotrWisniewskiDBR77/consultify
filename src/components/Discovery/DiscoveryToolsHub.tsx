@@ -852,6 +852,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     };
   }, []);
 
+  const resolveBootstrapRequest = useCallback(
+    async <T,>(label: string, promise: Promise<T>, fallback: T, timeoutMs = 8000): Promise<T> => {
+      try {
+        return await Promise.race<T>([
+          promise,
+          new Promise<T>((_, reject) =>
+            window.setTimeout(() => reject(new Error(`${label} bootstrap timeout`)), timeoutMs)
+          ),
+        ]);
+      } catch (error) {
+        console.warn(`[DiscoveryToolsHub] ${label} bootstrap fallback:`, error);
+        return fallback;
+      }
+    },
+    []
+  );
+
   // Fetch data from API
   const fetchData = useCallback(
     async (showRefreshIndicator = false) => {
@@ -864,17 +881,37 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       try {
         const [toolSessionsRes, assessmentRes, assessmentReports, reportBuilderList, decksList] =
           await Promise.all([
-            Api.listToolSessions({
-              projectId: currentProjectId || undefined,
-            }),
-            Api.listAssessments({
-              projectId: currentProjectId || undefined,
-              limit: 100,
-              offset: 0,
-            }).catch(() => ({ items: [] as any[] })),
-            Api.getAssessmentReports(currentProjectId || undefined).catch(() => []),
-            Api.get('/report-builder').catch(() => ({ reports: [] as any[] })),
-            Api.get('/presentations/decks').catch(() => ({ success: true, data: [] as any[] })),
+            resolveBootstrapRequest(
+              'tool sessions',
+              Api.listToolSessions({
+                projectId: currentProjectId || undefined,
+              }),
+              { items: [] as ToolSessionData[] }
+            ),
+            resolveBootstrapRequest(
+              'assessments',
+              Api.listAssessments({
+                projectId: currentProjectId || undefined,
+                limit: 100,
+                offset: 0,
+              }),
+              { items: [] as any[] }
+            ),
+            resolveBootstrapRequest(
+              'assessment reports',
+              Api.getAssessmentReports(currentProjectId || undefined),
+              [] as any[]
+            ),
+            resolveBootstrapRequest(
+              'report builder list',
+              Api.get('/report-builder'),
+              { reports: [] as any[] }
+            ),
+            resolveBootstrapRequest(
+              'presentation decks',
+              Api.get('/presentations/decks'),
+              { success: true, data: [] as any[] }
+            ),
           ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
@@ -1068,7 +1105,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         setIsRefreshing(false);
       }
     },
-    [currentProjectId, transformAssessmentSession, transformToolSession]
+    [currentProjectId, resolveBootstrapRequest, transformAssessmentSession, transformToolSession]
   );
 
   // Fetch data on mount and when projectId changes
