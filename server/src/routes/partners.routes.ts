@@ -31,6 +31,7 @@ import {
   submitSalesExam,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
+import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -2234,6 +2235,117 @@ superAdminPartnerRouter.get(
       res.json({ success: true, data: analytics });
     } catch (error: any) {
       logger.error('Error fetching code analytics:', error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/superadmin/partner-settlements/program/:partnerOrgId/status
+ * P29 operator tower: same lifecycle + ledger truth as partner portal
+ */
+superAdminPartnerRouter.get(
+  '/program/:partnerOrgId/status',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const partnerOrgId = String(req.params.partnerOrgId || '');
+      if (!partnerOrgId) {
+        return res.status(400).json({ success: false, error: 'partnerOrgId required' });
+      }
+      const runtime = await PartnerProgramLedgerService.getOrCreateRuntime(partnerOrgId);
+      const balances = await PartnerProgramLedgerService.getBalances(partnerOrgId);
+      const entries = await PartnerProgramLedgerService.listEntries(partnerOrgId, { limit: 25 });
+      res.json({
+        success: true,
+        data: {
+          lifecyclePhase: runtime.lifecycle_phase,
+          partnerOrganizationStatus: runtime.partner_status,
+          balances,
+          recentLedgerEntries: entries,
+        },
+      });
+    } catch (error: any) {
+      logger.error('Error fetching partner program status:', error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/superadmin/partner-settlements/program/:partnerOrgId/lifecycle
+ * Body: { toPhase: 'activate' | 'earn' | 'onboard' | 'payout', reason? }
+ */
+superAdminPartnerRouter.post(
+  '/program/:partnerOrgId/lifecycle',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const partnerOrgId = String(req.params.partnerOrgId || '');
+      const toPhase = req.body?.toPhase;
+      if (!partnerOrgId || !toPhase) {
+        return res.status(400).json({ success: false, error: 'partnerOrgId and toPhase required' });
+      }
+      const userId = (req as any).user?.id;
+      const result = await PartnerProgramLedgerService.transitionLifecycle({
+        partnerOrgId,
+        toPhase,
+        actor: 'operator',
+        actorId: userId,
+        reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+      });
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
+        return res.status(400).json({ success: false, error: error.message, code });
+      }
+      logger.error('Error transitioning partner program lifecycle:', error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/superadmin/partner-settlements/program/:partnerOrgId/ledger-entry
+ * Operator-only accrual/hold/payout events (auditable append-only)
+ */
+superAdminPartnerRouter.post(
+  '/program/:partnerOrgId/ledger-entry',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const partnerOrgId = String(req.params.partnerOrgId || '');
+      if (!partnerOrgId) {
+        return res.status(400).json({ success: false, error: 'partnerOrgId required' });
+      }
+      const {
+        entryType,
+        amount,
+        currency,
+        sourceRef,
+        correlationId,
+        idempotencyKey,
+        reasonCode,
+        note,
+      } = req.body || {};
+      if (!entryType || amount === undefined) {
+        return res.status(400).json({ success: false, error: 'entryType and amount required' });
+      }
+      const userId = (req as any).user?.id;
+      const out = await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId,
+        entryType,
+        amount: Number(amount),
+        currency: currency || 'EUR',
+        sourceRef: sourceRef && typeof sourceRef === 'object' ? sourceRef : {},
+        actor: 'operator',
+        actorId: userId ?? null,
+        correlationId: correlationId || null,
+        idempotencyKey: idempotencyKey || null,
+        reasonCode: reasonCode || null,
+        note: note || null,
+      });
+      res.json({ success: true, data: out });
+    } catch (error: any) {
+      logger.error('Error appending partner program ledger entry:', error);
       next(error);
     }
   }

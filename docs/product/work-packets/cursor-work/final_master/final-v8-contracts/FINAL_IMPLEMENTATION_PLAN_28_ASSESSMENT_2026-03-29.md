@@ -284,6 +284,6 @@ Acceptance checklist (P28-A scope approval; must-pass dla P28-B/P28-C):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P28-A | approved(scope) | `f95bbf5de1` | N/A — docs/scope only | N/A | Canon §2.3 (object model/lifecycle/governance + no silent scoring + bounded handoffs); EXECUTION_INDEX #28 updated; SSOT copy synced; lock P28-A released. |
-| P28-B |  |  |  |  |  |
-| P28-C |  |  |  |  |  |
+| P28-B | verified(evidence) | `539ad7fb81` | `AssessmentWorkbenchService` + `/api/v8/assessment/:id/workbench/*`; integration contract tests (promotion payload, gates) | Bounded API staging: workbench CRUD via V8 auth | Persisted column `p28_workbench_v1`; explicit proposal/review; `completed` read-only via service guards |
+| P28-C | verified(evidence) | `539ad7fb81` | Same tests + EXECUTION_INDEX #28 | Ledger row | Rollback: stop calling workbench routes; column preserved read-only |
 

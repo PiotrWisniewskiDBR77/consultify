@@ -264,6 +264,6 @@ Degraded behavior is part of the contract (no “silent fail”):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P29-A | approved(scope) | `6b1fe7dfbe` | n/a (docs-only) | n/a (docs-only) | Canon frozen: lifecycle + ledger semantics + boundaries + audit + degraded + checklist |
-| P29-B |  |  |  |  |  |
-| P29-C |  |  |  |  |  |
+| P29-B | verified(evidence) | `539ad7fb81` | `PartnerProgramLedgerService` + V8 partner program routes + superadmin program routes; `deriveBalancesFromEntries` test | Operator vs partner lifecycle edges enforced in service | Append-only ledger; single runtime lifecycle row; does not duplicate P30 org profile |
+| P29-C | verified(evidence) | `539ad7fb81` | Same + EXECUTION_INDEX #29 | Ledger row | Rollback: disable routes; tables remain read-only safe |
 

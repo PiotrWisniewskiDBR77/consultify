@@ -25,6 +25,7 @@ import {
   getPartnerPayoutSettings,
   updatePartnerPayoutSettings,
 } from '../../services/partnerPayoutSettingsService.js';
+import PartnerProgramLedgerService from '../../services/partnerProgramLedgerService.js';
 import PartnerReferralService from '../../services/partnerReferralService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as DbPromise from '../../utils/DbPromise.js';
@@ -33,12 +34,23 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
+export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
   return {
     version: 'v8' as const,
     contract: V8_PARTNER_READ_CONTRACT,
+    partnerOrgId,
+    v8TenantOrganizationId: organizationId,
+  };
+}
+
+function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
+  const { organizationId } = getV8Context(req);
+  return {
+    version: 'v8' as const,
+    contract: V8_PARTNER_PROGRAM_CONTRACT,
     partnerOrgId,
     v8TenantOrganizationId: organizationId,
   };
@@ -54,6 +66,109 @@ function buildReferralToolsFallback() {
     campaignLinks: [],
   };
 }
+
+/**
+ * GET /api/v8/partner/program/status
+ * P29 single truth: lifecycle phase (runtime) + derived ledger balances
+ */
+router.get(
+  '/program/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    const runtime = await PartnerProgramLedgerService.getOrCreateRuntime(partnerOrgId);
+    const balances = await PartnerProgramLedgerService.getBalances(partnerOrgId);
+    return res.json({
+      data: {
+        lifecyclePhase: runtime.lifecycle_phase,
+        partnerOrganizationStatus: runtime.partner_status,
+        balances,
+      },
+      meta: partnerProgramMeta(req, partnerOrgId),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/partner/program/ledger
+ */
+router.get(
+  '/program/ledger',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    const limit =
+      typeof req.query.limit === 'string' && /^\d+$/.test(req.query.limit)
+        ? parseInt(req.query.limit, 10)
+        : 50;
+    const offset =
+      typeof req.query.offset === 'string' && /^\d+$/.test(req.query.offset)
+        ? parseInt(req.query.offset, 10)
+        : 0;
+    const entries = await PartnerProgramLedgerService.listEntries(partnerOrgId, { limit, offset });
+    return res.json({
+      data: { entries },
+      meta: partnerProgramMeta(req, partnerOrgId),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/partner/program/lifecycle/request-payout-phase
+ * Partner-only edge per P29: earn → payout
+ */
+router.post(
+  '/program/lifecycle/request-payout-phase',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    try {
+      const result = await PartnerProgramLedgerService.transitionLifecycle({
+        partnerOrgId,
+        toPhase: 'payout',
+        actor: 'partner',
+        actorId: userId,
+        reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+      });
+      return res.json({
+        data: result,
+        meta: partnerProgramMeta(req, partnerOrgId),
+      });
+    } catch (e: any) {
+      return res.status(400).json({
+        error: e?.message || 'Lifecycle error',
+        code: e?.code || 'P29_LIFECYCLE_ERROR',
+      });
+    }
+  })
+);
 
 /**
  * GET /api/v8/partner/clients

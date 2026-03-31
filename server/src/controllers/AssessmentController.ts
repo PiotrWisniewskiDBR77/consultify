@@ -349,6 +349,7 @@ export const ensureAssessmentSchema = async (): Promise<void> => {
     await tryAddColumn('assessments', 'score_summary', "score_summary TEXT DEFAULT '{}'");
     await tryAddColumn('assessments', 'current_section_id', 'current_section_id TEXT');
     await tryAddColumn('assessments', 'navigation_json', "navigation_json TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'p28_workbench_v1', 'p28_workbench_v1 TEXT');
     await tryAddColumn('assessments', 'review_requested_at', 'review_requested_at TIMESTAMP');
     await tryAddColumn('assessments', 'report_approved_at', 'report_approved_at TIMESTAMP');
     await tryAddColumn('assessments', 'approved_at', 'approved_at TIMESTAMP');

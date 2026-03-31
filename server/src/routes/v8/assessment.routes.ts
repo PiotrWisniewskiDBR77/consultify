@@ -12,6 +12,10 @@ import { ensureAssessmentSchema, normalizeStatus } from '../../controllers/Asses
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
+import AssessmentWorkbenchService, {
+  assertPromotionPayloadShape,
+  buildBoundedPromotionPayload,
+} from '../../services/assessment/AssessmentWorkbenchService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -20,6 +24,7 @@ const router = Router();
 
 export const V8_ASSESSMENT_READ_CONTRACT = 'assessment_runtime_read_v1';
 export const V8_ASSESSMENT_MUTATION_CONTRACT = 'assessment_runtime_mutation_v1';
+export const V8_ASSESSMENT_WORKBENCH_CONTRACT = 'assessment_workbench_p28_v1';
 
 function assessmentReadMeta() {
   return {
@@ -34,6 +39,22 @@ function assessmentMutationMeta() {
     version: 'v8' as const,
     contract: V8_ASSESSMENT_MUTATION_CONTRACT,
     writeScope: 'bounded_assessment_runtime' as const,
+  };
+}
+
+function workbenchReadMeta() {
+  return {
+    version: 'v8' as const,
+    contract: V8_ASSESSMENT_WORKBENCH_CONTRACT,
+    readScope: 'p28_workbench' as const,
+  };
+}
+
+function workbenchMutationMeta() {
+  return {
+    version: 'v8' as const,
+    contract: V8_ASSESSMENT_WORKBENCH_CONTRACT,
+    writeScope: 'p28_workbench' as const,
   };
 }
 
@@ -352,6 +373,290 @@ router.put(
       data: { id: assessmentId, updatedAt: now },
       meta: assessmentMutationMeta(),
     });
+  })
+);
+
+// --- P28 Assessment workbench (no silent scoring; proposals + review) ---
+router.get(
+  '/:assessmentId/workbench',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    const row = (await queryHelpers.queryOne<{
+      assessment_type?: string | null;
+      created_by?: string | null;
+    }>(
+      `SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`,
+      [assessmentId, organizationId]
+    )) as { assessment_type?: string | null; created_by?: string | null } | null;
+    if (!row) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+    const state = await AssessmentWorkbenchService.load(
+      assessmentId,
+      organizationId,
+      String(row.assessment_type || 'DRD'),
+      String(row.created_by || userId)
+    );
+    return res.json({
+      data: { workbench: state },
+      meta: workbenchReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/transition',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    const to = String(req.body?.toState || '');
+    const valid = new Set(['running', 'awaiting_evidence', 'completed', 'failed']);
+    if (!assessmentId || !valid.has(to)) {
+      return res.status(400).json({ error: 'Invalid transition', code: 'P28_TRANSITION_INVALID' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.transition(
+        assessmentId,
+        organizationId,
+        userId,
+        to as any,
+        { reason: req.body?.reason }
+      );
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      const code = e?.code || 'P28_ERROR';
+      if (code === 'ASSESSMENT_NOT_FOUND') {
+        return res.status(404).json({ error: 'Assessment not found', code });
+      }
+      return res.status(400).json({ error: e?.message || 'Workbench error', code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/evidence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    const pointers = Array.isArray(req.body?.pointers) ? req.body.pointers : [];
+    if (!assessmentId || !pointers.length) {
+      return res.status(400).json({ error: 'pointers required', code: 'P28_EVIDENCE_INVALID' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.addEvidence(assessmentId, organizationId, userId, pointers);
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Evidence error', code: e?.code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/required-evidence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    const kinds = Array.isArray(req.body?.kinds) ? req.body.kinds.map(String) : [];
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.setRequiredEvidenceKinds(
+        assessmentId,
+        organizationId,
+        userId,
+        kinds
+      );
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Workbench error', code: e?.code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/score-proposal',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.proposeScore(assessmentId, organizationId, userId, {
+        scoreValues: req.body?.scoreValues || {},
+        scoringRationale: String(req.body?.scoringRationale || ''),
+        evidencePointerIds: Array.isArray(req.body?.evidencePointerIds)
+          ? req.body.evidencePointerIds.map(String)
+          : [],
+        assumptions: Array.isArray(req.body?.assumptions) ? req.body.assumptions.map(String) : [],
+        confidence: Number(req.body?.confidence ?? 0.5),
+      });
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      if (e?.code === 'P28_AWAITING_EVIDENCE') {
+        return res.status(409).json({
+          error: e?.message,
+          code: e.code,
+          missingEvidenceKinds: e.missingEvidenceKinds,
+        });
+      }
+      return res.status(400).json({ error: e?.message || 'Score proposal error', code: e?.code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/score-review',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    const action = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
+    if (!['accept', 'reject', 'override'].includes(action)) {
+      return res.status(400).json({ error: 'action must be accept|reject|override', code: 'P28_REVIEW_INVALID' });
+    }
+    try {
+      const state = await AssessmentWorkbenchService.reviewScore(assessmentId, organizationId, userId, {
+        action,
+        reason: req.body?.reason,
+        overrideScoreValues: req.body?.overrideScoreValues,
+      });
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Score review error', code: e?.code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/interpretation-proposal',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.proposeInterpretation(
+        assessmentId,
+        organizationId,
+        userId,
+        {
+          summary: String(req.body?.summary || ''),
+          keyFindings: Array.isArray(req.body?.keyFindings) ? req.body.keyFindings.map(String) : [],
+          limits: String(req.body?.limits || ''),
+          nextActions: Array.isArray(req.body?.nextActions) ? req.body.nextActions.map(String) : [],
+        }
+      );
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Interpretation error', code: e?.code });
+    }
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/interpretation-review',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    const intAction = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
+    if (!['accept', 'reject', 'override'].includes(intAction)) {
+      return res
+        .status(400)
+        .json({ error: 'action must be accept|reject|override', code: 'P28_REVIEW_INVALID' });
+    }
+    try {
+      const state = await AssessmentWorkbenchService.reviewInterpretation(
+        assessmentId,
+        organizationId,
+        userId,
+        {
+          action: intAction,
+          reason: req.body?.reason,
+          overrideSummary: req.body?.overrideSummary,
+        }
+      );
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Interpretation review error', code: e?.code });
+    }
+  })
+);
+
+router.get(
+  '/:assessmentId/workbench/promotion-payload',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    const row = (await queryHelpers.queryOne<{
+      assessment_type?: string | null;
+      created_by?: string | null;
+    }>(
+      `SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`,
+      [assessmentId, organizationId]
+    )) as { assessment_type?: string | null; created_by?: string | null } | null;
+    if (!row) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+    const state = await AssessmentWorkbenchService.load(
+      assessmentId,
+      organizationId,
+      String(row.assessment_type || 'DRD'),
+      String(row.created_by || userId)
+    );
+    const validation = assertPromotionPayloadShape(state);
+    const payload = buildBoundedPromotionPayload(state);
+    return res.json({
+      data: { valid: validation.ok, validationErrors: validation.errors, payload },
+      meta: workbenchReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/promotion',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.recordPromotion(assessmentId, organizationId, userId, {
+        targetKind: req.body?.targetKind,
+        targetRef: String(req.body?.targetRef || ''),
+        payloadSummary: req.body?.payloadSummary,
+      });
+      return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
+    } catch (e: any) {
+      return res.status(400).json({ error: e?.message || 'Promotion error', code: e?.code });
+    }
   })
 );
 
