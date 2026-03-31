@@ -1,8 +1,8 @@
 # Final Implementation Contract — Finanse (Position 5/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P05-A** (finance lane canon frozen); P05-B / P05-C not started  
-Last updated: 2026-03-30 (P05-A scope closure)
+Status: `verified(evidence)` for **P05-A/B/C** — Finance Lane E2E closed  
+Last updated: 2026-03-31 (P05-B/C delivery + verification)
 
 ## 1. Executive summary
 - **Intent**: Poprawa modeli (import + dane historyczne) + analityka 1/2/3 poziomów + pełne narzędzia pracy z modelem.
@@ -270,6 +270,6 @@ To mark `P05-A` as `approved(scope)`, the following must be true (testable state
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P05-A | `approved(scope)` | `5ef9e3bd1f` | Scope approval — no runtime tests | N/A (scope phase) | Finance lane canon frozen: lanes, KPI↔Finance boundary, versioning, error taxonomy + recovery, anti-duplicate gate, degraded posture |
-| P05-B |  |  |  |  |  |
-| P05-C |  |  |  |  |  |
+| P05-B | `verified(evidence)` | `31034b191d` + `40a6ffb275` | Contract tests (lane steps, import taxonomy, mutation audit, versioning, degraded scenarios, KPI coherence) — all pass | E2E: import→analysis→mutation→readback; failed import blocks mutation; mutation audit trail; version switchover; KPI readback coherent | None — all §2.3 requirements implemented |
+| P05-C | `verified(evidence)` | `91abf23038` + `0820972bd3` | Contract tests + smoke script (11 checks, all pass) | Evidence doc + staging checklist complete | None |
 

@@ -1,8 +1,8 @@
 # Final Implementation Contract — Radar (Position 6/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P06-A** (Radar canon + prioritization grammar frozen); P06-B / P06-C not started  
-Last updated: 2026-03-30 (P06-A scope closure)
+Status: `verified(evidence)` for **P06-A/B/C** — Radar Triage Cockpit closed  
+Last updated: 2026-03-31 (P06-B/C delivery + verification)
 
 ## 1. Executive summary
 - **Intent**: Radar ma być czytelny + „sexy” i działać jak decyzyjny cockpit (nie nieczytelny wykres).
@@ -376,6 +376,6 @@ UI guideline:
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P06-A | approved(scope) | 90c7b4973b | n/a (docs-only) | n/a | Canon frozen: ranking grammar + why-now payload + handoff + degraded/error posture |
-| P06-B |  |  |  |  |  |
-| P06-C |  |  |  |  |  |
+| P06-B | `verified(evidence)` | `40a6ffb275` + `0820972bd3` | Contract tests (5 categories, ranking grammar, score formula, hard-gates, why-now payload, handoff payloads per target, degraded rules, anti-duplicate, error posture) — all pass | 3 signal types with explainability + next action; landing in target module preserves context; uncertainty boundary visible | None — all §2.3 requirements implemented |
+| P06-C | `verified(evidence)` | `91abf23038` + `0820972bd3` | Contract tests + smoke script (11 checks, all pass) | Evidence doc + staging checklist complete | None |
 
