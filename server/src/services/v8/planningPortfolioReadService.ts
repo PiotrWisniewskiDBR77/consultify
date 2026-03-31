@@ -194,6 +194,7 @@ export async function getPortfolioRead(
       (initiative.business_value as number) ||
       0;
 
+    const normalizedStatus = normalizeInitiativeDbStatusForRead(initiative.status);
     return {
       id: initiative.id,
       organizationId: initiative.organization_id,
@@ -205,7 +206,10 @@ export async function getPortfolioRead(
       area: initiative.area,
       summary: initiative.summary,
       hypothesis: initiative.hypothesis,
-      status: normalizeInitiativeDbStatusForRead(initiative.status),
+      status: normalizedStatus,
+      displayStatus: normalizedStatus,
+      p11LifecycleState: mapDbStatusToP11Lifecycle(initiative.status),
+      statusReadDrift: hasInitiativeStatusSchemaDrift(initiative.status),
       progress: initiative.progress || 0,
       currentStage: initiative.current_stage,
       businessValue: initiative.business_value || 0,

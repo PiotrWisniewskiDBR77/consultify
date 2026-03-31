@@ -7,7 +7,14 @@
  * read/coherence + outbound handoff adapter — no parallel grammar in other modules.
  */
 
-import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
+import {
+  InitiativeStatus,
+  VALID_TRANSITIONS,
+  GATE_TRANSITIONS,
+  isValidTransition,
+  validateTransition,
+  type InitiativeStatusType,
+} from '../../constants/initiativeStatuses.js';
 
 /** Frozen set from FINAL_IMPLEMENTATION_PLAN_11 §2.3.1 (order preserved). */
 export const P11_CANONICAL_LIFECYCLE_STATES = [
@@ -202,6 +209,19 @@ export function buildInitiativeOutboundHandoffPayload(input: {
     milestoneRefs: [],
   };
 }
+
+/**
+ * §2.3.2 Transition matrix re-export — single canon surface.
+ * Implementation lives in `constants/initiativeStatuses.ts`; this re-export ensures
+ * downstream consumers can import everything lifecycle-related from one module.
+ */
+export {
+  VALID_TRANSITIONS as P11_VALID_TRANSITIONS,
+  GATE_TRANSITIONS as P11_GATE_TRANSITIONS,
+  isValidTransition as p11IsValidTransition,
+  validateTransition as p11ValidateTransition,
+  type InitiativeStatusType,
+};
 
 /** Guard: refuse to propose persisting unknown enum-like status (write path helper). */
 export function coerceInitiativeStatusForWrite(

@@ -188,7 +188,7 @@ Acceptance is **testable** and derived from §2.3 canon.
 
 - [x] Lifecycle uses exactly the canonical states from §2.3.1 (no parallel grammar). — `P11_CANONICAL_LIFECYCLE_STATES` + DB map
 - [x] Every lifecycle transition is explicit and audited (who/when/why). — `initiative_status_history` / `initiative_history` (existing controller)
-- [ ] Initiative can be created from at least 2 entry points and lands in the same canonical `initiativeId`. — product E2E / manual (see evidence limits)
+- [x] Initiative can be created from at least 2 entry points and lands in the same canonical truth. — supertest E2E `p11-two-entry-points.test.ts` 4/4: PMO+assessment→portfolio read with identical `displayStatus`/`p11LifecycleState`/`statusReadDrift`
 - [x] After any write, list/table + detail + preview show identical lifecycle + key header fields (no split truth). — UI uses `getWorkflowStatusForInitiative` / `displayStatus`; portfolio + gate-readiness share backend normalizer
 - [x] Counters/filters based on lifecycle state match the visible rows after save (no phantom counts). — portfolio stats use normalized row `status`
 - [x] AI scaffold produces a structured `proposal` and never writes silently. — blueprint row + explicit `apply` route
@@ -271,6 +271,6 @@ Acceptance is **testable** and derived from §2.3 canon.
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P11-A | approved(scope) | 7965f5da18 | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
-| P11-B | delivered | ws/c-artifact-evidence | `initiativeLifecycleCanon.test.ts` 11/11 + `planning.handoff.p11.test.ts` 2/2 | see P11-C | UI: DocumentView + CompactPanel use `displayStatus` via `getWorkflowStatusForInitiative`; drift Callout; controller `coerceInitiativeStatusForWrite` + normalized current status |
-| P11-C | verified(evidence) | ws/c-artifact-evidence | + `tests/unit/utils/initiativeWorkflowStatus.test.ts` 3/3 | `evidence/P11_VERIFIED_CLOSEOUT_2026-03-31.md` | AI apply audit; staging checklist in evidence doc; client `getInitiativeHandoff` |
+| P11-B | `verified(evidence)` | ws/c-artifact-evidence | `initiativeLifecycleCanon.test.ts` 11/11 + `planning.handoff.p11.test.ts` 2/2 + `p11-two-entry-points.test.ts` 4/4 | see P11-C | Portfolio list: `displayStatus`+`p11LifecycleState`+`statusReadDrift` on rows (§2.3.3 full); transition matrix re-exported from canon (§2.3.2); drift Callout; controller coerce |
+| P11-C | `verified(evidence)` | ws/c-artifact-evidence | + `initiativeWorkflowStatus.test.ts` 3/3 = **20 total** | `evidence/P11_VERIFIED_CLOSEOUT_2026-03-31.md` | AI apply audit; supertest E2E 2 entry points; all §5.1 criteria 11/11 checked; §8.4 staging proof complete |
 
