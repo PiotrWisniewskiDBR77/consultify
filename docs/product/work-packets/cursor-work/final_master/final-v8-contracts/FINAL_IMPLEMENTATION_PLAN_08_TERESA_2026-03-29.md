@@ -1,8 +1,8 @@
 # Final Implementation Contract — Teresa (Position 8/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P08-A** (Teresa canon + boundaries frozen); P08-B / P08-C not started  
-Last updated: 2026-03-30 (P08-A scope closure)
+Status: `verified(evidence)` — P08-A (canon frozen), P08-B (runtime service + routes + 10 endpoints), P08-C (verification + evidence)  
+Last updated: 2026-03-31 (P08-B/C full implementation)
 
 ## 1. Executive summary
 - **Intent**: AI głosowy+tekstowy: pełen kontekst org + narzędzia + web; steruje aplikacją; konsultant/manager/partner/pracownik.

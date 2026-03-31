@@ -56,7 +56,7 @@ router.post(
   '/proposal',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const { sessionId, handoffContext, targetModule, targetPayload } = req.body ?? {};
+    const { sessionId, handoffContext, targetModule, targetPayload, idempotencyKey } = req.body ?? {};
 
     if (!sessionId || typeof sessionId !== 'string') {
       return res.status(400).json({ error: 'sessionId required', code: 'P08_SESSION_ID_REQUIRED' });
@@ -76,6 +76,7 @@ router.post(
         handoffContext,
         targetModule,
         targetPayload: targetPayload ?? {},
+        idempotencyKey: typeof idempotencyKey === 'string' ? idempotencyKey : undefined,
       });
       return res.status(201).json({ data: proposal, meta: teresaMeta({ action: 'proposal_created' }) });
     } catch (err) {

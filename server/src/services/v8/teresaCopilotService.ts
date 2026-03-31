@@ -180,8 +180,25 @@ export async function createProposal(params: {
   handoffContext: TeresaHandoffContext;
   targetModule: HandoffTargetModule;
   targetPayload: Record<string, unknown>;
+  idempotencyKey?: string;
 }): Promise<ProposalRecord> {
-  const { organizationId, userId, sessionId, handoffContext, targetModule, targetPayload } = params;
+  const { organizationId, userId, sessionId, handoffContext, targetModule, targetPayload, idempotencyKey } = params;
+
+  // Idempotency: if caller provides a key, return existing proposal instead of creating duplicate
+  if (idempotencyKey) {
+    const existing = await dbGet<ProposalRow>(
+      `SELECT * FROM teresa_proposals
+       WHERE organization_id = ? AND user_id = ? AND session_id = ?
+         AND target_module = ? AND id = ?`,
+      [organizationId, userId, sessionId, targetModule, idempotencyKey],
+      { fallback: true },
+    );
+    if (existing) {
+      logger.info(`${LOG_PREFIX} Idempotent hit: returning existing proposal ${existing.id}`);
+      const auditRows = await loadAuditEntries(existing.id);
+      return rowToProposal(existing, auditRows);
+    }
+  }
 
   // Validate target module
   if (!P08_HANDOFF_TARGET_MODULES.includes(targetModule)) {
@@ -241,7 +258,7 @@ export async function createProposal(params: {
     });
   }
 
-  const proposalId = randomUUID();
+  const proposalId = idempotencyKey ?? randomUUID();
   const now = new Date().toISOString();
 
   await dbRun(

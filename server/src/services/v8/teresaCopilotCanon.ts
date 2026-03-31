@@ -428,17 +428,25 @@ export const P08_ACCEPTANCE_CHECKLIST: Array<{
 /**
  * Validate that a handoff context has all required common fields.
  */
+export const P08_BOUNDED_CONTEXT_PACK_MAX = 5;
+
 export function validateHandoffContext(ctx: Record<string, unknown>): {
   valid: boolean;
   missing: string[];
+  warnings: string[];
 } {
   const missing: string[] = [];
+  const warnings: string[] = [];
   for (const field of P08_COMMON_PAYLOAD_FIELDS) {
     if (ctx[field] === undefined || ctx[field] === null) {
       missing.push(field);
     }
   }
-  return { valid: missing.length === 0, missing };
+  const bcp = ctx.bounded_context_pack;
+  if (Array.isArray(bcp) && bcp.length > P08_BOUNDED_CONTEXT_PACK_MAX) {
+    warnings.push(`bounded_context_pack exceeds max ${P08_BOUNDED_CONTEXT_PACK_MAX} (got ${bcp.length})`);
+  }
+  return { valid: missing.length === 0, missing, warnings };
 }
 
 /**

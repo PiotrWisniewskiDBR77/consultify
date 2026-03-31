@@ -51,6 +51,7 @@ const {
   validateHandoffContext,
   validateTargetPayload,
   isValidEnvelopeTransition,
+  validateWriteOwnership,
 } = await import('../../../services/v8/teresaCopilotCanon.js');
 
 // ---------------------------------------------------------------------------
@@ -520,23 +521,34 @@ describe('P08-B §6 — Degraded scenarios', () => {
 // ────────────────────────────────────────────────────────────────
 
 describe('P08-B §7 — Write ownership', () => {
-  it('rejects proposal where Teresa is both initiator and writer', async () => {
-    const context = buildHandoffContext({
-      audit_stub: { actor: 'teresa:copilot', timestamp: new Date().toISOString() },
-    });
-
-    // The validateWriteOwnership check in createProposal uses `${targetModule}_service` as writer,
-    // so this should pass. Let's test the canon function directly for the violation case.
-    const { validateWriteOwnership } = await import('../../../services/v8/teresaCopilotCanon.js');
+  it('canon: validateWriteOwnership rejects Teresa as both initiator and writer', () => {
     const result = validateWriteOwnership('teresa:copilot', 'teresa:copilot');
     expect(result.valid).toBe(false);
     expect(result.reason).toContain('cannot be both');
   });
 
-  it('allows Teresa initiator + module writer', async () => {
-    const { validateWriteOwnership } = await import('../../../services/v8/teresaCopilotCanon.js');
+  it('canon: validateWriteOwnership allows Teresa initiator + module writer', () => {
     const result = validateWriteOwnership('teresa:copilot', 'radar_service');
     expect(result.valid).toBe(true);
+  });
+
+  it('service: createProposal enforces write ownership (Teresa initiator, module writer)', async () => {
+    const context = buildHandoffContext({
+      audit_stub: { actor: 'teresa:copilot', timestamp: new Date().toISOString() },
+    });
+    const proposal = await createProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      handoffContext: context,
+      targetModule: 'radar',
+      targetPayload: buildRadarPayload(),
+    });
+    expect(proposal.state).toBe('proposal');
+
+    const auditActor = proposal.audit_trail[0].actor;
+    expect(auditActor).toBe('teresa:copilot');
+    expect(proposal.target_module).toBe('radar');
   });
 });
 
@@ -673,10 +685,9 @@ describe('P08-B §12 — Error handling', () => {
     expect(err.name).toBe('TeresaCopilotError');
   });
 
-  it('execution failure returns degraded result', async () => {
+  it('execution failure returns degraded(tool_unavailable) result', async () => {
     const row = mockProposalRow({ id: 'prop-fail-1', state: 'approved' });
     mockDbGet.mockResolvedValueOnce(row);
-    // Make the handoff INSERT fail
     mockDbRun
       .mockResolvedValueOnce({ changes: 1 }) // state transition to executing
       .mockResolvedValueOnce({ changes: 1 }) // audit entry for execution_started
@@ -692,5 +703,110 @@ describe('P08-B §12 — Error handling', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('DB connection lost');
+    expect(result.degraded).toBe('tool_unavailable');
+    expect(result.state).toBe('rejected');
+  });
+
+  it('execution failure with audit write failure returns degraded(audit_unavailable)', async () => {
+    const row = mockProposalRow({ id: 'prop-fail-2', state: 'approved' });
+    mockDbGet.mockResolvedValueOnce(row);
+    mockDbRun
+      .mockResolvedValueOnce({ changes: 1 }) // state transition to executing
+      .mockResolvedValueOnce({ changes: 1 }) // audit entry for execution_started
+      .mockRejectedValueOnce(new Error('Target module error')) // handoff fails
+      .mockRejectedValueOnce(new Error('Audit DB down')) // state transition to rejected fails
+      .mockRejectedValueOnce(new Error('Audit DB down')); // audit entry write also fails
+
+    const result = await executeProposal({
+      proposalId: 'prop-fail-2',
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.degraded).toBe('audit_unavailable');
+    expect(result.state).toBe('executing');
+  });
+});
+
+// ────────────────────────────────────────────────────────────────
+// §13 — Idempotency posture
+// ────────────────────────────────────────────────────────────────
+
+describe('P08-B §13 — Idempotency posture', () => {
+  it('idempotencyKey returns existing proposal instead of creating duplicate', async () => {
+    const existingRow = mockProposalRow({ id: 'idem-key-1', state: 'proposal' });
+    // First call: idempotency check finds existing
+    mockDbGet.mockResolvedValueOnce(existingRow);
+    mockDbAll.mockResolvedValueOnce([]); // audit entries
+
+    const context = buildHandoffContext();
+    const proposal = await createProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      handoffContext: context,
+      targetModule: 'initiatives',
+      targetPayload: buildInitiativesPayload(),
+      idempotencyKey: 'idem-key-1',
+    });
+
+    expect(proposal.id).toBe('idem-key-1');
+    // Should NOT have called INSERT (no new proposal created)
+    const insertCalls = mockDbRun.mock.calls.filter(
+      (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO teresa_proposals'),
+    );
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it('idempotencyKey creates new proposal when no existing match', async () => {
+    // Idempotency check returns null (no existing)
+    mockDbGet.mockResolvedValueOnce(null);
+    // Anti-duplicate check returns null (no active)
+    mockDbGet.mockResolvedValueOnce(null);
+
+    const context = buildHandoffContext();
+    const proposal = await createProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      handoffContext: context,
+      targetModule: 'initiatives',
+      targetPayload: buildInitiativesPayload(),
+      idempotencyKey: 'idem-key-new',
+    });
+
+    expect(proposal.id).toBe('idem-key-new');
+    expect(proposal.state).toBe('proposal');
+  });
+});
+
+// ────────────────────────────────────────────────────────────────
+// §14 — bounded_context_pack max 5 enforcement
+// ────────────────────────────────────────────────────────────────
+
+describe('P08-B §14 — bounded_context_pack max 5', () => {
+  it('validateHandoffContext warns when bounded_context_pack exceeds max 5', () => {
+    const ctx = buildHandoffContext({
+      bounded_context_pack: [
+        { ref: 'a', type: 'x' },
+        { ref: 'b', type: 'x' },
+        { ref: 'c', type: 'x' },
+        { ref: 'd', type: 'x' },
+        { ref: 'e', type: 'x' },
+        { ref: 'f', type: 'x' },
+      ],
+    });
+    const result = validateHandoffContext(ctx as unknown as Record<string, unknown>);
+    expect(result.valid).toBe(true);
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings[0]).toContain('exceeds max 5');
+  });
+
+  it('validateHandoffContext has no warnings when bounded_context_pack is within limit', () => {
+    const ctx = buildHandoffContext();
+    const result = validateHandoffContext(ctx as unknown as Record<string, unknown>);
+    expect(result.valid).toBe(true);
+    expect(result.warnings).toHaveLength(0);
   });
 });
