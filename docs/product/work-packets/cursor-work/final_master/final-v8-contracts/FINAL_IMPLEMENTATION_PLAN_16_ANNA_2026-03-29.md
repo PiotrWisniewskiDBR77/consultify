@@ -1,7 +1,7 @@
 # Final Implementation Contract — Anna (Position 16/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P16-A canon frozen; docs-only)
+Status: `approved(scope)` for **P16-A** (public assistant canon frozen); **P16-B** `delivered`; P16-C not started
 
 ## 1. Executive summary
 - **Intent**: Ma dostać pełniejszy kontekst DBR77+produkty; rozwój wiedzy sterowalny w Superadmin (Virtual Workers).
@@ -155,6 +155,6 @@ This contract must not create a parallel “public Anna truth”. It only approv
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P16-A | approved(scope) | f972557204 | N/A (scope) | N/A (scope) | Canon frozen in `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` §2.3; docs-only scope approval. |
-| P16-B |  |  |  |  |  |
+| P16-B | delivered | `4e5fee0a46` | Automated test set documented in `docs/product/work-packets/cursor-work/final_master/evidence/P16_B_ANNA_CTA_MULTILANG_VOICE_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Staging proof script prepared in the same evidence doc; final capture belongs to P16-C | Runtime landed for CTA funnel grammar + multilang + voice degraded posture; final rollback/evidence closeout remains in P16-C. |
 | P16-C |  |  |  |  |  |
 

@@ -1,7 +1,7 @@
 # Final Implementation Contract — Mądrość czata (Position 34/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) — P34-A complete (direct contract over existing plan)
+Status: `approved(scope)` for **P34-A** (policy gateway canon frozen); **P34-B** `delivered`; P34-C not started
 
 ## 1. Executive summary
 - **Intent**: Konkurencyjność: kontekst, reasoning, research; żeby chat był tak dobry jak konkurencja (bez udawania).

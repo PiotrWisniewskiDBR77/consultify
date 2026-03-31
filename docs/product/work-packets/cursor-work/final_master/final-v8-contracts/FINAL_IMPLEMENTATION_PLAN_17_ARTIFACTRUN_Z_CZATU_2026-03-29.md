@@ -1,7 +1,7 @@
 # Final Implementation Contract — ArtifactRun z czatu (Position 17/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: `approved(scope)` for **P17-A** (run grammar canon frozen); **P17-B** `delivered`; P17-C not started
 
 ## 1. Executive summary
 - **Intent**: Chat/Teresa pracuje z aplikacją (głos+tekst): rozumie ekran, robi pracę w UI i bazach.
@@ -145,7 +145,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P17-A |  |  |  |  |  |
+| P17-A | approved(scope) | `2bc392365c` | N/A — scope packet | N/A — scope packet | Run grammar canon + stage separation approved; manager closeout synced with execution docs and released lock. |
 | P17-B | delivered | 8335c275e3 | `tests/integration/routes/artifact-runs.routes.preflight-and-failure.sqlite.integration.test.ts` (green); `tests/components/AIChat/V8ArtifactRunControl.test.tsx` (green) | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P17_B_ARTIFACTRUN_VALIDATION_RERUN_FAILURE_E2E_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Explicit `/api/artifact-runs/:runId/preflight` stage + UI preflight panel; failure packaged (`failurePackage`) + retry lineage; best-effort ghost Outputs cleanup by origin. |
 | P17-C |  |  |  |  |  |
 

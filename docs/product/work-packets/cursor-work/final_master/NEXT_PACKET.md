@@ -6,188 +6,52 @@ Rules:
 
 - Agents **must not self-select** a packet unless it is listed below.
 - If a packet is not listed here, it is **not authorized** to start (even if it looks "obvious").
-- **Open docs mode**: manager has authorized **all remaining PNN-A (scope)** packets so documentation agents don’t block on the gate.
-- **Coding is still gated**: `P<NN>-B` / `P<NN>-C` are authorized only in the “Runtime” section below.
+- Scope/docs packets are **closed by default**. Re-open `P<NN>-A` only with an explicit manager entry below.
+- `P<NN>-B` / `P<NN>-C` remain gated and must appear in the runtime section below.
 
 ---
 
-## Authorized packet(s) — OPEN DOCS MODE (PNN-A only)
+## Scope/docs phase
 
-### 1) P08-A — Teresa: copilot canon + boundaries (scope approval) — REDO (previous attempt incomplete)
+All broad `P<NN>-A` documentation packets are treated as **closed for manager-gate purposes**.
 
-Goal: freeze Teresa as contextual copilot (proposal→approval→execution→audit) with P0 handoff targets, voice degraded rules, and clear boundaries vs Anna/public assistant. This packet must fill contract §2.3 canon + evidence ledger and update `EXECUTION_INDEX` #08 → `approved(scope)`.
-
-Dependencies: P17-A ✅, P07-A ✅, foundations ✅; benchmarks: `CHAT_V8_BENCHMARK.md` + Wave2 AI OS context.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P08-A.md`
-
-### 2) P09-A — Ankiety: collection lane canon + scope approval
-
-Goal: freeze surveys as governed collection lane (submission status grammar + operator workflow + handoff payload to Insights), explicitly not an insight engine.
-
-Dependencies: flow `docs/flows/core/ASSESSMENT_EXECUTION_FLOW.md` + detailed plan.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P09-A.md`
-
-### 3) P10-A — Wnioski w Interview: insight artifact canon + scope approval
-
-Goal: freeze insight as auditable artifact (finding/evidence/limits/next action) with confidence semantics, evidence pointers rules, and handoff payload to Initiatives.
-
-Dependencies: readiness `docs/product/INTERVIEW_V8_READINESS_AUDIT.md` + Ankiety handoff posture (P09).
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P10-A.md`
-
-### 4) P12-A — Mindmap: calm interaction canon + scope approval (DOCS ONLY)
-
-Goal: freeze mindmap core-loop canon (minimal toolbelt, branch-state semantics, undo/redo posture, export/readback baseline, AI co-building contract, degraded posture) and update evidence + index.
-
-Dependencies: `docs/product/MINDMAP_V8_READINESS_AUDIT.md` + plan `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_MIND_MAP_2026-03-29.md`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P12-A.md`
-
-### 5) P13-A — Whiteboard: board canon + toolbelt baseline (DOCS ONLY)
-
-Goal: freeze whiteboard operator-safe toolbelt + facilitation baseline + export/readback assumptions + AI co-building proposal contract (preview/apply/reject), with explicit non-goals (no Miro parity).
-
-Dependencies: wave1 plan + readiness/SSOT as referenced in contract.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P13-A.md`
-
-### 6) P15-A — Tabele: singular relational grammar (DOCS ONLY)
-
-Goal: freeze one relational grammar (schema→records→relations→views→forms/interfaces) + permissions/lock semantics + schema drift posture + AI plan→preview/diff→approve→materialize contract (no silent writes).
-
-Dependencies: benchmark `docs/strategy/TABELE_V8_BENCHMARK.md` + wave1 plan.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P15-A.md`
-
-### 7) P14-A — Proces flow: semantics + interoperability posture (DOCS ONLY)
-
-Goal: freeze process semantics (typed objects + meaning) + BPMN-adjacent mapping posture + export/import assumptions + validation layering (semantic-first).
-
-Dependencies: wave1 plan + readiness/SSOT as referenced in contract.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P14-A.md`
-
-### 8) P16-A — Anna: public assistant canon + boundaries (DOCS ONLY)
-
-Goal: freeze public assistant contract (public boundaries, CTA funnel events, citations/uncertainty, voice/memory degraded rules) explicitly separate from Teresa.
-
-Dependencies: `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md` + `docs/product/CHAT_V8_BENCHMARK.md`
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P16-A.md`
-
-### 9) P22-A — Wordy: KIMI-style docs lane evidence mapping (DOCS ONLY)
-
-Goal: freeze Wordy’s net-new lane scope (KIMI-style) with explicit missing-input flags where needed; define evidence mapping before any runtime.
-
-Dependencies: KIMI references + internal program doctrine (no guessing).
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P22-A.md`
-
-### 10) P23-A — Excele: KIMI-style sheets lane evidence mapping (DOCS ONLY)
-
-Goal: freeze Excele’s net-new lane scope (KIMI-style) with explicit missing-input flags where needed; define evidence mapping before any runtime.
-
-Dependencies: KIMI references + internal program doctrine (no guessing).
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P23-A.md`
-
-### 11) P25-A — Help: contextual help canon + content ops baseline (DOCS ONLY)
-
-Goal: freeze contextual help as runtime product (entry points, routing, PL/EN fallback) + content ops baseline + recommendation payload contract for Anna/Teresa.
-
-Dependencies: Wave2 help/KB plan + KB templates.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P25-A.md`
-
-### 12) P26-A — Baza wiedzy: KB canon + taxonomy + content ops (DOCS ONLY)
-
-Goal: freeze KB as curated knowledge system (taxonomy, search/discovery posture, ingestion rules, governance) integrated with Help and AI grounding.
-
-Dependencies: Wave2 help/KB plan.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P26-A.md`
-
-### 13) P28-A — Assessment: assessment lane canon + governance (DOCS ONLY)
-
-Goal: freeze assessment lane scope, artifact model, governance and handoffs (bounded).
-
-Dependencies: wave plans + existing flow docs as referenced in contract.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P28-A.md`
-
-### 14) P29-A — Program partnerski: partner lifecycle canon + ledger boundaries (DOCS ONLY)
-
-Goal: freeze partner program lifecycle + earnings/ledger semantics + governance boundaries (bounded).
-
-Dependencies: Org/Settings/Admin foundations.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P29-A.md`
-
-### 15) P34-A — Mądrość czata: policy gateway canon + boundaries (DOCS ONLY)
-
-Goal: freeze chat wisdom/policy gateway (what is allowed, how refusals/citations work, governance) before chat history/search.
-
-Dependencies: governance foundations + chat benchmarks.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P34-A.md`
-
-### 16) P35-A — Historia czatów: history/library canon + retrieval boundaries (DOCS ONLY)
-
-Goal: freeze chat history library + retrieval/search posture with governance boundaries and anti-duplicate gates.
-
-Dependencies: P34 wisdom gateway recommended first.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-A.md`
+If a scope packet truly needs a redo, re-open it explicitly here with a fresh manager note. Until then, agents should assume docs work is frozen and move only through runtime (`B` / `C`) packets.
 
 ---
 
 ## Authorized packet(s) — RUNTIME (PNN-B/PNN-C only)
 
-### 1) P24-B — Templaty: template-first generation + save-as-template (core runtime)
-
-Goal: deliver template runtime in Outputs (P19) with governed publish/review gate and reuse.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P24-B.md`
-
-### 2) P25-B — Help: contextual entry points + recommendation closure (core runtime)
-
-Goal: deliver contextual help entry points on 3 surfaces + search→article→next-action routing + PL/EN degraded fallback + recommendation payload v1 for Teresa/Anna deep-linking.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P25-B.md`
-
-### 3) P16-B — Anna (public assistant): landing + bounded assistant runtime (core runtime)
-
-Goal: deliver Anna public assistant surface per contract: bounded funnel CTA + citations/uncertainty + degraded rules; explicitly separate from Teresa.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P16-B.md`
-
-### 4) P24-C — Templaty: verification + rollout + evidence (runtime verification)
+### 1) P24-C — Templaty: verification + rollout + evidence (runtime verification)
 
 Goal: execute P24 staging proof, run tests, fill evidence ledger rows P24-B/P24-C, and close packet as `verified(evidence)`.
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P24-C.md`
 
-### 5) P18-B — Provenance: end-to-end traceability closure (core runtime)
+### 2) P17-C — ArtifactRun: verification + rollout + evidence closeout
 
-Goal: deliver click-through lineage (run→tool calls→output) + export audit that respects visibility, with integration tests + staging proof.
+Goal: capture staging proof, validate rollback, and fill ledger rows P17-A/B/C so position 17 can move from `delivered` to `verified(evidence)`.
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P18-B.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-C.md`
 
-### 6) P17-B — ArtifactRun: validation + rerun/failure closure (core runtime)
+### 3) P18-C — Provenance: verification + rollout + evidence closeout
 
-Goal: deliver explicit validation/preflight stage + failure packaging + retry/rerun without ghost artifacts, with integration tests + staging proof.
+Goal: capture lineage/export staging proof, validate rollback, and fill ledger rows P18-A/B/C so position 18 can move from `delivered` to `verified(evidence)`.
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-B.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P18-C.md`
 
-### 7) P34-B — Mądrość czata: source ledger + promotion workflow closure (core runtime)
+### 4) P21-C — Raporty: verification + rollout + evidence closeout
 
-Goal: deliver policy-first retrieval gateway runtime: used/blocked source ledger + governed private→org promotion, proven by security tests + staging demos.
+Goal: capture reports staging proof, validate rollback, and fill ledger rows P21-A/B/C so position 21 can move from `delivered` to `verified(evidence)`.
 
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P34-B.md`
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P21-C.md`
 
-### 8) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
+### 5) P34-C — Mądrość czata: verification + observability + rollout closeout
+
+Goal: capture retrieval traces/eval harness evidence, validate rollback to private-only mode, and fill ledger rows P34-A/B/C so position 34 can move from `delivered` to `verified(evidence)`.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P34-C.md`
+
+### 6) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
 
 Goal: deliver full thread lifecycle + server-side search target with pagination/filters + team folder permission denials (no leakage), with integration/security tests + staging demo.
 
@@ -197,7 +61,11 @@ Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-B.md`
 
 Completion (each agent independently):
 
-- update `EXECUTION_INDEX.md` own row → `approved(scope)`
+- update own contract ledger/evidence row
+- update `EXECUTION_INDEX.md` own row to the packet terminal state:
+  - `P<NN>-A` → `approved(scope)`
+  - `P<NN>-B` → `delivered`
+  - `P<NN>-C` → `verified(evidence)`
 - release own lock (`Status: released`)
 - sync contract to SSOT copy
 - commit + push
@@ -217,11 +85,18 @@ Completion (each agent independently):
 | P33-A | approved(scope) | 2026-03-30 |
 | P24-A | approved(scope) | 2026-03-30 |
 | P17-A | approved(scope) | 2026-03-30 |
+| P17-B | delivered | 2026-03-30 |
+| P18-B | delivered | 2026-03-30 |
 | P20-A | approved(scope) | 2026-03-30 |
 | P21-A | approved(scope) | 2026-03-30 |
+| P21-B | delivered | 2026-03-30 |
 | P11-A | approved(scope) | 2026-03-30 |
 | P04-A | approved(scope) | 2026-03-30 |
 | P02-A | approved(scope) | 2026-03-30 |
 | P03-A | approved(scope) | 2026-03-30 |
 | P05-A | approved(scope) | 2026-03-30 |
 | P06-A | approved(scope) | 2026-03-30 |
+| P16-B | delivered | 2026-03-30 |
+| P24-B | delivered | 2026-03-30 |
+| P25-B | delivered | 2026-03-30 |
+| P34-B | delivered | 2026-03-30 |

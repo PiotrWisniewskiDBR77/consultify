@@ -12,6 +12,12 @@ Status legend:
 
 - `draft` → `approved(scope)` → `in progress` → `delivered` → `verified(evidence)`
 
+Interpretation note:
+
+- Row status reflects the **furthest packet state reached** for that module.
+- Only `verified(evidence)` means the module is truly closed end-to-end.
+- `delivered` means runtime landed, but `P<NN>-C` verification/rollout may still be open.
+
 > Recommended packet baseline for every position: `P<NN>-A` (canon+scope), `P<NN>-B` (core runtime), `P<NN>-C` (evidence+rollout).
 
 ## Start rules (to prevent parallel worlds)

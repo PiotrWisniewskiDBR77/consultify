@@ -1,8 +1,8 @@
 # Final Implementation Contract — Templaty (Position 24/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P24-A** (template runtime canon + ownership/permissions frozen); P24-B / P24-C not started  
-Last updated: 2026-03-30 (P24-A scope closure)
+Status: `approved(scope)` for **P24-A** (template runtime canon + ownership/permissions frozen); **P24-B** `delivered`; P24-C in progress  
+Last updated: 2026-03-30 (P24-B delivered; P24-C verification in progress)
 
 ## 1. Executive summary
 - **Intent**: Templates dla raportów i prezentacji; przeniesienie pełnej funkcji z admin do Outputs: zakładka Templaty + generator + user templates + app templates.
