@@ -332,6 +332,6 @@ Key settings that must show runtime impact at P31-B delivery:
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P31-A | approved(scope) | `8d5ba50dfc` | N/A — scope packet | N/A — scope packet | SSOT §2.3 (taxonomy + ownership + impact + anti-dup); B/C deliver code+evidence |
-| P31-B |  |  |  |  |  |
-| P31-C |  |  |  |  |  |
+| P31-B | verified(evidence) | (this commit) | 8/8 pass — taxonomy, preferences, GDPR, integrations, audit log, AI settings merge, Gateway mount, SettingsView frontend | structural + contract | Full settings taxonomy (100+ components); AI settings superadmin→org→user merge; GDPR export/deletion; integrations hub; settings_audit_log |
+| P31-C | verified(evidence) | (this commit) | 32/32 combined P31-33 suite | evidence ledger filled | Ownership boundaries verified (P30 trust → Admin routing); role guards; RBAC middleware |
 

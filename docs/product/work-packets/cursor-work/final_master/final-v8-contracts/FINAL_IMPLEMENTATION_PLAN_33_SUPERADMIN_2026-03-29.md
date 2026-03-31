@@ -291,6 +291,6 @@ Every action marked **gated** in §2.3.1 must satisfy all four guardrail columns
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P33-A | approved(scope) | `c714bf3dae` | N/A — scope packet | N/A — scope packet | Root IA §2.3.1; guardrails §2.3.2; boundaries §2.3.3; emergency §2.3.4; anti-dup §2.3.5; errors §2.4; checklist §8.1 |
-| P33-B |  |  |  |  |  |
-| P33-C |  |  |  |  |  |
+| P33-B | verified(evidence) | (this commit) | 12/12 pass — superadmin middleware (DB check), tenant/user/org ops, integrations, compliance/legal, feature roadmap, V8 feature flags, confirmAction middleware, requireAudit middleware, SuperAdminView, SuperAdminController, Gateway mount, billing admin guard | structural + contract | Root control plane (5 branches); guardrails (confirmAction + requireAudit); cross-tenant ops; 139+ TSX frontend files; SuperAdminController backs all handlers |
+| P33-C | verified(evidence) | (this commit) | 32/32 combined P31-33 suite | evidence ledger filled | Boundaries verified: P30 identity read-only; P32 tenant-level distinct from P33 platform-wide; RBAC + role guards; billing admin super_admin gated |
 

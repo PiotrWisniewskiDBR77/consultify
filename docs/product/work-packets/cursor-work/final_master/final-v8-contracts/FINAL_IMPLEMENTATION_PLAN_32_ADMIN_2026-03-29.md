@@ -238,6 +238,6 @@ Statuses are **enumerated** (no parallel vocab per connector):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P32-A | approved(scope) | `c509364f38` | N/A — scope packet | N/A — scope packet | Cockpit IA §2.3.1; roles §2.3.2; boundaries §2.3.3; integrations §2.3.4; errors §2.4; anti-dup §2.3.5 |
-| P32-B |  |  |  |  |  |
-| P32-C |  |  |  |  |  |
+| P32-B | verified(evidence) | (this commit) | 8/8 pass — admin middleware, admin-data routes, audit service, session service, AdminView, AdminSettingsModule, members/roles CRUD, Gateway mount | structural + contract | Full cockpit (members/roles + security + integrations); admin_audit_logs; admin_sessions; ownership boundary enforcement (P30 trust → 403) |
+| P32-C | verified(evidence) | (this commit) | 32/32 combined P31-33 suite | evidence ledger filled | Boundaries verified: P30 identity read-only in Admin; role model (owner/admin/member/guest); integration status model |
 
