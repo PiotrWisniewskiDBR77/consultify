@@ -1,7 +1,7 @@
 # Final Implementation Contract — Inicjatywy (Position 11/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: active delivery (P11-B delivered 2026-03-31; P11-C open)
 
 ## 1. Executive summary
 - **Intent**: Dopięcie UI/UX + AI: wypełnianie całości/fragmentów, “zrób inicjatywę”, poprawianie tekstów.
@@ -271,6 +271,6 @@ Acceptance is **testable** and derived from §2.3 canon.
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P11-A | approved(scope) | 7965f5da18 | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
-| P11-B |  |  |  |  |  |
+| P11-B | delivered | ws/c-artifact-evidence | `initiativeLifecycleCanon.test.ts` 10/10 | pending (P11-C) | Read coherence: portfolio + detail (`displayStatus`, `p11LifecycleState`, `statusReadDrift`) + gate-readiness use shared normalizer; handoff envelope endpoint; write drift guard helper |
 | P11-C |  |  |  |  |  |
 

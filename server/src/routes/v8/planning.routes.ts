@@ -13,6 +13,10 @@ import { z } from 'zod';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
+  buildInitiativeOutboundHandoffPayload,
+  type InitiativeHandoffKind,
+} from '../../services/initiative/initiativeLifecycleCanon.js';
+import {
   getCriticalPath,
   getCrossInitiativeDependencies,
   getDecisionChainsByInitiative,
@@ -39,6 +43,7 @@ import {
   getPortfolioRead,
 } from '../../services/v8/planningPortfolioReadService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -498,6 +503,49 @@ router.get(
     const pendingDecisionChains = await getPendingDecisions(organizationId);
     return res.json({
       data: { pendingDecisionChains },
+      meta: planningMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/planning/initiatives/:initiativeId/handoff
+ * P11-B bounded outbound envelope for P03 / P04 / P02 (read-only; does not mutate).
+ */
+router.get(
+  '/initiatives/:initiativeId/handoff',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const rawId = firstParam((req.params as { initiativeId?: string }).initiativeId);
+    const parsed = initiativeIdParamSchema.safeParse(rawId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Initiative id is required',
+        code: 'PLANNING_INITIATIVE_ID_INVALID',
+      });
+    }
+
+    const kindRaw = String(firstParam(req.query.kind) || 'execution').toLowerCase();
+    const kindParse = z.enum(['execution', 'kpi', 'calendar']).safeParse(kindRaw);
+    const kind = (kindParse.success ? kindParse.data : 'execution') as InitiativeHandoffKind;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [parsed.data, organizationId]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const handoff = buildInitiativeOutboundHandoffPayload({
+      initiativeRow: row as Record<string, unknown>,
+      organizationId,
+      handoffBy: req.user?.id ?? null,
+      kind,
+    });
+
+    return res.json({
+      data: { handoff },
       meta: planningMeta(),
     });
   })

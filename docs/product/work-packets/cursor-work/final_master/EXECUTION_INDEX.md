@@ -69,7 +69,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 08 | Teresa | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_08_TERESA_2026-03-29.md` | P08-A / P08-B / P08-C | approved(scope) |
 | 09 | Ankiety | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_09_ANKIETY_2026-03-29.md` | P09-A / P09-B / P09-C | approved(scope) |
 | 10 | Wnioski w Interview | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_10_WNIOSKI_W_INTERVIEW_2026-03-29.md` | P10-A / P10-B / P10-C | approved(scope) |
-| 11 | Inicjatywy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_11_INICJATYWY_2026-03-29.md` | P11-A / P11-B / P11-C | approved(scope) |
+| 11 | Inicjatywy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_11_INICJATYWY_2026-03-29.md` | P11-A / P11-B / P11-C | delivered — P11-B: single canon adapter (`initiativeLifecycleCanon`), list/detail/gate-readiness share normalized DB status + P11 lifecycle bucket; schema drift flag on detail read; bounded handoff GET `/api/v8/planning/initiatives/:id/handoff`; write guard `coerceInitiativeStatusForWrite`; 10/10 tests; P11-C verification/staging still open |
 | 12 | Mindmap | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_12_MINDMAP_2026-03-29.md` | P12-A / P12-B / P12-C | approved(scope) |
 | 13 | Whiteboard | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_13_WHITEBOARD_2026-03-29.md` | P13-A / P13-B / P13-C | approved(scope) |
 | 14 | Proces flow | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_14_PROCES_FLOW_2026-03-29.md` | P14-A / P14-B / P14-C | approved(scope) |

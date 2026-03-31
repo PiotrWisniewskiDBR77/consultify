@@ -21,13 +21,7 @@ If a scope packet truly needs a redo, re-open it explicitly here with a fresh ma
 
 ## Authorized packet(s) — RUNTIME (PNN-B/PNN-C only)
 
-*(No active runtime packets — all authorized work completed. See archive below.)*
-
-*(P35-B and P35-C completed — see archive below)*
-
-*(P20-B and P20-C completed — see archive below)*
-
-*(P22-C and P23-C completed — see archive below)*
+*(No active runtime packets — see archive below.)*
 
 ---
 
@@ -87,3 +81,4 @@ Completion (each agent independently):
 | P20-C | verified(evidence) | 2026-03-31 |
 | P35-B | delivered | 2026-03-31 |
 | P35-C | verified(evidence) | 2026-03-31 |
+| P11-B | delivered | 2026-03-31 |

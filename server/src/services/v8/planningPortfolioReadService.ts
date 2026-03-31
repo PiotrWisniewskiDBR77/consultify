@@ -8,6 +8,11 @@ import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
+import {
+  hasInitiativeStatusSchemaDrift,
+  mapDbStatusToP11Lifecycle,
+  normalizeInitiativeDbStatusForRead,
+} from '../initiative/initiativeLifecycleCanon.js';
 
 function isMissingPlanningSupportTableError(error: unknown, tableName: string): boolean {
   const message = String((error as any)?.message || error || '').toLowerCase();
@@ -79,34 +84,6 @@ const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, 
   } catch {
     return fallback;
   }
-};
-
-const normalizePortfolioStatus = (status: string | unknown): string => {
-  const s = String(status || 'DRAFT').toUpperCase();
-  if (s.includes('STEP3') || s.includes('STEP_3')) return 'REVIEW';
-  if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
-  if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
-  if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
-  if (
-    [
-      'DRAFT',
-      'PENDING_REVIEW',
-      'PLANNING',
-      'REVIEW',
-      'PROMOTED',
-      'APPROVED',
-      'SCHEDULED',
-      'EXECUTING',
-      'BLOCKED',
-      'DONE',
-      'TRACKING',
-      'CANCELLED',
-      'ARCHIVED',
-    ].includes(s)
-  ) {
-    return s;
-  }
-  return 'DRAFT';
 };
 
 const parsePortfolioName = (name: string | unknown): string => {
@@ -228,7 +205,7 @@ export async function getPortfolioRead(
       area: initiative.area,
       summary: initiative.summary,
       hypothesis: initiative.hypothesis,
-      status: normalizePortfolioStatus(initiative.status),
+      status: normalizeInitiativeDbStatusForRead(initiative.status),
       progress: initiative.progress || 0,
       currentStage: initiative.current_stage,
       businessValue: initiative.business_value || 0,
@@ -335,6 +312,10 @@ export async function getInitiativeDetailRead(
   if (!initiative) return null;
 
   const row = initiative as Record<string, unknown>;
+  const rawStatus = row.status;
+  const displayStatus = normalizeInitiativeDbStatusForRead(rawStatus);
+  const p11LifecycleState = mapDbStatusToP11Lifecycle(rawStatus);
+  const statusReadDrift = hasInitiativeStatusSchemaDrift(rawStatus);
 
   return {
     ...initiative,
@@ -369,6 +350,9 @@ export async function getInitiativeDetailRead(
     sourceType: row.source_type,
     sourceId: row.source_id,
     initiativeTemplateId: (row as any).initiative_template_id ?? null,
+    displayStatus,
+    p11LifecycleState,
+    statusReadDrift,
   };
 }
 
@@ -811,7 +795,7 @@ export async function getInitiativeGateReadinessRead(
   if (!initiative) return null;
 
   const ini = initiative as any;
-  const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
+  const currentStatus = normalizeInitiativeDbStatusForRead(ini.status);
 
   const accessCtx =
     organizationId && currentUserId
