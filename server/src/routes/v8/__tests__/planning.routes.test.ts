@@ -333,7 +333,7 @@ describe('V8 Planning continuity read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
     expect(res.body.data?.readiness?.currentStatus).toBe('PLANNING');
-    expect(mockGetInitiativeGateReadinessRead).toHaveBeenCalledWith(INIT, ORG, UID);
+    expect(mockGetInitiativeGateReadinessRead).toHaveBeenCalledWith(INIT, ORG, UID, 'ADMIN');
   });
 
   it('GET /api/v8/planning/initiatives/:id/resources returns V8 envelope and org-scoped resources', async () => {

@@ -95,3 +95,10 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 34 | Mądrość czata | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_34_MADROSC_CZATA_2026-03-29.md` | P34-A / P34-B / P34-C | verified(evidence) |
 | 35 | Historia czatów | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_35_HISTORIA_CZATOW_2026-03-29.md` | P35-A / P35-B / P35-C | verified(evidence) |
 
+## Cross-Module Integration Hardening
+
+| Task | Status | Details |
+|------|--------|---------|
+| Fix planning.routes.test.ts 4th-arg mismatch | ✅ done | `getInitiativeGateReadinessRead` called with 4 args (incl. `role`), test expected 3 — fixed |
+| Cross-module handoff integration test suite | ✅ done | 31 tests in `t2-flows/crossModuleHandoffFlow.test.ts` covering 6 chains: C1 P09→P10→P11, C2 P06→P11/P03, C3 P08→targets, C4 P07→targets, C5 P11→P03/P04/P02, C6 P04↔P05 |
+
