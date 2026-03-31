@@ -261,6 +261,6 @@ Degraded modes are part of user trust; they must be explicit and safe.
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P26-A | approved(scope) | `00ec148c6b` | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: KB object model, taxonomy/search/discovery posture, content ops baseline, AI grounding payload + citations posture, anti-duplicate gate, degraded modes + checklist |
-| P26-B |  |  |  |  |  |
-| P26-C |  |  |  |  |  |
+| P26-B | verified(evidence) | pending commit | 25 integration tests: collections CRUD, tags, faceted search, related articles, versions, redirect/deprecation, surface bindings, regression, PL/EN degraded | Collections-first browse, tag facets, deprecation banner, related articles, AI surface binding priority | Known limits: content seeding (50 articles) is ops task not code; full-text search is LIKE-based (no FTS index); chart/visual content in articles not supported |
+| P26-C | verified(evidence) | pending commit | Same as P26-B | Same as P26-B | Rollback: disable collections/tags routes; categories still work; browse/search preserved |
 

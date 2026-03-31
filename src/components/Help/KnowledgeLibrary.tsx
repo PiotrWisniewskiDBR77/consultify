@@ -29,10 +29,16 @@ import { useTranslation } from 'react-i18next';
 import {
   KbArticleListItem,
   KbCategory,
+  KbCollection,
+  KbTag,
   useKnowledgeArticles,
   useKnowledgeCategories,
+  useKnowledgeCollections,
+  useKnowledgeCollectionArticles,
   useKnowledgeContextual,
   useKnowledgeSearch,
+  useKnowledgeSearchFaceted,
+  useKnowledgeTags,
 } from '../../hooks/useKnowledge';
 
 // ============================================
@@ -154,6 +160,71 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
 );
 
 // ============================================
+// COLLECTION CARD (P26-B: IA spine)
+// ============================================
+
+interface CollectionCardProps {
+  collection: KbCollection;
+  onClick: (slug: string) => void;
+}
+
+const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) => (
+  <button
+    onClick={() => onClick(collection.slug)}
+    className="w-full text-left p-3 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+  >
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <FolderOpen size={16} className="text-purple-500" />
+        <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+          {collection.title}
+        </span>
+        {collection.featured && <Sparkles size={12} className="text-amber-500" />}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-slate-400">{collection.article_count}</span>
+        <ChevronRight size={14} className="text-slate-400 group-hover:text-purple-500" />
+      </div>
+    </div>
+    {collection.description && (
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{collection.description}</p>
+    )}
+  </button>
+);
+
+// ============================================
+// TAG CHIP (P26-B: facets)
+// ============================================
+
+interface TagChipProps {
+  tag: KbTag;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
+  const kindColors: Record<string, string> = {
+    domain: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    tool: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+    concept: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+    stage: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    audience: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap
+        ${isActive ? 'bg-purple-600 text-white shadow-sm ring-1 ring-purple-400' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+      `}
+    >
+      {tag.label}
+      <span className={`text-[9px] ${isActive ? 'text-purple-200' : 'opacity-60'}`}>({tag.article_count})</span>
+    </button>
+  );
+};
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -166,52 +237,99 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCollection, setActiveCollection] = useState<string | null>(null);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const limit = 10;
 
-  // Fetch categories
+  // P26-B: Collections (IA spine — primary browse)
+  const { data: collections = [], isLoading: collectionsLoading } = useKnowledgeCollections();
+
+  // P26-B: Tags (facets)
+  const { data: tags = [], isLoading: tagsLoading } = useKnowledgeTags();
+
+  // Fetch categories (legacy, still shown as secondary)
   const { data: categories = [], isLoading: categoriesLoading } = useKnowledgeCategories(true);
 
-  // Fetch contextual articles if moduleId is provided and no category/search is active
-  const { data: contextualArticles = [], isLoading: contextualLoading } = useKnowledgeContextual(
-    !activeCategory && !searchQuery ? moduleId : undefined
+  // Collection-scoped articles
+  const { data: collectionData, isLoading: collectionArticlesLoading } = useKnowledgeCollectionArticles(
+    activeCollection || undefined,
+    limit,
+    page * limit
   );
 
-  // Fetch articles with filters
+  // Fetch contextual articles if moduleId is provided
+  const { data: contextualArticles = [], isLoading: contextualLoading } = useKnowledgeContextual(
+    !activeCategory && !activeCollection && !searchQuery ? moduleId : undefined
+  );
+
+  // Fetch articles with category filter (fallback)
   const { data: articlesData, isLoading: articlesLoading } = useKnowledgeArticles({
-    category: activeCategory || undefined,
+    category: !activeCollection ? (activeCategory || undefined) : undefined,
     limit,
     offset: page * limit,
   });
 
-  // Search results (only when searching)
-  const { data: searchResults = [], isLoading: searchLoading } = useKnowledgeSearch(searchQuery);
+  // P26-B: Faceted search
+  const { data: facetedResults, isLoading: facetedLoading } = useKnowledgeSearchFaceted(
+    searchQuery,
+    {
+      collectionSlug: activeCollection || undefined,
+      tagSlugs: activeTags.length > 0 ? activeTags : undefined,
+    }
+  );
 
-  // Use search results, contextual articles, or regular articles
+  // Search results (legacy fallback)
+  const { data: searchResults = [], isLoading: searchLoading } = useKnowledgeSearch(
+    searchQuery.length >= 2 && !facetedResults ? searchQuery : ''
+  );
+
   const articles = useMemo(() => {
-    if (searchQuery.length >= 2) return searchResults;
+    if (searchQuery.length >= 2) {
+      return facetedResults?.articles || searchResults;
+    }
+    if (activeCollection) return collectionData?.articles || [];
     if (!activeCategory && moduleId && contextualArticles.length > 0) return contextualArticles;
     return articlesData?.articles || [];
-  }, [searchQuery, searchResults, activeCategory, moduleId, contextualArticles, articlesData]);
+  }, [searchQuery, facetedResults, searchResults, activeCollection, collectionData, activeCategory, moduleId, contextualArticles, articlesData]);
 
-  const total = searchQuery.length >= 2 ? searchResults.length : articlesData?.total || 0;
-  const isLoading = categoriesLoading || articlesLoading || searchLoading || contextualLoading;
+  const searchFacets = facetedResults?.facets;
 
-  // Reset page when category changes
-  const handleCategoryClick = (slug: string | null) => {
-    setActiveCategory(slug);
+  const total = useMemo(() => {
+    if (searchQuery.length >= 2) return facetedResults?.total || searchResults.length;
+    if (activeCollection) return collectionData?.total || 0;
+    return articlesData?.total || 0;
+  }, [searchQuery, facetedResults, searchResults, activeCollection, collectionData, articlesData]);
+
+  const isLoading = collectionsLoading || categoriesLoading || articlesLoading || searchLoading || contextualLoading || collectionArticlesLoading || facetedLoading;
+
+  const handleCollectionClick = (slug: string | null) => {
+    setActiveCollection(slug);
+    setActiveCategory(null);
     setPage(0);
   };
 
-  // Clear search
+  const handleCategoryClick = (slug: string | null) => {
+    setActiveCategory(slug);
+    setActiveCollection(null);
+    setPage(0);
+  };
+
+  const handleTagToggle = (slug: string) => {
+    setActiveTags((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
   const handleClearSearch = () => {
     setSearchQuery('');
+    setActiveTags([]);
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Search Bar */}
-      <div className="px-1 mb-4">
+      <div className="px-1 mb-3">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -233,9 +351,74 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
         </div>
       </div>
 
-      {/* Category Pills */}
-      {!searchQuery && (
-        <div className="px-1 mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      {/* P26-B: Tag facets (always visible, compact) */}
+      {tags.length > 0 && (
+        <div className="px-1 mb-3 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          {tags.slice(0, 12).map((tag) => (
+            <TagChip
+              key={tag.id}
+              tag={tag}
+              isActive={activeTags.includes(tag.slug)}
+              onClick={() => handleTagToggle(tag.slug)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Search facets (shown when searching) */}
+      {searchQuery.length >= 2 && searchFacets && (
+        <div className="px-1 mb-3">
+          {searchFacets.collections.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+              {searchFacets.collections.map((f: any) => (
+                <button
+                  key={f.id}
+                  onClick={() => handleCollectionClick(f.slug)}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all
+                    ${activeCollection === f.slug ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+                  `}
+                >
+                  <FolderOpen size={10} />
+                  {f.title} ({f.count})
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* P26-B: Collections (IA spine — primary browse) */}
+      {!searchQuery && !activeCollection && collections.length > 0 && (
+        <div className="px-1 mb-3">
+          <h3 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+            {t('help.knowledge.collections', 'Collections')}
+          </h3>
+          <div className="grid gap-2">
+            {collections.map((coll) => (
+              <CollectionCard key={coll.id} collection={coll} onClick={handleCollectionClick} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Collection breadcrumb */}
+      {activeCollection && (
+        <div className="px-1 mb-3 flex items-center gap-2">
+          <button
+            onClick={() => handleCollectionClick(null)}
+            className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+          >
+            ← {t('help.knowledge.allCollections', 'All Collections')}
+          </button>
+          <span className="text-xs text-slate-400">
+            {collectionData?.collection?.title || activeCollection}
+          </span>
+        </div>
+      )}
+
+      {/* Category Pills (secondary, when no collection active) */}
+      {!searchQuery && !activeCollection && categories.length > 0 && (
+        <div className="px-1 mb-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => handleCategoryClick(null)}
             className={`
@@ -279,8 +462,18 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {searchQuery
                 ? t('help.knowledge.noSearchResults', 'No articles found for your search.')
-                : t('help.knowledge.noArticles', 'No articles available in this category.')}
+                : activeCollection
+                  ? t('help.knowledge.emptyCollection', 'No articles in this collection yet.')
+                  : t('help.knowledge.noArticles', 'No articles available in this category.')}
             </p>
+            {(searchQuery || activeCollection) && (
+              <button
+                onClick={() => { handleCollectionClick(null); handleClearSearch(); }}
+                className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                {t('help.knowledge.browseAll', 'Browse all collections')}
+              </button>
+            )}
           </div>
         )}
       </div>

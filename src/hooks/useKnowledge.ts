@@ -366,6 +366,163 @@ export function useTrackArticleView() {
   });
 }
 
+// ============================================
+// P26-B: COLLECTION + TAG HOOKS
+// ============================================
+
+export interface KbCollection {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  parent_collection_id?: string;
+  visibility: string;
+  featured: boolean;
+  article_count: number;
+}
+
+export interface KbTag {
+  id: string;
+  slug: string;
+  kind: string;
+  label: string;
+  description?: string;
+  article_count: number;
+}
+
+async function fetchCollections(lang: string, params: { parentId?: string; featured?: boolean } = {}): Promise<KbCollection[]> {
+  const searchParams = new URLSearchParams({ lang });
+  if (params.parentId) searchParams.append('parent', params.parentId);
+  if (params.featured) searchParams.append('featured', 'true');
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/collections?${searchParams}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.data?.collections || []) as KbCollection[];
+}
+
+async function fetchCollectionArticles(
+  collectionSlug: string,
+  lang: string,
+  limit = 20,
+  offset = 0
+): Promise<{ articles: KbArticleListItem[]; total: number; collection: KbCollection | null }> {
+  const res = await fetch(
+    `${PUBLIC_V8_KB_BASE}/collections/${collectionSlug}/articles?lang=${lang}&limit=${limit}&offset=${offset}`
+  );
+  if (!res.ok) return { articles: [], total: 0, collection: null };
+  const data = await res.json();
+  return {
+    articles: (data.data?.articles || []) as KbArticleListItem[],
+    total: data.data?.total || 0,
+    collection: (data.data?.collection || null) as KbCollection | null,
+  };
+}
+
+async function fetchTags(lang: string, kind?: string): Promise<KbTag[]> {
+  const searchParams = new URLSearchParams({ lang });
+  if (kind) searchParams.append('kind', kind);
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/tags?${searchParams}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.data?.tags || []) as KbTag[];
+}
+
+async function fetchRelatedArticles(slug: string, lang: string, limit = 5): Promise<KbArticleListItem[]> {
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/articles/${slug}/related?lang=${lang}&limit=${limit}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.data?.articles || []) as KbArticleListItem[];
+}
+
+async function fetchArticleRedirect(slug: string): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/articles/${slug}/redirect`);
+  if (!res.ok) return { redirectSlug: null, deprecationReason: null };
+  const data = await res.json();
+  return data.data || { redirectSlug: null, deprecationReason: null };
+}
+
+async function searchWithFacets(
+  query: string,
+  lang: string,
+  params: { collectionSlug?: string; tagSlugs?: string[]; surface?: string; limit?: number } = {}
+): Promise<{ articles: KbArticleListItem[]; facets: { collections: any[]; tags: any[] }; total: number }> {
+  if (!query || query.length < 2) return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+  const searchParams = new URLSearchParams({ q: query, lang });
+  if (params.collectionSlug) searchParams.append('collection', params.collectionSlug);
+  if (params.tagSlugs?.length) searchParams.append('tags', params.tagSlugs.join(','));
+  if (params.surface) searchParams.append('surface', params.surface);
+  if (params.limit) searchParams.append('limit', String(params.limit));
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/search/faceted?${searchParams}`);
+  if (!res.ok) return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+  const data = await res.json();
+  return data.data || { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+}
+
+export function useKnowledgeCollections(params: { parentId?: string; featured?: boolean } = {}) {
+  const { i18n } = useTranslation();
+  const lang = normalizeKbLang(i18n.language);
+  return useQuery({
+    queryKey: ['kb-collections', lang, params],
+    queryFn: () => fetchCollections(lang, params),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useKnowledgeCollectionArticles(collectionSlug: string | undefined, limit = 20, offset = 0) {
+  const { i18n } = useTranslation();
+  const lang = normalizeKbLang(i18n.language);
+  return useQuery({
+    queryKey: ['kb-collection-articles', collectionSlug, lang, limit, offset],
+    queryFn: () => fetchCollectionArticles(collectionSlug!, lang, limit, offset),
+    enabled: !!collectionSlug,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useKnowledgeTags(kind?: string) {
+  const { i18n } = useTranslation();
+  const lang = normalizeKbLang(i18n.language);
+  return useQuery({
+    queryKey: ['kb-tags', lang, kind],
+    queryFn: () => fetchTags(lang, kind),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useKnowledgeRelated(slug: string | undefined) {
+  const { i18n } = useTranslation();
+  const lang = normalizeKbLang(i18n.language);
+  return useQuery({
+    queryKey: ['kb-related', slug, lang],
+    queryFn: () => fetchRelatedArticles(slug!, lang),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useKnowledgeRedirect(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['kb-redirect', slug],
+    queryFn: () => fetchArticleRedirect(slug!),
+    enabled: !!slug,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useKnowledgeSearchFaceted(
+  query: string,
+  params: { collectionSlug?: string; tagSlugs?: string[]; surface?: string; limit?: number } = {}
+) {
+  const { i18n } = useTranslation();
+  const lang = normalizeKbLang(i18n.language);
+  return useQuery({
+    queryKey: ['kb-search-faceted', query, lang, params],
+    queryFn: () => searchWithFacets(query, lang, params),
+    enabled: query.length >= 2,
+    staleTime: 30 * 1000,
+  });
+}
+
 export default {
   useKnowledgeCategories,
   useKnowledgeArticles,
@@ -375,4 +532,10 @@ export default {
   useKnowledgeSearch,
   useKnowledgeContextual,
   useTrackArticleView,
+  useKnowledgeCollections,
+  useKnowledgeCollectionArticles,
+  useKnowledgeTags,
+  useKnowledgeRelated,
+  useKnowledgeRedirect,
+  useKnowledgeSearchFaceted,
 };

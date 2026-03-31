@@ -515,6 +515,493 @@ class KnowledgeBaseService {
     }
   }
 
+  // ============================================
+  // P26-B: COLLECTIONS (IA spine)
+  // ============================================
+
+  async getCollections(
+    language: string = 'en',
+    params: { parentId?: string; visibility?: string; featured?: boolean } = {}
+  ): Promise<any[]> {
+    try {
+      const conditions = ['c.status = ?'];
+      const queryParams: any[] = ['active'];
+
+      if (params.parentId) {
+        conditions.push('c.parent_collection_id = ?');
+        queryParams.push(params.parentId);
+      } else if (params.parentId === undefined) {
+        conditions.push('c.parent_collection_id IS NULL');
+      }
+
+      if (params.visibility) {
+        conditions.push('c.visibility = ?');
+        queryParams.push(params.visibility);
+      }
+
+      if (params.featured) {
+        conditions.push('c.featured = TRUE');
+      }
+
+      const sql = `
+        SELECT c.id, c.slug, c.parent_collection_id, c.visibility, c.featured, c.sort_order,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.description, te.description) as description,
+               (SELECT COUNT(*) FROM kb_article_collections ac WHERE ac.collection_id = c.id) as article_count
+        FROM kb_collections c
+        LEFT JOIN kb_collection_translations t ON c.id = t.collection_id AND t.language = ?
+        LEFT JOIN kb_collection_translations te ON c.id = te.collection_id AND te.language = 'en'
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY c.sort_order ASC, c.created_at ASC
+      `;
+
+      return await dbAll(sql, [language, ...queryParams]);
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting collections:', error);
+      return [];
+    }
+  }
+
+  async getCollectionBySlug(slug: string, language: string = 'en'): Promise<any | null> {
+    try {
+      const sql = `
+        SELECT c.id, c.slug, c.parent_collection_id, c.visibility, c.featured, c.sort_order, c.status,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.description, te.description) as description,
+               (SELECT COUNT(*) FROM kb_article_collections ac WHERE ac.collection_id = c.id) as article_count
+        FROM kb_collections c
+        LEFT JOIN kb_collection_translations t ON c.id = t.collection_id AND t.language = ?
+        LEFT JOIN kb_collection_translations te ON c.id = te.collection_id AND te.language = 'en'
+        WHERE c.slug = ?
+      `;
+      return await dbGet(sql, [language, slug]);
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting collection by slug:', error);
+      return null;
+    }
+  }
+
+  async getArticlesByCollection(
+    collectionId: string,
+    language: string = 'en',
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ articles: KbArticleListItem[]; total: number }> {
+    try {
+      const countSql = `
+        SELECT COUNT(*) as total
+        FROM kb_article_collections ac
+        JOIN kb_articles a ON ac.article_id = a.id
+        WHERE ac.collection_id = ? AND a.status = 'published'
+      `;
+      const countResult = (await dbGet(countSql, [collectionId])) as any;
+      const total = countResult?.total || 0;
+
+      const sql = `
+        SELECT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.summary, te.summary) as summary,
+               c.slug as category_slug,
+               COALESCE(ct.name, cte.name) as category_name,
+               c.icon as category_icon
+        FROM kb_article_collections ac
+        JOIN kb_articles a ON ac.article_id = a.id
+        JOIN kb_categories c ON a.category_id = c.id
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+        LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+        WHERE ac.collection_id = ? AND a.status = 'published'
+        ORDER BY ac.sort_order ASC, a.is_featured DESC, a.view_count DESC
+        LIMIT ? OFFSET ?
+      `;
+
+      const articles = await dbAll(sql, [language, language, collectionId, limit, offset]);
+      return {
+        articles: articles.map((row: any) => ({
+          ...row,
+          is_featured: Boolean(row.is_featured),
+        })),
+        total,
+      };
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting articles by collection:', error);
+      return { articles: [], total: 0 };
+    }
+  }
+
+  // ============================================
+  // P26-B: TAGS (facets)
+  // ============================================
+
+  async getTags(
+    language: string = 'en',
+    params: { kind?: string; articleId?: string } = {}
+  ): Promise<any[]> {
+    try {
+      const conditions = ['tg.status = ?'];
+      const queryParams: any[] = ['active'];
+
+      if (params.kind) {
+        conditions.push('tg.kind = ?');
+        queryParams.push(params.kind);
+      }
+
+      let joinClause = '';
+      if (params.articleId) {
+        joinClause = 'JOIN kb_article_tags at2 ON tg.id = at2.tag_id';
+        conditions.push('at2.article_id = ?');
+        queryParams.push(params.articleId);
+      }
+
+      const sql = `
+        SELECT tg.id, tg.slug, tg.kind, tg.synonyms, tg.visibility,
+               COALESCE(tt.label, tte.label) as label,
+               COALESCE(tt.description, tte.description) as description,
+               (SELECT COUNT(*) FROM kb_article_tags at3 WHERE at3.tag_id = tg.id) as article_count
+        FROM kb_tags tg
+        ${joinClause}
+        LEFT JOIN kb_tag_translations tt ON tg.id = tt.tag_id AND tt.language = ?
+        LEFT JOIN kb_tag_translations tte ON tg.id = tte.tag_id AND tte.language = 'en'
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY tg.kind ASC, COALESCE(tt.label, tte.label) ASC
+      `;
+
+      return await dbAll(sql, [language, ...queryParams]);
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting tags:', error);
+      return [];
+    }
+  }
+
+  async getArticlesByTag(
+    tagSlug: string,
+    language: string = 'en',
+    limit: number = 20
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const sql = `
+        SELECT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.summary, te.summary) as summary,
+               c.slug as category_slug,
+               COALESCE(ct.name, cte.name) as category_name,
+               c.icon as category_icon
+        FROM kb_article_tags atg
+        JOIN kb_tags tg ON atg.tag_id = tg.id
+        JOIN kb_articles a ON atg.article_id = a.id
+        JOIN kb_categories c ON a.category_id = c.id
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+        LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+        WHERE tg.slug = ? AND a.status = 'published'
+        ORDER BY a.is_featured DESC, a.view_count DESC
+        LIMIT ?
+      `;
+
+      const articles = await dbAll(sql, [language, language, tagSlug, limit]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting articles by tag:', error);
+      return [];
+    }
+  }
+
+  // ============================================
+  // P26-B: SEARCH with facets
+  // ============================================
+
+  async searchWithFacets(
+    query: string,
+    language: string = 'en',
+    params: { collectionSlug?: string; tagSlugs?: string[]; surface?: string; limit?: number } = {}
+  ): Promise<{
+    articles: KbArticleListItem[];
+    facets: { collections: any[]; tags: any[] };
+    total: number;
+  }> {
+    try {
+      const limit = params.limit || 20;
+      const searchPattern = `%${query}%`;
+      const conditions = ['a.status = ?'];
+      const queryParams: any[] = ['published'];
+
+      if (params.surface) {
+        conditions.push(`EXISTS (SELECT 1 FROM kb_surface_bindings sb WHERE sb.article_id = a.id AND sb.surface = ?)`);
+        queryParams.push(params.surface);
+      }
+
+      if (params.collectionSlug) {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM kb_article_collections ac2
+          JOIN kb_collections col ON ac2.collection_id = col.id
+          WHERE ac2.article_id = a.id AND col.slug = ?
+        )`);
+        queryParams.push(params.collectionSlug);
+      }
+
+      if (params.tagSlugs && params.tagSlugs.length > 0) {
+        const placeholders = params.tagSlugs.map(() => '?').join(',');
+        conditions.push(`EXISTS (
+          SELECT 1 FROM kb_article_tags at4
+          JOIN kb_tags tg2 ON at4.tag_id = tg2.id
+          WHERE at4.article_id = a.id AND tg2.slug IN (${placeholders})
+        )`);
+        queryParams.push(...params.tagSlugs);
+      }
+
+      conditions.push(
+        `(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?
+          OR te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?)`
+      );
+      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+
+      const whereClause = conditions.join(' AND ');
+
+      const countSql = `
+        SELECT COUNT(*) as total
+        FROM kb_articles a
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        WHERE ${whereClause}
+      `;
+      const countResult = (await dbGet(countSql, [language, ...queryParams])) as any;
+      const total = countResult?.total || 0;
+
+      const dataSql = `
+        SELECT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.summary, te.summary) as summary,
+               c.slug as category_slug,
+               COALESCE(ct.name, cte.name) as category_name,
+               c.icon as category_icon
+        FROM kb_articles a
+        JOIN kb_categories c ON a.category_id = c.id
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+        LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+        WHERE ${whereClause}
+        ORDER BY
+          CASE WHEN COALESCE(t.title, te.title) LIKE ? THEN 0 ELSE 1 END,
+          a.is_featured DESC, a.view_count DESC
+        LIMIT ?
+      `;
+
+      const articles = await dbAll(dataSql, [language, language, ...queryParams, searchPattern, limit]);
+
+      // Build facets from result set
+      const articleIds = articles.map((a: any) => a.id);
+      let collectionFacets: any[] = [];
+      let tagFacets: any[] = [];
+
+      if (articleIds.length > 0) {
+        const idPlaceholders = articleIds.map(() => '?').join(',');
+
+        try {
+          const collFacetSql = `
+            SELECT col.id, col.slug, COALESCE(ct2.title, cte2.title) as title, COUNT(*) as count
+            FROM kb_article_collections ac5
+            JOIN kb_collections col ON ac5.collection_id = col.id
+            LEFT JOIN kb_collection_translations ct2 ON col.id = ct2.collection_id AND ct2.language = ?
+            LEFT JOIN kb_collection_translations cte2 ON col.id = cte2.collection_id AND cte2.language = 'en'
+            WHERE ac5.article_id IN (${idPlaceholders})
+            GROUP BY col.id, col.slug, ct2.title, cte2.title
+            ORDER BY count DESC
+          `;
+          collectionFacets = await dbAll(collFacetSql, [language, ...articleIds]);
+        } catch { /* collections table may not exist yet */ }
+
+        try {
+          const tagFacetSql = `
+            SELECT tg3.id, tg3.slug, tg3.kind, COALESCE(tt3.label, tte3.label) as label, COUNT(*) as count
+            FROM kb_article_tags at5
+            JOIN kb_tags tg3 ON at5.tag_id = tg3.id
+            LEFT JOIN kb_tag_translations tt3 ON tg3.id = tt3.tag_id AND tt3.language = ?
+            LEFT JOIN kb_tag_translations tte3 ON tg3.id = tte3.tag_id AND tte3.language = 'en'
+            WHERE at5.article_id IN (${idPlaceholders}) AND tg3.status = 'active'
+            GROUP BY tg3.id, tg3.slug, tg3.kind, tt3.label, tte3.label
+            ORDER BY count DESC
+          `;
+          tagFacets = await dbAll(tagFacetSql, [language, ...articleIds]);
+        } catch { /* tags table may not exist yet */ }
+      }
+
+      return {
+        articles: articles.map((row: any) => ({
+          ...row,
+          is_featured: Boolean(row.is_featured),
+        })),
+        facets: { collections: collectionFacets, tags: tagFacets },
+        total,
+      };
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error in searchWithFacets:', error);
+      return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+    }
+  }
+
+  // ============================================
+  // P26-B: RELATED ARTICLES (curated)
+  // ============================================
+
+  async getRelatedArticles(
+    articleId: string,
+    language: string = 'en',
+    limit: number = 5
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const article = (await dbGet(
+        `SELECT related_article_ids FROM kb_articles WHERE id = ?`,
+        [articleId]
+      )) as any;
+
+      if (!article?.related_article_ids) return [];
+
+      let relatedIds: string[];
+      try {
+        relatedIds = JSON.parse(article.related_article_ids);
+      } catch {
+        return [];
+      }
+
+      if (!Array.isArray(relatedIds) || relatedIds.length === 0) return [];
+
+      const bounded = relatedIds.slice(0, limit);
+      const placeholders = bounded.map(() => '?').join(',');
+
+      const sql = `
+        SELECT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.summary, te.summary) as summary,
+               c.slug as category_slug,
+               COALESCE(ct.name, cte.name) as category_name,
+               c.icon as category_icon
+        FROM kb_articles a
+        JOIN kb_categories c ON a.category_id = c.id
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+        LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+        WHERE a.id IN (${placeholders}) AND a.status = 'published'
+      `;
+
+      const articles = await dbAll(sql, [language, language, ...bounded]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting related articles:', error);
+      return [];
+    }
+  }
+
+  // ============================================
+  // P26-B: ARTICLE VERSIONS
+  // ============================================
+
+  async getArticleVersions(articleId: string): Promise<any[]> {
+    try {
+      return await dbAll(
+        `SELECT id, article_id, version, change_type, change_note, changed_by, changed_at
+         FROM kb_article_versions
+         WHERE article_id = ?
+         ORDER BY version DESC`,
+        [articleId]
+      );
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting article versions:', error);
+      return [];
+    }
+  }
+
+  // ============================================
+  // P26-B: DEPRECATION / REDIRECT
+  // ============================================
+
+  async resolveArticleRedirect(slug: string): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
+    try {
+      const article = (await dbGet(
+        `SELECT a.redirect_to_article_id, a.deprecated_at, a.deprecation_reason, a.replacement_article_id
+         FROM kb_articles a WHERE a.slug = ?`,
+        [slug]
+      )) as any;
+
+      if (!article) return { redirectSlug: null, deprecationReason: null };
+
+      const targetId = article.redirect_to_article_id || article.replacement_article_id;
+      if (targetId) {
+        const target = (await dbGet(`SELECT slug FROM kb_articles WHERE id = ?`, [targetId])) as any;
+        return {
+          redirectSlug: target?.slug || null,
+          deprecationReason: article.deprecation_reason || null,
+        };
+      }
+
+      return {
+        redirectSlug: null,
+        deprecationReason: article.deprecated_at ? (article.deprecation_reason || 'This article has been deprecated.') : null,
+      };
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error resolving redirect:', error);
+      return { redirectSlug: null, deprecationReason: null };
+    }
+  }
+
+  // ============================================
+  // P26-B: SURFACE BINDING FILTER
+  // ============================================
+
+  async getArticlesForSurface(
+    surface: string,
+    language: string = 'en',
+    params: { toolContext?: string; limit?: number } = {}
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const limit = params.limit || 10;
+      const conditions = ['a.status = ?', 'sb.surface = ?'];
+      const queryParams: any[] = ['published', surface];
+
+      if (params.toolContext) {
+        conditions.push('(sb.tool_context = ? OR sb.tool_context IS NULL)');
+        queryParams.push(params.toolContext);
+      }
+
+      const sql = `
+        SELECT DISTINCT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+               COALESCE(t.title, te.title) as title,
+               COALESCE(t.summary, te.summary) as summary,
+               c.slug as category_slug,
+               COALESCE(ct.name, cte.name) as category_name,
+               c.icon as category_icon
+        FROM kb_surface_bindings sb
+        JOIN kb_articles a ON sb.article_id = a.id
+        JOIN kb_categories c ON a.category_id = c.id
+        LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+        LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+        LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+        LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY a.is_featured DESC, a.view_count DESC
+        LIMIT ?
+      `;
+
+      const articles = await dbAll(sql, [language, language, ...queryParams, limit]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting articles for surface:', error);
+      return [];
+    }
+  }
+
   /**
    * Get featured articles
    */

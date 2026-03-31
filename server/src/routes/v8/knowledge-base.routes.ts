@@ -176,6 +176,209 @@ publicKnowledgeBaseRoutes.post(
   })
 );
 
+// ============================================================
+// P26-B: Collections (IA spine)
+// ============================================================
+
+/**
+ * GET /api/v8/kb/collections?lang=&parent=&featured=
+ * Browse collections (IA spine). Public + authenticated.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/collections',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const parentId = firstParam(req.query.parent);
+    const featured = firstParam(req.query.featured) === 'true';
+    const collections = await KnowledgeBaseService.getCollections(language, {
+      parentId: parentId || undefined,
+      visibility: 'public',
+      featured: featured || undefined,
+    });
+    return res.json({ data: { collections }, meta: kbMeta() });
+  })
+);
+
+/**
+ * GET /api/v8/kb/collections/:slug?lang=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/collections/:slug',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+    const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
+    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+    return res.json({ data: { collection }, meta: kbMeta() });
+  })
+);
+
+/**
+ * GET /api/v8/kb/collections/:slug/articles?lang=&limit=&offset=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/collections/:slug/articles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
+    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+
+    const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
+    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+
+    const result = await KnowledgeBaseService.getArticlesByCollection(collection.id, language, limit, offset);
+    return res.json({ data: { ...result, collection }, meta: kbMeta() });
+  })
+);
+
+// ============================================================
+// P26-B: Tags (facets)
+// ============================================================
+
+/**
+ * GET /api/v8/kb/tags?lang=&kind=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/tags',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const kind = firstParam(req.query.kind);
+    const tags = await KnowledgeBaseService.getTags(language, { kind: kind || undefined });
+    return res.json({ data: { tags }, meta: kbMeta() });
+  })
+);
+
+/**
+ * GET /api/v8/kb/tags/:slug/articles?lang=&limit=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/tags/:slug/articles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+
+    const articles = await KnowledgeBaseService.getArticlesByTag(slug, language, limit);
+    return res.json({ data: { articles }, meta: kbMeta() });
+  })
+);
+
+// ============================================================
+// P26-B: Search with facets
+// ============================================================
+
+/**
+ * GET /api/v8/kb/search/faceted?q=&lang=&collection=&tags=&surface=&limit=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/search/faceted',
+  asyncHandler(async (req: Request, res: Response) => {
+    const q = firstParam(req.query.q);
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 50);
+    const collectionSlug = firstParam(req.query.collection);
+    const tagsRaw = firstParam(req.query.tags);
+    const surface = firstParam(req.query.surface);
+
+    if (!q || q.length < 2) {
+      return res.json({ data: { articles: [], facets: { collections: [], tags: [] }, total: 0 }, meta: kbMeta() });
+    }
+
+    const tagSlugs = tagsRaw ? tagsRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined;
+
+    const result = await KnowledgeBaseService.searchWithFacets(q, language, {
+      collectionSlug: collectionSlug || undefined,
+      tagSlugs,
+      surface: surface || undefined,
+      limit,
+    });
+
+    return res.json({ data: result, meta: kbMeta() });
+  })
+);
+
+// ============================================================
+// P26-B: Related articles + versions + redirect
+// ============================================================
+
+/**
+ * GET /api/v8/kb/articles/:slug/related?lang=&limit=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/articles/:slug/related',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 5, 20);
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+
+    const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
+    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+
+    const related = await KnowledgeBaseService.getRelatedArticles(article.id, language, limit);
+    return res.json({ data: { articles: related }, meta: kbMeta() });
+  })
+);
+
+/**
+ * GET /api/v8/kb/articles/:slug/versions
+ */
+publicKnowledgeBaseRoutes.get(
+  '/articles/:slug/versions',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+
+    const article = await KnowledgeBaseService.getArticleBySlug(slug, 'en');
+    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+
+    const versions = await KnowledgeBaseService.getArticleVersions(article.id);
+    return res.json({ data: { versions }, meta: kbMeta() });
+  })
+);
+
+/**
+ * GET /api/v8/kb/articles/:slug/redirect — resolve deprecation/redirect
+ */
+publicKnowledgeBaseRoutes.get(
+  '/articles/:slug/redirect',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as any).slug);
+    if (!slug) return res.status(400).json({ error: 'slug required' });
+
+    const result = await KnowledgeBaseService.resolveArticleRedirect(slug);
+    return res.json({ data: result, meta: kbMeta() });
+  })
+);
+
+// ============================================================
+// P26-B: Surface binding (contextual articles for a surface)
+// ============================================================
+
+/**
+ * GET /api/v8/kb/surface/:surface?lang=&toolContext=&limit=
+ */
+publicKnowledgeBaseRoutes.get(
+  '/surface/:surface',
+  asyncHandler(async (req: Request, res: Response) => {
+    const surface = firstParam((req.params as any).surface);
+    const language = firstParam(req.query.lang) || 'en';
+    const toolContext = firstParam(req.query.toolContext);
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 10, 50);
+    if (!surface) return res.status(400).json({ error: 'surface required' });
+
+    const articles = await KnowledgeBaseService.getArticlesForSurface(surface, language, {
+      toolContext: toolContext || undefined,
+      limit,
+    });
+    return res.json({ data: { articles, surface }, meta: kbMeta() });
+  })
+);
+
 /**
  * GET /api/v8/kb/categories?lang=&all=
  * Same semantics as GET /api/kb/categories; returns translated category pills with counts.

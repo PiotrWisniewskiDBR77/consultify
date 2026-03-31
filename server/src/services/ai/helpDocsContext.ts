@@ -174,6 +174,7 @@ export async function buildHelpDocsContext(opts: {
   query: string;
   language?: string;
   moduleId?: string | null;
+  surface?: string;
   maxArticles?: number;
   maxCharsPerArticle?: number;
 }): Promise<HelpDocsContextResult> {
@@ -189,6 +190,7 @@ export async function buildHelpDocsContext(opts: {
 
   const lang = opts.language ? normalizeLang(opts.language) : detectLangFromText(query);
   const moduleId = (opts.moduleId || '').trim() || null;
+  const surface = (opts.surface || '').trim() || null;
   const maxArticles = Math.min(Math.max(opts.maxArticles || 3, 1), 5);
   const maxCharsPerArticle = Math.min(Math.max(opts.maxCharsPerArticle || 1400, 400), 3000);
 
@@ -203,13 +205,20 @@ export async function buildHelpDocsContext(opts: {
   }
 
   try {
-    // Step 1: retrieve candidate articles (contextual + search)
-    const [contextual, searched] = await Promise.all([
+    // Step 1: retrieve candidate articles (contextual + search + surface-bound)
+    const [contextual, searched, surfaceBound] = await Promise.all([
       moduleId ? KnowledgeBaseService.getContextualArticles(moduleId, lang, maxArticles) : [],
       KnowledgeBaseService.searchArticles(query, lang, Math.max(8, maxArticles * 3)),
+      surface ? KnowledgeBaseService.getArticlesForSurface(
+        surface === 'chat' ? 'ai_recommendations' : surface,
+        lang,
+        { toolContext: moduleId || undefined, limit: maxArticles }
+      ).catch(() => []) : [],
     ]);
 
+    // P26-B: Surface-bound articles get priority, then contextual, then search
     const candidates = uniqById([
+      ...(Array.isArray(surfaceBound) ? (surfaceBound as any[]) : []),
       ...(Array.isArray(contextual) ? (contextual as any[]) : []),
       ...(Array.isArray(searched) ? (searched as any[]) : []),
     ]).slice(0, maxArticles);

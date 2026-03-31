@@ -84,7 +84,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 23 | Excele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md` | P23-A / P23-B / P23-C | verified(evidence) |
 | 24 | Templaty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_24_TEMPLATY_2026-03-29.md` | P24-A / P24-B / P24-C | verified(evidence) |
 | 25 | Help | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_25_HELP_2026-03-29.md` | P25-A / P25-B / P25-C | verified(evidence) |
-| 26 | Baza wiedzy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_26_BAZA_WIEDZY_2026-03-29.md` | P26-A / P26-B / P26-C | approved(scope) |
+| 26 | Baza wiedzy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_26_BAZA_WIEDZY_2026-03-29.md` | P26-A / P26-B / P26-C | verified(evidence) |
 | 27 | Tools | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_27_TOOLS_2026-03-29.md` | P27-A / P27-B / P27-C | approved(scope) |
 | 28 | Assessment | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md` | P28-A / P28-B / P28-C | approved(scope) |
 | 29 | Program partnerski | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` | P29-A / P29-B / P29-C | approved(scope) |
