@@ -27,6 +27,18 @@ Goal: deliver full thread lifecycle + server-side search target with pagination/
 
 Lock: `docs/product/work-packets/cursor-work/final_master/locks/P35-B.md`
 
+### 2) P22-B — Wordy: KIMI-style split-screen doc generation + preview + export (core runtime)
+
+Goal: deliver split-screen chat↔document workflow: generate doc from chat (step-by-step with task progress), preview (PDF inline), export/download, optional save-to-Outputs. Based on fresh KIMI evidence (2026-03-31 screenshots). Reuse existing `SplitLayout` + `V8ArtifactRunControl` + artifact registry. No silent apply; provenance via P18/P19.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P22-B.md`
+
+### 3) P23-B — Excele: KIMI-style split-screen sheet generation + preview + export (core runtime)
+
+Goal: deliver split-screen chat↔sheet workflow: generate sheet from chat (task progress checklist, code execution), preview (multi-sheet xlsx inline), export/download. Based on fresh KIMI evidence (2026-03-31 screenshots). Reuse existing `SplitLayout` + `V8ArtifactRunControl` + governed sheet artifact registry + table-platform. No silent apply; provenance via P18/P19.
+
+Lock: `docs/product/work-packets/cursor-work/final_master/locks/P23-B.md`
+
 ---
 
 Completion (each agent independently):
@@ -77,3 +89,5 @@ Completion (each agent independently):
 | P34-B | delivered | 2026-03-30 |
 | P25-C | verified(evidence) | 2026-03-31 |
 | P34-C | verified(evidence) | 2026-03-31 |
+| P22-B | delivered | 2026-03-31 |
+| P23-B | delivered | 2026-03-31 |

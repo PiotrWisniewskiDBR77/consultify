@@ -1,0 +1,470 @@
+/**
+ * KimiWorkspaceShell — KIMI-style split-screen: chat left ↔ artifact preview right.
+ *
+ * Shared shell for Wordy (P22) and Excele (P23) lanes.
+ * Reuses UnifiedChatPanel in split mode + artifact preview pane.
+ *
+ * SSOT: FINAL_IMPLEMENTATION_PLAN_22_WORDY / FINAL_IMPLEMENTATION_PLAN_23_EXCELE
+ */
+
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  FolderOpen,
+  Loader2,
+  Play,
+  RefreshCw,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
+import { UnifiedChatPanel } from '../UnifiedChatPanel';
+
+export type KimiLane = 'wordy' | 'excele';
+
+export type TaskStepStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface TaskStep {
+  id: string;
+  label: string;
+  status: TaskStepStatus;
+  detail?: string;
+}
+
+export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'none';
+
+export interface ArtifactPreview {
+  type: ArtifactPreviewType;
+  title: string;
+  url?: string;
+  fileName?: string;
+  pageCount?: number;
+  sheetNames?: string[];
+  summary?: string;
+  kpiItems?: Array<{ label: string; value: string }>;
+}
+
+interface KimiWorkspaceShellProps {
+  lane: KimiLane;
+  taskSteps: TaskStep[];
+  totalSteps: number;
+  completedSteps: number;
+  isGenerating: boolean;
+  isCompleted: boolean;
+  preview: ArtifactPreview | null;
+  onReplay?: () => void;
+  onRemix?: () => void;
+  onDownload?: () => void;
+  onPreviewFile?: () => void;
+  onAllFiles?: () => void;
+  chatSystemPrompt?: string;
+  conversationId?: string | null;
+}
+
+const LANE_CONFIG = {
+  wordy: {
+    icon: FileText,
+    label: 'Wordy',
+    labelPl: 'Dokumenty',
+    accentColor: 'purple',
+    inputPlaceholder: 'Describe the document you want to create...',
+    inputPlaceholderPl: 'Opisz dokument, który chcesz stworzyć...',
+  },
+  excele: {
+    icon: FileSpreadsheet,
+    label: 'Excele',
+    labelPl: 'Arkusze',
+    accentColor: 'emerald',
+    inputPlaceholder: 'Upload a spreadsheet to work with or create from scratch',
+    inputPlaceholderPl: 'Prześlij arkusz lub stwórz od zera',
+  },
+} as const;
+
+function TaskProgressBar({
+  steps,
+  total,
+  completed,
+  isGenerating,
+  isCompleted,
+  onReplay,
+  onRemix,
+}: {
+  steps: TaskStep[];
+  total: number;
+  completed: number;
+  isGenerating: boolean;
+  isCompleted: boolean;
+  onReplay?: () => void;
+  onRemix?: () => void;
+}) {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          {isGenerating ? (
+            <Loader2 size={16} className="animate-spin text-brand" />
+          ) : isCompleted ? (
+            <CheckCircle2 size={16} className="text-emerald-500" />
+          ) : (
+            <Sparkles size={16} className="text-slate-400" />
+          )}
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {isCompleted
+              ? t('kimi.taskCompleted', 'Task completed')
+              : isGenerating
+                ? t('kimi.executingTask', 'Executing task...')
+                : t('kimi.taskProgress', 'Task Progress')}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            {completed}/{total}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {isCompleted && onReplay && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReplay();
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+            >
+              <Play size={12} />
+              {t('kimi.replay', 'Replay')}
+            </button>
+          )}
+          {isCompleted && onRemix && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemix();
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+            >
+              <RefreshCw size={12} />
+              {t('kimi.remix', 'Remix')}
+            </button>
+          )}
+          {isExpanded ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </div>
+      </button>
+
+      {/* Progress bar */}
+      <div className="px-4 pb-1">
+        <div className="h-1 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-brand rounded-full transition-all duration-500 ease-out"
+            style={{ width: total > 0 ? `${(completed / total) * 100}%` : '0%' }}
+          />
+        </div>
+      </div>
+
+      {/* Expanded step list */}
+      {isExpanded && (
+        <div className="px-4 pb-3 space-y-1.5 max-h-48 overflow-y-auto">
+          {steps.map((step) => (
+            <div key={step.id} className="flex items-center gap-2 text-xs">
+              {step.status === 'running' ? (
+                <Loader2 size={12} className="animate-spin text-brand flex-shrink-0" />
+              ) : step.status === 'completed' ? (
+                <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
+              ) : step.status === 'failed' ? (
+                <X size={12} className="text-red-500 flex-shrink-0" />
+              ) : (
+                <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-navy-600 flex-shrink-0" />
+              )}
+              <span
+                className={`${step.status === 'running' ? 'text-slate-800 dark:text-slate-100 font-medium' : 'text-slate-600 dark:text-slate-400'}`}
+              >
+                {step.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArtifactPreviewPane({
+  preview,
+  lane,
+  isGenerating,
+  onDownload,
+  onPreviewFile,
+  onAllFiles,
+}: {
+  preview: ArtifactPreview | null;
+  lane: KimiLane;
+  isGenerating: boolean;
+  onDownload?: () => void;
+  onPreviewFile?: () => void;
+  onAllFiles?: () => void;
+}) {
+  const { t } = useTranslation();
+  const config = LANE_CONFIG[lane];
+  const Icon = config.icon;
+  const [activeSheet, setActiveSheet] = useState(0);
+
+  if (isGenerating && !preview) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto">
+            <Loader2 size={28} className="animate-spin text-brand" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {t('kimi.generating', 'Generating...')}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {lane === 'wordy'
+                ? t('kimi.generatingDoc', 'Building your document')
+                : t('kimi.generatingSheet', 'Building your spreadsheet')}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!preview || preview.type === 'none') {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+        <div className="text-center space-y-4 max-w-sm px-6">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mx-auto">
+            <Icon size={28} className="text-slate-400 dark:text-slate-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {lane === 'wordy'
+                ? t('kimi.emptyWordy', 'Your document will appear here')
+                : t('kimi.emptyExcele', 'Your spreadsheet will appear here')}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t('kimi.emptyHint', 'Start a conversation to generate content')}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-navy-900">
+      {/* Preview header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Icon size={16} className="text-slate-500 flex-shrink-0" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+            {preview.title}
+          </span>
+          {preview.pageCount && (
+            <span className="text-xs text-slate-400 flex-shrink-0">
+              {preview.pageCount} {preview.pageCount === 1 ? 'page' : 'pages'}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {onDownload && (
+            <button
+              onClick={onDownload}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+            >
+              <Download size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Preview content */}
+      <div className="flex-1 overflow-auto p-4">
+        {preview.type === 'pdf' && preview.url && (
+          <iframe
+            src={preview.url}
+            className="w-full h-full min-h-[600px] rounded-lg border border-slate-200 dark:border-navy-700"
+            title={preview.title}
+          />
+        )}
+        {preview.type === 'xlsx' && (
+          <div className="space-y-4">
+            {preview.summary && (
+              <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+                <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
+              </div>
+            )}
+            {preview.kpiItems && preview.kpiItems.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {preview.kpiItems.map((kpi, i) => (
+                  <div
+                    key={i}
+                    className="p-3 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700"
+                  >
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{kpi.label}</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white mt-0.5">
+                      {kpi.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                <FileSpreadsheet size={48} className="mx-auto mb-3 opacity-50" />
+                <p className="text-sm font-medium">
+                  {t('kimi.xlsxPreview', 'Spreadsheet preview')}
+                </p>
+                <p className="text-xs mt-1">
+                  {preview.fileName || 'spreadsheet.xlsx'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Sheet tabs (for xlsx) */}
+      {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
+        <div className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0">
+          {preview.sheetNames.map((name, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveSheet(i)}
+              className={`px-3 py-1 text-xs rounded whitespace-nowrap transition-colors ${
+                activeSheet === i
+                  ? 'bg-white dark:bg-navy-800 text-slate-800 dark:text-white font-medium shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Download bar */}
+      {(onPreviewFile || onAllFiles) && (
+        <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shrink-0">
+          {onPreviewFile && (
+            <button
+              onClick={onPreviewFile}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+            >
+              <Eye size={16} />
+              <span>{preview.fileName || (lane === 'wordy' ? 'document.pdf' : 'spreadsheet.xlsx')}</span>
+              <span className="text-xs text-slate-400">{t('kimi.previewFile', 'Preview File')}</span>
+            </button>
+          )}
+          {onAllFiles && (
+            <button
+              onClick={onAllFiles}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+            >
+              <FolderOpen size={16} />
+              <span>{t('kimi.allFiles', 'All files')}</span>
+              <span className="text-xs text-slate-400">
+                {t('kimi.viewOrDownload', 'View or download files')}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
+  lane,
+  taskSteps,
+  totalSteps,
+  completedSteps,
+  isGenerating,
+  isCompleted,
+  preview,
+  onReplay,
+  onRemix,
+  onDownload,
+  onPreviewFile,
+  onAllFiles,
+  chatSystemPrompt,
+  conversationId,
+}) => {
+  const { setDisplayMode, setWorkspaceContext } = useConversationStore();
+
+  const workspaceContext = useMemo(() => {
+    const view = lane === 'wordy' ? AppView.AI_CHAT : AppView.AI_CHAT;
+    const type = getDefaultWorkspaceType(view);
+    return createWorkspaceContext(view, type, {});
+  }, [lane]);
+
+  React.useEffect(() => {
+    if (workspaceContext) {
+      setWorkspaceContext(workspaceContext);
+      setDisplayMode('split');
+    }
+  }, [workspaceContext, setWorkspaceContext, setDisplayMode]);
+
+  return (
+    <div className="flex w-full h-full min-h-0 overflow-hidden bg-slate-50 dark:bg-navy-950">
+      {/* Left: Chat panel */}
+      <div className="w-[420px] shrink-0 flex flex-col bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700">
+        <div className="flex-1 min-h-0">
+          <UnifiedChatPanel
+            mode="split"
+            workspaceContext={workspaceContext}
+            showModeToggle={false}
+            showHistoryTrigger={true}
+            showFocusMode={false}
+            systemPrompt={chatSystemPrompt}
+          />
+        </div>
+
+        {/* Task progress bar at bottom of chat */}
+        {(isGenerating || isCompleted || taskSteps.length > 0) && (
+          <TaskProgressBar
+            steps={taskSteps}
+            total={totalSteps}
+            completed={completedSteps}
+            isGenerating={isGenerating}
+            isCompleted={isCompleted}
+            onReplay={onReplay}
+            onRemix={onRemix}
+          />
+        )}
+      </div>
+
+      {/* Right: Artifact preview */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <ArtifactPreviewPane
+          preview={preview}
+          lane={lane}
+          isGenerating={isGenerating}
+          onDownload={onDownload}
+          onPreviewFile={onPreviewFile}
+          onAllFiles={onAllFiles}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default KimiWorkspaceShell;

@@ -57,6 +57,16 @@ Status: approved(scope) — Wordy KIMI-style docs lane canon frozen; evidence ma
   - `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.13.51.png` (split view: left chat, right artifact surface).
   - `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.15.01.png` (download/allow prompt: export/download posture in workflow).
   - `Softs/KIMI/Screens/` (pozostałe screenshoty: UX/flow/akcje do wyekstrahowania w dedicated plan).
+- **KIMI Docs — fresh evidence (2026-03-31)**:
+  - `assets/Screenshot_2026-03-31_at_07.46.55.png` — **doc generation completed**: split-screen (chat left, PDF preview right); "Task Progress 6/6"; "Replay" + "Remix" buttons; "Preview File" + "All files" download posture; 22-page professional document with cover, ToC, headers/footers; chat shows structured summary (sections 1–4) + word count + file size validation.
+  - Evidence extracted:
+    - **Generation trigger**: user prompt → agent plans multi-step task → executes sequentially (Think → Execute Terminal → build doc).
+    - **Task progress**: explicit "Task Progress N/M" bar at bottom; each step is named and expandable.
+    - **Completion state**: "Kimi Agent playback completed" with **Replay** (re-run) and **Remix** (modify) actions.
+    - **Preview posture**: right pane shows PDF inline preview (page-by-page, zoom, page count "PAGE 1 OF 22").
+    - **Download posture**: "Preview File" button (opens preview) + "All files — View or download files" (file manager).
+    - **Chat summary**: structured description of generated content + key metrics (word count, references, formatting).
+    - **No silent apply**: generation is visible step-by-step; user sees each execution step before final output.
 
 ### 4.4 Evidence mapping table (explicit; do not infer)
 Poniżej jest **deliverable P22-A**: tabela mapująca deklarowane zachowania do dowodów. Każda pozycja bez jednoznacznego dowodu jest **MISSING INPUT** (blokada).
@@ -67,7 +77,7 @@ Poniżej jest **deliverable P22-A**: tabela mapująca deklarowane zachowania do 
 | Export/download posture exists in flow | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.15.01.png` | screenshot | OK | — |
 | Word/PDF “professional” intent + track changes + comments are part of KIMI Docs posture | `Softs/KIMI/Docs/www.kimi.com/en/docs.html` <br> `Softs/KIMI/Docs/www.kimi.com/features/docs.html` | vendor docs page | OK (posture only) | **MISSING INPUT**: concrete in-app UI/UX for track changes + comments (screens/video) and their exact semantics |
 | Split-screen action grammar (buttons, menus, states, shortcuts) | `Softs/KIMI/Screens/` | evidence folder exists | **MISSING INPUT** | **MISSING INPUT**: screen-by-screen extraction: exact actions, states, shortcuts, confirmations, disabled states |
-| Generate doc from chat into doc pane (exact triggers + states) | — | — | **MISSING INPUT** | **MISSING INPUT**: evidence for entrypoint, generation trigger, intermediate/loading states, cancel/retry semantics |
+| Generate doc from chat into doc pane (exact triggers + states) | `assets/Screenshot_2026-03-31_at_07.46.55.png` | screenshot (KIMI live 2026-03-31) | OK (bounded) | Trigger: user prompt → agent plans → sequential execution (Think/Execute steps). Progress: "Task Progress N/M". Completion: "playback completed" + Replay/Remix. Preview: PDF inline right pane. **Remaining gap**: cancel mid-generation not observed; retry = "Replay" button. |
 | Edit doc content (exact editor behaviors) | — | — | **MISSING INPUT** | **MISSING INPUT**: evidence for editing model, selection/formatting/toolbars, undo/redo, focus rules |
 | Track changes behaviors (toggle, display, accept/reject flows) | — | — | **MISSING INPUT** | **MISSING INPUT**: evidence for UI + exact semantics; must not be inferred from “Word-like” assumptions |
 | Comments behaviors (create, resolve, threading, visibility) | — | — | **MISSING INPUT** | **MISSING INPUT**: evidence for UI + exact semantics |
@@ -195,6 +205,6 @@ Poniżej jest **deliverable P22-A**: tabela mapująca deklarowane zachowania do 
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P22-A | approved(scope) |  | N/A (docs-only) | N/A (docs-only) | Canon frozen; evidence mapping added with **MISSING INPUT** flags; governance + anti-duplicate stated |
-| P22-B |  |  |  |  |  |
+| P22-B | delivered | ws/c-artifact-evidence | KimiWorkspaceShell + WordyView: split-screen chat↔doc, task progress, preview, download posture; routes /wordy wired | KIMI evidence screenshots mapped; runtime shell functional | Bounded: preview uses iframe for PDF; task progress is UI-ready but not yet wired to real AI pipeline execution steps. No silent apply. |
 | P22-C |  |  |  |  |  |
 

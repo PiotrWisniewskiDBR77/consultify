@@ -30,6 +30,8 @@ export const ROUTES = {
   AI_CHAT: '/chat',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
+  WORDY: '/wordy',
+  EXCELE: '/excele',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 

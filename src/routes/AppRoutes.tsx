@@ -168,6 +168,14 @@ const SuperAdminView = React.lazy(() =>
 // AI Chat (Full Screen Chat View)
 const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
 
+// KIMI-style workspaces (P22 Wordy / P23 Excele)
+const WordyView = React.lazy(() =>
+  import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
+);
+const ExceleView = React.lazy(() =>
+  import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({ default: m.ExceleView }))
+);
+
 // Discovery Consultant (AI Discovery with Canvas)
 const DiscoveryConsultantView = React.lazy(() =>
   import('@/components/Discovery/DiscoveryConsultantView').then((m) => ({
@@ -970,6 +978,30 @@ export const AppRoutes: React.FC = () => {
                   <ConversationRouteSync />
                   <AIChatWelcomeView />
                 </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* KIMI-style Wordy — document generation workspace (P22) */}
+        <Route
+          path={ROUTES.WORDY}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Wordy']} noPadding>
+              <RouteErrorBoundary>
+                <WordyView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* KIMI-style Excele — spreadsheet generation workspace (P23) */}
+        <Route
+          path={ROUTES.EXCELE}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
+              <RouteErrorBoundary>
+                <ExceleView />
               </RouteErrorBoundary>
             </MainLayout>
           }

@@ -61,6 +61,9 @@ Last updated: 2026-03-30 (P23-A scope closure)
   - `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.15.01.png` (download/allow prompt: export posture).
 - **Workbook expectation class (non-goal parity but user mental model)**:
   - `Microsoft Excel`, `Google Sheets` jako “expectation class” — nie parity target (wprost non-goal w planie `Sheet`).
+- **KIMI Sheets — fresh evidence (2026-03-31)**:
+  - `assets/Screenshot_2026-03-31_at_07.41.09.png` — **sheet generation in-progress**: split-screen (chat left with task-list, "Kimi's Computer" right executing Python/openpyxl code). Evidence: split-screen anatomy, task progress checklist (sequential steps), code execution model (iPython + openpyxl), "Executing task..." real-time status, input posture ("Upload a spreadsheet to work with or create from scratch").
+  - `assets/Screenshot_2026-03-31_at_07.46.10.png` — **sheet generation completed**: split-screen (chat left with summary + KPIs, xlsx preview right with multi-sheet workbook). Evidence: "Task completed" badge, multi-sheet output (Cover + 5 data sheets), full spreadsheet preview with professional formatting (conditional formatting, borders, alternating rows), download posture ("Preview File" + "All files"), structured chat summary with KPIs.
 
 ### 4.3 Parity checklist vs Softs (approval-grade)
 **Parity oznacza “governed, believable bounded sheet artifact + KIMI split-screen posture”, nie “Excel parity”.**
@@ -91,9 +94,9 @@ Poniżej jest **approval-grade mapping** tego, czego *wymagamy* jako dowód prze
 
 | Capability cluster (what we claim) | Required evidence (approval-grade) | Current evidence in repo | Status |
 | --- | --- | --- | --- |
-| KIMI split-screen anatomy (chat↔sheet) | Konkretne screeny + opis akcji/stanu bez interpretacji | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.13.51.png` (split) | **MISSING INPUT**: brak pełnego action/state mapping (skrótów, stanów, affordances) |
+| KIMI split-screen anatomy (chat↔sheet) | Konkretne screeny + opis akcji/stanu bez interpretacji | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.13.51.png` (split) + `assets/Screenshot_2026-03-31_at_07.41.09.png` (in-progress) + `assets/Screenshot_2026-03-31_at_07.46.10.png` (completed) | OK (bounded) — split anatomy mapped: chat left (task-list + summary), execution/preview right; in-progress and completed states captured. **Remaining gap**: shortcut keys not observed. |
 | Task progress checklist in flow | Screen pokazujący checklist + jak wpływa na sheet | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.14.17.png` | **MISSING INPUT**: brak spisanej semantyki checklist (co jest “task”, kiedy complete) |
-| Export/download posture in flow | Screen + dialog/posture + recovery path | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.15.01.png`; KIMI resource o preview→export | **MISSING INPUT**: brak mappingu stanów failure/retry w UX |
+| Export/download posture in flow | Screen + dialog/posture + recovery path | `Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.15.01.png` + `assets/Screenshot_2026-03-31_at_07.46.10.png` | OK (bounded) — "Preview File" + "All files" buttons; preview shows full spreadsheet inline; download yields .xlsx. **Remaining gap**: failure/retry UX not directly observed; we define our own bounded recovery (retry + no ghost artifacts). |
 | AI Excel agent capability claims (formulas/cleaning/modeling) | Strona/Docs z deklaracjami capability | `Softs/KIMI/Docs/www.kimi.com/en/sheets.html`; `.../best-free-ai-tools-for-excel.html` | OK (claims captured) |
 | Schema proposal + apply gating | Evidence że zmiany nie są silent + są reviewable | Brak bezpośredniego KIMI dowodu w Screens/Docs dla “diff+apply gating” | **MISSING INPUT**: brak referencji KIMI dla propose/review/apply UI; dopóki brak — nie wolno implementować “jak nam pasuje” |
 | Import posture (CSV/XLSX) + bounded limits | Dowód formatu + granic + komunikatów | KIMI resource wspomina conversion/import; brak lokalnego flow evidence | **MISSING INPUT**: brak specyfikacji limitów + brak evidence dla import UX |
@@ -220,6 +223,6 @@ Każdy scenariusz musi: (a) zatrzymać silent apply, (b) zostawić artefakt w pr
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P23-A | approved(scope) | `67589fb7f5` | N/A — docs/scope only | N/A | Canon §2.3; evidence mapping §6 (with explicit **MISSING INPUT**); governance + anti-duplicate §7; degraded/error posture §7.1; checklist §7.2. |
-| P23-B |  |  |  |  |  |
+| P23-B | delivered | ws/c-artifact-evidence | KimiWorkspaceShell + ExceleView: split-screen chat↔sheet, task progress, multi-sheet tabs, KPI cards, download posture; routes /excele wired | KIMI evidence screenshots mapped; runtime shell functional | Bounded: sheet preview is summary+KPI view (not full grid editor); task progress UI-ready but not yet wired to real AI pipeline. No silent apply. |
 | P23-C |  |  |  |  |  |
 
