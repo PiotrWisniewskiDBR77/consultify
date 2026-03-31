@@ -1,7 +1,7 @@
 # Final Implementation Contract — Whiteboard (Position 13/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: approved(scope) (P13-A canon frozen; docs-only)
 
 ## 1. Executive summary
 - **Intent**: Jak Mindmap: przegląd narzędzi/przycisków + naprawa procesu budowania; AI współbuduje.
@@ -15,6 +15,108 @@ Status: draft (contract wrapper over existing plan)
 
 ### 2.2 Out-of-scope / non-goals
 - Realtime-collab parity z pełnymi canvas tools, jeśli nie jest zadeklarowane w planie.
+
+### 2.3 P13-A canon (board canon + toolbelt baseline) (DOCS ONLY)
+
+This section is the **scope-approval canon** for Whiteboard. It freezes the P0 toolbelt, facilitation baseline, export/readback assumptions, collaboration boundary, and AI co-building governance used by later packets.
+
+#### 2.3.1 Minimal toolbelt (P0)
+The board must provide, at minimum:
+- **Select**: single-select + multi-select (shift / marquee) with clear selection bounds; selection must not “teleport” after operations.
+- **Pan / zoom / fit**: pan canvas, zoom in/out, and fit-to-content (and/or fit-to-selection) without losing orientation.
+- **Sticky**: create sticky notes, edit text, move, duplicate; stickies behave as first-class objects for grouping/alignment/export.
+- **Shape**: create basic shapes (rectangle, ellipse, line/arrow) with resize/rotate bounded to predictable handles.
+- **Text**: create standalone text objects; edit in place; text is selectable/movable like other objects.
+- **Group / ungroup**: group selected objects; ungroup; group moves as a unit while preserving children positions.
+- **Align / distribute (bounded)**: align (left/center/right/top/middle/bottom) and distribute (horizontal/vertical) **only within current selection**; no auto-layout or global rearrangement.
+- **Undo / redo**: undo/redo all above actions (incl. group/ungroup + align/distribute + text edits) with stable history semantics.
+- **Export**: export a readback artifact from the current canonical board state (see 2.3.3).
+
+#### 2.3.2 Facilitation baseline cues (bounded)
+Whiteboard is a facilitation surface, not just drawing. The product must expose a minimal, explicit workshop journey:
+
+- **Start → Organize → Converge → Handoff**
+
+Bounded scope for cues (P0):
+- **Start**: prompt to capture raw inputs (stickies/shapes/text) and name the board/session.
+- **Organize**: prompt/affordance to cluster/group and align/distribute without losing content; “clean up” actions are bounded to selection.
+- **Converge**: prompt/affordance to mark a small set of outcomes (e.g. “top 3”) without introducing a full voting system.
+- **Handoff**: prompt/affordance to export/readback and attach/share the result with a downstream artifact (bounded by declared integrations in later packets).
+
+Non-goal (P13-A): building a full workshop engine (timers, voting, roles, templates marketplace).
+
+#### 2.3.3 Export + readback assumptions (freeze)
+Export is for **handoff** and **audit-friendly readback**. For P0 we freeze expectations explicitly:
+
+- **Exported (must)**:
+  - **Visual export** of the board (at least PNG). Scope may later include SVG/PDF, but P0 requires one predictable visual output.
+  - **Metadata**: board title, export timestamp, and a stable identifier (board/artifact id) embedded in filename or export payload.
+- **Preserved** (in the exported artifact):
+  - relative layout/positions at the time of export
+  - visible text content (with font fallback allowed)
+  - grouping as it appears visually (even if not editable)
+- **Lost** (if export is visual-only):
+  - object editability (no re-select/move/resize semantics)
+  - semantic object types (sticky vs shape vs text) beyond pixels
+  - undo/redo history
+- **Explicit constraint**:
+  - Export must be derived from the **single canonical board truth** (see 2.3.6). No “export-only” parallel renderer state that becomes a second truth.
+
+#### 2.3.4 Collaboration boundary (freeze)
+P13-B is allowed to ship a high-quality **single-operator** whiteboard without real-time collaboration.
+
+- **Explicit non-goal (P0 / P13-B baseline)**: real-time collaboration features are not required:
+  - presence indicators
+  - live cursors
+  - comments/chat on-canvas
+  - concurrent edit conflict resolution
+
+If collaboration is later declared, it must be frozen in a separate scope packet (e.g. `P13-X`) with explicit presence/cursor/comment semantics and degraded modes.
+
+#### 2.3.5 AI co-building contract (NO silent apply)
+AI may help build the board, but only as **proposals**:
+
+- **Generate layout**: AI proposes a set of board operations (create/move/group/align/distribute objects; add stickies/text/shapes) within the frozen toolbelt.
+- **Preview**: user sees a non-destructive preview (overlay or staged diff) of the proposed changes.
+- **Apply / reject**: user explicitly applies or rejects the proposal.
+- **Audit event (required)**: every proposal must write an auditable event:
+  - proposal created (with summarized intent + bounded diff)
+  - proposal applied OR rejected
+
+Rule: **NO silent apply** (AI cannot modify the canonical board state without an explicit user “Apply”).
+
+#### 2.3.6 Anti-duplicate gate (one board canon)
+There must be **one** canonical board truth/store:
+
+- No parallel “AI board state”, “export board state”, or “preview board state” persisted as a second truth.
+- Previews are ephemeral and must be derived from the canonical state + proposed diff.
+- Any persistence must extend existing artifact governance (provenance/audit), not create a new standalone store.
+
+#### 2.3.7 Degraded / error posture (P0)
+The board must fail safely and predictably. Minimum scenarios to support (8+):
+
+1. **Board load fails**: show error state + retry; do not create duplicate boards silently.
+2. **Offline / network loss**: switch to read-only or local-only mode; clearly label state; prevent destructive actions if not safely persisted.
+3. **Permission/locked state**: tools become read-only; export still allowed; AI apply disabled.
+4. **Very large board**: degrade gracefully (e.g. disable snapping/alignment guides first) rather than freezing.
+5. **Undo/redo unavailable or stack overflow**: communicate limits; keep manual edits possible; never corrupt visible state.
+6. **Export fails**: show actionable error; allow retry; preserve user work; do not “export blank” silently.
+7. **Font/asset missing**: fallback rendering; preserve text content; warn about visual differences in export.
+8. **AI unavailable / timeout**: AI disabled with clear messaging; manual toolbelt remains fully usable.
+9. **Apply proposal fails mid-flight**: roll back to pre-apply canonical state; record audit event as failed.
+10. **Corrupted board document**: open in safe mode (readback/export only) and provide recovery path; never overwrite the last good state without explicit consent.
+
+#### 2.3.8 Acceptance checklist (P13-A scope approval)
+- [ ] §2.3 exists and freezes the **minimal toolbelt (P0)** exactly (select; pan/zoom/fit; sticky; shape; text; group/ungroup; align/distribute bounded; undo/redo; export).
+- [ ] Facilitation cues are explicitly frozen as **Start → Organize → Converge → Handoff** (bounded; non-goals stated).
+- [ ] Export/readback assumptions are frozen (what is exported, what is preserved, what is lost).
+- [ ] Collaboration boundary is explicit (presence/cursors/comments are non-goals unless later packet freezes them).
+- [ ] AI co-building contract is frozen (generate → preview → apply/reject + audit; **no silent apply**).
+- [ ] Anti-duplicate gate is explicit (one canon; no parallel truth/store).
+- [ ] Degraded/error posture includes **8+** concrete scenarios with expected behavior.
+- [ ] Contract header status is `approved(scope)` for P13-A (docs-only).
+- [ ] `EXECUTION_INDEX.md` row #13 is updated to `approved(scope)`.
+- [ ] Evidence ledger row `P13-A` is filled at least with status + notes (commit link added on closeout).
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -139,7 +241,7 @@ Status: draft (contract wrapper over existing plan)
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
-| P13-A |  |  |  |  |  |
+| P13-A | approved(scope) |  |  |  | §2.3 canon frozen (toolbelt, facilitation cues, export/readback, collab boundary, AI proposals + audit, anti-duplicate, degraded posture) |
 | P13-B |  |  |  |  |  |
 | P13-C |  |  |  |  |  |
 
