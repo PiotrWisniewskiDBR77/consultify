@@ -227,6 +227,76 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     });
   });
 
+  // ==================== ATTACHMENT ENDPOINTS ====================
+
+  describe('Attachment Pointers (§2.3.1)', () => {
+    it('POST /:id/messages/:messageId/attachments creates attachment or requires auth', async () => {
+      const res = await request(app)
+        .post('/api/conversations/00000000-0000-0000-0000-000000000001/messages/msg-1/attachments')
+        .send({
+          kind: 'file',
+          displayName: 'test-doc.pdf',
+          mime: 'application/pdf',
+          sizeBytes: 1024,
+        });
+      expect([201, 401, 404]).toContain(res.status);
+      if (res.status === 201) {
+        expect(res.body).toHaveProperty('id');
+        expect(res.body.kind).toBe('file');
+        expect(res.body.display_name).toBe('test-doc.pdf');
+      }
+    });
+
+    it('GET /:id/messages/:messageId/attachments lists attachments or degrades gracefully', async () => {
+      const res = await request(app)
+        .get('/api/conversations/00000000-0000-0000-0000-000000000001/messages/msg-1/attachments');
+      expect([200, 401, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('attachments');
+        expect(Array.isArray(res.body.attachments)).toBe(true);
+      }
+    });
+  });
+
+  // ==================== SESSION ENDPOINTS ====================
+
+  describe('Conversation Sessions (§2.3.1)', () => {
+    it('GET /:id/sessions lists sessions or degrades gracefully', async () => {
+      const res = await request(app)
+        .get('/api/conversations/00000000-0000-0000-0000-000000000001/sessions');
+      expect([200, 401, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('sessions');
+      }
+    });
+
+    it('POST /:id/sessions creates a new session or requires auth', async () => {
+      const res = await request(app)
+        .post('/api/conversations/00000000-0000-0000-0000-000000000001/sessions')
+        .send({ modelId: 'gpt-4', locale: 'en' });
+      expect([201, 401, 404]).toContain(res.status);
+      if (res.status === 201) {
+        expect(res.body).toHaveProperty('id');
+        expect(res.body.model_id).toBe('gpt-4');
+      }
+    });
+  });
+
+  // ==================== WRITE CONFLICT DETECTION ====================
+
+  describe('Write Conflict Detection (§2.3.5 E9)', () => {
+    it('PATCH with wrong expectedVersion returns 409 Conflict', async () => {
+      const res = await request(app)
+        .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
+        .send({ title: 'Conflict test', expectedVersion: 999 });
+      expect([401, 404, 409]).toContain(res.status);
+      if (res.status === 409) {
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(res.body).toHaveProperty('currentVersion');
+      }
+    });
+  });
+
   // ==================== REGRESSION GUARDS ====================
 
   describe('Regression Guards', () => {

@@ -137,6 +137,8 @@ const UpdateConversationSchema = z.object({
   pmoContext: z.record(z.string(), z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
   language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
+  /** Optimistic concurrency: expected version for conflict detection (§2.3.5 E9) */
+  expectedVersion: z.number().int().positive().optional(),
 });
 
 const AddMessageSchema = z.object({
@@ -393,6 +395,17 @@ router.post(
         ]
       );
 
+      // Create initial session (§2.3.1 — runtime snapshot)
+      try {
+        await dbRun(
+          `INSERT INTO conversation_sessions (id, conversation_id, locale, started_at, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [uuidv4(), id, language || 'en', now, now]
+        );
+      } catch {
+        // Session table may not exist yet; non-blocking
+      }
+
       const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [id]);
 
       logger.info(`[Conversations] Created: ${id} for user ${req.userId}`);
@@ -500,9 +513,29 @@ router.patch(
         }
       }
 
-      // Build update query
+      // Optimistic concurrency control (§2.3.5 E9)
+      if (updates.expectedVersion !== undefined) {
+        const currentVersion = (existing as any).version || 1;
+        if (currentVersion !== updates.expectedVersion) {
+          return res.status(409).json({
+            error: 'Conflict: conversation was modified by another session. Please refresh and retry.',
+            code: 'VERSION_CONFLICT',
+            currentVersion,
+            expectedVersion: updates.expectedVersion,
+          });
+        }
+      }
+
+      // Build update query (bump version on every write)
       const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
       const params: (string | boolean | null)[] = [];
+
+      // Bump version for conflict detection
+      try {
+        setClauses.push('version = COALESCE(version, 1) + 1');
+      } catch {
+        // version column may not exist yet
+      }
 
       if (updates.title !== undefined) {
         setClauses.push('title = ?');
@@ -1484,6 +1517,184 @@ router.get(
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);
       return res.status(500).json({ error: 'Search failed' });
+    }
+  })
+);
+
+// ==================== MESSAGE ATTACHMENTS (§2.3.1 — attachment pointers) ====================
+
+const AttachmentSchema = z.object({
+  kind: z.enum(['file', 'link', 'artifact', 'snapshot', 'reference']),
+  targetId: z.string().max(500).optional(),
+  targetUrl: z.string().url().max(2000).optional(),
+  displayName: z.string().min(1).max(500),
+  mime: z.string().max(200).optional(),
+  sizeBytes: z.number().int().nonnegative().optional(),
+  provenancePointer: z.string().max(500).optional(),
+});
+
+// POST /:id/messages/:messageId/attachments — Add attachment pointer to a message
+router.post(
+  '/:id/messages/:messageId/attachments',
+  verifyToken,
+  validateParams(ConversationMessageParamSchema),
+  validateBody(AttachmentSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId, messageId } = req.params;
+    const { kind, targetId, targetUrl, displayName, mime, sizeBytes, provenancePointer } = req.body;
+
+    try {
+      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      const message = await dbGet(
+        `SELECT id FROM conversation_messages WHERE id = ? AND conversation_id = ?`,
+        [messageId, conversationId]
+      );
+      if (!message) return res.status(404).json({ error: 'Message not found' });
+
+      const attachmentId = uuidv4();
+      await dbRun(
+        `INSERT INTO conversation_message_attachments
+         (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [attachmentId, messageId, conversationId, kind, targetId || null, targetUrl || null, displayName, mime || null, sizeBytes || null, provenancePointer || null, new Date().toISOString()]
+      );
+
+      const attachment = await dbGet(`SELECT * FROM conversation_message_attachments WHERE id = ?`, [attachmentId]);
+      return res.status(201).json(attachment);
+    } catch (err: any) {
+      logger.error('[Conversations] Add attachment error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// GET /:id/messages/:messageId/attachments — List attachments for a message
+router.get(
+  '/:id/messages/:messageId/attachments',
+  verifyToken,
+  validateParams(ConversationMessageParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId, messageId } = req.params;
+
+    try {
+      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      const attachments = await dbAll(
+        `SELECT * FROM conversation_message_attachments WHERE message_id = ? AND conversation_id = ? ORDER BY created_at ASC`,
+        [messageId, conversationId]
+      );
+
+      return res.json({ attachments: attachments || [] });
+    } catch (err: any) {
+      // Degraded posture E6: table may not exist yet
+      if (err?.message?.includes('no such table') || err?.message?.includes('does not exist')) {
+        return res.json({ attachments: [], _degraded: true, _reason: 'attachment_table_unavailable' });
+      }
+      logger.error('[Conversations] List attachments error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// DELETE /:id/messages/:messageId/attachments/:attachmentId — Remove attachment pointer
+router.delete(
+  '/:id/messages/:messageId/attachments/:attachmentId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId, messageId, attachmentId } = req.params;
+
+    try {
+      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      await dbRun(
+        `DELETE FROM conversation_message_attachments WHERE id = ? AND message_id = ? AND conversation_id = ?`,
+        [attachmentId, messageId, conversationId]
+      );
+
+      return res.json({ success: true, deleted: attachmentId });
+    } catch (err: any) {
+      logger.error('[Conversations] Delete attachment error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== CONVERSATION SESSIONS (§2.3.1 — runtime snapshots) ====================
+
+// GET /:id/sessions — List sessions for a conversation
+router.get(
+  '/:id/sessions',
+  verifyToken,
+  validateParams(ConversationIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId } = req.params;
+
+    try {
+      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      const sessions = await dbAll(
+        `SELECT * FROM conversation_sessions WHERE conversation_id = ? ORDER BY started_at DESC`,
+        [conversationId]
+      );
+
+      return res.json({ sessions: sessions || [] });
+    } catch (err: any) {
+      if (err?.message?.includes('no such table') || err?.message?.includes('does not exist')) {
+        return res.json({ sessions: [], _degraded: true });
+      }
+      logger.error('[Conversations] List sessions error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// POST /:id/sessions — Create a new session (model change, preset switch, etc.)
+router.post(
+  '/:id/sessions',
+  verifyToken,
+  validateParams(ConversationIdParamSchema),
+  validateBody(z.object({
+    modelId: z.string().max(100).optional(),
+    presetId: z.string().max(100).optional(),
+    locale: z.string().max(10).optional(),
+    toolsEnabled: z.array(z.string()).optional(),
+    retrievalParams: z.record(z.string(), z.unknown()).optional(),
+  })),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId } = req.params;
+    const { modelId, presetId, locale, toolsEnabled, retrievalParams } = req.body;
+
+    try {
+      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      // End the current active session
+      try {
+        await dbRun(
+          `UPDATE conversation_sessions SET ended_at = ? WHERE conversation_id = ? AND ended_at IS NULL`,
+          [new Date().toISOString(), conversationId]
+        );
+      } catch { /* table may not exist */ }
+
+      const sessionId = uuidv4();
+      const now = new Date().toISOString();
+
+      await dbRun(
+        `INSERT INTO conversation_sessions (id, conversation_id, model_id, preset_id, locale, tools_enabled, retrieval_params, started_at, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [sessionId, conversationId, modelId || null, presetId || null, locale || null, JSON.stringify(toolsEnabled || []), JSON.stringify(retrievalParams || {}), now, now]
+      );
+
+      const session = await dbGet(`SELECT * FROM conversation_sessions WHERE id = ?`, [sessionId]);
+      return res.status(201).json(session);
+    } catch (err: any) {
+      logger.error('[Conversations] Create session error:', err);
+      return res.status(500).json({ error: err.message });
     }
   })
 );

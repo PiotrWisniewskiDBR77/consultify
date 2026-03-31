@@ -197,6 +197,59 @@ describe('P35-B: useConversationStore — History Library', () => {
     });
   });
 
+  describe('Write Conflict Detection (§2.3.5 E9)', () => {
+    it('updateConversation sends expectedVersion from local state', async () => {
+      mockApi.updateConversation.mockResolvedValueOnce({});
+      useConversationStore.setState({
+        conversations: [{ id: 'c1', title: 'Test', version: 5, archived: false, starred: false }] as any[],
+      });
+
+      const state = useConversationStore.getState();
+      await state.updateConversation('c1', { title: 'New title' });
+      expect(mockApi.updateConversation).toHaveBeenCalledWith('c1', {
+        title: 'New title',
+        expectedVersion: 5,
+      });
+    });
+
+    it('updateConversation handles 409 conflict by refreshing', async () => {
+      const conflictError: any = new Error('Conflict');
+      conflictError.response = { status: 409 };
+      mockApi.updateConversation.mockRejectedValueOnce(conflictError);
+      mockApi.getConversation.mockResolvedValueOnce({
+        id: 'c1', title: 'Server title', version: 6, created_at: '2026-01-01', updated_at: '2026-01-01',
+      });
+
+      useConversationStore.setState({
+        conversations: [{ id: 'c1', title: 'Old', version: 5, archived: false, starred: false }] as any[],
+      });
+
+      const state = useConversationStore.getState();
+      await expect(state.updateConversation('c1', { title: 'Conflict' })).rejects.toThrow();
+      // Should have attempted to refresh from server
+      expect(mockApi.getConversation).toHaveBeenCalledWith('c1');
+    });
+  });
+
+  describe('Deep-Link State Management (§2.3.5)', () => {
+    it('initial state has null conversation state', () => {
+      const state = useConversationStore.getState();
+      expect(state._activeConversationState).toBeNull();
+      expect(state._activeConversationStateMessage).toBeNull();
+    });
+
+    it('clearActiveChat resets conversation state', () => {
+      useConversationStore.setState({
+        _activeConversationState: 'archived',
+        _activeConversationStateMessage: 'test',
+      });
+      useConversationStore.getState().clearActiveChat();
+      const after = useConversationStore.getState();
+      expect(after._activeConversationState).toBeNull();
+      expect(after._activeConversationStateMessage).toBeNull();
+    });
+  });
+
   describe('chatFolderId vs projectId Separation', () => {
     it('Conversation type has both chatProjectId and projectId (distinct fields)', () => {
       const conv = {

@@ -69,7 +69,10 @@ CREATE TABLE IF NOT EXISTS conversation_purge_audit (
 CREATE INDEX IF NOT EXISTS idx_purge_audit_user
   ON conversation_purge_audit (purged_by_user_id, purged_at DESC);
 
--- 7) Composite indexes for efficient listing (§2.3.1)
+-- 7) Optimistic concurrency control (§2.3.5 E9 — write conflict detection)
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
+
+-- 8) Composite indexes for efficient listing (§2.3.1)
 CREATE INDEX IF NOT EXISTS idx_conversations_private_list
   ON conversations (organization_id, user_id, deleted_at, last_message_at DESC NULLS LAST)
   WHERE deleted_at IS NULL;

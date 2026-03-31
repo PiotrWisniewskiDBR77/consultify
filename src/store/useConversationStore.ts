@@ -114,6 +114,13 @@ export interface Conversation {
   lastMessageAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  /** Optimistic concurrency version (§2.3.5 E9) */
+  version?: number;
+  /** Soft-delete timestamp */
+  deletedAt?: string | null;
+  /** Deep-link state from backend */
+  _state?: 'active' | 'archived' | 'deleted' | 'not_found';
+  _stateMessage?: string;
 }
 
 export interface ConversationMessage {
@@ -281,6 +288,10 @@ interface ConversationState {
   draftChatLanguage: SupportedLanguage;
   chatLanguageByConversationId: Record<string, SupportedLanguage>;
 
+  // Deep-link / lifecycle state for the active conversation (§2.3.5)
+  _activeConversationState: 'active' | 'archived' | 'deleted' | 'not_found' | 'permission_denied' | null;
+  _activeConversationStateMessage: string | null;
+
   // UI State
   isLoading: boolean;
   isSidebarOpen: boolean;
@@ -443,6 +454,8 @@ export const useConversationStore = create<ConversationState>()(
       conversations: [],
       activeConversationId: null,
       activeMessages: [],
+      _activeConversationState: null,
+      _activeConversationStateMessage: null,
       draftChatLanguage: getAppLanguageFallback(),
       chatLanguageByConversationId: {},
       isLoading: false,
@@ -522,8 +535,26 @@ export const useConversationStore = create<ConversationState>()(
                 activeConversationId: id,
                 activeMessages: [],
                 isLoading: false,
+                _activeConversationState: 'deleted',
+                _activeConversationStateMessage: result?._stateMessage || 'This conversation has been deleted.',
               });
               return;
+            }
+
+            // Handle deep-link states: archived conversation (accessible but flagged)
+            if (result?._state === 'archived') {
+              // Store state so UI can show archived banner
+              set((prev) => ({
+                ...prev,
+                _activeConversationState: 'archived',
+                _activeConversationStateMessage: null,
+              }));
+            } else {
+              set((prev) => ({
+                ...prev,
+                _activeConversationState: 'active',
+                _activeConversationStateMessage: null,
+              }));
             }
 
             const messages = (result?.messages || []).map(mapApiMessage);
@@ -547,13 +578,25 @@ export const useConversationStore = create<ConversationState>()(
             });
           } catch (err: any) {
             console.error('[ConversationStore] Fetch conversation error:', err);
-            // Handle 403 (team permission denied) and 404 (not found)
             const status = err?.response?.status || err?.status;
-            if (status === 403 || status === 404) {
+            if (status === 403) {
+              // Permission denied (§2.3.5 E4) — explicit state for UI
               set({
-                activeConversationId: null,
+                activeConversationId: id,
                 activeMessages: [],
                 isLoading: false,
+                _activeConversationState: 'permission_denied',
+                _activeConversationStateMessage: 'You do not have access to this conversation.',
+              });
+              return;
+            }
+            if (status === 404) {
+              set({
+                activeConversationId: id,
+                activeMessages: [],
+                isLoading: false,
+                _activeConversationState: 'not_found',
+                _activeConversationStateMessage: 'This conversation does not exist.',
               });
               return;
             }
@@ -604,18 +647,47 @@ export const useConversationStore = create<ConversationState>()(
 
       updateConversation: async (id, updates) => {
         try {
-          await Api.updateConversation(id, updates);
+          // Send expectedVersion for optimistic concurrency control (§2.3.5 E9)
+          const current = get().conversations.find((c) => c.id === id);
+          const payload = current?.version
+            ? { ...updates, expectedVersion: current.version }
+            : updates;
+
+          await Api.updateConversation(id, payload);
 
           set((state) => {
             const newConversations = state.conversations.map((c) =>
-              c.id === id ? { ...c, ...updates, updatedAt: new Date() } : c
+              c.id === id
+                ? { ...c, ...updates, updatedAt: new Date(), version: (c.version || 1) + 1 }
+                : c
             );
             return {
               conversations: newConversations,
               groupedConversations: groupConversations(newConversations),
             };
           });
-        } catch (err) {
+        } catch (err: any) {
+          // Write conflict detection (§2.3.5 E9)
+          const status = err?.response?.status || err?.status;
+          if (status === 409) {
+            console.warn('[ConversationStore] Write conflict on', id, '— refreshing from server');
+            // Refresh conversation from server to get latest version
+            try {
+              const fresh = await Api.getConversation(id);
+              if (fresh) {
+                const mapped = mapApiConversation(fresh);
+                set((state) => {
+                  const newConversations = state.conversations.map((c) =>
+                    c.id === id ? mapped : c
+                  );
+                  return {
+                    conversations: newConversations,
+                    groupedConversations: groupConversations(newConversations),
+                  };
+                });
+              }
+            } catch { /* best effort refresh */ }
+          }
           console.error('[ConversationStore] Update error:', err);
           throw err;
         }
@@ -829,7 +901,12 @@ export const useConversationStore = create<ConversationState>()(
       },
 
       clearActiveChat: () => {
-        set({ activeConversationId: null, activeMessages: [] });
+        set({
+          activeConversationId: null,
+          activeMessages: [],
+          _activeConversationState: null,
+          _activeConversationStateMessage: null,
+        });
       },
 
       // ==================== LANGUAGE ====================
@@ -1285,6 +1362,10 @@ function mapApiConversation(api: any): Conversation {
     lastMessageAt: api.last_message_at ? new Date(api.last_message_at) : undefined,
     createdAt: new Date(api.created_at),
     updatedAt: new Date(api.updated_at),
+    version: api.version || 1,
+    deletedAt: api.deleted_at || null,
+    _state: api._state || undefined,
+    _stateMessage: api._stateMessage || undefined,
   };
 }
 

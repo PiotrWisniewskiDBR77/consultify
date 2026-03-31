@@ -329,6 +329,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     collapseToSplit,
     draftChatLanguage,
     chatLanguageByConversationId,
+    _activeConversationState,
+    _activeConversationStateMessage,
   } = useConversationStore();
 
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
@@ -2988,7 +2990,42 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </p>
           </div>
         ) : (
-          displayMessages.map((msg, index) => renderMessage(msg, index))
+          <>
+            {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
+            {_activeConversationState === 'archived' && (
+              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
+                <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                <span className="text-xs text-amber-700 dark:text-amber-400">
+                  {t('aiChat.archivedBanner', 'This conversation is archived. Unarchive it to continue chatting.')}
+                </span>
+              </div>
+            )}
+            {_activeConversationState === 'deleted' && (
+              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/60 dark:border-red-700/40 flex items-center gap-2">
+                <svg className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <span className="text-xs text-red-700 dark:text-red-400">
+                  {_activeConversationStateMessage || t('aiChat.deletedBanner', 'This conversation has been deleted.')}
+                </span>
+              </div>
+            )}
+            {_activeConversationState === 'permission_denied' && (
+              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                <span className="text-xs text-slate-700 dark:text-slate-300">
+                  {_activeConversationStateMessage || t('aiChat.permissionDenied', 'You do not have access to this conversation. Contact the folder owner for access.')}
+                </span>
+              </div>
+            )}
+            {_activeConversationState === 'not_found' && (
+              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('aiChat.notFound', 'This conversation does not exist or has been permanently removed.')}
+                </span>
+              </div>
+            )}
+            {displayMessages.map((msg, index) => renderMessage(msg, index))}
+          </>
         )}
 
         {/* Typing indicator */}
