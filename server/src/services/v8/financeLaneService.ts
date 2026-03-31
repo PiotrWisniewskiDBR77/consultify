@@ -18,22 +18,39 @@ const LOG_PREFIX = '[V8:FinanceLane]';
 // TYPES
 // ==========================================
 
-export type FinanceLaneStep = 'import' | 'analysis' | 'mutation' | 'readback';
-export type ImportOutcome = 'completed' | 'completed_with_warnings' | 'failed' | 'queued' | 'running' | 'cancelled';
-export type MutationOutcome = 'applied' | 'failed' | 'conflict' | 'rolled_back';
-export type VersionType = 'current' | 'actual';
-export type FinanceDegradedReason =
-  | 'import_mapping_missing'
-  | 'import_completed_with_warnings'
-  | 'import_failed'
-  | 'schema_drift'
-  | 'stale_model'
-  | 'stale_linkage'
-  | 'mutation_conflict'
-  | 'mutation_failed'
-  | 'permission_denied'
-  | 'switchover_misconfigured'
-  | 'reconciliation_mismatch';
+export const FinanceLaneStepValues = ['import', 'analysis', 'mutation', 'readback'] as const;
+export type FinanceLaneStep = (typeof FinanceLaneStepValues)[number];
+
+export const ImportOutcomeValues = [
+  'completed',
+  'completed_with_warnings',
+  'failed',
+  'queued',
+  'running',
+  'cancelled',
+] as const;
+export type ImportOutcome = (typeof ImportOutcomeValues)[number];
+
+export const MutationOutcomeValues = ['applied', 'failed', 'conflict', 'rolled_back'] as const;
+export type MutationOutcome = (typeof MutationOutcomeValues)[number];
+
+export const VersionTypeValues = ['current', 'actual'] as const;
+export type VersionType = (typeof VersionTypeValues)[number];
+
+export const FinanceDegradedReasonValues = [
+  'import_mapping_missing',
+  'import_completed_with_warnings',
+  'import_failed',
+  'schema_drift',
+  'stale_model',
+  'stale_linkage',
+  'mutation_conflict',
+  'mutation_failed',
+  'permission_denied',
+  'switchover_misconfigured',
+  'reconciliation_mismatch',
+] as const;
+export type FinanceDegradedReason = (typeof FinanceDegradedReasonValues)[number];
 
 export interface FinanceLaneRun {
   runId: string;

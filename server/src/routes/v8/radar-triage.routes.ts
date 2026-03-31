@@ -12,6 +12,11 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 
+/** §2.3.8 — documented HTTP surface for Radar Triage clients (contract checklist). */
+export const P06_RADAR_TRIAGE_HTTP_STATUSES = [
+  200, 206, 400, 401, 403, 409, 412, 429, 503, 504,
+] as const;
+
 function triageMeta() {
   return { version: 'v8' as const, contract: 'radar_triage_v1' };
 }

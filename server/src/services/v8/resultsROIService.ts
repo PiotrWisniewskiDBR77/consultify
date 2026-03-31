@@ -1663,13 +1663,31 @@ export async function getResultsDashboard(
 // P04-B: CLOSED-LOOP WORKFLOW (signal→report→reconciliation→action)
 // ==========================================
 
-export type KpiSignalType =
-  | 'deviation'
-  | 'target_drift'
-  | 'data_quality'
-  | 'reconciliation_needed'
-  | 'freshness';
-export type NextActionStatus = 'pending' | 'acknowledged' | 'action_created' | 'dismissed';
+export const KpiSignalTypeValues = [
+  'deviation',
+  'target_drift',
+  'data_quality',
+  'reconciliation_needed',
+  'freshness',
+] as const;
+export type KpiSignalType = (typeof KpiSignalTypeValues)[number];
+
+export const NextActionStatusValues = [
+  'pending',
+  'acknowledged',
+  'action_created',
+  'dismissed',
+] as const;
+export type NextActionStatus = (typeof NextActionStatusValues)[number];
+
+export const KpiNextActionTypeValues = [
+  'reconcile',
+  'investigate',
+  'escalate',
+  'create_initiative',
+  'update_target',
+] as const;
+export type KpiNextActionType = (typeof KpiNextActionTypeValues)[number];
 
 export interface KpiSignal {
   signalId: string;
@@ -1691,7 +1709,7 @@ export interface KpiNextAction {
   organizationId: string;
   signalId: string;
   kpiId: string;
-  actionType: 'reconcile' | 'investigate' | 'escalate' | 'create_initiative' | 'update_target';
+  actionType: KpiNextActionType;
   description: string;
   assignedTo: string | null;
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';
@@ -1915,11 +1933,13 @@ export async function completeKpiNextAction(actionId: string, organizationId: st
   );
 }
 
-export type KpiWorkflowDegradedReason =
-  | 'missing_data'
-  | 'discrepancy_unresolved'
-  | 'linkage_unavailable'
-  | 'permission_denied';
+export const KpiWorkflowDegradedReasonValues = [
+  'missing_data',
+  'discrepancy_unresolved',
+  'linkage_unavailable',
+  'permission_denied',
+] as const;
+export type KpiWorkflowDegradedReason = (typeof KpiWorkflowDegradedReasonValues)[number];
 
 export interface KpiWorkflowStatus {
   kpiId: string;
