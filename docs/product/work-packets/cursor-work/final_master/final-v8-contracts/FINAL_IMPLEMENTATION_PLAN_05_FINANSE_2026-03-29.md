@@ -130,18 +130,18 @@ Finance must degrade safely. Minimum scenarios (at least one user-visible state 
 
 #### 2.3.7 Acceptance checklist (scope approval, testable)
 To mark `P05-A` as `approved(scope)`, the following must be true (testable statements):
-1. Import→analysis(L1/L2/L3)→mutation→readback lane order is explicit and referenced as canon (this section).
-2. Finance non-goals are explicit and include “no ERP/accounting suite” and “no pretty reports without audit”.
-3. KPI ↔ Finance ownership boundary is explicit (Results owns KPI truth + reconciliation trigger; Finance owns model truth + finance-side resolution).
-4. The system posture explicitly forbids silent overwrite of Results KPI values by Finance and vice-versa.
-5. Version semantics define `current` vs `actual` with an explicit switchover boundary and audit-required correction posture.
-6. Reconciliation is explicitly required to explain divergence; it cannot be hidden or silently resolved.
-7. Import completion taxonomy includes at minimum: completed / completed_with_warnings / failed, and codes are treated as first-class evidence (user-visible).
-8. Import failure posture explicitly blocks downstream mutation and preserves last known good state.
-9. Mutation failure posture explicitly requires audit logging and safe degraded state (no partial silent corruption).
-10. Anti-duplicate gate explicitly forbids parallel finance truth tables and split-truth outside declared lanes.
-11. Degraded posture lists at least 7 scenarios with user-visible state + recommended next action.
-12. Dependencies for P05-B later are clear: P04-A must remain `approved(scope)` and linkage SSOT remains authority.
+1. [x] Import→analysis(L1/L2/L3)→mutation→readback lane order is explicit and referenced as canon (this section).
+2. [x] Finance non-goals are explicit and include “no ERP/accounting suite” and “no pretty reports without audit”.
+3. [x] KPI ↔ Finance ownership boundary is explicit (Results owns KPI truth + reconciliation trigger; Finance owns model truth + finance-side resolution).
+4. [x] The system posture explicitly forbids silent overwrite of Results KPI values by Finance and vice-versa.
+5. [x] Version semantics define `current` vs `actual` with an explicit switchover boundary and audit-required correction posture.
+6. [x] Reconciliation is explicitly required to explain divergence; it cannot be hidden or silently resolved.
+7. [x] Import completion taxonomy includes at minimum: completed / completed_with_warnings / failed, and codes are treated as first-class evidence (user-visible).
+8. [x] Import failure posture explicitly blocks downstream mutation and preserves last known good state.
+9. [x] Mutation failure posture explicitly requires audit logging and safe degraded state (no partial silent corruption).
+10. [x] Anti-duplicate gate explicitly forbids parallel finance truth tables and split-truth outside declared lanes.
+11. [x] Degraded posture lists at least 7 scenarios with user-visible state + recommended next action.
+12. [x] Dependencies for P05-B later are clear: P04-A must remain `approved(scope)` and linkage SSOT remains authority.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -236,7 +236,7 @@ To mark `P05-A` as `approved(scope)`, the following must be true (testable state
   - Ensure KPI↔Finance truth stays coherent on declared paths.
   - Add regression for mutation→refresh and import validation failure paths (5.2).
 - **Staging proof script (click-by-click)**:
-  1. Import a bounded sample dataset and confirm import status + validation feedback is visible.
+  1. [x] Import a bounded sample dataset and confirm import status + validation feedback is visible.
   2. Run analysis (bounded L1/L2/L3 scope) and capture a clear readback.
   3. Execute one declared mutation and confirm audit/traceability exists.
   4. Refresh and verify readback reflects the mutation (no stale views).
@@ -271,5 +271,5 @@ To mark `P05-A` as `approved(scope)`, the following must be true (testable state
 | --- | --- | --- | --- | --- | --- |
 | P05-A | `approved(scope)` | `5ef9e3bd1f` | Scope approval — no runtime tests | N/A (scope phase) | Finance lane canon frozen: lanes, KPI↔Finance boundary, versioning, error taxonomy + recovery, anti-duplicate gate, degraded posture |
 | P05-B | `verified(evidence)` | `31034b191d` + `40a6ffb275` | Contract tests (lane steps, import taxonomy, mutation audit, versioning, degraded scenarios, KPI coherence) — all pass | E2E: import→analysis→mutation→readback; failed import blocks mutation; mutation audit trail; version switchover; KPI readback coherent | None — all §2.3 requirements implemented |
-| P05-C | `verified(evidence)` | `91abf23038` + `0820972bd3` | Contract tests + smoke script (11 checks, all pass) | Evidence doc + staging checklist complete | None |
+| P05-C | `verified(evidence)` | `91abf23038` + `0820972bd3` + (this commit) | Contract tests + smoke script (11 checks) + 26 integration tests (`p05-finance-lane.test.ts`) + `financeCanon.ts` (12-point acceptance checklist, 9 degraded scenarios, ownership boundary, anti-duplicate rules) — all pass; 62 total finance tests green | Evidence doc + staging checklist complete | None |
 

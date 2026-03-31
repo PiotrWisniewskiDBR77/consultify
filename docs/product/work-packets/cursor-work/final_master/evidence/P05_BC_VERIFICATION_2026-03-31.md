@@ -26,6 +26,8 @@
 
 ### P05-C: Verification
 - Contract tests: `tests/integration/p05-finance-lane.contract.test.ts`
+- Integration tests: `server/src/routes/v8/__tests__/p05-finance-lane.test.ts` (26 tests — lane CRUD, E2E workflow, mutation audit, versioning, KPI coherence, canon unit tests)
+- Canon module: `server/src/services/v8/financeCanon.ts` (P05 acceptance checklist, degraded scenarios, anti-duplicate rules, ownership boundary, version semantics, error taxonomy)
 - Smoke: `server/scripts/smoke-p05-finance-lane-c.ts`
 
 ## Staging checklist
