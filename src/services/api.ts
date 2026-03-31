@@ -4863,7 +4863,10 @@ export const Api = {
       confidenceAvg?: number;
       contextSnapshot?: Record<string, unknown>;
       wizard_state?: Record<string, unknown>;
+      wizardState?: Record<string, unknown>;
       status?: string;
+      missingItems?: Array<{ id: string; label: string; severity?: string; stepId?: string; resolved?: boolean }>;
+      failureReason?: string;
     }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}`, {
@@ -4929,6 +4932,26 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch generated initiatives');
+  },
+
+  promoteToolOutput: async (
+    toolId: string,
+    payload: { outputType: 'report' | 'presentation' | 'idea'; title: string; description?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/promote`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to promote tool output');
+  },
+
+  retryToolFromFailure: async (toolId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/retry`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to retry tool');
   },
 
   // --- ASSESSMENT WORKFLOW ---

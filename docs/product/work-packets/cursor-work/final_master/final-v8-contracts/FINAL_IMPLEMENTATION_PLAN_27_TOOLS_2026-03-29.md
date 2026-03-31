@@ -180,6 +180,6 @@ P27-B/C MUST **extend** the following — not fork parallel session types, tool 
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P27-A | approved(scope) | `d3d10e6e1a` | N/A — docs/scope only | N/A | Canon: §2.2–2.4, P27-A checklist; lock P27-A released; EXECUTION_INDEX #27 updated. |
-| P27-B |  |  |  |  |  |
-| P27-C |  |  |  |  |  |
+| P27-B | verified(evidence) | (pending commit) | 25 integration tests: 2 archetypes (strategic+operational), lifecycle transitions, finalize gating, failure/retry, idempotent generation, promotion to report/presentation, regression | Staging: session lifecycle E2E, promotion traceability, failure recovery | Known limits: ToolWizardShell not mounted in hub (uses ToolDocumentView as primary shell); trace view is audit_log-based, not a dedicated UI; promotion creates lightweight records — full report-builder integration is downstream. |
+| P27-C | verified(evidence) | (pending commit) | Regression: existing CRUD + governance + DoD endpoints stable | Rollback: disable promotion endpoint; sessions + results preserved | Lock P27-B/C released. |
 

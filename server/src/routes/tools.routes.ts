@@ -47,6 +47,8 @@ router.post(
 );
 router.post('/:toolId/approve', validateBody(ApproveToolSchema), ToolController.approveTool);
 router.post('/:toolId/send-back', validateBody(SendBackSchema), ToolController.sendBackToDraft);
+router.post('/:toolId/promote', ToolController.promoteToOutput);
+router.post('/:toolId/retry', ToolController.retryFromFailure);
 router.post(
   '/:toolId/generate-initiatives',
   validateBody(GenerateInitiativesSchema),

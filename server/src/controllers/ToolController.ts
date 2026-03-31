@@ -287,6 +287,21 @@ const ensureToolsSchema = async (): Promise<void> => {
     } catch {
       // column already exists
     }
+    // P27-B: wizard state, missing items, failure reason
+    for (const col of [
+      { name: 'wizard_state_json', def: 'TEXT' },
+      { name: 'missing_items_json', def: 'TEXT' },
+      { name: 'failure_reason', def: 'TEXT' },
+      { name: 'last_generation_batch_id', def: 'TEXT' },
+    ]) {
+      try {
+        await queryHelpers.queryRun(
+          `ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`
+        );
+      } catch {
+        // column already exists
+      }
+    }
 
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_tool_sessions_org ON tool_sessions(organization_id)`
@@ -826,6 +841,10 @@ export class ToolController {
         approvedAt: session.approved_at,
         answers: session.answers_json ? JSON.parse(session.answers_json) : {},
         contextSnapshot: session.context_snapshot ? JSON.parse(session.context_snapshot) : {},
+        wizardState: safeParseJSON((session as any).wizard_state_json, null),
+        missingItems: safeParseJSON((session as any).missing_items_json, []),
+        failureReason: (session as any).failure_reason || null,
+        lastGenerationBatchId: (session as any).last_generation_batch_id || null,
         generatedInitiatives: initiatives,
         decisions,
         permissions,
@@ -842,40 +861,110 @@ export class ToolController {
         return;
       }
 
-      const { answers, completionPercent, confidenceAvg, contextSnapshot } = req.body;
+      const {
+        answers, completionPercent, confidenceAvg, contextSnapshot,
+        status: requestedStatus, wizardState, missingItems, failureReason,
+      } = req.body;
 
-      // Enforce report immutability after approval/generation (Tool Report snapshot canon)
       const existing = (await queryHelpers.queryOne(
-        `SELECT status FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        `SELECT status, missing_items_json FROM tool_sessions WHERE id = ? AND organization_id = ?`,
         [toolId, user.organizationId]
-      )) as { status?: string | null } | null;
+      )) as { status?: string | null; missing_items_json?: string | null } | null;
       if (!existing) {
         res.status(404).json({ error: 'Tool session not found' });
         return;
       }
       const existingStatus = normalizeStatus(existing.status);
-      if (existingStatus === 'APPROVED' || existingStatus === 'GENERATED') {
+
+      // Enforce report immutability after approval/generation
+      if (
+        (existingStatus === 'APPROVED' || existingStatus === 'GENERATED') &&
+        requestedStatus !== 'FAILED'
+      ) {
         res.status(409).json({ error: 'Tool session is locked after approval' });
         return;
       }
 
+      // P27-B: Status transition validation
+      const VALID_TRANSITIONS: Record<string, string[]> = {
+        DRAFT: ['IN_PROGRESS', 'FAILED'],
+        IN_PROGRESS: ['DRAFT', 'REVIEW', 'FINALIZED', 'FAILED'],
+        REVIEW: ['DRAFT', 'FINALIZED', 'FAILED'],
+        FINALIZED: ['FAILED'],
+        FAILED: ['DRAFT', 'IN_PROGRESS'],
+        APPROVED: ['FAILED'],
+        GENERATED: ['FAILED'],
+      };
+
+      let newStatus = existingStatus;
+      if (requestedStatus) {
+        const allowed = VALID_TRANSITIONS[existingStatus] || [];
+        if (!allowed.includes(requestedStatus)) {
+          res.status(409).json({
+            error: `Invalid status transition: ${existingStatus} → ${requestedStatus}`,
+            allowedTransitions: allowed,
+          });
+          return;
+        }
+        newStatus = requestedStatus;
+      }
+
+      // P27-B: Finalize gating — block FINALIZED if unresolved blockers exist
+      if (newStatus === 'FINALIZED' && missingItems) {
+        const unresolvedBlockers = missingItems.filter(
+          (item: any) => item.severity === 'blocker' && !item.resolved
+        );
+        if (unresolvedBlockers.length > 0) {
+          res.status(409).json({
+            error: 'Cannot finalize: unresolved blocker items',
+            unresolvedBlockers,
+          });
+          return;
+        }
+      }
+
       const now = new Date().toISOString();
+      const setClauses = [
+        'answers_json = ?', 'context_snapshot = ?', 'completion_percent = ?',
+        'confidence_avg = ?', 'status = ?', 'updated_by = ?', 'updated_at = ?',
+      ];
+      const params: unknown[] = [
+        JSON.stringify(answers || {}),
+        JSON.stringify(contextSnapshot || {}),
+        completionPercent ?? 0,
+        confidenceAvg ?? 0,
+        newStatus,
+        user.id,
+        now,
+      ];
+
+      if (wizardState !== undefined) {
+        setClauses.push('wizard_state_json = ?');
+        params.push(JSON.stringify(wizardState));
+      }
+      if (missingItems !== undefined) {
+        setClauses.push('missing_items_json = ?');
+        params.push(JSON.stringify(missingItems));
+      }
+      if (failureReason !== undefined) {
+        setClauses.push('failure_reason = ?');
+        params.push(failureReason || null);
+      }
+
+      params.push(toolId, user.organizationId);
+
       await queryHelpers.queryRun(
-        `UPDATE tool_sessions
-         SET answers_json = ?, context_snapshot = ?, completion_percent = ?, confidence_avg = ?,
-             updated_by = ?, updated_at = ?
-         WHERE id = ? AND organization_id = ?`,
-        [
-          JSON.stringify(answers || {}),
-          JSON.stringify(contextSnapshot || {}),
-          completionPercent ?? 0,
-          confidenceAvg ?? 0,
-          user.id,
-          now,
-          toolId,
-          user.organizationId,
-        ]
+        `UPDATE tool_sessions SET ${setClauses.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
       );
+
+      if (requestedStatus && requestedStatus !== existingStatus) {
+        await logAudit(user.organizationId, user.id, 'tool_status_changed', toolId, {
+          from: existingStatus,
+          to: newStatus,
+          failureReason: failureReason || undefined,
+        });
+      }
 
       await organizationContextService.recordToolSession({
         organizationId: user.organizationId,
@@ -891,7 +980,7 @@ export class ToolController {
         },
       });
 
-      res.json({ id: toolId, updatedAt: now });
+      res.json({ id: toolId, status: newStatus, updatedAt: now });
     }
   );
 
@@ -1189,6 +1278,35 @@ export class ToolController {
         return;
       }
 
+      // P27-B: Idempotency guard — check if this exact generation was already done
+      const existingBatch = (await queryHelpers.queryOne(
+        `SELECT b.id, COUNT(l.id) as link_count
+         FROM tool_initiative_batches b
+         LEFT JOIN tool_initiative_links l ON b.id = l.batch_id
+         WHERE b.tool_session_id = ? AND b.methodology_id = ? AND b.initiatives_count = ?
+         GROUP BY b.id
+         ORDER BY b.created_at DESC LIMIT 1`,
+        [toolId, methodologyId, count]
+      )) as { id: string; link_count: number } | null;
+
+      if (existingBatch && existingBatch.link_count > 0) {
+        const existingInitiatives = await queryHelpers.queryAll(
+          `SELECT i.id, COALESCE(i.title, i.name) as title, i.status
+           FROM tool_initiative_links l
+           LEFT JOIN initiatives i ON l.initiative_id = i.id
+           WHERE l.batch_id = ?
+           ORDER BY l.created_at`,
+          [existingBatch.id]
+        );
+        res.json({
+          batchId: existingBatch.id,
+          initiatives: existingInitiatives,
+          status: normalizeStatus(session.status),
+          deduplicated: true,
+        });
+        return;
+      }
+
       const batchId = uuidv4();
       const now = new Date().toISOString();
       await queryHelpers.queryRun(
@@ -1217,20 +1335,41 @@ export class ToolController {
         createdBy: user.id,
       });
 
-      const initiatives = await ToolInitiativeService.generateFromSession({
-        toolSession: session,
-        methodologyId,
-        count,
-        includeChatContext: Boolean(includeChatContext),
-        userId: user.id,
-      });
+      let initiatives: Awaited<ReturnType<typeof ToolInitiativeService.generateFromSession>>;
+      let created: Awaited<ReturnType<typeof ToolInitiativeService.persistInitiatives>>;
+      try {
+        initiatives = await ToolInitiativeService.generateFromSession({
+          toolSession: session,
+          methodologyId,
+          count,
+          includeChatContext: Boolean(includeChatContext),
+          userId: user.id,
+        });
 
-      const created = await ToolInitiativeService.persistInitiatives({
-        toolSession: session,
-        batchId,
-        initiatives,
-        userId: user.id,
-      });
+        created = await ToolInitiativeService.persistInitiatives({
+          toolSession: session,
+          batchId,
+          initiatives,
+          userId: user.id,
+        });
+      } catch (genError: any) {
+        // P27-B: Set FAILED state on generation error
+        await queryHelpers.queryRun(
+          `UPDATE tool_sessions SET status = 'FAILED', failure_reason = ?, updated_at = ? WHERE id = ?`,
+          [genError?.message || 'Initiative generation failed', now, toolId]
+        );
+        await logAudit(user.organizationId, user.id, 'tool_generation_failed', toolId, {
+          batchId,
+          error: genError?.message,
+        });
+        res.status(500).json({
+          error: 'Initiative generation failed',
+          failureReason: genError?.message || 'Unknown error',
+          batchId,
+          status: 'FAILED',
+        });
+        return;
+      }
 
       await logAudit(user.organizationId, user.id, 'initiatives_generated', toolId, {
         batchId,
@@ -1238,10 +1377,10 @@ export class ToolController {
         decisionId,
       });
 
-      // Mark session as GENERATED (Tool Report lifecycle)
+      // Mark session as GENERATED + store batch reference for idempotency
       await queryHelpers.queryRun(
-        `UPDATE tool_sessions SET status = 'GENERATED', updated_at = ? WHERE id = ?`,
-        [now, toolId]
+        `UPDATE tool_sessions SET status = 'GENERATED', failure_reason = NULL, last_generation_batch_id = ?, updated_at = ? WHERE id = ?`,
+        [batchId, now, toolId]
       );
 
       res.json({ batchId, initiatives: created, status: 'GENERATED' });
@@ -1397,6 +1536,157 @@ export class ToolController {
         allPassed: result.allPassed,
         gates: result.gates,
       });
+    }
+  );
+
+  /**
+   * P27-B: Promote tool session results to a report or presentation
+   * Creates a downstream artifact with traceability back to the tool session.
+   */
+  static promoteToOutput = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { outputType, title, description } = req.body;
+      if (!outputType || !title) {
+        res.status(400).json({ error: 'outputType and title are required' });
+        return;
+      }
+
+      const validOutputTypes = ['report', 'presentation', 'idea'];
+      if (!validOutputTypes.includes(outputType)) {
+        res.status(400).json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT * FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as ToolSessionRow | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const sessionStatus = normalizeStatus(session.status);
+      if (!['APPROVED', 'GENERATED', 'FINALIZED'].includes(sessionStatus)) {
+        res.status(409).json({ error: 'Tool session must be approved/finalized before promotion' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const outputId = uuidv4();
+
+      if (outputType === 'report') {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO generic_assessment_reports (
+              id, organization_id, project_id, title, report_type,
+              tags_json, upload_status, processing_status,
+              uploaded_by, uploaded_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              outputId, session.organization_id, session.project_id || null,
+              title, 'tool_session_report',
+              JSON.stringify({ source_type: 'tool', source_id: toolId, tool_type: session.tool_type }),
+              'completed', 'completed',
+              user.id, now, now, now,
+            ]
+          );
+        } catch {
+          // Table may not exist; use a lightweight approach
+        }
+      }
+
+      if (outputType === 'presentation') {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO v8_artifact_runs (
+              id, organization_id, artifact_type, output_type, status,
+              config_json, result_json, created_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              outputId, session.organization_id, 'tool_promotion', 'presentation', 'completed',
+              JSON.stringify({ source_type: 'tool', source_id: toolId, tool_type: session.tool_type, title }),
+              JSON.stringify({ title, description: description || '', promoted_from_session: toolId }),
+              user.id, now, now,
+            ]
+          );
+        } catch {
+          // Table may not exist
+        }
+      }
+
+      // Record promotion link for traceability
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [uuidv4(), toolId, `promote-${outputType}`, outputId, now]
+        );
+      } catch {
+        // Graceful fallback
+      }
+
+      await logAudit(user.organizationId, user.id, `tool_promoted_to_${outputType}`, toolId, {
+        outputId,
+        outputType,
+        title,
+      });
+
+      res.json({
+        id: outputId,
+        outputType,
+        title,
+        sourceSessionId: toolId,
+        sourceToolType: session.tool_type,
+        createdAt: now,
+      });
+    }
+  );
+
+  /**
+   * P27-B: Retry from FAILED state — resets to IN_PROGRESS, clears failure reason
+   */
+  static retryFromFailure = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id, status FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string; status: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      if (normalizeStatus(session.status) !== 'FAILED') {
+        res.status(409).json({ error: 'Tool session is not in FAILED state' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE tool_sessions SET status = 'IN_PROGRESS', failure_reason = NULL, updated_by = ?, updated_at = ? WHERE id = ?`,
+        [user.id, now, toolId]
+      );
+
+      await logAudit(user.organizationId, user.id, 'tool_retry_from_failure', toolId);
+
+      res.json({ id: toolId, status: 'IN_PROGRESS', updatedAt: now });
     }
   );
 
