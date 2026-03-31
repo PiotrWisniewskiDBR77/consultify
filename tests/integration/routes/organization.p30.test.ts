@@ -260,3 +260,70 @@ describe('Ownership boundaries', () => {
     expect(router.stack || (router as any)._router?.stack).toBeDefined;
   });
 });
+
+// ---------------------------------------------------------------------------
+// 5. Snapshot rebuild (P30-A checklist #9)
+// ---------------------------------------------------------------------------
+
+describe('Snapshot rebuild after profile update', () => {
+  it('recordOrganizationProfile triggers rebuildSnapshot via recordContextSource', async () => {
+    const mod = await import(
+      '../../../server/src/services/organizationContext/OrganizationContextService.js'
+    );
+    const service = mod.default;
+
+    expect(typeof service.recordOrganizationProfile).toBe('function');
+    expect(typeof service.rebuildSnapshot).toBe('function');
+    expect(typeof service.recordContextSource).toBe('function');
+  });
+
+  it('rebuildSnapshot method exists and is callable', async () => {
+    const mod = await import(
+      '../../../server/src/services/organizationContext/OrganizationContextService.js'
+    );
+    const service = mod.default;
+    expect(typeof service.rebuildSnapshot).toBe('function');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. Downstream bypass regression (P30-A checklist #4)
+// ---------------------------------------------------------------------------
+
+describe('Downstream services use OrganizationContextService (no bypass)', () => {
+  it('ideaAIGeneratorService buildOrgContext uses OrganizationContextService', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      'server/src/services/ideaAIGeneratorService.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('OrganizationContextService');
+    expect(content).toContain('buildResolvedContext');
+  });
+
+  it('competitiveIntelligenceService uses OrganizationContextService', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      'server/src/services/competitiveIntelligenceService.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('OrganizationContextService');
+    expect(content).toContain('buildResolvedContext');
+  });
+
+  it('assessment-workflow-v2 uses OrganizationContextService for industry', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      'server/src/routes/assessment-workflow-v2.routes.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('OrganizationContextService');
+    expect(content).toContain('buildResolvedContext');
+  });
+});

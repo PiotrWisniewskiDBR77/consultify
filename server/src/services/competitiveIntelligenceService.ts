@@ -457,12 +457,18 @@ const CompetitiveIntelligenceService = {
     gaps: Array<{ area: string; description: string; recommendation: string }>;
     strengths: Array<unknown>;
   }> => {
-    const org = await DbPromise.get<{ industry?: string }>(
-      'SELECT industry FROM organizations WHERE id = ?',
-      [organizationId]
-    );
-
-    const industry = org?.industry || 'Unknown';
+    let industry = 'Unknown';
+    try {
+      const orgContextService = (await import('./organizationContext/OrganizationContextService.js')).default;
+      const resolved = await orgContextService.buildResolvedContext(organizationId);
+      industry = resolved?.profile?.industry || 'Unknown';
+    } catch {
+      const org = await DbPromise.get<{ industry?: string }>(
+        'SELECT industry FROM organizations WHERE id = ?',
+        [organizationId]
+      );
+      industry = org?.industry || 'Unknown';
+    }
 
     const benchmarks = await DbPromise.all<BenchmarkRow>(
       `

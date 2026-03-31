@@ -653,18 +653,31 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
 async function buildOrgContext(orgId: string): Promise<OrgContext> {
   const ctx: OrgContext = {};
   try {
-    const org = await queryHelpers.queryOne<any>(
-      `SELECT name, industry, size, country FROM organizations WHERE id = ? LIMIT 1`,
-      [orgId]
+    const { default: orgContextService } = await import(
+      './organizationContext/OrganizationContextService.js'
     );
-    if (org) {
-      ctx.name = org.name;
-      ctx.industry = org.industry;
-      ctx.size = org.size;
-      ctx.country = org.country;
+    const resolved = await orgContextService.buildResolvedContext(orgId);
+    if (resolved) {
+      ctx.name = resolved.profile.companyName || undefined;
+      ctx.industry = resolved.profile.industry || undefined;
+      ctx.size = resolved.profile.companySize || undefined;
+      ctx.country = resolved.profile.location || undefined;
     }
   } catch {
-    /* table may not exist */
+    try {
+      const org = await queryHelpers.queryOne<any>(
+        `SELECT name, industry, size, country FROM organizations WHERE id = ? LIMIT 1`,
+        [orgId]
+      );
+      if (org) {
+        ctx.name = org.name;
+        ctx.industry = org.industry;
+        ctx.size = org.size;
+        ctx.country = org.country;
+      }
+    } catch {
+      /* table may not exist */
+    }
   }
 
   try {

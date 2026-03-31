@@ -1497,12 +1497,20 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
     );
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
 
-    const org = await db.get<any>(`SELECT industry FROM organizations WHERE id = ?`, [
-      String(organizationId),
-    ]);
+    let resolvedIndustry = 'manufacturing';
+    try {
+      const orgContextService = (await import('../services/organizationContext/OrganizationContextService.js')).default;
+      const resolved = await orgContextService.buildResolvedContext(String(organizationId));
+      resolvedIndustry = resolved?.profile?.industry || 'manufacturing';
+    } catch {
+      const org = await db.get<any>(`SELECT industry FROM organizations WHERE id = ?`, [
+        String(organizationId),
+      ]);
+      resolvedIndustry = org?.industry || 'manufacturing';
+    }
 
     const framework = String(assessment.assessment_type || 'SIRI').toUpperCase();
-    const industry = String(org?.industry || 'manufacturing')
+    const industry = String(resolvedIndustry)
       .toLowerCase()
       .replace(/[^a-z_]/g, '_');
     const normalizedIndustry =
