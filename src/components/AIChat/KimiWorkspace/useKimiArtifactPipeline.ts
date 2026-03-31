@@ -465,13 +465,21 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             language: navigator.language,
           });
           if (wbResult?.id) {
+            const qualityLabel = wbResult.qualityScore != null
+              ? `${wbResult.qualityScore.toFixed(1)}/5`
+              : 'N/A';
+            const pipelinePhases = Array.isArray(wbResult.pipelineLog)
+              ? wbResult.pipelineLog.filter((p: any) => p.status !== 'skipped').length
+              : 0;
+
             setPreview({
               type: 'xlsx',
               title: wbResult.title || title,
               fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
-              summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets.`,
+              summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets. Quality: ${qualityLabel}`,
               kpiItems: [
                 { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
+                { label: 'Quality', value: qualityLabel },
                 { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
                 ...(wbResult.sheets || []).map((s: any) => ({
                   label: s.name,
@@ -481,6 +489,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
               workbookId: wbResult.id,
               downloadUrl: wbResult.downloadUrl,
+              qualityScore: wbResult.qualityScore,
+              pipelineLog: wbResult.pipelineLog,
             });
             setContentGenerated(true);
             return true;

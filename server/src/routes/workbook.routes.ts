@@ -52,6 +52,8 @@ async function ensureWorkbookSchema() {
         file_name TEXT,
         file_size INTEGER,
         validation_errors TEXT,
+        quality_score REAL,
+        pipeline_log TEXT,
         created_by TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -101,8 +103,8 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
   // Persist metadata
   try {
     await queryHelpers.queryRun(
-      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         result.id,
         user.organizationId,
@@ -114,6 +116,8 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
         result.fileName,
         result.buffer.length,
         result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
+        result.qualityScore,
+        JSON.stringify(result.pipelineLog),
         user.id,
         result.generatedAt,
       ]
@@ -135,6 +139,8 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     fileName: result.fileName,
     fileSize: result.buffer.length,
     validationErrors: result.validationErrors,
+    qualityScore: result.qualityScore,
+    pipelineLog: result.pipelineLog,
     downloadUrl: `/api/workbook/${result.id}/download`,
     generatedAt: result.generatedAt,
   });
