@@ -1,7 +1,7 @@
 # Final Implementation Contract — Ankiety (Position 9/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) — P09-A (governed collection lane canon)
+Status: verified(evidence) — P09-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Generalnie ok; ewentualnie poprawa UI/UX.
@@ -195,6 +195,6 @@ Handoff is a **structured evidence bundle** (not an insight):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P09-A | approved(scope) | 75bda211fc | docs-only (canon freeze) | n/a | scope canon + execution index flip |
-| P09-B |  |  |  |  |  |
-| P09-C |  |  |  |  |  |
+| P09-B | verified(evidence) | ws/c-artifact-evidence | 32 tests (canon structure, submission statuses, transitions, branching posture, handoff payload, anti-duplicate, degraded posture, acceptance checklist) — all pass | Canon + governance closure | surveyCollectionCanon: 6 submission statuses + transitions, 6 survey lifecycle states, branching posture (skip_logic/conditional_display), P10 handoff payload, 4 anti-duplicate rules, 10 degraded scenarios, 7/7 acceptance |
+| P09-C | verified(evidence) | ws/c-artifact-evidence | 32 tests — regression green | Evidence ledger filled; EXECUTION_INDEX updated | Full P09-A acceptance checklist verified; evidence `P09_VERIFIED_CLOSEOUT_2026-03-31.md` |
 

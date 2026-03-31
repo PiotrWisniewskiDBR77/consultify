@@ -1,7 +1,7 @@
 # Final Implementation Contract — Whiteboard (Position 13/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P13-A canon frozen; docs-only)
+Status: verified(evidence) — P13-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Jak Mindmap: przegląd narzędzi/przycisków + naprawa procesu budowania; AI współbuduje.
@@ -242,6 +242,6 @@ The board must fail safely and predictably. Minimum scenarios to support (8+):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P13-A | approved(scope) |  |  |  | §2.3 canon frozen (toolbelt, facilitation cues, export/readback, collab boundary, AI proposals + audit, anti-duplicate, degraded posture) |
-| P13-B |  |  |  |  |  |
-| P13-C |  |  |  |  |  |
+| P13-B | verified(evidence) | ws/c-artifact-evidence | 57 tests (toolbelt 9 tools, facilitation 4-phase flow + transitions, export PNG+JSON, collaboration boundary, AI co-building contract, anti-duplicate gate, 9 degraded scenarios, 10/10 acceptance) — all pass | Canon + runtime closure | whiteboardCanon: 9-tool frozen toolbelt, 4-phase facilitation flow, export (PNG+JSON), collaboration boundary, AI co-building contract, anti-duplicate gate, 9 degraded scenarios, 10/10 acceptance |
+| P13-C | verified(evidence) | ws/c-artifact-evidence | 57 tests — regression green | Evidence ledger filled; EXECUTION_INDEX updated | Full P13-A acceptance checklist verified; evidence `P13_VERIFIED_CLOSEOUT_2026-03-31.md` |
 

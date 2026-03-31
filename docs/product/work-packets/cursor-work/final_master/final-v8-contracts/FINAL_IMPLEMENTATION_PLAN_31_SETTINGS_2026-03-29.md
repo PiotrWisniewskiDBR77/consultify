@@ -1,8 +1,8 @@
 # Final Implementation Contract — Settings (Position 31/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P31-A** (settings taxonomy + ownership model frozen); P31-B / P31-C not started  
-Last updated: 2026-03-30 (P31-A scope closure)
+Status: verified(evidence) — P31-A/B/C complete  
+Last updated: 2026-03-31 (P31-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Dopasować UI/UX; scalić myślenie: user settings + admin org + superadmin dzierżawca; role: owner/admin/user + role w projekcie.

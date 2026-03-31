@@ -1,7 +1,7 @@
 # Final Implementation Contract — Wnioski z interview (insights) (Position 10/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P10-A canon frozen; contract wrapper over existing plan)
+Status: verified(evidence) — P10-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Wnioskowanie z odpowiedzi + kontekstu organizacji w sposób **audytowalny**: insight ma strukturę, wskazuje evidence, i ma jawne granice pewności.
@@ -278,6 +278,6 @@ Co najmniej poniższe scenariusze muszą mieć jawne UI + audit + operator next 
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P10-A | approved(scope) | f15dda63af0afed396a6b282ac179560103015ba | n/a (docs-only scope approval) | n/a | §2.3 canon frozen (artifact structure, confidence semantics, evidence pointers rules, P11 handoff payload, anti-duplicate gate, degraded posture, acceptance checklist) |
-| P10-B |  |  |  |  |  |
-| P10-C |  |  |  |  |  |
+| P10-B | verified(evidence) | ws/c-artifact-evidence | 55 tests (artifact structure, confidence levels + semantics, no-overclaim rules, evidence pointer types, source loss rules, handoff payload, anti-duplicate gate, degraded posture, canPublishFinding, acceptance checklist) — all pass | Canon + confidence semantics closure | interviewInsightCanon: frozen artifact structure (finding/evidence/limits/next_action), 4 confidence levels + semantics + no-overclaim, 7 evidence pointer types, source loss rules (append-only/tombstone), handoff to initiatives (9 required + 3 optional), 5 anti-duplicate rules, 10 degraded scenarios, 12/12 acceptance |
+| P10-C | verified(evidence) | ws/c-artifact-evidence | 55 tests — regression green | Evidence ledger filled; EXECUTION_INDEX updated | Full P10-A acceptance checklist verified; evidence `P10_VERIFIED_CLOSEOUT_2026-03-31.md` |
 

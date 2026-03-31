@@ -1,7 +1,7 @@
 # Final Implementation Contract — Tabele (Position 15/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P15-A canon frozen; docs-only)
+Status: verified(evidence) — P15-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Pełna logika Airtable: tabele zwykłe/relacyjne + AI współbuduje jak konkurencja.

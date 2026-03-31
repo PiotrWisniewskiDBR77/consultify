@@ -1,7 +1,7 @@
 # Final Implementation Contract — Integracja (Position 1/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: verified(evidence) — P01-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Integracja z zewnętrznymi programami.

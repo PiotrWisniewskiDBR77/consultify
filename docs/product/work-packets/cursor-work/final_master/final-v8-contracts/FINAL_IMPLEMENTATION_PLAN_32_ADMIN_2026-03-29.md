@@ -1,8 +1,8 @@
 # Final Implementation Contract — Admin (Position 32/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P32-A** (Admin cockpit IA + role model + boundaries frozen); P32-B / P32-C not started  
-Last updated: 2026-03-30 (P32-A scope closure)
+Status: verified(evidence) — P32-A/B/C complete  
+Last updated: 2026-03-31 (P32-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Dopasować UI/UX; połączyć z Settings i Superadmin; zarządzanie rolami i organizacją.

@@ -1,8 +1,8 @@
 # Final Implementation Contract — Organization (Position 30/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P30-A** (tenant/org SSOT + reuse contract frozen); P30-B / P30-C not started  
-Last updated: 2026-03-30 (P30-A scope closure)
+Status: verified(evidence) — P30-A/B/C complete  
+Last updated: 2026-03-31 (P30-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Dopasować UI/UX do standardu; dodać/zmienić co ma sens; lepsza organizacja danych.

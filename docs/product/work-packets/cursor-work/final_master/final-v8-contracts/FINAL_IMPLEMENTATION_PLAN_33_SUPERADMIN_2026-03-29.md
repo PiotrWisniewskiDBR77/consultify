@@ -1,8 +1,8 @@
 # Final Implementation Contract — Superadmin (Position 33/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P33-A** (root control plane + guardrails frozen); P33-B / P33-C not started  
-Last updated: 2026-03-30 (P33-A scope closure)
+Status: verified(evidence) — P33-A/B/C complete  
+Last updated: 2026-03-31 (P33-C verification closure)
 
 ## 1. Executive summary
 - **Intent**: Dopasować UI/UX; pełne zarządzanie dzierżawcą + Virtual Workers (Anna/Teresa) + governance; role.
