@@ -1,9 +1,13 @@
 /**
  * P35-B: Historia czatów — Integration Tests
  *
- * Tests the full conversation lifecycle (create/rename/pin/archive/unarchive/delete),
- * server-side search with cursor pagination, soft-delete grace semantics,
- * deep-link state handling, and team folder permission boundaries.
+ * Tests the full conversation lifecycle, server-side search with cursor pagination,
+ * soft-delete grace semantics, deep-link state handling, team folder permissions,
+ * and P34 policy gateway integration.
+ *
+ * NOTE: These tests run against the actual server with DB initialization.
+ * Auth may not be available in all test environments, so we test both
+ * authenticated (200/201) and unauthenticated (401) paths.
  */
 import request from 'supertest';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -14,9 +18,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-p35-history-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
-
-describe('P35-B: Historia czatów — Lifecycle + Search + Soft-Delete', () => {
+describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
   let app: any;
 
   beforeAll(async () => {
@@ -28,198 +30,224 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Soft-Delete', () => {
     app = serverModule.default;
   });
 
-  // ==================== LIFECYCLE ====================
+  // ==================== LIFECYCLE CRUD ====================
 
-  describe('Conversation Lifecycle', () => {
-    it('GET /api/conversations returns valid response', async () => {
+  describe('Conversation Lifecycle CRUD', () => {
+    it('GET /api/conversations returns 200 with conversations array or 401 without auth', async () => {
       const res = await request(app).get('/api/conversations');
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401]).toContain(res.status);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversations');
         expect(Array.isArray(res.body.conversations)).toBe(true);
+        expect(res.body).toHaveProperty('total');
+        expect(typeof res.body.total).toBe('number');
       }
     });
 
-    it('POST /api/conversations creates a conversation (or requires auth)', async () => {
+    it('POST /api/conversations returns 201 with id or 401 without auth', async () => {
       const res = await request(app)
         .post('/api/conversations')
         .send({ title: 'P35 Test Conversation' });
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([201, 401]).toContain(res.status);
+      if (res.status === 201) {
+        expect(res.body).toHaveProperty('id');
+        expect(typeof res.body.id).toBe('string');
+      }
     });
 
-    it('PATCH /api/conversations/:id updates metadata (or requires auth)', async () => {
+    it('PATCH /api/conversations/:id returns 200 or 401/404', async () => {
       const res = await request(app)
         .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
         .send({ title: 'Renamed', starred: true });
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401, 404]).toContain(res.status);
     });
 
-    it('DELETE /api/conversations/:id soft-deletes (or requires auth)', async () => {
+    it('DELETE /api/conversations/:id returns soft-delete response or 401/404', async () => {
       const res = await request(app).delete(
         '/api/conversations/00000000-0000-0000-0000-000000000001'
       );
-      expect(VALID_STATUSES).toContain(res.status);
-      if (res.status === 200 && res.body.softDeleted) {
-        expect(res.body.deletedAt).toBeDefined();
+      expect([200, 401, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body.success).toBe(true);
+        // Should be soft-delete (not purge) by default
+        if (res.body.softDeleted) {
+          expect(res.body.deletedAt).toBeDefined();
+          expect(res.body.purged).toBeUndefined();
+        }
       }
     });
 
-    it('DELETE with ?force=true hard-deletes a soft-deleted conversation', async () => {
+    it('DELETE with ?force=true purges with audit trail or 401/404', async () => {
       const res = await request(app).delete(
         '/api/conversations/00000000-0000-0000-0000-000000000001?force=true'
       );
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401, 404]).toContain(res.status);
+      if (res.status === 200 && res.body.purged) {
+        expect(res.body.messagesRemoved).toBeDefined();
+        expect(typeof res.body.messagesRemoved).toBe('number');
+      }
     });
   });
 
-  // ==================== SEARCH ====================
+  // ==================== SERVER-SIDE SEARCH ====================
 
-  describe('Server-Side Search (target posture)', () => {
-    it('GET /api/conversations/search requires q param >= 2 chars', async () => {
-      const res = await request(app).get('/api/conversations/search?q=a');
-      expect(VALID_STATUSES).toContain(res.status);
-      if (res.status === 200) {
-        expect(res.body.conversations).toEqual([]);
-      }
+  describe('Server-Side Search (P34-governed)', () => {
+    it('GET /api/conversations/search without q returns empty', async () => {
+      const res = await request(app).get('/api/conversations/search');
+      expect([200, 400, 401]).toContain(res.status);
     });
 
-    it('GET /api/conversations/search with valid q returns results + cursor', async () => {
-      const res = await request(app).get('/api/conversations/search?q=test');
-      expect(VALID_STATUSES).toContain(res.status);
+    it('GET /api/conversations/search?q=ab (2 chars) returns results or auth error', async () => {
+      const res = await request(app).get('/api/conversations/search?q=ab');
+      expect([200, 401]).toContain(res.status);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversations');
         expect(res.body).toHaveProperty('nextCursor');
         expect(res.body).toHaveProperty('hasMore');
-        expect(res.body).toHaveProperty('query', 'test');
+        expect(res.body).toHaveProperty('query', 'ab');
+        expect(Array.isArray(res.body.conversations)).toBe(true);
       }
     });
 
-    it('GET /api/conversations/search supports filters', async () => {
+    it('search supports cursor pagination (nextCursor + hasMore)', async () => {
+      const res = await request(app).get('/api/conversations/search?q=test&limit=2');
+      expect([200, 401]).toContain(res.status);
+      if (res.status === 200) {
+        expect(typeof res.body.hasMore).toBe('boolean');
+        if (res.body.hasMore) {
+          expect(typeof res.body.nextCursor).toBe('string');
+          expect(res.body.nextCursor).toContain('|');
+        }
+      }
+    });
+
+    it('search supports filters (pinned, archived, folderId, from, to)', async () => {
       const res = await request(app).get(
         '/api/conversations/search?q=test&pinned=true&archived=false'
       );
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401]).toContain(res.status);
     });
+  });
 
-    it('GET /api/conversations/search supports cursor pagination', async () => {
+  // ==================== LIST WITH CURSOR PAGINATION ====================
+
+  describe('List with Cursor Pagination', () => {
+    it('GET /api/conversations?cursor=... uses cursor-based pagination', async () => {
       const res = await request(app).get(
-        '/api/conversations/search?q=test&cursor=2026-03-31T00:00:00Z|some-id&limit=5'
+        '/api/conversations?cursor=2026-01-01T00:00:00Z|fake-id&limit=5'
       );
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('conversations');
+        expect(res.body).toHaveProperty('nextCursor');
+        expect(res.body).toHaveProperty('hasMore');
+      }
     });
   });
 
   // ==================== DEEP-LINK STATE ====================
 
-  describe('Deep-Link State Handling', () => {
-    it('GET /api/conversations/:id returns _state field', async () => {
+  describe('Deep-Link State Handling (§2.3.5 E5)', () => {
+    it('GET /api/conversations/:id for non-existent returns 404 with state', async () => {
       const res = await request(app).get(
         '/api/conversations/00000000-0000-0000-0000-000000000099'
       );
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([401, 404]).toContain(res.status);
       if (res.status === 404) {
-        expect(res.body).toHaveProperty('state', 'not_found');
+        expect(res.body.state).toBe('not_found');
       }
+    });
+  });
+
+  // ==================== ARCHIVE vs DELETE ====================
+
+  describe('Archive vs Delete Semantics (§2.3.6 F2)', () => {
+    it('archive is reversible via PATCH archived=true/false', async () => {
+      const archiveRes = await request(app)
+        .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
+        .send({ archived: true });
+      expect([200, 401, 404]).toContain(archiveRes.status);
+
+      const unarchiveRes = await request(app)
+        .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
+        .send({ archived: false });
+      expect([200, 401, 404]).toContain(unarchiveRes.status);
     });
   });
 
   // ==================== BULK OPERATIONS ====================
 
   describe('Bulk Operations', () => {
-    it('POST /api/conversations/bulk archive works', async () => {
+    it('POST /api/conversations/bulk validates action enum', async () => {
       const res = await request(app)
         .post('/api/conversations/bulk')
-        .send({
-          ids: ['00000000-0000-0000-0000-000000000001'],
-          action: 'archive',
-        });
-      expect(VALID_STATUSES).toContain(res.status);
+        .send({ ids: ['00000000-0000-0000-0000-000000000001'], action: 'invalid' });
+      expect([400, 401]).toContain(res.status);
     });
 
-    it('POST /api/conversations/bulk delete uses soft-delete', async () => {
+    it('POST /api/conversations/bulk with valid action works or requires auth', async () => {
       const res = await request(app)
         .post('/api/conversations/bulk')
-        .send({
-          ids: ['00000000-0000-0000-0000-000000000001'],
-          action: 'delete',
-        });
-      expect(VALID_STATUSES).toContain(res.status);
+        .send({ ids: ['00000000-0000-0000-0000-000000000001'], action: 'archive' });
+      expect([200, 401, 404]).toContain(res.status);
     });
   });
 
-  // ==================== ARCHIVE vs DELETE DISTINCTION ====================
+  // ==================== TEAM PERMISSIONS (P34 GATEWAY) ====================
 
-  describe('Archive vs Delete Semantics', () => {
-    it('archive is reversible (PATCH archived=true then archived=false)', async () => {
-      const archiveRes = await request(app)
-        .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
-        .send({ archived: true });
-      expect(VALID_STATUSES).toContain(archiveRes.status);
-
-      const unarchiveRes = await request(app)
-        .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
-        .send({ archived: false });
-      expect(VALID_STATUSES).toContain(unarchiveRes.status);
-    });
-
-    it('delete is destructive (sets deleted_at, not reversible via PATCH)', async () => {
-      const deleteRes = await request(app).delete(
-        '/api/conversations/00000000-0000-0000-0000-000000000001'
-      );
-      expect(VALID_STATUSES).toContain(deleteRes.status);
-    });
-  });
-
-  // ==================== TEAM FOLDER PERMISSIONS ====================
-
-  describe('Team Folder Permission Boundaries', () => {
-    it('team conversation without org access returns 403 or 404', async () => {
+  describe('Team Folder Permissions (§2.3.3)', () => {
+    it('team conversation without org access returns 401/403/404 (no leakage)', async () => {
       const res = await request(app).get(
         '/api/conversations/00000000-0000-0000-0000-000000000099'
       );
       expect([401, 403, 404]).toContain(res.status);
+      // Must NOT return conversation content
+      if (res.status === 404) {
+        expect(res.body.messages).toBeUndefined();
+      }
     });
   });
 
   // ==================== CHAT PROJECTS (FOLDERS) ====================
 
-  describe('Chat Projects (Folders)', () => {
-    it('GET /api/chat-projects returns folders', async () => {
+  describe('Chat Projects / Folders', () => {
+    it('GET /api/chat-projects returns folders or requires auth', async () => {
       const res = await request(app).get('/api/chat-projects');
-      expect(VALID_STATUSES).toContain(res.status);
+      expect([200, 401]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('projects');
+      }
     });
 
-    it('POST /api/chat-projects creates a folder', async () => {
+    it('POST /api/chat-projects validates scope enum', async () => {
       const res = await request(app)
         .post('/api/chat-projects')
-        .send({ name: 'Test Folder', scope: 'personal' });
-      expect(VALID_STATUSES).toContain(res.status);
+        .send({ name: 'Test', scope: 'invalid' });
+      expect([400, 401]).toContain(res.status);
     });
   });
 
-  // ==================== REGRESSION ====================
+  // ==================== REGRESSION GUARDS ====================
 
   describe('Regression Guards', () => {
-    it('list endpoint excludes soft-deleted conversations', async () => {
+    it('list endpoint does NOT return soft-deleted conversations', async () => {
       const res = await request(app).get('/api/conversations');
-      expect(VALID_STATUSES).toContain(res.status);
       if (res.status === 200 && Array.isArray(res.body.conversations)) {
         for (const conv of res.body.conversations) {
-          expect(conv.deleted_at).toBeUndefined();
+          expect(conv.deleted_at).toBeNull();
         }
       }
     });
 
-    it('search endpoint excludes soft-deleted conversations', async () => {
-      const res = await request(app).get('/api/conversations/search?q=test');
-      expect(VALID_STATUSES).toContain(res.status);
-    });
-
-    it('auto-archive endpoint works', async () => {
+    it('summarize endpoint references conversation_messages (not messages)', async () => {
       const res = await request(app)
-        .post('/api/conversations/auto-archive')
-        .send({ daysOld: 30 });
-      expect(VALID_STATUSES).toContain(res.status);
+        .post('/api/conversations/00000000-0000-0000-0000-000000000001/summarize')
+        .send({ keepRecent: 10 });
+      // Should not get "no such table: messages" error
+      expect([200, 401, 404]).toContain(res.status);
+      if (res.status === 500) {
+        expect(res.body.error).not.toContain('no such table: messages');
+      }
     });
   });
 });

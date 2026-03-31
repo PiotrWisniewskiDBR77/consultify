@@ -437,6 +437,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const { serverSearch } = useConversationStore();
   const [serverResults, setServerResults] = useState<Conversation[] | null>(null);
   const [serverSearchLoading, setServerSearchLoading] = useState(false);
+  const [searchPartial, setSearchPartial] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Trigger server-side search when query is >= 3 chars (debounced)
@@ -445,6 +446,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
     if (!searchQuery || searchQuery.length < 3) {
       setServerResults(null);
+      setSearchPartial(false);
       return;
     }
 
@@ -453,8 +455,10 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       try {
         const result = await serverSearch({ q: searchQuery, limit: 30 });
         setServerResults(result.conversations);
+        setSearchPartial(result.partial || false);
       } catch {
         setServerResults(null);
+        setSearchPartial(true);
       } finally {
         setServerSearchLoading(false);
       }
@@ -725,7 +729,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     {t('aiChat.searching', 'Searching...')}
                   </span>
                 </div>
-              ) : visibleGroups.length === 0 ? (
+              ) : visibleGroups.length === 0 && !searchPartial ? (
                 <div className="text-center py-12 px-4">
                   <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
                     <Search size={20} className="text-slate-400 dark:text-slate-500" />
@@ -736,6 +740,14 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 </div>
               ) : (
                 <div className="px-3">
+                  {/* Degraded posture: partial results indicator (§2.3.5 E2/E8) */}
+                  {searchPartial && (
+                    <div className="mb-2 px-2.5 py-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40">
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                        {t('aiChat.partialResults', 'Results may be incomplete. Try again later.')}
+                      </p>
+                    </div>
+                  )}
                   <ConversationList
                     groups={displayGroups}
                     activeId={activeConversationId}

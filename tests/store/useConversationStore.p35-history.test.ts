@@ -3,23 +3,24 @@
  *
  * Tests the conversation store's lifecycle actions, grouping, search,
  * and state management for the chat history library.
+ * All tests import and exercise real store code from src/store/useConversationStore.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/services/api', () => ({
-  Api: {
-    getConversations: vi.fn().mockResolvedValue({ conversations: [] }),
-    getConversation: vi.fn().mockResolvedValue({ messages: [] }),
-    createConversation: vi.fn().mockResolvedValue({ id: 'new-id', title: 'New conversation' }),
-    updateConversation: vi.fn().mockResolvedValue({}),
-    deleteConversation: vi.fn().mockResolvedValue({}),
-    addConversationMessage: vi.fn().mockResolvedValue({ id: 'msg-1' }),
-    generateConversationTitle: vi.fn().mockResolvedValue({ title: 'Generated Title' }),
-    bulkConversationOperation: vi.fn().mockResolvedValue({}),
-    migrateConversations: vi.fn().mockResolvedValue({}),
-    get: vi.fn().mockResolvedValue({ conversations: [], nextCursor: null, hasMore: false }),
-  },
-}));
+const mockApi = {
+  getConversations: vi.fn().mockResolvedValue({ conversations: [] }),
+  getConversation: vi.fn().mockResolvedValue({ messages: [] }),
+  createConversation: vi.fn().mockResolvedValue({ id: 'new-id', title: 'New conversation' }),
+  updateConversation: vi.fn().mockResolvedValue({}),
+  deleteConversation: vi.fn().mockResolvedValue({}),
+  addConversationMessage: vi.fn().mockResolvedValue({ id: 'msg-1' }),
+  generateConversationTitle: vi.fn().mockResolvedValue({ title: 'Generated Title' }),
+  bulkConversationOperation: vi.fn().mockResolvedValue({}),
+  migrateConversations: vi.fn().mockResolvedValue({}),
+  get: vi.fn().mockResolvedValue({ conversations: [], nextCursor: null, hasMore: false }),
+};
+
+vi.mock('@/services/api', () => ({ Api: mockApi }));
 
 vi.mock('@/i18n', () => ({
   isValidLanguage: (lang: string) => ['pl', 'en', 'de'].includes(lang),
@@ -31,12 +32,13 @@ describe('P35-B: useConversationStore — History Library', () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    vi.clearAllMocks();
     const mod = await import('../../src/store/useConversationStore');
     useConversationStore = mod.useConversationStore;
     groupConversations = mod.groupConversations;
   });
 
-  describe('Grouping', () => {
+  describe('Grouping (real groupConversations function)', () => {
     it('groups conversations into pinned/today/thisWeek/thisMonth/older/archived', () => {
       const now = new Date();
       const conversations = [
@@ -76,56 +78,127 @@ describe('P35-B: useConversationStore — History Library', () => {
       expect(groups.today[0].id).toBe('b');
       expect(groups.today[1].id).toBe('a');
     });
+
+    it('empty input produces empty groups', () => {
+      const groups = groupConversations([]);
+      expect(groups.pinned).toHaveLength(0);
+      expect(groups.today).toHaveLength(0);
+      expect(groups.archived).toHaveLength(0);
+    });
   });
 
-  describe('Store Actions', () => {
-    it('has all required lifecycle actions', () => {
+  describe('Store Lifecycle Actions (real store)', () => {
+    it('has all required lifecycle actions as functions', () => {
       const state = useConversationStore.getState();
-      expect(typeof state.createConversation).toBe('function');
-      expect(typeof state.updateConversation).toBe('function');
-      expect(typeof state.deleteConversation).toBe('function');
-      expect(typeof state.starConversation).toBe('function');
-      expect(typeof state.unstarConversation).toBe('function');
-      expect(typeof state.archiveConversation).toBe('function');
-      expect(typeof state.unarchiveConversation).toBe('function');
-      expect(typeof state.renameConversation).toBe('function');
-      expect(typeof state.bulkOperation).toBe('function');
+      const requiredActions = [
+        'createConversation', 'updateConversation', 'deleteConversation',
+        'starConversation', 'unstarConversation',
+        'archiveConversation', 'unarchiveConversation',
+        'renameConversation', 'bulkOperation',
+        'serverSearch', 'searchConversations',
+        'fetchConversations', 'fetchConversation',
+        'clearActiveChat', 'addMessage',
+      ];
+      for (const action of requiredActions) {
+        expect(typeof state[action]).toBe('function');
+      }
     });
 
-    it('has server-side search action', () => {
-      const state = useConversationStore.getState();
-      expect(typeof state.serverSearch).toBe('function');
-    });
-
-    it('has search helpers', () => {
-      const state = useConversationStore.getState();
-      expect(typeof state.searchConversations).toBe('function');
-    });
-
-    it('clearActiveChat resets state', () => {
+    it('clearActiveChat resets conversation state', () => {
       const state = useConversationStore.getState();
       state.clearActiveChat();
       const after = useConversationStore.getState();
       expect(after.activeConversationId).toBeNull();
       expect(after.activeMessages).toEqual([]);
     });
+
+    it('serverSearch calls API with correct params and returns structured result', async () => {
+      mockApi.get.mockResolvedValueOnce({
+        conversations: [{ id: 'found-1', title: 'Match', created_at: '2026-01-01' }],
+        nextCursor: 'ts|id',
+        hasMore: true,
+      });
+
+      const state = useConversationStore.getState();
+      const result = await state.serverSearch({ q: 'test query', limit: 10 });
+
+      expect(mockApi.get).toHaveBeenCalledWith(
+        expect.stringContaining('/conversations/search?q=test+query')
+      );
+      expect(result).toHaveProperty('conversations');
+      expect(result).toHaveProperty('nextCursor', 'ts|id');
+      expect(result).toHaveProperty('hasMore', true);
+      expect(result.partial).toBe(false);
+    });
+
+    it('serverSearch returns partial=true on API error (degraded posture)', async () => {
+      mockApi.get.mockRejectedValueOnce(new Error('Network error'));
+
+      const state = useConversationStore.getState();
+      const result = await state.serverSearch({ q: 'failing query' });
+
+      expect(result.conversations).toEqual([]);
+      expect(result.partial).toBe(true);
+    });
+
+    it('searchConversations filters locally by title', () => {
+      const state = useConversationStore.getState();
+      useConversationStore.setState({
+        conversations: [
+          { id: '1', title: 'Alpha project', starred: false, archived: false },
+          { id: '2', title: 'Beta work', starred: false, archived: false },
+          { id: '3', title: 'Alpha chat', starred: false, archived: false },
+        ] as any[],
+      });
+
+      const results = useConversationStore.getState().searchConversations('alpha');
+      expect(results.length).toBe(2);
+      expect(results.every((c: any) => c.title.toLowerCase().includes('alpha'))).toBe(true);
+    });
   });
 
   describe('Archive vs Delete Semantics', () => {
-    it('archive is reversible (starred=false, archived=true → archived=false)', async () => {
+    it('archive calls updateConversation with archived=true', async () => {
+      mockApi.updateConversation.mockResolvedValueOnce({});
+      useConversationStore.setState({
+        conversations: [{ id: 'c1', title: 'Test', archived: false, starred: false }] as any[],
+      });
+
       const state = useConversationStore.getState();
-      expect(typeof state.archiveConversation).toBe('function');
-      expect(typeof state.unarchiveConversation).toBe('function');
+      await state.archiveConversation('c1');
+      expect(mockApi.updateConversation).toHaveBeenCalledWith('c1', { archived: true });
     });
 
-    it('delete removes from local state', async () => {
+    it('unarchive calls updateConversation with archived=false', async () => {
+      mockApi.updateConversation.mockResolvedValueOnce({});
+      useConversationStore.setState({
+        conversations: [{ id: 'c1', title: 'Test', archived: true, starred: false }] as any[],
+      });
+
       const state = useConversationStore.getState();
-      expect(typeof state.deleteConversation).toBe('function');
+      await state.unarchiveConversation('c1');
+      expect(mockApi.updateConversation).toHaveBeenCalledWith('c1', { archived: false });
+    });
+
+    it('delete calls deleteConversation and removes from local state', async () => {
+      mockApi.deleteConversation.mockResolvedValueOnce({});
+      useConversationStore.setState({
+        conversations: [
+          { id: 'c1', title: 'Keep', archived: false, starred: false },
+          { id: 'c2', title: 'Delete me', archived: false, starred: false },
+        ] as any[],
+      });
+
+      const state = useConversationStore.getState();
+      await state.deleteConversation('c2');
+      expect(mockApi.deleteConversation).toHaveBeenCalledWith('c2');
+      const after = useConversationStore.getState();
+      expect(after.conversations.find((c: any) => c.id === 'c2')).toBeUndefined();
     });
   });
 
   describe('chatFolderId vs projectId Separation', () => {
-    it('Conversation type has both chatProjectId and projectId', () => {
+    it('Conversation type has both chatProjectId and projectId (distinct fields)', () => {
       const conv = {
         id: '1',
         title: 'Test',

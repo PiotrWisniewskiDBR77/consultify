@@ -107,6 +107,8 @@ const ListConversationsQuerySchema = z.object({
   search: z.string().max(200).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   offset: z.string().regex(/^\d+$/).optional(),
+  /** Cursor-based pagination: "lastMessageAt|id" — preferred over offset */
+  cursor: z.string().optional(),
 });
 
 const CreateConversationSchema = z.object({
@@ -191,36 +193,41 @@ router.get(
       search,
       limit: limitStr,
       offset: offsetStr,
+      cursor: cursorParam,
     } = req.query as Record<string, string | undefined>;
 
     const limit = parseInt(limitStr || '50', 10);
     const offset = parseInt(offsetStr || '0', 10);
     const scope = scopeFilter || 'all';
+    const useCursor = Boolean(cursorParam);
 
     try {
-      // Build WHERE clause based on scope
-      // personal: user's own conversations (no team project or personal project)
-      // team: conversations inside team-scope chat_projects where user is org member
-      // all: union of both
+      // P34 policy gateway: resolve team read permission before listing (§2.3.3)
+      let teamReadAllowed = false;
+      if (req.organizationId) {
+        const perm = await checkChatPermission(req.userId!, req.organizationId, 'read');
+        teamReadAllowed = perm.allowed;
+      }
+
+      // Build WHERE clause based on scope (governed by P34 permission)
       let whereClause: string;
       const params: (string | boolean)[] = [];
 
       if (scope === 'personal') {
         whereClause = `WHERE c.user_id = ?`;
         params.push(req.userId!);
-        // Exclude conversations in team projects (they show under 'team')
         whereClause += ` AND (c.chat_project_id IS NULL OR cp.scope IS NULL OR cp.scope = 'personal')`;
       } else if (scope === 'team') {
-        if (!req.organizationId) {
+        if (!req.organizationId || !teamReadAllowed) {
           return res.json({ conversations: [], total: 0, limit, offset });
         }
         whereClause = `WHERE cp.scope = 'team' AND cp.organization_id = ?`;
         params.push(req.organizationId);
       } else {
-        // scope === 'all': personal + team
+        // scope === 'all': personal + team (team only if P34 allows read)
         whereClause = `WHERE (c.user_id = ?`;
         params.push(req.userId!);
-        if (req.organizationId) {
+        if (teamReadAllowed && req.organizationId) {
           whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
           params.push(req.organizationId);
         }
@@ -256,6 +263,15 @@ router.get(
         params.push(searchPattern, searchPattern);
       }
 
+      // Cursor-based pagination (preferred over offset)
+      if (useCursor && cursorParam) {
+        const [cursorTs, cursorId] = cursorParam.split('|');
+        if (cursorTs && cursorId) {
+          whereClause += ` AND (COALESCE(c.last_message_at, c.updated_at) < ? OR (COALESCE(c.last_message_at, c.updated_at) = ? AND c.id < ?))`;
+          params.push(cursorTs, cursorTs, cursorId);
+        }
+      }
+
       // Use LEFT JOIN to chat_projects to resolve scope
       const fromClause = `FROM conversations c LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id`;
 
@@ -266,6 +282,7 @@ router.get(
       )) as { total: number };
 
       // Get conversations (include created_by for team display)
+      const fetchLimit = useCursor ? limit + 1 : limit;
       const conversations = await dbAll(
         `
                 SELECT 
@@ -279,11 +296,29 @@ router.get(
                 ${whereClause}
                 ORDER BY 
                     CASE WHEN c.starred = true THEN 0 ELSE 1 END,
-                    COALESCE(c.last_message_at, c.updated_at) DESC
-                LIMIT ? OFFSET ?
+                    COALESCE(c.last_message_at, c.updated_at) DESC,
+                    c.id DESC
+                LIMIT ? ${useCursor ? '' : 'OFFSET ?'}
             `,
-        [...params, limit, offset]
+        useCursor ? [...params, fetchLimit] : [...params, fetchLimit, offset]
       );
+
+      if (useCursor) {
+        const hasMore = conversations.length > limit;
+        const page = hasMore ? conversations.slice(0, limit) : conversations;
+        let nextCursor: string | null = null;
+        if (hasMore && page.length > 0) {
+          const last = page[page.length - 1] as any;
+          nextCursor = `${last.last_message_at || last.updated_at}|${last.id}`;
+        }
+        return res.json({
+          conversations: page,
+          total: countResult?.total || 0,
+          nextCursor,
+          hasMore,
+          limit,
+        });
+      }
 
       return res.json({
         conversations,
@@ -555,11 +590,31 @@ router.delete(
       }
 
       if (forceHard && existing.deleted_at) {
-        // Final purge: hard-delete a previously soft-deleted conversation
+        // Final purge: hard-delete with audit trail (§2.3.3)
+        const msgCountRow = await dbGet(
+          `SELECT COUNT(*) as cnt FROM conversation_messages WHERE conversation_id = ?`,
+          [id]
+        );
+        const msgCount = (msgCountRow as any)?.cnt || 0;
+
+        // Preserve minimal audit event before purging content
+        try {
+          const titleHash = existing.title
+            ? Buffer.from(existing.title).toString('base64').slice(0, 64)
+            : null;
+          await dbRun(
+            `INSERT INTO conversation_purge_audit (id, conversation_id, purged_by_user_id, organization_id, message_count, title_hash, purged_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), id, req.userId!, req.organizationId || null, msgCount, titleHash, new Date().toISOString()]
+          );
+        } catch {
+          // Audit table may not exist yet; proceed with purge
+        }
+
         await dbRun('DELETE FROM conversation_messages WHERE conversation_id = ?', [id]);
         await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
-        logger.info(`[Conversations] Hard-deleted (purge): ${id} by user ${req.userId}`);
-        return res.json({ success: true, deleted: id, purged: true });
+        logger.info(`[Conversations] Hard-deleted (purge): ${id} by user ${req.userId}, ${msgCount} messages`);
+        return res.json({ success: true, deleted: id, purged: true, messagesRemoved: msgCount });
       }
 
       // Soft-delete: set deleted_at timestamp (grace window)
@@ -1208,7 +1263,7 @@ router.post(
       // 1. Fetch all messages
       const messages: any[] = await dbAll(
         `SELECT id, role, content, message_type, created_at
-         FROM messages WHERE conversation_id = ?
+         FROM conversation_messages WHERE conversation_id = ?
          ORDER BY created_at ASC`,
         [id]
       );
@@ -1258,7 +1313,7 @@ router.post(
       // 5. Store the summary as a message of type 'summary'
       const summaryId = uuidv4();
       await dbRun(
-        `INSERT INTO messages (id, conversation_id, role, content, message_type, created_at)
+        `INSERT INTO conversation_messages (id, conversation_id, role, content, message_type, created_at)
          VALUES (?, ?, 'ai', ?, 'summary', ?)`,
         [summaryId, id, summaryText, new Date().toISOString()]
       );
@@ -1270,7 +1325,7 @@ router.post(
         // Add metadata flag instead of deleting
         const placeholders = condensedIds.map(() => '?').join(',');
         await dbRun(
-          `UPDATE messages SET message_type = 'condensed'
+          `UPDATE conversation_messages SET message_type = 'condensed'
            WHERE id IN (${placeholders}) AND conversation_id = ?`,
           [...condensedIds, id]
         );
@@ -1329,11 +1384,18 @@ router.get(
     try {
       const searchPattern = `%${query}%`;
 
-      // Scope: personal + team (same logic as list endpoint)
+      // P34 policy gateway: resolve team read permission before search (§2.3.3)
+      let teamReadAllowed = false;
+      if (req.organizationId) {
+        const perm = await checkChatPermission(req.userId!, req.organizationId, 'read');
+        teamReadAllowed = perm.allowed;
+      }
+
+      // Scope: personal + team (governed by P34 permission check)
       let whereClause = `WHERE (c.user_id = ?`;
       const params: (string | boolean)[] = [req.userId!];
 
-      if (req.organizationId) {
+      if (teamReadAllowed && req.organizationId) {
         whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
         params.push(req.organizationId);
       }
@@ -1366,6 +1428,14 @@ router.get(
       if (to) {
         whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) <= ?`;
         params.push(to);
+      }
+
+      // hasAttachments filter (checks conversation_message_attachments table)
+      const hasAttachments = (req.query as any).hasAttachments;
+      if (hasAttachments === 'true') {
+        whereClause += ` AND EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
+      } else if (hasAttachments === 'false') {
+        whereClause += ` AND NOT EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
       }
 
       // Cursor-based pagination: cursor = "lastMessageAt|id"

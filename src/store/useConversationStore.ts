@@ -1087,10 +1087,18 @@ export const useConversationStore = create<ConversationState>()(
             conversations: (result?.conversations || []).map(mapApiConversation),
             nextCursor: result?.nextCursor || null,
             hasMore: result?.hasMore || false,
+            partial: false,
           };
-        } catch (err) {
+        } catch (err: any) {
           console.error('[ConversationStore] Server search error:', err);
-          return { conversations: [], nextCursor: null, hasMore: false };
+          // Degraded posture (§2.3.5 E2/E8): return partial flag so UI can show "partial results"
+          const status = err?.response?.status || err?.status;
+          if (status === 429) {
+            // Rate limited — signal to UI
+            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true };
+          }
+          // Gateway/search unavailable — fall back to empty with partial flag
+          return { conversations: [], nextCursor: null, hasMore: false, partial: true };
         }
       },
 
