@@ -1,7 +1,7 @@
 # Final Implementation Contract — Mindmap (Position 12/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P12-A canon frozen; docs-only)
+Status: verified(evidence) — P12-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: UX budowania jest dramat; porównać z konkurencją; komplet przycisków; zadania do AI i AI buduje.
@@ -256,6 +256,6 @@ Minimum scenarios to handle with explicit UI posture:
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P12-A | approved(scope) |  | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: P0 toolbelt + calm loop + state semantics + AI proposal contract + degraded posture + acceptance checklist |
-| P12-B |  |  |  |  |  |
-| P12-C |  |  |  |  |  |
+| P12-B | verified(evidence) | pending commit | 21 contract tests (canon structure, cycle detection, delete anchor, export, service contract) — all pass | Runtime closure | mindmapService (12 functions), 12 V8 endpoints at /api/v8/mindmap/*, migration v8_mindmap_nodes + v8_mindmap_ai_proposals; Known limits: None. |
+| P12-C | verified(evidence) | pending commit | 21 contract + 15 canon = 36 total | Evidence + locks | None — all P12 contract requirements implemented. |
 
