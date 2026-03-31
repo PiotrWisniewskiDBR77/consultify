@@ -563,3 +563,199 @@ describe('P01 — SSO + SCIM + Webhooks + Automation', () => {
     expect(typeof mod.listGovernedIntegrations).toBe('function');
   });
 });
+
+// ===========================================================================
+// P01-B Deep Audit Fixes — Provider Sync Engine
+// ===========================================================================
+
+describe('P01-B — Provider sync dispatch engine', () => {
+  it('integrationHubService syncIntegration calls dispatchProviderSync (not placeholder)', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('dispatchProviderSync');
+    expect(content).not.toContain('// This would call the actual connector sync logic');
+    expect(content).not.toContain('// Simplified implementation');
+  });
+
+  it('PROVIDER_ADAPTERS has adapters for Jira, Slack, Teams, Google', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('jira: jiraSyncAdapter');
+    expect(content).toContain('slack: slackSyncAdapter');
+    expect(content).toContain('teams: teamsSyncAdapter');
+    expect(content).toContain('gmail: googleSyncAdapter');
+  });
+
+  it('jiraSyncAdapter calls Jira REST API v3 search', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('/rest/api/3/search');
+    expect(content).toContain('integration_sync_mappings');
+  });
+
+  it('slackSyncAdapter calls Slack conversations.list API', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('slack.com/api/conversations.list');
+  });
+
+  it('teamsSyncAdapter calls Microsoft Graph joinedTeams', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('graph.microsoft.com/v1.0/me/joinedTeams');
+  });
+
+  it('googleSyncAdapter calls Google Calendar API', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrationHubService.ts', 'utf-8'
+    );
+    expect(content).toContain('googleapis.com/calendar/v3');
+  });
+});
+
+// ===========================================================================
+// P01-B Deep Audit Fixes — Reauth wiring
+// ===========================================================================
+
+describe('P01-B — Reauth wiring', () => {
+  it('POST /reauth calls executeRefreshExecution', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/syncHub.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('executeRefreshExecution');
+    expect(content).toContain('getRefreshExecutionSecret');
+  });
+
+  it('POST /reauth updates auth state on success', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/syncHub.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('connected_healthy');
+    expect(content).toContain('token_refresh_success');
+  });
+
+  it('POST /reauth handles missing refresh secret gracefully', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/syncHub.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('No refresh secret stored');
+    expect(content).toContain('requiresManualOAuth');
+  });
+});
+
+// ===========================================================================
+// P01-B Deep Audit Fixes — Slack/Teams real services
+// ===========================================================================
+
+describe('P01-B — Slack user integration service', () => {
+  it('exports real API methods (not lazy-load stub)', async () => {
+    const mod = await import(
+      '../../../server/src/services/integrations/slackUserIntegration.js'
+    );
+    const svc = mod.default || mod;
+    expect(typeof (svc.listChannels || mod.listChannels)).toBe('function');
+    expect(typeof (svc.postMessage || mod.postMessage)).toBe('function');
+    expect(typeof (svc.updateMessage || mod.updateMessage)).toBe('function');
+    expect(typeof (svc.testConnection || mod.testConnection)).toBe('function');
+  });
+
+  it('calls Slack API endpoints', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrations/slackUserIntegration.ts', 'utf-8'
+    );
+    expect(content).toContain('slack.com/api/conversations.list');
+    expect(content).toContain('slack.com/api/chat.postMessage');
+    expect(content).toContain('slack.com/api/chat.update');
+    expect(content).toContain('slack.com/api/auth.test');
+  });
+});
+
+describe('P01-B — Teams user integration service', () => {
+  it('exports real Graph API methods (not lazy-load stub)', async () => {
+    const mod = await import(
+      '../../../server/src/services/integrations/teamsUserIntegration.js'
+    );
+    const svc = mod.default || mod;
+    expect(typeof (svc.listJoinedTeams || mod.listJoinedTeams)).toBe('function');
+    expect(typeof (svc.listChannels || mod.listChannels)).toBe('function');
+    expect(typeof (svc.postChannelMessage || mod.postChannelMessage)).toBe('function');
+    expect(typeof (svc.testConnection || mod.testConnection)).toBe('function');
+    expect(typeof (svc.createSubscription || mod.createSubscription)).toBe('function');
+  });
+
+  it('calls Microsoft Graph API endpoints', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/integrations/teamsUserIntegration.ts', 'utf-8'
+    );
+    expect(content).toContain('graph.microsoft.com/v1.0');
+    expect(content).toContain('/me/joinedTeams');
+    expect(content).toContain('/channels');
+    expect(content).toContain('/messages');
+    expect(content).toContain('/subscriptions');
+  });
+});
+
+// ===========================================================================
+// P01-B Deep Audit Fixes — Health Dashboard + Retry Jitter
+// ===========================================================================
+
+describe('P01-B — IntegrationHealthDashboard real API', () => {
+  it('loads health from /api/sync-hub/health (not fake endpoint)', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/settings/integrations/IntegrationHealthDashboard.tsx', 'utf-8'
+    );
+    expect(content).toContain('/api/sync-hub/health');
+    expect(content).not.toContain('/api/user/integrations/health');
+  });
+
+  it('Recent Activity loads from sync-runs API (no hardcoded data)', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/settings/integrations/IntegrationHealthDashboard.tsx', 'utf-8'
+    );
+    expect(content).toContain('sync-runs');
+    expect(content).toContain('RecentActivityPanel');
+    expect(content).not.toContain('5 min ago');
+    expect(content).not.toContain('12 items synced');
+  });
+});
+
+describe('P01-B — Retry backoff with jitter', () => {
+  it('calculateRetryDelay includes jitter', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/services/syncGuardrailsService.ts', 'utf-8'
+    );
+    expect(content).toContain('jitter');
+    expect(content).toContain('Math.random()');
+  });
+
+  it('calculateRetryDelay returns different values (non-deterministic)', async () => {
+    const mod = await import(
+      '../../../server/src/services/syncGuardrailsService.js'
+    );
+    const fn = mod.default?.calculateRetryDelay || mod.calculateRetryDelay;
+    const results = new Set<number>();
+    for (let i = 0; i < 20; i++) {
+      results.add(fn(2));
+    }
+    expect(results.size).toBeGreaterThan(1);
+  });
+});

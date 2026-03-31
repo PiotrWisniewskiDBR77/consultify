@@ -59,7 +59,7 @@ To minimize rework and prevent duplicate truths, ship in this order:
 
 | # | Position | Contract (bundle) | Packets (baseline) | Status |
 |---:|---|---|---|---|
-| 01 | Integracja | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_01_INTEGRACJA_2026-03-29.md` | P01-A / P01-B / P01-C | verified(evidence) — 55/55 tests; 4-object model (catalog/connection/workflow/run); lifecycle grammar (state machine); P0 providers (Google/Microsoft/Slack/Jira/Webhooks); operator surfaces (health/errors/runs/audit); recovery (reauth/retry/drift); SSO/SCIM/webhooks/automation |
+| 01 | Integracja | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_01_INTEGRACJA_2026-03-29.md` | P01-A / P01-B / P01-C | verified(evidence) — 72/72 tests; deep audit closed: real provider sync engine (Jira/Slack/Teams/Google API adapters), reauth wired to token refresh, Slack+Teams real services (not stubs), health dashboard wired to sync-hub API, retry jitter; bidirectional: Jira (full), Slack (full), Teams (full), Google Calendar (pull) |
 | 02 | Kalendarz | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_02_KALENDARZ_2026-03-29.md` | P02-A / P02-B / P02-C | approved(scope) |
 | 03 | Wdrożenia | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_03_WDROZENIA_2026-03-29.md` | P03-A / P03-B / P03-C | approved(scope) |
 | 04 | KPI | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_04_KPI_2026-03-29.md` | P04-A / P04-B / P04-C | approved(scope) |

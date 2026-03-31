@@ -74,8 +74,27 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
   const loadHealthData = async () => {
     try {
       setLoading(true);
-      const response = await Api.get('/api/user/integrations/health');
-      if (response.success && response.data) {
+      const response = await Api.get('/api/sync-hub/health');
+      if (response.integrations && Array.isArray(response.integrations)) {
+        const mapped = response.integrations.map((h: any) => ({
+          id: h.integrationId || h.id,
+          name: h.connectorId || h.name || 'Integration',
+          icon: h.icon || '🔗',
+          status: h.status === 'healthy' ? 'healthy' : h.status === 'degraded' ? 'warning' : h.status === 'unhealthy' ? 'error' : 'disconnected',
+          lastSync: h.lastRunAt || new Date().toISOString(),
+          nextSync: '',
+          syncFrequency: h.syncFrequency || 'On demand',
+          errorCount: h.unresolvedErrorCount || 0,
+          lastError: h.lastError,
+          usageStats: {
+            requestsToday: h.requestsToday || 0,
+            requestsThisMonth: h.requestsThisMonth || 0,
+            dataTransferred: h.dataTransferred || '—',
+          },
+          enabled: h.status !== 'disconnected',
+        }));
+        setIntegrations(mapped);
+      } else if (response.success && response.data) {
         setIntegrations(response.data);
       }
     } catch (error) {
@@ -334,34 +353,9 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                 </div>
               )}
 
-              {/* Expanded Logs */}
+              {/* Expanded Logs — loaded from sync-runs API */}
               {showErrorLogs === integration.id && (
-                <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg">
-                  <h5 className="font-medium text-slate-900 dark:text-white mb-2">
-                    Recent Activity
-                  </h5>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle size={14} />
-                      <span>Sync completed successfully</span>
-                      <span className="text-slate-400 dark:text-slate-500 ml-auto">5 min ago</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle size={14} />
-                      <span>12 items synced</span>
-                      <span className="text-slate-400 dark:text-slate-500 ml-auto">1 hour ago</span>
-                    </div>
-                    {integration.errorCount > 0 && (
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle size={14} />
-                        <span>Rate limit warning</span>
-                        <span className="text-slate-400 dark:text-slate-500 ml-auto">
-                          2 hours ago
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <RecentActivityPanel integrationId={integration.id} />
               )}
             </div>
           </div>
@@ -377,5 +371,71 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     </div>
   );
 };
+
+function RecentActivityPanel({ integrationId }: { integrationId: string }) {
+  const [runs, setRuns] = React.useState<
+    Array<{ id: string; status: string; items_processed?: number; started_at: string; error_summary?: string }>
+  >([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await Api.get(`/api/sync-hub/sync-runs/${integrationId}?limit=5`);
+        if (!cancelled && resp.runs) setRuns(resp.runs);
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [integrationId]);
+
+  if (loading) {
+    return (
+      <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg flex items-center gap-2 text-sm text-slate-500">
+        <Loader2 size={14} className="animate-spin" /> Loading activity…
+      </div>
+    );
+  }
+
+  if (runs.length === 0) {
+    return (
+      <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg text-sm text-slate-500 dark:text-slate-400">
+        No sync runs recorded yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg">
+      <h5 className="font-medium text-slate-900 dark:text-white mb-2">Recent Activity</h5>
+      <div className="space-y-2 text-sm">
+        {runs.map((run) => (
+          <div
+            key={run.id}
+            className={`flex items-center gap-2 ${
+              run.status === 'completed' ? 'text-green-600' : run.status === 'failed' ? 'text-red-500' : 'text-amber-600'
+            }`}
+          >
+            {run.status === 'completed' ? <CheckCircle size={14} /> : run.status === 'failed' ? <XCircle size={14} /> : <Clock size={14} />}
+            <span>
+              {run.status === 'completed'
+                ? `Synced ${run.items_processed ?? 0} items`
+                : run.status === 'failed'
+                  ? run.error_summary || 'Sync failed'
+                  : 'Sync in progress'}
+            </span>
+            <span className="text-slate-400 dark:text-slate-500 ml-auto">
+              {new Date(run.started_at).toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default IntegrationHealthDashboard;

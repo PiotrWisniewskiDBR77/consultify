@@ -397,7 +397,57 @@ router.post(
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
     await logAudit(orgId, intId, 'reauth_started', userId, actorName, {});
 
-    return res.json({ success: true, message: 'Re-authorization initiated' });
+    const integration = (await dbAll(
+      `SELECT connector_id FROM integrations WHERE id = ? AND organization_id = ?`,
+      [intId, orgId]
+    )) as Array<{ connector_id: string }> | null;
+    const connectorId = integration?.[0]?.connector_id;
+
+    let refreshResult: { success: boolean; error?: string } = { success: false };
+
+    if (connectorId) {
+      try {
+        const { getRefreshExecutionSecret, executeRefreshExecution } = await import(
+          '../services/v8/pmSyncRefreshExecutionService.js'
+        );
+        const secret = await getRefreshExecutionSecret(connectorId, orgId);
+        if (secret) {
+          const tokenResult = await executeRefreshExecution(connectorId, orgId);
+          if (tokenResult.success) {
+            await updateIntegrationStatus(intId, 'connected');
+            await setConnectorAuthState({
+              connectorId,
+              organizationId: orgId,
+              targetState: 'connected_healthy',
+              transitionedBy: `reauth:${userId}`,
+              reason: 'token_refresh_success',
+            });
+            refreshResult = { success: true };
+          } else {
+            refreshResult = { success: false, error: tokenResult.error || 'Token refresh failed' };
+          }
+        } else {
+          refreshResult = { success: false, error: 'No refresh secret stored — manual OAuth required' };
+        }
+      } catch (err) {
+        refreshResult = { success: false, error: (err as Error).message };
+      }
+    }
+
+    if (!refreshResult.success) {
+      await updateIntegrationStatus(intId, 'requires_reauth', refreshResult.error);
+    }
+
+    await logAudit(orgId, intId, refreshResult.success ? 'reauth_completed' : 'reauth_failed', userId, actorName, {
+      refreshResult,
+    });
+
+    return res.json({
+      success: refreshResult.success,
+      message: refreshResult.success ? 'Re-authorization completed' : 'Re-authorization requires manual OAuth',
+      requiresManualOAuth: !refreshResult.success,
+      error: refreshResult.error,
+    });
   })
 );
 

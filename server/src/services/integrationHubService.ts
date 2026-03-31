@@ -475,8 +475,6 @@ class IntegrationHubServiceClass {
     });
 
     try {
-      // This would call the actual connector sync logic
-      // Simplified implementation
       const result: SyncResult = {
         syncId,
         integrationId,
@@ -486,7 +484,16 @@ class IntegrationHubServiceClass {
         duration: 0,
       };
 
-      // Update last sync time
+      const connectorId = integration.connectorId;
+      const config = integration.config || {};
+
+      const dispatched = await dispatchProviderSync(connectorId, integrationId, config, options);
+      result.recordsSynced = dispatched.recordsSynced;
+      if (dispatched.error) {
+        result.status = 'partial';
+        result.error = dispatched.error;
+      }
+
       await this.deps.db.run(
         `UPDATE integrations 
                  SET last_sync_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
@@ -639,6 +646,208 @@ class IntegrationHubServiceClass {
       `CREATE INDEX IF NOT EXISTS idx_sync_int ON integration_sync_logs(integration_id)`
     );
   }
+}
+
+// ==========================================
+// PROVIDER SYNC DISPATCH ENGINE
+// ==========================================
+
+type ProviderSyncResult = {
+  recordsSynced: number;
+  error?: string;
+};
+
+type ProviderAdapter = (
+  integrationId: string,
+  config: Record<string, unknown>,
+  options: Record<string, unknown>
+) => Promise<ProviderSyncResult>;
+
+async function jiraSyncAdapter(
+  integrationId: string,
+  config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  try {
+    const { parseJiraConfig } = await import('./integrations/jiraOrgClient.js');
+    const jiraCfg = parseJiraConfig(config);
+    if (!jiraCfg) return { recordsSynced: 0, error: 'Invalid Jira configuration' };
+
+    const baseUrl = jiraCfg.baseUrl;
+    const auth = Buffer.from(`${jiraCfg.email}:${jiraCfg.apiToken}`).toString('base64');
+
+    const resp = await fetch(
+      `${baseUrl}/rest/api/3/search?jql=project=${jiraCfg.projectKey}&maxResults=50&fields=summary,status,assignee,updated`,
+      { headers: { Authorization: `Basic ${auth}`, Accept: 'application/json' } }
+    );
+
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => resp.statusText);
+      return { recordsSynced: 0, error: `Jira API ${resp.status}: ${errText.slice(0, 200)}` };
+    }
+
+    const data = (await resp.json()) as { issues?: unknown[]; total?: number };
+    const issues = data.issues || [];
+
+    const db = getDatabase();
+    let synced = 0;
+    for (const issue of issues as Array<{ key: string; fields?: Record<string, unknown> }>) {
+      await db.run(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'jira_issue', 'task', NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET synced_at = NOW()`,
+        [integrationId, issue.key]
+      );
+      synced++;
+    }
+
+    return { recordsSynced: synced };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Jira sync error: ${(err as Error).message}` };
+  }
+}
+
+async function slackSyncAdapter(
+  integrationId: string,
+  config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  try {
+    const token = String(config.botToken || config.bot_token || config.accessToken || config.access_token || '');
+    if (!token) return { recordsSynced: 0, error: 'No Slack bot token configured' };
+
+    const resp = await fetch('https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=100', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+
+    if (!resp.ok) return { recordsSynced: 0, error: `Slack API ${resp.status}` };
+
+    const data = (await resp.json()) as { ok?: boolean; channels?: Array<{ id: string; name: string }>; error?: string };
+    if (!data.ok) return { recordsSynced: 0, error: `Slack error: ${data.error || 'unknown'}` };
+
+    const channels = data.channels || [];
+    const db = getDatabase();
+    let synced = 0;
+    for (const ch of channels) {
+      await db.run(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'slack_channel', 'channel', ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        [integrationId, ch.id, JSON.stringify({ name: ch.name })]
+      );
+      synced++;
+    }
+
+    return { recordsSynced: synced };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Slack sync error: ${(err as Error).message}` };
+  }
+}
+
+async function teamsSyncAdapter(
+  integrationId: string,
+  config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  try {
+    const token = String(config.accessToken || config.access_token || config.bearerToken || '');
+    if (!token) return { recordsSynced: 0, error: 'No Teams access token configured' };
+
+    const resp = await fetch('https://graph.microsoft.com/v1.0/me/joinedTeams', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 401) return { recordsSynced: 0, error: 'Teams token expired — reauth required' };
+      return { recordsSynced: 0, error: `Graph API ${resp.status}` };
+    }
+
+    const data = (await resp.json()) as { value?: Array<{ id: string; displayName: string }> };
+    const teams = data.value || [];
+    const db = getDatabase();
+    let synced = 0;
+    for (const team of teams) {
+      await db.run(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'teams_team', 'team', ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        [integrationId, team.id, JSON.stringify({ displayName: team.displayName })]
+      );
+      synced++;
+    }
+
+    return { recordsSynced: synced };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Teams sync error: ${(err as Error).message}` };
+  }
+}
+
+async function googleSyncAdapter(
+  integrationId: string,
+  config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  try {
+    const token = String(config.accessToken || config.access_token || '');
+    if (!token) return { recordsSynced: 0, error: 'No Google access token configured' };
+
+    const resp = await fetch(
+      'https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50',
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!resp.ok) {
+      if (resp.status === 401) return { recordsSynced: 0, error: 'Google token expired — reauth required' };
+      return { recordsSynced: 0, error: `Google API ${resp.status}` };
+    }
+
+    const data = (await resp.json()) as { items?: Array<{ id: string; summary: string }> };
+    const calendars = data.items || [];
+    const db = getDatabase();
+    let synced = 0;
+    for (const cal of calendars) {
+      await db.run(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'google_calendar', 'calendar', ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        [integrationId, cal.id, JSON.stringify({ summary: cal.summary })]
+      );
+      synced++;
+    }
+
+    return { recordsSynced: synced };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Google sync error: ${(err as Error).message}` };
+  }
+}
+
+async function genericWebhookSyncAdapter(
+  _integrationId: string,
+  _config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  return { recordsSynced: 0 };
+}
+
+const PROVIDER_ADAPTERS: Record<string, ProviderAdapter> = {
+  jira: jiraSyncAdapter,
+  slack: slackSyncAdapter,
+  teams: teamsSyncAdapter,
+  gmail: googleSyncAdapter,
+  google_calendar: googleSyncAdapter,
+};
+
+async function dispatchProviderSync(
+  connectorId: string,
+  integrationId: string,
+  config: Record<string, unknown>,
+  options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  const adapter = PROVIDER_ADAPTERS[connectorId];
+  if (!adapter) {
+    return genericWebhookSyncAdapter(integrationId, config, options);
+  }
+  return adapter(integrationId, config, options);
 }
 
 // Create singleton instance

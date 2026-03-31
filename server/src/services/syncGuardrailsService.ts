@@ -184,7 +184,9 @@ export function classifyError(error: Error | string): {
 }
 
 export function calculateRetryDelay(retryCount: number): number {
-  return Math.min(RETRY_BACKOFF_BASE_MS * Math.pow(2, retryCount), MAX_RETRY_DELAY_MS);
+  const base = Math.min(RETRY_BACKOFF_BASE_MS * Math.pow(2, retryCount), MAX_RETRY_DELAY_MS);
+  const jitter = Math.random() * base * 0.3;
+  return Math.round(base + jitter);
 }
 
 export async function logSyncError(
