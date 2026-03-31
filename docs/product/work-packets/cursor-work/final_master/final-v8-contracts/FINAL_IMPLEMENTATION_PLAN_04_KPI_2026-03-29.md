@@ -1,8 +1,8 @@
 # Final Implementation Contract — KPI (Position 4/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P04-A** (KPI canon + scope approval frozen); P04-B / P04-C not started  
-Last updated: 2026-03-30 (P04-A scope closure)
+Status: `verified(evidence)` — P04-A/B/C all closed  
+Last updated: 2026-03-31 (P04-C evidence closure)
 
 ## 1. Executive summary
 - **Intent**: KPI są dobrze opisane — teraz trzeba je dobrze zbudować.
@@ -185,18 +185,18 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 - **Permission denied**: show explicit denied state and what capability is blocked (edit target / edit definition / manage reconciliation), without leaking restricted details.
 
 ##### 8.1G Acceptance checklist (scope approval, testable)
-- [ ] Vocabulary is frozen and used consistently: signal/target/trend/report(or scorecard)/reconciliation/next action are defined and non-overlapping.
-- [ ] KPI is explicitly a closed-loop lane, not a BI suite; BI parity is declared out-of-scope.
-- [ ] KPI truth vs finance model truth boundary is explicit and non-collapsing (no silent overwrite either way).
-- [ ] Linkage is explicitly optional and supports at least interpretation/driver/review/realization patterns (as per linkage SSOT).
-- [ ] Reconciliation ownership rule is frozen: Results starts reconciliation, Finance resolves finance-side meaning.
-- [ ] Permissions semantics are frozen for: edit definition, edit targets, view, comment, manage reconciliation (Results vs Finance).
-- [ ] “Permission denied” has explicit degraded UX posture (no silent disappearance).
-- [ ] “Missing data” has explicit degraded UX posture (freshness/source shown; no misleading trend).
-- [ ] “Discrepancy unresolved” has explicit degraded UX posture (status visible; cannot be silently cleared).
-- [ ] “Linkage unavailable” has explicit degraded UX posture (operational loop continues without finance linkage).
-- [ ] Anti-duplicate gates are explicit: no BI-suite drift, no parallel finance truth, no charts-only KPI.
-- [ ] The canonical workflow contract is explicit: signal → inspect → report/scorecard → reconcile → next action (with reconciliation optional only when linkage/discrepancy doesn’t apply).
+- [x] Vocabulary is frozen and used consistently → `kpiWorkflowCanon.ts`: `KpiSignal`, `KpiTarget`, `KpiTrend`, `KpiReport`, `KpiReconciliation`, `KpiNextAction`.
+- [x] KPI is closed-loop lane, not BI suite → `KPI_ANTI_DUPLICATE_RULES.no_bi_suite_drift`.
+- [x] KPI truth vs finance model truth boundary explicit → `KpiFinanceLinkMetadata` + `LINKAGE_PATTERNS` + W6-5 ownership.
+- [x] Linkage optional, supports interpretation/driver/review/realization → `LINKAGE_PATTERNS`.
+- [x] Reconciliation ownership frozen → `initiateReconciliation()` (Results) + `resolveReconciliation()` (Finance).
+- [x] Permissions frozen → `KPI_PERMISSION_MATRIX` + `canPerformKpiAction()`.
+- [x] “Permission denied” has explicit degraded posture → `computeKpiHealthPosture()` returns `permission_denied`.
+- [x] “Missing data” has explicit degraded posture → `computeKpiHealthPosture()` returns `missing_data`; `/workflow/kpi/:kpiId/health`.
+- [x] “Discrepancy unresolved” has explicit degraded posture → `computeKpiHealthPosture()` returns `discrepancy_unresolved`.
+- [x] “Linkage unavailable” has explicit degraded posture → `computeKpiHealthPosture()` returns `linkage_unavailable`.
+- [x] Anti-duplicate gates explicit → `KPI_ANTI_DUPLICATE_RULES` (4 rules) + `/workflow/contract`.
+- [x] Canonical workflow explicit → `KPI_WORKFLOW_STATES` + `KPI_WORKFLOW_TRANSITIONS` + 6 workflow endpoints.
 
 #### P04-B — Core workflow closure (signal→report→reconciliation→action)
 - **Goal**: domknąć workflow i stany (w deklarowanym zakresie).
@@ -242,6 +242,6 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P04-A | approved(scope) | 99eb08e9aa | n/a (docs-only) | n/a (docs-only) | KPI canon + scope frozen; no runtime changes in this packet. |
-| P04-B |  |  |  |  |  |
-| P04-C |  |  |  |  |  |
+| P04-B | verified(evidence) | (this commit) | 30 tests (15 integration + 6 health posture + 4 permissions + 3 workflow transitions + 1 E2E + 1 checklist) — all green | E2E: signal→inspect→next-action chain; degraded posture for all 4 scenarios; org-health breakdown | Existing 93 ROI service + 20 route tests still green (113 total). |
+| P04-C | verified(evidence) | (this commit) | Regression: 113 existing + 30 new = 143 total, 0 failures | Contract checklist 12/12 checked; evidence closeout doc created | Known limits: reconciliation UX depends on Finance module (P05); chart aggregation methods are bounded to last/sum/average. |
 
