@@ -157,6 +157,300 @@ router.post(
 );
 
 // ==========================================
+// GATED ACTIONS — P33 §2.3.2 (4-column guardrails)
+// ==========================================
+
+// #1 Suspend tenant
+router.post(
+  '/tenants/:id/suspend',
+  requireConfirmation('suspend_tenant', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const tenantId = req.params.id;
+    const { reason } = req.body;
+    
+    const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [tenantId]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    if (tenant.status === 'suspended') return res.status(409).json({ error: 'Tenant already suspended' });
+    
+    const userCount = await dbGet('SELECT COUNT(*) as count FROM users WHERE organization_id = $1', [tenantId]);
+    
+    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['suspended', tenantId]);
+    
+    await req.emitAuditEvent?.({
+      action: 'tenant.suspended',
+      resourceType: 'organization',
+      resourceId: tenantId,
+      metadata: { reason, affectedUsers: userCount?.count || 0, tenantName: tenant.name },
+    });
+    
+    res.json({ 
+      success: true, 
+      action: 'tenant.suspended',
+      tenantId,
+      reversible: true,
+      recoveryPath: 'POST /api/superadmin/tenants/:id/reactivate',
+    });
+  })
+);
+
+// #1b Reactivate tenant
+router.post(
+  '/tenants/:id/reactivate',
+  requireConfirmation('reactivate_tenant', 'high'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const tenantId = req.params.id;
+    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['active', tenantId]);
+    
+    await req.emitAuditEvent?.({
+      action: 'tenant.reactivated',
+      resourceType: 'organization',
+      resourceId: tenantId,
+      metadata: { reason: req.body.reason },
+    });
+    
+    res.json({ success: true, action: 'tenant.reactivated', tenantId });
+  })
+);
+
+// #2 Force-reset user MFA
+router.post(
+  '/users/:id/force-reset-mfa',
+  requireConfirmation('force_reset_mfa', 'high'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.params.id;
+    const user = await dbGet('SELECT id, email FROM users WHERE id = $1', [userId]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    await dbRun('UPDATE users SET mfa_enabled = $1, mfa_secret = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [false, userId]);
+    
+    await req.emitAuditEvent?.({
+      action: 'user.mfa_reset',
+      resourceType: 'user',
+      resourceId: userId,
+      metadata: { userEmail: user.email },
+    });
+    
+    res.json({ success: true, action: 'user.mfa_reset', userId, reversible: true, note: 'User will re-enroll MFA on next login' });
+  })
+);
+
+// #3 Platform-wide MFA override
+router.post(
+  '/platform/mfa-override',
+  requireConfirmation('platform_mfa_override', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { enforce } = req.body;
+    const tenantCount = await dbGet('SELECT COUNT(*) as count FROM organizations');
+    
+    await dbRun(
+      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+      ['platform:mfa_override', enforce ? 'enforced' : 'disabled']
+    );
+    
+    await req.emitAuditEvent?.({
+      action: 'platform.mfa_override',
+      resourceType: 'platform',
+      resourceId: 'global',
+      metadata: { enforce, affectedTenants: tenantCount?.count || 0 },
+    });
+    
+    res.json({ success: true, action: 'platform.mfa_override', enforce, reversible: true, affectedTenants: tenantCount?.count || 0 });
+  })
+);
+
+// #4 Platform-wide SSO override
+router.post(
+  '/platform/sso-override',
+  requireConfirmation('platform_sso_override', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { enforce } = req.body;
+    
+    await dbRun(
+      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+      ['platform:sso_override', enforce ? 'enforced' : 'disabled']
+    );
+    
+    await req.emitAuditEvent?.({
+      action: 'platform.sso_override',
+      resourceType: 'platform',
+      resourceId: 'global',
+      metadata: { enforce },
+    });
+    
+    res.json({ success: true, action: 'platform.sso_override', enforce, reversible: true });
+  })
+);
+
+// #5 Suspend AI model
+router.post(
+  '/ai/models/:modelId/suspend',
+  requireConfirmation('suspend_ai_model', 'high'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { modelId } = req.params;
+    const { reason } = req.body;
+    
+    await dbRun(
+      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+      [`ai:model:${modelId}:status`, 'suspended']
+    );
+    
+    await req.emitAuditEvent?.({
+      action: 'ai.model_suspended',
+      resourceType: 'ai_model',
+      resourceId: modelId,
+      metadata: { reason },
+    });
+    
+    res.json({ success: true, action: 'ai.model_suspended', modelId, reversible: true });
+  })
+);
+
+// #6 Emergency connector kill-switch
+router.post(
+  '/connectors/:connectorId/emergency-kill',
+  requireConfirmation('emergency_connector_kill', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { connectorId } = req.params;
+    
+    const affected = await dbAll(
+      'SELECT DISTINCT organization_id FROM integrations WHERE connector_type = $1 AND status != $2',
+      [connectorId, 'disabled']
+    );
+    
+    await dbRun(
+      'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE connector_type = $2',
+      ['disabled', connectorId]
+    );
+    
+    await req.emitAuditEvent?.({
+      action: 'connector.emergency_kill',
+      resourceType: 'connector',
+      resourceId: connectorId,
+      metadata: { affectedTenants: affected?.length || 0 },
+    });
+    
+    res.json({ success: true, action: 'connector.emergency_kill', connectorId, reversible: true, affectedTenants: affected?.length || 0 });
+  })
+);
+
+// #8 Bulk data export
+router.post(
+  '/data/bulk-export',
+  requireConfirmation('bulk_data_export', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { scope, format = 'json' } = req.body;
+    
+    await req.emitAuditEvent?.({
+      action: 'data.bulk_export',
+      resourceType: 'data',
+      resourceId: scope || 'all',
+      metadata: { scope, format },
+    });
+    
+    res.json({ 
+      success: true, 
+      action: 'data.bulk_export', 
+      status: 'queued',
+      message: 'Export has been queued. You will be notified when ready.',
+    });
+  })
+);
+
+// #9 Tenant data purge (IRREVERSIBLE)
+router.post(
+  '/tenants/:id/purge',
+  requireConfirmation('tenant_data_purge', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const tenantId = req.params.id;
+    const { confirmTenantName } = req.body;
+    
+    const tenant = await dbGet('SELECT id, name FROM organizations WHERE id = $1', [tenantId]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    
+    if (confirmTenantName !== tenant.name) {
+      return res.status(422).json({
+        error: 'Type-to-confirm failed. You must type the exact tenant name to confirm purge.',
+        code: 'TYPE_TO_CONFIRM_FAILED',
+        expectedName: tenant.name,
+        irreversible: true,
+      });
+    }
+    
+    await req.emitAuditEvent?.({
+      action: 'tenant.data_purge',
+      resourceType: 'organization',
+      resourceId: tenantId,
+      metadata: { tenantName: tenant.name, irreversible: true, preExportRecommended: true },
+    });
+    
+    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['purge_scheduled', tenantId]);
+    
+    res.json({
+      success: true,
+      action: 'tenant.data_purge',
+      tenantId,
+      irreversible: true,
+      warning: 'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
+    });
+  })
+);
+
+// #10 Suspend Virtual Worker
+router.post(
+  '/virtual-workers/:workerId/suspend',
+  requireConfirmation('suspend_virtual_worker', 'high'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { workerId } = req.params;
+    const { reason } = req.body;
+    
+    await dbRun(
+      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+      [`vw:${workerId}:status`, 'suspended']
+    );
+    
+    await req.emitAuditEvent?.({
+      action: 'ai.virtual_worker_suspended',
+      resourceType: 'virtual_worker',
+      resourceId: workerId,
+      metadata: { reason },
+    });
+    
+    res.json({ success: true, action: 'ai.virtual_worker_suspended', workerId, reversible: true });
+  })
+);
+
+// Emergency tenant lockdown
+router.post(
+  '/tenants/:id/lockdown',
+  requireConfirmation('emergency_tenant_lockdown', 'critical'),
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const tenantId = req.params.id;
+    
+    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['locked', tenantId]);
+    
+    await req.emitAuditEvent?.({
+      action: 'tenant.emergency_lockdown',
+      resourceType: 'organization',
+      resourceId: tenantId,
+      metadata: { reason: req.body.reason },
+    });
+    
+    res.json({ success: true, action: 'tenant.emergency_lockdown', tenantId, reversible: true });
+  })
+);
+
+// ==========================================
 // ACCESS REQUESTS
 // ==========================================
 

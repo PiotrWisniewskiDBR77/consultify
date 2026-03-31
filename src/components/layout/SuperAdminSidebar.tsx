@@ -1,17 +1,14 @@
 import {
-  Activity,
   BarChart3,
   Bot,
   Brain,
   ChevronRight,
-  Code,
   CreditCard,
   Layers,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
   Pin,
-  Radar,
   Server,
   Settings,
   Shield,
@@ -105,34 +102,17 @@ interface MenuItem {
   separator?: 'before';
 }
 
-// Unified menu structure with single AI Platform entry
 const menuItems: MenuItem[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
-  // --- separator ---
-  { id: 'customers', label: 'Customers', icon: <Users size={20} />, separator: 'before' },
-  // --- AI Platform (unified) ---
-  {
-    id: 'ai-platform',
-    label: 'AI Platform',
-    icon: <Brain size={20} />,
-    separator: 'before',
-  },
-  // --- separator ---
-  { id: 'system', label: 'System', icon: <Activity size={20} />, separator: 'before' },
-  { id: 'content', label: 'Content', icon: <Layers size={20} /> },
-  // --- separator ---
-  { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} />, separator: 'before' },
-  { id: 'security', label: 'Security', icon: <Shield size={20} /> },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} /> },
-  // --- separator ---
-  { id: 'virtual-workers', label: 'Virtual Workers', icon: <Bot size={20} />, separator: 'before' },
-  // --- separator ---
-  {
-    id: 'configuration',
-    label: 'Configuration',
-    icon: <Settings size={20} />,
-    separator: 'before',
-  },
+  { id: 'customers', label: 'Tenant & User Ops', icon: <Users size={20} />, separator: 'before' },
+  { id: 'ai-platform', label: 'AI Operations', icon: <Brain size={20} />, separator: 'before' },
+  { id: 'virtual-workers', label: 'Virtual Workers', icon: <Bot size={20} /> },
+  { id: 'system', label: 'Connector Ops', icon: <Server size={20} />, separator: 'before' },
+  { id: 'content', label: 'Governance & Compliance', icon: <Layers size={20} />, separator: 'before' },
+  { id: 'security', label: 'Platform Security', icon: <Shield size={20} /> },
+  { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} />, separator: 'before' },
+  { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} /> },
+  { id: 'configuration', label: 'Configuration', icon: <Settings size={20} />, separator: 'before' },
 ];
 
 // Reusable menu button component
