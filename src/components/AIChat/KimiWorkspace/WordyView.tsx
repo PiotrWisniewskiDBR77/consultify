@@ -64,8 +64,15 @@ export const WordyView: React.FC = () => {
     }
   }, [pipeline.currentRun]);
 
+  const handleDownloadPdf = useCallback(() => {
+    if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
+      const reportId = pipeline.currentRun.materializationOrigin.originRecordId;
+      window.open(`/api/report-builder/reports/${reportId}/export/pdf`, '_blank');
+    }
+  }, [pipeline.currentRun]);
+
   const handleAllFiles = useCallback(() => {
-    window.open('/presentations', '_blank');
+    window.open('/results', '_blank');
   }, []);
 
   return (
@@ -80,6 +87,7 @@ export const WordyView: React.FC = () => {
       onReplay={pipeline.handleReplay}
       onRemix={pipeline.handleRemix}
       onDownload={pipeline.handleDownload}
+      onDownloadPdf={handleDownloadPdf}
       onPreviewFile={handlePreviewFile}
       onAllFiles={handleAllFiles}
       onStartGeneration={pipeline.startGeneration}

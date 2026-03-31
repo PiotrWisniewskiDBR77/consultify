@@ -69,7 +69,7 @@ export const ExceleView: React.FC = () => {
   }, [pipeline.currentRun]);
 
   const handleAllFiles = useCallback(() => {
-    window.open('/presentations', '_blank');
+    window.open('/my-work', '_blank');
   }, []);
 
   return (

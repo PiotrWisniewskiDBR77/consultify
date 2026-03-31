@@ -2373,14 +2373,52 @@ export async function materializeArtifactRun(
         resolvedArtifactId = link?.artifactId || null;
       }
     } else {
-      const tableId =
+      let tableId =
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
       const tableName =
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
+
+      // Auto-create table when Excele pipeline doesn't provide one
       if (!tableId) {
-        throw new Error(
-          `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization`
-        );
+        try {
+          const { metadataService } = await import('../tablePlatform/MetadataService.js');
+
+          // Find or create a base for this org's Excele artifacts
+          let baseId: string | null = null;
+          const existingBases = await dbAll(
+            `SELECT id FROM tp_bases WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+            [validated.organizationId]
+          );
+          if (existingBases && (existingBases as any[]).length > 0) {
+            baseId = (existingBases as any[])[0].id;
+          } else {
+            const newBase = await metadataService.createBase(
+              validated.organizationId,
+              validated.organizationId,
+              'Excele Workspace',
+              validated.actorUserId
+            );
+            baseId = (newBase as any)?.id;
+          }
+
+          if (baseId) {
+            const newTable = await metadataService.createTable(
+              baseId,
+              tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
+              `Auto-created by Excele pipeline for artifact run ${validated.runId}`,
+              validated.actorUserId
+            );
+            tableId = (newTable as any)?.id || '';
+          }
+        } catch (tableCreateErr) {
+          logger.warn('[ArtifactRegistry] Auto-create table failed, falling back to error:', tableCreateErr);
+        }
+
+        if (!tableId) {
+          throw new Error(
+            `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization (auto-create also failed)`
+          );
+        }
       }
 
       const artifact = await registerGovernedTableSheetArtifact({

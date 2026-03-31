@@ -235,9 +235,75 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
-  ws['!cols'] = fields.map((f) => ({
-    wch: XLSX_COLUMN_WIDTHS[f.type] ?? 16,
-  }));
+  // Auto-column-width: measure actual content length
+  const colWidths = fields.map((f, colIdx) => {
+    let maxLen = f.name.length;
+    for (let r = 1; r < rows.length && r < 100; r++) {
+      const val = rows[r][colIdx];
+      const len = val != null ? String(val).length : 0;
+      if (len > maxLen) maxLen = len;
+    }
+    const typeDefault = XLSX_COLUMN_WIDTHS[f.type] ?? 16;
+    return Math.min(Math.max(maxLen + 2, typeDefault), 60);
+  });
+  ws['!cols'] = colWidths.map((w) => ({ wch: w }));
+
+  // Freeze header row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+  // Header row formatting: bold + background color
+  for (let c = 0; c < fields.length; c++) {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+    if (ws[cellRef]) {
+      ws[cellRef].s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '4472C4' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: {
+          bottom: { style: 'thin', color: { rgb: '2F5496' } },
+        },
+      };
+    }
+  }
+
+  // Number formatting for numeric columns
+  for (let c = 0; c < fields.length; c++) {
+    const fieldType = fields[c].type;
+    if (fieldType === 'currency' || fieldType === 'number' || fieldType === 'percent') {
+      for (let r = 1; r < rows.length; r++) {
+        const cellRef = XLSX.utils.encode_cell({ r, c });
+        if (ws[cellRef]) {
+          const numVal = parseFloat(String(ws[cellRef].v));
+          if (!isNaN(numVal)) {
+            ws[cellRef].v = numVal;
+            ws[cellRef].t = 'n';
+            if (fieldType === 'currency') {
+              ws[cellRef].z = '#,##0.00';
+            } else if (fieldType === 'percent') {
+              ws[cellRef].z = '0.00%';
+            } else {
+              ws[cellRef].z = '#,##0.##';
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Alternating row colors for readability
+  for (let r = 1; r < rows.length; r++) {
+    if (r % 2 === 0) {
+      for (let c = 0; c < fields.length; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r, c });
+        if (ws[cellRef]) {
+          ws[cellRef].s = {
+            ...(ws[cellRef].s || {}),
+            fill: { fgColor: { rgb: 'F2F7FB' } },
+          };
+        }
+      }
+    }
+  }
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Data');

@@ -8,6 +8,7 @@
 import bcrypt from 'bcryptjs';
 import {
   AlignmentType,
+  BorderStyle,
   Document,
   Footer,
   Header,
@@ -15,7 +16,11 @@ import {
   Packer,
   PageNumber,
   Paragraph,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
 } from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
@@ -3035,13 +3040,107 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
   await fs.promises.writeFile(filePath, html, 'utf8');
 };
 
-const markdownToDocxParagraphs = (markdown: string): Paragraph[] => {
+/**
+ * Parse inline markdown (bold, italic, code, links) into TextRun children.
+ */
+const parseInlineMarkdown = (text: string): TextRun[] => {
+  const runs: TextRun[] = [];
+  const regex = /(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*|`(.*?)`|\[(.*?)\]\((.*?)\))/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      runs.push(new TextRun(text.slice(lastIndex, match.index)));
+    }
+    if (match[2]) {
+      runs.push(new TextRun({ text: match[2], bold: true, italics: true }));
+    } else if (match[3]) {
+      runs.push(new TextRun({ text: match[3], bold: true }));
+    } else if (match[4]) {
+      runs.push(new TextRun({ text: match[4], italics: true }));
+    } else if (match[5]) {
+      runs.push(new TextRun({ text: match[5], font: 'Courier New', size: 20 }));
+    } else if (match[6]) {
+      runs.push(new TextRun({ text: match[6], underline: {} }));
+    }
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    runs.push(new TextRun(text.slice(lastIndex)));
+  }
+  return runs.length > 0 ? runs : [new TextRun(text)];
+};
+
+/**
+ * Parse a markdown table block (array of lines starting with |) into a docx Table.
+ */
+const parseMarkdownTable = (tableLines: string[]): Table => {
+  const rows: string[][] = [];
+  for (const line of tableLines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('|') && !trimmed.match(/^\|[\s-:|]+\|$/)) {
+      const cells = trimmed
+        .split('|')
+        .slice(1, -1)
+        .map((c) => c.trim());
+      if (cells.length > 0) rows.push(cells);
+    }
+  }
+
+  if (rows.length === 0) {
+    return new Table({ rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })] });
+  }
+
+  const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
+  const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: rows.map((cells, rowIdx) =>
+      new TableRow({
+        children: cells.map((cellText) =>
+          new TableCell({
+            borders,
+            children: [
+              new Paragraph({
+                children: rowIdx === 0
+                  ? [new TextRun({ text: cellText, bold: true, size: 20 })]
+                  : parseInlineMarkdown(cellText),
+              }),
+            ],
+          })
+        ),
+      })
+    ),
+  });
+};
+
+const markdownToDocxParagraphs = (markdown: string): (Paragraph | Table)[] => {
   const text = String(markdown || '');
   const lines = text.split('\n');
-  const out: Paragraph[] = [];
+  const out: (Paragraph | Table)[] = [];
+  let i = 0;
 
-  for (const raw of lines) {
+  while (i < lines.length) {
+    const raw = lines[i];
     const line = raw.replace(/\r/g, '');
+
+    // Collect markdown table blocks
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      if (tableLines.length >= 2) {
+        out.push(parseMarkdownTable(tableLines));
+      }
+      continue;
+    }
+
+    i++;
+
     if (!line.trim()) {
       out.push(new Paragraph({ text: '' }));
       continue;
@@ -3049,30 +3148,15 @@ const markdownToDocxParagraphs = (markdown: string): Paragraph[] => {
 
     // Headings
     if (line.startsWith('### ')) {
-      out.push(
-        new Paragraph({
-          text: line.slice(4).trim(),
-          heading: HeadingLevel.HEADING_3,
-        })
-      );
+      out.push(new Paragraph({ text: line.slice(4).trim(), heading: HeadingLevel.HEADING_3 }));
       continue;
     }
     if (line.startsWith('## ')) {
-      out.push(
-        new Paragraph({
-          text: line.slice(3).trim(),
-          heading: HeadingLevel.HEADING_2,
-        })
-      );
+      out.push(new Paragraph({ text: line.slice(3).trim(), heading: HeadingLevel.HEADING_2 }));
       continue;
     }
     if (line.startsWith('# ')) {
-      out.push(
-        new Paragraph({
-          text: line.slice(2).trim(),
-          heading: HeadingLevel.HEADING_1,
-        })
-      );
+      out.push(new Paragraph({ text: line.slice(2).trim(), heading: HeadingLevel.HEADING_1 }));
       continue;
     }
 
@@ -3080,21 +3164,32 @@ const markdownToDocxParagraphs = (markdown: string): Paragraph[] => {
     if (/^[-*]\s+/.test(line)) {
       out.push(
         new Paragraph({
-          text: line.replace(/^[-*]\s+/, '').trim(),
+          children: parseInlineMarkdown(line.replace(/^[-*]\s+/, '').trim()),
           bullet: { level: 0 },
         })
       );
       continue;
     }
 
-    // Basic inline cleanup (drop markdown markers)
-    const cleaned = line
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/`(.*?)`/g, '$1')
-      .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+    // Numbered lists
+    if (/^\d+\.\s+/.test(line)) {
+      out.push(
+        new Paragraph({
+          children: parseInlineMarkdown(line.replace(/^\d+\.\s+/, '').trim()),
+          numbering: { reference: 'default-numbering', level: 0 },
+        })
+      );
+      continue;
+    }
 
-    out.push(new Paragraph({ children: [new TextRun(String(cleaned))] }));
+    // Horizontal rule
+    if (/^[-*_]{3,}$/.test(line.trim())) {
+      out.push(new Paragraph({ text: '', border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } } }));
+      continue;
+    }
+
+    // Regular paragraph with inline formatting
+    out.push(new Paragraph({ children: parseInlineMarkdown(line) }));
   }
 
   return out;
@@ -3111,9 +3206,9 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
     .filter((s) => s && s.enabled)
     .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
 
-  // Cover-ish header
+  // Cover page
   children.push(
     new Paragraph({
       text: String(title),
@@ -3129,9 +3224,32 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
       })
     );
   }
+  children.push(
+    new Paragraph({
+      text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      alignment: AlignmentType.CENTER,
+    })
+  );
   children.push(new Paragraph({ text: '' }));
 
-  // Body
+  // Table of Contents
+  if (enabledSections.length >= 3) {
+    children.push(
+      new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 })
+    );
+    for (let idx = 0; idx < enabledSections.length; idx++) {
+      const secTitle = enabledSections[idx].title || enabledSections[idx].sectionKey || 'Section';
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: `${idx + 1}. ${secTitle}`, size: 22 })],
+          spacing: { after: 60 },
+        })
+      );
+    }
+    children.push(new Paragraph({ text: '' }));
+  }
+
+  // Body sections
   for (const section of enabledSections) {
     const sectionTitle = section.title || section.sectionKey || 'Section';
     children.push(
@@ -3145,14 +3263,31 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
     children.push(new Paragraph({ text: '' }));
   }
 
+  // Customizable header/footer from report metadata
+  const orgName = report.organizationName || '';
+  const headerText = orgName ? `${title} — ${orgName}` : String(title);
+  const footerLabel = orgName ? `${orgName} • Confidential` : 'Consultify Report';
+
   const doc = new Document({
+    numbering: {
+      config: [{
+        reference: 'default-numbering',
+        levels: [{
+          level: 0,
+          format: 'decimal' as any,
+          text: '%1.',
+          alignment: AlignmentType.LEFT,
+        }],
+      }],
+    },
     sections: [
       {
         headers: {
           default: new Header({
             children: [
               new Paragraph({
-                children: [new TextRun({ text: String(title), size: 18 })],
+                children: [new TextRun({ text: headerText, size: 18, color: '666666' })],
+                alignment: AlignmentType.LEFT,
               }),
             ],
           }),
@@ -3162,10 +3297,10 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
             children: [
               new Paragraph({
                 children: [
-                  new TextRun({ text: 'Consultify Report', size: 16 }),
-                  new TextRun('  •  '),
+                  new TextRun({ text: footerLabel, size: 16, color: '999999' }),
+                  new TextRun('  •  Page '),
                   new TextRun({ children: [PageNumber.CURRENT] }),
-                  new TextRun(' / '),
+                  new TextRun(' of '),
                   new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
                 ],
                 alignment: AlignmentType.RIGHT,

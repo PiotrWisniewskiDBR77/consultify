@@ -648,7 +648,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
     if (lane === 'wordy' && currentRun.materializationOrigin?.originRecordId) {
       const reportId = currentRun.materializationOrigin.originRecordId;
-      window.open(`/api/report-builder/reports/${reportId}/export/pdf`, '_blank');
+      window.open(`/api/report-builder/reports/${reportId}/export/docx`, '_blank');
       return;
     }
 
