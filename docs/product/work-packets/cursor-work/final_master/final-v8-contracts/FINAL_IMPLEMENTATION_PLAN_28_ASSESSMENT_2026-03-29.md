@@ -284,6 +284,6 @@ Acceptance checklist (P28-A scope approval; must-pass dla P28-B/P28-C):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P28-A | approved(scope) | `f95bbf5de1` | N/A — docs/scope only | N/A | Canon §2.3 (object model/lifecycle/governance + no silent scoring + bounded handoffs); EXECUTION_INDEX #28 updated; SSOT copy synced; lock P28-A released. |
-| P28-B | verified(evidence) | `33c7841aea` | `AssessmentWorkbenchService` + `/api/v8/assessment/:id/workbench/*`; integration contract tests (promotion payload, gates) | Bounded API staging: workbench CRUD via V8 auth | Persisted column `p28_workbench_v1`; explicit proposal/review; `completed` read-only via service guards |
+| P28-B | verified(evidence) | `33c7841aea` + P28-B rollout commit | `AssessmentWorkbenchService` + `/api/v8/assessment/:id/workbench/*`; contract + **E2E mock** `assessmentWorkbench.p28b-e2e.test.ts` (7+ tests łącznie z preset DRD) | `docs/.../evidence/P28_B_ROLLOUT_2026-03-31.md`; `npx tsx server/scripts/smoke-p28-workbench-b.ts` | **whatNext** na GET workbench i 409; preset DRD; metodologia domknięta do promotion |
 | P28-C | verified(evidence) | `33c7841aea` | Same tests + EXECUTION_INDEX #28 | Ledger row | Rollback: stop calling workbench routes; column preserved read-only |
 

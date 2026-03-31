@@ -15,6 +15,7 @@ import AssessmentPermissionService from '../../services/assessmentPermissionServ
 import AssessmentWorkbenchService, {
   assertPromotionPayloadShape,
   buildBoundedPromotionPayload,
+  buildWhatNextGuidance,
 } from '../../services/assessment/AssessmentWorkbenchService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -404,10 +405,45 @@ router.get(
       String(row.assessment_type || 'DRD'),
       String(row.created_by || userId)
     );
+    const whatNext = buildWhatNextGuidance(state);
     return res.json({
-      data: { workbench: state },
+      data: { workbench: state, whatNext },
       meta: workbenchReadMeta(),
     });
+  })
+);
+
+router.post(
+  '/:assessmentId/workbench/methodology-preset',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    const preset = String(req.body?.preset || '').trim();
+    if (!assessmentId || !preset) {
+      return res.status(400).json({ error: 'preset required (e.g. DRD)', code: 'P28_PRESET_REQUIRED' });
+    }
+    await ensureAssessmentSchema();
+    try {
+      const state = await AssessmentWorkbenchService.applyMethodologyPreset(
+        assessmentId,
+        organizationId,
+        userId,
+        preset
+      );
+      return res.json({
+        data: { workbench: state, whatNext: buildWhatNextGuidance(state) },
+        meta: workbenchMutationMeta(),
+      });
+    } catch (e: any) {
+      if (e?.code === 'ASSESSMENT_NOT_FOUND') {
+        return res.status(404).json({ error: 'Assessment not found', code: e.code });
+      }
+      return res.status(400).json({
+        error: e?.message || 'Preset error',
+        code: e?.code,
+        knownPresets: e?.knownPresets,
+      });
+    }
   })
 );
 
@@ -510,6 +546,7 @@ router.post(
           error: e?.message,
           code: e.code,
           missingEvidenceKinds: e.missingEvidenceKinds,
+          whatNext: e.whatNext,
         });
       }
       return res.status(400).json({ error: e?.message || 'Score proposal error', code: e?.code });

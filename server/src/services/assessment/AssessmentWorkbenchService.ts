@@ -104,6 +104,83 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+/** Bounded preset for P28-B “one methodology” closure (DRD = document + interview artefakty jako evidence). */
+export const P28_METHODOLOGY_PRESETS: Record<
+  string,
+  { requiredEvidenceKinds: EvidencePointer['kind'][]; label: string }
+> = {
+  DRD: {
+    label: 'DRD maturity assessment (P28-B default)',
+    requiredEvidenceKinds: ['document', 'interview_note'],
+  },
+};
+
+/**
+ * Jawne kroki „what next” dla degraded / każdego runState (FINAL 28 §5.2, §2.3.7).
+ */
+export function buildWhatNextGuidance(state: P28WorkbenchState): string[] {
+  const lines: string[] = [];
+  const push = (s: string) => lines.push(s);
+
+  switch (state.runState) {
+    case 'draft':
+      push('Call POST .../workbench/transition with { toState: "running" } to start evidence capture.');
+      break;
+    case 'running':
+      if (state.requiredEvidenceKinds?.length) {
+        push(
+          `Attach at least one evidence pointer per required kind: ${state.requiredEvidenceKinds.join(', ')} (POST .../workbench/evidence).`
+        );
+      }
+      push(
+        'When requirements are met, call POST .../workbench/score-proposal with scoringRationale, scoreValues, and linked evidencePointerIds.'
+      );
+      break;
+    case 'awaiting_evidence':
+      push(
+        'Add evidence for every missing kind (see degraded.missingEvidenceKinds), then POST .../workbench/transition with { toState: "running" } before retrying score-proposal.'
+      );
+      if (state.degraded?.missingEvidenceKinds?.length) {
+        push(`Still required kinds: ${state.degraded.missingEvidenceKinds.join(', ')}`);
+      }
+      break;
+    case 'score_proposed':
+      push('Review the score proposal: POST .../workbench/score-review with action accept, reject, or override.');
+      break;
+    case 'score_reviewed':
+      push(
+        'Create an interpretation proposal: POST .../workbench/interpretation-proposal (must include limits — no overclaim).'
+      );
+      push(
+        'Or, for bounded degraded closure only: POST .../workbench/transition with { toState: "completed", reason: "..." } from score_reviewed.'
+      );
+      break;
+    case 'interpretation_proposed':
+      push('POST .../workbench/interpretation-review with action accept, reject, or override.');
+      break;
+    case 'interpretation_reviewed':
+      push('Finalize: POST .../workbench/transition with { toState: "completed" }.');
+      break;
+    case 'completed':
+      push('GET .../workbench/promotion-payload, then POST .../workbench/promotion with targetKind and targetRef for Outputs/Interview handoff.');
+      break;
+    case 'failed':
+      push('Resume: POST .../workbench/transition with { toState: "running" } after resolving the failure.');
+      break;
+    default:
+      break;
+  }
+
+  const broken = state.evidencePointers.filter((e) => e.availability === 'unavailable');
+  if (broken.length) {
+    push(
+      `Unavailable evidence (restore access or add replacement pointers): ${broken.map((b) => `${b.kind}:${b.ref}`).join('; ')}`
+    );
+  }
+
+  return lines;
+}
+
 export function createInitialWorkbench(params: {
   assessmentId: string;
   orgId: string;
@@ -405,6 +482,7 @@ export class AssessmentWorkbenchService {
       throw Object.assign(new Error('Missing required evidence'), {
         code: 'P28_AWAITING_EVIDENCE',
         missingEvidenceKinds: missing,
+        whatNext: buildWhatNextGuidance(state),
       });
     }
 
@@ -626,6 +704,28 @@ export class AssessmentWorkbenchService {
     });
     await persistState(assessmentId, organizationId, state);
     return state;
+  }
+
+  /** P28-B: jedna domknięta metodologia — ustaw wymagane evidence z presetu (np. DRD). */
+  static async applyMethodologyPreset(
+    assessmentId: string,
+    organizationId: string,
+    userId: string,
+    presetKey: string
+  ): Promise<P28WorkbenchState> {
+    const preset = P28_METHODOLOGY_PRESETS[presetKey];
+    if (!preset) {
+      throw Object.assign(new Error(`Unknown methodology preset: ${presetKey}`), {
+        code: 'P28_PRESET_UNKNOWN',
+        knownPresets: Object.keys(P28_METHODOLOGY_PRESETS),
+      });
+    }
+    return this.setRequiredEvidenceKinds(
+      assessmentId,
+      organizationId,
+      userId,
+      preset.requiredEvidenceKinds as unknown as string[]
+    );
   }
 
   static async setRequiredEvidenceKinds(

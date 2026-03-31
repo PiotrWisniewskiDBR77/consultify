@@ -6,7 +6,9 @@ import { describe, it, expect } from 'vitest';
 import {
   assertPromotionPayloadShape,
   buildBoundedPromotionPayload,
+  buildWhatNextGuidance,
   createInitialWorkbench,
+  P28_METHODOLOGY_PRESETS,
   P28_WORKBENCH_CONTRACT_VERSION,
 } from '../../server/src/services/assessment/AssessmentWorkbenchService.js';
 import { deriveBalancesFromEntries } from '../../server/src/services/partnerProgramLedgerService.js';
@@ -84,6 +86,30 @@ describe('P28 Assessment workbench (FINAL 28)', () => {
     expect(Array.isArray(payload.evidence_pointers)).toBe(true);
     expect(payload.promotion_traces).toEqual([]);
     expect(payload.limits).toBe('Not exhaustive');
+  });
+
+  it('buildWhatNextGuidance lists actionable steps for awaiting_evidence', () => {
+    const s = createInitialWorkbench({
+      assessmentId: 'x',
+      orgId: 'o',
+      methodologyId: 'DRD',
+      startedBy: 'u',
+    });
+    s.runState = 'awaiting_evidence';
+    s.degraded = {
+      code: 'missing_required_evidence',
+      message: 'Add evidence',
+      missingEvidenceKinds: ['document'],
+    };
+    const next = buildWhatNextGuidance(s);
+    expect(next.some((l) => l.includes('missing') || l.includes('document') || l.includes('evidence'))).toBe(
+      true
+    );
+  });
+
+  it('P28_METHODOLOGY_PRESETS defines DRD required evidence kinds', () => {
+    expect(P28_METHODOLOGY_PRESETS.DRD.requiredEvidenceKinds).toContain('document');
+    expect(P28_METHODOLOGY_PRESETS.DRD.requiredEvidenceKinds).toContain('interview_note');
   });
 
   it('rejects promotion payload when run is not completed', () => {
