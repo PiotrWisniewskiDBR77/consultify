@@ -30,7 +30,7 @@ Użytkownik (Piotr) działa jako **product manager**. Agent wybiera zadanie, imp
 
 ## 3. Stan realizacji (2026-03-31)
 
-### Zamknięte (`verified(evidence)`) — 22/35:
+### Zamknięte (`verified(evidence)`) — 35/35:
 
 | # | Moduł | Testy | Kluczowe |
 |---|-------|-------|----------|
@@ -55,32 +55,28 @@ Użytkownik (Piotr) działa jako **product manager**. Agent wybiera zadanie, imp
 | 34 | Mądrość czata | ✓ | Chat wisdom/policy |
 | 35 | Historia czatów | ✓ | Chat history |
 
-### Do zrobienia (`approved(scope)`) — 13/35:
+### Do zrobienia (`approved(scope)`) — 0/35:
 
-| # | Moduł | Priorytet wg dependency order |
-|---|-------|-------------------------------|
-| 11 | **Inicjatywy** | Execution spine start |
-| 03 | **Wdrożenia** | After Inicjatywy |
-| 04 | **KPI** | After Wdrożenia |
-| 05 | **Finanse** | After KPI |
-| 06 | **Radar** | After Finanse |
-| 02 | **Kalendarz** | After Radar |
-| 07 | **Notatnik** | After Kalendarz |
-| 08 | **Teresa** (AI Copilot) | After Notatnik |
-| 09 | **Ankiety** | Collection lane |
-| 10 | **Wnioski w Interview** | After Ankiety |
-| 28 | **Assessment** | Standalone |
-| 29 | **Program partnerski** | Standalone |
-| 12 | **Mindmap** | Tool |
-| 13 | **Whiteboard** | Tool |
-| 14 | **Proces flow** | Tool |
+Wszystkie 35 modułów zostały zamknięte na `verified(evidence)`.
 
-### Rekomendowana kolejność:
-
-Zgodnie z `EXECUTION_INDEX.md` dependency-first order:
-1. **P11 Inicjatywy** → P03 Wdrożenia → P04 KPI → P05 Finanse → P06 Radar → P02 Kalendarz → P07 Notatnik → P08 Teresa
-2. **P09 Ankiety** → P10 Wnioski
-3. **P28 Assessment**, P29 Partner, P12/P13/P14 (tools)
+Dodatkowe moduły zamknięte w tej sesji:
+| # | Moduł | Testy | Kluczowe |
+|---|-------|-------|----------|
+| 02 | **Kalendarz** | 62 | Calendar Interop: 3 providers, conflict-safe writes, 5 lifecycle states, 4 permission gradients |
+| 03 | **Wdrożenia** | 26 | Control tower 5-queue, 4 interventions, baseline-variance |
+| 04 | **KPI** | 32 | Frozen vocabulary, 7 workflow endpoints, permissions enforced |
+| 05 | **Finanse** | 26 | Finance Lane E2E, 8 import outcomes, KPI coherence gate |
+| 06 | **Radar** | ✓ | Triage cockpit, 5 archetypes, near-duplicate detection |
+| 07 | **Notatnik** | 55 | Notebook canon, provenance, attachment lifecycle, search |
+| 08 | **Teresa** | 49 | Copilot canon, action envelope governance, Anna boundary |
+| 09 | **Ankiety** | 32 | Survey collection lane, submission lifecycle, P10 handoff |
+| 10 | **Wnioski** | 55 | Insight artifact, confidence semantics, evidence pointers |
+| 11 | **Inicjatywy** | 20 | Lifecycle canon, portfolio coherence, 2-entry-point E2E |
+| 12 | **Mindmap** | 48 | CALM loop, cycle detection, export, AI co-building |
+| 13 | **Whiteboard** | 57 | 9-tool toolbelt, facilitation flow, collaboration boundary |
+| 14 | **Proces flow** | 68 | 11 BPMN objects, 2-layer validation, AI proposal |
+| 28 | **Assessment** | ✓ | P19 handoff, read-only guards |
+| 29 | **Program partnerski** | ✓ | Dual-control, ledger degraded snapshot |
 
 ---
 
