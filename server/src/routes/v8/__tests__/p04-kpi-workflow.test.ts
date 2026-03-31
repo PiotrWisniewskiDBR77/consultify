@@ -326,10 +326,45 @@ describe('P04 KPI Workflow Canon', () => {
     });
   });
 
-  // ─── §8.1D E2E workflow: signal → inspect → next-action ───
+  // ─── §8.1D Report creation (closed-loop bridge) ─────────────
+
+  describe('POST /workflow/kpi/:kpiId/report — report creation', () => {
+    it('creates a report/scorecard from KPI inspection', async () => {
+      mockDbGet.mockResolvedValueOnce({
+        id: KPI_ID, name: 'Revenue Growth', latest_value: 65, target_value: 100, baseline_value: 50,
+      });
+      mockDbAll.mockResolvedValueOnce([
+        { id: 'sig-1', severity: 'RED', deviation_summary: 'Revenue drop' },
+      ]);
+      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+
+      const res = await request(app)
+        .post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`)
+        .send({ commentary: 'Revenue below target', actionPlan: 'Increase outreach', reconciliationNeeded: true });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.kpiId).toBe(KPI_ID);
+      expect(res.body.data.commentary).toBe('Revenue below target');
+      expect(res.body.data.actionPlan).toBe('Increase outreach');
+      expect(res.body.data.reconciliationNeeded).toBe(true);
+      expect(res.body.data.status).toBe('draft');
+      expect(res.body.data.signalsSummary).toHaveLength(1);
+      expect(res.body.data.snapshot.currentValue).toBe(65);
+    });
+
+    it('returns 404 for non-existent KPI', async () => {
+      mockDbGet.mockResolvedValueOnce(null);
+      const res = await request(app)
+        .post('/api/v8/results/workflow/kpi/nonexistent/report')
+        .send({ commentary: 'test' });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  // ─── §8.1D E2E workflow: signal → inspect → report → next-action ───
 
   describe('E2E closed-loop workflow', () => {
-    it('signal → inspect → next-action creates traceable chain', async () => {
+    it('signal → inspect → report → next-action creates traceable chain', async () => {
       // Step 1: Get signals
       mockDbAll.mockResolvedValueOnce([
         { id: 'sig-e2e', kpi_id: KPI_ID, severity: 'RED', status: 'OPEN', deviation_summary: 'Revenue drop', detected_at: '2026-03-20', created_at: '2026-03-20' },
@@ -356,18 +391,34 @@ describe('P04 KPI Workflow Canon', () => {
       expect(inspectRes.body.data.openSignals).toHaveLength(1);
       expect(inspectRes.body.data.workflowHint).toContain('Signal detected');
 
-      // Step 3: Create next action from signal
+      // Step 3: Create report/scorecard
+      mockDbGet.mockResolvedValueOnce({
+        id: KPI_ID, name: 'Revenue Growth', latest_value: 65, target_value: 100, baseline_value: 50,
+      });
+      mockDbAll.mockResolvedValueOnce([
+        { id: 'sig-e2e', severity: 'RED', deviation_summary: 'Revenue drop' },
+      ]);
+      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+
+      const reportRes = await request(app)
+        .post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`)
+        .send({ commentary: 'Revenue below target — corrective action needed', actionPlan: 'Increase outreach' });
+      expect(reportRes.status).toBe(200);
+      expect(reportRes.body.data.status).toBe('draft');
+
+      // Step 4: Create next action from report
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       const actionRes = await request(app)
         .post(`/api/v8/results/workflow/kpi/${KPI_ID}/next-action`)
         .send({
           title: 'Investigate and create corrective plan',
-          sourceType: 'signal',
-          sourceRef: signal.signalId,
+          sourceType: 'report',
+          sourceRef: reportRes.body.data.reportId,
         });
 
       expect(actionRes.status).toBe(200);
-      expect(actionRes.body.data.sourceRef).toBe('sig-e2e');
+      expect(actionRes.body.data.sourceType).toBe('report');
+      expect(actionRes.body.data.sourceRef).toBe(reportRes.body.data.reportId);
       expect(actionRes.body.data.kpiId).toBe(KPI_ID);
       expect(actionRes.body.data.status).toBe('open');
     });

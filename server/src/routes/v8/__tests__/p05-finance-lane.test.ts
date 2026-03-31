@@ -359,6 +359,11 @@ describe('P05 Finance Lane', () => {
 
   describe('POST /versions/:snapshotId/finalize — switchover', () => {
     it('finalizes a snapshot as actual', async () => {
+      mockDbGet.mockResolvedValueOnce({
+        snapshot_id: 'snap-1', organization_id: ORG, version_type: 'actual',
+        snapshot_data: '{"budget":50000}', switchover_date: null,
+        switchover_actor: null, is_finalized: 0, created_at: '2026-03-01',
+      });
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       mockDbGet.mockResolvedValueOnce({
         snapshot_id: 'snap-1', organization_id: ORG, version_type: 'actual',
@@ -465,6 +470,15 @@ describe('P05 Finance Lane', () => {
       // Step 6: Advance readback → confirmed
       const readbackRun = { ...mutationRun, current_step: 'readback', mutation_outcome: 'applied', audit_trail_json: JSON.stringify(mutationRes.body.data.auditTrail) };
       mockDbGet.mockResolvedValueOnce(readbackRun);
+      // getMutationAudits query
+      mockDbAll.mockResolvedValueOnce([{
+        audit_id: 'a1', organization_id: ORG, run_id: runId,
+        mutation_type: 'forecast_update', target_entity: 'model-1',
+        previous_value: null, new_value: '150000', outcome: 'applied',
+        actor: 'test-user', created_at: '2026-03-31',
+      }]);
+      // checkKpiLinkageCoherence query
+      mockDbAll.mockResolvedValueOnce([]);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const readbackRes = await request(app)
@@ -472,6 +486,8 @@ describe('P05 Finance Lane', () => {
         .send({ outcome: 'confirmed' });
       expect(readbackRes.body.data.readbackConfirmed).toBe(true);
       expect(readbackRes.body.data.auditTrail.length).toBeGreaterThanOrEqual(5);
+      const verifiedEntry = readbackRes.body.data.auditTrail.find((e: Record<string, unknown>) => e.outcome === 'readback_verified');
+      expect(verifiedEntry).toBeDefined();
     });
   });
 });
