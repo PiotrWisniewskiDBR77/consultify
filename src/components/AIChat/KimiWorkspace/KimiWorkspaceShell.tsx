@@ -67,6 +67,7 @@ interface KimiWorkspaceShellProps {
   onDownload?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
+  onStartGeneration?: (goal: string) => Promise<void>;
   chatSystemPrompt?: string;
   conversationId?: string | null;
 }
@@ -212,6 +213,7 @@ function ArtifactPreviewPane({
   onDownload,
   onPreviewFile,
   onAllFiles,
+  onStartGeneration,
 }: {
   preview: ArtifactPreview | null;
   lane: KimiLane;
@@ -219,6 +221,7 @@ function ArtifactPreviewPane({
   onDownload?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
+  onStartGeneration?: (goal: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const config = LANE_CONFIG[lane];
@@ -247,10 +250,23 @@ function ArtifactPreviewPane({
     );
   }
 
+  const [goalInput, setGoalInput] = React.useState('');
+  const [isStarting, setIsStarting] = React.useState(false);
+
+  const handleGenerate = React.useCallback(async () => {
+    if (!goalInput.trim() || !onStartGeneration) return;
+    setIsStarting(true);
+    try {
+      await onStartGeneration(goalInput.trim());
+    } finally {
+      setIsStarting(false);
+    }
+  }, [goalInput, onStartGeneration]);
+
   if (!preview || preview.type === 'none') {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="text-center space-y-4 max-w-sm px-6">
+        <div className="text-center space-y-5 max-w-md px-6">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mx-auto">
             <Icon size={28} className="text-slate-400 dark:text-slate-500" />
           </div>
@@ -261,9 +277,34 @@ function ArtifactPreviewPane({
                 : t('kimi.emptyExcele', 'Your spreadsheet will appear here')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t('kimi.emptyHint', 'Start a conversation to generate content')}
+              {t('kimi.emptyHint', 'Describe what you need and click Generate')}
             </p>
           </div>
+          {onStartGeneration && (
+            <div className="space-y-3">
+              <textarea
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                placeholder={config.inputPlaceholder}
+                rows={3}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none"
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={!goalInput.trim() || isStarting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isStarting ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                {lane === 'wordy'
+                  ? t('kimi.generateDoc', 'Generate Document')
+                  : t('kimi.generateSheet', 'Generate Spreadsheet')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -405,6 +446,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   onDownload,
   onPreviewFile,
   onAllFiles,
+  onStartGeneration,
   chatSystemPrompt,
   conversationId,
 }) => {
@@ -461,6 +503,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
           onDownload={onDownload}
           onPreviewFile={onPreviewFile}
           onAllFiles={onAllFiles}
+          onStartGeneration={onStartGeneration}
         />
       </div>
     </div>

@@ -2,20 +2,15 @@
  * ExceleView — KIMI-style spreadsheet generation workspace (P23-B).
  *
  * Split-screen: chat left ↔ sheet preview right.
- * Governed artifact creation via V8 artifact run pipeline (sheet family).
+ * Wired to the real V8 artifact run pipeline via useKimiArtifactPipeline.
  *
  * SSOT: FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md
  */
 
-import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
+import React, { useCallback, useEffect, useRef } from 'react';
 
-import {
-  KimiWorkspaceShell,
-  type ArtifactPreview,
-  type TaskStep,
-} from './KimiWorkspaceShell';
+import { KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
 const EXCELE_SYSTEM_PROMPT = `You are a professional spreadsheet creation assistant in Consultify.
 Your role is to help users create high-quality spreadsheets: financial reports, data analyses, dashboards, and structured data workbooks.
@@ -31,63 +26,47 @@ Support: data tables, conditional formatting, formulas, pivot summaries, charts 
 Honest limits: this is a bounded sheet deliverable, not full Excel parity.`;
 
 export const ExceleView: React.FC = () => {
-  const { t } = useTranslation();
+  const pipeline = useKimiArtifactPipeline('excele');
+  const advanceRef = useRef(pipeline.advancePipeline);
+  advanceRef.current = pipeline.advancePipeline;
 
-  const [taskSteps, setTaskSteps] = useState<TaskStep[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [preview, setPreview] = useState<ArtifactPreview | null>(null);
-
-  const handleReplay = useCallback(() => {
-    setTaskSteps([]);
-    setIsGenerating(false);
-    setIsCompleted(false);
-    setPreview(null);
-    toast.success(t('kimi.replayStarted', 'Starting replay...'));
-  }, [t]);
-
-  const handleRemix = useCallback(() => {
-    toast.success(t('kimi.remixHint', 'Modify your prompt and regenerate'));
-  }, [t]);
-
-  const handleDownload = useCallback(() => {
-    if (preview?.url) {
-      const a = document.createElement('a');
-      a.href = preview.url;
-      a.download = preview.fileName || 'spreadsheet.xlsx';
-      a.click();
-    } else {
-      toast.error(t('kimi.noFileToDownload', 'No file available for download'));
-    }
-  }, [preview, t]);
+  useEffect(() => {
+    if (!pipeline.isGenerating || pipeline.isBusy) return undefined;
+    const timer = setInterval(() => {
+      void advanceRef.current();
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [pipeline.isGenerating, pipeline.isBusy]);
 
   const handlePreviewFile = useCallback(() => {
-    if (preview?.url) {
-      window.open(preview.url, '_blank');
+    if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
+      const tableId = pipeline.currentRun.materializationOrigin.originRecordId;
+      window.open(
+        `/my-work/ideas/workspace/table?tpTable=${encodeURIComponent(tableId)}`,
+        '_blank'
+      );
     }
-  }, [preview]);
+  }, [pipeline.currentRun]);
 
   const handleAllFiles = useCallback(() => {
-    toast.success(t('kimi.allFilesHint', 'Opening file manager...'));
-  }, [t]);
-
-  const totalSteps = taskSteps.length || 0;
-  const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
+    window.open('/reports-hub', '_blank');
+  }, []);
 
   return (
     <KimiWorkspaceShell
       lane="excele"
-      taskSteps={taskSteps}
-      totalSteps={totalSteps}
-      completedSteps={completedSteps}
-      isGenerating={isGenerating}
-      isCompleted={isCompleted}
-      preview={preview}
-      onReplay={handleReplay}
-      onRemix={handleRemix}
-      onDownload={handleDownload}
+      taskSteps={pipeline.taskSteps}
+      totalSteps={pipeline.totalSteps}
+      completedSteps={pipeline.completedSteps}
+      isGenerating={pipeline.isGenerating}
+      isCompleted={pipeline.isCompleted}
+      preview={pipeline.preview}
+      onReplay={pipeline.handleReplay}
+      onRemix={pipeline.handleRemix}
+      onDownload={pipeline.handleDownload}
       onPreviewFile={handlePreviewFile}
       onAllFiles={handleAllFiles}
+      onStartGeneration={pipeline.startGeneration}
       chatSystemPrompt={EXCELE_SYSTEM_PROMPT}
     />
   );
