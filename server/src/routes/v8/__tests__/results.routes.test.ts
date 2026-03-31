@@ -765,7 +765,10 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/reconciliations delegates to initiateReconciliation', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/reconciliations').send({ kpiId: KPI_UUID });
+    const res = await request(app)
+      .post('/api/v8/results/reconciliations')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({ kpiId: KPI_UUID });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -786,10 +789,23 @@ describe('V8 results read-only routes', () => {
     expect(mockResolveReconciliation).not.toHaveBeenCalled();
   });
 
+  it('PUT /api/v8/results/reconciliations/:id/resolve returns 400 when resolvedBy invalid', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/results/reconciliations/rec-1/resolve')
+      .set('x-kpi-role', 'finance_owner')
+      .send({ status: 'reconciled', resolvedBy: 'admin' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('P04_RESOLVED_BY_INVALID');
+    expect(mockResolveReconciliation).not.toHaveBeenCalled();
+  });
+
   it('PUT /api/v8/results/reconciliations/:id/resolve delegates to resolveReconciliation', async () => {
     const app = createApp();
     const res = await request(app)
       .put('/api/v8/results/reconciliations/rec-1/resolve')
+      .set('x-kpi-role', 'finance_owner')
       .send({ status: 'reconciled' });
 
     expect(res.status).toBe(200);
@@ -820,15 +836,35 @@ describe('V8 results read-only routes', () => {
     expect(mockCreateKpiSignal).not.toHaveBeenCalled();
   });
 
+  it('POST /api/v8/results/signals returns 403 when role cannot create_signal', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/results/signals')
+      .set('x-kpi-role', 'viewer')
+      .send({
+        kpiId: KPI_UUID,
+        signalType: 'data_quality',
+        severity: 'high',
+        description: 'Gap',
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    expect(mockCreateKpiSignal).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/results/signals delegates to createKpiSignal', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/signals').send({
-      kpiId: KPI_UUID,
-      signalType: 'data_quality',
-      severity: 'high',
-      description: 'Gap',
-      evidencePointers: ['ev:1'],
-    });
+    const res = await request(app)
+      .post('/api/v8/results/signals')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        kpiId: KPI_UUID,
+        signalType: 'data_quality',
+        severity: 'high',
+        description: 'Gap',
+        evidencePointers: ['ev:1'],
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.signalId).toBe('sig-1');
@@ -846,6 +882,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/signals/sig-1/acknowledge')
+      .set('x-kpi-role', 'commenter')
       .send({ reason: 'reviewed' });
 
     expect(res.status).toBe(200);
@@ -868,14 +905,17 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/next-actions delegates to createKpiNextAction with finance refs', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/next-actions').send({
-      signalId: 'sig-1',
-      kpiId: KPI_UUID,
-      actionType: 'reconcile',
-      description: 'Align with Finance',
-      financeConsequenceRef: 'fin:ledger:1',
-      executionFollowUpRef: 'exec:task:2',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/next-actions')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        signalId: 'sig-1',
+        kpiId: KPI_UUID,
+        actionType: 'reconcile',
+        description: 'Align with Finance',
+        financeConsequenceRef: 'fin:ledger:1',
+        executionFollowUpRef: 'exec:task:2',
+      });
 
     expect(res.status).toBe(200);
     expect(mockCreateKpiNextAction).toHaveBeenCalledWith({
@@ -893,7 +933,10 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/next-actions/:actionId/complete delegates to completeKpiNextAction', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/next-actions/act-1/complete').send({});
+    const res = await request(app)
+      .post('/api/v8/results/next-actions/act-1/complete')
+      .set('x-kpi-role', 'finance_owner')
+      .send({});
 
     expect(res.status).toBe(200);
     expect(res.body.data?.success).toBe(true);

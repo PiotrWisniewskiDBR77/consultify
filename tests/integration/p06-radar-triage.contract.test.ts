@@ -17,30 +17,31 @@ import {
 } from '../../server/src/services/v8/radarTriageService.js';
 
 function minimalSignal(over: Partial<RadarTriageSignal> = {}): RadarTriageSignal {
-  return {
+  const bands: RadarBands = {
+    impact: 2,
+    urgency: 2,
+    scope: 2,
+    confidence: 2,
+    freshness: 2,
+    actionability: 1,
+  };
+  const merged = {
     signalId: 'sig-p06-contract',
     organizationId: 'org-p06',
-    category: 'finance_kpi',
-    priorityLevel: 'P1',
+    category: 'finance_kpi' as const,
+    priorityLevel: 'P1' as const,
     score: 20,
-    bands: {
-      impact: 2,
-      urgency: 2,
-      scope: 2,
-      confidence: 2,
-      freshness: 2,
-      actionability: 1,
-    },
-    triggeredRules: [],
+    bands,
+    triggeredRules: [] as string[],
     whyNow: {
       rationaleText: 'Variance exceeds threshold on linked KPI.',
-      timeWindow: 'this_week',
-      primaryDriver: 'variance',
+      timeWindow: 'this_week' as const,
+      primaryDriver: 'variance' as const,
     },
     evidence: {
       evidencePointers: [{ type: 'kpi', ref: 'kpi-1' }],
       lastObservedAt: '2026-03-31T12:00:00.000Z',
-      sourceCoverage: 'partial',
+      sourceCoverage: 'partial' as const,
     },
     uncertaintyBoundary: {
       missingInputs: [],
@@ -49,18 +50,22 @@ function minimalSignal(over: Partial<RadarTriageSignal> = {}): RadarTriageSignal
     },
     ownership: {
       ownerRole: 'Finance Lead / PMO',
-      queueHint: 'decision',
+      queueHint: 'decision' as const,
     },
     nextAction: {
-      targetModule: 'Inicjatywy',
-      handoffIntent: 'open',
+      targetModule: 'Inicjatywy' as const,
+      handoffIntent: 'open' as const,
       handoffPayload: {},
       safeFallback: 'Notatki — capture context for later review',
     },
-    triageState: 'ready',
+    triageState: 'ready' as const,
     createdAt: '2026-03-31T12:00:00.000Z',
     updatedAt: '2026-03-31T12:00:00.000Z',
     ...over,
+  };
+  return {
+    ...merged,
+    rank: over.rank ?? { bands: merged.bands, triggeredRules: merged.triggeredRules },
   };
 }
 

@@ -1973,7 +1973,7 @@ export async function getKpiWorkflowStatus(
   const degradedReasons: KpiWorkflowStatus['degradedReasons'] = [];
 
   const kpi = await dbGet<any>(
-    `SELECT current_value, target_value, updated_at FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`,
+    `SELECT current_value, target_value, updated_at, status, mode FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`,
     [kpiId, organizationId],
     { fallback: true }
   ).catch(() => null);
@@ -1991,6 +1991,37 @@ export async function getKpiWorkflowStatus(
       reason: 'discrepancy_unresolved',
       detail: `${reconciliationHealth.unresolvedCount} unresolved reconciliation(s)`,
       nextAction: 'Resolve via PUT /api/v8/results/reconciliations/:id/resolve',
+    });
+  }
+
+  // §8.1F: linkage_unavailable — KPI is initiative-linked but has no finance reconciliation row
+  const linkageRow = await dbGet<{ reconciliation_id: string }>(
+    `SELECT reconciliation_id FROM v8_kpi_finance_reconciliations WHERE kpi_id = ? AND organization_id = ? LIMIT 1`,
+    [kpiId, organizationId],
+    { fallback: true }
+  ).catch(() => null);
+
+  if (!linkageRow) {
+    const initiativeLinked = await dbGet<{ kpi_id: string }>(
+      `SELECT kpi_id FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ? AND mode = 'initiative_linked'`,
+      [kpiId, organizationId],
+      { fallback: true }
+    ).catch(() => null);
+    if (initiativeLinked) {
+      degradedReasons.push({
+        reason: 'linkage_unavailable',
+        detail: 'KPI is initiative-linked but has no finance reconciliation linkage',
+        nextAction: 'Create finance linkage via POST /api/v8/results/reconciliations',
+      });
+    }
+  }
+
+  // §8.1F: permission_denied — locked statuses block definition/target edits
+  if (kpi && (kpi.status === 'benefits_realization' || kpi.status === 'review')) {
+    degradedReasons.push({
+      reason: 'permission_denied',
+      detail: `KPI is in '${kpi.status}' status — definition and target edits are blocked`,
+      nextAction: 'Contact KPI Owner to transition status before editing',
     });
   }
 

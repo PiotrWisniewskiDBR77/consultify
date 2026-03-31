@@ -244,6 +244,12 @@ export const KPI_PERMISSION_MATRIX: Record<string, KpiPermissionRole[]> = {
   manage_reconciliation_results: ['kpi_owner'],
   edit_finance_artifacts: ['finance_owner'],
   manage_reconciliation_finance: ['finance_owner'],
+  /** P04-B HTTP: create workflow signal */
+  create_signal: ['kpi_owner', 'finance_owner'],
+  /** P04-B HTTP: create next action */
+  create_next_action: ['kpi_owner', 'finance_owner'],
+  /** P04-B HTTP: initiate or resolve reconciliation */
+  manage_reconciliation: ['kpi_owner', 'finance_owner'],
   view: ['kpi_owner', 'finance_owner', 'viewer', 'commenter'],
   comment: ['kpi_owner', 'finance_owner', 'commenter'],
 };

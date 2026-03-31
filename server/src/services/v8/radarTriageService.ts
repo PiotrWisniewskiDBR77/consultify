@@ -31,6 +31,54 @@ export type PrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' |
 export type TimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type HandoffIntent = 'open' | 'create' | 'append';
 export type TargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+
+export type P0Archetype =
+  | 'critical_path_blocker'
+  | 'decision_needed'
+  | 'stakeholder_escalation'
+  | 'compliance_deadline'
+  | 'kpi_finance_anomaly';
+
+export const P0_ARCHETYPES: Record<
+  P0Archetype,
+  {
+    category: RadarCategory;
+    ownerRole: string;
+    primaryTarget: TargetModule;
+    fallbackTarget: string;
+  }
+> = {
+  critical_path_blocker: {
+    category: 'execution_delivery',
+    ownerRole: 'Delivery Lead / PMO',
+    primaryTarget: 'Wdrożenia',
+    fallbackTarget: 'Notatki — capture blockers checklist',
+  },
+  decision_needed: {
+    category: 'decision_alignment',
+    ownerRole: 'PMO / Initiative Owner',
+    primaryTarget: 'Inicjatywy',
+    fallbackTarget: 'Notatki',
+  },
+  stakeholder_escalation: {
+    category: 'decision_alignment',
+    ownerRole: 'Program Lead / PMO',
+    primaryTarget: 'Notatki',
+    fallbackTarget: 'Inicjatywy — if decision required',
+  },
+  compliance_deadline: {
+    category: 'governance_compliance',
+    ownerRole: 'Governance Owner / PMO',
+    primaryTarget: 'Wdrożenia',
+    fallbackTarget: 'Notatki',
+  },
+  kpi_finance_anomaly: {
+    category: 'finance_kpi',
+    ownerRole: 'Finance Lead / PMO',
+    primaryTarget: 'Inicjatywy',
+    fallbackTarget: 'Notatki — analysis',
+  },
+};
 export const TriageStateValues = [
   'ready',
   'degraded_missing_data',
@@ -57,6 +105,10 @@ export interface RadarTriageSignal {
   score: number;
   bands: RadarBands;
   triggeredRules: string[];
+  rank: {
+    bands: RadarBands;
+    triggeredRules: string[];
+  };
   whyNow: {
     rationaleText: string;
     timeWindow: TimeWindow;
@@ -98,6 +150,7 @@ export interface RadarHandoffContext {
   uncertaintyBoundary: RadarTriageSignal['uncertaintyBoundary'];
   ownerRole: string;
   triggeredRules: string[];
+  rank: RadarTriageSignal['rank'];
   radarDeeplink: string;
 }
 
@@ -159,15 +212,35 @@ function determinePriority(score: number, bands: RadarBands, hardGateRules: stri
   return 'P2';
 }
 
+const PERMISSION_BLOCK_PATTERN =
+  /permission|access\s*denied|unauthorized|forbidden|\b403\b|insufficient\s*privilege/i;
+
+function hasPermissionBlock(ub: RadarTriageSignal['uncertaintyBoundary'] | undefined): boolean {
+  if (!ub?.missingInputs?.length) return false;
+  return ub.missingInputs.some((m) => PERMISSION_BLOCK_PATTERN.test(m));
+}
+
 function determineTriageState(signal: Partial<RadarTriageSignal>): TriageState {
   const ub = signal.uncertaintyBoundary;
   if (!ub) return 'ready';
+  if (hasPermissionBlock(ub)) return 'blocked_permission';
   if (ub.missingInputs && ub.missingInputs.length > 0) return 'degraded_missing_data';
   if (ub.conflicts && ub.conflicts.length > 0) return 'degraded_conflict';
+
+  // §2.3.6: stale detection based on freshness band
+  if (signal.bands && signal.bands.freshness === 0) return 'degraded_stale';
+
+  // §2.3.6: evidence staleness
+  if (signal.evidence?.lastObservedAt) {
+    const age = Date.now() - Date.parse(signal.evidence.lastObservedAt);
+    if (!Number.isNaN(age) && age > 30 * 24 * 3600 * 1000) return 'degraded_stale';
+  }
+
   return 'ready';
 }
 
-function determineTargetModule(category: RadarCategory): TargetModule {
+function determineTargetModule(category: RadarCategory, archetype: P0Archetype | null): TargetModule {
+  if (archetype) return P0_ARCHETYPES[archetype].primaryTarget;
   switch (category) {
     case 'execution_delivery':
       return 'Wdrożenia';
@@ -182,7 +255,8 @@ function determineTargetModule(category: RadarCategory): TargetModule {
   }
 }
 
-function determineFallback(_category: RadarCategory): string {
+function determineFallback(_category: RadarCategory, archetype: P0Archetype | null): string {
+  if (archetype) return P0_ARCHETYPES[archetype].fallbackTarget;
   return 'Notatki — capture context for later review';
 }
 
@@ -241,9 +315,58 @@ export async function createTriageSignal(params: {
   const now = new Date().toISOString();
 
   const hardGateRules = checkHardGates(params.category, params.bands);
-  const score = computeScore(params.bands, false);
+
+  // §2.3.7: near-duplicate detection — check for same category + similar rationale in last 24h
+  const recentDuplicates = await dbAll<any>(
+    `SELECT signal_id, why_now_json FROM v8_radar_triage_signals 
+     WHERE organization_id = ? AND category = ? 
+     AND created_at > datetime('now', '-24 hours')
+     ORDER BY created_at DESC LIMIT 5`,
+    [params.organizationId, params.category],
+    { fallback: true },
+  );
+
+  let isDuplicate = false;
+  if (recentDuplicates && recentDuplicates.length > 0) {
+    const inputWords = new Set(
+      params.whyNow.rationaleText
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 3),
+    );
+    for (const dup of recentDuplicates) {
+      const dupWhyNow = safeJsonParse<any>(dup.why_now_json, {});
+      const dupWords = new Set(
+        String(dupWhyNow.rationaleText || '')
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((w: string) => w.length > 3),
+      );
+      const overlap = [...inputWords].filter((w) => dupWords.has(w)).length;
+      if (inputWords.size > 0 && overlap / inputWords.size > 0.6) {
+        isDuplicate = true;
+        break;
+      }
+    }
+  }
+
+  const score = computeScore(params.bands, isDuplicate);
   const priorityLevel = determinePriority(score, params.bands, hardGateRules);
-  const targetModule = determineTargetModule(params.category);
+
+  // §2.3.4: detect P0 archetype
+  let archetype: P0Archetype | null = null;
+  if (priorityLevel === 'P0') {
+    if (params.category === 'execution_delivery') archetype = 'critical_path_blocker';
+    else if (params.category === 'decision_alignment' && params.whyNow.primaryDriver === 'escalation')
+      archetype = 'stakeholder_escalation';
+    else if (params.category === 'decision_alignment') archetype = 'decision_needed';
+    else if (params.category === 'governance_compliance') archetype = 'compliance_deadline';
+    else if (params.category === 'finance_kpi') archetype = 'kpi_finance_anomaly';
+  }
+
+  const targetModule = determineTargetModule(params.category, archetype);
+  const ownerRole =
+    archetype != null ? P0_ARCHETYPES[archetype].ownerRole : determineOwnerRole(params.category);
 
   const ub = {
     missingInputs: params.uncertaintyBoundary?.missingInputs || [],
@@ -259,18 +382,19 @@ export async function createTriageSignal(params: {
     score,
     bands: params.bands,
     triggeredRules: hardGateRules,
+    rank: { bands: params.bands, triggeredRules: hardGateRules },
     whyNow: params.whyNow,
     evidence: params.evidence,
     uncertaintyBoundary: ub,
     ownership: {
-      ownerRole: determineOwnerRole(params.category),
+      ownerRole,
       queueHint: determineQueueHint(params.category),
     },
     nextAction: {
       targetModule,
       handoffIntent: 'open',
       handoffPayload: params.handoffPayload || {},
-      safeFallback: determineFallback(params.category),
+      safeFallback: determineFallback(params.category, archetype),
     },
     triageState: 'ready',
     createdAt: now,
@@ -327,7 +451,13 @@ export async function getTriageSignals(
     sql += ` AND triage_state = ?`;
     params.push(filters.triageState);
   }
-  sql += ` ORDER BY priority_level ASC, score DESC, created_at DESC`;
+  sql += ` ORDER BY priority_level ASC, 
+  CASE WHEN json_extract(triggered_rules_json, '$[0]') IS NOT NULL THEN 0 ELSE 1 END ASC,
+  json_extract(bands_json, '$.urgency') DESC,
+  json_extract(bands_json, '$.impact') DESC,
+  json_extract(bands_json, '$.actionability') DESC,
+  score DESC,
+  created_at DESC`;
 
   const rows = await dbAll<any>(sql, params, { fallback: true });
   return (rows || []).map(rowToTriageSignal);
@@ -358,6 +488,7 @@ export function buildHandoffContext(signal: RadarTriageSignal): RadarHandoffCont
     uncertaintyBoundary: signal.uncertaintyBoundary,
     ownerRole: signal.ownership.ownerRole,
     triggeredRules: signal.triggeredRules,
+    rank: signal.rank,
     radarDeeplink: `/radar/signals/${signal.signalId}`,
   };
 }
@@ -438,21 +569,24 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
 }
 
 function rowToTriageSignal(row: any): RadarTriageSignal {
+  const bands = safeJsonParse(row.bands_json, {
+    impact: 1,
+    urgency: 1,
+    scope: 1,
+    confidence: 0,
+    freshness: 0,
+    actionability: 0,
+  });
+  const triggeredRules = safeJsonParse(row.triggered_rules_json, []);
   return {
     signalId: row.signal_id,
     organizationId: row.organization_id,
     category: row.category,
     priorityLevel: row.priority_level,
     score: row.score,
-    bands: safeJsonParse(row.bands_json, {
-      impact: 1,
-      urgency: 1,
-      scope: 1,
-      confidence: 0,
-      freshness: 0,
-      actionability: 0,
-    }),
-    triggeredRules: safeJsonParse(row.triggered_rules_json, []),
+    bands,
+    triggeredRules,
+    rank: { bands, triggeredRules },
     whyNow: safeJsonParse(row.why_now_json, {
       rationaleText: '',
       timeWindow: 'this_week',

@@ -28,6 +28,8 @@ export const ImportOutcomeValues = [
   'queued',
   'running',
   'cancelled',
+  'mapping_missing',
+  'schema_drift',
 ] as const;
 export type ImportOutcome = (typeof ImportOutcomeValues)[number];
 
@@ -157,6 +159,30 @@ export async function advanceLaneStep(
   const run = await getLaneRun(runId, organizationId);
   if (!run) throw Object.assign(new Error('Lane run not found'), { code: 'P05_RUN_NOT_FOUND' });
 
+  const validOutcomes: Record<FinanceLaneStep, string[]> = {
+    import: [
+      'completed',
+      'completed_with_warnings',
+      'failed',
+      'queued',
+      'running',
+      'cancelled',
+      'mapping_missing',
+      'schema_drift',
+    ],
+    analysis: ['completed', 'failed'],
+    mutation: ['applied', 'failed', 'conflict', 'rolled_back'],
+    readback: ['confirmed', 'failed'],
+  };
+
+  const allowed = validOutcomes[run.currentStep];
+  if (allowed && !allowed.includes(outcome)) {
+    throw Object.assign(
+      new Error(`Invalid outcome '${outcome}' for step '${run.currentStep}'. Valid: ${allowed.join(', ')}`),
+      { code: 'P05_INVALID_OUTCOME' }
+    );
+  }
+
   const now = new Date().toISOString();
   const stepOrder: FinanceLaneStep[] = ['import', 'analysis', 'mutation', 'readback'];
   const currentIdx = stepOrder.indexOf(run.currentStep);
@@ -177,6 +203,20 @@ export async function advanceLaneStep(
         detail: detail || 'Import completed with warnings — review impacted rows',
         nextAction: 'Review warning details and fix affected mappings',
       });
+    } else if (outcome === 'mapping_missing') {
+      run.importOutcome = 'failed' as ImportOutcome;
+      run.degraded.push({
+        reason: 'import_mapping_missing',
+        detail: detail || 'Import mapping missing or invalid — import blocked',
+        nextAction: 'Configure required mapping fields and retry',
+      });
+    } else if (outcome === 'schema_drift') {
+      run.importOutcome = 'failed' as ImportOutcome;
+      run.degraded.push({
+        reason: 'schema_drift',
+        detail: detail || 'Source dataset schema has drifted — mapping update required',
+        nextAction: 'Review schema changes and update mapping configuration',
+      });
     }
   } else if (run.currentStep === 'analysis') {
     run.analysisCompleted = outcome === 'completed';
@@ -195,11 +235,53 @@ export async function advanceLaneStep(
         nextAction: 'Review failure cause and retry',
       });
     }
+    if (outcome === 'failed' || outcome === 'conflict') {
+      // §2.3.4: auto-create audit event on mutation failure
+      await recordMutationAudit({
+        organizationId,
+        runId,
+        mutationType: 'lane_step_mutation',
+        targetEntity: 'finance_model',
+        previousValue: undefined,
+        newValue: outcome,
+        outcome: outcome as MutationOutcome,
+        actor,
+      }).catch((e) => logger.warn(`${LOG_PREFIX} Auto-audit on mutation failure failed`, e));
+    }
   } else if (run.currentStep === 'readback') {
     run.readbackConfirmed = outcome === 'confirmed';
   }
 
-  if (outcome !== 'failed' && outcome !== 'conflict' && currentIdx < stepOrder.length - 1) {
+  // §2.3.2: enforce KPI coherence before confirming readback
+  if (run.currentStep === 'readback' && outcome === 'confirmed') {
+    const coherence = await checkKpiLinkageCoherence(organizationId, runId);
+    if (coherence.status === 'stale') {
+      run.degraded.push({
+        reason: 'stale_linkage',
+        detail: coherence.detail,
+        nextAction: 'Refresh KPI linkage before confirming readback',
+      });
+      run.kpiLinkageStatus = 'stale';
+      run.readbackConfirmed = false;
+    } else if (coherence.status === 'unavailable') {
+      run.degraded.push({
+        reason: 'stale_linkage',
+        detail: coherence.detail,
+        nextAction: 'KPI linkage data unavailable — proceed with caution',
+      });
+      run.kpiLinkageStatus = 'unavailable';
+    } else {
+      run.kpiLinkageStatus = 'coherent';
+    }
+  }
+
+  if (
+    outcome !== 'failed' &&
+    outcome !== 'conflict' &&
+    outcome !== 'mapping_missing' &&
+    outcome !== 'schema_drift' &&
+    currentIdx < stepOrder.length - 1
+  ) {
     run.currentStep = stepOrder[currentIdx + 1];
   }
 

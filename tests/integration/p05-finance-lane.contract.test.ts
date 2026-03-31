@@ -51,8 +51,10 @@ describe('P05 Finance Lane E2E', () => {
   });
 
   describe('Import outcome taxonomy', () => {
-    it('has 6 import outcomes per §2.3.4 error taxonomy', () => {
-      expect(ImportOutcomeValues).toHaveLength(6);
+    it('has 8 import outcomes (base §2.3.4 + mapping_missing, schema_drift)', () => {
+      expect(ImportOutcomeValues).toHaveLength(8);
+      expect(ImportOutcomeValues).toContain('mapping_missing');
+      expect(ImportOutcomeValues).toContain('schema_drift');
     });
     it('failed import blocks downstream mutation', async () => {
       mockDbGet.mockResolvedValueOnce(baseLaneRow({ current_step: 'import' }));

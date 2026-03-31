@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import type { KpiPermissionRole } from '../../services/v8/kpiWorkflowCanon.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
@@ -37,6 +38,42 @@ function resultsMeta() {
 
 function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
+}
+
+/** P04-B: role for `canPerformKpiAction` (header override; default viewer). */
+const P04_KPI_ROLE_HEADER = 'x-kpi-role';
+const P04_CANON_KPI_ROLES: readonly KpiPermissionRole[] = [
+  'kpi_owner',
+  'finance_owner',
+  'viewer',
+  'commenter',
+];
+
+function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
+  const raw = String(req.headers[P04_KPI_ROLE_HEADER] ?? 'viewer').toLowerCase();
+  return (P04_CANON_KPI_ROLES as readonly string[]).includes(raw)
+    ? (raw as KpiPermissionRole)
+    : 'viewer';
+}
+
+type P04KpiGuardedAction =
+  | 'create_signal'
+  | 'create_next_action'
+  | 'manage_reconciliation'
+  | 'comment';
+
+async function p04AssertKpiPermission(
+  req: AuthRequest,
+  res: Response,
+  action: P04KpiGuardedAction
+): Promise<boolean> {
+  const { canPerformKpiAction } = await import('../../services/v8/kpiWorkflowCanon.js');
+  const role = p04KpiRoleFromRequest(req);
+  if (!canPerformKpiAction(role, action)) {
+    res.status(403).json({ error: 'Permission denied', code: 'P04_PERMISSION_DENIED' });
+    return false;
+  }
+  return true;
 }
 
 function deriveKpiPeriodKey(
@@ -1524,6 +1561,7 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { kpiId, financeRef } = req.body || {};
     if (!kpiId) return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
+    if (!(await p04AssertKpiPermission(req, res, 'manage_reconciliation'))) return;
 
     const { initiateReconciliation } = await import('../../services/v8/resultsROIService.js');
     const result = await initiateReconciliation({
@@ -1545,6 +1583,16 @@ router.put(
     if (!reconciliationId)
       return res.status(400).json({ error: 'reconciliationId required', code: 'P04_RECONCILIATION_ID_REQUIRED' });
     if (!status) return res.status(400).json({ error: 'status required', code: 'P04_STATUS_REQUIRED' });
+
+    const resolvedBy = req.body?.resolvedBy ?? 'finance';
+    if (resolvedBy !== 'finance' && resolvedBy !== 'results') {
+      return res.status(400).json({
+        error: 'resolvedBy must be finance or results',
+        code: 'P04_RESOLVED_BY_INVALID',
+      });
+    }
+
+    if (!(await p04AssertKpiPermission(req, res, 'manage_reconciliation'))) return;
 
     const { resolveReconciliation } = await import('../../services/v8/resultsROIService.js');
     const result = await resolveReconciliation(reconciliationId, organizationId, status);
@@ -1575,6 +1623,7 @@ router.post(
     const { kpiId, signalType, severity, description, evidencePointers } = req.body || {};
     if (!kpiId || !signalType)
       return res.status(400).json({ error: 'kpiId and signalType required', code: 'P04_SIGNAL_PARAMS_REQUIRED' });
+    if (!(await p04AssertKpiPermission(req, res, 'create_signal'))) return;
 
     const { createKpiSignal } = await import('../../services/v8/resultsROIService.js');
     const signal = await createKpiSignal({
@@ -1595,6 +1644,7 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
     const signalId = req.params.signalId?.trim();
     if (!signalId) return res.status(400).json({ error: 'signalId required', code: 'P04_SIGNAL_ID_REQUIRED' });
+    if (!(await p04AssertKpiPermission(req, res, 'comment'))) return;
 
     const { acknowledgeKpiSignal } = await import('../../services/v8/resultsROIService.js');
     const signal = await acknowledgeKpiSignal(signalId, organizationId, userId, req.body?.reason || '');
@@ -1626,6 +1676,7 @@ router.post(
       req.body || {};
     if (!signalId || !kpiId || !actionType)
       return res.status(400).json({ error: 'signalId, kpiId, actionType required', code: 'P04_ACTION_PARAMS_REQUIRED' });
+    if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
 
     const { createKpiNextAction } = await import('../../services/v8/resultsROIService.js');
     const action = await createKpiNextAction({
@@ -1649,6 +1700,7 @@ router.post(
     const { organizationId } = getV8Context(req);
     const actionId = req.params.actionId?.trim();
     if (!actionId) return res.status(400).json({ error: 'actionId required', code: 'P04_ACTION_ID_REQUIRED' });
+    if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
 
     const { completeKpiNextAction } = await import('../../services/v8/resultsROIService.js');
     await completeKpiNextAction(actionId, organizationId);
