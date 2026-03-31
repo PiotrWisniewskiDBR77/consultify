@@ -1,7 +1,7 @@
 # Final Implementation Contract — Proces flow (Position 14/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: approved(scope) (P14-A canon frozen; docs-only)
+Status: verified(evidence) (P14-A/B/C complete; 2026-03-31)
 
 ## 1. Executive summary
 - **Intent**: Jak Mindmap/Whiteboard: UX budowania + komplet narzędzi; AI współbuduje.
@@ -307,6 +307,6 @@ The product must fail safely and guide recovery (10+):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P14-A | approved(scope) | 6f39e6de91 | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: semantic object types + readback, BPMN/interoperability posture, validation layering, toolbelt boundaries, AI proposal contract (no silent apply), anti-duplicate gate, degraded posture + acceptance checklist |
-| P14-B |  |  |  |  |  |
-| P14-C |  |  |  |  |  |
+| P14-B | verified(evidence) | ws/c-artifact-evidence | 125 tests (75 canon + 50 service); 100% pass | 5-step staging proof (create→connect→validate→export→AI proposal) | processFlowService (15 functions) + 18 endpoints; semantic readback + 2-layer validation |
+| P14-C | verified(evidence) | ws/c-artifact-evidence | Regression suite green | Evidence ledger filled; EXECUTION_INDEX updated | Known limits: BPMN XML import/export deferred; undo stack client-side |
 
