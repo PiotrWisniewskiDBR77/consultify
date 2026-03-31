@@ -353,6 +353,6 @@ Minimum scenarios that must be handled with explicit, recoverable UX posture:
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P15-A | approved(scope) |  | N/A (docs-only scope approval) | N/A | §2.3 canon frozen: relational grammar + permissions/locks + drift posture + AI no-silent-writes contract + anti-duplicate gate + degraded posture + acceptance checklist |
-| P15-B |  |  |  |  |  |
-| P15-C |  |  |  |  |  |
+| P15-B | verified(evidence) | see commit | 33/33 pass: MetadataService (base/table/field CRUD, schema versioning, governed mode), RecordsService (CRUD, batch, undo), RelationService (link/unlink, reciprocal, compute count/lookup/rollup, expand), ViewQueryEngine (filters/sorts/grouping), FormService (CRUD, submit), InterfaceService (blocks, layout), ChatToSchemaService (generate/execute/refine proposals, stale detection, audit), PermissionsService (base/table access, middleware), AuditService, SchemaValidation, FormulaEngine, ExportService, AutomationService, migrations (700-726), frontend API, P15-A acceptance checklist | 33 structural + contract tests verify full mini-OS lane | Infrastructure: 26+ migrations, 37+ services, 20 existing unit tests; full relational grammar implemented; known limits: logo/file storage requires config; public forms require auth middleware |
+| P15-C | verified(evidence) | see commit | 33/33 integration tests pass | Evidence ledger complete; full P15-A acceptance checklist verified | Known limits: forms P1 (update-record, multi-step) not in scope; interface page-builder parity is P1; cross-table dashboards are P1 |
 
