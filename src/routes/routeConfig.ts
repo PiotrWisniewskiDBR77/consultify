@@ -32,6 +32,7 @@ export const ROUTES = {
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
   EXCELE: '/excele',
+  PREZENTACJE_GEN: '/prezentacje',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 
@@ -283,6 +284,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.MEETING]: ROUTES.MEETING,
   [AppView.WORDY]: ROUTES.WORDY,
   [AppView.EXCELE]: ROUTES.EXCELE,
+  [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,

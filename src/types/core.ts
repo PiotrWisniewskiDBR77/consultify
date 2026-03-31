@@ -95,6 +95,7 @@ export enum AppView {
   MEETING = 'MEETING', // Meeting workspace
   WORDY = 'WORDY', // KIMI-style document generation workspace (P22)
   EXCELE = 'EXCELE', // KIMI-style spreadsheet generation workspace (P23)
+  PREZENTACJE_GEN = 'PREZENTACJE_GEN', // Gamma-style presentation generation workspace (P20)
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',

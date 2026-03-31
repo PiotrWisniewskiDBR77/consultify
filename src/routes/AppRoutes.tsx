@@ -168,12 +168,17 @@ const SuperAdminView = React.lazy(() =>
 // AI Chat (Full Screen Chat View)
 const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
 
-// KIMI-style workspaces (P22 Wordy / P23 Excele)
+// KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
 );
 const ExceleView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({ default: m.ExceleView }))
+);
+const PrezentacjeView = React.lazy(() =>
+  import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
+    default: m.PrezentacjeView,
+  }))
 );
 
 // Discovery Consultant (AI Discovery with Canvas)
@@ -1002,6 +1007,18 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
               <RouteErrorBoundary>
                 <ExceleView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Gamma-style Prezentacje — presentation generation workspace (P20) */}
+        <Route
+          path={ROUTES.PREZENTACJE_GEN}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Prezentacje']} noPadding>
+              <RouteErrorBoundary>
+                <PrezentacjeView />
               </RouteErrorBoundary>
             </MainLayout>
           }

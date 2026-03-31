@@ -16,8 +16,10 @@ import {
   FileSpreadsheet,
   FileText,
   FolderOpen,
+  LayoutGrid,
   Loader2,
   Play,
+  Presentation,
   RefreshCw,
   Sparkles,
   X,
@@ -30,7 +32,7 @@ import { AppView } from '@/types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
 
-export type KimiLane = 'wordy' | 'excele';
+export type KimiLane = 'wordy' | 'excele' | 'prezentacje';
 
 export type TaskStepStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -41,7 +43,7 @@ export interface TaskStep {
   detail?: string;
 }
 
-export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'none';
+export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'deck' | 'none';
 
 export interface ArtifactPreview {
   type: ArtifactPreviewType;
@@ -56,6 +58,13 @@ export interface ArtifactPreview {
     columns: string[];
     rows: Array<Record<string, unknown>>;
   };
+  deckId?: string;
+  deckSlides?: Array<{
+    slideId: string;
+    intent: string;
+    title: string;
+    bulletPoints?: string[];
+  }>;
 }
 
 interface KimiWorkspaceShellProps {
@@ -92,6 +101,14 @@ const LANE_CONFIG = {
     accentColor: 'emerald',
     inputPlaceholder: 'Upload a spreadsheet to work with or create from scratch',
     inputPlaceholderPl: 'Prześlij arkusz lub stwórz od zera',
+  },
+  prezentacje: {
+    icon: Presentation,
+    label: 'Prezentacje',
+    labelPl: 'Prezentacje',
+    accentColor: 'fuchsia',
+    inputPlaceholder: 'Describe the presentation you want to create...',
+    inputPlaceholderPl: 'Opisz prezentację, którą chcesz stworzyć...',
   },
 } as const;
 
@@ -258,7 +275,9 @@ function ArtifactPreviewPane({
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {lane === 'wordy'
                 ? t('kimi.generatingDoc', 'Building your document')
-                : t('kimi.generatingSheet', 'Building your spreadsheet')}
+                : lane === 'excele'
+                  ? t('kimi.generatingSheet', 'Building your spreadsheet')
+                  : t('kimi.generatingDeck', 'Building your presentation')}
             </p>
           </div>
         </div>
@@ -277,7 +296,9 @@ function ArtifactPreviewPane({
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
               {lane === 'wordy'
                 ? t('kimi.emptyWordy', 'Your document will appear here')
-                : t('kimi.emptyExcele', 'Your spreadsheet will appear here')}
+                : lane === 'excele'
+                  ? t('kimi.emptyExcele', 'Your spreadsheet will appear here')
+                  : t('kimi.emptyDeck', 'Your presentation will appear here')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {t('kimi.emptyHint', 'Describe what you need and click Generate')}
@@ -304,7 +325,9 @@ function ArtifactPreviewPane({
                 )}
                 {lane === 'wordy'
                   ? t('kimi.generateDoc', 'Generate Document')
-                  : t('kimi.generateSheet', 'Generate Spreadsheet')}
+                  : lane === 'excele'
+                    ? t('kimi.generateSheet', 'Generate Spreadsheet')
+                    : t('kimi.generateDeck', 'Generate Presentation')}
               </button>
             </div>
           )}
@@ -445,7 +468,97 @@ function ArtifactPreviewPane({
       </div>
 
       {/* Sheet tabs (for xlsx) */}
-      {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
+        {preview.type === 'deck' && (
+          <div className="space-y-4">
+            {preview.summary && (
+              <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+                <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
+              </div>
+            )}
+            {preview.kpiItems && preview.kpiItems.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {preview.kpiItems.map((kpi, i) => (
+                  <div
+                    key={i}
+                    className="p-3 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700"
+                  >
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{kpi.label}</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white mt-0.5">
+                      {kpi.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {preview.deckSlides && preview.deckSlides.length > 0 ? (
+              <div className="space-y-3">
+                {preview.deckSlides.map((slide, i) => (
+                  <div
+                    key={slide.slideId}
+                    className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-navy-700/50 border-b border-slate-200 dark:border-navy-600">
+                      <span className="w-7 h-7 rounded-md bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-xs font-bold">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                          {slide.title}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          {slide.intent.replace(/_/g, ' ')}
+                        </p>
+                      </div>
+                    </div>
+                    {slide.bulletPoints && slide.bulletPoints.length > 0 && (
+                      <ul className="px-4 py-2.5 space-y-1">
+                        {slide.bulletPoints.slice(0, 4).map((bp, bi) => (
+                          <li
+                            key={bi}
+                            className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2"
+                          >
+                            <span className="mt-1.5 w-1 h-1 rounded-full bg-fuchsia-400 flex-shrink-0" />
+                            {bp}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  <Presentation size={48} className="mx-auto mb-3 opacity-50" />
+                  <p className="text-sm font-medium">
+                    {t('kimi.deckPreview', 'Presentation preview')}
+                  </p>
+                  {preview.deckId && (
+                    <button
+                      onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
+                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
+                    >
+                      <LayoutGrid size={14} />
+                      {t('kimi.openInBuilder', 'Open in Deck Builder')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {preview.deckId && preview.deckSlides && preview.deckSlides.length > 0 && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
+                >
+                  <LayoutGrid size={14} />
+                  {t('kimi.openInBuilder', 'Open in Deck Builder')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
         <div className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0">
           {preview.sheetNames.map((name, i) => (
             <button
@@ -472,7 +585,7 @@ function ArtifactPreviewPane({
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
             >
               <Eye size={16} />
-              <span>{preview.fileName || (lane === 'wordy' ? 'document.pdf' : 'spreadsheet.xlsx')}</span>
+              <span>{preview.fileName || (lane === 'wordy' ? 'document.pdf' : lane === 'excele' ? 'spreadsheet.xlsx' : 'presentation.pptx')}</span>
               <span className="text-xs text-slate-400">{t('kimi.previewFile', 'Preview File')}</span>
             </button>
           )}

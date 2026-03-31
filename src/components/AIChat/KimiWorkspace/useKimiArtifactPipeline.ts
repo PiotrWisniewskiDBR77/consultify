@@ -271,8 +271,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const { activeConversationId } = useConversationStore();
   const conversationId = activeConversationId;
 
-  const outputType: ArtifactPlanOutputType = lane === 'wordy' ? 'report' : 'sheet';
-  const artifactFamily: ArtifactFamily = lane === 'wordy' ? 'document' : 'sheet';
+  const outputType: ArtifactPlanOutputType =
+    lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
+  const artifactFamily: ArtifactFamily =
+    lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
 
   const { data: snapshots } = useV8Snapshots(
     showV8Chat && conversationId ? conversationId : undefined
@@ -340,9 +342,67 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     contentGenerationTriggered.current = true;
 
     const origin = currentRun.materializationOrigin;
-    const title = currentRun.plan.titleHint || (lane === 'wordy' ? 'Document' : 'Spreadsheet');
+    const title =
+      currentRun.plan.titleHint ||
+      (lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation');
 
-    if (lane === 'wordy' && origin?.originRecordId) {
+    if (lane === 'prezentacje' && origin?.originRecordId) {
+      const deckId = origin.originRecordId;
+      Api.get(`/presentations/decks/${deckId}`)
+        .then((deckData: any) => {
+          const slides: Array<{
+            slideId: string;
+            intent: string;
+            title: string;
+            bulletPoints?: string[];
+          }> = [];
+          const unifiedJson =
+            typeof deckData?.deck_json === 'string'
+              ? JSON.parse(deckData.deck_json)
+              : deckData?.deck_json || deckData?.unified_json;
+          const rawSlides = unifiedJson?.slides || [];
+          for (const s of rawSlides) {
+            const blocks = s.blocks || s.content_blocks || [];
+            const bulletPoints = blocks
+              .filter((b: any) => b.type === 'bullet_list' || b.type === 'text')
+              .flatMap((b: any) => (Array.isArray(b.items) ? b.items : [b.text || b.content]))
+              .filter(Boolean)
+              .slice(0, 4);
+            slides.push({
+              slideId: s.slide_id || s.id || String(slides.length),
+              intent: s.intent || s.layout || 'content',
+              title: s.title || s.heading || `Slide ${slides.length + 1}`,
+              bulletPoints,
+            });
+          }
+          setPreview({
+            type: 'deck',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.pptx`,
+            summary: `Presentation "${title}" — ${slides.length} slides.`,
+            kpiItems: [
+              { label: 'Slides', value: String(slides.length) },
+              { label: 'Format', value: 'PPTX / PDF' },
+              { label: 'Status', value: 'Ready' },
+            ],
+            deckId,
+            deckSlides: slides,
+          });
+          setContentGenerated(true);
+        })
+        .catch(() => {
+          setPreview({
+            type: 'deck',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.pptx`,
+            summary: `Presentation "${title}" generated.`,
+            kpiItems: [{ label: 'Status', value: 'Ready' }],
+            deckId,
+            deckSlides: [],
+          });
+          setContentGenerated(true);
+        });
+    } else if (lane === 'wordy' && origin?.originRecordId) {
       const reportId = origin.originRecordId;
       Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
         .then(() => {
@@ -397,7 +457,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           title,
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
         });
-      } else {
+      } else if (lane === 'excele') {
         setPreview({
           type: 'xlsx',
           title,
@@ -405,6 +465,15 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           summary: `Spreadsheet "${title}" generated.`,
           kpiItems: [],
           sheetNames: ['Sheet1'],
+        });
+      } else {
+        setPreview({
+          type: 'deck',
+          title,
+          fileName: `${title.replace(/\s+/g, '_')}.pptx`,
+          summary: `Presentation "${title}" generated.`,
+          kpiItems: [{ label: 'Status', value: 'Ready' }],
+          deckSlides: [],
         });
       }
       setContentGenerated(true);
@@ -512,7 +581,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
-            config: outputType === 'sheet' ? { tableId: '' } : undefined,
+            config:
+              outputType === 'sheet'
+                ? { tableId: '' }
+                : outputType === 'presentation'
+                  ? { templateId: '' }
+                  : undefined,
           },
         });
         setCurrentRun(completed);
@@ -559,6 +633,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     if (lane === 'wordy' && currentRun.materializationOrigin?.originRecordId) {
       const reportId = currentRun.materializationOrigin.originRecordId;
       window.open(`/api/report-builder/reports/${reportId}/export/pdf`, '_blank');
+      return;
+    }
+
+    if (lane === 'prezentacje' && currentRun.materializationOrigin?.originRecordId) {
+      const deckId = currentRun.materializationOrigin.originRecordId;
+      window.open(`/api/presentations/decks/${deckId}/download`, '_blank');
       return;
     }
 

@@ -132,6 +132,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(FileSpreadsheet, { size: 20 }),
       viewId: AppView.EXCELE,
     },
+    // 12. Prezentacje — Gamma-style presentation generation (P20)
+    {
+      id: 'MODULE_PREZENTACJE_GEN',
+      label: t('sidebar.prezentacje', 'Prezentacje'),
+      icon: React.createElement(Presentation, { size: 20 }),
+      viewId: AppView.PREZENTACJE_GEN,
+    },
     {
       id: 'MODULE_MEETING',
       label: t('sidebar.meeting', 'Meeting'),

@@ -288,7 +288,7 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'notebook':
       return '/my-work';
     case 'presentation':
-      return `/presentations/builder/${id}`;
+      return `/prezentacje?artifactId=${id}`;
     case 'sheet':
       return `/excele?artifactId=${id}`;
     case 'meeting':
