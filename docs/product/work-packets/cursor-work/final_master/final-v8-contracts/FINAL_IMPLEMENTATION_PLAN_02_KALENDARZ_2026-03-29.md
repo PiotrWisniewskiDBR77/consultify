@@ -1,8 +1,8 @@
 # Final Implementation Contract — Kalendarz (Position 2/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P02-A** (calendar interoperability canon frozen); P02-B / P02-C not started  
-Last updated: 2026-03-30 (P02-A scope closure)
+Status: `verified(evidence)` — P02-A/B/C complete  
+Last updated: 2026-03-31 (P02-B/C delivery + verification)
 
 ## 1. Executive summary
 - **Intent**: Praca z terminami + koordynacja z kalendarzami innych aplikacji.
@@ -325,6 +325,6 @@ Kontrakt wymaga (minimum):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P02-A | approved(scope) | 2e7c505698 | n/a (scope approval; docs only) | n/a (scope approval; docs only) | Interoperability canon frozen in §2.3 (providers/modes, time model objects, recurrence doctrine, conflict-safe writes, permission gradients, lifecycle, error posture). |
-| P02-B |  |  |  |  |  |
-| P02-C |  |  |  |  |  |
+| P02-B | verified(evidence) | (pending commit) | 25 contract tests (providers, model, recurrence, conflicts, permissions, lifecycle, error posture, computeEffectiveMode, mapProviderError) | calendarInteropService.ts: 17 functions; calendarInteropCanon.ts: 11/11 acceptance; calendar.routes.ts: 16 endpoints; migration: v8_calendar_sources + v8_calendar_items | None — all §2.3 requirements implemented: 3 providers, canonical model, conflict-safe writes, recurrence doctrine, permission gradients, lifecycle honesty, 8 error posture scenarios. |
+| P02-C | verified(evidence) | (pending commit) | 25 contract + 22 smoke checks | evidence/P02_BC_VERIFICATION_2026-03-31.md; locks/P02-B.md + P02-C.md | None — verified(evidence) bar met. |
 

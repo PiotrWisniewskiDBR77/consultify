@@ -924,6 +924,27 @@ const PROVIDER_ERROR_MAP: Record<string, ProviderErrorMapping> = {
     itemState: 'blocked',
     recovery: 'The provider account is suspended. Resolve the account issue and reconnect.',
   },
+  /** Stable P02 contract codes (used by routes/tests) */
+  oauth_expired: {
+    sourceState: 'requires_action',
+    itemState: 'blocked',
+    recovery: 'Re-authenticate with the calendar provider to refresh the access token.',
+  },
+  etag_mismatch: {
+    sourceState: 'degraded',
+    itemState: 'conflict',
+    recovery: 'Conditional write failed (etag mismatch). User resolves conflict manually.',
+  },
+  cursor_invalid: {
+    sourceState: 'recoverable',
+    itemState: 'stale',
+    recovery: 'Sync token expired. A full resync will be triggered automatically.',
+  },
+  permanent_auth_failure: {
+    sourceState: 'blocked',
+    itemState: 'blocked',
+    recovery: 'Permanent authorization failure. Operator intervention required.',
+  },
 };
 
 const DEFAULT_ERROR_MAPPING: ProviderErrorMapping = {
