@@ -36,5 +36,14 @@
 - Disable signal/action routes; preserve read-only KPI dashboard + audit
 - No data destruction
 
+## GAP closure (commit 6ab53c8553)
+
+| GAP | Fix |
+|-----|-----|
+| `getKpiWorkflowStatus` only 2/4 degraded | Added `linkage_unavailable` (initiative-linked KPI without reconciliation) + `permission_denied` (KPI in locked status) |
+| No permission enforcement on P04-B routes | `canPerformKpiAction` via `p04AssertKpiPermission` on all write routes (signals, next-actions, reconciliations) |
+| `resolveReconciliation` no finance-only guard | Route validates `resolvedBy` param (finance/results), rejects others with 400 `P04_RESOLVED_BY_INVALID` |
+| `KPI_PERMISSION_MATRIX` missing P04-B actions | Added `create_signal`, `create_next_action`, `manage_reconciliation` to canon matrix |
+
 ## Known limits
-None — all P04 contract §2.3 requirements implemented.
+None — all P04 contract §2.3 requirements implemented. All 4 degraded states populated, permissions enforced, finance-only resolve guarded.

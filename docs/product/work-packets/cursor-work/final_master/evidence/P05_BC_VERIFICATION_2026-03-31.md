@@ -41,5 +41,15 @@
 - Disable mutation routes; preserve read-only + audit
 - No data destruction
 
+## GAP closure (commit 6ab53c8553)
+
+| GAP | Fix |
+|-----|-----|
+| Mutation failure no auto-audit | `advanceLaneStep` now calls `recordMutationAudit` automatically on mutation failure/conflict |
+| KPI coherence not a hard gate | Readback confirmation blocked if coherence is `stale` (`readbackConfirmed = false`) |
+| No step+outcome validation | `validOutcomes` per step; throws `P05_INVALID_OUTCOME` for invalid combos |
+| Missing degraded scenarios | Added `mapping_missing`, `schema_drift` import outcomes + degraded entries |
+| Import outcomes incomplete | `ImportOutcomeValues` extended to 8 (added `mapping_missing`, `schema_drift`) |
+
 ## Known limits
-None — all P05 contract §2.3 requirements implemented.
+None — all P05 contract §2.3 requirements implemented. 8 import outcomes, auto-audit on mutation failure, KPI coherence hard gate, full degraded coverage.

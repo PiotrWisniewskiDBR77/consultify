@@ -149,15 +149,48 @@ export async function startLaneRun(params: {
   return run;
 }
 
+export interface AdvanceLaneContext {
+  hasPermission?: boolean;
+  blockedCapability?: string;
+  modelUpdatedAt?: string | null;
+}
+
 export async function advanceLaneStep(
   runId: string,
   organizationId: string,
   actor: string,
   outcome: string,
-  detail?: string
+  detail?: string,
+  context?: AdvanceLaneContext
 ): Promise<FinanceLaneRun> {
   const run = await getLaneRun(runId, organizationId);
   if (!run) throw Object.assign(new Error('Lane run not found'), { code: 'P05_RUN_NOT_FOUND' });
+
+  if (context?.hasPermission === false) {
+    run.degraded.push({
+      reason: 'permission_denied',
+      detail: `Permission denied: ${context.blockedCapability || 'unknown capability'}`,
+      nextAction: 'Request appropriate role or wait for review window to unlock',
+    });
+    run.updatedAt = new Date().toISOString();
+    await dbRun(
+      `UPDATE v8_finance_lane_runs SET degraded_json = ?, updated_at = ? WHERE run_id = ? AND organization_id = ?`,
+      [JSON.stringify(run.degraded), run.updatedAt, runId, organizationId]
+    );
+    throw Object.assign(new Error('Permission denied'), { code: 'P05_PERMISSION_DENIED' });
+  }
+
+  if (context?.modelUpdatedAt) {
+    const staleDays = 30;
+    const modelAge = (Date.now() - new Date(context.modelUpdatedAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (modelAge > staleDays) {
+      run.degraded.push({
+        reason: 'stale_model',
+        detail: `Finance model last updated ${Math.round(modelAge)} days ago — exceeds ${staleDays}-day threshold`,
+        nextAction: 'Refresh model data before proceeding',
+      });
+    }
+  }
 
   const validOutcomes: Record<FinanceLaneStep, string[]> = {
     import: [
@@ -250,6 +283,19 @@ export async function advanceLaneStep(
     }
   } else if (run.currentStep === 'readback') {
     run.readbackConfirmed = outcome === 'confirmed';
+    if (outcome === 'confirmed') {
+      const audits = await getMutationAudits(organizationId, runId);
+      const lastApplied = audits.filter((a) => a.outcome === 'applied').at(-1);
+      if (lastApplied) {
+        run.auditTrail.push({
+          at: now,
+          step: 'readback',
+          actor,
+          outcome: 'readback_verified',
+          detail: `Verified mutation ${lastApplied.auditId}: ${lastApplied.mutationType} → ${lastApplied.newValue}`,
+        });
+      }
+    }
   }
 
   // §2.3.2: enforce KPI coherence before confirming readback
@@ -456,6 +502,25 @@ export async function finalizeSwitchover(
   organizationId: string,
   actor: string
 ): Promise<FinanceVersionSnapshot> {
+  const pre = await dbGet<Record<string, unknown>>(
+    `SELECT * FROM v8_finance_version_snapshots WHERE snapshot_id = ? AND organization_id = ?`,
+    [snapshotId, organizationId],
+    { fallback: true }
+  );
+  if (!pre) throw Object.assign(new Error('Snapshot not found'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
+  if (pre.is_finalized) {
+    throw Object.assign(
+      new Error('Switchover misconfigured: snapshot already finalized'),
+      { code: 'P05_SWITCHOVER_MISCONFIGURED', degradedReason: 'switchover_misconfigured' as const }
+    );
+  }
+  if (pre.version_type !== 'actual') {
+    throw Object.assign(
+      new Error('Switchover misconfigured: only "actual" snapshots can be finalized'),
+      { code: 'P05_SWITCHOVER_MISCONFIGURED', degradedReason: 'switchover_misconfigured' as const }
+    );
+  }
+
   const now = new Date().toISOString();
   await dbRun(
     `UPDATE v8_finance_version_snapshots SET
@@ -469,7 +534,7 @@ export async function finalizeSwitchover(
     [snapshotId, organizationId],
     { fallback: true }
   );
-  if (!row) throw Object.assign(new Error('Snapshot not found'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
+  if (!row) throw Object.assign(new Error('Snapshot not found after update'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
 
   return {
     snapshotId: String(row.snapshot_id),
@@ -515,16 +580,48 @@ export async function getVersionSnapshots(
 export async function checkKpiLinkageCoherence(
   organizationId: string,
   runId: string
-): Promise<{ status: 'coherent' | 'stale' | 'unavailable'; detail: string }> {
+): Promise<{
+  status: 'coherent' | 'stale' | 'unavailable';
+  detail: string;
+  reconciliationMismatches?: Array<{ reconciliationId: string; mismatchCategory: string }>;
+}> {
   try {
     const linkages = await dbAll<Record<string, unknown>>(
-      `SELECT * FROM v8_kpi_finance_reconciliations WHERE organization_id = ? AND reconciliation_status != 'reconciled' LIMIT 5`,
+      `SELECT * FROM v8_kpi_finance_reconciliations WHERE organization_id = ? AND reconciliation_status != 'reconciled' LIMIT 20`,
       [organizationId],
       { fallback: true }
     );
 
     if (!linkages || linkages.length === 0) {
       return { status: 'coherent', detail: 'No unresolved KPI↔Finance discrepancies' };
+    }
+
+    const mismatches = linkages
+      .filter((l) => {
+        const status = String(l.reconciliation_status || '');
+        return ['disputed', 'escalated', 'requires_review'].includes(status);
+      })
+      .map((l) => ({
+        reconciliationId: String(l.id || l.reconciliation_id),
+        mismatchCategory: String(l.mismatch_category || l.reconciliation_status || 'unknown'),
+      }));
+
+    if (mismatches.length > 0) {
+      const run = await getLaneRun(runId, organizationId);
+      if (run) {
+        const alreadyHas = run.degraded.some((d) => d.reason === 'reconciliation_mismatch');
+        if (!alreadyHas) {
+          run.degraded.push({
+            reason: 'reconciliation_mismatch',
+            detail: `${mismatches.length} reconciliation mismatch(es) detected — review required`,
+            nextAction: 'Review mismatch categories, add notes, and acknowledge or escalate',
+          });
+          await dbRun(
+            `UPDATE v8_finance_lane_runs SET degraded_json = ? WHERE run_id = ? AND organization_id = ?`,
+            [JSON.stringify(run.degraded), runId, organizationId]
+          );
+        }
+      }
     }
 
     const staleLinkages = linkages.filter((l) => {
@@ -537,10 +634,18 @@ export async function checkKpiLinkageCoherence(
         `UPDATE v8_finance_lane_runs SET kpi_linkage_status = 'stale' WHERE run_id = ? AND organization_id = ?`,
         [runId, organizationId]
       );
-      return { status: 'stale', detail: `${staleLinkages.length} stale reconciliation(s) — refresh required` };
+      return {
+        status: 'stale',
+        detail: `${staleLinkages.length} stale reconciliation(s) — refresh required`,
+        reconciliationMismatches: mismatches.length > 0 ? mismatches : undefined,
+      };
     }
 
-    return { status: 'coherent', detail: `${linkages.length} active reconciliation(s) in progress` };
+    return {
+      status: 'coherent',
+      detail: `${linkages.length} active reconciliation(s) in progress`,
+      reconciliationMismatches: mismatches.length > 0 ? mismatches : undefined,
+    };
   } catch {
     return { status: 'unavailable', detail: 'KPI linkage data unavailable' };
   }

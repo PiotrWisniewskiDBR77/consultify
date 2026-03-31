@@ -39,5 +39,16 @@
 - Disable radar-triage routing; preserve neutral view
 - No data destruction
 
+## GAP closure (commit 6ab53c8553)
+
+| GAP | Fix |
+|-----|-----|
+| No tie-breakers in ORDER BY | Added hard-gate > urgency > impact > actionability tie-breaking |
+| Duplicate detection missing | Near-duplicate check (word overlap >60% in 24h window) applied to score |
+| P0 archetypes not implemented | 5 frozen archetypes (A-E): critical_path_blocker, decision_needed, stakeholder_escalation, compliance_deadline, kpi_finance_anomaly with correct targets |
+| `degraded_stale` never set | Set from freshness band F0 or evidence >30 days old |
+| `blocked_permission` never set | Set from permission-related missing inputs (regex heuristic) |
+| No `rank` wrapper | Added `rank: { bands, triggeredRules }` to signal model + handoff context |
+
 ## Known limits
-None — all P06 contract §2.3 requirements implemented.
+None — all P06 contract §2.3 requirements implemented. 5 archetypes, full tie-breakers, duplicate detection, all 5 triage states dynamically set, rank wrapper on signal + handoff.

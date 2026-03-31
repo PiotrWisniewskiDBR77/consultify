@@ -1406,6 +1406,67 @@ router.post(
 );
 
 /**
+ * POST /workflow/kpi/:kpiId/report — Create a report/scorecard from inspection (§8.1D).
+ * Bridges the closed-loop: signal → inspect → **report** → reconcile → next action.
+ */
+router.post(
+  '/workflow/kpi/:kpiId/report',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { kpiId } = req.params;
+    const { commentary, actionPlan, reconciliationNeeded } = req.body || {};
+
+    const kpi = await dbGet(
+      `SELECT id, name, latest_value, target_value, baseline_value
+       FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [kpiId, organizationId]
+    );
+    if (!kpi) {
+      return res.status(404).json({ error: 'KPI not found', code: 'KPI_NOT_FOUND' });
+    }
+
+    const openSignals: Array<Record<string, unknown>> = await dbAll(
+      `SELECT id, severity, deviation_summary FROM kpi_deviation_cases
+       WHERE kpi_id = ? AND status NOT IN ('CLOSED', 'RESOLVED')`,
+      [kpiId]
+    );
+
+    const reportId = uuidv4();
+    const now = new Date().toISOString();
+
+    const reportPayload = {
+      reportId,
+      kpiId,
+      kpiName: String(kpi.name || kpi.id),
+      snapshot: {
+        currentValue: kpi.latest_value != null ? Number(kpi.latest_value) : null,
+        targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
+        baselineValue: kpi.baseline_value != null ? Number(kpi.baseline_value) : null,
+      },
+      signalsSummary: openSignals.map((s) => ({
+        signalId: String(s.id),
+        severity: String(s.severity),
+        summary: String(s.deviation_summary || ''),
+      })),
+      commentary: commentary || null,
+      actionPlan: actionPlan || null,
+      reconciliationNeeded: !!reconciliationNeeded,
+      createdBy: userId,
+      createdAt: now,
+      status: 'draft' as const,
+    };
+
+    await dbRun(
+      `INSERT INTO results_kpi_report_snapshots (id, organization_id, kpi_id, snapshot_json, status, created_by, created_at)
+       VALUES (?, ?, ?, ?, 'draft', ?, ?)`,
+      [reportId, organizationId, kpiId, JSON.stringify(reportPayload), userId, now]
+    );
+
+    return res.json({ data: reportPayload, meta: p04Meta() });
+  })
+);
+
+/**
  * GET /workflow/kpi/:kpiId/health — Degraded posture for a single KPI (§8.1F).
  */
 router.get(
