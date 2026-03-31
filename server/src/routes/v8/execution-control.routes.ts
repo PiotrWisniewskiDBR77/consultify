@@ -28,6 +28,11 @@ import {
 } from '../../services/executionBudgetService.js';
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
+import {
+  getExecutionControlTowerItemDetail,
+  getExecutionControlTowerQueues,
+  V8_EXECUTION_CONTROL_TOWER_CONTRACT,
+} from '../../services/v8ExecutionControlTowerService.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
@@ -37,6 +42,7 @@ const router = Router();
 /** Stable contract id for V8 execution-control read responses. */
 export const V8_EXECUTION_CONTROL_READ_CONTRACT = 'execution_control_read_v1';
 export const V8_EXECUTION_CONTROL_MUTATION_CONTRACT = 'execution_control_mutation_v1';
+export { V8_EXECUTION_CONTROL_TOWER_CONTRACT };
 
 function executionControlMeta() {
   return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_READ_CONTRACT };
@@ -45,6 +51,19 @@ function executionControlMeta() {
 function executionControlMutationMeta() {
   return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_MUTATION_CONTRACT };
 }
+
+function executionControlTowerMeta() {
+  return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_TOWER_CONTRACT };
+}
+
+const CONTROL_TOWER_QUEUES = new Set([
+  'late',
+  'at_risk',
+  'blocked',
+  'overloaded',
+  'stale',
+  'all',
+]);
 
 const firstQueryString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
@@ -194,6 +213,73 @@ router.patch(
     return res.json({
       data: { success: true, raidItemId: String(req.params.id) },
       meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/execution-control/control-tower/queues
+ * Canonical five-queue read model (P03-B) with drill-down fields on each item.
+ */
+router.get(
+  '/control-tower/queues',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const projectId = firstQueryString(req.query.projectId);
+    const queueRaw = firstQueryString(req.query.queue);
+    const queue =
+      queueRaw && CONTROL_TOWER_QUEUES.has(queueRaw)
+        ? (queueRaw as 'late' | 'at_risk' | 'blocked' | 'overloaded' | 'stale' | 'all')
+        : 'all';
+
+    const payload = await getExecutionControlTowerQueues(organizationId, { projectId, queue });
+    return res.json({
+      data: payload,
+      meta: executionControlTowerMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/execution-control/control-tower/items/:entityType/:entityId
+ * Drill-down envelope merged across all queues the entity appears in.
+ */
+router.get(
+  '/control-tower/items/:entityType/:entityId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const projectId = firstQueryString(req.query.projectId);
+    const entityType = String(req.params.entityType || '').toUpperCase();
+    if (entityType !== 'INITIATIVE' && entityType !== 'TASK') {
+      return res.status(400).json({
+        error: 'entityType must be INITIATIVE or TASK',
+        code: 'EXECUTION_CONTROL_TOWER_BAD_ENTITY',
+      });
+    }
+    const entityId = String(req.params.entityId || '');
+    if (!entityId) {
+      return res.status(400).json({
+        error: 'entityId required',
+        code: 'EXECUTION_CONTROL_TOWER_BAD_ENTITY',
+      });
+    }
+
+    const detail = await getExecutionControlTowerItemDetail(
+      organizationId,
+      entityType as 'INITIATIVE' | 'TASK',
+      entityId,
+      projectId
+    );
+    if (!detail) {
+      return res.status(404).json({
+        error: 'Entity not present in control tower queues',
+        code: 'EXECUTION_CONTROL_TOWER_ITEM_NOT_FOUND',
+      });
+    }
+
+    return res.json({
+      data: detail,
+      meta: executionControlTowerMeta(),
     });
   })
 );

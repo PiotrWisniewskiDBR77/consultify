@@ -168,7 +168,8 @@ async function analyzeWhySlip(
 
 export async function detectDelaySignals(
   organizationId: string,
-  projectId?: string
+  projectId?: string,
+  options?: { maxSignals?: number }
 ): Promise<DelaySignal[]> {
   const signals: DelaySignal[] = [];
   const now = new Date();
@@ -383,7 +384,8 @@ export async function detectDelaySignals(
       return (sev[b.severity] || 0) - (sev[a.severity] || 0) || b.daysDeviation - a.daysDeviation;
     });
 
-    return visibleSignals.slice(0, 100);
+    const cap = options?.maxSignals ?? 100;
+    return cap > 0 ? visibleSignals.slice(0, cap) : visibleSignals;
   } catch (err) {
     logger.error('Delay detection failed', err);
     return [];

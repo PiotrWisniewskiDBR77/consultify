@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   V8_EXECUTION_CONTROL_MUTATION_CONTRACT,
   V8_EXECUTION_CONTROL_READ_CONTRACT,
+  V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../execution-control.routes.js';
 
 const mockDetectRiskSignals = vi.fn();
@@ -18,6 +19,8 @@ const mockGetInitiativeBudgetSummary = vi.fn();
 const mockGetPortfolioBudgetSummary = vi.fn();
 const mockDetectOverspendSignals = vi.fn();
 const mockCreateBudgetEntry = vi.fn();
+const mockGetExecutionControlTowerQueues = vi.fn();
+const mockGetExecutionControlTowerItemDetail = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 
@@ -45,6 +48,13 @@ vi.mock('../../../services/executionBudgetService.js', () => ({
   getInitiativeBudgetSummary: (...args: unknown[]) => mockGetInitiativeBudgetSummary(...args),
   getPortfolioBudgetSummary: (...args: unknown[]) => mockGetPortfolioBudgetSummary(...args),
   detectOverspendSignals: (...args: unknown[]) => mockDetectOverspendSignals(...args),
+}));
+
+vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
+  getExecutionControlTowerQueues: (...args: unknown[]) => mockGetExecutionControlTowerQueues(...args),
+  getExecutionControlTowerItemDetail: (...args: unknown[]) =>
+    mockGetExecutionControlTowerItemDetail(...args),
+  V8_EXECUTION_CONTROL_TOWER_CONTRACT: 'execution_control_tower_v1',
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -140,6 +150,19 @@ describe('V8 execution-control read-only routes', () => {
     mockGetPortfolioBudgetSummary.mockResolvedValue({ totals: { planned: 0, actual: 0 } });
     mockDetectOverspendSignals.mockResolvedValue([]);
     mockCreateBudgetEntry.mockResolvedValue('budget-entry-1');
+    mockGetExecutionControlTowerQueues.mockResolvedValue({
+      generatedAt: '2026-03-31T00:00:00.000Z',
+      contract: 'execution_control_tower_v1',
+      queues: {
+        late: [],
+        at_risk: [],
+        blocked: [],
+        overloaded: [],
+        stale: [],
+      },
+      counts: { late: 0, at_risk: 0, blocked: 0, overloaded: 0, stale: 0 },
+    });
+    mockGetExecutionControlTowerItemDetail.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
@@ -165,6 +188,74 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
     expect(res.body.data?.count).toBe(1);
     expect(mockDetectRiskSignals).toHaveBeenCalledWith(ORG, 'p1');
+  });
+
+  it('GET /api/v8/execution-control/control-tower/queues returns tower contract envelope', async () => {
+    mockGetExecutionControlTowerQueues.mockResolvedValue({
+      generatedAt: '2026-03-31T12:00:00.000Z',
+      contract: 'execution_control_tower_v1',
+      projectId: 'p1',
+      queues: {
+        late: [
+          {
+            entityType: 'INITIATIVE' as const,
+            entityId: 'i-late',
+            name: 'Late initiative',
+            initiativeId: 'i-late',
+            projectId: 'p1',
+            severity: 'warning' as const,
+            why: [{ kind: 'baseline_forecast' as const, detail: 'Past end' }],
+            whatNext: [],
+            affectsNext: [],
+          },
+        ],
+        at_risk: [],
+        blocked: [],
+        overloaded: [],
+        stale: [],
+      },
+      counts: { late: 1, at_risk: 0, blocked: 0, overloaded: 0, stale: 0 },
+    });
+
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/execution-control/control-tower/queues?projectId=p1&queue=late'
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_TOWER_CONTRACT);
+    expect(res.body.data?.counts?.late).toBe(1);
+    expect(mockGetExecutionControlTowerQueues).toHaveBeenCalledWith(ORG, {
+      projectId: 'p1',
+      queue: 'late',
+    });
+  });
+
+  it('GET /api/v8/execution-control/control-tower/items/:entityType/:entityId returns merged drill-down', async () => {
+    mockGetExecutionControlTowerItemDetail.mockResolvedValue({
+      entityType: 'INITIATIVE' as const,
+      entityId: 'i1',
+      inQueues: ['late', 'blocked'] as const,
+      contract: 'execution_control_tower_v1',
+      item: {
+        entityType: 'INITIATIVE' as const,
+        entityId: 'i1',
+        name: 'N',
+        why: [],
+        whatNext: [],
+        affectsNext: [],
+      },
+    });
+
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/execution-control/control-tower/items/INITIATIVE/i1?projectId=p1'
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_TOWER_CONTRACT);
+    expect(res.body.data?.inQueues).toEqual(['late', 'blocked']);
+    expect(mockGetExecutionControlTowerItemDetail).toHaveBeenCalledWith(ORG, 'INITIATIVE', 'i1', 'p1');
   });
 
   it('GET /api/v8/execution-control/timeline-warnings uses shared snapshot service', async () => {
