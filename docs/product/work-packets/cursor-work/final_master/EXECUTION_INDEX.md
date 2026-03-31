@@ -74,15 +74,15 @@ To minimize rework and prevent duplicate truths, ship in this order:
 | 13 | Whiteboard | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_13_WHITEBOARD_2026-03-29.md` | P13-A / P13-B / P13-C | approved(scope) |
 | 14 | Proces flow | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_14_PROCES_FLOW_2026-03-29.md` | P14-A / P14-B / P14-C | approved(scope) |
 | 15 | Tabele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_15_TABELE_2026-03-29.md` | P15-A / P15-B / P15-C | approved(scope) |
-| 16 | Anna | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_16_ANNA_2026-03-29.md` | P16-A / P16-B / P16-C | delivered |
-| 17 | ArtifactRun z czatu | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_17_ARTIFACTRUN_Z_CZATU_2026-03-29.md` | P17-A / P17-B / P17-C | delivered |
-| 18 | Provenance/Review/Visibility | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_18_PROVENANCE_REVIEW_VISIBILITY_2026-03-29.md` | P18-A / P18-B / P18-C | delivered |
+| 16 | Anna | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_16_ANNA_2026-03-29.md` | P16-A / P16-B / P16-C | verified(evidence) |
+| 17 | ArtifactRun z czatu | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_17_ARTIFACTRUN_Z_CZATU_2026-03-29.md` | P17-A / P17-B / P17-C | verified(evidence) |
+| 18 | Provenance/Review/Visibility | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_18_PROVENANCE_REVIEW_VISIBILITY_2026-03-29.md` | P18-A / P18-B / P18-C | verified(evidence) |
 | 19 | Outputs Library | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_19_OUTPUTS_LIBRARY_2026-03-29.md` | P19-A / P19-B / P19-C | verified(evidence) |
 | 20 | Prezentacje | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_20_PREZENTACJE_2026-03-29.md` | P20-A / P20-B / P20-C | approved(scope) |
-| 21 | Raporty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_21_RAPORTY_2026-03-29.md` | P21-A / P21-B / P21-C | delivered |
+| 21 | Raporty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_21_RAPORTY_2026-03-29.md` | P21-A / P21-B / P21-C | verified(evidence) |
 | 22 | Wordy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_22_WORDY_2026-03-29.md` | P22-A / P22-B / P22-C | approved(scope) |
 | 23 | Excele | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md` | P23-A / P23-B / P23-C | approved(scope) |
-| 24 | Templaty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_24_TEMPLATY_2026-03-29.md` | P24-A / P24-B / P24-C | delivered |
+| 24 | Templaty | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_24_TEMPLATY_2026-03-29.md` | P24-A / P24-B / P24-C | verified(evidence) |
 | 25 | Help | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_25_HELP_2026-03-29.md` | P25-A / P25-B / P25-C | verified(evidence) |
 | 26 | Baza wiedzy | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_26_BAZA_WIEDZY_2026-03-29.md` | P26-A / P26-B / P26-C | approved(scope) |
 | 27 | Tools | `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_27_TOOLS_2026-03-29.md` | P27-A / P27-B / P27-C | approved(scope) |

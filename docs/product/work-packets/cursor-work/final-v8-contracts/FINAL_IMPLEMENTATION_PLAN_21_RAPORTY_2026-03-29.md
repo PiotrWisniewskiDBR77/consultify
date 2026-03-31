@@ -1,8 +1,8 @@
 # Final Implementation Contract — Raporty (Position 21/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P21-A** (report template-first canon + sources posture frozen); P21-B / P21-C not started  
-Last updated: 2026-03-30 (P21-A scope closure)
+Status: **P21-A** `approved(scope)` (scope closure); **P21-B** `delivered` (runtime + tests); **P21-C** `verified(evidence)`  
+Last updated: 2026-03-31 (P21-C closeout)
 
 ## 1. Executive summary
 - **Intent**: Gamma‑like raporty: template-first deliverable artifact with evidence pointers, governed generation, and honest degraded posture.
@@ -273,6 +273,6 @@ A report artifact **extends** `OutputTemplate` (P24 §2.3.1) with report-specifi
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P21-A | `approved(scope)` | `fdcba833f7` | Scope approval — no runtime tests | N/A (scope phase) | Report template-first canon + sources posture frozen; approve(run) ≠ review(artifact) invariant explicit |
-| P21-B |  |  |  |  |  |
-| P21-C |  |  |  |  |  |
+| P21-B | `delivered` | `efa7d28f19` | `npx vitest run tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts` ✅ | Planned: `docs/product/work-packets/cursor-work/final_master/evidence/P21_B_REPORTS_RUNTIME_E2E_TESTS_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Bounded: 2 templates via governed ArtifactRun -> Outputs Library; originSummary carries `sourcesLedger` + `degradedFlags.no_web`; export audit trace recorded via Outputs ledger |
+| P21-C | verified(evidence) | `98bf75bf8a` | `npx vitest run tests/integration/routes/report-builder.sessions.routes.test.ts tests/integration/routes/report-builder.share.routes.test.ts tests/integration/routes/report-builder-public.docx.routes.test.ts tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts tests/integration/routes/artifacts.routes.test.ts` -> PASS (20/20) | `docs/product/work-packets/cursor-work/final_master/evidence/P21-C_REPORTS_CLOSEOUT_2026-03-31.md` | Closeout verified bounded two-template report runtime, reopen/continue, export/share posture, audit trace visibility, and honest no-web degraded behavior. |
 

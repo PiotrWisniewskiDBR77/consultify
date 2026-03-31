@@ -21,31 +21,7 @@ If a scope packet truly needs a redo, re-open it explicitly here with a fresh ma
 
 ## Authorized packet(s) — RUNTIME (PNN-B/PNN-C only)
 
-### 1) P24-C — Templaty: verification + rollout + evidence (runtime verification)
-
-Goal: execute P24 staging proof, run tests, fill evidence ledger rows P24-B/P24-C, and close packet as `verified(evidence)`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P24-C.md`
-
-### 2) P17-C — ArtifactRun: verification + rollout + evidence closeout
-
-Goal: capture staging proof, validate rollback, and fill ledger rows P17-A/B/C so position 17 can move from `delivered` to `verified(evidence)`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P17-C.md`
-
-### 3) P18-C — Provenance: verification + rollout + evidence closeout
-
-Goal: capture lineage/export staging proof, validate rollback, and fill ledger rows P18-A/B/C so position 18 can move from `delivered` to `verified(evidence)`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P18-C.md`
-
-### 4) P21-C — Raporty: verification + rollout + evidence closeout
-
-Goal: capture reports staging proof, validate rollback, and fill ledger rows P21-A/B/C so position 21 can move from `delivered` to `verified(evidence)`.
-
-Lock: `docs/product/work-packets/cursor-work/final_master/locks/P21-C.md`
-
-### 5) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
+### 1) P35-B — Historia czatów: lifecycle + search target closure (core runtime)
 
 Goal: deliver full thread lifecycle + server-side search target with pagination/filters + team folder permission denials (no leakage), with integration/security tests + staging demo.
 
@@ -91,7 +67,12 @@ Completion (each agent independently):
 | P05-A | approved(scope) | 2026-03-30 |
 | P06-A | approved(scope) | 2026-03-30 |
 | P16-B | delivered | 2026-03-30 |
+| P16-C | verified(evidence) | 2026-03-31 |
+| P17-C | verified(evidence) | 2026-03-31 |
+| P18-C | verified(evidence) | 2026-03-31 |
+| P21-C | verified(evidence) | 2026-03-31 |
 | P24-B | delivered | 2026-03-30 |
+| P24-C | verified(evidence) | 2026-03-31 |
 | P25-B | delivered | 2026-03-30 |
 | P34-B | delivered | 2026-03-30 |
 | P25-C | verified(evidence) | 2026-03-31 |

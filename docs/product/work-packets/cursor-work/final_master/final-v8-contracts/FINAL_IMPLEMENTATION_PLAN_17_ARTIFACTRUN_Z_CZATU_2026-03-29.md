@@ -1,7 +1,7 @@
 # Final Implementation Contract — ArtifactRun z czatu (Position 17/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P17-A** (run grammar canon frozen); **P17-B** `delivered`; P17-C not started
+Status: `approved(scope)` for **P17-A** (run grammar canon frozen); **P17-B** `delivered`; **P17-C** `verified(evidence)`
 
 ## 1. Executive summary
 - **Intent**: Chat/Teresa pracuje z aplikacją (głos+tekst): rozumie ekran, robi pracę w UI i bazach.
@@ -147,5 +147,5 @@ Status: `approved(scope)` for **P17-A** (run grammar canon frozen); **P17-B** `d
 | --- | --- | --- | --- | --- | --- |
 | P17-A | approved(scope) | `2bc392365c` | N/A — scope packet | N/A — scope packet | Run grammar canon + stage separation approved; manager closeout synced with execution docs and released lock. |
 | P17-B | delivered | 8335c275e3 | `tests/integration/routes/artifact-runs.routes.preflight-and-failure.sqlite.integration.test.ts` (green); `tests/components/AIChat/V8ArtifactRunControl.test.tsx` (green) | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P17_B_ARTIFACTRUN_VALIDATION_RERUN_FAILURE_E2E_AND_STAGING_PROOF_PLAN_2026-03-30.md` | Explicit `/api/artifact-runs/:runId/preflight` stage + UI preflight panel; failure packaged (`failurePackage`) + retry lineage; best-effort ghost Outputs cleanup by origin. |
-| P17-C |  |  |  |  |  |
+| P17-C | verified(evidence) | `98bf75bf8a` | `npx vitest run tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts tests/integration/routes/artifact-runs.routes.preflight-and-failure.sqlite.integration.test.ts tests/components/AIChat/V8ArtifactRunControl.test.tsx` -> PASS (12/12) | `docs/product/work-packets/cursor-work/final_master/evidence/P17-C_ARTIFACTRUN_CLOSEOUT_2026-03-31.md` | Closeout verified bounded ArtifactRun lifecycle: plan, preflight, materialize, failure packaging, retry lineage, and no ghost artifacts. |
 

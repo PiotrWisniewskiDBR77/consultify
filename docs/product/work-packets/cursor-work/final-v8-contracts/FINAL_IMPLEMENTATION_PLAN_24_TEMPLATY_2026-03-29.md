@@ -1,8 +1,8 @@
 # Final Implementation Contract — Templaty (Position 24/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P24-A** (template runtime canon + ownership/permissions frozen); P24-B / P24-C not started  
-Last updated: 2026-03-30 (P24-A scope closure)
+Status: `approved(scope)` for **P24-A** (template runtime canon + ownership/permissions frozen); **P24-B** `delivered`; **P24-C** `verified(evidence)`  
+Last updated: 2026-03-31 (P24-C closeout)
 
 ## 1. Executive summary
 - **Intent**: Templates dla raportów i prezentacji; przeniesienie pełnej funkcji z admin do Outputs: zakładka Templaty + generator + user templates + app templates.
@@ -317,5 +317,5 @@ Canonical paired families (per V8 Decision W6-3): **Executive Steering Pack**, *
 | --- | --- | --- | --- | --- | --- |
 | P24-A | approved(scope) | `8787580d34` | N/A — scope packet | N/A — scope packet | Schema §2.3.1; ownership §2.3.2; gate §2.3.3; foundation §2.3.4; convergence §2.3.5; anti-dup §2.3.6; errors §2.4; checklist §8.1 |
 | P24-B | delivered | `42e2a699b7` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/unit/hooks/useTemplates.canonicalArtifacts.test.tsx` — **pass** | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P24-B_TEMPLATE_RUNTIME_VERIFICATION_2026-03-30.md` (not yet executed) | Bounded: templates are canonical `v8_output_artifacts` entries; org publish requires review+admin approval; presentation template “edit” remains bounded to wizard entrypoints |
-| P24-C |  |  |  |  |  |
+| P24-C | verified(evidence) | `98bf75bf8a` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/unit/hooks/useTemplates.canonicalArtifacts.test.tsx` -> PASS (13/13) | `docs/product/work-packets/cursor-work/final_master/evidence/P24-C_TEMPLATES_CLOSEOUT_2026-03-31.md` | Closeout verified canonical template runtime in Outputs, fail-closed review/publish rollback guards, and stable browse+generate behavior for report and presentation families. |
 
