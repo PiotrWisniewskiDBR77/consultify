@@ -848,6 +848,10 @@ export interface PortfolioInitiative {
   description?: string;
   axis: string;
   status: InitiativeStatus;
+  /** V8 planning read: normalized PMO status when raw DB value needed coercion */
+  displayStatus?: string;
+  p11LifecycleState?: string;
+  statusReadDrift?: boolean;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   progress: number;
   budget: number;

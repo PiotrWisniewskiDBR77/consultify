@@ -54,6 +54,7 @@ import {
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
+import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
@@ -310,7 +311,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   // COMPUTED
   // ==========================================
 
-  const status = ((initiative?.status || 'DRAFT') as string).toUpperCase() as InitiativeStatus;
+  const wfStatus = getWorkflowStatusForInitiative(initiative as any);
+  const status = (
+    (Object.values(InitiativeStatus) as string[]).includes(wfStatus) ? wfStatus : InitiativeStatus.DRAFT
+  ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
   const statusActions = getStatusActions(status);
   const priority = (initiative?.priority || 'medium').toLowerCase();
@@ -318,10 +322,16 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
   // Next step CTA data
   const nextStepInfo = useMemo(
-    () => (initiative ? getNextStep(initiative.status) : null),
+    () => (initiative ? getNextStep(getWorkflowStatusForInitiative(initiative as any)) : null),
     [initiative]
   );
-  const healthInfo = useMemo(() => (initiative ? getHealthInfo(initiative) : null), [initiative]);
+  const healthInfo = useMemo(() => {
+    if (!initiative) return null;
+    return getHealthInfo({
+      ...initiative,
+      status: getWorkflowStatusForInitiative(initiative as any),
+    });
+  }, [initiative]);
   const blockingItems = useMemo(() => {
     if (!gateReadiness?.readiness) return [];
     return gateReadiness.readiness.filter((r: any) => r.severity === 'blocking' && !r.pass);

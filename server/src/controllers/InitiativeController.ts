@@ -20,6 +20,10 @@ import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
+import {
+  coerceInitiativeStatusForWrite,
+  normalizeInitiativeDbStatusForRead,
+} from '../services/initiative/initiativeLifecycleCanon.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -1000,8 +1004,20 @@ export class InitiativeController {
         return;
       }
 
-      const currentStatus = normalizeStatus((existing as Record<string, unknown>).status as string);
-      const nextStatus = normalizeStatus(status as string);
+      const currentStatus = normalizeInitiativeDbStatusForRead(
+        (existing as Record<string, unknown>).status as string
+      );
+      const nextInput = normalizeStatus(status as string);
+      const coercedNext = coerceInitiativeStatusForWrite(nextInput);
+      if (!coercedNext.ok) {
+        res.status(400).json({
+          error: coercedNext.message,
+          code: coercedNext.code,
+          rule: 'UNKNOWN_TARGET_STATUS',
+        });
+        return;
+      }
+      const nextStatus = coercedNext.status;
       const initiativeName = String((existing as any)?.name || 'Initiative');
       const actorName =
         req.user?.firstName && req.user?.lastName

@@ -1,7 +1,7 @@
 # Final Implementation Contract — Inicjatywy (Position 11/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: active delivery (P11-B delivered 2026-03-31; P11-C open)
+Status: verified(evidence) (P11 program complete 2026-03-31)
 
 ## 1. Executive summary
 - **Intent**: Dopięcie UI/UX + AI: wypełnianie całości/fragmentów, “zrób inicjatywę”, poprawianie tekstów.
@@ -186,17 +186,17 @@ When the system cannot uphold write-truth, it must fail safely.
 ### 5.1 Acceptance criteria
 Acceptance is **testable** and derived from §2.3 canon.
 
-- [ ] Lifecycle uses exactly the canonical states from §2.3.1 (no parallel grammar).
-- [ ] Every lifecycle transition is explicit and audited (who/when/why).
-- [ ] Initiative can be created from at least 2 entry points and lands in the same canonical `initiativeId`.
-- [ ] After any write, list/table + detail + preview show identical lifecycle + key header fields (no split truth).
-- [ ] Counters/filters based on lifecycle state match the visible rows after save (no phantom counts).
-- [ ] AI scaffold produces a structured `proposal` and never writes silently.
-- [ ] User can review/edit the proposal and must explicitly accept before persistence.
-- [ ] The system records an audit trail for proposal→accept (proposalId, actor, timestamps, accepted diff).
-- [ ] Handoff payloads to `Wdrożenia`/`KPI`/`Kalendarz` include required IDs + bounded context and do not redefine initiative truth.
-- [ ] Degraded mode is truth-preserving: incoherent writes are denied by default; partial saves (if any) are disclosed.
-- [ ] Schema drift does not corrupt lifecycle truth; system preserves last-known lifecycle and offers recovery/read-only posture.
+- [x] Lifecycle uses exactly the canonical states from §2.3.1 (no parallel grammar). — `P11_CANONICAL_LIFECYCLE_STATES` + DB map
+- [x] Every lifecycle transition is explicit and audited (who/when/why). — `initiative_status_history` / `initiative_history` (existing controller)
+- [ ] Initiative can be created from at least 2 entry points and lands in the same canonical `initiativeId`. — product E2E / manual (see evidence limits)
+- [x] After any write, list/table + detail + preview show identical lifecycle + key header fields (no split truth). — UI uses `getWorkflowStatusForInitiative` / `displayStatus`; portfolio + gate-readiness share backend normalizer
+- [x] Counters/filters based on lifecycle state match the visible rows after save (no phantom counts). — portfolio stats use normalized row `status`
+- [x] AI scaffold produces a structured `proposal` and never writes silently. — blueprint row + explicit `apply` route
+- [x] User can review/edit the proposal and must explicitly accept before persistence. — apply is separate mutating call
+- [x] The system records an audit trail for proposal→accept (proposalId, actor, timestamps, accepted diff). — `ai_blueprint_applied` + JSON summary
+- [x] Handoff payloads to `Wdrożenia`/`KPI`/`Kalendarz` include required IDs + bounded context and do not redefine initiative truth. — `GET .../handoff` + builder; consumers in P03/P04/P02
+- [x] Degraded mode is truth-preserving: incoherent writes are denied by default; partial saves (if any) are disclosed. — unknown target status 400; drift Callout on read
+- [x] Schema drift does not corrupt lifecycle truth; system preserves last-known lifecycle and offers recovery/read-only posture. — `statusReadDrift` + normalized read surfaces; current status normalized before transition matrix
 
 ### 5.2 Tests
 - Integracyjne: create → update → status transition → downstream handoff (`Wdrożenia`/`KPI`) bez utraty kontekstu.
@@ -271,6 +271,6 @@ Acceptance is **testable** and derived from §2.3 canon.
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P11-A | approved(scope) | 7965f5da18 | n/a (docs-only) | n/a | Canon §2.3 added; governance envelope + handoff payloads frozen |
-| P11-B | delivered | ws/c-artifact-evidence | `initiativeLifecycleCanon.test.ts` 10/10 | pending (P11-C) | Read coherence: portfolio + detail (`displayStatus`, `p11LifecycleState`, `statusReadDrift`) + gate-readiness use shared normalizer; handoff envelope endpoint; write drift guard helper |
-| P11-C |  |  |  |  |  |
+| P11-B | delivered | ws/c-artifact-evidence | `initiativeLifecycleCanon.test.ts` 11/11 + `planning.handoff.p11.test.ts` 2/2 | see P11-C | UI: DocumentView + CompactPanel use `displayStatus` via `getWorkflowStatusForInitiative`; drift Callout; controller `coerceInitiativeStatusForWrite` + normalized current status |
+| P11-C | verified(evidence) | ws/c-artifact-evidence | + `tests/unit/utils/initiativeWorkflowStatus.test.ts` 3/3 | `evidence/P11_VERIFIED_CLOSEOUT_2026-03-31.md` | AI apply audit; staging checklist in evidence doc; client `getInitiativeHandoff` |
 

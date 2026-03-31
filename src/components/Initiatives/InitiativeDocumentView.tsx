@@ -78,6 +78,10 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode, buildArtifactPermalink } from '@/utils/artifactLinks';
+import {
+  getWorkflowStatusForInitiative,
+  hasInitiativeStatusReadDrift,
+} from '@/utils/initiativeWorkflowStatus';
 
 import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types';
 import {
@@ -845,7 +849,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const contextText = [
         `[INITIATIVE CONTEXT]`,
         `Initiative name: ${initiative?.name || initiative?.title || ''}`,
-        `Status: ${initiative?.status || ''}`,
+        `Status: ${getWorkflowStatusForInitiative(initiative as any)}`,
         `Priority: ${initiative?.priority || ''}`,
         `Summary: ${(initiative?.summary || initiative?.description || '').toString()}`,
         ``,
@@ -870,7 +874,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         fieldLabel: 'Initiative RAID review',
         artifactContext: {
           title: initiative?.name || initiative?.title || '',
-          status: initiative?.status || '',
+          status: getWorkflowStatusForInitiative(initiative as any),
           priority: initiative?.priority || '',
           type: 'initiative',
         },
@@ -1048,7 +1052,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // COMPUTED VALUES
   // ==========================================
 
-  const rawStatus = String(initiative?.status || InitiativeStatus.DRAFT).toUpperCase();
+  const rawStatus = getWorkflowStatusForInitiative(initiative as any);
   const status = (
     (Object.values(InitiativeStatus) as string[]).includes(rawStatus)
       ? rawStatus
@@ -1071,6 +1075,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       })
       .filter(Boolean) as any[];
   }, [status, gateReadiness]);
+  const statusDriftUi = useMemo(
+    () => hasInitiativeStatusReadDrift(initiative as any),
+    [initiative]
+  );
   const primaryActions = statusActions.filter((a) => a.variant === 'primary').slice(0, 2);
   const contextActions = useMemo(() => {
     return gateReadiness?.capabilities?.ctaBar?.contextCreateActions || [];
@@ -3371,7 +3379,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           problemStatement: initiative?.problem_statement || '',
           category: initiative?.category || '',
           module: initiative?.module || '',
-          status: initiative?.status || '',
+          status: getWorkflowStatusForInitiative(initiative as any),
           language: aiLanguage,
         };
         const res = await Api.post('/initiatives/generate-section', context);
@@ -3432,7 +3440,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         problemStatement: initiative?.problem_statement || '',
         category: initiative?.category || '',
         module: initiative?.module || '',
-        status: initiative?.status || '',
+        status: getWorkflowStatusForInitiative(initiative as any),
         language: aiLanguage,
       };
 
@@ -7674,6 +7682,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="col-span-full space-y-4 mt-4">
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
+                {statusDriftUi ? (
+                  <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                    {isPolish
+                      ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
+                      : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
+                  </Callout>
+                ) : null}
+
                 {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned */}
                 <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -8335,6 +8351,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="lg:col-span-3 bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 p-5"
               >
+                {statusDriftUi ? (
+                  <div className="mb-3">
+                    <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                      {isPolish
+                        ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
+                        : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
+                    </Callout>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     {onBack && (

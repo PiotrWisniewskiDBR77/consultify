@@ -82,3 +82,4 @@ Completion (each agent independently):
 | P35-B | delivered | 2026-03-31 |
 | P35-C | verified(evidence) | 2026-03-31 |
 | P11-B | delivered | 2026-03-31 |
+| P11-C | verified(evidence) | 2026-03-31 |

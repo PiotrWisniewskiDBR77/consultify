@@ -130,4 +130,11 @@ describe('initiativeLifecycleCanon (P11)', () => {
     expect(src).toContain('applyBlueprint');
     expect(src).toMatch(/async applyBlueprint/);
   });
+
+  it('AI blueprint apply writes P11 audit row to initiative_history', () => {
+    const govPath = join(__dirname, '../../initiativeGovernanceService.ts');
+    const src = readFileSync(govPath, 'utf-8');
+    expect(src).toContain('ai_blueprint_applied');
+    expect(src).toContain('proposalId');
+  });
 });

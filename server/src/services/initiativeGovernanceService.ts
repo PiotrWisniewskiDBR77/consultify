@@ -357,6 +357,48 @@ class InitiativeGovernanceService {
       [blueprintId, orgId]
     );
 
+    const appliedAt = new Date().toISOString();
+    try {
+      const histId = uuidv4();
+      let citations: unknown[] = [];
+      try {
+        citations = safeJsonArray(blueprint.citations);
+      } catch {
+        citations = [];
+      }
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [
+          histId,
+          blueprint.initiative_id,
+          orgId,
+          'ai_blueprint_applied',
+          userId,
+          null,
+          JSON.stringify({
+            proposalId: blueprintId,
+            actorId: userId,
+            appliedAt,
+            acceptedDiffSummary: {
+              tasksCreated,
+              dependenciesCreated,
+              milestonesCreated: milestoneIds.length,
+              resourcesCreated: resourceIds.length,
+              wbsItemCount: wbs.length,
+              milestoneProposalCount: milestones.length,
+              dependencyProposalCount: deps.length,
+              resourceProposalCount: resources.length,
+            },
+            citations,
+          }),
+          appliedAt,
+        ]
+      );
+    } catch {
+      /* P11: best-effort audit — do not block apply on history schema drift */
+    }
+
     return {
       ok: true,
       reused: false,

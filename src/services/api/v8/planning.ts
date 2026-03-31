@@ -403,4 +403,9 @@ export const V8PlanningApi = {
     ),
   getPendingDecisions: () =>
     v8Get<{ pendingDecisionChains: V8PlanningDecisionChain[] }>('/planning/pending-decisions'),
+  /** P11 outbound handoff envelope (read-only) */
+  getInitiativeHandoff: (initiativeId: string, kind: 'execution' | 'kpi' | 'calendar' = 'execution') =>
+    v8Get<{ handoff: Record<string, unknown> }>(
+      `/planning/initiatives/${encodeURIComponent(initiativeId)}/handoff?kind=${encodeURIComponent(kind)}`
+    ).then((r) => r.handoff),
 };
