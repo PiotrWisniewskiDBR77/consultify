@@ -893,18 +893,29 @@ export class AIPipeline {
     const ctx = enrichedContext.context as any;
     const messages: ChatMessage[] = [];
 
-    // Build intelligent system prompt based on context
-    let systemPrompt = await this.buildSystemPrompt(capability, ctx, request);
+    // Dedicated system instruction mode: when a caller provides systemInstruction
+    // AND sets dedicatedSystemPrompt=true, use ONLY that instruction as the system
+    // prompt (skip persona, org context, etc.). Used by WorkbookGeneratorService, etc.
+    const dedicatedMode = !!(request.options as any)?.dedicatedSystemPrompt && (request.options as any)?.systemInstruction;
 
-    // Add custom system instruction if provided
-    if ((request.options as any)?.systemInstruction) {
-      systemPrompt += `\n\n${(request.options as any).systemInstruction}`;
+    let systemPrompt: string;
+    if (dedicatedMode) {
+      systemPrompt = (request.options as any).systemInstruction;
+    } else {
+      // Build intelligent system prompt based on context
+      systemPrompt = await this.buildSystemPrompt(capability, ctx, request);
+
+      // Add custom system instruction if provided
+      if ((request.options as any)?.systemInstruction) {
+        systemPrompt += `\n\n${(request.options as any).systemInstruction}`;
+      }
     }
 
     // Integrate adaptive style preferences (v2.0)
     // Deep Thinking autonomy: skip (pulls user/system preferences outside the conversation).
+    // Dedicated mode: skip all post-processing to keep the system prompt pristine.
     const aiModes = (request.options as any)?.aiModes || (ctx as any)?.aiModes;
-    if (!aiModes?.deepResearch) {
+    if (!aiModes?.deepResearch && !dedicatedMode) {
       try {
         const adaptiveModule = await import('./adaptiveResponseService.js');
         const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
@@ -926,7 +937,8 @@ export class AIPipeline {
 
     // Enhance system prompt with learned instructions from user feedback.
     // If SSOT prompt assembler already injected org learned instructions, skip to avoid duplication.
-    if (request.organizationId && !ctx?._promptSsotUsed) {
+    // Dedicated mode: skip to keep the system prompt pristine.
+    if (request.organizationId && !ctx?._promptSsotUsed && !dedicatedMode) {
       try {
         const lsPath = './learningSystem' + '.js';
         const learningMod = await import(/* @vite-ignore */ lsPath);
