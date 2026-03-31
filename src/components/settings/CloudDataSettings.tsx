@@ -5,7 +5,7 @@
  * Used in Settings → Integrations.
  */
 
-import { Cloud, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Cloud, ExternalLink, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,7 @@ export const CloudDataSettings: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProvider, setNewProvider] = useState('google_drive');
   const [newName, setNewName] = useState('');
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const fetchSources = useCallback(async () => {
     try {
@@ -84,6 +85,28 @@ export const CloudDataSettings: React.FC = () => {
       }
     } catch {
       toast.error(t('cloud.connectFailed', 'Failed to connect cloud source'));
+    }
+  };
+
+  const handleSync = async (id: string) => {
+    setSyncingId(id);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/cloud/sources/${id}/sync`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(t('cloud.syncComplete', `Synced ${data.filesSynced || 0} files`));
+        fetchSources();
+      } else {
+        toast.error(t('cloud.syncFailed', 'Sync failed'));
+      }
+    } catch {
+      toast.error(t('cloud.syncFailed', 'Sync failed'));
+    } finally {
+      setSyncingId(null);
     }
   };
 
@@ -208,6 +231,14 @@ export const CloudDataSettings: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleSync(source.id)}
+                  disabled={syncingId === source.id}
+                  className="p-1.5 text-blue-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50"
+                  title={t('cloud.sync', 'Sync files')}
+                >
+                  <RefreshCw size={14} className={syncingId === source.id ? 'animate-spin' : ''} />
+                </button>
                 <button
                   className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('cloud.openInProvider', 'Open in provider')}

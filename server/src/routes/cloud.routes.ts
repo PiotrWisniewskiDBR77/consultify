@@ -266,4 +266,83 @@ router.get('/import/:id', verifyToken, async (req: AuthRequest, res: Response) =
   }
 });
 
+/**
+ * POST /api/cloud/import/:id/process
+ * Trigger background processing of an import job (download + extract)
+ */
+router.post('/import/:id/process', verifyToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    const { processImportJob } = await import('../services/cloudDataService.js');
+    processImportJob(req.params.id, organizationId).catch((err: Error) => {
+      logger.error(`[CloudRoutes] Background import failed: ${err.message}`);
+    });
+
+    return res.json({ success: true, message: 'Import processing started' });
+  } catch (err: any) {
+    logger.error('[CloudRoutes] Failed to process import:', err?.message);
+    return res.status(500).json({ error: 'Failed to process import' });
+  }
+});
+
+/**
+ * POST /api/cloud/sources/:id/sync
+ * Trigger a full file listing sync for a cloud source (indexes files into sync mappings)
+ */
+router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    const { listCloudFiles, getCloudSource } = await import('../services/cloudDataService.js');
+    const source = await getCloudSource(req.params.id, organizationId);
+    if (!source) return res.status(404).json({ error: 'Cloud source not found' });
+
+    const files = await listCloudFiles(req.params.id, organizationId);
+
+    const { run: dbRun } = await import('../utils/DbPromise.js');
+    let synced = 0;
+    for (const file of files) {
+      await dbRun(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, ?, 'file', ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        [req.params.id, file.id, `${source.provider}_file`, JSON.stringify({ name: file.name, mimeType: file.mimeType, size: file.size, isFolder: file.isFolder })]
+      );
+      synced++;
+    }
+
+    const { run: dbRunUpdate } = await import('../utils/DbPromise.js');
+    await dbRunUpdate(
+      `UPDATE cloud_sources SET last_sync_at = NOW(), updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [req.params.id, organizationId]
+    );
+
+    return res.json({ success: true, provider: source.provider, filesSynced: synced });
+  } catch (err: any) {
+    logger.error('[CloudRoutes] Failed to sync cloud source:', err?.message);
+    return res.status(500).json({ error: 'Failed to sync cloud source' });
+  }
+});
+
+/**
+ * GET /api/cloud/providers
+ * List supported cloud storage providers
+ */
+router.get('/providers', verifyToken, async (_req: AuthRequest, res: Response) => {
+  return res.json({
+    providers: [
+      { id: 'google_drive', name: 'Google Drive', authType: 'oauth2', capabilities: ['list', 'download', 'upload', 'search'] },
+      { id: 'onedrive', name: 'OneDrive / SharePoint', authType: 'oauth2', capabilities: ['list', 'download', 'upload'] },
+      { id: 'dropbox', name: 'Dropbox', authType: 'oauth2', capabilities: ['list', 'download', 'upload'] },
+    ],
+  });
+});
+
 export default router;

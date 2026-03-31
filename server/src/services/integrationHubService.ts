@@ -190,6 +190,32 @@ export const CONNECTORS: Record<string, Connector> = {
     authType: 'oauth2',
     configFields: ['domain'],
   },
+
+  // Cloud Storage
+  google_drive: {
+    id: 'google_drive',
+    name: 'Google Drive',
+    category: CATEGORIES.COLLABORATION,
+    capabilities: ['files', 'folders', 'sharing', 'search'],
+    authType: 'oauth2',
+    configFields: ['root_folder_id'],
+  },
+  onedrive: {
+    id: 'onedrive',
+    name: 'OneDrive / SharePoint',
+    category: CATEGORIES.COLLABORATION,
+    capabilities: ['files', 'folders', 'sharing', 'sites'],
+    authType: 'oauth2',
+    configFields: ['tenant_id', 'site_id'],
+  },
+  dropbox: {
+    id: 'dropbox',
+    name: 'Dropbox',
+    category: CATEGORIES.COLLABORATION,
+    capabilities: ['files', 'folders', 'sharing', 'paper'],
+    authType: 'oauth2',
+    configFields: ['root_folder_id'],
+  },
 };
 
 // ==========================================
@@ -829,12 +855,50 @@ async function genericWebhookSyncAdapter(
   return { recordsSynced: 0 };
 }
 
+async function cloudStorageSyncAdapter(
+  integrationId: string,
+  config: Record<string, unknown>,
+  _options: Record<string, unknown>
+): Promise<ProviderSyncResult> {
+  try {
+    const { listCloudSources } = await import('./cloudDataService.js');
+    const orgId = String(config._organizationId || config.organizationId || '');
+    if (!orgId) return { recordsSynced: 0, error: 'No organization ID for cloud sync' };
+
+    const sources = await listCloudSources(orgId);
+    const matchingSource = sources.find((s: any) => s.id === integrationId || s.status === 'active');
+    if (!matchingSource) return { recordsSynced: 0 };
+
+    const { listCloudFiles } = await import('./cloudDataService.js');
+    const files = await listCloudFiles(matchingSource.id, orgId);
+
+    const db = getDatabase();
+    let synced = 0;
+    for (const file of files.slice(0, 100)) {
+      await db.run(
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'cloud_file', 'file', ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        [integrationId, file.id, JSON.stringify({ name: file.name, mimeType: file.mimeType, size: file.size, isFolder: file.isFolder })]
+      );
+      synced++;
+    }
+
+    return { recordsSynced: synced };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Cloud storage sync error: ${(err as Error).message}` };
+  }
+}
+
 const PROVIDER_ADAPTERS: Record<string, ProviderAdapter> = {
   jira: jiraSyncAdapter,
   slack: slackSyncAdapter,
   teams: teamsSyncAdapter,
   gmail: googleSyncAdapter,
   google_calendar: googleSyncAdapter,
+  google_drive: cloudStorageSyncAdapter,
+  onedrive: cloudStorageSyncAdapter,
+  dropbox: cloudStorageSyncAdapter,
 };
 
 async function dispatchProviderSync(

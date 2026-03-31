@@ -145,6 +145,14 @@ export async function listCloudFiles(
     return listGoogleDriveFiles(source, folderId);
   }
 
+  if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
+    return listOneDriveFiles(source, folderId);
+  }
+
+  if (source.provider === 'dropbox') {
+    return listDropboxFiles(source, folderId);
+  }
+
   logger.warn(`[CloudData] Provider ${source.provider} not yet implemented`);
   return [];
 }
@@ -190,6 +198,14 @@ export async function downloadCloudFile(
 
   if (source.provider === 'google_drive') {
     return downloadGoogleDriveFile(source, fileId);
+  }
+
+  if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
+    return downloadOneDriveFile(source, fileId);
+  }
+
+  if (source.provider === 'dropbox') {
+    return downloadDropboxFile(source, fileId);
   }
 
   throw new Error(`Download not supported for provider ${source.provider}`);
@@ -297,6 +313,14 @@ export async function uploadCloudFile(input: {
       );
     } else if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
       result = await uploadOneDriveFile(
+        source,
+        input.fileName,
+        input.mimeType,
+        input.content,
+        input.folderId
+      );
+    } else if (source.provider === 'dropbox') {
+      result = await uploadDropboxFile(
         source,
         input.fileName,
         input.mimeType,
@@ -463,6 +487,245 @@ async function uploadOneDriveFile(
     mimeType,
     url: data?.webUrl ? String(data.webUrl) : undefined,
   };
+}
+
+// ── OneDrive / SharePoint: List + Download ──────────────────────
+
+async function listOneDriveFiles(source: CloudSource, folderId?: string): Promise<CloudFile[]> {
+  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+
+  const itemPath = folderId
+    ? `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(folderId)}/children`
+    : 'https://graph.microsoft.com/v1.0/me/drive/root/children';
+
+  const url = `${itemPath}?$select=id,name,size,lastModifiedDateTime,file,folder&$top=200`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${source.accessToken}` },
+  });
+
+  if (response.status === 401) throw new Error('OneDrive token expired — reauth required');
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`OneDrive API error ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = (await response.json()) as {
+    value?: Array<{
+      id: string;
+      name: string;
+      size?: number;
+      lastModifiedDateTime?: string;
+      file?: { mimeType?: string };
+      folder?: { childCount?: number };
+    }>;
+  };
+
+  return (data.value || []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    mimeType: item.file?.mimeType || (item.folder ? 'folder' : 'application/octet-stream'),
+    size: item.size || 0,
+    modifiedAt: new Date(item.lastModifiedDateTime || Date.now()),
+    path: item.name,
+    isFolder: !!item.folder,
+  }));
+}
+
+async function downloadOneDriveFile(source: CloudSource, fileId: string): Promise<CloudDownloadResult> {
+  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+
+  const metaResp = await fetch(
+    `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(fileId)}?$select=name,file`,
+    { headers: { Authorization: `Bearer ${source.accessToken}` } }
+  );
+  if (!metaResp.ok) throw new Error(`OneDrive metadata error: ${metaResp.status}`);
+  const meta = (await metaResp.json()) as { name?: string; file?: { mimeType?: string } };
+
+  const contentResp = await fetch(
+    `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(fileId)}/content`,
+    { headers: { Authorization: `Bearer ${source.accessToken}` }, redirect: 'follow' }
+  );
+  if (!contentResp.ok) throw new Error(`OneDrive download error: ${contentResp.status}`);
+
+  const arrayBuffer = await contentResp.arrayBuffer();
+  return {
+    fileName: meta.name || `onedrive-${fileId}`,
+    mimeType: meta.file?.mimeType || 'application/octet-stream',
+    content: Buffer.from(arrayBuffer),
+  };
+}
+
+// ── Dropbox: List + Download + Upload ───────────────────────────
+
+async function listDropboxFiles(source: CloudSource, folderId?: string): Promise<CloudFile[]> {
+  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+
+  const path = folderId || source.rootFolderId || '';
+
+  const response = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${source.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ path: path || '', recursive: false, limit: 200 }),
+  });
+
+  if (response.status === 401) throw new Error('Dropbox token expired — reauth required');
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Dropbox API error ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = (await response.json()) as {
+    entries?: Array<{
+      '.tag': 'file' | 'folder';
+      id: string;
+      name: string;
+      size?: number;
+      server_modified?: string;
+      path_display?: string;
+    }>;
+  };
+
+  return (data.entries || []).map((entry) => ({
+    id: entry.id,
+    name: entry.name,
+    mimeType: entry['.tag'] === 'folder' ? 'folder' : guessMimeType(entry.name),
+    size: entry.size || 0,
+    modifiedAt: new Date(entry.server_modified || Date.now()),
+    path: entry.path_display || entry.name,
+    isFolder: entry['.tag'] === 'folder',
+  }));
+}
+
+async function downloadDropboxFile(source: CloudSource, fileId: string): Promise<CloudDownloadResult> {
+  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+
+  const response = await fetch('https://content.dropboxapi.com/2/files/download', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${source.accessToken}`,
+      'Dropbox-API-Arg': JSON.stringify({ path: fileId }),
+    },
+  });
+
+  if (!response.ok) throw new Error(`Dropbox download error: ${response.status}`);
+
+  const apiResult = response.headers.get('dropbox-api-result');
+  let fileName = `dropbox-${fileId}`;
+  let mimeType = 'application/octet-stream';
+  if (apiResult) {
+    try {
+      const parsed = JSON.parse(apiResult) as { name?: string };
+      if (parsed.name) {
+        fileName = parsed.name;
+        mimeType = guessMimeType(parsed.name);
+      }
+    } catch { /* ignore */ }
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return { fileName, mimeType, content: Buffer.from(arrayBuffer) };
+}
+
+async function uploadDropboxFile(
+  source: CloudSource,
+  fileName: string,
+  _mimeType: string,
+  content: Buffer,
+  folderId?: string
+): Promise<CloudUploadResult> {
+  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+
+  const path = `${folderId || source.rootFolderId || ''}/${fileName}`;
+
+  const response = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${source.accessToken}`,
+      'Dropbox-API-Arg': JSON.stringify({
+        path,
+        mode: 'add',
+        autorename: true,
+        mute: false,
+      }),
+      'Content-Type': 'application/octet-stream',
+    },
+    body: content,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Dropbox upload error ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = (await response.json()) as { id?: string; name?: string; path_display?: string };
+  return {
+    provider: source.provider,
+    fileId: data.id || '',
+    name: data.name || fileName,
+    mimeType: guessMimeType(fileName),
+    url: undefined,
+  };
+}
+
+function guessMimeType(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    svg: 'image/svg+xml',
+    csv: 'text/csv',
+    txt: 'text/plain',
+    json: 'application/json',
+    zip: 'application/zip',
+  };
+  return map[ext] || 'application/octet-stream';
+}
+
+// ── Background Import Processing ────────────────────────────────
+
+export async function processImportJob(jobId: string, organizationId: string): Promise<void> {
+  const db = await getDb();
+  const job = await getImportJob(jobId, organizationId);
+  if (!job) throw new Error('Import job not found');
+
+  await db.run(
+    `UPDATE cloud_import_jobs SET status = 'downloading', progress = 10 WHERE id = ?`,
+    [jobId]
+  );
+
+  try {
+    const downloaded = await downloadCloudFile(job.cloudSourceId, organizationId, job.filePath);
+
+    await db.run(
+      `UPDATE cloud_import_jobs SET status = 'processing', progress = 50 WHERE id = ?`,
+      [jobId]
+    );
+
+    const textContent = downloaded.content.toString('utf-8').slice(0, 500_000);
+
+    await db.run(
+      `UPDATE cloud_import_jobs SET status = 'completed', progress = 100, result = ?, completed_at = NOW() WHERE id = ?`,
+      [JSON.stringify({ fileName: downloaded.fileName, mimeType: downloaded.mimeType, textLength: textContent.length }), jobId]
+    );
+
+    logger.info(`[CloudData] Import job ${jobId} completed: ${downloaded.fileName}`);
+  } catch (err) {
+    await db.run(
+      `UPDATE cloud_import_jobs SET status = 'failed', error = ?, completed_at = NOW() WHERE id = ?`,
+      [(err as Error).message, jobId]
+    );
+    logger.error(`[CloudData] Import job ${jobId} failed`, { error: (err as Error).message });
+  }
 }
 
 async function tryLogIntegrationSync(input: {
@@ -719,4 +982,5 @@ export default {
   uploadCloudFile,
   startImportJob,
   getImportJob,
+  processImportJob,
 };
