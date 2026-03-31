@@ -558,4 +558,534 @@ router.post(
   })
 );
 
+// ────────────────────────────────────────────────────────────────
+// P03-B §2.4.3 — Bounded operator interventions
+// ────────────────────────────────────────────────────────────────
+
+const ReassignSchema = z.object({
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  newOwnerId: z.string().min(1),
+  reason: z.string().optional(),
+});
+
+const SmoothSchema = z.object({
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  forecastStartDate: z.string().optional(),
+  forecastEndDate: z.string().optional(),
+  allocatedHours: z.number().optional(),
+  reason: z.string().optional(),
+});
+
+const ReplanSchema = z.object({
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  forecastStartDate: z.string().optional(),
+  forecastEndDate: z.string().optional(),
+  forecastEffortHours: z.number().optional(),
+  reason: z.string().min(1),
+});
+
+const EscalateSchema = z.object({
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  escalationType: z.enum(['RISK', 'DECISION', 'ISSUE', 'DEPENDENCY']),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  ownerId: z.string().optional(),
+  dueDate: z.string().optional(),
+});
+
+async function auditLog(
+  orgId: string,
+  initiativeId: string | null,
+  field: string,
+  oldVal: unknown,
+  newVal: unknown,
+  reason: string | null,
+  userId: string
+) {
+  try {
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?, ?)`,
+      [orgId, initiativeId, field, String(oldVal ?? ''), String(newVal ?? ''), reason, userId]
+    );
+  } catch {
+    // best-effort audit
+  }
+}
+
+async function refreshControlTower(
+  organizationId: string,
+  projectId?: string,
+  entityType?: 'INITIATIVE' | 'TASK',
+  entityId?: string
+) {
+  const queues = await getExecutionControlTowerQueues(organizationId, {
+    projectId,
+    queue: 'all',
+  });
+  let drillDown = null;
+  if (entityType && entityId) {
+    drillDown = await getExecutionControlTowerItemDetail(
+      organizationId,
+      entityType,
+      entityId,
+      projectId
+    );
+  }
+  return { queues, drillDown };
+}
+
+/**
+ * POST /api/v8/execution-control/interventions/reassign
+ * §2.4.3: change owner/team of canonical work item.
+ * §2.4.4: returns refreshed queues + drill-down (mandatory readback).
+ */
+router.post(
+  '/interventions/reassign',
+  validateBody(ReassignSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { entityType, entityId, newOwnerId, reason } = req.body;
+
+    if (entityType === 'TASK') {
+      const old = (await dbAll(
+        `SELECT assignee_id FROM tasks WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { assignee_id: string | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      await dbRun(
+        `UPDATE tasks SET assignee_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [newOwnerId, entityId, organizationId]
+      );
+      await auditLog(organizationId, null, 'assignee_id', old[0].assignee_id, newOwnerId, reason || null, userId);
+    } else {
+      const old = (await dbAll(
+        `SELECT owner_execution_id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { owner_execution_id: string | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      await dbRun(
+        `UPDATE initiatives SET owner_execution_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [newOwnerId, entityId, organizationId]
+      );
+      await auditLog(organizationId, entityId, 'owner_execution_id', old[0].owner_execution_id, newOwnerId, reason || null, userId);
+    }
+
+    const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
+    return res.json({
+      data: {
+        success: true,
+        action: 'reassign',
+        entityType,
+        entityId,
+        newOwnerId,
+        readback,
+      },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/interventions/smooth
+ * §2.4.3: move work within bounded schedule window to reduce overload.
+ * Mutates forecast dates/allocation on canonical object, preserves baseline.
+ */
+router.post(
+  '/interventions/smooth',
+  validateBody(SmoothSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { entityType, entityId, forecastStartDate, forecastEndDate, allocatedHours, reason } =
+      req.body;
+
+    if (entityType === 'TASK') {
+      const old = (await dbAll(
+        `SELECT due_date, estimated_hours FROM tasks WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { due_date: string | null; estimated_hours: number | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      const sets: string[] = [];
+      const params: unknown[] = [];
+      if (forecastEndDate) {
+        sets.push('due_date = ?');
+        params.push(forecastEndDate);
+      }
+      if (allocatedHours != null) {
+        sets.push('estimated_hours = ?');
+        params.push(allocatedHours);
+      }
+      if (sets.length === 0) {
+        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+      }
+      sets.push('updated_at = NOW()');
+      params.push(entityId, organizationId);
+      await dbRun(
+        `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
+      );
+      await auditLog(organizationId, null, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, allocatedHours }), reason || null, userId);
+    } else {
+      const old = (await dbAll(
+        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      const sets: string[] = [];
+      const params: unknown[] = [];
+      if (forecastStartDate) {
+        sets.push('planned_start_date = ?');
+        params.push(forecastStartDate);
+      }
+      if (forecastEndDate) {
+        sets.push('planned_end_date = ?');
+        params.push(forecastEndDate);
+      }
+      if (sets.length === 0) {
+        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+      }
+      sets.push('updated_at = NOW()');
+      params.push(entityId, organizationId);
+      await dbRun(
+        `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
+      );
+      await auditLog(organizationId, entityId, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason || null, userId);
+    }
+
+    const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
+    return res.json({
+      data: { success: true, action: 'smooth', entityType, entityId, readback },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/interventions/replan
+ * §2.4.3: update forecast dates/effort; baseline preserved (§2.4.5).
+ */
+router.post(
+  '/interventions/replan',
+  validateBody(ReplanSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { entityType, entityId, forecastStartDate, forecastEndDate, forecastEffortHours, reason } =
+      req.body;
+
+    if (entityType === 'TASK') {
+      const old = (await dbAll(
+        `SELECT due_date, estimated_hours FROM tasks WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { due_date: string | null; estimated_hours: number | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      const sets: string[] = [];
+      const params: unknown[] = [];
+      if (forecastEndDate) {
+        sets.push('due_date = ?');
+        params.push(forecastEndDate);
+      }
+      if (forecastEffortHours != null) {
+        sets.push('estimated_hours = ?');
+        params.push(forecastEffortHours);
+      }
+      if (sets.length === 0) {
+        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+      }
+      sets.push('updated_at = NOW()');
+      params.push(entityId, organizationId);
+      await dbRun(
+        `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
+      );
+      await auditLog(organizationId, null, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, forecastEffortHours }), reason, userId);
+    } else {
+      const old = (await dbAll(
+        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      if (!old?.length) {
+        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      const sets: string[] = [];
+      const params: unknown[] = [];
+      if (forecastStartDate) {
+        sets.push('planned_start_date = ?');
+        params.push(forecastStartDate);
+      }
+      if (forecastEndDate) {
+        sets.push('planned_end_date = ?');
+        params.push(forecastEndDate);
+      }
+      if (sets.length === 0) {
+        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+      }
+      sets.push('updated_at = NOW()');
+      params.push(entityId, organizationId);
+      await dbRun(
+        `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+        params
+      );
+      await auditLog(organizationId, entityId, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason, userId);
+    }
+
+    const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
+    return res.json({
+      data: { success: true, action: 'replan', entityType, entityId, readback },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/interventions/escalate
+ * §2.4.3: create governed follow-up (RAID item) linked to work.
+ */
+router.post(
+  '/interventions/escalate',
+  validateBody(EscalateSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { entityType, entityId, escalationType, title, description, ownerId, dueDate } = req.body;
+
+    const initiativeId =
+      entityType === 'INITIATIVE'
+        ? entityId
+        : ((
+            (await dbAll(
+              `SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`,
+              [entityId, organizationId]
+            )) as { initiative_id: string | null }[]
+          )?.[0]?.initiative_id ?? null);
+
+    const raidId = `raid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    await dbRun(
+      `INSERT INTO raid_items (id, organization_id, initiative_id, type, title, description, status, owner_id, due_date, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, NOW(), NOW())`,
+      [
+        raidId,
+        organizationId,
+        initiativeId,
+        escalationType,
+        title,
+        description || null,
+        ownerId || userId,
+        dueDate || null,
+      ]
+    );
+
+    await auditLog(
+      organizationId,
+      initiativeId,
+      'escalate',
+      null,
+      JSON.stringify({ raidId, escalationType, title }),
+      `Escalation from ${entityType}:${entityId}`,
+      userId
+    );
+
+    const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
+    return res.json({
+      data: {
+        success: true,
+        action: 'escalate',
+        entityType,
+        entityId,
+        raidItemId: raidId,
+        readback,
+      },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
+// P03-B §2.4.5 — Baseline / forecast / variance read
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v8/execution-control/baseline-variance/:initiativeId
+ * Returns baseline vs current (forecast) dates + variance.
+ * Missing baseline → explicit "missing_baseline" posture (§2.4.5).
+ */
+router.get(
+  '/baseline-variance/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { initiativeId } = req.params;
+
+    const inits = (await dbAll(
+      `SELECT planned_start_date, planned_end_date, start_date, actual_end_date, progress
+       FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId]
+    )) as {
+      planned_start_date: string | null;
+      planned_end_date: string | null;
+      start_date: string | null;
+      actual_end_date: string | null;
+      progress: number | null;
+    }[];
+
+    if (!inits?.length) {
+      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
+    }
+
+    const init = inits[0];
+
+    let snapshots: Array<{ tasks_json: string; snapshot_at: string }> = [];
+    try {
+      snapshots = ((await dbAll(
+        `SELECT tasks_json, snapshot_at FROM task_baseline_snapshots
+         WHERE initiative_id = ? AND organization_id = ?
+         ORDER BY snapshot_at DESC LIMIT 1`,
+        [initiativeId, organizationId]
+      )) || []) as Array<{ tasks_json: string; snapshot_at: string }>;
+    } catch {
+      // table may not exist
+    }
+
+    const baselineSnapshot = snapshots.length > 0 ? snapshots[0] : null;
+    const hasBaseline = !!(init.planned_start_date || init.planned_end_date);
+
+    const forecastStart = init.start_date || init.planned_start_date;
+    const forecastEnd = init.actual_end_date || init.planned_end_date;
+
+    let startVarianceDays: number | null = null;
+    let endVarianceDays: number | null = null;
+
+    if (hasBaseline && init.planned_start_date && forecastStart) {
+      startVarianceDays = Math.round(
+        (new Date(forecastStart).getTime() - new Date(init.planned_start_date).getTime()) / 86400000
+      );
+    }
+    if (hasBaseline && init.planned_end_date && forecastEnd) {
+      endVarianceDays = Math.round(
+        (new Date(forecastEnd).getTime() - new Date(init.planned_end_date).getTime()) / 86400000
+      );
+    }
+
+    return res.json({
+      data: {
+        initiativeId,
+        posture: hasBaseline ? 'baseline_available' : 'missing_baseline',
+        baseline: {
+          startDate: init.planned_start_date,
+          endDate: init.planned_end_date,
+        },
+        forecast: {
+          startDate: forecastStart,
+          endDate: forecastEnd,
+        },
+        variance: hasBaseline
+          ? { startDays: startVarianceDays, endDays: endVarianceDays }
+          : null,
+        progress: init.progress,
+        taskBaselineSnapshot: baselineSnapshot
+          ? { snapshotAt: baselineSnapshot.snapshot_at, available: true }
+          : { available: false },
+        degradedNote: hasBaseline
+          ? null
+          : 'Missing baseline: variance cannot be computed. Set planned dates to establish baseline.',
+      },
+      meta: executionControlMeta(),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
+// P03-B §2.4.8 — Degraded posture: control tower health
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v8/execution-control/control-tower/health
+ * Reports degraded posture signals: stale data, missing baselines, etc.
+ */
+router.get(
+  '/control-tower/health',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const projectId = firstQueryString(req.query.projectId);
+
+    const queues = await getExecutionControlTowerQueues(organizationId, {
+      projectId,
+      queue: 'all',
+    });
+
+    const missingBaselineCount = queues.queues.at_risk.filter((i) =>
+      i.why.some((w) => w.kind === 'baseline_forecast' && w.detail.includes('Missing baseline'))
+    ).length;
+
+    const missingEstimateCount = queues.queues.overloaded.filter((i) =>
+      i.why.some((w) => w.kind === 'estimate')
+    ).length;
+
+    const staleCount = queues.counts.stale;
+
+    const degradedSignals: Array<{
+      type: string;
+      message: string;
+      count: number;
+      severity: 'info' | 'warning' | 'critical';
+    }> = [];
+
+    if (missingBaselineCount > 0) {
+      degradedSignals.push({
+        type: 'missing_baseline',
+        message: `${missingBaselineCount} initiative(s) without baseline dates — variance cannot be computed.`,
+        count: missingBaselineCount,
+        severity: missingBaselineCount > 5 ? 'critical' : 'warning',
+      });
+    }
+
+    if (missingEstimateCount > 0) {
+      degradedSignals.push({
+        type: 'missing_estimate',
+        message: `${missingEstimateCount} overloaded item(s) lack estimated_hours — overload may be understated.`,
+        count: missingEstimateCount,
+        severity: 'warning',
+      });
+    }
+
+    if (staleCount > 0) {
+      degradedSignals.push({
+        type: 'stale_data',
+        message: `${staleCount} item(s) have not been updated in ≥14 days.`,
+        count: staleCount,
+        severity: staleCount > 10 ? 'critical' : 'warning',
+      });
+    }
+
+    return res.json({
+      data: {
+        generatedAt: queues.generatedAt,
+        healthy: degradedSignals.length === 0,
+        degradedSignals,
+        counts: queues.counts,
+        posture:
+          degradedSignals.length === 0
+            ? 'nominal'
+            : degradedSignals.some((s) => s.severity === 'critical')
+              ? 'degraded_critical'
+              : 'degraded_warning',
+      },
+      meta: executionControlTowerMeta(),
+    });
+  })
+);
+
 export default router;

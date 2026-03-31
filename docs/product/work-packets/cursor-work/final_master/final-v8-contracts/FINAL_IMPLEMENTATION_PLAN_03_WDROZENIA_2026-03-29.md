@@ -1,8 +1,8 @@
 # Final Implementation Contract — Wdrożenia (Position 3/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `approved(scope)` for **P03-A** (control tower canon + write-truth boundaries frozen); P03-B / P03-C not started  
-Last updated: 2026-03-30 (P03-A scope closure)
+Status: `verified(evidence)` (P03 program complete 2026-03-31)  
+Last updated: 2026-03-31 (P03-B/C closure)
 
 ## 1. Executive summary
 - **Intent**: Zarządzanie pracą wielu zadań i inicjatyw: ryzyko, obciążenia, zasoby.
@@ -289,6 +289,6 @@ Kontrakt wymaga (minimum):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P03-A | `approved(scope)` | `fa9ab5e05b` | Scope approval — no runtime tests | N/A (scope phase) | Control tower canon + one-truth boundaries frozen; bounded interventions; degraded posture |
-| P03-B |  |  |  |  |  |
-| P03-C |  |  |  |  |  |
+| P03-B | `verified(evidence)` | `4d8ebfa514` + follow-up | 26 tests (2 tower service + 15 route + 9 intervention write→readback) | API: detect→drill-down→intervene→verify via Postman/test | 5-queue read model; 4 intervention endpoints with mandatory readback; baseline-variance; degraded health; 1-hop affectsNext |
+| P03-C | `verified(evidence)` | same commit chain | All P03-B tests green; acceptance checklist 12/12 | Evidence closeout doc | Known limit: UI consumer not in P03 scope (API-first); smooth uses plan dates as forecast proxy |
 
