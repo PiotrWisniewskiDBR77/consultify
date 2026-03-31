@@ -11,7 +11,10 @@ import {
   P28_METHODOLOGY_PRESETS,
   P28_WORKBENCH_CONTRACT_VERSION,
 } from '../../server/src/services/assessment/AssessmentWorkbenchService.js';
-import { deriveBalancesFromEntries } from '../../server/src/services/partnerProgramLedgerService.js';
+import {
+  buildPartnerWhatNextGuidance,
+  deriveBalancesFromEntries,
+} from '../../server/src/services/partnerProgramLedgerService.js';
 
 describe('P28 Assessment workbench (FINAL 28)', () => {
   it('uses frozen contract version constant', () => {
@@ -143,5 +146,46 @@ describe('P29 Partner program ledger (FINAL 29)', () => {
     expect(b.heldAmount).toBe(15);
     expect(b.paidOut).toBe(30);
     expect(b.availableToPayout).toBe(45);
+  });
+
+  it('buildPartnerWhatNextGuidance: partner in earn with balance suggests payout CTA when no hold', () => {
+    const next = buildPartnerWhatNextGuidance({
+      lifecyclePhase: 'earn',
+      balances: {
+        grossEarned: 100,
+        heldAmount: 0,
+        paidOut: 0,
+        availableToPayout: 40,
+        currency: 'EUR',
+      },
+      audience: 'partner',
+    });
+    expect(next.some((l) => l.includes('request-payout-phase'))).toBe(true);
+  });
+
+  it('buildPartnerWhatNextGuidance: partner in earn with active hold suppresses payout CTA', () => {
+    const next = buildPartnerWhatNextGuidance({
+      lifecyclePhase: 'earn',
+      balances: {
+        grossEarned: 100,
+        heldAmount: 20,
+        paidOut: 0,
+        availableToPayout: 30,
+        currency: 'EUR',
+      },
+      audience: 'partner',
+      activeHold: { reasonCode: 'review', note: 'internal', amount: 20 },
+    });
+    expect(next.some((l) => l.toLowerCase().includes('hold'))).toBe(true);
+    expect(next.some((l) => l.includes('request-payout-phase'))).toBe(false);
+  });
+
+  it('buildPartnerWhatNextGuidance: operator in earn mentions ledger alignment', () => {
+    const next = buildPartnerWhatNextGuidance({
+      lifecyclePhase: 'earn',
+      balances: deriveBalancesFromEntries([{ entry_type: 'accrual.posted', amount: 10 }], 'EUR'),
+      audience: 'operator',
+    });
+    expect(next.some((l) => l.toLowerCase().includes('ledger'))).toBe(true);
   });
 });

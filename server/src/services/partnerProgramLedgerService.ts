@@ -50,6 +50,84 @@ export interface PartnerProgramBalances {
   currency: string;
 }
 
+export interface PartnerProgramWhatNextContext {
+  lifecyclePhase: PartnerLifecyclePhase;
+  balances: PartnerProgramBalances;
+  audience: 'partner' | 'operator';
+  partnerOrgStatus?: string | null;
+  /** Ostatni hold.placed gdy heldAmount > 0 (P29-B exceptional path) */
+  activeHold?: { reasonCode: string | null; note: string | null; amount: number } | null;
+}
+
+/**
+ * Jawne kroki „what next” — ta sama semantyka dla portalu partnera i wieży operatora (FINAL 29 §2.3.6, §8.1 P29-B).
+ */
+export function buildPartnerWhatNextGuidance(ctx: PartnerProgramWhatNextContext): string[] {
+  const lines: string[] = [];
+  const { lifecyclePhase: phase, balances: b, audience: aud, activeHold } = ctx;
+
+  if (activeHold && b.heldAmount > 0) {
+    if (aud === 'partner') {
+      lines.push(
+        'Część środków jest zablokowana (hold). Sprawdź kategorię poniżej; w razie potrzeby skontaktuj się z operatorem programu.'
+      );
+      if (activeHold.reasonCode) {
+        lines.push(`Kategoria (non-sensitive): ${activeHold.reasonCode}`);
+      }
+    } else {
+      lines.push(
+        `Aktywny hold: ${activeHold.amount} ${b.currency}. Po weryfikacji dodaj wpis hold.released lub korektę; audyt w ledgerze.`
+      );
+      if (activeHold.note?.trim()) {
+        lines.push(`Notatka operatora: ${activeHold.note.trim()}`);
+      }
+    }
+  }
+
+  switch (phase) {
+    case 'onboard':
+      lines.push(
+        aud === 'partner'
+          ? 'Uzupełnij onboarding; przejście do fazy activate wykonuje operator platformy.'
+          : 'Gdy wymagania onboard są spełnione: POST .../partner-settlements/program/:partnerOrgId/lifecycle z { toPhase: "activate" }.'
+      );
+      break;
+    case 'activate':
+      lines.push(
+        aud === 'operator'
+          ? 'Włącz naliczanie: transition do earn, potem ewentualnie wpisy accrual.posted w ledgerze.'
+          : 'Konto w aktywacji — po stronie operatora przejdziesz do fazy earn (narzędzia referral).'
+      );
+      break;
+    case 'earn':
+      if (aud === 'partner' && b.availableToPayout > 0 && !(activeHold && b.heldAmount > 0)) {
+        lines.push(
+          'Możesz przejść do fazy payout: POST /api/v8/partner/program/lifecycle/request-payout-phase (wymaga kompletnych ustawień wypłat).'
+        );
+      }
+      if (aud === 'operator') {
+        lines.push(
+          'Ten sam ledger co u partnera: GET status/ledger po stronie partnera i superadmin program/:id/status — jedna prawda.'
+        );
+        lines.push(
+          'Wpisy hold/accrual/payout: POST .../partner-settlements/program/:partnerOrgId/ledger-entry (tylko operator).'
+        );
+      }
+      break;
+    case 'payout':
+      lines.push(
+        aud === 'partner'
+          ? 'Trwa żądanie / rozliczenie wypłaty; operator dokończy payout w ledgerze, potem powrót do earn.'
+          : 'Zaksięguj payout.approved / payout.executed / payout.reconciled, potem transition z powrotem do earn.'
+      );
+      break;
+    default:
+      break;
+  }
+
+  return lines.filter(Boolean);
+}
+
 export interface AppendLedgerEntryInput {
   partnerOrgId: string;
   entryType: PartnerLedgerEntryType;
@@ -248,6 +326,72 @@ export class PartnerProgramLedgerService {
       { fallback: false }
     );
     return deriveBalancesFromEntries(rows, currency);
+  }
+
+  /** Ostatni wpis hold.placed (dla komunikatów hold / review). */
+  static async getLatestHoldPlaced(
+    partnerOrgId: string
+  ): Promise<{ amount: number; reason_code: string | null; note: string | null } | null> {
+    const db = getDatabase();
+    await ensurePartnerProgramSchema(db);
+    const row = await DbPromise.get<{
+      amount: number;
+      reason_code: string | null;
+      note: string | null;
+    }>(
+      db,
+      `SELECT amount, reason_code, note FROM partner_program_ledger
+       WHERE partner_org_id = ? AND entry_type = 'hold.placed'
+       ORDER BY occurred_at DESC LIMIT 1`,
+      [partnerOrgId],
+      { fallback: false }
+    );
+    return row ?? null;
+  }
+
+  /**
+   * P29-B: jedna odpowiedź statusu dla partnera i operatora + whatNext + hold (bounded exposure).
+   */
+  static async getProgramStatusDetail(
+    partnerOrgId: string,
+    audience: 'partner' | 'operator'
+  ): Promise<{
+    runtime: Awaited<ReturnType<typeof PartnerProgramLedgerService.getOrCreateRuntime>>;
+    balances: PartnerProgramBalances;
+    whatNext: string[];
+    hold: {
+      amount: number;
+      reasonCode: string | null;
+      note: string | null;
+    } | null;
+  }> {
+    const runtime = await this.getOrCreateRuntime(partnerOrgId);
+    const balances = await this.getBalances(partnerOrgId);
+    const latestHold = balances.heldAmount > 0 ? await this.getLatestHoldPlaced(partnerOrgId) : null;
+    const activeHoldForGuidance =
+      latestHold && balances.heldAmount > 0
+        ? {
+            reasonCode: latestHold.reason_code,
+            note: latestHold.note,
+            amount: Number(latestHold.amount),
+          }
+        : undefined;
+    const whatNext = buildPartnerWhatNextGuidance({
+      lifecyclePhase: runtime.lifecycle_phase,
+      balances,
+      audience,
+      partnerOrgStatus: runtime.partner_status,
+      activeHold: activeHoldForGuidance ?? null,
+    });
+    const hold =
+      latestHold && balances.heldAmount > 0
+        ? {
+            amount: Number(latestHold.amount),
+            reasonCode: latestHold.reason_code,
+            note: audience === 'operator' ? latestHold.note : null,
+          }
+        : null;
+    return { runtime, balances, whatNext, hold };
   }
 
   static async getOrCreateRuntime(partnerOrgId: string): Promise<{

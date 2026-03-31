@@ -264,6 +264,6 @@ Degraded behavior is part of the contract (no “silent fail”):
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P29-A | approved(scope) | `6b1fe7dfbe` | n/a (docs-only) | n/a (docs-only) | Canon frozen: lifecycle + ledger semantics + boundaries + audit + degraded + checklist |
-| P29-B | verified(evidence) | `33c7841aea` | `PartnerProgramLedgerService` + V8 partner program routes + superadmin program routes; `deriveBalancesFromEntries` test | Operator vs partner lifecycle edges enforced in service | Append-only ledger; single runtime lifecycle row; does not duplicate P30 org profile |
+| P29-B | verified(evidence) | `d875bf25c3` | `PartnerProgramLedgerService`: `getProgramStatusDetail`, `buildPartnerWhatNextGuidance`; trasy status (partner+operator) z `whatNext`/`hold`; błędy lifecycle z `whatNext`; kontrakt + smoke `smoke-p29-partner-program-b.ts` | `final_master/evidence/P29_B_ROLLOUT_2026-03-31.md`; `npx tsx server/scripts/smoke-p29-partner-program-b.ts` | Hold path: partner bez pełnej notatki w `hold.note`; operator widzi notatkę; CTA payout w earn wyłączony przy aktywnym hold |
 | P29-C | verified(evidence) | `33c7841aea` | Same + EXECUTION_INDEX #29 | Ledger row | Rollback: disable routes; tables remain read-only safe |
 

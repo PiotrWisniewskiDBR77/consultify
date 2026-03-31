@@ -2252,15 +2252,16 @@ superAdminPartnerRouter.get(
       if (!partnerOrgId) {
         return res.status(400).json({ success: false, error: 'partnerOrgId required' });
       }
-      const runtime = await PartnerProgramLedgerService.getOrCreateRuntime(partnerOrgId);
-      const balances = await PartnerProgramLedgerService.getBalances(partnerOrgId);
+      const detail = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'operator');
       const entries = await PartnerProgramLedgerService.listEntries(partnerOrgId, { limit: 25 });
       res.json({
         success: true,
         data: {
-          lifecyclePhase: runtime.lifecycle_phase,
-          partnerOrganizationStatus: runtime.partner_status,
-          balances,
+          lifecyclePhase: detail.runtime.lifecycle_phase,
+          partnerOrganizationStatus: detail.runtime.partner_status,
+          balances: detail.balances,
+          whatNext: detail.whatNext,
+          hold: detail.hold,
           recentLedgerEntries: entries,
         },
       });
@@ -2296,7 +2297,19 @@ superAdminPartnerRouter.post(
     } catch (error: any) {
       const code = error?.code;
       if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
-        return res.status(400).json({ success: false, error: error.message, code });
+        let whatNext: string[] = [];
+        try {
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'operator');
+          whatNext = d.whatNext;
+        } catch {
+          /* ignore */
+        }
+        return res.status(400).json({
+          success: false,
+          error: error.message,
+          code,
+          ...(whatNext.length ? { whatNext } : {}),
+        });
       }
       logger.error('Error transitioning partner program lifecycle:', error);
       next(error);

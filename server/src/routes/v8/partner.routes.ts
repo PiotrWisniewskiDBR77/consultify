@@ -85,13 +85,14 @@ router.get(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    const runtime = await PartnerProgramLedgerService.getOrCreateRuntime(partnerOrgId);
-    const balances = await PartnerProgramLedgerService.getBalances(partnerOrgId);
+    const detail = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
     return res.json({
       data: {
-        lifecyclePhase: runtime.lifecycle_phase,
-        partnerOrganizationStatus: runtime.partner_status,
-        balances,
+        lifecyclePhase: detail.runtime.lifecycle_phase,
+        partnerOrganizationStatus: detail.runtime.partner_status,
+        balances: detail.balances,
+        whatNext: detail.whatNext,
+        hold: detail.hold,
       },
       meta: partnerProgramMeta(req, partnerOrgId),
     });
@@ -162,9 +163,20 @@ router.post(
         meta: partnerProgramMeta(req, partnerOrgId),
       });
     } catch (e: any) {
+      const code = e?.code || 'P29_LIFECYCLE_ERROR';
+      let whatNext: string[] = [];
+      if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
+        try {
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
+          whatNext = d.whatNext;
+        } catch {
+          /* ignore */
+        }
+      }
       return res.status(400).json({
         error: e?.message || 'Lifecycle error',
-        code: e?.code || 'P29_LIFECYCLE_ERROR',
+        code,
+        ...(whatNext.length ? { whatNext } : {}),
       });
     }
   })
