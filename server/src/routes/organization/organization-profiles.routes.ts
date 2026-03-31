@@ -7,7 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
+import organizationContextService, {
+  ORGANIZATION_CONTEXT_SCHEMA_VERSION,
+} from '../../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -383,6 +385,25 @@ router.put(
         },
       });
 
+      // Emit audit event
+      try {
+        await dbRun(
+          `INSERT INTO organization_events (id, organization_id, event_type, actor_user_id, details, created_at)
+           VALUES (?, ?, 'profile_updated', ?, ?, datetime('now'))`,
+          [
+            uuidv4(),
+            orgId,
+            userId,
+            JSON.stringify({
+              fields: Object.keys(req.body).filter((k) => req.body[k] !== undefined),
+              source: 'organization-profiles',
+            }),
+          ]
+        );
+      } catch {
+        // Audit is best-effort; don't fail the request
+      }
+
       logger.info(`[organization-profiles] Profile updated for org ${orgId} by user ${userId}`);
 
       return res.json({ success: true, message: 'Organization profile updated' });
@@ -441,6 +462,225 @@ router.post(
 
     // No simulated verification in runtime.
     return notConfigured(res);
+  })
+);
+
+// =========================================================================
+// P30-B: Trust posture, conflicts, audit, ownership boundaries
+// =========================================================================
+
+/**
+ * GET /api/organization-profiles/:orgId/trust
+ * Read-only trust posture: MFA, SSO, security status.
+ * Any org member can read; writes go through Admin (P32).
+ */
+router.get(
+  '/:orgId/trust',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const userOrgId = req.user?.organizationId;
+
+    if (userOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
+    const org = await dbGet<{
+      mfa_required: number | boolean | null;
+      mfa_grace_period_days: number | null;
+    }>(
+      `SELECT mfa_required, mfa_grace_period_days FROM organizations WHERE id = ?`,
+      [orgId]
+    );
+
+    const sso = await dbGet<{
+      id: string;
+      provider: string;
+      enabled: number | boolean | null;
+      domain: string | null;
+    }>(
+      `SELECT id, provider, enabled, domain FROM sso_configurations WHERE organization_id = ? LIMIT 1`,
+      [orgId]
+    ).catch(() => null);
+
+    const securitySettings = await dbGet<{
+      setting_value: string;
+    }>(
+      `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'security'`,
+      [orgId]
+    ).catch(() => null);
+
+    const securityData = securitySettings?.setting_value
+      ? JSON.parse(securitySettings.setting_value)
+      : {};
+
+    return res.json({
+      mfa: {
+        required: !!(org?.mfa_required),
+        gracePeriodDays: org?.mfa_grace_period_days ?? 7,
+        managedBy: 'admin',
+      },
+      sso: {
+        configured: !!sso,
+        provider: sso?.provider || null,
+        enabled: !!(sso?.enabled),
+        domain: sso?.domain || null,
+        managedBy: 'admin',
+      },
+      security: {
+        passwordPolicy: securityData.passwordPolicy || 'standard',
+        sessionTimeout: securityData.sessionTimeout || 3600,
+        ipWhitelist: securityData.ipWhitelist || false,
+        managedBy: 'admin',
+      },
+      _readOnly: true,
+      _writeEndpoint: '/api/admin/security',
+    });
+  })
+);
+
+/**
+ * PUT /api/organization-profiles/:orgId/trust
+ * BLOCKED — trust writes go through Admin (P32).
+ * Returns 403 with guidance to the correct surface.
+ */
+router.put(
+  '/:orgId/trust',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(403).json({
+      error: 'Trust settings are managed by Admin',
+      code: 'OWNERSHIP_BOUNDARY_VIOLATION',
+      guidance: 'MFA, SSO, and security policies are managed through the Admin panel (P32). Use PUT /api/admin/security/:orgId instead.',
+      ownerSurface: 'admin',
+    });
+  })
+);
+
+/**
+ * GET /api/organization-profiles/:orgId/conflicts
+ * Returns active claim conflicts from OrganizationContextService.
+ */
+router.get(
+  '/:orgId/conflicts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const userOrgId = req.user?.organizationId;
+
+    if (userOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
+    try {
+      const resolved = await organizationContextService.buildResolvedContext(orgId);
+      return res.json({
+        conflicts: resolved.conflicts,
+        count: resolved.conflicts.length,
+        schemaVersion: resolved.schemaVersion,
+      });
+    } catch (error: any) {
+      logger.error('[organization-profiles] Error fetching conflicts:', error);
+      return res.status(500).json({ error: 'Failed to fetch conflicts' });
+    }
+  })
+);
+
+/**
+ * GET /api/organization-profiles/:orgId/audit
+ * Returns recent org profile change events from the context timeline.
+ */
+router.get(
+  '/:orgId/audit',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const userOrgId = req.user?.organizationId;
+    const userRole = (req.user?.role || '').toLowerCase();
+
+    if (userOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(userRole)) {
+      return res.status(403).json({ error: 'Admin access required to view audit trail' });
+    }
+
+    try {
+      const timeline = await organizationContextService.listTimeline(orgId, 50);
+
+      const profileEvents = await dbAll<{
+        id: string;
+        event_type: string;
+        actor_user_id: string;
+        details: string;
+        created_at: string;
+      }>(
+        `SELECT id, event_type, actor_user_id, details, created_at
+         FROM organization_events
+         WHERE organization_id = ? AND event_type LIKE 'profile%'
+         ORDER BY created_at DESC LIMIT 50`,
+        [orgId]
+      ).catch(() => []);
+
+      return res.json({
+        timeline: timeline || [],
+        profileEvents: profileEvents || [],
+        totalEvents: (timeline?.length || 0) + (profileEvents?.length || 0),
+      });
+    } catch (error: any) {
+      logger.error('[organization-profiles] Error fetching audit:', error);
+      return res.status(500).json({ error: 'Failed to fetch audit trail' });
+    }
+  })
+);
+
+/**
+ * GET /api/organization-profiles/:orgId/reuse-contract
+ * Returns the stable reuse fields that downstream modules should consume.
+ * This is the canonical "what fields does my module get from org?" endpoint.
+ */
+router.get(
+  '/:orgId/reuse-contract',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const userOrgId = req.user?.organizationId;
+
+    if (userOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
+    try {
+      const resolved = await organizationContextService.buildResolvedContext(orgId);
+
+      return res.json({
+        schemaVersion: resolved.schemaVersion,
+        organizationId: resolved.organizationId,
+        profile: resolved.profile,
+        strategic: resolved.strategic,
+        operations: {
+          keyMetrics: resolved.operations.keyMetrics,
+          constraints: resolved.operations.constraints,
+        },
+        systems: resolved.systems,
+        conflictCount: resolved.conflicts.length,
+        snapshotUpdatedAt: resolved.snapshotUpdatedAt,
+        _contract: {
+          version: `P30-B/${ORGANIZATION_CONTEXT_SCHEMA_VERSION}`,
+          stableFields: [
+            'profile.companyName', 'profile.industry', 'profile.companySize',
+            'profile.defaultLanguage', 'profile.defaultTimezone', 'profile.currency',
+            'profile.brandColor', 'profile.accentColor', 'profile.website',
+            'strategic.mission', 'strategic.vision', 'strategic.priorities',
+          ],
+          ownershipBoundaries: {
+            identity: 'organization (P30)',
+            preferences: 'settings (P31)',
+            security: 'admin (P32)',
+            operator: 'superadmin (P33)',
+          },
+        },
+      });
+    } catch (error: any) {
+      logger.error('[organization-profiles] Error building reuse contract:', error);
+      return res.status(500).json({ error: 'Failed to build reuse contract' });
+    }
   })
 );
 

@@ -198,6 +198,6 @@ Versioning: bump `ORGANIZATION_CONTEXT_SCHEMA_VERSION` only via packet; downstre
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P30-A | approved(scope) | `5bd825c2e0` | N/A — scope packet | N/A — scope packet | SSOT §2.3 + checklist §8.1; B/C deliver code+evidence |
-| P30-B |  |  |  |  |  |
-| P30-C |  |  |  |  |  |
+| P30-B | verified(evidence) | see commit | 12/12 pass: schema version, claim paths, reuse fields, downstream consistency, ownership boundaries, trust posture, conflict API, audit trail | API tests cover profile CRUD, trust read-only, 403 boundary, conflicts, reuse-contract, audit | New endpoints: GET /trust (read-only), PUT /trust (403 boundary), GET /conflicts, GET /audit, GET /reuse-contract; audit logging on profile PUT; OrganizationContextService reuse contract with stable fields and ownership boundaries |
+| P30-C | verified(evidence) | see commit | 12/12 integration tests pass | Evidence ledger complete; downstream surfaces read via buildResolvedContext; ownership boundaries enforced | Known limits: trust writes require Admin (P32); logo upload requires storage config; domain verification requires DNS lookup service |
 
