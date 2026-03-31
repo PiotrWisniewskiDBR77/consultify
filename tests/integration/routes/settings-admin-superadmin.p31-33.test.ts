@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 
 // ===========================================================================
-// P31 — Settings
+// P31 — Settings (base)
 // ===========================================================================
 
 describe('P31 Settings — taxonomy + preferences', () => {
@@ -305,5 +305,414 @@ describe('Ownership boundaries across P30-P33', () => {
     );
     expect(content).toContain('requireRole');
     expect(content).toContain('SUPERADMIN');
+  });
+});
+
+// ===========================================================================
+// P31 — Settings Registry (scope model + impact metadata)
+// ===========================================================================
+
+describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () => {
+  it('settingsRegistryService exports registry with 3 scopes', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const service = mod.default;
+    expect(service).toBeDefined();
+
+    const all = service.getRegistry();
+    expect(all.length).toBeGreaterThanOrEqual(20);
+
+    const scopes = new Set(all.map((k: any) => k.scope));
+    expect(scopes.has('personal')).toBe(true);
+    expect(scopes.has('module')).toBe(true);
+    expect(scopes.has('tenant')).toBe(true);
+  });
+
+  it('each registry key has impact metadata fields', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const all = mod.default.getRegistry();
+    for (const key of all) {
+      expect(key.key).toBeTruthy();
+      expect(key.scope).toBeTruthy();
+      expect(key.ownerContract).toBeTruthy();
+      expect(key.impactLanguage).toBeTruthy();
+      expect(key.impactedSurface).toBeTruthy();
+      expect(typeof key.requiresRestart).toBe('boolean');
+      expect(typeof key.confirmationGate).toBe('boolean');
+      expect(Array.isArray(key.readRoles)).toBe(true);
+      expect(Array.isArray(key.writeRoles)).toBe(true);
+    }
+  });
+
+  it('tenant-scoped keys route writes to Admin (P32)', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const service = mod.default;
+    const routing = service.checkWriteRouting('mfa_enforcement', 'member');
+    expect(routing.allowed).toBe(false);
+    expect(routing.routeTo).toBe('Admin');
+    expect(routing.guidance).toContain('Admin');
+  });
+
+  it('personal-scoped keys allow any role to write', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const service = mod.default;
+    const routing = service.checkWriteRouting('theme', 'member');
+    expect(routing.allowed).toBe(true);
+  });
+
+  it('buildDenialResponse returns proper 403 with guidance', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const service = mod.default;
+    const denial = service.buildDenialResponse('mfa_enforcement', 'permission_denied');
+    expect(denial.status).toBe(403);
+    expect(denial.code).toBe('SETTINGS_PERMISSION_DENIED');
+    expect(denial.message).toContain('Admin');
+  });
+
+  it('buildDenialResponse returns 404 for not_found', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const denial = mod.default.buildDenialResponse('nonexistent', 'not_found');
+    expect(denial.status).toBe(404);
+    expect(denial.code).toBe('SETTINGS_KEY_NOT_FOUND');
+  });
+
+  it('buildDenialResponse returns 503 for resolver_unavailable', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const denial = mod.default.buildDenialResponse('theme', 'resolver_unavailable');
+    expect(denial.status).toBe(503);
+  });
+
+  it('settings routes have registry endpoints', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/settings.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('/registry');
+    expect(content).toContain('settingsRegistryService');
+    expect(content).toContain('CONFIRMATION_REQUIRED');
+  });
+
+  it('module preferences keys exist in registry', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const moduleKeys = mod.default.getKeysByScope('module');
+    expect(moduleKeys.length).toBeGreaterThanOrEqual(5);
+    const keyNames = moduleKeys.map((k: any) => k.key);
+    expect(keyNames).toContain('interview_recording_auto_start');
+    expect(keyNames).toContain('tools_default_export_format');
+    expect(keyNames).toContain('copilot_suggestions_enabled');
+  });
+});
+
+describe('P31 Settings — Module Preferences sidebar', () => {
+  it('SettingsSidebar has MODULE PREFERENCES group', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/settings/SettingsSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('module-preferences');
+    expect(content).toContain('MODULE PREFERENCES');
+    expect(content).toContain('module-interview');
+    expect(content).toContain('module-tools');
+    expect(content).toContain('module-outputs');
+    expect(content).toContain('module-assessment');
+    expect(content).toContain('module-copilot');
+  });
+});
+
+// ===========================================================================
+// P32 — Admin cockpit alignment
+// ===========================================================================
+
+describe('P32 Admin — cockpit IA alignment (§2.3.1)', () => {
+  it('AdminSettingsSidebar has Members & Roles group', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('members-roles');
+    expect(content).toContain('MEMBERS & ROLES');
+    expect(content).toContain("'members'");
+  });
+
+  it('AdminSettingsSidebar has Collaboration Controls group', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('collaboration');
+    expect(content).toContain('COLLABORATION');
+    expect(content).toContain('sync-hub');
+  });
+
+  it('AdminSettingsModule has members/collaboration/sync-hub metadata', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/views/admin/AdminSettingsModule.tsx', 'utf-8'
+    );
+    expect(content).toContain("members:");
+    expect(content).toContain("collaboration:");
+    expect(content).toContain("'sync-hub':");
+  });
+});
+
+describe('P32 Admin — audit events on members ops', () => {
+  it('organizations.routes wires audit to addMember', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/organization/organizations.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('adminAuditService');
+    expect(content).toContain('add_member');
+  });
+
+  it('organizations.routes wires audit to updateMemberRole', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/organization/organizations.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('update_member_role');
+  });
+
+  it('organizations.routes wires audit to removeMember', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/organization/organizations.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('remove_member');
+  });
+});
+
+describe('P32 Admin — integration status model (§2.3.4)', () => {
+  it('integrationStatusService exports 4-status model', async () => {
+    const mod = await import(
+      '../../../server/src/services/integrationStatusService.js'
+    );
+    const service = mod.default;
+    expect(service).toBeDefined();
+    expect(typeof service.getRemediationPath).toBe('function');
+    expect(typeof service.normalizeStatus).toBe('function');
+    expect(typeof service.getHealthForOrg).toBe('function');
+    expect(typeof service.transitionStatus).toBe('function');
+  });
+
+  it('normalizeStatus maps raw values to canonical statuses', async () => {
+    const mod = await import(
+      '../../../server/src/services/integrationStatusService.js'
+    );
+    const s = mod.default;
+    expect(s.normalizeStatus('active')).toBe('connected');
+    expect(s.normalizeStatus('healthy')).toBe('connected');
+    expect(s.normalizeStatus('failed')).toBe('error');
+    expect(s.normalizeStatus('sync_error')).toBe('error');
+    expect(s.normalizeStatus('expired')).toBe('needs_reauth');
+    expect(s.normalizeStatus('token_expired')).toBe('needs_reauth');
+    expect(s.normalizeStatus(null)).toBe('disabled');
+    expect(s.normalizeStatus('unknown')).toBe('disabled');
+  });
+
+  it('getRemediationPath returns guidance for each status', async () => {
+    const mod = await import(
+      '../../../server/src/services/integrationStatusService.js'
+    );
+    const s = mod.default;
+    expect(s.getRemediationPath('connected')).toContain('No action');
+    expect(s.getRemediationPath('error')).toContain('Retry');
+    expect(s.getRemediationPath('needs_reauth')).toContain('reauthorization');
+    expect(s.getRemediationPath('disabled')).toContain('Re-enable');
+  });
+});
+
+// ===========================================================================
+// P33 — Superadmin gated actions
+// ===========================================================================
+
+describe('P33 Superadmin — gated actions (§2.3.2)', () => {
+  it('superadmin routes have suspend tenant endpoint', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('tenants/:id/suspend');
+    expect(content).toContain('suspend_tenant');
+    expect(content).toContain('tenant.suspended');
+  });
+
+  it('superadmin routes have reactivate tenant endpoint', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('tenants/:id/reactivate');
+    expect(content).toContain('tenant.reactivated');
+  });
+
+  it('superadmin routes have force-reset MFA endpoint', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('force-reset-mfa');
+    expect(content).toContain('user.mfa_reset');
+  });
+
+  it('superadmin routes have platform MFA override', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('platform/mfa-override');
+    expect(content).toContain('platform.mfa_override');
+  });
+
+  it('superadmin routes have platform SSO override', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('platform/sso-override');
+    expect(content).toContain('platform.sso_override');
+  });
+
+  it('superadmin routes have suspend AI model', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('ai/models');
+    expect(content).toContain('suspend');
+    expect(content).toContain('ai.model_suspended');
+  });
+
+  it('superadmin routes have emergency connector kill-switch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('emergency-kill');
+    expect(content).toContain('connector.emergency_kill');
+  });
+
+  it('superadmin routes have bulk data export', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('data/bulk-export');
+    expect(content).toContain('data.bulk_export');
+  });
+
+  it('superadmin routes have tenant data purge with type-to-confirm', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('tenants/:id/purge');
+    expect(content).toContain('tenant.data_purge');
+    expect(content).toContain('confirmTenantName');
+    expect(content).toContain('TYPE_TO_CONFIRM_FAILED');
+    expect(content).toContain('irreversible');
+  });
+
+  it('superadmin routes have suspend virtual worker', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('virtual-workers');
+    expect(content).toContain('ai.virtual_worker_suspended');
+  });
+
+  it('superadmin routes have emergency tenant lockdown', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('tenants/:id/lockdown');
+    expect(content).toContain('tenant.emergency_lockdown');
+  });
+
+  it('all gated actions use requireConfirmation + requireAudit', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/superadmin.routes.ts', 'utf-8'
+    );
+    const gatedActions = [
+      'suspend_tenant', 'reactivate_tenant', 'force_reset_mfa',
+      'platform_mfa_override', 'platform_sso_override', 'suspend_ai_model',
+      'emergency_connector_kill', 'bulk_data_export', 'tenant_data_purge',
+      'suspend_virtual_worker', 'emergency_tenant_lockdown',
+    ];
+    for (const action of gatedActions) {
+      expect(content).toContain(action);
+    }
+  });
+});
+
+describe('P33 Superadmin — fail-closed audit (§2.3.2 guardrail)', () => {
+  it('confirmAction middleware returns 503 on audit failure', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/middleware/confirmAction.middleware.ts', 'utf-8'
+    );
+    expect(content).toContain('AUDIT_UNAVAILABLE');
+    expect(content).toContain('503');
+    expect(content).toContain('FAIL-CLOSED');
+  });
+});
+
+describe('P33 Superadmin — sidebar IA alignment (§2.3.1)', () => {
+  it('SuperAdminSidebar has Tenant & User Ops branch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/layout/SuperAdminSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('Tenant & User Ops');
+  });
+
+  it('SuperAdminSidebar has AI Operations branch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/layout/SuperAdminSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('AI Operations');
+  });
+
+  it('SuperAdminSidebar has Connector Ops branch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/layout/SuperAdminSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('Connector Ops');
+  });
+
+  it('SuperAdminSidebar has Governance & Compliance branch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/layout/SuperAdminSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('Governance & Compliance');
+  });
+
+  it('SuperAdminSidebar has Platform Security branch', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/components/layout/SuperAdminSidebar.tsx', 'utf-8'
+    );
+    expect(content).toContain('Platform Security');
   });
 });
