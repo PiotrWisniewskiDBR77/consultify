@@ -2032,4 +2032,132 @@ router.delete(
   })
 );
 
+// ==========================================
+// P05-B: Finance Lane E2E endpoints
+// ==========================================
+
+router.post(
+  '/lane/start',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { startLaneRun } = await import('../../services/v8/financeLaneService.js');
+    const { versionType } = req.body || {};
+    const run = await startLaneRun({ organizationId, actor: userId, versionType: versionType || 'current' });
+    return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.post(
+  '/lane/:runId/advance',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const runId = req.params.runId?.trim();
+    if (!runId) return res.status(400).json({ error: 'runId required', code: 'P05_RUN_ID_REQUIRED' });
+    const { outcome, detail } = req.body || {};
+    if (!outcome) return res.status(400).json({ error: 'outcome required', code: 'P05_OUTCOME_REQUIRED' });
+    const { advanceLaneStep } = await import('../../services/v8/financeLaneService.js');
+    const run = await advanceLaneStep(runId, organizationId, userId, outcome, detail);
+    return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.get(
+  '/lane/:runId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const runId = req.params.runId?.trim();
+    if (!runId) return res.status(400).json({ error: 'runId required', code: 'P05_RUN_ID_REQUIRED' });
+    const { getLaneRun } = await import('../../services/v8/financeLaneService.js');
+    const run = await getLaneRun(runId, organizationId);
+    if (!run) return res.status(404).json({ error: 'Run not found', code: 'P05_RUN_NOT_FOUND' });
+    return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.get(
+  '/lane',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { getLaneRuns } = await import('../../services/v8/financeLaneService.js');
+    const runs = await getLaneRuns(organizationId);
+    return res.json({ data: runs, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.post(
+  '/lane/:runId/mutation-audit',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const runId = req.params.runId?.trim();
+    if (!runId) return res.status(400).json({ error: 'runId required', code: 'P05_RUN_ID_REQUIRED' });
+    const { mutationType, targetEntity, previousValue, newValue, outcome } = req.body || {};
+    if (!mutationType || !targetEntity || !newValue || !outcome) {
+      return res.status(400).json({ error: 'mutationType, targetEntity, newValue, outcome required', code: 'P05_AUDIT_PARAMS_REQUIRED' });
+    }
+    const { recordMutationAudit } = await import('../../services/v8/financeLaneService.js');
+    const audit = await recordMutationAudit({
+      organizationId, runId, mutationType, targetEntity, previousValue, newValue, outcome, actor: userId,
+    });
+    return res.json({ data: audit, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.get(
+  '/lane/:runId/mutation-audit',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const runId = req.params.runId?.trim();
+    const { getMutationAudits } = await import('../../services/v8/financeLaneService.js');
+    const audits = await getMutationAudits(organizationId, runId || undefined);
+    return res.json({ data: audits, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.post(
+  '/versions/snapshot',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { versionType, snapshotData } = req.body || {};
+    if (!versionType || !snapshotData) return res.status(400).json({ error: 'versionType and snapshotData required', code: 'P05_VERSION_PARAMS_REQUIRED' });
+    const { createVersionSnapshot } = await import('../../services/v8/financeLaneService.js');
+    const snapshot = await createVersionSnapshot({ organizationId, versionType, snapshotData, actor: userId });
+    return res.json({ data: snapshot, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.post(
+  '/versions/:snapshotId/finalize',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const snapshotId = req.params.snapshotId?.trim();
+    if (!snapshotId) return res.status(400).json({ error: 'snapshotId required', code: 'P05_SNAPSHOT_ID_REQUIRED' });
+    const { finalizeSwitchover } = await import('../../services/v8/financeLaneService.js');
+    const snapshot = await finalizeSwitchover(snapshotId, organizationId, userId);
+    return res.json({ data: snapshot, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.get(
+  '/versions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { getVersionSnapshots } = await import('../../services/v8/financeLaneService.js');
+    const versionType = req.query.versionType ? String(req.query.versionType) : undefined;
+    const snapshots = await getVersionSnapshots(organizationId, versionType as any);
+    return res.json({ data: snapshots, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+router.get(
+  '/lane/:runId/kpi-coherence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const runId = req.params.runId?.trim();
+    if (!runId) return res.status(400).json({ error: 'runId required', code: 'P05_RUN_ID_REQUIRED' });
+    const { checkKpiLinkageCoherence } = await import('../../services/v8/financeLaneService.js');
+    const result = await checkKpiLinkageCoherence(organizationId, runId);
+    return res.json({ data: result, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
 export default router;
