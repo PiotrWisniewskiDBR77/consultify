@@ -13,9 +13,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import {
   useKnowledgeArticle,
+  useKnowledgeCollections,
   useKnowledgeRedirect,
   useKnowledgeRelated,
-  useKnowledgeTags,
   useTrackArticleView,
 } from '../../hooks/useKnowledge';
 
@@ -93,6 +93,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, poster }) => {
 interface KnowledgeArticleViewProps {
   slug: string;
   onBack: () => void;
+  onArticleClick?: (slug: string) => void;
   moduleId?: string;
 }
 
@@ -108,6 +109,7 @@ function fallbackRouteForModule(moduleId?: string): string {
 export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   slug,
   onBack,
+  onArticleClick,
   moduleId,
 }) => {
   const { t, i18n } = useTranslation();
@@ -118,8 +120,10 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   const { mutate: trackView } = useTrackArticleView();
   const { data: relatedArticles = [] } = useKnowledgeRelated(article?.slug);
   const { data: redirectInfo } = useKnowledgeRedirect(slug);
-  const { data: articleTags = [] } = useKnowledgeTags();
+  const { data: collections = [] } = useKnowledgeCollections();
   const isPolish = i18n.language?.startsWith('pl');
+  const articleTags: Array<{ id: string; slug: string; kind: string; label: string }> =
+    (article as any)?.tags || [];
 
   const closePanelAndNavigate = (targetRoute?: string) => {
     window.setTimeout(() => {
@@ -149,14 +153,17 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
     return (
       <div className="text-center py-12">
         <BookOpen size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t('help.knowledge.articleNotFound', 'Article not found.')}
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('help.knowledge.contentMoved', 'This content has been moved or removed.')}
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {t('help.knowledge.contentMovedHint', 'Browse our collections to find what you need.')}
         </p>
         <button
           onClick={onBack}
-          className="mt-4 px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700"
+          className="mt-4 px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
         >
-          ← {t('help.knowledge.backToSearch', 'Search help')}
+          ← {t('help.knowledge.browseCollections', 'Browse collections')}
         </button>
       </div>
     );
@@ -215,12 +222,22 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             <div>
               <p className="font-semibold">{t('help.knowledge.deprecated', 'This article has been deprecated')}</p>
               <p className="mt-0.5">{redirectInfo.deprecationReason}</p>
-              {redirectInfo.redirectSlug && (
+              {redirectInfo.redirectSlug ? (
+                <button
+                  onClick={() => {
+                    onBack();
+                    setTimeout(() => onArticleClick?.(redirectInfo.redirectSlug!), 100);
+                  }}
+                  className="mt-1 text-red-700 dark:text-red-300 underline hover:no-underline"
+                >
+                  {t('help.knowledge.viewReplacement', 'View replacement article')} →
+                </button>
+              ) : (
                 <button
                   onClick={() => onBack()}
                   className="mt-1 text-red-700 dark:text-red-300 underline hover:no-underline"
                 >
-                  {t('help.knowledge.viewReplacement', 'View replacement article')} →
+                  {t('help.knowledge.browseCollections', 'Browse collections')} →
                 </button>
               )}
             </div>
@@ -245,6 +262,29 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             {article.view_count} {t('help.knowledge.views', 'views')}
           </span>
         </div>
+
+        {/* P26-B: Article tags */}
+        {articleTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {articleTags.map((tag) => {
+              const kindColors: Record<string, string> = {
+                domain: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                tool: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+                concept: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+                stage: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+                audience: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
+              };
+              return (
+                <span
+                  key={tag.id}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}`}
+                >
+                  {tag.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {/* Video */}
         {article.video_url && (

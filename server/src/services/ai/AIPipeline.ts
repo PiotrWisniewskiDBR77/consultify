@@ -1219,6 +1219,7 @@ export class AIPipeline {
             query: request.prompt,
             language: userLang || undefined,
             moduleId: kbModuleId,
+            surface: 'ai_recommendations',
             maxArticles: 3,
             maxCharsPerArticle: 1200,
           });

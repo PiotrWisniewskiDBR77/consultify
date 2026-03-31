@@ -453,7 +453,7 @@ async function searchWithFacets(
   if (params.surface) searchParams.append('surface', params.surface);
   if (params.limit) searchParams.append('limit', String(params.limit));
   const res = await fetch(`${PUBLIC_V8_KB_BASE}/search/faceted?${searchParams}`);
-  if (!res.ok) return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+  if (!res.ok) throw new Error(`Faceted search failed: ${res.status}`);
   const data = await res.json();
   return data.data || { articles: [], facets: { collections: [], tags: [] }, total: 0 };
 }

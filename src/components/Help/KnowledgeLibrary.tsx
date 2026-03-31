@@ -10,6 +10,7 @@
  */
 
 import {
+  AlertTriangle,
   BookOpen,
   ChevronRight,
   Clock,
@@ -271,7 +272,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
   });
 
   // P26-B: Faceted search
-  const { data: facetedResults, isLoading: facetedLoading } = useKnowledgeSearchFaceted(
+  const { data: facetedResults, isLoading: facetedLoading, isError: facetedError } = useKnowledgeSearchFaceted(
     searchQuery,
     {
       collectionSlug: activeCollection || undefined,
@@ -362,6 +363,14 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
               onClick={() => handleTagToggle(tag.slug)}
             />
           ))}
+        </div>
+      )}
+
+      {/* P26-B: Search degraded banner */}
+      {facetedError && searchQuery.length >= 2 && (
+        <div className="mx-1 mb-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+          <AlertTriangle size={14} className="flex-shrink-0" />
+          {t('help.knowledge.searchLimited', 'Search is temporarily limited. Showing browse results instead.')}
         </div>
       )}
 

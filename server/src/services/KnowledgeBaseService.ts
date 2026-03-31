@@ -322,7 +322,21 @@ class KnowledgeBaseService {
         }
       }
 
-      // Parse JSON arrays
+      // Load article tags
+      let tags: Array<{ id: string; slug: string; kind: string; label: string }> = [];
+      try {
+        tags = (await dbAll(
+          `SELECT tg.id, tg.slug, tg.kind,
+                  COALESCE(tt.label, tte.label) as label
+           FROM kb_article_tags atg
+           JOIN kb_tags tg ON atg.tag_id = tg.id
+           LEFT JOIN kb_tag_translations tt ON tg.id = tt.tag_id AND tt.language = ?
+           LEFT JOIN kb_tag_translations tte ON tg.id = tte.tag_id AND tte.language = 'en'
+           WHERE atg.article_id = ? AND tg.status = 'active'`,
+          [language, rest.id]
+        )) as any[];
+      } catch { /* tags table may not exist yet */ }
+
       return {
         ...rest,
         title,
@@ -335,6 +349,7 @@ class KnowledgeBaseService {
         is_public: Boolean(row.is_public),
         related_modules: JSON.parse(row.related_modules || '[]'),
         target_audience: JSON.parse(row.target_audience || '[]'),
+        tags,
       };
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting article:', error);
@@ -787,12 +802,18 @@ class KnowledgeBaseService {
         LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
         WHERE ${whereClause}
         ORDER BY
-          CASE WHEN COALESCE(t.title, te.title) LIKE ? THEN 0 ELSE 1 END,
+          CASE
+            WHEN LOWER(COALESCE(t.title, te.title)) = LOWER(?) THEN 0
+            WHEN COALESCE(t.title, te.title) LIKE ? THEN 1
+            WHEN COALESCE(t.summary, te.summary) LIKE ? THEN 2
+            ELSE 3
+          END,
+          CASE WHEN a.deprecated_at IS NOT NULL THEN 1 ELSE 0 END,
           a.is_featured DESC, a.view_count DESC
         LIMIT ?
       `;
 
-      const articles = await dbAll(dataSql, [language, language, ...queryParams, searchPattern, limit]);
+      const articles = await dbAll(dataSql, [language, language, ...queryParams, query, searchPattern, searchPattern, limit]);
 
       // Build facets from result set
       const articleIds = articles.map((a: any) => a.id);

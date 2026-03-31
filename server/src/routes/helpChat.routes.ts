@@ -60,6 +60,7 @@ router.post(
       const kb = await buildHelpDocsContext({
         query: message,
         moduleId: context || null,
+        surface: 'help',
         maxArticles: 3,
         maxCharsPerArticle: 1200,
       });

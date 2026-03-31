@@ -2061,6 +2061,7 @@ router.post(
           query: message,
           language,
           moduleId: kbModuleId,
+          surface: 'ai_recommendations',
           maxArticles: 3,
           maxCharsPerArticle: 1200,
         });
