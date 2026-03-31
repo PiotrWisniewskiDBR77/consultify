@@ -4954,6 +4954,30 @@ export const Api = {
     return handleResponse(res, 'Failed to retry tool');
   },
 
+  // --- WORKBOOK GENERATION (P23 extension) ---
+
+  generateWorkbook: async (payload: {
+    prompt: string;
+    researchContext?: string;
+    language?: string;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/workbook/generate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate workbook');
+  },
+
+  downloadWorkbook: (workbookId: string): void => {
+    window.open(`${API_URL}/workbook/${workbookId}/download`, '_blank');
+  },
+
+  listWorkbooks: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/workbook/list`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list workbooks');
+  },
+
   // --- ASSESSMENT WORKFLOW ---
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';

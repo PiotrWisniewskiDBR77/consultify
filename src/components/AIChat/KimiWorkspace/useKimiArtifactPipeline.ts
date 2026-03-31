@@ -201,6 +201,22 @@ function mapRunToSteps(
   return steps;
 }
 
+async function fetchWorkbookPreview(
+  workbookId: string
+): Promise<{
+  sheetNames: string[];
+  kpiItems: Array<{ label: string; value: string }>;
+  downloadUrl: string;
+} | null> {
+  try {
+    const res = await fetch(`/api/workbook/${workbookId}/download`, { method: 'HEAD' });
+    if (!res.ok) return null;
+    return null; // workbook exists, preview built from generation response
+  } catch {
+    return null;
+  }
+}
+
 async function fetchSheetPreviewData(
   tableId: string
 ): Promise<{
@@ -440,32 +456,80 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           });
           setContentGenerated(true);
         });
-    } else if (lane === 'excele' && origin?.originRecordId) {
-      const tableId = origin.originRecordId;
-      fetchSheetPreviewData(tableId)
-        .then((data) => {
-          setPreview({
-            type: 'xlsx',
-            title,
-            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-            summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
-            kpiItems: data.kpiItems,
-            sheetNames: data.sheetNames,
-            tableData: { columns: data.columns, rows: data.rows },
+    } else if (lane === 'excele') {
+      // P23-ext: Try intelligent workbook generation first, fallback to table export
+      const generateWorkbook = async () => {
+        try {
+          const wbResult = await Api.generateWorkbook({
+            prompt: lastGoal || title,
+            language: navigator.language,
           });
-          setContentGenerated(true);
-        })
-        .catch(() => {
-          setPreview({
-            type: 'xlsx',
-            title,
-            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-            summary: `Spreadsheet "${title}" generated.`,
-            kpiItems: [],
-            sheetNames: ['Sheet1'],
+          if (wbResult?.id) {
+            setPreview({
+              type: 'xlsx',
+              title: wbResult.title || title,
+              fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
+              summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets.`,
+              kpiItems: [
+                { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
+                { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
+                ...(wbResult.sheets || []).map((s: any) => ({
+                  label: s.name,
+                  value: `${s.rowCount} rows × ${s.columnCount} cols`,
+                })),
+              ],
+              sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
+              workbookId: wbResult.id,
+              downloadUrl: wbResult.downloadUrl,
+            });
+            setContentGenerated(true);
+            return true;
+          }
+        } catch (err) {
+          console.warn('[KIMI] Workbook generation failed, falling back to table export:', err);
+        }
+        return false;
+      };
+
+      const workbookGenerated = await generateWorkbook();
+
+      if (!workbookGenerated && origin?.originRecordId) {
+        const tableId = origin.originRecordId;
+        fetchSheetPreviewData(tableId)
+          .then((data) => {
+            setPreview({
+              type: 'xlsx',
+              title,
+              fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+              summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
+              kpiItems: data.kpiItems,
+              sheetNames: data.sheetNames,
+              tableData: { columns: data.columns, rows: data.rows },
+            });
+            setContentGenerated(true);
+          })
+          .catch(() => {
+            setPreview({
+              type: 'xlsx',
+              title,
+              fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+              summary: `Spreadsheet "${title}" generated.`,
+              kpiItems: [],
+              sheetNames: ['Sheet1'],
+            });
+            setContentGenerated(true);
           });
-          setContentGenerated(true);
+      } else if (!workbookGenerated) {
+        setPreview({
+          type: 'xlsx',
+          title,
+          fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+          summary: `Spreadsheet "${title}" generated.`,
+          kpiItems: [],
+          sheetNames: ['Sheet1'],
         });
+        setContentGenerated(true);
+      }
     } else {
       if (lane === 'wordy') {
         setPreview({
@@ -636,6 +700,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, []);
 
   const handleDownload = useCallback(async () => {
+    // P23-ext: Check for workbook download first
+    if (lane === 'excele' && preview && (preview as any).workbookId) {
+      Api.downloadWorkbook((preview as any).workbookId);
+      return;
+    }
+
     if (!currentRun) return;
 
     if (lane === 'excele' && currentRun.materializationOrigin?.originRecordId) {

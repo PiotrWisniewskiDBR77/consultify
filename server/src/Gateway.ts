@@ -230,6 +230,7 @@ import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
+import workbookRoutes from './routes/workbook.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import sessionsRoutes from './routes/user/sessions.routes.js';
@@ -308,6 +309,8 @@ export class ApiGateway {
       app.use('/api/ai/performance', performanceRoutes);
       console.log('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
+      console.log('[ApiGateway] Mounting /api/workbook');
+      app.use('/api/workbook', workbookRoutes);
       console.log('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
       console.log('[ApiGateway] Mounting /api/tool-assets');
