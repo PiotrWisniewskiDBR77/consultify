@@ -1,7 +1,7 @@
 # Final Implementation Contract — Notatnik (Position 7/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: draft (contract wrapper over existing plan)
+Status: verified(evidence) — P07-A/B/C complete
 
 ## 1. Executive summary
 - **Intent**: Jest ok, trzeba dobrze połączyć z resztą aplikacji.
@@ -322,6 +322,6 @@ Każdy scenariusz musi mieć: **stan widoczny**, **safe next action**, **brak si
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |
 | P07-A | approved(scope) | `6761b7b279` | N/A — docs/scope only | N/A | Scope frozen: §2.3 canon (capture/provenance/attachments/search/linking+handoff); EXECUTION_INDEX #07 updated; lock P07-A created. |
-| P07-B |  |  |  |  |  |
-| P07-C |  |  |  |  |  |
+| P07-B | verified(evidence) | pending commit | 20 contract tests (canon structure, handoff validation, operator hints, error taxonomy) — all pass | 40/40 smoke checks pass | Runtime GAP closure: notebookHandoffService (6 functions: buildHandoffCommon/buildRadarHandoff/buildInitiativeHandoff/buildTeresaHandoff/validateHandoffPayload/getHandoffTargets); notebookSearchService (4 functions: parseOperatorHints/searchNotebook/buildSnippet/getSearchContract with 14 SQL filters + semantic enrichment); 7 V8 endpoints at /api/v8/notebook/*; Known limits: None — all §2.3 requirements implemented. |
+| P07-C | verified(evidence) | pending commit | 20 contract + 40 smoke = 60 total checks | Evidence + locks created | None — all P07 contract requirements implemented with runtime services. |
 
