@@ -8,21 +8,15 @@
  */
 
 import {
-  AlertTriangle,
-  BookOpen,
   Loader2,
   RefreshCw,
-  Target,
-  TrendingUp,
-  Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { AdminTable, StatusBadge } from '../../components/Admin/shared/AdminTable';
 import { Button } from '../../components/Admin/shared/Button';
 import { Card, Section } from '../../components/Admin/shared/Card';
-import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { Api } from '../../services/api';
 
 export const SuperAdminMetricsView: React.FC = () => {
@@ -71,17 +65,16 @@ export const SuperAdminMetricsView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 p-6 pb-12">
+    <div className="space-y-5 p-5 pb-12">
       {/* Header */}
-      <PageHeader
-        title="Conversion Intelligence"
-        subtitle="Enterprise Analytics & Funnel Monitoring"
-        action={
-          <Button variant="secondary" icon={RefreshCw} onClick={fetchData}>
-            Refresh Data
-          </Button>
-        }
-      />
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Enterprise Analytics & Funnel Monitoring</h2>
+        </div>
+        <Button variant="secondary" icon={RefreshCw} onClick={fetchData}>
+          Refresh
+        </Button>
+      </div>
 
       {/* Conversion Funnels & Warnings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

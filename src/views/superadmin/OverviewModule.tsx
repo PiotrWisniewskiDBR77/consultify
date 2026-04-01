@@ -1,7 +1,7 @@
 /**
  * OverviewModule - Super Admin Overview
  *
- * Tabs: Dashboard | Metrics | Signals
+ * Tabs: Dashboard | Metrics | Signals | Updates
  */
 
 import { BarChart3, Bell, LayoutDashboard, Radio } from 'lucide-react';
@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-import { SuperadminRootClosurePanel } from '../../components/SuperAdmin/SuperadminRootClosurePanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
@@ -125,7 +124,6 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
     }
   };
 
-  // Map activeTab to help card id
   const getHelpCardId = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -150,12 +148,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
       subtitle="System dashboard and real-time insights"
       actions={<InfoButton cardId={getHelpCardId()} />}
     >
-      <>
-        <div className="p-6 pb-0">
-          <SuperadminRootClosurePanel compact />
-        </div>
-        {renderContent()}
-      </>
+      {renderContent()}
     </TabLayout>
   );
 };

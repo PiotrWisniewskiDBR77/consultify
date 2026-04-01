@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 
 import { Button } from '../../components/Admin/shared/Button';
 import { Card } from '../../components/Admin/shared/Card';
-import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { Api } from '../../services/api';
 
 type SignalType = 'SYSTEM_ALERT' | 'CLIENT_TICKET' | 'USER_FEEDBACK';
@@ -132,16 +132,15 @@ export const SuperAdminSignalsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 pb-12">
-      <PageHeader
-        title="Signals"
-        subtitle="System alerts, client tickets, and user feedback (unread)"
-        action={
-          <Button variant="secondary" icon={RefreshCw} onClick={fetchSignals} loading={loading}>
-            Refresh
-          </Button>
-        }
-      />
+    <div className="space-y-5 p-5 pb-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">System alerts, client tickets, and user feedback (unread)</h2>
+        </div>
+        <Button variant="secondary" icon={RefreshCw} onClick={fetchSignals} loading={loading}>
+          Refresh
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="bordered" padding="lg" className="min-h-[320px]">
