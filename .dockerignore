@@ -55,4 +55,20 @@ tests
 playwright.config.ts
 vitest.config.ts
 
-
+# Local-only directories (never in container)
+Softs
+App_for_ideas
+Consulitinity przegląd
+Logo consultinity
+Piotr_Tools
+Plast-met
+_quarantine
+_backup
+_archived_backups
+_analysis
+.cursor
+.claude
+.codex-worktrees
+.tmp
+screenshots
+exports

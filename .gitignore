@@ -228,6 +228,21 @@ _analysis/
 # Client data (never commit)
 Plast-met/
 
+# Softs benchmark data (large, local-only reference material)
+Softs/
+
+# Local project folders (not part of codebase)
+App_for_ideas/
+Consulitinity przegląd/
+Logo consultinity/
+
+# Archived backups
+_archived_backups/
+
+# Test artifacts (local only)
+test-drafts/
+test-screenshots/
+
 # Knowledge bank: keep markdown packs in repo, ignore raw source binaries
 knowledge/**/*.pdf
 knowledge/**/*.xlsx

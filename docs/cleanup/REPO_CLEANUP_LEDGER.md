@@ -26,13 +26,35 @@ This ledger records the first cleanup pass, the authority of noisy areas, and th
 | `docs/*` top-level indexes | authority and historical-link tightening | completed in this cleanup pass |
 | `wdrozenia/` and `Consulitinity przegląd/` | parallel-tree classification stubs | completed in this cleanup pass |
 
+## Second-Pass Actions Completed (2026-03-31)
+
+| Path pattern | Action | Result |
+| --- | --- | --- |
+| `ARCHITECTURE_DECISIONS_TAB.md` | `git mv` → `docs/architecture/` | completed |
+| `CHANGELOG_RESOURCE_MANAGEMENT.md` | `git mv` → `docs/architecture/` | completed |
+| `HOSTING_RECOMMENDATIONS.md` | `git mv` → `docs/deployment/` | completed |
+| `RAILWAY_DEPLOYMENT.md`, `RAILWAY_SETUP.md` | `git mv` → `docs/deployment/` | completed |
+| `TEST_REPORT_DECISIONS_TAB.md`, `test-decisions-manual.md` | `git mv` → `docs/testing/` | completed |
+| `odpowiedzi/` + `odpowiedzi.zip` | `git mv` → `docs/odpowiedzi/` | completed |
+| `env.production.template` | `git mv` → `config/` | completed |
+| `start-londyn.sh` | `git rm --cached` (already in .gitignore) | untracked |
+| `verify-rec-map-blocker.mjs` | `git rm --cached` | untracked |
+| `_archived_backups/*.tar.gz` | `git rm --cached` | untracked |
+| `docs/.../final-v8-contracts/` (outer, pre-closure) | moved to `_quarantine/pre-closure-contracts/`, untracked | 35 stale contracts removed from git |
+| `debug-*`, `test-*`, `inspect-*`, `capture-*`, `reproduce-*` (root) | moved to `_quarantine/root-debug-artifacts/` and `_quarantine/root-test-scripts/` | local only |
+| `DECISION_TAB_FIX.md`, `REC_MAP_CRASH_EVIDENCE.md` | moved to `_quarantine/` | local only |
+| `.gitignore` | added: `Softs/`, `App_for_ideas/`, `Consulitinity przegląd/`, `Logo consultinity/`, `_archived_backups/`, `test-drafts/`, `test-screenshots/` | updated |
+| `.dockerignore` | added: `Softs`, `App_for_ideas`, `Consulitinity przegląd`, `Logo consultinity`, `Piotr_Tools`, `Plast-met`, `_quarantine`, `_backup`, `_archived_backups`, `_analysis`, `.cursor`, `.claude`, `.codex-worktrees`, `.tmp`, `screenshots`, `exports` | updated |
+
 ## Deferred By Design
 
-These areas were intentionally not moved or deleted in the first pass:
+These areas were intentionally not moved or deleted:
 
-- tracked historical documents in `wdrozenia/`
-- tracked audit evidence in `Consulitinity przegląd/`
-- local benchmark corpora under `Softs/`
+- tracked historical documents in `wdrozenia/` (298 files, deployment history)
+- `Consulitinity przegląd/` — local-only (now in .gitignore), not tracked
+- `App_for_ideas/` — local-only (now in .gitignore), not tracked
+- `Logo consultinity/` — local-only (now in .gitignore), not tracked
+- local benchmark corpora under `Softs/` (now in .gitignore + .railwayignore + .dockerignore)
 - noisy sample and knowledge duplicates under `data/` that need provenance review
 
 ## Decision Notes
@@ -40,3 +62,4 @@ These areas were intentionally not moved or deleted in the first pass:
 - `docs/` remains the canonical home for tracked long-term documentation.
 - `docs/cleanup/` is the repository hygiene SSOT.
 - Numbered suffix copies are treated as local garbage unless a unique-content review proves otherwise.
+- `_quarantine/` is local-only (in .gitignore) — safe holding area for files removed from tracking.
