@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { tokenService } from '@/services/tokenService';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -222,6 +223,18 @@ const DEFAULT_IDEAS_COLUMN_WIDTHS = {
   actions: 68,
 };
 
+function getIdeasTableViewStorageKey(): string {
+  try {
+    const token = tokenService.getToken();
+    const payload = token ? (tokenService.decodeToken(token) as Record<string, unknown> | null) : null;
+    const userId = String(payload?.id || 'anonymous').trim() || 'anonymous';
+    const orgId = String(payload?.organizationId || 'unknown-org').trim() || 'unknown-org';
+    return `${IDEAS_TABLE_VIEW_STORAGE_KEY}.${orgId}.${userId}`;
+  } catch {
+    return IDEAS_TABLE_VIEW_STORAGE_KEY;
+  }
+}
+
 function loadIdeasTableViewState(): {
   sortField: SortField;
   sortDir: SortDir;
@@ -229,7 +242,7 @@ function loadIdeasTableViewState(): {
   columnWidths: typeof DEFAULT_IDEAS_COLUMN_WIDTHS;
 } {
   try {
-    const raw = window.localStorage.getItem(IDEAS_TABLE_VIEW_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getIdeasTableViewStorageKey());
     if (!raw) {
       return {
         sortField: 'date',
@@ -369,7 +382,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   useEffect(() => {
     try {
       window.localStorage.setItem(
-        IDEAS_TABLE_VIEW_STORAGE_KEY,
+        getIdeasTableViewStorageKey(),
         JSON.stringify({
           sortField,
           sortDir,
@@ -478,6 +491,19 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
     return list;
   }, [baseFilteredIdeas, tableFilters, viewMode]);
+
+  useEffect(() => {
+    const hasPersistedTableFilters = Object.values(tableFilters).some(
+      (value) => Array.isArray(value) && value.length > 0
+    );
+    if (!hasPersistedTableFilters) return;
+    if (viewMode !== 'table') return;
+    if (baseFilteredIdeas.length === 0) return;
+    if (filteredIdeas.length > 0) return;
+
+    // Stale browser-local filters can hide all Ideas after account/demo switches.
+    setTableFilters(DEFAULT_IDEAS_TABLE_FILTERS);
+  }, [baseFilteredIdeas.length, filteredIdeas.length, tableFilters, viewMode]);
 
   const sortedIdeas = useMemo(() => {
     const list = [...filteredIdeas];
