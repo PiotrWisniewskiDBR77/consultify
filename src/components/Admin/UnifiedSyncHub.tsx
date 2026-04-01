@@ -37,7 +37,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { EasySyncSetupShellPanel } from '@/components/shared/EasySyncSetupShellPanel';
 import {
   V8MultiplayerApi,
   type V8MultiplayerLockRecord,
@@ -438,23 +437,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       });
     });
 
-    if (byConnectorId.size === 0) {
-      catalog
-        .filter((connector) => connector.isV2Ready && !connector.comingSoon)
-        .slice(0, 5)
-        .forEach((connector) => {
-          const connectorId = connector.id?.trim();
-          if (!connectorId || byConnectorId.has(connectorId)) return;
-          byConnectorId.set(connectorId, {
-            connectorId,
-            name: connector.name,
-            category: connector.category,
-          });
-        });
-    }
-
     return Array.from(byConnectorId.values()).slice(0, 5);
-  }, [catalog, integrations]);
+  }, [integrations]);
 
   const v8RefreshPolicyTargets = useMemo<V8RefreshPolicyTarget[]>(() => {
     const byFamily = new Map<V8SyncProviderFamily, V8RefreshPolicyTarget>();
@@ -708,22 +692,26 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const results = await Promise.all([
-      fetchIntegrations(),
-      fetchCatalog(),
-      fetchHealth(),
-      fetchErrors(),
-      fetchAuditLog(),
-      fetchV8AuthHealth(),
-      fetchV8AuthEscalations(),
-      fetchV8Conflicts(),
-      fetchV8RefreshPolicies(),
-      fetchV8WorkspaceMapping(),
-      fetchV8WorkspaceBinding(),
-    ]);
-    const workspaceBinding = results[10] as V8MultiplayerRoomBinding | null;
-    await fetchV8WorkspacePresenceAndLocks(workspaceBinding);
-    setLoading(false);
+    try {
+      await Promise.allSettled([
+        fetchIntegrations(),
+        fetchCatalog(),
+        fetchHealth(),
+        fetchErrors(),
+        fetchAuditLog(),
+        fetchV8AuthHealth(),
+        fetchV8AuthEscalations(),
+        fetchV8Conflicts(),
+      ]);
+    } finally {
+      setLoading(false);
+    }
+
+    void fetchV8RefreshPolicies();
+    void fetchV8WorkspaceMapping();
+    void fetchV8WorkspaceBinding().then((workspaceBinding) => {
+      void fetchV8WorkspacePresenceAndLocks(workspaceBinding);
+    });
   }, [
     fetchIntegrations,
     fetchCatalog,
@@ -2642,6 +2630,34 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const renderHealthTab = () => (
     <div className="space-y-6">
+      {!loading && integrations.length === 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+          <Zap size={16} className="text-violet-300 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-white">
+              {t('integrations.syncHub.healthEmptyTitle', 'No integrations connected yet')}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              {t(
+                'integrations.syncHub.healthEmptyBody',
+                'Connect your first integration to unlock sync health, auth escalations, and governed conflict visibility.'
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('apps');
+              setShowConnectModal(true);
+            }}
+            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+          >
+            <Plus size={14} />
+            {t('integrations.syncHub.connectNew', 'Connect')}
+          </button>
+        </div>
+      )}
+
       {/* Health summary cards */}
       {healthSummary && (
         <div className="grid grid-cols-4 gap-3">
@@ -3567,8 +3583,6 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
-
-      <EasySyncSetupShellPanel compact />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-navy-700/50">
