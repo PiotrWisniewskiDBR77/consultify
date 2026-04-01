@@ -33,7 +33,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -727,10 +727,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     fetchV8WorkspacePresenceAndLocks,
   ]);
 
+  // Avoid reload loops caused by `loadAll` changing when derived sync targets change.
+  // We want an initial load on mount, and then explicit refreshes on demand.
+  const loadAllRef = useRef(loadAll);
   useEffect(() => {
-    loadAll();
-    trackFunnelEvent('integration_sync_hub_viewed');
+    loadAllRef.current = loadAll;
   }, [loadAll]);
+
+  useEffect(() => {
+    loadAllRef.current();
+    trackFunnelEvent('integration_sync_hub_viewed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (activeTab !== 'health') return;

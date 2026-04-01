@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import _logger from '../utils/Logger.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 
 // ==========================================
 // CONSTANTS
@@ -237,6 +238,9 @@ export interface IntegrationRecord {
   last_error?: string | null;
   created_at?: string;
   updated_at?: string;
+  // Legacy schemas
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Integration {
@@ -321,6 +325,7 @@ export interface IntegrationHubServiceDependencies {
 
 class IntegrationHubServiceClass {
   private deps: IntegrationHubServiceDependencies;
+  private integrationsColumnsPromise: Promise<Set<string>> | null = null;
 
   constructor(deps?: Partial<IntegrationHubServiceDependencies>) {
     this.deps = {
@@ -334,6 +339,13 @@ class IntegrationHubServiceClass {
    */
   setDependencies(newDeps: Partial<IntegrationHubServiceDependencies>): void {
     this.deps = { ...this.deps, ...newDeps };
+  }
+
+  private async getIntegrationsColumns(): Promise<Set<string>> {
+    if (!this.integrationsColumnsPromise) {
+      this.integrationsColumnsPromise = getTableColumns('integrations').catch(() => new Set());
+    }
+    return await this.integrationsColumnsPromise;
   }
 
   /**
@@ -358,10 +370,12 @@ class IntegrationHubServiceClass {
    * Get organization's connected integrations
    */
   async getConnectedIntegrations(organizationId: string): Promise<Integration[]> {
+    const cols = await this.getIntegrationsColumns();
+    const orderBy = cols.has('created_at') ? 'created_at' : cols.has('updated_at') ? 'updated_at' : 'id';
     const rows = (await this.deps.db.all<IntegrationRecord>(
       `SELECT * FROM integrations
              WHERE organization_id = ?
-             ORDER BY created_at DESC`,
+             ORDER BY ${orderBy} DESC`,
       [organizationId]
     )) as IntegrationRecord[];
 
@@ -380,8 +394,8 @@ class IntegrationHubServiceClass {
         : undefined,
       lastSyncAt: r.last_sync_at || undefined,
       lastError: r.last_error || undefined,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      createdAt: r.created_at ?? (r as any).createdAt,
+      updatedAt: r.updated_at ?? (r as any).updatedAt,
     }));
   }
 
@@ -406,23 +420,68 @@ class IntegrationHubServiceClass {
     }
 
     const integrationId = this.deps.uuidv4();
+    const cols = await this.getIntegrationsColumns();
+    const hasCreatedAt = cols.has('created_at');
+    const hasUpdatedAt = cols.has('updated_at');
+    const hasLegacyCreatedAt = cols.has('createdAt');
+    const hasLegacyUpdatedAt = cols.has('updatedAt');
+
+    const timestampCols: string[] = [];
+    const timestampValues: string[] = [];
+    if (hasCreatedAt) {
+      timestampCols.push('created_at');
+      timestampValues.push('CURRENT_TIMESTAMP');
+    } else if (hasLegacyCreatedAt) {
+      timestampCols.push('"createdAt"');
+      timestampValues.push('CURRENT_TIMESTAMP');
+    }
+    if (hasUpdatedAt) {
+      timestampCols.push('updated_at');
+      timestampValues.push('CURRENT_TIMESTAMP');
+    } else if (hasLegacyUpdatedAt) {
+      timestampCols.push('"updatedAt"');
+      timestampValues.push('CURRENT_TIMESTAMP');
+    }
+
+    const baseCols = [
+      'id',
+      'organization_id',
+      'connector_id',
+      'name',
+      'category',
+      'status',
+      'config',
+      'capabilities',
+      'auth_type',
+    ];
+    const columns = [...baseCols, ...timestampCols];
+    const values = [
+      '?',
+      '?',
+      '?',
+      '?',
+      '?',
+      '?',
+      '?',
+      '?',
+      '?',
+      ...timestampValues,
+    ];
+    const params = [
+      integrationId,
+      organizationId,
+      connectorId,
+      connector.name,
+      connector.category,
+      STATUS.PENDING,
+      JSON.stringify(config),
+      JSON.stringify(connector.capabilities),
+      connector.authType,
+    ];
 
     await this.deps.db.run(
-      `INSERT INTO integrations (
-                id, organization_id, connector_id, name, category,
-                status, config, capabilities, auth_type, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      [
-        integrationId,
-        organizationId,
-        connectorId,
-        connector.name,
-        connector.category,
-        STATUS.PENDING,
-        JSON.stringify(config),
-        JSON.stringify(connector.capabilities),
-        connector.authType,
-      ]
+      `INSERT INTO integrations (${columns.join(', ')}) VALUES (${values.join(', ')})`,
+      params
     );
 
     return {
