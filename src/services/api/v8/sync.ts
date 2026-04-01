@@ -236,6 +236,10 @@ export interface V8SyncTriggeredRun {
 
 export const shouldFallbackToLegacySync = (error: any) => {
   const status = Number(error?.status);
+  // V8 sync endpoints live under `/api/v8/*` and are gated by org-level V8 enablement.
+  // In admin surfaces we still want the legacy `/api/sync-hub/*` to work even when V8 is disabled.
+  // `v8OrgGate` returns 404 with code `V8_ORG_DISABLED` when V8 is not enabled for an org.
+  if (status === 404 && String(error?.data?.code || '') === 'V8_ORG_DISABLED') return true;
   return [400, 404, 405, 501].includes(status);
 };
 
