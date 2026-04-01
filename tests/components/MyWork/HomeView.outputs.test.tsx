@@ -81,18 +81,6 @@ vi.mock('../../../src/components/MyWork/Home/TeamSignalBlock', () => ({
   TeamSignalBlock: ({ block }: any) => <div>{block.title}</div>,
 }));
 
-vi.mock('../../../src/components/MyWork/Home/CommandDock', () => ({
-  CommandDock: ({ block, onAction }: any) => (
-    <div>
-      <button type="button" onClick={() => onAction({ type: 'create', target: 'idea' })}>
-        open {block.title}
-      </button>
-      <span>{block.payload?.runtimeSummary?.inboxPending}</span>
-      <span>{block.payload?.runtimeSummary?.recentOutputs}</span>
-    </div>
-  ),
-}));
-
 const homeBlocks = [
   { id: 'aiPulseCore', title: 'AI Pulse Core' },
   { id: 'momentum', title: 'Momentum' },
@@ -101,7 +89,6 @@ const homeBlocks = [
   { id: 'industryLens', title: 'Industry Lens' },
   { id: 'executionCurrent', title: 'Execution Current' },
   { id: 'teamSignal', title: 'Team Signal' },
-  { id: 'commandDock', title: 'Command Dock' },
 ].map((block) => ({
   ...block,
   accent: 'neutral' as const,
@@ -111,24 +98,15 @@ const homeBlocks = [
   freshnessScore: 80,
   ctaIntents: [],
   payload:
-    block.id === 'commandDock'
+    block.id === 'sparkField'
       ? {
           runtimeSummary: {
-            inboxPending: 7,
-            inboxAtRisk: 2,
+            ideasWithTasks: 2,
+            recentNotes: 4,
             recentOutputs: 3,
-            reviewSharedOutputs: 1,
+            orgSignals: 5,
           },
         }
-      : block.id === 'sparkField'
-        ? {
-            runtimeSummary: {
-              ideasWithTasks: 2,
-              recentNotes: 4,
-              recentOutputs: 3,
-              orgSignals: 5,
-            },
-          }
       : {},
 }));
 
@@ -159,7 +137,7 @@ describe('HomeView aggregated contract', () => {
         overallStatus: 'coherent',
         surfaceMode: 'home_v2_aggregated_with_outputs_bridge',
         counts: {
-          backed_by_real_service: 8,
+          backed_by_real_service: 7,
           partial_stitched: 0,
           placeholder_non_canonical: 0,
         },
@@ -171,7 +149,6 @@ describe('HomeView aggregated contract', () => {
           { blockName: 'industryLens', maturityLevel: 'backed_by_real_service' },
           { blockName: 'executionCurrent', maturityLevel: 'backed_by_real_service' },
           { blockName: 'teamSignal', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'commandDock', maturityLevel: 'backed_by_real_service' },
         ],
       },
       isLoading: false,
@@ -188,12 +165,10 @@ describe('HomeView aggregated contract', () => {
     expect(screen.getAllByText('AI Pulse Core').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Industry Lens').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Execution Current').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Command Dock').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Momentum').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Spark Field').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Decision Temperature').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Team Signal').length).toBeGreaterThan(0);
-    expect(screen.getByText('7')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
   });
 
@@ -216,12 +191,6 @@ describe('HomeView aggregated contract', () => {
     expect(onAction).toHaveBeenCalledWith({
       type: 'navigate',
       target: 'outputs_review',
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'open Command Dock' }));
-    expect(onAction).toHaveBeenCalledWith({
-      type: 'create',
-      target: 'idea',
     });
   });
 

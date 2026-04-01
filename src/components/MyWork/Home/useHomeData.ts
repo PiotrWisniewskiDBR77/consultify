@@ -8,7 +8,6 @@ import type {
   HomeBlockLayout,
   HomeBlockSize,
   HomeLayoutConfig,
-  HomePrimaryAction,
   HomeScreenData,
   SparkItem,
 } from './homeV2Types';
@@ -111,7 +110,6 @@ const DEFAULT_LAYOUT: HomeLayoutConfig = {
     { blockId: 'industryLens', visible: true },
     { blockId: 'executionCurrent', visible: true },
     { blockId: 'teamSignal', visible: true },
-    { blockId: 'commandDock', visible: true, pinned: true },
   ],
 };
 
@@ -424,33 +422,6 @@ const MOCK_SCREEN: HomeScreenData = {
         ],
       },
     },
-    {
-      id: 'commandDock',
-      title: 'Command Dock',
-      subtitle: 'Immediate moves',
-      accent: 'neutral',
-      size: 'hero',
-      priorityWeight: 100,
-      relevanceScore: 100,
-      freshnessScore: 100,
-      ctaIntents: ['create', 'navigate', 'chat'],
-      payload: {
-        actions: [
-          { id: 'new-idea', label: '+ Idea', kind: 'create', target: 'idea' },
-          { id: 'new-note', label: '+ Note', kind: 'create', target: 'note' },
-          { id: 'new-task', label: '+ Task', kind: 'create', target: 'task' },
-          { id: 'new-decision', label: '+ Decision', kind: 'create', target: 'decision' },
-          { id: 'open-calendar', label: 'Calendar', kind: 'navigate', target: 'calendar' },
-          {
-            id: 'ask-ai',
-            label: 'Ask AI',
-            kind: 'chat',
-            starterPrompt:
-              'Help me understand what deserves the highest attention in this transformation right now.',
-          },
-        ],
-      },
-    },
   ],
 };
 
@@ -522,6 +493,7 @@ function mergeBlocksWithLayout(blocks: HomeBlock[], layout: HomeLayoutConfig): H
   const layoutMap = new Map(layout.blockLayouts.map((item) => [item.blockId, item]));
 
   return [...blocks]
+    .filter((block) => block.id !== 'commandDock')
     .map((block) => {
       const override = layoutMap.get(block.id);
       return {
@@ -682,99 +654,13 @@ function buildLegacyNudge(screen: HomeScreenData): NudgeData | null {
   };
 }
 
-function buildCommandPrimaryAction(screen: HomeScreenData): HomePrimaryAction | null {
-  const aiPulsePayload = getBlockPayload(screen, 'aiPulseCore');
-  const topFocusItem = Array.isArray(aiPulsePayload.focusItems) ? aiPulsePayload.focusItems[0] : null;
-
-  if (topFocusItem && typeof topFocusItem.id === 'string' && typeof topFocusItem.title === 'string') {
-    const target =
-      topFocusItem.type === 'idea' || topFocusItem.type === 'task' || topFocusItem.type === 'decision'
-        ? topFocusItem.type
-        : 'idea';
-
-    return {
-      title: String(topFocusItem.title),
-      helper:
-        typeof topFocusItem.meta === 'string' && topFocusItem.meta.trim().length > 0
-          ? String(topFocusItem.meta)
-          : typeof aiPulsePayload.summary === 'string'
-            ? String(aiPulsePayload.summary)
-            : '',
-      action: {
-        type: 'open',
-        target,
-        id: String(topFocusItem.id),
-      },
-    };
-  }
-
-  const decisionPayload = getBlockPayload(screen, 'decisionTemperature');
-  const hottestDecision = decisionPayload.hottestDecision;
-  if (
-    hottestDecision &&
-    typeof hottestDecision.id === 'string' &&
-    typeof hottestDecision.title === 'string'
-  ) {
-    return {
-      title: String(hottestDecision.title),
-      helper:
-        typeof hottestDecision.deadlineLabel === 'string' && hottestDecision.deadlineLabel.trim().length > 0
-          ? String(hottestDecision.deadlineLabel)
-          : typeof hottestDecision.ownerLabel === 'string'
-            ? String(hottestDecision.ownerLabel)
-            : '',
-      action: {
-        type: 'open',
-        target: 'decision',
-        id: String(hottestDecision.id),
-      },
-    };
-  }
-
-  const sparkPayload = getBlockPayload(screen, 'sparkField');
-  if (
-    sparkPayload.nudge &&
-    typeof sparkPayload.nudge === 'object' &&
-    typeof sparkPayload.nudge.ideaId === 'string'
-  ) {
-    return {
-      title: String(sparkPayload.nudge.text || 'Explore the strongest idea'),
-      helper: typeof sparkPayload.nudge.text === 'string' ? String(sparkPayload.nudge.text) : '',
-      action: {
-        type: 'open',
-        target: 'idea',
-        id: String(sparkPayload.nudge.ideaId),
-      },
-    };
-  }
-
-  return null;
-}
-
-function enrichCommandDock(screen: HomeScreenData): HomeScreenData {
-  const primaryAction = buildCommandPrimaryAction(screen);
-
-  return {
-    ...screen,
-    blocks: screen.blocks.map((block) => {
-      if (block.id !== 'commandDock') return block;
-      return {
-        ...block,
-        payload: {
-          ...block.payload,
-          primaryAction,
-        },
-      };
-    }),
-  };
-}
-
 export function useHomeData(refreshTrigger?: number): HomeData {
   const [screen, setScreen] = useState<HomeScreenData>(cloneMockScreen);
   const [layout, setLayout] = useState<HomeLayoutConfig>(getDefaultLayout);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+  const retryCountRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     const isInitialLoad = !hasLoadedRef.current;
@@ -789,7 +675,7 @@ export function useHomeData(refreshTrigger?: number): HomeData {
 
     const screenData =
       screenRes.status === 'fulfilled' && screenRes.value?.data?.blocks
-        ? enrichCommandDock(screenRes.value.data as HomeScreenData)
+        ? (screenRes.value.data as HomeScreenData)
         : createEmptyScreen();
     const savedLayout =
       prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
@@ -801,6 +687,7 @@ export function useHomeData(refreshTrigger?: number): HomeData {
       setLayout(savedLayout);
       setError(null);
       hasLoadedRef.current = true;
+      retryCountRef.current = 0;
     } else {
       if (isInitialLoad) {
         setScreen(screenData);
@@ -824,6 +711,16 @@ export function useHomeData(refreshTrigger?: number): HomeData {
   useEffect(() => {
     fetchData();
   }, [fetchData, refreshTrigger]);
+
+  useEffect(() => {
+    if (!error || hasLoadedRef.current || retryCountRef.current >= 4) return;
+    const delay = Math.min(2000 * 2 ** retryCountRef.current, 12000);
+    const timer = window.setTimeout(() => {
+      retryCountRef.current += 1;
+      fetchData();
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [error, fetchData]);
 
   const blocks = useMemo(
     () => mergeBlocksWithLayout(screen.blocks, layout),

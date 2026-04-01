@@ -8,7 +8,6 @@ import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
 
 import { AIPulseCore } from './AIPulseCore';
-import { CommandDock } from './CommandDock';
 import { DecisionTemperatureBlock } from './DecisionTemperatureBlock';
 import { ExecutionCurrentBlock } from './ExecutionCurrentBlock';
 import type { HomeBlock, HomeScreenAction, HomeTimeMode } from './homeV2Types';
@@ -49,7 +48,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const alignedHomeBlocks = useMemo(() => {
     const homeBlocks = roofSummary.data?.homeBlocks;
     if (!homeBlocks) return [];
-    return homeBlocks.filter((block) => block.maturityLevel !== 'placeholder_non_canonical');
+    return homeBlocks.filter(
+      (block) =>
+        block.maturityLevel !== 'placeholder_non_canonical' && block.blockName !== 'commandDock'
+    );
   }, [roofSummary.data?.homeBlocks]);
 
   if (loading && !blocks.length) {
@@ -170,8 +172,6 @@ function renderHomeBlock(
       return <ExecutionCurrentBlock block={block} onAction={onAction} />;
     case 'teamSignal':
       return <TeamSignalBlock block={block} onAction={onAction} />;
-    case 'commandDock':
-      return <CommandDock block={block} onAction={onAction} />;
     default:
       return null;
   }
@@ -196,8 +196,6 @@ function getHomeBlockLabel(blockName: string): string {
       return 'Industry Lens';
     case 'executionCurrent':
       return 'Execution Current';
-    case 'commandDock':
-      return 'Command Dock';
     case 'sparkField':
       return 'Spark Field';
     case 'decisionTemperature':
