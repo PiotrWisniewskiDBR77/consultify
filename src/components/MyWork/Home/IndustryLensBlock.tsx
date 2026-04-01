@@ -17,7 +17,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300/75">
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
             <Factory size={12} className="mr-1 inline" />
@@ -45,16 +45,16 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
           />
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
+        <div className="grid gap-2 md:grid-cols-2">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+            <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
               <Scale size={12} className="text-emerald-200" />
               {isPolish ? 'Benchmark' : 'Benchmark'}
             </div>
-            <div className="mt-2 text-3xl font-semibold text-white">{payload.benchmark.value}</div>
-            <div className="text-sm text-slate-300/80">{payload.benchmark.label}</div>
-            <div className="mt-1 text-xs text-emerald-100/80">{payload.benchmark.delta}</div>
-            <p className="mt-3 text-sm leading-7 text-slate-300/75">
+            <div className="mt-1 text-2xl font-semibold tabular-nums text-white">{payload.benchmark.value}</div>
+            <div className="text-xs text-slate-300/85">{payload.benchmark.label}</div>
+            <div className="mt-0.5 text-[11px] text-emerald-100/80">{payload.benchmark.delta}</div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-300/80 md:text-sm">
               {payload.benchmark.implication}
             </p>
           </div>
@@ -80,16 +80,16 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
                 },
               })
             }
-            className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.08]"
+            className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
           >
-            <div className="text-xs uppercase tracking-[0.18em] text-white/45">
+            <div className="font-mono text-[9px] uppercase tracking-wider text-white/45">
               {isPolish ? 'Peer case' : 'Peer case'}
             </div>
-            <div className="mt-2 text-lg font-semibold leading-snug text-white">
+            <div className="mt-1.5 text-base font-semibold leading-snug text-white">
               {payload.peerCase.title}
             </div>
-            <p className="mt-2 text-sm leading-7 text-slate-300/78">{payload.peerCase.summary}</p>
-            <div className="mt-3 flex items-center gap-2 text-xs font-medium text-primary-200">
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/80 md:text-sm">{payload.peerCase.summary}</p>
+            <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-primary-200">
               {payload.peerCase.implication}
               <ArrowRight size={14} />
             </div>
@@ -131,11 +131,11 @@ const SignalCard: React.FC<{
         },
       })
     }
-    className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.08]"
+    className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
   >
-    <div className={`inline-flex rounded-xl p-2 ${toneClass}`}>{icon}</div>
-    <div className="mt-3 text-base font-semibold leading-snug text-white">{signal.title}</div>
-    <div className="mt-2 text-sm leading-7 text-slate-300/78">{signal.summary}</div>
-    <div className="mt-3 text-xs uppercase tracking-[0.18em] text-white/45">{signal.tag}</div>
+    <div className={`inline-flex rounded-lg p-1.5 ${toneClass}`}>{icon}</div>
+    <div className="mt-2 text-sm font-semibold leading-snug text-white">{signal.title}</div>
+    <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{signal.summary}</div>
+    <div className="mt-2 font-mono text-[9px] uppercase tracking-wider text-white/45">{signal.tag}</div>
   </button>
 );

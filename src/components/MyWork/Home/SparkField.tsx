@@ -25,7 +25,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
@@ -71,7 +71,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
                 },
               })
             }
-            className="flex items-center gap-3 rounded-[22px] border border-amber-400/15 bg-amber-500/[0.06] p-4 text-left transition hover:bg-amber-500/[0.10]"
+            className="flex items-center gap-2.5 rounded-lg border border-amber-400/15 bg-amber-500/[0.06] p-3 text-left transition hover:bg-amber-500/[0.10]"
           >
             <div className="rounded-xl bg-amber-500/15 p-2 text-amber-200">
               <WandSparkles size={16} />
@@ -81,18 +81,18 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
           </button>
         ) : null}
 
-        <div className="grid gap-3 xl:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {payload.ideas.map((idea) => (
             <IdeaCard key={idea.id} item={idea} onAction={onAction} isPolish={isPolish} />
           ))}
           <button
             onClick={() => onAction({ type: 'create', target: 'idea' })}
-            className="flex min-h-[208px] flex-col items-center justify-center rounded-[24px] border border-dashed border-amber-300/20 bg-white/[0.03] text-center transition hover:border-amber-300/35 hover:bg-amber-500/[0.05]"
+            className="flex min-h-[120px] flex-col items-center justify-center rounded-lg border border-dashed border-amber-300/20 bg-white/[0.03] text-center transition hover:border-amber-300/35 hover:bg-amber-500/[0.05] xl:min-h-[140px]"
           >
-            <div className="mb-3 rounded-2xl bg-amber-500/10 p-4 text-amber-200">
-              <Plus size={22} />
+            <div className="mb-2 rounded-lg bg-amber-500/10 p-3 text-amber-200">
+              <Plus size={18} />
             </div>
-            <div className="text-base font-semibold text-amber-50">
+            <div className="text-sm font-semibold text-amber-50">
               {isPolish ? 'Nowy pomysł' : 'New idea'}
             </div>
             <div className="mt-1 text-xs text-slate-300/65">
@@ -101,12 +101,12 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
           </button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           {payload.notes.map((note) => (
             <button
               key={note.id}
               onClick={() => onAction({ type: 'open', target: 'note', id: note.id })}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.08]"
+              className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
             >
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/40">
                 <FileText size={12} />
@@ -130,7 +130,7 @@ const IdeaCard: React.FC<{
 }> = ({ item, onAction, isPolish }) => (
   <button
     onClick={() => onAction({ type: 'open', target: 'idea', id: item.id })}
-    className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/[0.08]"
+    className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
   >
     <div className="flex items-center justify-between gap-3">
       <span
@@ -142,8 +142,8 @@ const IdeaCard: React.FC<{
       </span>
       <Lightbulb size={15} className="text-amber-200/70" />
     </div>
-    <div className="mt-3 text-lg font-semibold leading-snug text-white">{item.title}</div>
-    <div className="mt-2 text-sm leading-7 text-slate-300/75">{item.snippet}</div>
+    <div className="mt-2 text-base font-semibold leading-snug text-white">{item.title}</div>
+    <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{item.snippet}</div>
     <div className="mt-3 flex items-center justify-between text-xs text-slate-400/70">
       <span>{item.updatedAt}</span>
       <span>

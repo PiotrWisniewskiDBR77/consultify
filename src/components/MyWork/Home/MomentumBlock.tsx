@@ -17,28 +17,28 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         <div>
-          <h4 className="text-2xl font-semibold text-white leading-tight">{payload.headline}</h4>
-          <p className="mt-2 text-sm leading-7 text-slate-300/80">{payload.summary}</p>
+          <h4 className="text-lg font-semibold leading-tight text-white md:text-xl">{payload.headline}</h4>
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-300/85 md:text-sm">{payload.summary}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {payload.stats.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+              className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5"
             >
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+              <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">
                 {stat.label}
               </div>
-              <div className="mt-1 text-2xl font-semibold text-white">{stat.value}</div>
-              <div className="mt-1 text-xs text-slate-300/65">{stat.trend}</div>
+              <div className="mt-0.5 text-lg font-semibold tabular-nums text-white md:text-xl">{stat.value}</div>
+              <div className="mt-0.5 text-[10px] text-slate-300/75">{stat.trend}</div>
             </div>
           ))}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {payload.signals.map((signal) => (
             <button
               key={signal.id}
@@ -65,7 +65,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
                   },
                 })
               }
-              className="flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+              className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
               <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-300">
                 <TrendingUp size={15} />

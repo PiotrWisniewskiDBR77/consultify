@@ -27,53 +27,51 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
   return (
     <HomeBlockShell
       block={block}
-      className="xl:col-span-12"
-      contentClassName="grid h-full grid-cols-1 xl:grid-cols-[1.55fr_0.95fr] gap-6"
+      contentClassName="grid h-full grid-cols-1 gap-4 xl:grid-cols-12 xl:gap-5"
       headerRight={
-        <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-right">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-            {isPolish ? 'Pulse score' : 'Pulse score'}
+        <div className="rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-right font-mono">
+          <div className="text-[9px] uppercase tracking-wider text-white/45">
+            {isPolish ? 'Pulse' : 'Pulse'}
           </div>
-          <div className="text-2xl font-semibold text-white">{payload.pulseScore}</div>
+          <div className="text-xl font-semibold tabular-nums text-white">{payload.pulseScore}</div>
         </div>
       }
     >
-      <div className="flex flex-col justify-between">
+      <div className="flex flex-col justify-between xl:col-span-7">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-100 mb-4">
-            <Bot size={14} />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[11px] font-medium text-primary-100">
+            <Bot size={13} />
             {payload.greeting}
           </div>
 
-          <div className="flex items-start gap-5">
-            <div className="relative hidden md:flex h-28 w-28 flex-shrink-0 items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-500 via-violet-400 to-cyan-400 blur-xl opacity-60" />
-              <div className="absolute inset-3 rounded-full border border-white/15 bg-white/[0.05]" />
-              <div className="relative rounded-full border border-white/15 bg-navy-950/70 px-4 py-4 text-white">
-                <Sparkles size={28} />
+          <div className="flex items-start gap-4">
+            <div className="relative hidden xl:flex h-16 w-16 flex-shrink-0 items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-500 via-violet-400 to-cyan-400 blur-lg opacity-50" />
+              <div className="relative rounded-full border border-white/15 bg-navy-950/80 p-3 text-white">
+                <Sparkles size={20} />
               </div>
             </div>
             <div className="min-w-0">
-              <h2 className="text-3xl md:text-4xl font-semibold leading-[1.08] tracking-tight text-white max-w-[18ch]">
+              <h2 className="max-w-[28ch] text-xl font-semibold leading-tight tracking-tight text-white md:text-2xl">
                 {payload.headline}
               </h2>
-              <p className="mt-3 max-w-[62ch] text-sm md:text-base leading-7 text-slate-300/85">
+              <p className="mt-2 max-w-[62ch] text-xs leading-relaxed text-slate-300/90 md:text-sm">
                 {payload.summary}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
-            <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-              <Compass size={16} className="text-primary-300" />
+        <div className="mt-4 space-y-3">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-white/85">
+              <Compass size={14} className="text-primary-300" />
               {isPolish ? 'Insight AI' : 'AI insight'}
             </div>
-            <p className="mt-2 text-sm leading-7 text-slate-300/80">{payload.insight}</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/85 md:text-sm">{payload.insight}</p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() =>
                 onAction({
@@ -91,14 +89,14 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                   },
                 })
               }
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary-500 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-900/30 transition hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-violet-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-primary-900/25 transition hover:brightness-110"
             >
               {isPolish ? 'Porozmawiaj z AI' : 'Talk to AI'}
-              <ArrowRight size={16} />
+              <ArrowRight size={14} />
             </button>
             <button
               onClick={() => onAction({ type: 'navigate', target: 'tasks' })}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08]"
             >
               {isPolish ? 'Przejdź do wykonania' : 'Open execution'}
             </button>
@@ -106,22 +104,22 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
+      <div className="grid gap-2 md:grid-cols-3 xl:col-span-5 xl:grid-cols-1">
         {primaryFocus ? (
-          <div className="rounded-[24px] border border-primary-400/30 bg-gradient-to-br from-primary-500/18 via-violet-500/10 to-cyan-400/10 p-4 shadow-[0_20px_60px_-28px_rgba(76,29,149,0.9)]">
+          <div className="rounded-lg border border-primary-400/30 bg-gradient-to-br from-primary-500/14 via-violet-500/8 to-cyan-400/8 p-3 shadow-lg shadow-violet-950/30">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-primary-100/80">
-                {isPolish ? 'Najważniejszy ruch teraz' : 'Top move right now'}
+              <div className="text-[9px] font-mono uppercase tracking-wider text-primary-100/85">
+                {isPolish ? 'Top move' : 'Top move'}
               </div>
               <span
                 className={cn(
-                  'h-2.5 w-2.5 rounded-full bg-gradient-to-r',
+                  'h-2 w-2 rounded-full bg-gradient-to-r',
                   PRIORITY_RING[primaryFocus.priority]
                 )}
               />
             </div>
-            <div className="mt-3 text-lg font-semibold leading-snug text-white">{primaryFocus.title}</div>
-            <div className="mt-2 text-sm leading-6 text-slate-200/80">{primaryFocus.meta}</div>
+            <div className="mt-2 text-base font-semibold leading-snug text-white">{primaryFocus.title}</div>
+            <div className="mt-1 text-xs leading-relaxed text-slate-200/80">{primaryFocus.meta}</div>
             <button
               onClick={() =>
                 onAction({
@@ -130,10 +128,10 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                   id: primaryFocus.id,
                 })
               }
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.13]"
+              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.08] px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
             >
               {isPolish ? 'Otwórz priorytet' : 'Open priority'}
-              <ArrowRight size={16} />
+              <ArrowRight size={14} />
             </button>
           </div>
         ) : null}
@@ -148,23 +146,23 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                 id: item.id,
               })
             }
-            className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.07] hover:-translate-y-0.5"
+            className="group rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.07]"
           >
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-                {isPolish ? `Kolejka ${index + 2}` : `Queue ${index + 2}`}
+              <div className="font-mono text-[9px] uppercase tracking-wider text-white/45">
+                {isPolish ? `Q${index + 2}` : `Q${index + 2}`}
               </div>
               <span
                 className={cn(
-                  'h-2.5 w-2.5 rounded-full bg-gradient-to-r',
+                  'h-2 w-2 rounded-full bg-gradient-to-r',
                   PRIORITY_RING[item.priority]
                 )}
               />
             </div>
-            <div className="mt-2 text-base font-semibold leading-snug text-white group-hover:text-primary-200">
+            <div className="mt-1.5 text-sm font-semibold leading-snug text-white group-hover:text-primary-200">
               {item.title}
             </div>
-            <div className="mt-1.5 text-xs leading-6 text-slate-300/70">{item.meta}</div>
+            <div className="mt-1 text-[11px] leading-relaxed text-slate-300/75">{item.meta}</div>
           </button>
         ))}
       </div>

@@ -159,6 +159,8 @@ describe('HomeView aggregated contract', () => {
   it('renders the aggregated home contract with roof truth and block orchestration', () => {
     render(<HomeView onAction={vi.fn()} />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Roof ·/ }));
+
     expect(screen.getByText('Transformation pulse is rising')).toBeInTheDocument();
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
     expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();

@@ -85,9 +85,9 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-4">
-        <p className="text-sm leading-7 text-slate-300/80">{payload.headline}</p>
-        <div className="space-y-2">
+      <div className="grid gap-3">
+        <p className="text-xs leading-relaxed text-slate-300/85 md:text-sm">{payload.headline}</p>
+        <div className="space-y-1.5">
           {payload.streams.map((stream) => {
             const openTarget =
               stream.entityType === 'task' || stream.entityType === 'decision'
@@ -106,7 +106,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                     ? onAction({ type: 'open', target: openTarget, id: stream.entityId })
                     : undefined
                 }
-                className="flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+                className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
               >
                 <div className={`rounded-xl p-2 ${STATUS_META[stream.status].className}`}>
                   {STATUS_META[stream.status].icon}
@@ -121,7 +121,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
           })}
         </div>
         {orderedArtifactOutputs.length > 0 ? (
-          <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
               {isPolish ? 'Strumień outputów' : 'Output flow'}
             </div>
@@ -148,7 +148,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                       id: artifact.id,
                     })
                   }
-                  className="flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+                  className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
                 >
                   <div className="rounded-xl bg-violet-500/15 p-2 text-violet-200">
                     {artifact.originRuntime === 'presentation' ? (
@@ -228,7 +228,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
               },
             })
           }
-          className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-medium text-slate-100 transition hover:bg-white/[0.08]"
+          className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/[0.08]"
         >
           {isPolish ? 'Poproś AI o sequencing' : 'Ask AI for sequencing'}
         </button>

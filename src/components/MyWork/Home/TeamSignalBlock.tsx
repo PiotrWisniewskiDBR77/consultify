@@ -23,17 +23,17 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
+      <div className="grid gap-3">
+        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+          <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
             <Users size={12} className="text-slate-200" />
             {isPolish ? 'Sygnał zespołu' : 'Team readout'}
           </div>
-          <div className="mt-2 text-lg font-semibold text-white">{payload.headline}</div>
-          <div className="mt-2 text-sm leading-7 text-slate-300/78">{payload.summary}</div>
+          <div className="mt-1.5 text-base font-semibold text-white">{payload.headline}</div>
+          <div className="mt-1 text-xs leading-relaxed text-slate-300/82 md:text-sm">{payload.summary}</div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {payload.signals.map((signal) => (
             <button
               key={signal.id}
@@ -53,7 +53,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
                   },
                 })
               }
-              className="flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+              className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
               <div className={`rounded-xl p-2 ${TONE_STYLE[signal.tone]}`}>
                 <Users size={14} />

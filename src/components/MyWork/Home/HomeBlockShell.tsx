@@ -6,12 +6,16 @@ import { cn } from '@/lib/utils';
 
 import type { HomeBlock } from './homeV2Types';
 
+export type HomeBlockShellDensity = 'comfortable' | 'compact';
+
 interface HomeBlockShellProps {
   block: HomeBlock;
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
   headerRight?: React.ReactNode;
+  /** compact = denser radar grid (default). */
+  density?: HomeBlockShellDensity;
 }
 
 const ACCENT_STYLES: Record<HomeBlock['accent'], string> = {
@@ -23,11 +27,18 @@ const ACCENT_STYLES: Record<HomeBlock['accent'], string> = {
   neutral: 'from-white/[0.06] via-white/[0.03] to-white/[0.02] border-white/[0.08]',
 };
 
-const SIZE_CLASSES: Record<HomeBlock['size'], string> = {
+const COMFORTABLE_SIZE: Record<HomeBlock['size'], string> = {
   hero: 'col-span-12 min-h-[22rem]',
   lg: 'col-span-12 xl:col-span-7 min-h-[20rem]',
   md: 'col-span-12 md:col-span-6 xl:col-span-5 min-h-[18rem]',
   sm: 'col-span-12 md:col-span-6 xl:col-span-4 min-h-[16rem]',
+};
+
+const COMPACT_SIZE: Record<HomeBlock['size'], string> = {
+  hero: 'col-span-12 min-h-0',
+  lg: 'col-span-12 lg:col-span-6 xl:col-span-6 min-h-0',
+  md: 'col-span-12 md:col-span-6 xl:col-span-6 min-h-0',
+  sm: 'col-span-12 sm:col-span-6 xl:col-span-4 min-h-0',
 };
 
 export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
@@ -36,44 +47,81 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
   className,
   contentClassName,
   headerRight,
+  density = 'compact',
 }) => {
   const isLive = block.freshnessScore >= 75 || block.priorityWeight >= 92;
+  const isCompact = density === 'compact';
+  const sizeClasses = isCompact ? COMPACT_SIZE : COMFORTABLE_SIZE;
 
   return (
     <motion.section
       layout
-      initial={{ opacity: 0, y: 24, scale: 0.985 }}
+      initial={{ opacity: 0, y: 16, scale: 0.99 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={{ duration: 0.38, ease: 'easeOut' }}
       className={cn(
-        'relative overflow-hidden rounded-[28px] border bg-white/[0.03] backdrop-blur-xl shadow-[0_18px_60px_-24px_rgba(0,0,0,0.75)]',
+        'relative overflow-hidden border bg-white/[0.025] backdrop-blur-xl',
+        isCompact
+          ? 'rounded-2xl border-white/[0.09] shadow-[0_8px_40px_-18px_rgba(0,0,0,0.65)]'
+          : 'rounded-[28px] shadow-[0_18px_60px_-24px_rgba(0,0,0,0.75)]',
         'before:absolute before:inset-0 before:bg-gradient-to-br before:opacity-100 before:pointer-events-none',
         'after:absolute after:inset-x-0 after:top-0 after:h-px after:bg-white/10 after:pointer-events-none',
+        isCompact && 'border-l-2 border-l-cyan-400/20',
         ACCENT_STYLES[block.accent],
-        SIZE_CLASSES[block.size],
+        sizeClasses[block.size],
         className
       )}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.10),transparent_35%)] pointer-events-none" />
-      <div className={cn('relative z-10 h-full p-5 md:p-6', contentClassName)}>
-        <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.07),transparent_38%)]" />
+      <div
+        className={cn(
+          'relative z-10 h-full',
+          isCompact ? 'p-3.5 md:p-4' : 'p-5 md:p-6',
+          contentClassName
+        )}
+      >
+        <div className={cn('flex items-start justify-between gap-3', isCompact ? 'mb-3' : 'mb-4')}>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className={cn('flex items-center gap-2', isCompact ? 'mb-1' : 'mb-1.5')}>
               {isLive && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                  <Activity size={10} className="text-primary-300" />
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded border border-white/10 bg-white/[0.05] font-mono text-white/65',
+                    isCompact
+                      ? 'px-1.5 py-0.5 text-[9px] uppercase tracking-wider'
+                      : 'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em]'
+                  )}
+                >
+                  <Activity size={isCompact ? 9 : 10} className="text-cyan-300/90" />
                   Live
                 </span>
               )}
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                Relevance {Math.round(block.relevanceScore)}
+              <span
+                className={cn(
+                  'font-mono font-medium uppercase tracking-wider text-white/40',
+                  isCompact ? 'text-[9px]' : 'text-[10px] tracking-[0.18em]'
+                )}
+              >
+                Rel {Math.round(block.relevanceScore)}
               </span>
             </div>
-            <h3 className="text-lg md:text-xl font-semibold text-white tracking-tight">
+            <h3
+              className={cn(
+                'font-semibold tracking-tight text-white',
+                isCompact ? 'text-base md:text-lg' : 'text-lg md:text-xl'
+              )}
+            >
               {block.title}
             </h3>
             {block.subtitle ? (
-              <p className="mt-1 text-sm text-slate-300/80 max-w-[46ch]">{block.subtitle}</p>
+              <p
+                className={cn(
+                  'mt-1 max-w-[50ch] text-slate-300/90',
+                  isCompact ? 'text-xs leading-relaxed' : 'text-sm'
+                )}
+              >
+                {block.subtitle}
+              </p>
             ) : null}
           </div>
           {headerRight}
