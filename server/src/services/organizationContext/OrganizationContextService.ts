@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { hasColumn } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 
 export const ORGANIZATION_CONTEXT_SCHEMA_VERSION = 1;
@@ -238,6 +239,30 @@ async function safeAll<T = any>(sql: string, params: unknown[]): Promise<T[]> {
   } catch {
     return [];
   }
+}
+
+async function getClaimQueryShape(): Promise<{
+  claimTypeSql: string;
+  reviewStatusSql: string;
+  sourceLabelSql: string;
+  isExplicitSql: string;
+  activeWhereSql: string;
+}> {
+  const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] = await Promise.all([
+    hasColumn('organization_context_claims', 'claim_type').catch(() => false),
+    hasColumn('organization_context_claims', 'review_status').catch(() => false),
+    hasColumn('organization_context_items', 'source_label').catch(() => false),
+    hasColumn('organization_context_items', 'is_explicit').catch(() => false),
+    hasColumn('organization_context_claims', 'status').catch(() => false),
+  ]);
+
+  return {
+    claimTypeSql: hasClaimType ? 'c.claim_type' : `'fact' as claim_type`,
+    reviewStatusSql: hasReviewStatus ? 'c.review_status' : `'accepted' as review_status`,
+    sourceLabelSql: hasSourceLabel ? 'i.source_label' : `NULL as source_label`,
+    isExplicitSql: hasIsExplicit ? 'i.is_explicit' : '1 as is_explicit',
+    activeWhereSql: hasStatus ? ` AND c.status = 'active'` : '',
+  };
 }
 
 function pickBestClaim(
@@ -741,12 +766,13 @@ export class OrganizationContextService {
       createdAt: string;
     }>
   > {
+    const claimShape = await getClaimQueryShape();
     const rows = await safeAll<ClaimRow>(
-      `SELECT c.id, c.item_id, c.claim_path, c.value_json, c.confidence, c.claim_type, c.review_status, c.created_at,
-              i.source_type, i.source_label, i.created_at as item_created_at, i.is_explicit
+      `SELECT c.id, c.item_id, c.claim_path, c.value_json, c.confidence, ${claimShape.claimTypeSql}, ${claimShape.reviewStatusSql}, c.created_at,
+              i.source_type, ${claimShape.sourceLabelSql}, i.created_at as item_created_at, ${claimShape.isExplicitSql}
        FROM organization_context_claims c
        JOIN organization_context_items i ON i.id = c.item_id
-       WHERE c.organization_id = ? AND c.status = 'active'
+       WHERE c.organization_id = ?${claimShape.activeWhereSql}
        ORDER BY c.created_at DESC
        LIMIT ?`,
       [organizationId, limit]
@@ -765,6 +791,7 @@ export class OrganizationContextService {
   }
 
   async buildResolvedContext(organizationId: string): Promise<ResolvedOrganizationContext> {
+    const claimShape = await getClaimQueryShape();
     const [
       organization,
       organizationProfile,
@@ -818,15 +845,15 @@ export class OrganizationContextService {
         [organizationId]
       ),
       safeGet<{ count?: number }>(
-        `SELECT COUNT(*) as count FROM organization_context_claims WHERE organization_id = ? AND status = 'active'`,
+        `SELECT COUNT(*) as count FROM organization_context_claims c WHERE c.organization_id = ?${claimShape.activeWhereSql}`,
         [organizationId]
       ),
       safeAll<ClaimRow>(
-        `SELECT c.id, c.item_id, c.claim_path, c.value_json, c.confidence, c.claim_type, c.review_status, c.created_at,
-                i.source_type, i.source_label, i.created_at as item_created_at, i.is_explicit
+        `SELECT c.id, c.item_id, c.claim_path, c.value_json, c.confidence, ${claimShape.claimTypeSql}, ${claimShape.reviewStatusSql}, c.created_at,
+                i.source_type, ${claimShape.sourceLabelSql}, i.created_at as item_created_at, ${claimShape.isExplicitSql}
          FROM organization_context_claims c
          JOIN organization_context_items i ON i.id = c.item_id
-         WHERE c.organization_id = ? AND c.status = 'active'
+         WHERE c.organization_id = ?${claimShape.activeWhereSql}
          ORDER BY c.created_at DESC`,
         [organizationId]
       ),

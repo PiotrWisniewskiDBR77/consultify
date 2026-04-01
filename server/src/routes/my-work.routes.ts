@@ -12148,7 +12148,22 @@ router.get(
       const L = (en: string, pl: string) => (isPolish ? pl : en);
 
       const roleLens = inferRoleLens(req.user?.role, isPolish);
-      const orgContext = await organizationContextService.buildResolvedContext(orgId);
+      const orgContext = await organizationContextService.buildResolvedContext(orgId).catch((err) => {
+        logger.warn('[home-v2] buildResolvedContext failed, using fallback', { error: err?.message });
+        return {
+          organizationId: orgId,
+          schemaVersion: 1,
+          snapshotUpdatedAt: null,
+          counts: { items: 0, claims: 0, conflicts: 0 },
+          profile: { companyName: null, description: null, industry: null, industryCode: null, industrySubsector: null, companySize: null, location: null, employeeCount: null, annualRevenue: null, website: null, defaultLanguage: null, defaultTimezone: null, currency: null, linkedinUrl: null, twitterUrl: null, customDomain: null, brandColor: null, accentColor: null },
+          strategic: { goals: [], priorities: [], mission: null, vision: null, values: [], competitiveAdvantage: null, targetMarket: null },
+          operations: { constraints: [], techStack: [], tools: [], processes: [], kpis: [] },
+          culture: { style: null, communicationPreferences: [], decisionMaking: null },
+          metadata: [],
+          timeline: [],
+          claims: [],
+        } as any;
+      });
       const preset = selectHomeV2Preset(orgContext.profile.industry);
 
       const safeHomeV2Query = async <T = any>(
@@ -12303,21 +12318,21 @@ router.get(
         ]),
         safeHomeV2Query('initiatives_upcoming', [
           {
-            sql: `SELECT id, name as title, target_date, status
+            sql: `SELECT id, name as title, end_date as target_date, status
                   FROM initiatives
                   WHERE organization_id = ?
-                    AND target_date IS NOT NULL
+                    AND end_date IS NOT NULL
                     AND LOWER(COALESCE(status,'')) NOT IN ('completed','cancelled')
-                  ORDER BY target_date ASC
+                  ORDER BY end_date ASC
                   LIMIT 12`,
             params: [orgId],
           },
           {
-            sql: `SELECT id, name as title, target_date, status
+            sql: `SELECT id, name as title, end_date as target_date, status
                   FROM initiatives
                   WHERE organization_id = ?
-                    AND target_date IS NOT NULL
-                  ORDER BY target_date ASC
+                    AND end_date IS NOT NULL
+                  ORDER BY end_date ASC
                   LIMIT 12`,
             params: [orgId],
           },
@@ -12328,6 +12343,9 @@ router.get(
           userId,
           roleKey: req.user?.role ? String(req.user.role) : null,
           limit: 8,
+        }).catch((err) => {
+          logger.warn('[home-v2] listMyWorkArtifacts failed, degrading gracefully', { error: err?.message });
+          return { mine: [], review: [], recent: [] };
         }),
         inboxService.getInboxStats(userId, orgId).catch(() => ({
           total: 0,

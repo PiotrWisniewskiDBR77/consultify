@@ -703,7 +703,7 @@ async function updateArtifactMetadata(
 
 export async function registerArtifactOrigin(
   params: RegisterArtifactOriginParams
-): Promise<ArtifactRecord> {
+): Promise<ArtifactRecord | null> {
   const validated = RegisterArtifactOriginParamsSchema.parse(params);
 
   const existingLink = await getOriginLinkByOrigin(
@@ -776,7 +776,8 @@ export async function registerArtifactOrigin(
 
   const row = await getArtifactRow(artifactId, validated.organizationId);
   if (!row) {
-    throw new Error(`Artifact ${artifactId} was not found after registration`);
+    logger.warn(`${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`);
+    return null;
   }
   return mapArtifactRow(row);
 }
@@ -926,32 +927,36 @@ async function backfillReportsForOrg(organizationId: string): Promise<number> {
 
   let inserted = 0;
   for (const row of rows || []) {
-    await registerArtifactOrigin({
-      organizationId,
-      outputType: 'report',
-      artifactFamily: 'document',
-      originRuntime: 'report',
-      originRecordId: row.id,
-      titleSnapshot: row.title || 'Untitled report',
-      ownerUserId: row.created_by || null,
-      createdBy: row.created_by || FALLBACK_ACTOR,
-      deliveryState: mapReportStatusToDeliveryState(row.status),
-      visibilityScope: deriveArtifactVisibilityScope({
+    try {
+      const result = await registerArtifactOrigin({
+        organizationId,
         outputType: 'report',
-        projectId: row.project_id,
+        artifactFamily: 'document',
+        originRuntime: 'report',
+        originRecordId: row.id,
+        titleSnapshot: row.title || 'Untitled report',
         ownerUserId: row.created_by || null,
-        isBackfill: true,
-      }),
-      projectId: row.project_id || null,
-      originSummary: {
-        reportType: row.report_type,
-        sourceId: row.source_id,
-        sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
-        nativeStatus: row.status,
-        sourceTable: 'report_builder_reports',
-      },
-    });
-    inserted++;
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: mapReportStatusToDeliveryState(row.status),
+        visibilityScope: deriveArtifactVisibilityScope({
+          outputType: 'report',
+          projectId: row.project_id,
+          ownerUserId: row.created_by || null,
+          isBackfill: true,
+        }),
+        projectId: row.project_id || null,
+        originSummary: {
+          reportType: row.report_type,
+          sourceId: row.source_id,
+          sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
+          nativeStatus: row.status,
+          sourceTable: 'report_builder_reports',
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill report ${row.id}: ${err?.message}`);
+    }
   }
   return inserted;
 }
@@ -974,32 +979,36 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
 
   let inserted = 0;
   for (const row of rows || []) {
-    await registerArtifactOrigin({
-      organizationId,
-      outputType: 'presentation',
-      artifactFamily: 'presentation',
-      originRuntime: 'presentation',
-      originRecordId: row.id,
-      titleSnapshot: row.title || 'Untitled presentation',
-      ownerUserId: null,
-      createdBy: FALLBACK_ACTOR,
-      deliveryState: mapPresentationStatusToDeliveryState(row.status),
-      visibilityScope: deriveArtifactVisibilityScope({
+    try {
+      const result = await registerArtifactOrigin({
+        organizationId,
         outputType: 'presentation',
-        isBackfill: true,
-      }),
-      originSummary: {
-        deckType: row.deck_type,
-        presentationMode: row.presentation_mode,
-        slideCount: row.slide_count,
-        exportFormat: row.export_format,
-        sourceId: row.source_id,
-        sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
-        nativeStatus: row.status,
-        sourceTable: 'presentation_decks',
-      },
-    });
-    inserted++;
+        artifactFamily: 'presentation',
+        originRuntime: 'presentation',
+        originRecordId: row.id,
+        titleSnapshot: row.title || 'Untitled presentation',
+        ownerUserId: null,
+        createdBy: FALLBACK_ACTOR,
+        deliveryState: mapPresentationStatusToDeliveryState(row.status),
+        visibilityScope: deriveArtifactVisibilityScope({
+          outputType: 'presentation',
+          isBackfill: true,
+        }),
+        originSummary: {
+          deckType: row.deck_type,
+          presentationMode: row.presentation_mode,
+          slideCount: row.slide_count,
+          exportFormat: row.export_format,
+          sourceId: row.source_id,
+          sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
+          nativeStatus: row.status,
+          sourceTable: 'presentation_decks',
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill presentation ${row.id}: ${err?.message}`);
+    }
   }
   return inserted;
 }
@@ -1022,42 +1031,46 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
 
   let inserted = 0;
   for (const row of rows || []) {
-    const sections = safeJsonParse(row.sections_json, [] as any[]);
-    await registerArtifactOrigin({
-      organizationId,
-      outputType: 'report',
-      artifactFamily: 'template',
-      originRuntime: 'report_template',
-      originRecordId: row.id,
-      titleSnapshot: row.name || 'Untitled report template',
-      ownerUserId: null,
-      createdBy: row.created_by || FALLBACK_ACTOR,
-      deliveryState: 'ready',
-      visibilityScope: 'organization',
-      originSummary: {
-        template: {
-          scope: row.is_system ? 'app' : 'org',
-          status: 'published',
-          description: row.description || '',
-          reportType: row.report_type || 'custom',
-          structureBlueprint: {
-            sections: Array.isArray(sections)
-              ? sections.map((s: any) => ({
-                  key: s?.key || s?.sectionKey || s?.section_key || s?.id || '',
-                  title: s?.title || s?.name || '',
-                }))
-              : [],
-          },
-          metadata: {
-            createdBy: row.created_by || FALLBACK_ACTOR,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            legacyTemplateId: row.id,
+    try {
+      const sections = safeJsonParse(row.sections_json, [] as any[]);
+      const result = await registerArtifactOrigin({
+        organizationId,
+        outputType: 'report',
+        artifactFamily: 'template',
+        originRuntime: 'report_template',
+        originRecordId: row.id,
+        titleSnapshot: row.name || 'Untitled report template',
+        ownerUserId: null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            scope: row.is_system ? 'app' : 'org',
+            status: 'published',
+            description: row.description || '',
+            reportType: row.report_type || 'custom',
+            structureBlueprint: {
+              sections: Array.isArray(sections)
+                ? sections.map((s: any) => ({
+                    key: s?.key || s?.sectionKey || s?.section_key || s?.id || '',
+                    title: s?.title || s?.name || '',
+                  }))
+                : [],
+            },
+            metadata: {
+              createdBy: row.created_by || FALLBACK_ACTOR,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+              legacyTemplateId: row.id,
+            },
           },
         },
-      },
-    });
-    inserted++;
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill report template ${row.id}: ${err?.message}`);
+    }
   }
   return inserted;
 }
@@ -1080,37 +1093,41 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
 
   let inserted = 0;
   for (const row of rows || []) {
-    const outline = safeJsonParse(row.outline_json, [] as any[]);
-    await registerArtifactOrigin({
-      organizationId,
-      outputType: 'presentation',
-      artifactFamily: 'template',
-      originRuntime: 'presentation_template',
-      originRecordId: row.id,
-      titleSnapshot: row.name || 'Untitled presentation template',
-      ownerUserId: null,
-      createdBy: row.created_by || FALLBACK_ACTOR,
-      deliveryState: 'ready',
-      visibilityScope: 'organization',
-      originSummary: {
-        template: {
-          scope: row.is_system ? 'app' : 'org',
-          status: 'published',
-          description: row.description || '',
-          deckType: row.deck_type || 'custom',
-          structureBlueprint: {
-            outline: Array.isArray(outline) ? outline : [],
-          },
-          metadata: {
-            createdBy: row.created_by || FALLBACK_ACTOR,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            legacyTemplateId: row.id,
+    try {
+      const outline = safeJsonParse(row.outline_json, [] as any[]);
+      const result = await registerArtifactOrigin({
+        organizationId,
+        outputType: 'presentation',
+        artifactFamily: 'template',
+        originRuntime: 'presentation_template',
+        originRecordId: row.id,
+        titleSnapshot: row.name || 'Untitled presentation template',
+        ownerUserId: null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            scope: row.is_system ? 'app' : 'org',
+            status: 'published',
+            description: row.description || '',
+            deckType: row.deck_type || 'custom',
+            structureBlueprint: {
+              outline: Array.isArray(outline) ? outline : [],
+            },
+            metadata: {
+              createdBy: row.created_by || FALLBACK_ACTOR,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+              legacyTemplateId: row.id,
+            },
           },
         },
-      },
-    });
-    inserted++;
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`);
+    }
   }
   return inserted;
 }
