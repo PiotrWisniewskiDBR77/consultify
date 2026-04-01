@@ -28,7 +28,6 @@ import {
   useV8ExecutionRun,
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
-import { useV8Gate } from '@/hooks/useV8Gate';
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -283,7 +282,6 @@ export interface KimiPipelineState {
 }
 
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
-  const { showV8Chat } = useV8Gate();
   const { activeConversationId } = useConversationStore();
   const conversationId = activeConversationId;
 
@@ -293,7 +291,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
 
   const { data: snapshots } = useV8Snapshots(
-    showV8Chat && conversationId ? conversationId : undefined
+    conversationId ? conversationId : undefined
   );
   const captureSnapshot = useV8CaptureSnapshot();
   const createRun = useV8CreateArtifactRunFromChat();
@@ -357,190 +355,199 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     }
     contentGenerationTriggered.current = true;
 
-    const origin = currentRun.materializationOrigin;
-    const title =
-      currentRun.plan.titleHint ||
-      (lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation');
+    const runContentGeneration = async () => {
+      const origin = currentRun.materializationOrigin;
+      const title =
+        currentRun.plan.titleHint ||
+        (lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation');
 
-    if (lane === 'prezentacje' && origin?.originRecordId) {
-      const deckId = origin.originRecordId;
+      if (lane === 'prezentacje' && origin?.originRecordId) {
+        const deckId = origin.originRecordId;
 
-      const generateAndFetch = async () => {
-        try {
-          await Api.post(`/presentations/generate/deck`, {
-            deckId,
-            outline: [],
-            setup: { goal: lastGoal, selectedTemplate: '' },
-          });
-        } catch {
-          // generation may already be done or endpoint may not match — continue to fetch
-        }
-        return Api.get(`/presentations/decks/${deckId}`);
-      };
-
-      generateAndFetch()
-        .then((deckData: any) => {
-          const slides: Array<{
-            slideId: string;
-            intent: string;
-            title: string;
-            bulletPoints?: string[];
-          }> = [];
-          const unifiedJson =
-            typeof deckData?.deck_json === 'string'
-              ? JSON.parse(deckData.deck_json)
-              : deckData?.deck_json || deckData?.unified_json;
-          const rawSlides = unifiedJson?.slides || [];
-          for (const s of rawSlides) {
-            const blocks = s.blocks || s.content_blocks || [];
-            const bulletPoints = blocks
-              .filter((b: any) => b.type === 'bullet_list' || b.type === 'text')
-              .flatMap((b: any) => (Array.isArray(b.items) ? b.items : [b.text || b.content]))
-              .filter(Boolean)
-              .slice(0, 4);
-            slides.push({
-              slideId: s.slide_id || s.id || String(slides.length),
-              intent: s.intent || s.layout || 'content',
-              title: s.title || s.heading || `Slide ${slides.length + 1}`,
-              bulletPoints,
+        const generateAndFetch = async () => {
+          try {
+            await Api.post(`/presentations/generate/deck`, {
+              deckId,
+              outline: [],
+              setup: { goal: lastGoal, selectedTemplate: '' },
             });
+          } catch {
+            // generation may already be done or endpoint may not match — continue to fetch
           }
-          const deckStatus = deckData?.status || deckData?.export_path ? 'exported' : 'draft';
-          setPreview({
-            type: 'deck',
-            title,
-            fileName: `${title.replace(/\s+/g, '_')}.pptx`,
-            summary: `Presentation "${title}" — ${slides.length} slides.`,
-            kpiItems: [
-              { label: 'Slides', value: String(slides.length) },
-              { label: 'Format', value: 'PPTX / PDF' },
-              { label: 'Status', value: deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft' },
-            ],
-            deckId,
-            deckStatus: deckData?.export_path ? 'exported' : (deckData?.status || 'draft'),
-            deckSlides: slides,
-          });
-          setContentGenerated(true);
-        })
-        .catch(() => {
-          setPreview({
-            type: 'deck',
-            title,
-            fileName: `${title.replace(/\s+/g, '_')}.pptx`,
-            summary: `Presentation "${title}" generated.`,
-            kpiItems: [{ label: 'Status', value: 'Ready' }],
-            deckId,
-            deckSlides: [],
-          });
-          setContentGenerated(true);
-        });
-    } else if (lane === 'wordy' && origin?.originRecordId) {
-      const reportId = origin.originRecordId;
-      Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
-        .then(() => {
-          const pdfUrl = `/api/report-builder/reports/${reportId}/export/pdf`;
-          setPreview({
-            type: 'pdf',
-            title,
-            url: pdfUrl,
-            fileName: `${title.replace(/\s+/g, '_')}.pdf`,
-          });
-          setContentGenerated(true);
-        })
-        .catch(() => {
-          setPreview({
-            type: 'pdf',
-            title,
-            url: `/api/report-builder/reports/${reportId}/export/pdf`,
-            fileName: `${title.replace(/\s+/g, '_')}.pdf`,
-          });
-          setContentGenerated(true);
-        });
-    } else if (lane === 'excele') {
-      // P23-ext: Try intelligent workbook generation first, fallback to table export
-      const generateWorkbook = async () => {
-        try {
-          const wbResult = await Api.generateWorkbook({
-            prompt: lastGoal || title,
-            language: navigator.language,
-          });
-          if (wbResult?.id) {
-            const qualityLabel = wbResult.qualityScore != null
-              ? `${wbResult.qualityScore.toFixed(1)}/5`
-              : 'N/A';
-            const pipelinePhases = Array.isArray(wbResult.pipelineLog)
-              ? wbResult.pipelineLog.filter((p: any) => p.status !== 'skipped').length
-              : 0;
+          return Api.get(`/presentations/decks/${deckId}`);
+        };
 
+        generateAndFetch()
+          .then((deckData: any) => {
+            const slides: Array<{
+              slideId: string;
+              intent: string;
+              title: string;
+              bulletPoints?: string[];
+            }> = [];
+            const unifiedJson =
+              typeof deckData?.deck_json === 'string'
+                ? JSON.parse(deckData.deck_json)
+                : deckData?.deck_json || deckData?.unified_json;
+            const rawSlides = unifiedJson?.slides || [];
+            for (const s of rawSlides) {
+              const blocks = s.blocks || s.content_blocks || [];
+              const bulletPoints = blocks
+                .filter((b: any) => b.type === 'bullet_list' || b.type === 'text')
+                .flatMap((b: any) => (Array.isArray(b.items) ? b.items : [b.text || b.content]))
+                .filter(Boolean)
+                .slice(0, 4);
+              slides.push({
+                slideId: s.slide_id || s.id || String(slides.length),
+                intent: s.intent || s.layout || 'content',
+                title: s.title || s.heading || `Slide ${slides.length + 1}`,
+                bulletPoints,
+              });
+            }
+            const deckStatus = deckData?.status || deckData?.export_path ? 'exported' : 'draft';
             setPreview({
-              type: 'xlsx',
-              title: wbResult.title || title,
-              fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
-              summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets. Quality: ${qualityLabel}`,
-              kpiItems: [
-                { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
-                { label: 'Quality', value: qualityLabel },
-                { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
-                ...(wbResult.sheets || []).map((s: any) => ({
-                  label: s.name,
-                  value: `${s.rowCount} rows × ${s.columnCount} cols`,
-                })),
-              ],
-              sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
-              workbookId: wbResult.id,
-              downloadUrl: wbResult.downloadUrl,
-              qualityScore: wbResult.qualityScore,
-              pipelineLog: wbResult.pipelineLog,
-            });
-            setContentGenerated(true);
-            return true;
-          }
-        } catch (err) {
-          console.warn('[KIMI] Workbook generation failed, falling back to table export:', err);
-        }
-        return false;
-      };
-
-      const workbookGenerated = await generateWorkbook();
-
-      if (!workbookGenerated && origin?.originRecordId) {
-        const tableId = origin.originRecordId;
-        fetchSheetPreviewData(tableId)
-          .then((data) => {
-            setPreview({
-              type: 'xlsx',
+              type: 'deck',
               title,
-              fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-              summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
-              kpiItems: data.kpiItems,
-              sheetNames: data.sheetNames,
-              tableData: { columns: data.columns, rows: data.rows },
+              fileName: `${title.replace(/\s+/g, '_')}.pptx`,
+              summary: `Presentation "${title}" — ${slides.length} slides.`,
+              kpiItems: [
+                { label: 'Slides', value: String(slides.length) },
+                { label: 'Format', value: 'PPTX / PDF' },
+                {
+                  label: 'Status',
+                  value:
+                    deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
+                },
+              ],
+              deckId,
+              deckStatus: deckData?.export_path ? 'exported' : (deckData?.status || 'draft'),
+              deckSlides: slides,
             });
             setContentGenerated(true);
           })
           .catch(() => {
             setPreview({
-              type: 'xlsx',
+              type: 'deck',
               title,
-              fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-              summary: `Spreadsheet "${title}" generated.`,
-              kpiItems: [],
-              sheetNames: ['Sheet1'],
+              fileName: `${title.replace(/\s+/g, '_')}.pptx`,
+              summary: `Presentation "${title}" generated.`,
+              kpiItems: [{ label: 'Status', value: 'Ready' }],
+              deckId,
+              deckSlides: [],
             });
             setContentGenerated(true);
           });
-      } else if (!workbookGenerated) {
-        setPreview({
-          type: 'xlsx',
-          title,
-          fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-          summary: `Spreadsheet "${title}" generated.`,
-          kpiItems: [],
-          sheetNames: ['Sheet1'],
-        });
-        setContentGenerated(true);
+        return;
       }
-    } else {
+
+      if (lane === 'wordy' && origin?.originRecordId) {
+        const reportId = origin.originRecordId;
+        Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
+          .then(() => {
+            const pdfUrl = `/api/report-builder/reports/${reportId}/export/pdf`;
+            setPreview({
+              type: 'pdf',
+              title,
+              url: pdfUrl,
+              fileName: `${title.replace(/\s+/g, '_')}.pdf`,
+            });
+            setContentGenerated(true);
+          })
+          .catch(() => {
+            setPreview({
+              type: 'pdf',
+              title,
+              url: `/api/report-builder/reports/${reportId}/export/pdf`,
+              fileName: `${title.replace(/\s+/g, '_')}.pdf`,
+            });
+            setContentGenerated(true);
+          });
+        return;
+      }
+
+      if (lane === 'excele') {
+        // P23-ext: Try intelligent workbook generation first, fallback to table export
+        const generateWorkbook = async () => {
+          try {
+            const wbResult = await Api.generateWorkbook({
+              prompt: lastGoal || title,
+              language: navigator.language,
+            });
+            if (wbResult?.id) {
+              const qualityLabel =
+                wbResult.qualityScore != null ? `${wbResult.qualityScore.toFixed(1)}/5` : 'N/A';
+
+              setPreview({
+                type: 'xlsx',
+                title: wbResult.title || title,
+                fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
+                summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets. Quality: ${qualityLabel}`,
+                kpiItems: [
+                  { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
+                  { label: 'Quality', value: qualityLabel },
+                  { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
+                  ...(wbResult.sheets || []).map((s: any) => ({
+                    label: s.name,
+                    value: `${s.rowCount} rows × ${s.columnCount} cols`,
+                  })),
+                ],
+                sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
+                workbookId: wbResult.id,
+                downloadUrl: wbResult.downloadUrl,
+                qualityScore: wbResult.qualityScore,
+                pipelineLog: wbResult.pipelineLog,
+              });
+              setContentGenerated(true);
+              return true;
+            }
+          } catch (err) {
+            console.warn('[KIMI] Workbook generation failed, falling back to table export:', err);
+          }
+          return false;
+        };
+
+        const workbookGenerated = await generateWorkbook();
+
+        if (!workbookGenerated && origin?.originRecordId) {
+          const tableId = origin.originRecordId;
+          fetchSheetPreviewData(tableId)
+            .then((data) => {
+              setPreview({
+                type: 'xlsx',
+                title,
+                fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+                summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
+                kpiItems: data.kpiItems,
+                sheetNames: data.sheetNames,
+                tableData: { columns: data.columns, rows: data.rows },
+              });
+              setContentGenerated(true);
+            })
+            .catch(() => {
+              setPreview({
+                type: 'xlsx',
+                title,
+                fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+                summary: `Spreadsheet "${title}" generated.`,
+                kpiItems: [],
+                sheetNames: ['Sheet1'],
+              });
+              setContentGenerated(true);
+            });
+        } else if (!workbookGenerated) {
+          setPreview({
+            type: 'xlsx',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+            summary: `Spreadsheet "${title}" generated.`,
+            kpiItems: [],
+            sheetNames: ['Sheet1'],
+          });
+          setContentGenerated(true);
+        }
+        return;
+      }
+
       if (lane === 'wordy') {
         setPreview({
           type: 'pdf',
@@ -567,7 +574,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         });
       }
       setContentGenerated(true);
-    }
+    };
+
+    void runContentGeneration();
   }, [effectiveStatus, currentRun, lane, lastGoal]);
 
   const startGeneration = useCallback(
