@@ -687,13 +687,37 @@ const authLimiter = rateLimit({
 // CORS CONFIGURATION
 // ============================================================
 
+const consultifyProdOriginRegex = /^https:\/\/(www\.)?consultify\.ai$/i;
+
 const corsOptions: cors.CorsOptions = {
-  origin:
-    process.env.FRONTEND_URL ||
-    (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000']),
+  origin: isProduction
+    ? (origin, callback) => {
+        // Non-browser clients (same-origin server-side) often omit Origin.
+        if (!origin) return callback(null, true);
+        if (consultifyProdOriginRegex.test(origin)) return callback(null, true);
+        const front = process.env.FRONTEND_URL?.trim();
+        if (front && origin === front) return callback(null, true);
+        callback(null, false);
+      }
+    : process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-csrf-token'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-access-token',
+    'x-csrf-token',
+    'X-Demo-Mode',
+    'x-demo-mode',
+    'X-Correlation-ID',
+    'x-correlation-id',
+    'X-App-Language',
+    'x-app-language',
+    'Accept-Language',
+    'accept-language',
+  ],
 };
 app.use(cors(corsOptions));
 

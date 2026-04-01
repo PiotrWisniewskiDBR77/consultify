@@ -1022,8 +1022,12 @@ router.get(
       resolvedOrgId: orgId,
       hasScopeEmail: Boolean(scopeEmail),
       demoHeader: String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true',
+      tokenIsDemo: Boolean((req.user as { isDemo?: boolean } | undefined)?.isDemo),
       count: rows.length,
     });
+
+    res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+    res.setHeader('Vary', 'Authorization');
 
     res.json(
       rows.map((r: any) => {

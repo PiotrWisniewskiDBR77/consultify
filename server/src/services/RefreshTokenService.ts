@@ -92,6 +92,22 @@ interface User {
   email: string;
   role: string;
   organization_id: string;
+  /** When true, embed in JWT (DEMO org). */
+  isDemo?: boolean;
+}
+
+async function isDemoOrganizationId(db: IDatabase, organizationId: string): Promise<boolean> {
+  if (!organizationId) return false;
+  try {
+    const row = await db.get<{ organization_type?: string }>(
+      'SELECT organization_type FROM organizations WHERE id = ? LIMIT 1',
+      [organizationId]
+    );
+    const t = String(row?.organization_type || '').trim().toUpperCase();
+    return t === 'DEMO';
+  } catch {
+    return false;
+  }
 }
 
 // ==========================================
@@ -203,6 +219,9 @@ class RefreshTokenService {
     // Clean up excess sessions (keep only MAX_SESSIONS)
     await this._enforceSessionLimit(user.id);
 
+    const isDemoFlag =
+      user.isDemo === true || (await isDemoOrganizationId(this.db, user.organization_id));
+
     // Generate tokens
     const jti = uuidv4();
     const tokenFamily = uuidv4();
@@ -217,6 +236,7 @@ class RefreshTokenService {
         role: user.role,
         organizationId: user.organization_id,
         isSuperAdmin: user.role === 'SUPERADMIN',
+        isDemo: isDemoFlag,
         jti,
       },
       config.JWT_SECRET,
@@ -317,12 +337,14 @@ class RefreshTokenService {
 
             // Generate new access token only (don't rotate refresh token again)
             const jti = uuidv4();
+            const isDemoGrace = await isDemoOrganizationId(this.db, latestToken.organization_id!);
             const accessToken = jwt.sign(
               {
                 id: latestToken.user_id,
                 email: latestToken.email!,
                 role: latestToken.role!,
                 organizationId: latestToken.organization_id!,
+                isDemo: isDemoGrace,
                 jti,
               },
               config.JWT_SECRET,
@@ -379,6 +401,8 @@ class RefreshTokenService {
       Date.now() + CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
     ).toISOString();
 
+    const isDemoRefresh = await isDemoOrganizationId(this.db, storedToken.organization_id!);
+
     // New access token
     const accessToken = jwt.sign(
       {
@@ -386,6 +410,7 @@ class RefreshTokenService {
         email: storedToken.email!,
         role: storedToken.role!,
         organizationId: storedToken.organization_id!,
+        isDemo: isDemoRefresh,
         jti,
       },
       config.JWT_SECRET,

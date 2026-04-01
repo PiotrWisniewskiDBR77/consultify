@@ -70,6 +70,8 @@ export interface JWTPayload {
   userRole?: string;
   organizationId?: string;
   isSuperAdmin?: boolean;
+  /** DEMO org users — used when X-Demo-Mode is dropped (e.g. strict CORS preflight). */
+  isDemo?: boolean;
   impersonatorId?: string;
   jti?: string;
   iat?: number;
@@ -257,7 +259,7 @@ const attachUser = async (
     role: mapRole(req.userRole),
     organizationId: req.organizationId || '',
     isSuperAdmin: decoded.isSuperAdmin || false,
-    isDemo: (decoded as any).isDemo || false,
+    isDemo: Boolean(decoded.isDemo),
     impersonatorId: decoded.impersonatorId,
   };
 

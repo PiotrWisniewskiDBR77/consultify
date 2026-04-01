@@ -310,6 +310,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       );
     });
 
+    const orgType = String((org as { organization_type?: string }).organization_type || '')
+      .trim()
+      .toUpperCase();
+
     // Generate tokens
     const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
     const tokenPair = await dependencies.RefreshTokenService.generateTokenPair(
@@ -318,6 +322,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         role: user.role,
         organization_id: user.organization_id,
+        isDemo: orgType === ORG_TYPES.DEMO,
       },
       {
         deviceInfo,
@@ -335,9 +340,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       logger.warn('[Auth] Failed to set auth cookies (continuing)', { error: err?.message || err });
     }
 
-    const orgType = String((org as { organization_type?: string }).organization_type || '')
-      .trim()
-      .toUpperCase();
     const safeUser = {
       id: user.id,
       email: user.email,
