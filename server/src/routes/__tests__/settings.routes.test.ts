@@ -269,7 +269,7 @@ describe('settings integrations authority continuity', () => {
     expect(res.body.success).toBe(true);
     expect(mockDisconnectIntegration).toHaveBeenCalledWith('int-1');
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
+      expect.stringContaining('ON CONFLICT (user_id, key)'),
       ['user-1', 'settings:integrations', '[]'],
       { fallback: false }
     );

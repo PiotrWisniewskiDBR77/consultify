@@ -116,8 +116,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
 
   const fetchKeys = async () => {
     try {
-      const response = await Api.getApiKeys();
-      const data = response?.keys || [];
+      const response = await Api.get('/api/settings/api-keys');
+      const data = response?.data?.keys || [];
       // Map API response to component format
       const mappedKeys = data.map((k: any) => ({
         id: k.id,
@@ -154,8 +154,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
 
   const fetchKeyUsage = async (keyId: string) => {
     try {
-      const data = await Api.getApiKeyUsage(keyId);
-      setKeyUsage((prev) => ({ ...prev, [keyId]: data }));
+      const res = await Api.get(`/api/settings/api-keys/${keyId}/usage`);
+      setKeyUsage((prev) => ({ ...prev, [keyId]: res?.data }));
     } catch (error) {
       console.error('Failed to load API key usage:', error);
       // Set empty usage data instead of mock
@@ -173,17 +173,18 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     if (!newKeyName.trim()) return;
 
     try {
-      const response = await Api.createApiKey({ name: newKeyName });
+      const response = await Api.post('/api/settings/api-keys', { name: newKeyName });
+      const payload = response?.data;
 
-      if (response?.key) {
-        setNewKey(response.key.key);
+      if (payload?.key) {
+        setNewKey(payload.key.key);
         setKeys((prev) => [
           ...prev,
           {
-            id: response.key.id,
-            name: response.key.name,
-            prefix: response.key.keyPrefix,
-            createdAt: response.key.createdAt,
+            id: payload.key.id,
+            name: payload.key.name,
+            prefix: payload.key.keyPrefix,
+            createdAt: payload.key.createdAt,
           },
         ]);
         toast.success(t('settings.api.keyCreated', 'API key created'));
@@ -202,7 +203,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
       return;
 
     try {
-      await Api.deleteApiKey(keyId);
+      await Api.delete(`/api/settings/api-keys/${keyId}`);
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
       toast.success(t('settings.api.keyDeleted', 'API key deleted'));
     } catch (_error) {
@@ -229,10 +230,11 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
 
     setRotatingKey(keyId);
     try {
-      const response = await Api.rotateApiKey(keyId);
+      const response = await Api.post(`/api/settings/api-keys/${keyId}/rotate`, {});
+      const payload = response?.data;
 
-      if (response?.key) {
-        setNewKey(response.key);
+      if (payload?.key) {
+        setNewKey(payload.key);
       }
       toast.success(t('settings.api.keyRotated', 'API key rotated successfully'));
       fetchKeys();
@@ -248,7 +250,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     if (!settings) return;
 
     try {
-      await Api.updateApiKey(keyId, {
+      await Api.put(`/api/settings/api-keys/${keyId}`, {
         rateLimit: settings.rateLimit ? parseInt(settings.rateLimit) : null,
         permissions: settings.scopes,
       });

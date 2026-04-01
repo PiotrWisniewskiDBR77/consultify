@@ -98,7 +98,7 @@ const ensureUserPreferencesTable = async () => {
         user_id TEXT NOT NULL,
         key TEXT NOT NULL,
         value TEXT NOT NULL,
-        updated_at TEXT DEFAULT (datetime('now')),
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, key),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
@@ -766,8 +766,11 @@ const saveIntegrations = async (userId: string, data: IntegrationEntry[]) => {
   await ensureUserPreferencesTable();
   const payload = JSON.stringify(data);
   const result = await dbRun(
-    `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-     VALUES (?, ?, ?, datetime('now'))`,
+    `INSERT INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT (user_id, key) DO UPDATE SET
+       value = EXCLUDED.value,
+       updated_at = CURRENT_TIMESTAMP`,
     [userId, preferencesKey('integrations'), payload],
     { fallback: false }
   );
@@ -3772,23 +3775,27 @@ router.post(
 // ===========================================
 
 const ensureUserApiKeysTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS user_api_keys (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            key_hash TEXT NOT NULL,
-            key_prefix TEXT NOT NULL,
-            permissions TEXT DEFAULT '[]',
-            rate_limit INTEGER DEFAULT 1000,
-            last_used_at TEXT,
-            expires_at TEXT,
-            is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
+  await dbRun(
+    `
+      CREATE TABLE IF NOT EXISTS user_api_keys (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        key_hash TEXT NOT NULL,
+        key_prefix TEXT NOT NULL,
+        permissions TEXT DEFAULT '[]',
+        rate_limit INTEGER DEFAULT 1000,
+        last_used_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ,
+        is_active INTEGER DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `,
+    [],
+    { fallback: false }
+  );
 };
 
 const generateApiKey = (): string => {
@@ -3891,7 +3898,7 @@ router.put(
                 permissions = COALESCE(?, permissions),
                 rate_limit = COALESCE(?, rate_limit),
                 is_active = COALESCE(?, is_active),
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
       [name, permissions ? JSON.stringify(permissions) : null, rateLimit, isActive, id, userId]
     );
@@ -3936,7 +3943,7 @@ router.post(
     const keyPrefix = newKey.substring(0, 10);
 
     await dbRun(
-      `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = datetime('now')
+      `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
       [newKey, keyPrefix, id, userId]
     );
@@ -3951,24 +3958,28 @@ router.post(
 // ===========================================
 
 const ensureUserWebhooksTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS user_webhooks (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            url TEXT NOT NULL,
-            events TEXT NOT NULL,
-            secret TEXT,
-            headers TEXT DEFAULT '{}',
-            is_active INTEGER DEFAULT 1,
-            last_triggered_at TEXT,
-            last_status INTEGER,
-            failure_count INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
+  await dbRun(
+    `
+      CREATE TABLE IF NOT EXISTS user_webhooks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        events TEXT NOT NULL,
+        secret TEXT,
+        headers TEXT DEFAULT '{}',
+        is_active INTEGER DEFAULT 1,
+        last_triggered_at TIMESTAMPTZ,
+        last_status INTEGER,
+        failure_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `,
+    [],
+    { fallback: false }
+  );
 };
 
 /**
@@ -4041,7 +4052,7 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { id } = req.params;
-    const { name, url, events, headers, isActive } = req.body;
+    const { name, url, events, headers, isActive, secret } = req.body;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     await ensureUserWebhooksTable();
@@ -4052,14 +4063,16 @@ router.put(
                 url = COALESCE(?, url),
                 events = COALESCE(?, events),
                 headers = COALESCE(?, headers),
+                secret = COALESCE(?, secret),
                 is_active = COALESCE(?, is_active),
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
       [
         name,
         url,
         events ? JSON.stringify(events) : null,
         headers ? JSON.stringify(headers) : null,
+        secret ?? null,
         isActive,
         id,
         userId,
@@ -4126,7 +4139,7 @@ router.post(
       });
 
       await dbRun(
-        `UPDATE user_webhooks SET last_triggered_at = datetime('now'), last_status = ?
+        `UPDATE user_webhooks SET last_triggered_at = CURRENT_TIMESTAMP, last_status = ?
                  WHERE id = ?`,
         [response.status, id]
       );

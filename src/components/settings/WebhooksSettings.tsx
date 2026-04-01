@@ -143,8 +143,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
 
   const fetchWebhooks = async () => {
     try {
-      const response = await Api.getWebhooks();
-      const webhookList = Array.isArray(response) ? response : response?.webhooks || [];
+      const response = await Api.get('/api/settings/webhooks');
+      const webhookList = response?.data?.webhooks || [];
       const formatted = webhookList.map((s: any) => ({
         id: s.id,
         name: s.name,
@@ -198,7 +198,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
 
     try {
-      await Api.createWebhook({
+      await Api.post('/api/settings/webhooks', {
         name: newWebhook.name || `Webhook ${Date.now()}`,
         url: newWebhook.url,
         events: newWebhook.events,
@@ -228,7 +228,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     if (!confirm(t('settings.webhooks.deleteConfirm', 'Delete this webhook?'))) return;
 
     try {
-      await Api.deleteWebhook(webhookId);
+      await Api.delete(`/api/settings/webhooks/${webhookId}`);
       setWebhooks((prev) => prev.filter((w) => w.id !== webhookId));
       toast.success(t('settings.webhooks.deleted', 'Webhook deleted'));
     } catch (error) {
@@ -239,12 +239,12 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
   const testWebhook = async (webhookId: string) => {
     setTestingWebhook(webhookId);
     try {
-      const response = await Api.testWebhook(webhookId);
+      const response = await Api.post(`/api/settings/webhooks/${webhookId}/test`, {});
 
-      if (response?.success) {
+      if (response?.data?.success) {
         toast.success(t('settings.webhooks.testSent', 'Test event sent'));
       } else {
-        toast.error(response?.error || t('settings.webhooks.testFailed', 'Test failed'));
+        toast.error(response?.data?.error || t('settings.webhooks.testFailed', 'Test failed'));
       }
     } catch (error) {
       toast.error(t('settings.webhooks.testError', 'Failed to send test event'));
@@ -268,11 +268,14 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     if (!settings) return;
 
     try {
-      await (Api as any).updateWebhook(webhookId, {
-        signatureSecret: settings.signatureSecret || undefined,
-        retryConfig: JSON.stringify(settings.retryConfig),
-        filterRules: JSON.stringify(settings.filterRules),
-        version: settings.version,
+      const existing = webhooks.find((w) => w.id === webhookId);
+      await Api.put(`/api/settings/webhooks/${webhookId}`, {
+        name: existing?.name,
+        url: existing?.url,
+        events: existing?.events,
+        headers: undefined,
+        isActive: existing?.active ? 1 : 0,
+        secret: settings.signatureSecret || undefined,
       });
 
       toast.success(t('settings.webhooks.settingsSaved', 'Settings saved'));
