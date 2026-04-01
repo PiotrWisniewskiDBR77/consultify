@@ -8,6 +8,8 @@
  * - Silent re-authentication
  */
 
+import { clearPersonalTasksCache } from './personalTasksCache';
+
 const API_URL = '/api';
 
 interface TokenPayload {
@@ -72,6 +74,7 @@ class TokenService {
     if (refreshToken) {
       localStorage.setItem('refreshToken', refreshToken);
     }
+    clearPersonalTasksCache();
     this.scheduleRefresh(token);
   }
 
@@ -81,6 +84,7 @@ class TokenService {
   clearTokens() {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    clearPersonalTasksCache();
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;

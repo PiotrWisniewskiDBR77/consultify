@@ -5,6 +5,12 @@ import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
 import { trackFunnelEvent } from './funnelAnalytics';
+import {
+  clearPersonalTasksCache,
+  makePersonalTasksCacheKey,
+  personalTasksCacheGet,
+  personalTasksCacheSet,
+} from './personalTasksCache';
 import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
@@ -29,14 +35,6 @@ if (!correlationId) {
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-
-// ----------------------------
-// Lightweight in-memory caches
-// ----------------------------
-// Goal: speed up module switching in dev/prod by avoiding refetch-on-mount patterns.
-// These caches are intentionally short-lived and are invalidated on writes.
-const __personalTasksCache = new Map<string, { at: number; data: any[] }>();
-const PERSONAL_TASKS_CACHE_MS = 15_000;
 
 async function isServerStartingResponse(res: Response): Promise<boolean> {
   if (res.status !== 503) return false;
@@ -3167,15 +3165,17 @@ export const Api = {
       if (params.toString()) url += `?${params.toString()}`;
     }
 
-    const cached = __personalTasksCache.get(url);
-    if (cached && Date.now() - cached.at < PERSONAL_TASKS_CACHE_MS) {
-      return cached.data;
+    const cacheKey = makePersonalTasksCacheKey(url, tokenService.getToken());
+    const cached = personalTasksCacheGet(cacheKey);
+    if (cached) {
+      return cached as any[];
     }
 
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch personal tasks');
-    const data = await res.json();
-    __personalTasksCache.set(url, { at: Date.now(), data });
+    const raw = await res.json();
+    const data = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
+    personalTasksCacheSet(cacheKey, data);
     return data;
   },
 
@@ -3201,7 +3201,7 @@ export const Api = {
       body: JSON.stringify(task),
     });
     const created = await handleResponse(res, 'Failed to create personal task');
-    __personalTasksCache.clear();
+    clearPersonalTasksCache();
     return created;
   },
 
@@ -3212,7 +3212,7 @@ export const Api = {
       body: JSON.stringify(updates),
     });
     const updated = await handleResponse(res, 'Failed to update personal task');
-    __personalTasksCache.clear();
+    clearPersonalTasksCache();
     return updated;
   },
 
@@ -3222,7 +3222,7 @@ export const Api = {
       headers: getHeaders(),
     });
     await handleResponse(res, 'Failed to delete personal task');
-    __personalTasksCache.clear();
+    clearPersonalTasksCache();
   },
 
   // ==========================================
