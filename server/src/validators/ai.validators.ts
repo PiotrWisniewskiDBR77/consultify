@@ -159,7 +159,10 @@ export const ChatStreamRequestSchema = z.object({
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),
-  conversationId: z.string().optional(),
+  conversationId: z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.string().min(1).optional()
+  ),
   resumeFromPartial: z.boolean().optional(),
 });
 

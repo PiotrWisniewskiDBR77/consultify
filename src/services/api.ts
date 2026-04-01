@@ -1408,6 +1408,12 @@ export const Api = {
 
       const responseStyle = options?.responseStyle ?? 'normal';
 
+      const resolvedStreamConversationId = (() => {
+        const raw = context?.conversationId ?? context?.sessionId;
+        if (typeof raw === 'string' && raw.trim().length > 0) return raw.trim();
+        return undefined;
+      })();
+
       const response = await fetch(`${API_URL}/ai/chat/stream`, {
         method: 'POST',
         headers: getHeaders(),
@@ -1422,7 +1428,8 @@ export const Api = {
           // Streaming session affinity / resume support
           // NOTE: backend uses `conversationId` as the stream session id to persist partial responses.
           // If we don't pass it, the backend falls back to a timestamp-based id which the client can't predict.
-          conversationId: context?.conversationId ?? context?.sessionId,
+          // Never send JSON `null` — Zod expects string | omitted (UnifiedChatPanel can pass conversationId: null).
+          conversationId: resolvedStreamConversationId,
           resumeFromPartial: Boolean(context?.resumeFromPartial),
           // AI Configuration
           aiModes,
