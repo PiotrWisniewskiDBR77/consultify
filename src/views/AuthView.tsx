@@ -162,7 +162,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   }, [targetMode]);
 
-  // Hidden dev shortcut instead of clickable logo to avoid accidental activation.
+  // Keyboard: Ctrl/Cmd+Shift+K. Logo: double-click toggles PIN (single click stays inert to limit accidents).
   useEffect(() => {
     if (!quickAccessEnabled) return;
 
@@ -176,6 +176,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [quickAccessEnabled]);
+
+  const toggleQuickAccessFromLogo = () => {
+    if (!quickAccessEnabled) return;
+    setShowQuickAccess((v) => !v);
+    setQuickCode('');
+  };
 
   // Quick access: dev/staging PINs; production consultify.ai / www → only 1111 (Anna demo).
   const handleQuickAccess = async (code: string) => {
@@ -933,40 +939,82 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700 shadow-2xl rounded-xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
         {/* Branding */}
         <div className="flex flex-col items-center mb-6">
-          <div className="select-none">
+          <div
+            className={`select-none ${quickAccessEnabled ? 'cursor-pointer' : ''}`}
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              toggleQuickAccessFromLogo();
+            }}
+            role={quickAccessEnabled ? 'button' : undefined}
+            tabIndex={quickAccessEnabled ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (!quickAccessEnabled) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleQuickAccessFromLogo();
+              }
+            }}
+            title={
+              quickAccessEnabled
+                ? t(
+                    'auth.quickAccessLogoHint',
+                    'Double-click the logo (or Ctrl+Shift+K / Cmd+Shift+K) to enter a 4-digit PIN.'
+                  )
+                : undefined
+            }
+            aria-label={
+              quickAccessEnabled
+                ? t('auth.quickAccessLogoAria', 'Open quick PIN sign-in (double-click)')
+                : undefined
+            }
+          >
             <img
               src="/assets/logos/logo-dark.svg?v=20260319"
-              className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
+              className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)] pointer-events-none"
               alt="Consultify"
             />
             <img
               src="/assets/logos/logo-light.svg?v=20260319"
-              className="h-16 md:h-20 w-auto object-contain block dark:hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+              className="h-16 md:h-20 w-auto object-contain block dark:hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)] pointer-events-none"
               alt="Consultify"
             />
           </div>
 
-          {/* Quick Access Code Input (hidden by default) */}
+          {/* Quick Access Code Input (hidden until shortcut or double-click on logo) */}
           {quickAccessEnabled && showQuickAccess && (
-            <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col items-center gap-1">
               <input
                 ref={quickAccessRef}
                 type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={4}
                 autoComplete="off"
                 value={quickCode}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                   setQuickCode(val);
+                  if (val.length === 4) {
+                    void handleQuickAccess(val);
+                  }
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && quickCode.length === 4) {
-                    void handleQuickAccess(quickCode);
+                  if (e.key !== 'Enter') return;
+                  const raw = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 4);
+                  if (raw.length === 4) {
+                    void handleQuickAccess(raw);
                   }
                 }}
                 placeholder="••••"
-                className="w-20 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                aria-label={t('auth.quickAccessPinAria', 'Four-digit quick access PIN')}
+                className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
               />
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[14rem] text-center leading-tight">
+                {t(
+                  'auth.quickAccessFooter',
+                  'Enter your PIN. To hide this field, double-click the logo or press Ctrl+Shift+K.'
+                )}
+              </span>
             </div>
           )}
         </div>
