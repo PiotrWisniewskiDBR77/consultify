@@ -57,6 +57,27 @@ async function main() {
       [ORG]
     );
     console.log('\nTotal personal tasks in org:', anyPersonalOrg.rows[0]?.c);
+
+    const u0 = users.rows[0] as { id: string } | undefined;
+    if (u0) {
+      const wrongId = '00000000-0000-0000-0000-000000000001';
+      const orScope = await pool.query(
+        `
+        SELECT COUNT(*)::int AS c FROM tasks t
+        WHERE t.organization_id = $1
+          AND (t.assignee_id = $2 OR EXISTS (
+            SELECT 1 FROM users pu WHERE pu.id = t.assignee_id AND lower(coalesce(pu.email,'')) = $3
+          ))
+          AND lower(coalesce(t.task_type,'')) = 'personal'
+          AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
+      `,
+        [ORG, wrongId, EMAIL.toLowerCase()]
+      );
+      console.log(
+        '\nOpen personal with WRONG jwt id + email EXISTS (simulates demo scope):',
+        orScope.rows[0]?.c
+      );
+    }
   } finally {
     await pool.end();
   }
