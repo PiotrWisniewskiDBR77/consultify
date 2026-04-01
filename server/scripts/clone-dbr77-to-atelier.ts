@@ -13,6 +13,10 @@
  * Usage:
  *   npx tsx server/scripts/clone-dbr77-to-atelier.ts              # dry-run
  *   npx tsx server/scripts/clone-dbr77-to-atelier.ts --write      # execute
+ *
+ * Optional:
+ *   CLONE_PURGE_TARGET=1  — before insert, delete existing rows for TARGET org in copied
+ *                           tables (use when refreshing a demo tenant).
  */
 
 import pg from 'pg';
@@ -61,6 +65,133 @@ const FK_REF_COLUMNS = new Set([
   'base_id', 'table_id', 'view_id', 'field_id',
 ]);
 
+/**
+ * Lower = inserted earlier. Previously rows were inserted in COUNT DESC order so `tasks`
+ * ran before `projects`/`initiatives`, causing FK failures and almost no data for Anna.
+ */
+const TABLE_INSERT_PRIORITY: Record<string, number> = {
+  // Foundation
+  teams: 20,
+  locations: 22,
+  custom_roles: 24,
+  custom_statuses: 26,
+  kpi_definitions: 28,
+  help_progress: 29,
+  my_work_session_context: 30,
+  // Containers
+  projects: 40,
+  chat_projects: 42,
+  knowledge_collections: 44,
+  notebook_pages: 160,
+  presentation_decks: 162,
+  // Initiatives & finance parents
+  initiatives: 60,
+  initiative_templates: 62,
+  initiative_benefits: 64,
+  initiative_kpis: 66,
+  benefit_targets: 68,
+  financial_statement_packs: 70,
+  financial_statements: 72,
+  financial_statement_line_aliases: 74,
+  budgets: 76,
+  financial_models: 78,
+  valuations: 80,
+  financial_analyses: 82,
+  // Planning / workflows
+  approval_workflows: 90,
+  approval_requests: 92,
+  assessments: 94,
+  assessment_reports: 96,
+  management_reports: 98,
+  // Primary work objects (depend on projects/initiatives)
+  decisions: 110,
+  tasks: 120,
+  task_dependencies: 125,
+  raid_items: 130,
+  canonical_inbox_items: 135,
+  // Comms & sessions
+  conversations: 150,
+  collab_sessions: 152,
+  tool_sessions: 154,
+  tool_session_presence: 156,
+  link_graph_edges: 158,
+  // Interview graph
+  interview_templates: 170,
+  interview_library_templates: 172,
+  interview_sessions: 180,
+  interview_assignments: 185,
+  interview_questions: 188,
+  interview_evidence: 190,
+  interview_insights: 192,
+  ai_conversations: 200,
+  ai_chat_runs: 205,
+  // Radar / signals
+  radar_ranked_signals: 210,
+  radar_actions: 212,
+  user_radar_profiles: 214,
+  threat_intelligence: 216,
+  // Notifications & misc mid-tier
+  notifications: 230,
+  usage_counters: 232,
+  system_feedback: 234,
+  feedback_items: 236,
+  support_tickets: 238,
+  dlp_policies: 240,
+  dlp_violations: 242,
+  conversion_events: 244,
+  journey_events: 246,
+  knowledge_graph_entities: 250,
+  my_ideas: 252,
+  my_idea_maps: 254,
+  tool_works: 256,
+  tool_feedback: 258,
+  ai_actions: 260,
+  ai_actions_log: 262,
+  ai_actions_config: 264,
+  ai_budgets: 266,
+  ai_instructions_org: 268,
+  ai_org_memory: 270,
+  ai_learning_patterns: 272,
+  ai_cost_usage: 274,
+  ai_usage_logs: 276,
+  executive_insights_cache: 280,
+  executive_aggregate_cache: 282,
+  analytics_snapshots: 284,
+  status_reports: 286,
+  custom_dashboards: 288,
+  custom_reports: 290,
+  report_builder_reports: 292,
+  report_public_links: 294,
+  report_schedules: 296,
+  saved_reports: 298,
+  session_configurations: 300,
+  enterprise_feature_flags: 302,
+  organization_branding: 304,
+  organization_context: 306,
+  organization_context_claims: 308,
+  organization_context_items: 310,
+  organization_context_snapshots: 312,
+  organization_style_profiles: 314,
+  public_mini_assessments: 316,
+  assessment_pdf_imports: 318,
+  assessment_initiative_generation_runs: 320,
+  lessons_learned: 322,
+  prompt_usage_log: 324,
+  user_activity: 326,
+  audit_statistics: 328,
+  audit_alerts: 330,
+  // Logs — late (high volume)
+  activity_logs: 900,
+  audit_log: 902,
+};
+
+function sortTablesForInsert(a: { name: string }, b: { name: string }): number {
+  const pa = TABLE_INSERT_PRIORITY[a.name] ?? 500;
+  const pb = TABLE_INSERT_PRIORITY[b.name] ?? 500;
+  if (pa !== pb) return pa - pb;
+  return a.name.localeCompare(b.name);
+}
+
 // Global ID mapping: old ID → new ID (shared across all tables)
 const idMap = new Map<string, string>();
 
@@ -75,6 +206,7 @@ function mapId(oldId: string): string {
 }
 
 async function main() {
+  idMap.clear();
   const isWrite = process.argv.includes('--write');
   const dryRun = !isWrite;
 
@@ -271,7 +403,8 @@ async function main() {
       }
     }
 
-    console.log(`  ID map size: ${idMap.size} entries`);
+    allTableData.sort(sortTablesForInsert);
+    console.log(`  ID map size: ${idMap.size} entries (insert order: FK-safe)`);
 
     if (dryRun) {
       const total = allTableData.reduce((sum, t) => sum + t.rows.length, 0) + (convMsgsData?.rows.length || 0);
@@ -282,27 +415,66 @@ async function main() {
       return;
     }
 
-    // ── Step 4: Insert all data with remapped IDs ──
+    // ── Step 4: Insert all data with remapped IDs (multi-pass for residual FKs) ──
     console.log('\n📋 Step 4: Inserting data with remapped IDs...\n');
+
+    if (process.env.CLONE_PURGE_TARGET === '1') {
+      console.log('  🗑 CLONE_PURGE_TARGET=1 — deleting existing target-org rows first...');
+      try {
+        const cm = await pool.query(
+          `DELETE FROM conversation_messages WHERE conversation_id IN (SELECT id FROM conversations WHERE organization_id = $1)`,
+          [TARGET_ORG_ID]
+        );
+        console.log(`    conversation_messages removed: ${cm.rowCount ?? 0}`);
+      } catch (e) {
+        console.warn('    conversation_messages purge skipped:', e instanceof Error ? e.message : e);
+      }
+      for (const t of [...allTableData].reverse()) {
+        try {
+          const del = await pool.query(`DELETE FROM "${t.name}" WHERE organization_id = $1`, [
+            TARGET_ORG_ID,
+          ]);
+          if ((del.rowCount ?? 0) > 0) {
+            console.log(`    purged ${t.name}: ${del.rowCount}`);
+          }
+        } catch (e) {
+          console.warn(`    purge skip ${t.name}:`, e instanceof Error ? e.message.slice(0, 120) : e);
+        }
+      }
+    }
 
     let totalCopied = 0;
     let totalSkipped = 0;
 
+    type RowJob = { tableData: TableData; row: Record<string, unknown> };
+    const insertQueue: RowJob[] = [];
     for (const tableData of allTableData) {
-      const { name: tableName, columns, pkColumns, rows } = tableData;
-      const userRefCols = columns.filter((c) => USER_REF_COLUMNS.has(c));
-      const fkRefCols = columns.filter((c) => FK_REF_COLUMNS.has(c));
+      for (const row of tableData.rows) {
+        insertQueue.push({ tableData, row });
+      }
+    }
 
-      let copied = 0;
-      let skipped = 0;
+    function isFkViolation(msg: string): boolean {
+      const m = msg.toLowerCase();
+      return m.includes('foreign key') || m.includes('violates foreign key');
+    }
 
-      for (const row of rows) {
+    let pass = 0;
+    let queue = insertQueue;
+    const perTableStats = new Map<string, { ok: number; skip: number }>();
+
+    while (queue.length > 0 && pass < 60) {
+      const nextRound: RowJob[] = [];
+      let insertedThisPass = 0;
+
+      for (const { tableData, row } of queue) {
+        const { name: tableName, columns, pkColumns } = tableData;
+        const userRefCols = columns.filter((c) => USER_REF_COLUMNS.has(c));
+        const fkRefCols = columns.filter((c) => FK_REF_COLUMNS.has(c));
+
         const newRow: Record<string, unknown> = { ...row };
-
-        // Remap org
         newRow['organization_id'] = TARGET_ORG_ID;
 
-        // Remap PK
         for (const pk of pkColumns) {
           const oldVal = String(row[pk] || '');
           if (oldVal && idMap.has(oldVal)) {
@@ -310,14 +482,12 @@ async function main() {
           }
         }
 
-        // Remap user references
         for (const col of userRefCols) {
           if (newRow[col] != null) {
             newRow[col] = remapUser(newRow[col]);
           }
         }
 
-        // Remap FK references using the global ID map
         for (const col of fkRefCols) {
           if (newRow[col] != null && typeof newRow[col] === 'string') {
             const mapped = idMap.get(newRow[col] as string);
@@ -336,63 +506,103 @@ async function main() {
              ON CONFLICT DO NOTHING`,
             values
           );
-          if ((ins.rowCount ?? 0) > 0) copied++;
-          else skipped++;
-        } catch (err: unknown) {
-          skipped++;
-          const msg = err instanceof Error ? err.message : String(err);
-          if (skipped <= 2 && !msg.includes('duplicate') && !msg.includes('unique')) {
-            console.warn(`    ⚠ ${tableName}: ${msg.slice(0, 150)}`);
+          const st = perTableStats.get(tableName) || { ok: 0, skip: 0 };
+          if ((ins.rowCount ?? 0) > 0) {
+            st.ok++;
+            insertedThisPass++;
+            totalCopied++;
+          } else {
+            st.skip++;
+            totalSkipped++;
           }
+          perTableStats.set(tableName, st);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          const st = perTableStats.get(tableName) || { ok: 0, skip: 0 };
+          if (isFkViolation(msg)) {
+            nextRound.push({ tableData, row });
+          } else {
+            st.skip++;
+            totalSkipped++;
+            if (pass === 0 && st.skip <= 3 && !msg.includes('duplicate') && !msg.includes('unique')) {
+              console.warn(`    ⚠ ${tableName}: ${msg.slice(0, 150)}`);
+            }
+          }
+          perTableStats.set(tableName, st);
         }
       }
 
-      if (copied > 0 || skipped > 0) {
-        const suffix = skipped > 0 ? ` (${skipped} skipped)` : '';
-        console.log(`  ✓ ${tableName}: ${copied}/${rows.length}${suffix}`);
+      queue = nextRound;
+      pass++;
+      if (insertedThisPass > 0 || queue.length > 0) {
+        console.log(`  pass ${pass}: +${insertedThisPass} rows, FK backlog: ${queue.length}`);
       }
-      totalCopied += copied;
-      totalSkipped += skipped;
+      if (queue.length === 0) break;
+      if (insertedThisPass === 0) {
+        console.error(
+          `  ⚠ No progress with ${queue.length} rows left — check FK gaps / purge target org (CLONE_PURGE_TARGET=1).`
+        );
+        break;
+      }
     }
 
-    // Insert conversation messages
+    for (const tableData of allTableData) {
+      const st = perTableStats.get(tableData.name);
+      if (!st || (st.ok === 0 && st.skip === 0)) continue;
+      console.log(
+        `  ✓ ${tableData.name}: ${st.ok}/${tableData.rows.length} inserted (${st.skip} skip/conflict)`
+      );
+    }
+
+    // Insert conversation messages (after conversations exist; retry FK)
     if (convMsgsData) {
       const { columns, pkColumns, rows } = convMsgsData;
       const userRefCols = columns.filter((c) => USER_REF_COLUMNS.has(c));
       const fkRefCols = columns.filter((c) => FK_REF_COLUMNS.has(c));
-      let copied = 0;
-
-      for (const row of rows) {
-        const newRow: Record<string, unknown> = { ...row };
-
-        for (const pk of pkColumns) {
-          const oldVal = String(row[pk] || '');
-          if (oldVal && idMap.has(oldVal)) newRow[pk] = idMap.get(oldVal);
-        }
-        for (const col of userRefCols) {
-          if (newRow[col] != null) newRow[col] = remapUser(newRow[col]);
-        }
-        for (const col of fkRefCols) {
-          if (newRow[col] != null && typeof newRow[col] === 'string') {
-            const mapped = idMap.get(newRow[col] as string);
-            if (mapped) newRow[col] = mapped;
+      let msgQueue: Record<string, unknown>[] = [...rows];
+      let msgCopied = 0;
+      let msgPass = 0;
+      while (msgQueue.length > 0 && msgPass < 25) {
+        const nextMsgs: Record<string, unknown>[] = [];
+        let insThis = 0;
+        for (const row of msgQueue) {
+          const newRow: Record<string, unknown> = { ...row };
+          for (const pk of pkColumns) {
+            const oldVal = String(row[pk] || '');
+            if (oldVal && idMap.has(oldVal)) newRow[pk] = idMap.get(oldVal);
+          }
+          for (const col of userRefCols) {
+            if (newRow[col] != null) newRow[col] = remapUser(newRow[col]);
+          }
+          for (const col of fkRefCols) {
+            if (newRow[col] != null && typeof newRow[col] === 'string') {
+              const mapped = idMap.get(newRow[col] as string);
+              if (mapped) newRow[col] = mapped;
+            }
+          }
+          const cols = columns.filter((c) => newRow[c] !== undefined);
+          const placeholders = cols.map((_, i) => `$${i + 1}`);
+          const values = cols.map((c) => newRow[c]);
+          try {
+            const ins = await pool.query(
+              `INSERT INTO conversation_messages (${cols.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders.join(', ')}) ON CONFLICT DO NOTHING`,
+              values
+            );
+            if ((ins.rowCount ?? 0) > 0) {
+              msgCopied++;
+              insThis++;
+            }
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (isFkViolation(msg)) nextMsgs.push(row);
           }
         }
-
-        const cols = columns.filter((c) => newRow[c] !== undefined);
-        const placeholders = cols.map((_, i) => `$${i + 1}`);
-        const values = cols.map((c) => newRow[c]);
-
-        try {
-          const ins = await pool.query(
-            `INSERT INTO conversation_messages (${cols.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders.join(', ')}) ON CONFLICT DO NOTHING`,
-            values
-          );
-          if ((ins.rowCount ?? 0) > 0) copied++;
-        } catch { /* skip */ }
+        msgQueue = nextMsgs;
+        msgPass++;
+        if (insThis === 0 && msgQueue.length > 0) break;
       }
-      console.log(`  ✓ conversation_messages: ${copied}/${rows.length}`);
-      totalCopied += copied;
+      console.log(`  ✓ conversation_messages: ${msgCopied}/${rows.length} (${msgQueue.length} remaining)`);
+      totalCopied += msgCopied;
     }
 
     console.log(`\n${'='.repeat(60)}`);
