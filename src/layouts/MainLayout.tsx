@@ -13,7 +13,7 @@ import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButto
 import { HelpDeepLinkListener } from '../components/Help/HelpDeepLinkListener';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
-import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
+// import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
 import { DemoModeBanner } from '../components/layout/DemoModeBanner';
 import GlobalAccessBanners from '../components/layout/GlobalAccessBanners';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
@@ -186,8 +186,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* First-login onboarding CTA (dismissible) */}
       <OnboardingFirstLoginCTA />
 
-      {/* Contextual micro-video help (T073) — shows once per module per user */}
-      <MicroVideoHelpTrigger />
+      {/* Contextual micro-video help (T073) — disabled for now */}
+      {/* <MicroVideoHelpTrigger /> */}
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (
