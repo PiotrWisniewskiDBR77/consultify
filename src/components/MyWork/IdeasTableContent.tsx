@@ -1,5 +1,4 @@
 import {
-  Calendar,
   CheckCircle2,
   Lightbulb,
   Network,
@@ -14,6 +13,16 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import {
+  type ActionRow,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import type {
@@ -300,117 +309,142 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const renderPreview = (idea: MyIdea) => {
     const stageMeta = getStageMeta(idea.stage);
+    const StageIcon = stageMeta.icon;
     const toolMeta = getToolMeta(idea.preferredTool);
+    const ToolIcon = toolMeta.icon;
+
+    const metaPills: MetaPill[] = [
+      {
+        label: isPolish ? stageMeta.labelPl : stageMeta.label,
+        className: stageMeta.badge,
+        icon: StageIcon,
+      },
+      {
+        label: isPolish ? toolMeta.labelPl : toolMeta.label,
+        className: toolMeta.badge,
+        icon: ToolIcon,
+      },
+    ];
+
+    const metaTrailing = (
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          {formatIdeaDate(idea)}
+        </span>
+      </div>
+    );
+
+    const detailsText = idea.body || '';
+
+    const contextParts: string[] = [];
+    if (idea.sourceType) contextParts.push(`${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`);
+    if (typeof idea.mapItems === 'number') contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
+    if (typeof idea.mapNodes === 'number') contextParts.push(`Nodes: ${idea.mapNodes}`);
+    if (typeof idea.mapEdges === 'number') contextParts.push(`${isPolish ? 'Połączenia' : 'Edges'}: ${idea.mapEdges}`);
+
     return (
       <div className="space-y-4">
-        {idea.body ? (
-          <section className="rounded-xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Opis' : 'Summary'}
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
+          {idea.tags?.length ? (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {idea.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{idea.body}</p>
-          </section>
-        ) : null}
+          ) : null}
+        </PreviewMetaCard>
 
-        <section className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Etap' : 'Stage'}
+        <PreviewDetailsSection
+          text={detailsText}
+          label={isPolish ? 'Szczegóły' : 'Details'}
+        >
+          {contextParts.length > 0 ? (
+            <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-white/[0.06]">
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                {isPolish ? 'Kontekst' : 'Context'}
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                {contextParts.map((part) => (
+                  <span key={part} className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
+                    {part}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="mt-2">{renderStageBadge(idea.stage)}</div>
-          </div>
-          <div className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Narzędzie' : 'Tool'}
-            </div>
-            <div className="mt-2">{renderToolBadge(idea.preferredTool)}</div>
-          </div>
-          <div className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Data' : 'Updated'}
-            </div>
-            <div className="mt-2 inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <Calendar size={14} className="text-slate-400" />
-              {formatIdeaDate(idea)}
-            </div>
-          </div>
-          <div className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Tagi' : 'Tags'}
-            </div>
-            <div className="mt-2">{renderTagBadges(idea.tags, 4)}</div>
-          </div>
-        </section>
-
-        {(idea.mapItems || idea.mapNodes || idea.mapEdges || idea.sourceType) && (
-          <section className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Kontekst' : 'Context'}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-              {idea.sourceType ? (
-                <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
-                  {isPolish ? 'Zrodlo' : 'Source'}: {idea.sourceType}
-                </span>
-              ) : null}
-              {typeof idea.mapItems === 'number' ? (
-                <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
-                  {isPolish ? 'Elementy' : 'Items'}: {idea.mapItems}
-                </span>
-              ) : null}
-              {typeof idea.mapNodes === 'number' ? (
-                <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
-                  {isPolish ? 'Nodes' : 'Nodes'}: {idea.mapNodes}
-                </span>
-              ) : null}
-              {typeof idea.mapEdges === 'number' ? (
-                <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
-                  {isPolish ? 'Polaczenia' : 'Edges'}: {idea.mapEdges}
-                </span>
-              ) : null}
-            </div>
-          </section>
-        )}
-
-        <section className="rounded-xl border border-dashed border-slate-200/70 p-3 dark:border-white/[0.06]">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Co dalej' : 'Next step'}
-          </div>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {isPolish
-              ? `Otworz pelny workspace, aby rozwinac ${stageMeta.labelPl.toLowerCase()} w narzedziu ${toolMeta.labelPl.toLowerCase()}.`
-              : `Open the full workspace to expand this ${stageMeta.label.toLowerCase()} idea in ${toolMeta.label.toLowerCase()}.`}
-          </p>
-        </section>
+          ) : null}
+        </PreviewDetailsSection>
       </div>
     );
   };
 
-  const renderPreviewFooter = (idea: MyIdea) => (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        onClick={() => onStartConvert(idea)}
-        className="inline-flex h-9 items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/10 px-4 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-500/15 dark:text-purple-300"
-      >
-        <Sparkles size={14} />
-        {isPolish ? 'Konwertuj' : 'Convert'}
-      </button>
-      <button
-        onClick={() => onOpenIdeaInProcessFlow(idea)}
-        className="inline-flex h-9 items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-300"
-      >
-        <Workflow size={14} />
-        {isPolish ? 'Otworz Flow' : 'Open Flow'}
-      </button>
-      <ConvertToOutputMenu
-        sourceType="idea"
-        sourceId={idea.id}
-        sourceTitle={idea.title || ''}
-        onConvertComplete={() => onRefresh()}
-        variant="dropdown"
-      />
-    </div>
-  );
+  const renderPreviewFooter = (idea: MyIdea) => {
+    const aiHints = isPolish
+      ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
+      : ['Why urgent?', 'Action plan', 'Who can help?'];
+
+    const relationItems: RelationItem[] = [];
+    if (idea.sourceType) {
+      relationItems.push({
+        label: `${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`,
+        tone: 'text-slate-600 dark:text-slate-400',
+      });
+    }
+
+    const actionRows: ActionRow[] = [
+      {
+        columns: 3,
+        buttons: [
+          {
+            label: isPolish ? 'Konwertuj' : 'Convert',
+            icon: Sparkles,
+            onClick: () => onStartConvert(idea),
+            colorScheme: 'purple',
+          },
+          {
+            label: isPolish ? 'Otwórz Flow' : 'Open Flow',
+            icon: Workflow,
+            onClick: () => onOpenIdeaInProcessFlow(idea),
+            colorScheme: 'emerald',
+          },
+          {
+            label: isPolish ? 'Usuń' : 'Delete',
+            icon: Trash2,
+            onClick: () => onDeleteIdea(idea),
+            colorScheme: 'red',
+          },
+        ],
+      },
+    ];
+
+    return (
+      <div className="space-y-0">
+        <PreviewAIHintStrip hints={aiHints} />
+
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+        <PreviewRelations items={relationItems} emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'} />
+
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+        <PreviewActionBar rows={actionRows} />
+
+        <div className="mt-2">
+          <ConvertToOutputMenu
+            sourceType="idea"
+            sourceId={idea.id}
+            sourceTitle={idea.title || ''}
+            onConvertComplete={() => onRefresh()}
+            variant="dropdown"
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 min-h-0 bg-white dark:bg-navy-950">
