@@ -11,6 +11,7 @@ import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
+import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
 
 const FORCED_SUPERADMIN_EMAILS = (() => {
@@ -334,6 +335,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       logger.warn('[Auth] Failed to set auth cookies (continuing)', { error: err?.message || err });
     }
 
+    const orgType = String((org as { organization_type?: string }).organization_type || '')
+      .trim()
+      .toUpperCase();
     const safeUser = {
       id: user.id,
       email: user.email,
@@ -345,6 +349,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       companyName: org.name,
       mfaEnabled: mfaStatus.enabled,
       isAuthenticated: true,
+      isDemo: orgType === ORG_TYPES.DEMO,
       accessLevel:
         org.status === 'active' && (org.plan === 'enterprise' || org.plan === 'pro')
           ? 'full'

@@ -424,10 +424,9 @@ const ReportsBuilderLegacyRedirect: React.FC = () => {
 const AuthRouteWithTrialRedirect: React.FC<{
   isAuthenticated: boolean;
   authInitialStep: AuthStep;
-  sessionMode: SessionMode | null;
   onAuthSuccess: (user: { status?: string; message?: string }) => void;
   onBack: () => void;
-}> = ({ isAuthenticated, authInitialStep, sessionMode, onAuthSuccess, onBack }) => {
+}> = ({ isAuthenticated, authInitialStep, onAuthSuccess, onBack }) => {
   const [searchParams] = useSearchParams();
   const action = searchParams.get('action');
 
@@ -441,7 +440,7 @@ const AuthRouteWithTrialRedirect: React.FC<{
     <AuthLayout>
       <AuthView
         initialStep={authInitialStep}
-        targetMode={sessionMode || SessionMode.FREE}
+        targetMode={SessionMode.FREE}
         onAuthSuccess={onAuthSuccess}
         onBack={onBack}
       />
@@ -563,7 +562,10 @@ export const AppRoutes: React.FC = () => {
     const validUser = user as User;
     // Demo sessions should only be enabled for demo accounts and demo-button entry.
     // If a regular user logs in after previously starting a demo session, we must clear stale flags.
-    const DEMO_EMAILS = new Set(['piotr.wisniewski@demo.com']);
+    const DEMO_EMAILS = new Set([
+      'piotr.wisniewski@demo.com',
+      'anna.zielinska@ateliertoys-demo.com',
+    ]);
     const FORCE_DEMO_OFF_EMAIL = 'piotr.wisniewski@dbr77.com';
     const isDemoUser = (validUser as any).isDemo === true || DEMO_EMAILS.has(validUser.email);
 
@@ -792,7 +794,7 @@ export const AppRoutes: React.FC = () => {
                 <AuthView
                   key="login-form-stable"
                   initialStep={AuthStep.LOGIN}
-                  targetMode={sessionMode || SessionMode.FREE}
+                  targetMode={SessionMode.FREE}
                   onAuthSuccess={handleAuthSuccess}
                   onBack={() => navigate('/')}
                 />
@@ -812,7 +814,7 @@ export const AppRoutes: React.FC = () => {
                 <AuthView
                   key="register-form-stable"
                   initialStep={AuthStep.REGISTER}
-                  targetMode={sessionMode || SessionMode.FREE}
+                  targetMode={SessionMode.FREE}
                   onAuthSuccess={handleAuthSuccess}
                   onBack={() => navigate('/')}
                 />
@@ -868,7 +870,6 @@ export const AppRoutes: React.FC = () => {
             <AuthRouteWithTrialRedirect
               isAuthenticated={!!currentUser?.isAuthenticated}
               authInitialStep={authInitialStep}
-              sessionMode={sessionMode}
               onAuthSuccess={handleAuthSuccess}
               onBack={() => navigate('/')}
             />
@@ -992,11 +993,13 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.WORDY}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Wordy']} noPadding>
-              <RouteErrorBoundary>
-                <WordyView />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Wordy']} noPadding>
+                <RouteErrorBoundary>
+                  <WordyView />
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
 
@@ -1004,11 +1007,13 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.EXCELE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
-              <RouteErrorBoundary>
-                <ExceleView />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
+                <RouteErrorBoundary>
+                  <ExceleView />
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
 
@@ -1016,11 +1021,13 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.PREZENTACJE_GEN}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Prezentacje']} noPadding>
-              <RouteErrorBoundary>
-                <PrezentacjeView />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Prezentacje']} noPadding>
+                <RouteErrorBoundary>
+                  <PrezentacjeView />
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
 
