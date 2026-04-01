@@ -7429,6 +7429,38 @@ const parseCaptureMetadata = (raw: string | null | undefined) =>
   toPublicNotebookCaptureMetadata(raw);
 const parseAttachments = (raw: string | null | undefined) => toPublicNotebookAttachments(raw);
 
+function buildLegacyNotebookSelect(cols: Set<string>, alias = 'np'): string {
+  const p = alias ? `${alias}.` : '';
+  const safe = (col: string, as: string, fallback: string) =>
+    cols.has(col) ? `${p}${col} as ${as}` : `${fallback} as ${as}`;
+  return [
+    `${p}id`,
+    `${p}owner_user_id as "ownerUserId"`,
+    `${p}organization_id as "organizationId"`,
+    `${p}project_id as "projectId"`,
+    `${p}visibility`,
+    `${p}title`,
+    `${p}content_json as "contentJson"`,
+    `${p}content_text as "contentText"`,
+    `${p}tags_json as tags`,
+    safe('maturity', 'maturity', "'seed'"),
+    safe('icon', 'icon', 'NULL'),
+    safe('summary', 'summary', 'NULL'),
+    `coalesce(${cols.has('status') ? `${p}status` : 'NULL'}, 'active') as status`,
+    `coalesce(${cols.has('pinned') ? `${p}pinned` : 'NULL'}, 0) as pinned`,
+    `coalesce(${cols.has('verification_status') ? `${p}verification_status` : 'NULL'}, 'unverified') as "verificationStatus"`,
+    `coalesce(${cols.has('review_cadence') ? `${p}review_cadence` : 'NULL'}, 'monthly') as "reviewCadence"`,
+    safe('stale_at', '"staleAt"', 'NULL'),
+    safe('last_reviewed_at', '"lastReviewedAt"', 'NULL'),
+    safe('capture_source', '"captureSource"', 'NULL'),
+    safe('capture_metadata', '"captureMetadataJson"', 'NULL'),
+    safe('attachments_json', '"attachmentsJson"', "'[]'"),
+    safe('converted_to_json', '"convertedToJson"', 'NULL'),
+    `${p}created_at as "createdAt"`,
+    `${p}updated_at as "updatedAt"`,
+  ].join(',\n          ');
+}
+
 /**
  * GET /api/my-work/notebook/pages?projectId?&q?&status?&pinned?&sort?&limit?&offset?
  */
@@ -7439,6 +7471,7 @@ router.get(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const projectId = req.query.projectId ? String(req.query.projectId) : null;
     const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
@@ -7472,7 +7505,6 @@ router.get(
     if (q) {
       const isPg = process.env.DB_TYPE === 'postgres';
       if (isPg) {
-        // V4-NOTE-03: FTS on Postgres (search_vector from migration 627)
         const ftsQuery = q.replace(/'/g, "''").trim();
         where.push(`np.search_vector @@ plainto_tsquery('simple', ?)`);
         params.push(ftsQuery);
@@ -7496,30 +7528,7 @@ router.get(
       (await queryHelpers.queryAll<any>(
         `
         SELECT
-          np.id,
-          np.owner_user_id as "ownerUserId",
-          np.organization_id as "organizationId",
-          np.project_id as "projectId",
-          np.visibility,
-          np.title,
-          np.content_json as "contentJson",
-          np.content_text as "contentText",
-          np.tags_json as tags,
-          np.maturity,
-          np.icon,
-          np.summary,
-          coalesce(np.status, 'active') as status,
-          coalesce(np.pinned, 0) as pinned,
-          coalesce(np.verification_status, 'unverified') as verificationStatus,
-          coalesce(np.review_cadence, 'monthly') as reviewCadence,
-          np.stale_at as staleAt,
-          np.last_reviewed_at as lastReviewedAt,
-          np.capture_source as "captureSource",
-          np.capture_metadata as "captureMetadataJson",
-          np.attachments_json as "attachmentsJson",
-          np.converted_to_json as "convertedToJson",
-          np.created_at as "createdAt",
-          np.updated_at as "updatedAt"
+          ${buildLegacyNotebookSelect(nbCols, 'np')}
         FROM notebook_pages np
         WHERE ${where.join(' AND ')}
         ORDER BY ${orderBy}
@@ -7577,6 +7586,7 @@ router.post(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const title = String(req.body?.title || '').trim();
     if (!title) return res.status(400).json({ error: 'title is required' });
@@ -7594,7 +7604,6 @@ router.post(
       return res.status(400).json({ error: 'projectId is required for visibility=project' });
     }
 
-    // If creating a project-visible note, require membership
     if (visibility === 'project' && projectId) {
       const pm = await queryHelpers.queryOne<{ ok: number }>(
         `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
@@ -7642,26 +7651,7 @@ router.post(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildLegacyNotebookSelect(nbCols, '')}
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -7728,6 +7718,7 @@ router.post(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, TXT, MD)' });
 
@@ -7745,12 +7736,7 @@ router.post(
     }
 
     const row = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id as "ownerUserId", organization_id as "organizationId", project_id as "projectId",
-        visibility, title, content_json as "contentJson", content_text as "contentText", tags_json as tags,
-        maturity, icon, summary, coalesce(status, 'active') as status, coalesce(pinned, 0) as pinned,
-        capture_source as "captureSource", capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson", created_at as "createdAt", updated_at as "updatedAt"
+      `SELECT ${buildLegacyNotebookSelect(nbCols, '')}
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [captureResult.pageId]
     );
@@ -7795,34 +7781,12 @@ router.get(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const id = String(req.params.id || '').trim();
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id,
-        organization_id,
-        project_id,
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as verificationStatus,
-        coalesce(review_cadence, 'monthly') as reviewCadence,
-        stale_at as staleAt,
-        last_reviewed_at as lastReviewedAt,
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildLegacyNotebookSelect(nbCols, '')}
        FROM notebook_pages
        WHERE id = ?
        LIMIT 1`,
@@ -7926,8 +7890,9 @@ router.post(
     const files = ((req.files as Express.Multer.File[] | undefined) || []).filter(Boolean);
     if (files.length === 0) return res.status(400).json({ error: 'Files required' });
 
+    const nbCols = await getTableColumns('notebook_pages');
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+      `SELECT id, owner_user_id, organization_id${nbCols.has('attachments_json') ? ', attachments_json as "attachmentsJson"' : ''}
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -7961,30 +7926,7 @@ router.post(
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as verificationStatus,
-        coalesce(review_cadence, 'monthly') as reviewCadence,
-        stale_at as staleAt,
-        last_reviewed_at as lastReviewedAt,
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        ${buildLegacyNotebookSelect(nbCols, '')}
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -8031,11 +7973,12 @@ router.get(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const id = String(req.params.id || '').trim();
     const attachmentId = String(req.params.attachmentId || '').trim();
     const row = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, project_id, visibility, attachments_json as "attachmentsJson"
+      `SELECT id, owner_user_id, organization_id, project_id, visibility${nbCols.has('attachments_json') ? ', attachments_json as "attachmentsJson"' : ''}
        FROM notebook_pages
        WHERE id = ?
        LIMIT 1`,
@@ -8062,11 +8005,12 @@ router.delete(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const id = String(req.params.id || '').trim();
     const attachmentId = String(req.params.attachmentId || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+      `SELECT id, owner_user_id, organization_id${nbCols.has('attachments_json') ? ', attachments_json as "attachmentsJson"' : ''}
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -8096,34 +8040,11 @@ router.delete(
       });
     }
 
-    const selectNotebookFull = `
-      SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as verificationStatus,
-        coalesce(review_cadence, 'monthly') as reviewCadence,
-        stale_at as staleAt,
-        last_reviewed_at as lastReviewedAt,
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
-      FROM notebook_pages WHERE id = ? LIMIT 1`;
-    const row = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT ${buildLegacyNotebookSelect(nbCols, '')}
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
     const parseCT = (raw: string | null) => {
       if (!raw) return null;
       try {
@@ -8170,6 +8091,7 @@ router.put(
     if (!identity) return;
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebook_pages']))) return;
+    const nbCols = await getTableColumns('notebook_pages');
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
@@ -8208,7 +8130,6 @@ router.put(
       ['inbox', 'active', 'converted', 'archived'].includes(req.body.status)
     )
       set('status', req.body.status);
-    // V4-NOTE-05: lifecycle
     if (
       typeof req.body?.verificationStatus === 'string' &&
       ['unverified', 'verified', 'disputed'].includes(req.body.verificationStatus)
@@ -8238,31 +8159,7 @@ router.put(
     }
 
     const selectNotebookFull = `
-      SELECT
-        id,
-        owner_user_id as "ownerUserId",
-        organization_id as "organizationId",
-        project_id as "projectId",
-        visibility,
-        title,
-        content_json as "contentJson",
-        content_text as "contentText",
-        tags_json as tags,
-        maturity,
-        icon,
-        summary,
-        coalesce(status, 'active') as status,
-        coalesce(pinned, 0) as pinned,
-        coalesce(verification_status, 'unverified') as verificationStatus,
-        coalesce(review_cadence, 'monthly') as reviewCadence,
-        stale_at as staleAt,
-        last_reviewed_at as lastReviewedAt,
-        capture_source as "captureSource",
-        capture_metadata as "captureMetadataJson",
-        attachments_json as "attachmentsJson",
-        converted_to_json as "convertedToJson",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+      SELECT ${buildLegacyNotebookSelect(nbCols, '')}
       FROM notebook_pages WHERE id = ? LIMIT 1`;
 
     const formatNotebookRow = (r: any) => {

@@ -1768,15 +1768,10 @@ export const Api = {
 
   // --- SUPER ADMIN ---
   getOrganizations: async (): Promise<any[]> => {
-    try {
-      const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch organizations');
-      return data;
-    } catch (e) {
-      console.error('[Api] Error fetching organizations:', e);
-      throw e;
-    }
+    const res = await fetchWithRetry(`${API_URL}/superadmin/organizations`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organizations');
   },
 
   updateOrganization: async (
@@ -1864,9 +1859,10 @@ export const Api = {
     counts: { total_users: number; total_orgs: number; active_users_7d: number };
     live?: { total_active_connections: number };
   }> => {
-    const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch dashboard');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/superadmin/dashboard`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch dashboard');
   },
 
   getSuperAdminSignals: async (): Promise<any[]> => {
@@ -12339,7 +12335,7 @@ export const Api = {
   myWorkNotebookLegacyModeKey: 'consultify:notebook-legacy-mode',
   shouldFallbackToLegacyMyWorkNotebook: (error: any) => {
     const status = Number(error?.status);
-    return [400, 404, 405, 501].includes(status);
+    return [400, 404, 405, 500, 501, 503].includes(status);
   },
   shouldLockLegacyMyWorkNotebookMode: (error: any) => {
     const status = Number(error?.status);
