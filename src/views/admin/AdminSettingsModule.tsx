@@ -15,7 +15,6 @@ import {
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
-import { AdminV8CanonPanel } from '../../components/Admin/AdminV8CanonPanel';
 import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
@@ -369,7 +368,6 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         {/* Content - No additional header, breadcrumbs are in MainLayout */}
         <ScrollArea className="flex-1">
           <div className="p-2 lg:p-3 w-full space-y-3">
-            <AdminV8CanonPanel compact />
             {renderContent()}
           </div>
         </ScrollArea>
