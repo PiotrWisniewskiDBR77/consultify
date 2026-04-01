@@ -487,7 +487,21 @@ const resolveCanonicalPersonalTaskIdentity = async (
       matches: matches.map((m) => ({ id: m.id, org: m.organization_id })),
     });
 
-    if (matches.length === 0) return identity;
+    if (matches.length === 0) {
+      try {
+        const row = await queryHelpers.queryOne<{ organization_id: string | null }>(
+          `SELECT organization_id FROM users WHERE id = ? LIMIT 1`,
+          [identity.userId]
+        );
+        const oid = row?.organization_id ? String(row.organization_id).trim() : '';
+        if (oid && oid !== identity.orgId) {
+          return { userId: identity.userId, orgId: oid };
+        }
+      } catch {
+        /* ignore */
+      }
+      return identity;
+    }
 
     const exact = matches.find(
       (row) => row.id === identity.userId && row.organization_id === identity.orgId
@@ -521,9 +535,11 @@ const buildPersonalTaskOwnerScope = (
     demoHeader ||
     Boolean((req.user as { isDemo?: boolean } | undefined)?.isDemo);
   const userId = overrides?.userId || (req as any).userId || req.user?.id;
-  const email =
-    overrides?.email ||
-    (typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '');
+  const rawOverride =
+    overrides?.email !== undefined && overrides?.email !== null ? String(overrides.email) : '';
+  const fromReq =
+    typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  const email = (rawOverride.trim().toLowerCase() || fromReq).trim();
   const assigneeIdCol = taskAlias ? `${taskAlias}.assignee_id` : 'assignee_id';
 
   if (allowLegacyEmailOwnerMatch && email) {
@@ -537,6 +553,26 @@ const buildPersonalTaskOwnerScope = (
     whereSql: `${assigneeIdCol} = ?`,
     params: [userId],
   };
+};
+
+/** Email for assignee scope: JWT first, then DB by resolved user id (tokens sometimes omit email). */
+const resolveEmailForPersonalTaskScope = async (
+  req: AuthRequest,
+  identity: { userId: string }
+): Promise<string> => {
+  const fromJwt =
+    typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  if (fromJwt) return fromJwt;
+  if (!identity.userId) return '';
+  try {
+    const row = await queryHelpers.queryOne<{ email: string | null }>(
+      `SELECT email FROM users WHERE id = ? LIMIT 1`,
+      [identity.userId]
+    );
+    return row?.email ? String(row.email).trim().toLowerCase() : '';
+  } catch {
+    return '';
+  }
 };
 
 const radarProfilePatchSchema = z.object({
@@ -909,9 +945,10 @@ router.get(
     if (!baseIdentity) return;
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const scopeEmail = await resolveEmailForPersonalTaskScope(req, identity);
     const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
       userId,
-      email: req.user?.email?.trim().toLowerCase(),
+      email: scopeEmail,
     });
 
     const includeDone = String(req.query.includeDone || 'false') === 'true';
@@ -983,6 +1020,8 @@ router.get(
       sessionOrgId: baseIdentity.orgId,
       resolvedUserId: userId,
       resolvedOrgId: orgId,
+      hasScopeEmail: Boolean(scopeEmail),
+      demoHeader: String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true',
       count: rows.length,
     });
 
@@ -1121,9 +1160,10 @@ router.get(
     if (!baseIdentity) return;
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const scopeEmail = await resolveEmailForPersonalTaskScope(req, identity);
     const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
       userId,
-      email: req.user?.email?.trim().toLowerCase(),
+      email: scopeEmail,
     });
 
     const id = String(req.params.id || '').trim();
@@ -1164,13 +1204,14 @@ router.put(
     if (!baseIdentity) return;
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const scopeEmail = await resolveEmailForPersonalTaskScope(req, identity);
     const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
       userId,
-      email: req.user?.email?.trim().toLowerCase(),
+      email: scopeEmail,
     });
     const ownerScopeNoAlias = buildPersonalTaskOwnerScope(req, '', {
       userId,
-      email: req.user?.email?.trim().toLowerCase(),
+      email: scopeEmail,
     });
 
     const id = String(req.params.id || '').trim();
@@ -1286,9 +1327,10 @@ router.delete(
     if (!baseIdentity) return;
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const scopeEmail = await resolveEmailForPersonalTaskScope(req, identity);
     const ownerScope = buildPersonalTaskOwnerScope(req, '', {
       userId,
-      email: req.user?.email?.trim().toLowerCase(),
+      email: scopeEmail,
     });
 
     const id = String(req.params.id || '').trim();
