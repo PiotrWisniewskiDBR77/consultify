@@ -54,8 +54,54 @@ interface AuthViewProps {
   onBack: () => void;
 }
 
+/**
+ * Hosts where the hidden quick-access PIN panel (Ctrl/Cmd+Shift+K) may appear.
+ * Production is limited to the public marketing domain — PINs are filtered in
+ * {@link resolveQuickAccessCredentials} so only the Anna demo shortcut works there.
+ */
+export function isQuickAccessShortcutHost(hostname: string): boolean {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('stage.') ||
+    hostname === 'consultify.ai' ||
+    hostname === 'www.consultify.ai'
+  );
+}
+
 export function isQuickAccessEnabledHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('stage.');
+  return isQuickAccessShortcutHost(hostname);
+}
+
+type QuickAccessCredentials = { email: string; password: string } | { demo: true };
+
+/**
+ * Maps a 4-digit PIN to login credentials. On consultify.ai / www only `1111`
+ * (Anna Zielińska → AtelierToys demo tenant) is allowed; dev/staging codes are blocked on prod.
+ */
+export function resolveQuickAccessCredentials(
+  code: string,
+  hostname: string
+): QuickAccessCredentials | null {
+  const isProdPublic = hostname === 'consultify.ai' || hostname === 'www.consultify.ai';
+
+  if (isProdPublic) {
+    if (code === '1111') {
+      return { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' };
+    }
+    return null;
+  }
+
+  const devStagingCodes: Record<string, QuickAccessCredentials> = {
+    '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
+    '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
+    '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
+    '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
+    '7778': { demo: true },
+    '1111': { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' },
+  };
+
+  return devStagingCodes[code] ?? null;
 }
 
 export const AuthView: React.FC<AuthViewProps> = ({
@@ -71,7 +117,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
-  const quickAccessEnabled = isQuickAccessEnabledHost(window.location.hostname);
+  const quickAccessEnabled = isQuickAccessShortcutHost(window.location.hostname);
 
   useEffect(() => {
     if (targetMode !== SessionMode.DEMO) return;
@@ -90,24 +136,51 @@ export const AuthView: React.FC<AuthViewProps> = ({
     updateAnnaLpCtaContext({ start_recorded_at_ms: Date.now() });
   }, [targetMode]);
 
-  // --- QUICK ACCESS BACKDOOR (Dev only) ---
+  // --- QUICK ACCESS (dev/staging + public prod domain; PINs restricted by host) ---
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [quickCode, setQuickCode] = useState('');
   const quickAccessRef = useRef<HTMLInputElement>(null);
 
-  // Quick access login handler (dev/staging: 4-digit codes 7777/7776/7778)
-  const handleQuickAccess = async (code: string) => {
+  // Reset transient auth UI state when route mode/step changes.
+  // This prevents stale demo/quick-access loaders from leaking into normal login.
+  useEffect(() => {
+    setStep(initialStep);
+    setError(null);
+    setIsPending(false);
+    setShowDemoRedirect(false);
+    setIsDemoLoading(false);
+    setFromDemoRedirect(false);
+    setShowQuickAccess(false);
+    setQuickCode('');
+  }, [initialStep, targetMode]);
+
+  // Quick access should never leak into normal auth flow.
+  useEffect(() => {
+    if (targetMode !== SessionMode.DEMO) {
+      setIsDemoLoading(false);
+      setFromDemoRedirect(false);
+    }
+  }, [targetMode]);
+
+  // Hidden dev shortcut instead of clickable logo to avoid accidental activation.
+  useEffect(() => {
     if (!quickAccessEnabled) return;
-    const quickAccessCodes: Record<string, { email: string; password: string } | { demo: true }> = {
-      '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
-      '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
-      '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
-      '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
-      // Demo uses a dedicated endpoint (doesn't rely on seeded user credentials).
-      '7778': { demo: true },
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setShowQuickAccess((current) => !current);
+      }
     };
 
-    const credentials = quickAccessCodes[code];
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [quickAccessEnabled]);
+
+  // Quick access: dev/staging PINs; production consultify.ai / www → only 1111 (Anna demo).
+  const handleQuickAccess = async (code: string) => {
+    if (!quickAccessEnabled) return;
+    const credentials = resolveQuickAccessCredentials(code, window.location.hostname);
     if (credentials) {
       setIsDemoLoading(true);
       try {
@@ -858,17 +931,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       {/* Card Container */}
       <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700 shadow-2xl rounded-xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
-        {/* Branding - Click logo 3x for quick access */}
+        {/* Branding */}
         <div className="flex flex-col items-center mb-6">
-          <div
-            className="cursor-pointer select-none"
-            onClick={() => {
-              if (quickAccessEnabled) {
-                setShowQuickAccess(!showQuickAccess);
-              }
-            }}
-            title={quickAccessEnabled ? 'DBR77' : undefined}
-          >
+          <div className="select-none">
             <img
               src="/assets/logos/logo-dark.svg?v=20260319"
               className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
@@ -888,12 +953,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 ref={quickAccessRef}
                 type="password"
                 maxLength={4}
+                autoComplete="off"
                 value={quickCode}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                   setQuickCode(val);
-                  if (val.length === 4) {
-                    handleQuickAccess(val);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && quickCode.length === 4) {
+                    void handleQuickAccess(quickCode);
                   }
                 }}
                 placeholder="••••"

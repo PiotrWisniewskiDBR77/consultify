@@ -1,7 +1,6 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -20,15 +19,22 @@ vi.mock('../../src/services/api', () => ({
   },
 }));
 
-import { isQuickAccessEnabledHost } from '../../src/views/AuthView';
+import {
+  isQuickAccessEnabledHost,
+  resolveQuickAccessCredentials,
+} from '../../src/views/AuthView';
 
 describe('AuthView quick access guard', () => {
   beforeEach(() => {
     sessionStorage.clear();
   });
 
-  it('disables quick access on production hosts', () => {
-    expect(isQuickAccessEnabledHost('consultify.ai')).toBe(false);
+  it('enables shortcut panel on public production hosts', () => {
+    expect(isQuickAccessEnabledHost('consultify.ai')).toBe(true);
+    expect(isQuickAccessEnabledHost('www.consultify.ai')).toBe(true);
+  });
+
+  it('keeps shortcut panel off arbitrary subdomains', () => {
     expect(isQuickAccessEnabledHost('app.consultify.ai')).toBe(false);
   });
 
@@ -36,5 +42,24 @@ describe('AuthView quick access guard', () => {
     expect(isQuickAccessEnabledHost('localhost')).toBe(true);
     expect(isQuickAccessEnabledHost('127.0.0.1')).toBe(true);
     expect(isQuickAccessEnabledHost('stage.consultify.ai')).toBe(true);
+  });
+
+  it('on production public host only 1111 resolves (Anna demo)', () => {
+    expect(resolveQuickAccessCredentials('1111', 'consultify.ai')).toEqual({
+      email: 'anna.zielinska@ateliertoys-demo.com',
+      password: '123456',
+    });
+    expect(resolveQuickAccessCredentials('7777', 'consultify.ai')).toBeNull();
+    expect(resolveQuickAccessCredentials('7776', 'www.consultify.ai')).toBeNull();
+  });
+
+  it('on localhost dev/staging PINs include legacy codes and 1111', () => {
+    expect(resolveQuickAccessCredentials('7777', 'localhost')).toMatchObject({
+      email: 'piotr.wisniewski@dbr77.com',
+    });
+    expect(resolveQuickAccessCredentials('7778', 'localhost')).toEqual({ demo: true });
+    expect(resolveQuickAccessCredentials('1111', 'localhost')).toMatchObject({
+      email: 'anna.zielinska@ateliertoys-demo.com',
+    });
   });
 });
