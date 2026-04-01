@@ -554,15 +554,6 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           title,
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
         });
-      } else if (lane === 'excele') {
-        setPreview({
-          type: 'xlsx',
-          title,
-          fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-          summary: `Spreadsheet "${title}" generated.`,
-          kpiItems: [],
-          sheetNames: ['Sheet1'],
-        });
       } else {
         setPreview({
           type: 'deck',

@@ -75,12 +75,14 @@ describe('requireConfirmation', () => {
     );
   });
 
-  it('still passes through if audit DB write fails', async () => {
+  it('blocks the action if audit DB write fails (fail-closed)', async () => {
     const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
     (mockRun as any).mockRejectedValueOnce(new Error('DB down'));
     const req = mockReq({ confirmation: true, reason: 'Testing resilience' });
     const res = mockRes();
     await middleware(req, res, next);
-    expect(next).toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(503);
+    expect(res.body.code).toBe('AUDIT_UNAVAILABLE');
   });
 });

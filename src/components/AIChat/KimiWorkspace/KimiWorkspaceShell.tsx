@@ -66,6 +66,11 @@ export interface ArtifactPreview {
     title: string;
     bulletPoints?: string[];
   }>;
+  // Excele (P23) extras
+  workbookId?: string;
+  downloadUrl?: string;
+  qualityScore?: number | null;
+  pipelineLog?: unknown;
 }
 
 interface KimiWorkspaceShellProps {

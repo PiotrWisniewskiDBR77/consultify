@@ -177,6 +177,12 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   developer: { title: 'Developer Mode', subtitle: 'Access developer tools and debugging' },
   'beta-features': { title: 'Beta Features', subtitle: 'Try experimental features before release' },
   'settings-history': { title: 'Settings History', subtitle: 'View and restore previous settings' },
+  // Module Preferences
+  'module-interview': { title: 'Interview', subtitle: 'Module-specific preferences for Interview' },
+  'module-tools': { title: 'Tools', subtitle: 'Module-specific preferences for Tools' },
+  'module-outputs': { title: 'Outputs', subtitle: 'Module-specific preferences for Outputs' },
+  'module-assessment': { title: 'Assessment', subtitle: 'Module-specific preferences for Assessment' },
+  'module-copilot': { title: 'Copilot', subtitle: 'Module-specific preferences for Copilot' },
 };
 
 export const SettingsView: React.FC<SettingsViewProps> = ({

@@ -17,8 +17,13 @@ describe('getNotebookUploadSourceSummary', () => {
   });
 
   it('returns null for non-upload capture sources', () => {
-    expect(getNotebookUploadSourceSummary('web_clipper', { fileOriginalname: 'ignored.pdf' }, false)).toBe(
-      null
-    );
+    expect(getNotebookUploadSourceSummary('manual', { fileOriginalname: 'ignored.pdf' }, false)).toBe(null);
+  });
+
+  it('returns a web clip badge for web_clipper capture source', () => {
+    expect(getNotebookUploadSourceSummary('web_clipper', { url: 'https://example.com' }, false)).toEqual({
+      label: 'Web clip',
+      title: 'Note created from a clipped page: https://example.com',
+    });
   });
 });

@@ -571,7 +571,7 @@ interface ToolSessionData {
   toolType: string;
   status: string;
   progress: number;
-  confidenceAvg?: number;
+  confidenceAvg: number;
   projectId?: string;
   createdBy?: string;
   createdAt?: string;
@@ -886,7 +886,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               Api.listToolSessions({
                 projectId: currentProjectId || undefined,
               }),
-              { items: [] as ToolSessionData[] }
+              { items: [] as ToolSessionData[], total: 0, limit: 0, offset: 0 }
             ),
             resolveBootstrapRequest(
               'assessments',
@@ -895,7 +895,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 limit: 100,
                 offset: 0,
               }),
-              { items: [] as any[] }
+              { items: [] as any[], total: 0, limit: 100, offset: 0 }
             ),
             resolveBootstrapRequest(
               'assessment reports',

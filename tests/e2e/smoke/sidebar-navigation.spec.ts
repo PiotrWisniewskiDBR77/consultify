@@ -123,7 +123,8 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
 
   test('navigates to Economics', async ({ page }) => {
     await navItem(page, /Finance|Economics/i).click();
-    await expect(page).toHaveURL(/\/economics/);
+    // Canonical route is /finance, legacy alias /economics may exist.
+    await expect(page).toHaveURL(/\/(finance|economics)/);
     await expectNoRouteError(page);
   });
 });

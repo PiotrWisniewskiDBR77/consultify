@@ -439,7 +439,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [serverSearchLoading, setServerSearchLoading] = useState(false);
   const [searchPartial, setSearchPartial] = useState(false);
   const [searchScopeBlocked, setSearchScopeBlocked] = useState(0);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Trigger server-side search when query is >= 3 chars (debounced)
   useEffect(() => {
@@ -455,10 +455,10 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     setServerSearchLoading(true);
     searchDebounceRef.current = setTimeout(async () => {
       try {
-        const result = await serverSearch({ q: searchQuery, limit: 30 });
+        const result = (await serverSearch({ q: searchQuery, limit: 30 })) as any;
         setServerResults(result.conversations);
-        setSearchPartial(result.partial || false);
-        setSearchScopeBlocked((result as any).scopeBlocked || 0);
+        setSearchPartial(Boolean(result?.partial));
+        setSearchScopeBlocked(Number(result?.scopeBlocked || 0));
       } catch {
         setServerResults(null);
         setSearchPartial(true);
