@@ -3356,7 +3356,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
       {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
       <div
-        className={`flex-1 min-h-0 ${activeTab === 'calendar' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}
+        className={`flex-1 min-h-0 ${
+          activeTab === 'calendar' || (activeTab === 'ideas' && ideasViewMode === 'table')
+            ? 'overflow-hidden flex flex-col'
+            : 'overflow-y-auto'
+        }`}
       >
         {renderContent()}
       </div>

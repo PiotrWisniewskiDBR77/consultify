@@ -1091,47 +1091,50 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
         {convertModal}
         {tagModal}
         {confirmDialog}
-        <IdeasTableContent
-          ideas={sortedIdeas}
-          isPolish={isPolish}
-          tableFilters={tableFilters}
-          availableStageOptions={availableStageOptions}
-          availableTagOptions={availableTagOptions}
-          availableToolOptions={availableToolOptions}
-          columnWidths={columnWidths}
-          selectedIds={selectedIds}
-          allSelected={allSelected}
-          someSelected={someSelected}
-          focusedIndex={focusedIndex}
-          sortField={sortField}
-          sortDir={sortDir}
-          onSort={handleSort}
-          onFocusIndexChange={setFocusedIndex}
-          onToggleSelect={toggleSelect}
-          onSelectAllVisible={selectAllVisible}
-          onClearSelection={clearSelection}
-          onColumnResize={(columnId, value) =>
-            setColumnWidths((prev) => ({
-              ...prev,
-              [columnId]: value,
-            }))
-          }
-          onTableFilterChange={(columnId, value) =>
-            setTableFilters((prev) => ({
-              ...prev,
-              [columnId]: value.length > 0 ? value : undefined,
-            }))
-          }
-          onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
-          onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
-          onStartConvert={setConvertIdea}
-          onDeleteIdea={handleDeleteSingleIdea}
-          onRefresh={fetchIdeas}
-        />
+        {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
+        <div className="flex flex-col flex-1 min-h-0">
+          <IdeasTableContent
+            ideas={sortedIdeas}
+            isPolish={isPolish}
+            tableFilters={tableFilters}
+            availableStageOptions={availableStageOptions}
+            availableTagOptions={availableTagOptions}
+            availableToolOptions={availableToolOptions}
+            columnWidths={columnWidths}
+            selectedIds={selectedIds}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            focusedIndex={focusedIndex}
+            sortField={sortField}
+            sortDir={sortDir}
+            onSort={handleSort}
+            onFocusIndexChange={setFocusedIndex}
+            onToggleSelect={toggleSelect}
+            onSelectAllVisible={selectAllVisible}
+            onClearSelection={clearSelection}
+            onColumnResize={(columnId, value) =>
+              setColumnWidths((prev) => ({
+                ...prev,
+                [columnId]: value,
+              }))
+            }
+            onTableFilterChange={(columnId, value) =>
+              setTableFilters((prev) => ({
+                ...prev,
+                [columnId]: value.length > 0 ? value : undefined,
+              }))
+            }
+            onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
+            onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
+            onStartConvert={setConvertIdea}
+            onDeleteIdea={handleDeleteSingleIdea}
+            onRefresh={fetchIdeas}
+          />
+        </div>
 
         <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
