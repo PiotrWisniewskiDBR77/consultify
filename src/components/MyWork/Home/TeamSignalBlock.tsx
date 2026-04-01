@@ -23,14 +23,14 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-3">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
-          <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
-            <Users size={12} className="text-slate-200" />
-            {isPolish ? 'Sygnał zespołu' : 'Team readout'}
+      <div className="grid gap-2.5">
+        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5">
+          <div className="flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider text-white/40">
+            <Users size={10} className="text-slate-300" />
+            {isPolish ? 'Sygna\u0142 zespo\u0142u' : 'Team readout'}
           </div>
-          <div className="mt-1.5 text-base font-semibold text-white">{payload.headline}</div>
-          <div className="mt-1 text-xs leading-relaxed text-slate-300/82 md:text-sm">{payload.summary}</div>
+          <div className="mt-1 text-sm font-semibold text-white">{payload.headline}</div>
+          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-300/75">{payload.summary}</div>
         </div>
 
         <div className="space-y-1.5">

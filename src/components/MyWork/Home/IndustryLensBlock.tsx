@@ -17,12 +17,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 to-violet-500/12 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-100/90">
-            {isPolish ? 'Na tapecie · rynek i tech' : 'On deck · market & tech'}
-          </span>
-        </div>
+      <div className="grid gap-2.5">
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300/75">
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
             <Factory size={12} className="mr-1 inline" />
@@ -33,7 +28,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
           </span>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           <SignalCard
             icon={<Globe2 size={15} />}
             signal={payload.marketSignal}
@@ -56,7 +51,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
               <Scale size={12} className="text-emerald-200" />
               {isPolish ? 'Benchmark' : 'Benchmark'}
             </div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums text-white">{payload.benchmark.value}</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums text-white">{payload.benchmark.value}</div>
             <div className="text-xs text-slate-300/85">{payload.benchmark.label}</div>
             <div className="mt-0.5 text-[11px] text-emerald-100/80">{payload.benchmark.delta}</div>
             <p className="mt-2 text-xs leading-relaxed text-slate-300/80 md:text-sm">

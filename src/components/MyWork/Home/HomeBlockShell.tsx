@@ -36,8 +36,8 @@ const COMFORTABLE_SIZE: Record<HomeBlock['size'], string> = {
 
 const COMPACT_SIZE: Record<HomeBlock['size'], string> = {
   hero: 'col-span-12 min-h-0',
-  lg: 'col-span-12 lg:col-span-6 xl:col-span-6 min-h-0',
-  md: 'col-span-12 md:col-span-6 xl:col-span-6 min-h-0',
+  lg: 'col-span-12 lg:col-span-6 min-h-0',
+  md: 'col-span-12 md:col-span-6 min-h-0',
   sm: 'col-span-12 sm:col-span-6 xl:col-span-4 min-h-0',
 };
 
@@ -86,39 +86,27 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
       <div
         className={cn(
           'relative z-10 h-full',
-          isCompact ? 'p-3.5 md:p-4' : 'p-5 md:p-6',
+          isCompact ? 'p-3 md:p-3.5' : 'p-5 md:p-6',
           contentClassName
         )}
       >
-        <div className={cn('flex items-start justify-between gap-3', isCompact ? 'mb-3' : 'mb-4')}>
+        <div className={cn('flex items-start justify-between gap-2', isCompact ? 'mb-2' : 'mb-4')}>
           <div className="min-w-0">
-            <div className={cn('flex items-center gap-2', isCompact ? 'mb-1' : 'mb-1.5')}>
+            <div className={cn('flex items-center gap-1.5', isCompact ? 'mb-0.5' : 'mb-1.5')}>
               {isLive && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded border border-white/10 bg-white/[0.05] font-mono text-white/65',
-                    isCompact
-                      ? 'px-1.5 py-0.5 text-[9px] uppercase tracking-wider'
-                      : 'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em]'
-                  )}
-                >
-                  <Activity size={isCompact ? 9 : 10} className="text-cyan-300/90" />
+                <span className="inline-flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-cyan-300/70">
+                  <Activity size={8} className="text-cyan-300/80" />
                   Live
                 </span>
               )}
-              <span
-                className={cn(
-                  'font-mono font-medium uppercase tracking-wider text-white/40',
-                  isCompact ? 'text-[9px]' : 'text-[10px] tracking-[0.18em]'
-                )}
-              >
+              <span className="font-mono text-[8px] font-medium uppercase tracking-wider text-white/30">
                 Rel {Math.round(block.relevanceScore)}
               </span>
             </div>
             <h3
               className={cn(
                 'font-semibold tracking-tight text-white',
-                isCompact ? 'text-base md:text-lg' : 'text-lg md:text-xl'
+                isCompact ? 'text-sm md:text-base' : 'text-lg md:text-xl'
               )}
             >
               {block.title}
@@ -126,8 +114,8 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
             {block.subtitle ? (
               <p
                 className={cn(
-                  'mt-1 max-w-[50ch] text-slate-300/90',
-                  isCompact ? 'text-xs leading-relaxed' : 'text-sm'
+                  'mt-0.5 max-w-[50ch] text-slate-400/80',
+                  isCompact ? 'text-[11px] leading-relaxed' : 'text-sm'
                 )}
               >
                 {block.subtitle}

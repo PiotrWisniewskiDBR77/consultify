@@ -21,7 +21,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-3">
+      <div className="grid gap-2.5">
         {queueClear ? (
           <div className="rounded-lg border border-emerald-400/25 bg-emerald-500/[0.06] px-3 py-2.5">
             <div className="text-[10px] font-medium uppercase tracking-wide text-emerald-200/90">
@@ -65,7 +65,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
               <ShieldAlert size={12} className="text-amber-200" />
               {isPolish ? 'Najgorętsza decyzja' : 'Hottest decision'}
             </div>
-            <div className="mt-2 text-lg font-semibold leading-snug text-white">
+            <div className="mt-1.5 text-sm font-semibold leading-snug text-white">
               {payload.hottestDecision.title}
             </div>
             <div className="mt-2 text-sm text-slate-300/75">

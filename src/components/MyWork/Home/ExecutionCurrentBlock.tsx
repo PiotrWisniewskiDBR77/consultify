@@ -85,8 +85,8 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
 
   return (
     <HomeBlockShell block={block}>
-      <div className="grid gap-3">
-        <p className="text-xs leading-relaxed text-slate-300/85 md:text-sm">{payload.headline}</p>
+      <div className="grid gap-2">
+        <p className="text-[11px] leading-relaxed text-slate-300/80">{payload.headline}</p>
         <div className="space-y-1.5">
           {payload.streams.map((stream) => {
             const openTarget =

@@ -71,7 +71,7 @@ describe('AIPulseCore actionable priority', () => {
     expect(screen.getByText('Q2')).toBeInTheDocument();
     expect(screen.getByText('Q3')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Open priority/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Finalize the steering brief/i }));
     expect(onAction).toHaveBeenCalledWith({
       type: 'open',
       target: 'task',
