@@ -18,7 +18,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
-import { PartnerLifecycleCanonPanel } from '@/components/Partner/PartnerLifecycleCanonPanel';
 import { ROUTES } from '@/routes/routeConfig';
 
 /**
@@ -168,10 +167,6 @@ export const BecomePartnerView: React.FC = () => {
                 Mam już konto partnera
               </button>
             </div>
-          </section>
-
-          <section className="max-w-6xl mx-auto mb-24">
-            <PartnerLifecycleCanonPanel />
           </section>
 
           {/* BENEFITS SECTION */}

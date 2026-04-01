@@ -42,7 +42,6 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
-import { PartnerLifecycleCanonPanel } from '../../components/Partner/PartnerLifecycleCanonPanel';
 import {
   loadPartnerRuntimeSummary,
   type PartnerRuntimeSummary,
@@ -315,7 +314,6 @@ const DashboardSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {v8RuntimeSummary && <PartnerRuntimeSummaryStrip summary={v8RuntimeSummary} />}
-      <PartnerLifecycleCanonPanel status={onboardingStatus} compact />
 
       {/* Welcome Header */}
       <div className="flex items-center justify-between">

@@ -52,7 +52,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { PartnerLifecycleCanonPanel } from '@/components/Partner/PartnerLifecycleCanonPanel';
 
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
@@ -522,8 +521,6 @@ const OnboardingChecklistSection: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-      <PartnerLifecycleCanonPanel status={status} compact className="mb-6" />
-
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
