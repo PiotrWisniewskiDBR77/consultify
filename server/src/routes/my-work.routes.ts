@@ -455,7 +455,19 @@ const resolveCanonicalPersonalTaskIdentity = async (
   req: AuthRequest,
   identity: { userId: string; orgId: string }
 ): Promise<{ userId: string; orgId: string }> => {
-  const email = typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  let email = typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  if (!email && identity.userId) {
+    try {
+      const row = await queryHelpers.queryOne<{ email: string | null }>(
+        `SELECT email FROM users WHERE id = ? LIMIT 1`,
+        [identity.userId]
+      );
+      const e = row?.email ? String(row.email).trim().toLowerCase() : '';
+      if (e) email = e;
+    } catch {
+      /* best-effort */
+    }
+  }
   if (!email) return identity;
 
   try {
@@ -503,8 +515,11 @@ const buildPersonalTaskOwnerScope = (
   taskAlias = 't',
   overrides?: { userId?: string; email?: string }
 ) => {
+  const demoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
   const allowLegacyEmailOwnerMatch =
-    String(process.env.ENABLE_PERSONAL_TASK_EMAIL_MATCH || '').trim() === '1';
+    String(process.env.ENABLE_PERSONAL_TASK_EMAIL_MATCH || '').trim() === '1' ||
+    demoHeader ||
+    Boolean((req.user as { isDemo?: boolean } | undefined)?.isDemo);
   const userId = overrides?.userId || (req as any).userId || req.user?.id;
   const email =
     overrides?.email ||
