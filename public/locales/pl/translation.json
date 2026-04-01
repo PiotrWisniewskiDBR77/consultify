@@ -3198,11 +3198,11 @@
     }
   },
   "thinking": {
-    "processing": "Myślę...",
-    "analyzing": "Analizuję...",
-    "structuring": "Strukturyzuję...",
-    "synthesizing": "Syntezuję...",
-    "finalizing": "Finalizuję..."
+    "processing": "Thinking…",
+    "analyzing": "Analyzing…",
+    "structuring": "Structuring…",
+    "synthesizing": "Synthesizing…",
+    "finalizing": "Finalizing…"
   },
   "contextBadge": {
     "aiSees": "AI widzi",

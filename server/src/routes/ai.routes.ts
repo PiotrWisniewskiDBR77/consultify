@@ -1404,7 +1404,7 @@ router.post(
           type: 'thought',
           step: 'starting',
           status: 'in_progress',
-          label: language?.startsWith('pl') ? 'Rozpoczynam…' : 'Starting…',
+          label: 'Starting…',
         })}\n\n`
       );
     } catch {
@@ -1795,9 +1795,7 @@ router.post(
         type: 'thought',
         step: 'policy',
         status: 'in_progress',
-        label: language?.startsWith('pl')
-          ? 'Sprawdzam politykę bezpieczeństwa i wymagania dowodowe…'
-          : 'Checking safety policy and evidence requirements…',
+        label: 'Checking safety policy and evidence requirements…',
       });
       try {
         const polMod = await import('../services/ai/chatPolicyGateway.js');
@@ -1949,9 +1947,7 @@ router.post(
           type: 'thought',
           step: 'memory',
           status: 'in_progress',
-          label: language?.startsWith('pl')
-            ? 'Wczytuję kontekst rozmowy i pamięć…'
-            : 'Loading conversation context and memory…',
+          label: 'Loading conversation context and memory…',
         });
         try {
           const convIdForMemory = conversationId || null;
@@ -2042,9 +2038,7 @@ router.post(
         type: 'thought',
         step: 'knowledge',
         status: 'in_progress',
-        label: language?.startsWith('pl')
-          ? 'Przeszukuję bazę wiedzy i dokumentację…'
-          : 'Searching knowledge base and documentation…',
+        label: 'Searching knowledge base and documentation…',
       });
       try {
         const kbModuleId =
@@ -2144,9 +2138,7 @@ router.post(
           type: 'thought',
           step: 'web_search_check',
           status: 'in_progress',
-          label: language?.startsWith('pl')
-            ? 'Sprawdzam, czy potrzebuję informacji z internetu…'
-            : 'Checking if web search is needed…',
+          label: 'Checking if web search is needed…',
         });
       }
       if (!aiModes?.deepResearch) {
@@ -2389,9 +2381,7 @@ router.post(
           type: 'thought',
           step: 'attachments',
           status: 'in_progress',
-          label: language?.startsWith('pl')
-            ? `Analizuję ${attachmentDocIds.length} załącznik(ów) — szukam powiązanych fragmentów…`
-            : `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
+          label: `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
         });
         let attachmentChunksInjected = false;
         try {
@@ -2700,9 +2690,7 @@ router.post(
         type: 'thought',
         step: 'generating',
         status: 'in_progress',
-        label: language?.startsWith('pl')
-          ? 'Generuję odpowiedź na podstawie zebranego kontekstu…'
-          : 'Generating response based on gathered context…',
+        label: 'Generating response based on gathered context…',
       });
 
       const aiPipeline = await getAIPipeline();

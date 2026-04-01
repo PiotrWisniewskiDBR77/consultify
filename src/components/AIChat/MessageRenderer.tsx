@@ -300,7 +300,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         : ('pending' as const),
                 }))
                 .slice(-6)}
-              label={t('thinking.processing', 'Rozważam Twoje zapytanie...') as string}
+              label={t('thinking.processing', 'Thinking…') as string}
             />
           </div>
         )}

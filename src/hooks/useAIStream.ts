@@ -54,154 +54,37 @@ function buildDefaultThinkingSteps(
   language: string,
   complexity: ThinkingComplexity = 'medium'
 ): ThinkingStep[] {
-  const lang = (language || 'pl').split('-')[0];
-
-  // Multiple phrase variants for more natural feel - randomly selected
-  const labelVariants: Record<
-    string,
-    {
-      analyzing: string[];
-      context: string[];
-      planning: string[];
-      validating: string[];
-      composing: string[];
-    }
-  > = {
-    pl: {
-      analyzing: [
-        'Analizuję Twoje pytanie i szukam najlepszego sposobu odpowiedzi…',
-        'Rozważam kontekst Twojego zapytania i dobieram odpowiednie podejście…',
-        'Przygotowuję się do odpowiedzi — sprawdzam dostępne informacje…',
-      ],
-      context: [
-        'Zbieram kontekst z danych projektu i powiązanych dokumentów…',
-        'Przeszukuję historię rozmów i dane organizacji pod kątem powiązań…',
-        'Przeglądam informacje o inicjatywach, zadaniach i postępach…',
-        'Gromadzę wiedzę z dostępnych źródeł, żeby dać pełniejszą odpowiedź…',
-      ],
-      planning: [
-        'Układam plan odpowiedzi — wybieram najważniejsze wątki do poruszenia…',
-        'Porządkuję zebrane informacje i priorytetyzuję kluczowe punkty…',
-        'Wybieram podejście, które najlepiej odpowiada na Twoje pytanie…',
-      ],
-      validating: [
-        'Sprawdzam spójność mojej analizy i weryfikuję szczegóły…',
-        'Weryfikuję czy informacje się zgadzają i nie ma sprzeczności…',
-        'Dopinam odpowiedź — upewniam się, że wszystko jest na miejscu…',
-      ],
-      composing: [
-        'Przygotowuję odpowiedź — składam wnioski w przejrzystą całość…',
-        'Składam wszystko w czytelną odpowiedź z konkretnymi rekomendacjami…',
-        'Kończę i dopracowuję treść, żeby była jak najbardziej pomocna…',
-      ],
-    },
-    en: {
-      analyzing: [
-        'Analyzing your question and finding the best way to respond…',
-        'Processing your request and evaluating the relevant context…',
-        'Understanding what you need and preparing my approach…',
-      ],
-      context: [
-        'Gathering context from project data and related documents…',
-        'Searching conversation history and organization data for connections…',
-        'Reviewing initiatives, tasks, and progress to build a complete picture…',
-        'Collecting insights from available sources for a more thorough answer…',
-      ],
-      planning: [
-        'Planning the response — selecting the most important points to cover…',
-        'Organizing the gathered information and prioritizing key findings…',
-        'Choosing an approach that best addresses your specific question…',
-      ],
-      validating: [
-        'Checking my analysis for consistency and verifying the details…',
-        'Cross-referencing information to make sure there are no contradictions…',
-        'Finalizing the details — making sure everything checks out…',
-      ],
-      composing: [
-        'Composing the answer — weaving conclusions into a clear response…',
-        'Putting it all together with concrete recommendations…',
-        'Finishing up and polishing the response to be as helpful as possible…',
-      ],
-    },
-    de: {
-      analyzing: [
-        'Ich analysiere deine Frage und suche den besten Ansatz für die Antwort…',
-        'Ich denke über den Kontext deiner Frage nach und wähle ein Vorgehen…',
-        'Bearbeite deine Anfrage — prüfe verfügbare Informationen…',
-      ],
-      context: [
-        'Ich sammle Kontext aus Projektdaten und zugehörigen Dokumenten…',
-        'Suche nach Zusammenhängen in der Gesprächshistorie und Organisationsdaten…',
-        'Überprüfe Informationen zu Initiativen, Aufgaben und Fortschritt…',
-      ],
-      planning: [
-        'Ich plane die Antwort — wähle die wichtigsten Punkte aus…',
-        'Ordne die gesammelten Informationen und priorisiere die Ergebnisse…',
-        'Wähle ein Vorgehen, das deine Frage am besten beantwortet…',
-      ],
-      validating: [
-        'Prüfe die Konsistenz meiner Analyse und verifiziere Details…',
-        'Gegencheck — stelle sicher, dass keine Widersprüche bestehen…',
-      ],
-      composing: [
-        'Formuliere die Antwort mit konkreten Empfehlungen…',
-        'Setze alles zu einer klaren Antwort zusammen…',
-      ],
-    },
-    es: {
-      analyzing: [
-        'Analizando tu pregunta y buscando la mejor forma de responder…',
-        'Procesando tu solicitud y evaluando el contexto relevante…',
-      ],
-      context: [
-        'Recopilando contexto de los datos del proyecto y documentos relacionados…',
-        'Buscando conexiones en el historial y los datos de la organización…',
-      ],
-      planning: [
-        'Planificando la respuesta — seleccionando los puntos más importantes…',
-        'Organizando la información recopilada y priorizando hallazgos clave…',
-      ],
-      validating: [
-        'Verificando coherencia y revisando los detalles de mi análisis…',
-        'Comprobando que no haya contradicciones en la información…',
-      ],
-      composing: [
-        'Redactando la respuesta con recomendaciones concretas…',
-        'Uniendo todo en una respuesta clara y útil…',
-      ],
-    },
-    ar: {
-      analyzing: [
-        'أحلّل سؤالك وأبحث عن أفضل طريقة للإجابة…',
-        'أفكر في سياق سؤالك وأختار المنهج المناسب…',
-      ],
-      context: [
-        'أجمع السياق من بيانات المشروع والمستندات ذات الصلة…',
-        'أبحث عن المعلومات والروابط في بيانات المنظمة…',
-      ],
-      planning: ['أخطط للإجابة — أختار أهم النقاط للتغطية…', 'أنظم المعلومات وأرتب الأولويات…'],
-      validating: ['أتحقق من اتساق التحليل وأراجع التفاصيل…'],
-      composing: ['أصوغ الإجابة بتوصيات محددة…', 'أجهّز الرد النهائي…'],
-    },
-    ja: {
-      analyzing: [
-        'ご質問を分析し、最適な回答方法を検討しています…',
-        'ご質問の文脈を理解し、アプローチを選択中…',
-      ],
-      context: [
-        'プロジェクトデータと関連ドキュメントからコンテキストを収集中…',
-        '組織データと会話履歴から関連情報を検索中…',
-      ],
-      planning: [
-        '回答を計画中 — 最も重要なポイントを選択しています…',
-        '収集した情報を整理し、重要な発見を優先しています…',
-      ],
-      validating: ['分析の整合性を確認し、詳細を検証中…'],
-      composing: ['具体的な提案を含む回答を作成中…', '明確で役立つ回答にまとめています…'],
-    },
+  // AI thinking steps are always displayed in English regardless of UI language
+  const labelVariants = {
+    analyzing: [
+      'Analyzing your question and finding the best way to respond…',
+      'Processing your request and evaluating the relevant context…',
+      'Understanding what you need and preparing my approach…',
+    ],
+    context: [
+      'Gathering context from project data and related documents…',
+      'Searching conversation history and organization data for connections…',
+      'Reviewing initiatives, tasks, and progress to build a complete picture…',
+      'Collecting insights from available sources for a more thorough answer…',
+    ],
+    planning: [
+      'Planning the response — selecting the most important points to cover…',
+      'Organizing the gathered information and prioritizing key findings…',
+      'Choosing an approach that best addresses your specific question…',
+    ],
+    validating: [
+      'Checking my analysis for consistency and verifying the details…',
+      'Cross-referencing information to make sure there are no contradictions…',
+      'Finalizing the details — making sure everything checks out…',
+    ],
+    composing: [
+      'Composing the answer — weaving conclusions into a clear response…',
+      'Putting it all together with concrete recommendations…',
+      'Finishing up and polishing the response to be as helpful as possible…',
+    ],
   };
 
-  const variants = labelVariants[lang] || labelVariants.en;
+  const variants = labelVariants;
   const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
   const now = new Date();
@@ -662,22 +545,18 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (hasReceivedBackendThought) {
           // Backend is driving thinking steps — do NOT override with simulated steps.
           // Only add a long-wait label if generating takes very long (>30s)
-          const isPl = (language || '').startsWith('pl');
           if (elapsed > 30000 && !isDeepThinking) {
             setThinkingSteps((prev) => {
               const lastStep = prev[prev.length - 1];
               if (
                 lastStep &&
                 lastStep.status === 'in_progress' &&
-                !lastStep.label.includes('prawie') &&
                 !lastStep.label.includes('almost')
               ) {
                 const updated = [...prev];
                 updated[updated.length - 1] = {
                   ...lastStep,
-                  label: isPl
-                    ? 'Już prawie kończę — dopracowuję ostatnie szczegóły…'
-                    : 'Almost done — polishing the final details…',
+                  label: 'Almost done — polishing the final details…',
                 };
                 options.onThinkingUpdate?.(updated);
                 return updated;
@@ -707,17 +586,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         }
 
         // Long-wait escalation labels (3-second rule: always update something)
-        const isPl = (language || '').startsWith('pl');
         if (elapsed > 30000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
           if (
             escalationStep &&
-            !escalationStep.label.includes('zaraz') &&
             !escalationStep.label.includes('almost')
           ) {
-            escalationStep.label = isPl
-              ? 'Już prawie kończę — dopracowuję ostatnie szczegóły odpowiedzi…'
-              : 'Almost done — polishing the final details of the response…';
+            escalationStep.label = 'Almost done — polishing the final details of the response…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
@@ -725,12 +600,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
           if (
             escalationStep &&
-            !escalationStep.label.includes('chwilę') &&
             !escalationStep.label.includes('moment')
           ) {
-            escalationStep.label = isPl
-              ? 'To zajmie jeszcze chwilę — analizuję bardziej złożone aspekty Twojego pytania…'
-              : 'This is taking a moment — analyzing more complex aspects of your question…';
+            escalationStep.label = 'This is taking a moment — analyzing more complex aspects of your question…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }

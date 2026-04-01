@@ -1838,7 +1838,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   <PreviewAIHintStrip
                     hints={hints}
                     loading={aiLoading}
-                    result={aiLoading ? (isPolish ? 'Analiza…' : 'Thinking…') : aiText}
+                    result={aiLoading ? 'Thinking…' : aiText}
                     error={aiError}
                     onRunHint={(hint) => {
                       const intent = hintToIntent[hint];

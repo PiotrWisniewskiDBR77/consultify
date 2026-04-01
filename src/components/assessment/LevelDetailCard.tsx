@@ -312,7 +312,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                   ) : (
                     <Sparkles size={12} />
                   )}
-                  {isAiLoading ? cardT.thinking || 'Myślę...' : cardT.ai || 'AI'}
+                  {isAiLoading ? cardT.thinking || 'Thinking…' : cardT.ai || 'AI'}
                 </button>
               )}
             </div>

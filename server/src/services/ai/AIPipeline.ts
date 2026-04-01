@@ -1682,18 +1682,18 @@ export class AIPipeline {
     if (aiModes?.showReasoning) {
       if (aiModes?.deepResearch) {
         instructions.push(
-          '10. TRYB: Reasoning ON (Deep Thinking) — dodaj sekcję "Reasoning highlights" (3–6 punktów) z wysokopoziomowymi obserwacjami: kluczowe założenia, trade-offy, dlaczego rekomendacja ma sens. NIE używaj tagów <thinking> i NIE ujawniaj chain-of-thought.'
+          '10. MODE: Reasoning ON (Deep Thinking) — add a "Reasoning highlights" section (3–6 bullet points) with high-level observations: key assumptions, trade-offs, why the recommendation makes sense. Do NOT use <thinking> tags and do NOT reveal chain-of-thought.'
         );
       } else {
         instructions.push(
-          '10. TRYB: Reasoning ON — PRZED odpowiedzią dodaj sekcję toku rozumowania w tagach <thinking>...</thinking>. ' +
-            'Opisz w 3-8 punktach: jakie założenia przyjąłeś, jakie alternatywy rozważyłeś, ' +
-            'dlaczego wybrałeś daną ścieżkę, i co mogłoby zmienić Twoją rekomendację. ' +
-            'Bądź konkretny i merytoryczny. Nie ujawniaj danych wrażliwych.'
+          '10. MODE: Reasoning ON — BEFORE the answer, add a reasoning section inside <thinking>...</thinking> tags. ' +
+            'Describe in 3-8 bullet points: what assumptions you made, what alternatives you considered, ' +
+            'why you chose this path, and what could change your recommendation. ' +
+            'Be specific and substantive. Do not reveal sensitive data.'
         );
       }
     } else {
-      instructions.push('10. TRYB: Reasoning OFF — nie używaj tagów <thinking>...</thinking>.');
+      instructions.push('10. MODE: Reasoning OFF — do not use <thinking>...</thinking> tags.');
     }
 
     if (responseStyle) {
