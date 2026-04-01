@@ -26,6 +26,11 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-gradient-to-r from-amber-500/14 to-rose-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-100/90">
+            {isPolish ? 'Iskry na dziś' : 'Sparks for today'}
+          </span>
+        </div>
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">

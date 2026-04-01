@@ -39,6 +39,9 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
     >
       <div className="flex flex-col justify-between xl:col-span-7">
         <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-gradient-to-r from-violet-500/12 to-fuchsia-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-violet-100/90">
+            {isPolish ? 'Lekki briefing' : 'Light briefing'}
+          </div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[11px] font-medium text-primary-100">
             <Bot size={13} />
             {payload.greeting}
@@ -63,12 +66,12 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
         </div>
 
         <div className="mt-4 space-y-3">
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-white/85">
-              <Compass size={14} className="text-primary-300" />
-              {isPolish ? 'Insight AI' : 'AI insight'}
+          <div className="rounded-lg border border-amber-400/20 border-l-2 border-l-amber-400/45 bg-gradient-to-r from-amber-500/[0.07] to-transparent p-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-50/95">
+              <Compass size={14} className="text-amber-200" />
+              {isPolish ? 'Co warto zauważyć' : 'Worth noticing'}
             </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/85 md:text-sm">{payload.insight}</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-200/88 md:text-sm">{payload.insight}</p>
           </div>
 
           <div className="flex flex-wrap gap-2">

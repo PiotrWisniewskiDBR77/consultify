@@ -41,6 +41,16 @@ const COMPACT_SIZE: Record<HomeBlock['size'], string> = {
   sm: 'col-span-12 sm:col-span-6 xl:col-span-4 min-h-0',
 };
 
+/** Delicate left rim — signals block “personality” without loud chrome. */
+const ACCENT_LEFT_BORDER: Record<HomeBlock['accent'], string> = {
+  ai: 'border-l-violet-400/35',
+  warm: 'border-l-amber-400/35',
+  cool: 'border-l-cyan-400/35',
+  alert: 'border-l-rose-400/35',
+  success: 'border-l-emerald-400/30',
+  neutral: 'border-l-slate-400/22',
+};
+
 export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
   block,
   children,
@@ -66,7 +76,7 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
           : 'rounded-[28px] shadow-[0_18px_60px_-24px_rgba(0,0,0,0.75)]',
         'before:absolute before:inset-0 before:bg-gradient-to-br before:opacity-100 before:pointer-events-none',
         'after:absolute after:inset-x-0 after:top-0 after:h-px after:bg-white/10 after:pointer-events-none',
-        isCompact && 'border-l-2 border-l-cyan-400/20',
+        isCompact && cn('border-l-2', ACCENT_LEFT_BORDER[block.accent]),
         ACCENT_STYLES[block.accent],
         sizeClasses[block.size],
         className

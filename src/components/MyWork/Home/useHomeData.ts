@@ -104,10 +104,10 @@ const DEFAULT_LAYOUT: HomeLayoutConfig = {
   ambientMotion: 'full',
   blockLayouts: [
     { blockId: 'aiPulseCore', visible: true, pinned: true },
-    { blockId: 'momentum', visible: true },
+    { blockId: 'industryLens', visible: true, pinned: true },
     { blockId: 'sparkField', visible: true, pinned: true },
+    { blockId: 'momentum', visible: true },
     { blockId: 'decisionTemperature', visible: true },
-    { blockId: 'industryLens', visible: true },
     { blockId: 'executionCurrent', visible: true },
     { blockId: 'teamSignal', visible: true },
   ],
@@ -116,7 +116,7 @@ const DEFAULT_LAYOUT: HomeLayoutConfig = {
 const MOCK_SCREEN: HomeScreenData = {
   timeMode: 'liveDay',
   updatedAt: new Date().toISOString(),
-  pulseLabel: 'Transformation pulse is rising',
+  pulseLabel: 'Radar · context, ideas, and a gentle steer — not an ops wall.',
   blocks: [
     {
       id: 'aiPulseCore',
@@ -163,47 +163,47 @@ const MOCK_SCREEN: HomeScreenData = {
       },
     },
     {
-      id: 'momentum',
-      title: 'Momentum',
-      subtitle: 'Where the program is gaining speed',
-      accent: 'success',
+      id: 'industryLens',
+      title: 'Industry Lens',
+      subtitle: 'External signals filtered for transformation relevance',
+      accent: 'cool',
       size: 'lg',
-      priorityWeight: 84,
-      relevanceScore: 88,
-      freshnessScore: 70,
-      ctaIntents: ['summarize', 'prioritize'],
+      priorityWeight: 82,
+      relevanceScore: 85,
+      freshnessScore: 79,
+      ctaIntents: ['compare', 'explore', 'translate'],
       payload: {
-        headline: 'Three threads moved forward since yesterday.',
-        summary:
-          'Momentum is strongest in ideation and execution prep, but decision flow is still constraining scale.',
-        stats: [
-          { label: 'Ideas shaped', value: '3', trend: '+2 vs yesterday' },
-          { label: 'Tasks closed', value: '7', trend: 'steady flow' },
-          { label: 'Decisions pending', value: '2', trend: 'needs attention' },
-        ],
-        signals: [
-          {
-            id: 'momentum-signal-1',
-            title: 'Pilot narrative has sharpened',
-            summary: 'The strongest AI initiative now has clear value language for executives.',
-            tag: 'Strategy',
-            tone: 'positive',
-          },
-          {
-            id: 'momentum-signal-2',
-            title: 'Execution prep is improving',
-            summary: 'Two workstreams have concrete owners and near-term next steps.',
-            tag: 'Execution',
-            tone: 'positive',
-          },
-          {
-            id: 'momentum-signal-3',
-            title: 'Decision lag is visible',
-            summary: 'One unresolved approval is now shaping the pacing of the week.',
-            tag: 'Decision',
-            tone: 'warning',
-          },
-        ],
+        industryLabel: 'Manufacturing',
+        roleLens: 'Transformation lead',
+        marketSignal: {
+          id: 'industry-market',
+          title: 'Energy volatility is reshaping transformation payback cases',
+          summary:
+            'Manufacturing programs with energy and planning levers are now being funded faster than isolated automation pilots.',
+          tag: 'Market signal',
+          tone: 'warning',
+        },
+        technologySignal: {
+          id: 'industry-tech',
+          title: 'Computer vision pilots are shifting into operating model redesign',
+          summary:
+            'Leaders are no longer buying “AI inspection” alone. They are redesigning triage, escalation, and quality governance around it.',
+          tag: 'Technology signal',
+          tone: 'positive',
+        },
+        benchmark: {
+          label: 'Transformation benchmark',
+          value: '14-18%',
+          delta: 'value uplift in 12 months',
+          implication:
+            'Programs that combine quality + planning + governance outperform isolated pilots.',
+        },
+        peerCase: {
+          title: 'Tier-1 supplier reframed AI from tool to operating lane',
+          summary:
+            'Instead of launching another PoC, they created one cross-functional lane with KPIs, owners, and weekly decision cadences.',
+          implication: 'Your current strongest idea would benefit from the same reframing.',
+        },
       },
     },
     {
@@ -266,6 +266,50 @@ const MOCK_SCREEN: HomeScreenData = {
       },
     },
     {
+      id: 'momentum',
+      title: 'Momentum',
+      subtitle: 'Where the program is gaining speed',
+      accent: 'success',
+      size: 'lg',
+      priorityWeight: 84,
+      relevanceScore: 88,
+      freshnessScore: 70,
+      ctaIntents: ['summarize', 'prioritize'],
+      payload: {
+        headline: 'Three threads moved forward since yesterday.',
+        summary:
+          'Momentum is strongest in ideation and execution prep, but decision flow is still constraining scale.',
+        stats: [
+          { label: 'Ideas shaped', value: '3', trend: '+2 vs yesterday' },
+          { label: 'Tasks closed', value: '7', trend: 'steady flow' },
+          { label: 'Decisions pending', value: '2', trend: 'needs attention' },
+        ],
+        signals: [
+          {
+            id: 'momentum-signal-1',
+            title: 'Pilot narrative has sharpened',
+            summary: 'The strongest AI initiative now has clear value language for executives.',
+            tag: 'Strategy',
+            tone: 'positive',
+          },
+          {
+            id: 'momentum-signal-2',
+            title: 'Execution prep is improving',
+            summary: 'Two workstreams have concrete owners and near-term next steps.',
+            tag: 'Execution',
+            tone: 'positive',
+          },
+          {
+            id: 'momentum-signal-3',
+            title: 'Decision lag is visible',
+            summary: 'One unresolved approval is now shaping the pacing of the week.',
+            tag: 'Decision',
+            tone: 'warning',
+          },
+        ],
+      },
+    },
+    {
       id: 'decisionTemperature',
       title: 'Decision Temperature',
       subtitle: 'Where approvals and blockers are heating up',
@@ -301,50 +345,6 @@ const MOCK_SCREEN: HomeScreenData = {
             tone: 'neutral',
           },
         ],
-      },
-    },
-    {
-      id: 'industryLens',
-      title: 'Industry Lens',
-      subtitle: 'External signals filtered for transformation relevance',
-      accent: 'cool',
-      size: 'lg',
-      priorityWeight: 82,
-      relevanceScore: 85,
-      freshnessScore: 79,
-      ctaIntents: ['compare', 'explore', 'translate'],
-      payload: {
-        industryLabel: 'Manufacturing',
-        roleLens: 'Transformation lead',
-        marketSignal: {
-          id: 'industry-market',
-          title: 'Energy volatility is reshaping transformation payback cases',
-          summary:
-            'Manufacturing programs with energy and planning levers are now being funded faster than isolated automation pilots.',
-          tag: 'Market signal',
-          tone: 'warning',
-        },
-        technologySignal: {
-          id: 'industry-tech',
-          title: 'Computer vision pilots are shifting into operating model redesign',
-          summary:
-            'Leaders are no longer buying “AI inspection” alone. They are redesigning triage, escalation, and quality governance around it.',
-          tag: 'Technology signal',
-          tone: 'positive',
-        },
-        benchmark: {
-          label: 'Transformation benchmark',
-          value: '14-18%',
-          delta: 'value uplift in 12 months',
-          implication:
-            'Programs that combine quality + planning + governance outperform isolated pilots.',
-        },
-        peerCase: {
-          title: 'Tier-1 supplier reframed AI from tool to operating lane',
-          summary:
-            'Instead of launching another PoC, they created one cross-functional lane with KPIs, owners, and weekly decision cadences.',
-          implication: 'Your current strongest idea would benefit from the same reframing.',
-        },
       },
     },
     {

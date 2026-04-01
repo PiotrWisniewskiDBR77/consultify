@@ -1,5 +1,13 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, ChevronRight, Info, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  Lightbulb,
+  Newspaper,
+  Sparkles,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -126,10 +134,31 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
               {screen.pulseLabel ||
-                (pl ? 'Home V2 · ekran transformacji' : 'Home V2 · transformation screen')}
+                (pl
+                  ? 'Radar · kontekst, pomysły i spokojny kierunek'
+                  : 'Radar · context, ideas, and a gentle steer')}
               {userName ? ` · ${userName}` : ''}
             </span>
           </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/25 bg-gradient-to-r from-rose-500/12 to-amber-500/10 px-2.5 py-0.5 text-[10px] font-medium text-rose-100/90">
+              <Newspaper className="h-3 w-3 opacity-90" />
+              {pl ? 'Sygnały' : 'Signals'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/25 bg-gradient-to-r from-violet-500/12 to-fuchsia-500/10 px-2.5 py-0.5 text-[10px] font-medium text-violet-100/90">
+              <Sparkles className="h-3 w-3 opacity-90" />
+              {pl ? 'Porady' : 'Guidance'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-gradient-to-r from-amber-500/12 to-cyan-500/8 px-2.5 py-0.5 text-[10px] font-medium text-amber-100/90">
+              <Lightbulb className="h-3 w-3 opacity-90" />
+              {pl ? 'Iskry' : 'Sparks'}
+            </span>
+          </div>
+          <p className="mt-1.5 max-w-[52ch] text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+            {pl
+              ? 'Najpierw kontekst z rynku i lekkie inspiracje — głębsze tempo pracy i decyzje schodzą niżej, bez presji kokpitu.'
+              : 'Lead with market context and light inspiration — deeper execution and decisions sit lower, without an ops-cockpit pressure.'}
+          </p>
           {alignedHomeBlocks.length ? (
             <button
               type="button"
@@ -195,6 +224,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       ) : null}
 
       <div className="relative z-10 flex-1 overflow-auto px-5 md:px-6 pb-5">
+        <div className="mb-3 flex items-center gap-2 border-b border-white/[0.06] pb-2">
+          <span className="h-1 w-8 rounded-full bg-gradient-to-r from-cyan-400/60 via-violet-400/50 to-rose-400/50" />
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
+            {pl ? 'Dziś na Radarze' : 'On the Radar today'}
+          </span>
+        </div>
         <div className="grid grid-cols-12 gap-3">
           {blocks.map((block) => (
             <React.Fragment key={block.id}>{renderHomeBlock(block, onAction)}</React.Fragment>
@@ -302,26 +337,26 @@ function RadarExecutiveBrief({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-cyan-500/15 bg-gradient-to-r from-cyan-500/[0.06] via-violet-500/[0.04] to-transparent px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-br from-rose-500/[0.08] via-violet-500/[0.06] to-cyan-500/[0.09] px-3 py-2.5 shadow-[0_0_28px_-8px_rgba(139,92,246,0.35)] sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 flex-1 items-start gap-2.5">
-        <div className="mt-0.5 rounded-md border border-white/10 bg-white/[0.06] p-1.5 text-cyan-200">
+        <div className="mt-0.5 rounded-lg border border-white/12 bg-gradient-to-br from-rose-500/15 to-violet-500/15 p-1.5 text-rose-100">
           <Sparkles className="h-4 w-4" />
         </div>
         <div className="min-w-0">
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-200/80">
-            {pl ? '// Radar · następny krok' : '// Radar · next move'}
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-200/85">
+            {pl ? 'Porada na dziś' : 'Today’s angle'}
           </div>
           <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-white">{lead}</p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">
-            {pl ? 'Pulse' : 'Pulse'}{' '}
+          <p className="mt-0.5 text-xs text-slate-400">
+            {pl ? 'Puls' : 'Pulse'}{' '}
             <span className="tabular-nums text-slate-200">
               {typeof payload.pulseScore === 'number' ? payload.pulseScore : '—'}
             </span>
-            {top
-              ? pl
-                ? ` · priorytet: ${top.title}`
-                : ` · priority: ${top.title}`
-              : null}
+            {top ? (
+              <span className="text-slate-500">
+                {pl ? ' · możesz to odkryć spokojniej niżej' : ' · you can explore further below'}
+              </span>
+            ) : null}
           </p>
         </div>
       </div>
@@ -333,20 +368,42 @@ function RadarExecutiveBrief({
               type: 'chat',
               packet: {
                 sourceBlock: 'aiPulseCore',
-                intent: 'prioritize_transformation',
-                title: block.title,
+                intent: 'gentle_explain',
+                title: pl ? 'Spokojne wyjaśnienie' : 'Gentle explanation',
                 starterPrompt: pl
-                  ? 'Przełóż ten pulse na konkretny plan działania na dziś i ten tydzień.'
-                  : 'Turn this pulse into a concrete plan for today and this week.',
+                  ? 'Wyjaśnij ten skrót prosto i bez presji — daj mi 3 punkty: co to znaczy, dlaczego teraz, co mogę zrobić małym krokiem.'
+                  : 'Explain this briefing in plain language, no pressure — 3 bullets: what it means, why now, and one small step I can take.',
                 entityType: 'home',
                 entityId: 'pulse-core',
                 contextData: { headline: lead, insight: payload.insight },
               },
             })
           }
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-950/40 transition hover:brightness-110"
+          className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-50 transition hover:bg-cyan-500/15"
         >
-          {pl ? 'Porozmawiaj z AI' : 'Talk to AI'}
+          {pl ? 'Wyjaśnij spokojnie' : 'Explain gently'}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onAction({
+              type: 'chat',
+              packet: {
+                sourceBlock: 'aiPulseCore',
+                intent: 'prioritize_transformation',
+                title: block.title,
+                starterPrompt: pl
+                  ? 'Pomóż mi poukładać ten materiał na spokojny plan — bez pogoni, krok po kroku.'
+                  : 'Help me turn this into a calm, step-by-step plan — no rush.',
+                entityType: 'home',
+                entityId: 'pulse-core',
+                contextData: { headline: lead, insight: payload.insight },
+              },
+            })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-950/35 transition hover:brightness-110"
+        >
+          {pl ? 'Rozmowa z AI' : 'Chat with AI'}
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
         {top ? (
@@ -361,15 +418,15 @@ function RadarExecutiveBrief({
             }
             className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08]"
           >
-            {pl ? 'Otwórz priorytet' : 'Open priority'}
+            {pl ? 'Zajrzyj do tematu' : 'Peek at topic'}
           </button>
         ) : (
           <button
             type="button"
-            onClick={() => onAction({ type: 'navigate', target: 'tasks' })}
+            onClick={() => onAction({ type: 'navigate', target: 'ideas' })}
             className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08]"
           >
-            {pl ? 'Wykonanie' : 'Execution'}
+            {pl ? 'Pomysły' : 'Ideas'}
           </button>
         )}
       </div>
@@ -404,6 +461,19 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
       }
       transition={{
         duration: ambientMotion === 'soft' ? 34 : 28,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+    />
+    <motion.div
+      className="pointer-events-none absolute left-[30%] top-[55%] h-[22rem] w-[22rem] rounded-full bg-gradient-to-br from-fuchsia-400/12 to-rose-400/10 blur-[120px] dark:from-fuchsia-600/14 dark:to-rose-500/12"
+      animate={
+        ambientMotion === 'soft'
+          ? { x: [0, 10, 0], y: [0, -6, 0], opacity: [0.7, 1, 0.7] }
+          : { x: [0, 18, -10, 0], y: [0, -14, 10, 0], opacity: [0.6, 1, 0.75, 0.6] }
+      }
+      transition={{
+        duration: ambientMotion === 'soft' ? 38 : 32,
         repeat: Infinity,
         ease: 'easeInOut',
       }}

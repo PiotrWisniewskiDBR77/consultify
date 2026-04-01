@@ -83,10 +83,10 @@ vi.mock('../../../src/components/MyWork/Home/TeamSignalBlock', () => ({
 
 const homeBlocks = [
   { id: 'aiPulseCore', title: 'AI Pulse Core' },
-  { id: 'momentum', title: 'Momentum' },
-  { id: 'sparkField', title: 'Spark Field' },
-  { id: 'decisionTemperature', title: 'Decision Temperature' },
   { id: 'industryLens', title: 'Industry Lens' },
+  { id: 'sparkField', title: 'Spark Field' },
+  { id: 'momentum', title: 'Momentum' },
+  { id: 'decisionTemperature', title: 'Decision Temperature' },
   { id: 'executionCurrent', title: 'Execution Current' },
   { id: 'teamSignal', title: 'Team Signal' },
 ].map((block) => ({
@@ -98,16 +98,29 @@ const homeBlocks = [
   freshnessScore: 80,
   ctaIntents: [],
   payload:
-    block.id === 'sparkField'
+    block.id === 'aiPulseCore'
       ? {
-          runtimeSummary: {
-            ideasWithTasks: 2,
-            recentNotes: 4,
-            recentOutputs: 3,
-            orgSignals: 5,
-          },
+          headline: 'A calm storyline for your transformation week.',
+          pulseScore: 72,
+          focusItems: [],
+          insight: '',
+          greeting: 'Hello',
+          summary: '',
+          weekProgress: 0,
         }
-      : {},
+      : block.id === 'sparkField'
+        ? {
+            runtimeSummary: {
+              ideasWithTasks: 2,
+              recentNotes: 4,
+              recentOutputs: 3,
+              orgSignals: 5,
+            },
+            ideas: [],
+            notes: [],
+            nudge: null,
+          }
+        : {},
 }));
 
 describe('HomeView aggregated contract', () => {
@@ -118,7 +131,7 @@ describe('HomeView aggregated contract', () => {
       screen: {
         timeMode: 'liveDay',
         updatedAt: '2026-03-25T05:00:00.000Z',
-        pulseLabel: 'Transformation pulse is rising',
+        pulseLabel: 'Radar · context, ideas, and a gentle steer — not an ops wall.',
         blocks: homeBlocks,
       },
       blocks: homeBlocks,
@@ -143,10 +156,10 @@ describe('HomeView aggregated contract', () => {
         },
         homeBlocks: [
           { blockName: 'aiPulseCore', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'momentum', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'sparkField', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'decisionTemperature', maturityLevel: 'backed_by_real_service' },
           { blockName: 'industryLens', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'sparkField', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'momentum', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'decisionTemperature', maturityLevel: 'backed_by_real_service' },
           { blockName: 'executionCurrent', maturityLevel: 'backed_by_real_service' },
           { blockName: 'teamSignal', maturityLevel: 'backed_by_real_service' },
         ],
@@ -161,7 +174,7 @@ describe('HomeView aggregated contract', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Roof ·/ }));
 
-    expect(screen.getByText('Transformation pulse is rising')).toBeInTheDocument();
+    expect(screen.getByText(/Radar · context/)).toBeInTheDocument();
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
     expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
     expect(screen.getAllByText('AI Pulse Core').length).toBeGreaterThan(0);

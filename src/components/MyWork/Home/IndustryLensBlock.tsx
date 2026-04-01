@@ -18,6 +18,11 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 to-violet-500/12 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-100/90">
+            {isPolish ? 'Na tapecie · rynek i tech' : 'On deck · market & tech'}
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300/75">
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
             <Factory size={12} className="mr-1 inline" />
