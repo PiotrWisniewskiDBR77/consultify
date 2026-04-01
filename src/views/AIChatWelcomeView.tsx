@@ -51,7 +51,6 @@ import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from '../components/AIChat/teresaRuntimeCopy';
-import { MobileV8ScopePanel } from '../components/shared/MobileV8ScopePanel';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
@@ -2004,9 +2003,6 @@ For example: REMEMBER: preferred_language: Polish`;
 
         {/* Centered Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
-          <div className="w-full max-w-5xl mb-6 lg:hidden">
-            <MobileV8ScopePanel compact />
-          </div>
           {/* Personalized Greeting */}
           <div className="text-center mb-10">
             <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">

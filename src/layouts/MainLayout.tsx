@@ -22,7 +22,6 @@ import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
-import { MobileV8ScopePanel } from '../components/shared/MobileV8ScopePanel';
 import { FeatureFlagsDevToolsToggleButton } from '../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
@@ -291,11 +290,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
         <TrialExpiredGate>
           <div className={`flex-1 overflow-hidden relative flex min-h-0 ${noPadding ? '' : 'p-0'}`}>
-            {isMobile && (
-              <div className="absolute inset-x-3 top-3 z-20 lg:hidden">
-                <MobileV8ScopePanel compact />
-              </div>
-            )}
             {/* Chat Panel - Left Side */}
             {shouldShowChatPanel && !isChatCollapsed && (
               <>
