@@ -38,7 +38,8 @@ export const fetchWithRetry = async (
   const headers = skipDefaultHeaders
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
-  let res = await fetch(url, { ...requestOptions, headers });
+  // Ensure cookie-based sessions work even when API is cross-origin.
+  let res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
@@ -47,7 +48,7 @@ export const fetchWithRetry = async (
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...requestOptions, headers });
+      res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));

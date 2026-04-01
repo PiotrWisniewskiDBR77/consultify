@@ -235,6 +235,8 @@ const fetchWithRetry = async (
     res = await fetch(url, {
       ...fetchOptions,
       headers,
+      // Ensure cookie-based sessions work even when API_URL is cross-origin.
+      credentials: fetchOptions.credentials ?? 'include',
       signal: fetchOptions.signal || controller?.signal,
     });
   } catch (err: any) {
@@ -260,6 +262,7 @@ const fetchWithRetry = async (
       res = await fetch(url, {
         ...fetchOptions,
         headers,
+        credentials: fetchOptions.credentials ?? 'include',
         signal: fetchOptions.signal || controller?.signal,
       });
     } else {
