@@ -211,7 +211,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         ],
       },
       {
-        id: 'ai-automation',
+        id: 'ai-automation-group',
         label: t('settings.sidebar.groups.aiAutomation', 'AI & AUTOMATION'),
         items: [
           {
@@ -571,7 +571,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 <div
                   className={cn(
                     'overflow-hidden transition-all duration-200 ease-in-out',
-                    isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
                   )}
                 >
                   <div className="space-y-0.5 pb-2">
