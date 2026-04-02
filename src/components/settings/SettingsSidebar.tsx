@@ -110,12 +110,7 @@ export type SettingsSection =
   | 'developer'
   | 'beta-features'
   | 'settings-history'
-  // Module Preferences
-  | 'module-interview'
-  | 'module-tools'
-  | 'module-outputs'
-  | 'module-assessment'
-  | 'module-copilot';
+;
 
 interface NavItem {
   id: SettingsSection;
@@ -267,42 +262,6 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             label: t('settings.sidebar.aiVoice', 'Voice & TTS'),
             icon: Mic,
             keywords: ['speech', 'text to speech', 'audio'],
-          },
-        ],
-      },
-      {
-        id: 'module-preferences',
-        label: t('settings.sidebar.groups.modulePreferences', 'MODULE PREFERENCES'),
-        items: [
-          {
-            id: 'module-interview',
-            label: t('settings.sidebar.moduleInterview', 'Interview'),
-            icon: Mic,
-            keywords: ['interview', 'recording', 'scoring'],
-          },
-          {
-            id: 'module-tools',
-            label: t('settings.sidebar.moduleTools', 'Tools'),
-            icon: Sliders,
-            keywords: ['tools', 'export', 'format'],
-          },
-          {
-            id: 'module-outputs',
-            label: t('settings.sidebar.moduleOutputs', 'Outputs'),
-            icon: FileSignature,
-            keywords: ['outputs', 'template', 'default'],
-          },
-          {
-            id: 'module-assessment',
-            label: t('settings.sidebar.moduleAssessment', 'Assessment'),
-            icon: BookOpen,
-            keywords: ['assessment', 'auto-save', 'scoring'],
-          },
-          {
-            id: 'module-copilot',
-            label: t('settings.sidebar.moduleCopilot', 'AI Copilot'),
-            icon: Sparkles,
-            keywords: ['copilot', 'suggestions', 'ai'],
           },
         ],
       },

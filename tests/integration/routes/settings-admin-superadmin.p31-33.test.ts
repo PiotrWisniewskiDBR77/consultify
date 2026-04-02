@@ -418,22 +418,6 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
   });
 });
 
-describe('P31 Settings — Module Preferences sidebar', () => {
-  it('SettingsSidebar has MODULE PREFERENCES group', async () => {
-    const fs = await import('fs');
-    const content = fs.readFileSync(
-      'src/components/settings/SettingsSidebar.tsx', 'utf-8'
-    );
-    expect(content).toContain('module-preferences');
-    expect(content).toContain('MODULE PREFERENCES');
-    expect(content).toContain('module-interview');
-    expect(content).toContain('module-tools');
-    expect(content).toContain('module-outputs');
-    expect(content).toContain('module-assessment');
-    expect(content).toContain('module-copilot');
-  });
-});
-
 // ===========================================================================
 // P32 — Admin cockpit alignment
 // ===========================================================================
