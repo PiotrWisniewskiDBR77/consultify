@@ -11459,116 +11459,158 @@ export const Api = {
     return { success: true, templateId };
   },
 
+  // ── AI Settings: backed by /api/ai-settings/* (real endpoints) ──
+
+  getAIUserSettings: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/user`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch AI user settings');
+  },
+
+  updateAIUserSettings: async (settings: Record<string, unknown>) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/user`, {
+      method: 'PUT',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    return handleResponse(res, 'Failed to update AI user settings');
+  },
+
+  getAIAvailableModels: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/available-models`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch available models');
+  },
+
+  getAIEffectiveSettings: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/effective`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch effective AI settings');
+  },
+
   getAIAutoComplete: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        enabled: true,
-        triggerDelay: 500,
-        maxSuggestions: 3,
-        sensitivity: 'medium',
+        enabled: userSettings?.auto_suggestions ?? true,
+        sensitivity: 0.5,
         suggestionsInComments: true,
       },
     };
   },
 
   saveAIAutoComplete: async (settings: any) => {
-    return { success: true, preferences: settings };
+    return Api.updateAIUserSettings({ auto_suggestions: settings.enabled ?? true });
   },
 
   getAIInstructions: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        systemPrompt: '',
-        customInstructions: '',
-        tone: 'professional',
+        systemPrompt: userSettings?.system_instructions || '',
+        responseStyle: userSettings?.response_style || 'balanced',
+        includeContext: true,
+        maxContextLength: userSettings?.max_tokens || 4096,
       },
     };
   },
 
   saveAIInstructions: async (instructions: any) => {
-    return { success: true, preferences: instructions };
+    return Api.updateAIUserSettings({
+      system_instructions: instructions.systemPrompt ?? '',
+      response_style: instructions.responseStyle ?? 'balanced',
+    });
   },
 
   getAIMemory: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
         enabled: true,
         retentionDays: 30,
+        contextRetention: userSettings?.context_retention || 'session',
       },
-      memoryItems: [],
     };
   },
 
   saveAIMemory: async (settings: any) => {
-    return { success: true, preferences: settings };
+    return Api.updateAIUserSettings({
+      context_retention: settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
+    });
   },
 
   clearAIMemoryData: async () => {
-    return { success: true, cleared: true };
+    return Api.updateAIUserSettings({ context_retention: 'none' });
   },
 
   getAIModelPreferences: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        preferredModel: 'gpt-4',
-        fallbackModel: 'gpt-3.5-turbo',
-        autoSelect: true,
-        enabledModels: ['gpt-4', 'gpt-3.5-turbo', 'claude-3'],
+        preferredModel: userSettings?.preferred_model_id || null,
+        enabledModels: userSettings?.visible_model_ids || [],
       },
     };
   },
 
   saveAIModelPreferences: async (preferences: any) => {
-    return { success: true, preferences };
+    return Api.updateAIUserSettings({
+      preferred_model_id: preferences.preferredModel || null,
+      visible_model_ids: preferences.enabledModels || [],
+    });
   },
 
   getAIParameters: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        temperature: 0.7,
-        maxTokens: 2000,
-        topP: 1,
-        contextWindowSize: 4096,
-        responseSpeed: 'balanced',
+        temperature: userSettings?.model_temperature ?? 0.7,
+        maxTokens: userSettings?.max_tokens ?? 4096,
+        topP: userSettings?.top_p ?? 1,
       },
     };
   },
 
   saveAIParameters: async (params: any) => {
-    return { success: true, preferences: params };
+    return Api.updateAIUserSettings({
+      model_temperature: params.temperature ?? 0.7,
+      max_tokens: params.maxTokens ?? 4096,
+      top_p: params.topP ?? 1,
+    });
   },
 
   getAIPersonality: async () => {
+    const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        name: 'Assistant',
-        style: 'helpful',
-        formality: 'professional',
+        tone: userSettings?.writing_tone || 'professional',
+        formality: 'balanced',
+        verbosity: 'concise',
       },
     };
   },
 
   saveAIPersonality: async (personality: any) => {
-    return { success: true, preferences: personality };
+    return Api.updateAIUserSettings({
+      writing_tone: personality.tone || 'professional',
+    });
   },
 
-  getAIUsageStats: async (_period?: string) => {
-    return {
-      stats: {
-        totalTokens: 0,
-        totalCost: 0,
-        requestsToday: 0,
-        requestsThisMonth: 0,
-        totalRequests: 0,
-        avgResponseTime: 0,
-        successRate: 100,
-        limit: 10000,
-        used: 0,
-      },
-      usageByFeature: [],
-      dailyUsage: [],
-      history: [],
-    };
+  getAIUsageStats: async (period?: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai-settings/user/costs?period=${period || '30d'}`,
+        { headers: getHeaders() }
+      );
+      return handleResponse(res, 'Failed to fetch AI usage stats');
+    } catch {
+      return {
+        stats: { totalTokens: 0, totalCost: 0, totalRequests: 0, avgResponseTime: 0, successRate: 100, limit: 10000, used: 0 },
+        usageByFeature: [],
+        dailyUsage: [],
+      };
+    }
   },
 
   // Additional settings stubs
@@ -11881,19 +11923,17 @@ export const Api = {
     return { success: true, preferences };
   },
 
-  // Voice Settings
+  // Voice Settings — stored client-side (no backend table for voice prefs yet)
   getAIVoice: async () => {
-    return {
-      preferences: {
-        enabled: false,
-        voice: 'default',
-        speed: 1.0,
-        pitch: 1.0,
-      },
-    };
+    try {
+      const stored = localStorage.getItem('ai-voice-preferences');
+      if (stored) return { preferences: JSON.parse(stored) };
+    } catch { /* ignore */ }
+    return { preferences: { ttsEnabled: false, sttEnabled: false, voice: 'alloy', speed: 1.0, autoPlay: false } };
   },
 
   saveAIVoice: async (settings: any) => {
+    localStorage.setItem('ai-voice-preferences', JSON.stringify(settings));
     return { success: true, settings };
   },
 
