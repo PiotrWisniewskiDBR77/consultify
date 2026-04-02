@@ -925,6 +925,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: implementation-grade control-plane, webhook-ingress, operator-runtime and support-read API contract for the sync backend
   - **Authority**: Highest for API surface and control-plane contract of the sync package
 
+- `docs/product/work-packets/V8_PO1_PUBLIC_API_KEYS_AND_USER_LEVEL_SYNC_REPLATFORM_2026-04-02.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: delivery-grade plan for user-level integrations SSOT, admin monitoring-only sync posture, API keys productization, and Public API v1 (Tasks + Calendar)
+  - **Authority**: Highest for PO1 implementation scope/DoD and the intended Admin-vs-Settings ownership split for integrations + API keys
+
 - `docs/product/CONNECTOR_RUNTIME_JOBS_AND_STORAGE_MODEL_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: implementation-grade queue, worker, job, dead-letter, retention and storage model for connector runtime
