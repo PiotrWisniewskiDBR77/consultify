@@ -30,7 +30,7 @@ export const TrustStrip: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Label */}
         <div className="text-center mb-8">
-          <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/25">
+          <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-white/25">
             {t('landing.compliance.label', 'Enterprise-Grade Security & Compliance')}
           </span>
         </div>
@@ -54,7 +54,7 @@ export const TrustStrip: React.FC = () => {
                 }}
               >
                 <Icon size={16} className={badge.color} strokeWidth={2} />
-                <span className="text-sm font-bold text-white/70">{badge.label}</span>
+                <span className="text-sm font-bold text-slate-600 dark:text-white/70">{badge.label}</span>
               </motion.div>
             );
           })}
@@ -68,7 +68,7 @@ export const TrustStrip: React.FC = () => {
           viewport={{ once: true }}
           className="flex flex-col items-center gap-3"
         >
-          <div className="flex items-center gap-2 text-xs text-white/30">
+          <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-white/30">
             <Globe size={13} className="text-primary-400" />
             <span className="font-medium">
               {t('landing.compliance.dataResidency', 'Data residency')}
@@ -82,9 +82,9 @@ export const TrustStrip: React.FC = () => {
             }}
           >
             <span className="text-sm">🇪🇺</span>
-            <span className="font-bold text-white/60">EU data</span>
+            <span className="font-bold text-slate-600 dark:text-white/60">EU data</span>
           </div>
-          <p className="text-[11px] text-white/25 text-center mt-1">
+          <p className="text-[11px] text-slate-400 dark:text-white/25 text-center mt-1">
             {t(
               'landing.compliance.dataNote',
               'Your data stays in the EU region • No AI training on your data'

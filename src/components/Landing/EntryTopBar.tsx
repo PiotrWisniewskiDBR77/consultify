@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, Globe, Handshake, Menu, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Globe, Handshake, Menu, Moon, Sun, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -352,6 +352,31 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             </AnimatePresence>
           </div>
 
+          {/* Theme toggle */}
+          <button
+            onClick={() => toggleTheme()}
+            className="flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer"
+            style={{
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+              border: isDark ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(0,0,0,0.08)',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = isDark
+                ? 'rgba(255,255,255,0.07)'
+                : 'rgba(0,0,0,0.05)';
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              (e.currentTarget as HTMLButtonElement).style.color = isDark
+                ? 'rgba(255,255,255,0.40)'
+                : 'rgba(0,0,0,0.40)';
+            }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+
           {/* Separator */}
           <div
             className="h-4 w-px"
@@ -517,8 +542,24 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {t('landing.topBar.trial', 'Start trial')}
                   </button>
 
-                  {/* Language row */}
+                  {/* Language + theme row */}
                   <div className="flex items-center justify-end gap-1.5 pt-1">
+                    <button
+                      onClick={() => toggleTheme()}
+                      className="text-xs px-3 py-1 rounded-full border transition-colors font-medium flex items-center gap-1"
+                      style={{
+                        borderColor: isDark
+                          ? 'rgba(255,255,255,0.12)'
+                          : 'rgba(0,0,0,0.10)',
+                        color: isDark
+                          ? 'rgba(255,255,255,0.50)'
+                          : 'rgba(0,0,0,0.50)',
+                      }}
+                      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                      {isDark ? <Sun size={12} /> : <Moon size={12} />}
+                      <span>{isDark ? 'Light' : 'Dark'}</span>
+                    </button>
                     {languages.slice(0, 3).map((lang) => (
                       <button
                         key={lang.code}

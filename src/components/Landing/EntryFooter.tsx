@@ -238,12 +238,12 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
         </div>
 
         {/* Become Partner CTA */}
-        <div className="mt-12 pt-10 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-10 border-t border-slate-200 dark:border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-black text-white mb-0.5">
+            <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
               {t('partner.footerCta.title', 'Become a Consultify Partner')}
             </p>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-slate-500 dark:text-white/40">
               {t('partner.footerCta.sub', 'Resell, integrate, or co-create with us globally.')}
             </p>
           </div>

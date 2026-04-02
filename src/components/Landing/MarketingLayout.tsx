@@ -49,7 +49,7 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
   };
 
   return (
-    <div className="dark absolute inset-0 bg-[#0A0A1F] text-white overflow-y-auto overflow-x-hidden">
+    <div className="absolute inset-0 overflow-y-auto overflow-x-hidden transition-colors duration-300 bg-white dark:bg-[#0A0A1F] text-slate-900 dark:text-white">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
@@ -57,7 +57,6 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
         onRegisterClick={() => navigate('/register')}
         isLoggedIn={!!currentUser}
         hasWorkspace={!!currentUser?.hasWorkspace}
-        forceDark
       />
       <main className="pt-14">{children}</main>
       <EntryFooter />

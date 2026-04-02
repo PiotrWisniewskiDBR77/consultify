@@ -79,7 +79,7 @@ export const ValueJourneySection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-white/70"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70"
           >
             <Compass size={12} className="text-primary-300" />
             {t('landing.valueJourney.badge', 'How the platform creates value')}
@@ -89,7 +89,7 @@ export const ValueJourneySection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="mt-5 text-4xl lg:text-5xl font-black text-white tracking-tight"
+            className="mt-5 text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight"
           >
             {t(
               'landing.valueJourney.heading',
@@ -101,7 +101,7 @@ export const ValueJourneySection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="mt-4 text-base text-white/55 max-w-3xl mx-auto"
+            className="mt-4 text-base text-slate-500 dark:text-white/55 max-w-3xl mx-auto"
           >
             {t(
               'landing.valueJourney.sub',
@@ -115,7 +115,7 @@ export const ValueJourneySection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
+            className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/15 bg-violet-500/10">
@@ -125,7 +125,7 @@ export const ValueJourneySection: React.FC = () => {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-400">
                   {t('landing.valueJourney.layersBadge', 'Value layers')}
                 </p>
-                <h3 className="text-2xl font-black text-white">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   {t(
                     'landing.valueJourney.layersTitle',
                     'Five layers of value: Inspiration -> Knowledge -> Frameworks -> Guidance -> Execution.'
@@ -138,14 +138,14 @@ export const ValueJourneySection: React.FC = () => {
               {valueLayers.map(({ title, description }, index) => (
                 <div
                   key={title}
-                  className="flex gap-4 rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
+                  className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/12 bg-violet-500/10 text-sm font-black text-violet-300">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="mb-1 text-sm font-black text-white">{title}</p>
-                    <p className="text-xs leading-relaxed text-white/60">{description}</p>
+                    <p className="mb-1 text-sm font-black text-slate-900 dark:text-white">{title}</p>
+                    <p className="text-xs leading-relaxed text-slate-500 dark:text-white/60">{description}</p>
                   </div>
                 </div>
               ))}
@@ -157,7 +157,7 @@ export const ValueJourneySection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-8 backdrop-blur-xl"
+            className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/15 bg-cyan-500/10">
@@ -167,7 +167,7 @@ export const ValueJourneySection: React.FC = () => {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-400">
                   {t('landing.valueJourney.journeyBadge', 'Consulting journey')}
                 </p>
-                <h3 className="text-2xl font-black text-white">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   {t(
                     'landing.valueJourney.journeyTitle',
                     'One platform for the full consulting journey: understanding -> diagnosis -> design -> execution -> results.'
@@ -180,14 +180,14 @@ export const ValueJourneySection: React.FC = () => {
               {journey.map(({ title, description }, index) => (
                 <div
                   key={title}
-                  className="flex gap-4 rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
+                  className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-500/12 bg-cyan-500/10 text-sm font-black text-cyan-300">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-white mb-1">{title}</p>
-                    <p className="text-xs text-white/60 leading-relaxed">{description}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white mb-1">{title}</p>
+                    <p className="text-xs text-slate-500 dark:text-white/60 leading-relaxed">{description}</p>
                   </div>
                 </div>
               ))}

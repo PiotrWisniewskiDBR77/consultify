@@ -100,7 +100,7 @@ export const WhereItHappensSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4"
+            className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
           >
             {t(
               'landing.whereItHappens.heading',
@@ -112,7 +112,7 @@ export const WhereItHappensSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="text-base text-white/50 font-medium max-w-2xl mx-auto"
+            className="text-base text-slate-500 dark:text-white/50 font-medium max-w-2xl mx-auto"
           >
             {t(
               'landing.whereItHappens.sub',
@@ -175,12 +175,12 @@ export const WhereItHappensSection: React.FC = () => {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-base font-black text-white mb-2 leading-tight">
+                <h3 className="text-base font-black text-slate-900 dark:text-white mb-2 leading-tight">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-white/45 leading-relaxed mb-4">{feature.description}</p>
+                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">{feature.description}</p>
 
                 {/* Highlights */}
                 <div className="space-y-1.5">
@@ -191,7 +191,7 @@ export const WhereItHappensSection: React.FC = () => {
                         style={{ color: feature.accentColor }}
                         className="shrink-0"
                       />
-                      <span className="text-xs text-white/50 font-medium">{h}</span>
+                      <span className="text-xs text-slate-500 dark:text-white/50 font-medium">{h}</span>
                     </div>
                   ))}
                 </div>
@@ -220,7 +220,7 @@ export const WhereItHappensSection: React.FC = () => {
           className="text-center mt-14"
         >
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-white/35 font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-slate-400 dark:text-white/35 font-medium"
             style={{
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.08)',
