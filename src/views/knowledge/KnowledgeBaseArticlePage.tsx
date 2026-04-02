@@ -205,16 +205,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Hero Image */}
-              {article.thumbnail_url && (
-                <div className="mt-8 rounded-2xl overflow-hidden border border-white/[0.06]">
-                  <img
-                    src={article.thumbnail_url}
-                    alt={article.title}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              )}
+              {/* Hero image is embedded in the markdown content */}
             </motion.header>
 
             {/* Markdown Body */}
