@@ -11585,7 +11585,16 @@ export const Api = {
     return { success: true, key };
   },
 
-  removeAvatar: async (_userId?: string) => {
+  removeAvatar: async (userId?: string) => {
+    if (!userId) return { success: true };
+    const res = await fetch(`${API_URL}/users/${userId}/avatar`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to remove avatar');
+    }
     return { success: true };
   },
 
