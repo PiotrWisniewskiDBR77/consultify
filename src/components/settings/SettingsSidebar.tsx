@@ -434,15 +434,19 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     });
   }, []);
 
-  // Auto-expand group containing active section
+  // Auto-expand group containing active section (only on section change)
   useEffect(() => {
     const activeGroup = navGroups.find((group) =>
       group.items.some((item) => item.id === activeSection)
     );
-    if (activeGroup && !expandedGroups.has(activeGroup.id)) {
-      setExpandedGroups((prev) => new Set([...prev, activeGroup.id]));
+    if (activeGroup) {
+      setExpandedGroups((prev) => {
+        if (prev.has(activeGroup.id)) return prev;
+        return new Set([...prev, activeGroup.id]);
+      });
     }
-  }, [activeSection, navGroups, expandedGroups]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
 
   // Render badge
   const renderBadge = (item: NavItem) => {
