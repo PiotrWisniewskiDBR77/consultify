@@ -1903,6 +1903,8 @@
       "sessions": "Aktywne sesje",
       "loginHistory": "Historia logowań",
       "recovery": "Opcje odzyskiwania",
+      "securityOverview": "Przegląd bezpieczeństwa",
+      "authAccess": "Uwierzytelnianie i dostęp",
       "connectedApps": "Połączone aplikacje",
       "calendarSync": "Synchronizacja kalendarza",
       "apiKeys": "Klucze API",
@@ -2032,6 +2034,14 @@
       "recovery": {
         "title": "Opcje odzyskiwania",
         "subtitle": "Skonfiguruj metody odzyskiwania konta"
+      },
+      "security-dashboard": {
+        "title": "Przegląd bezpieczeństwa",
+        "subtitle": "Monitoruj stan bezpieczeństwa konta i zarządzaj ustawieniami ochrony"
+      },
+      "auth-access": {
+        "title": "Uwierzytelnianie i dostęp",
+        "subtitle": "Zarządzaj hasłem, uwierzytelnianiem dwuskładnikowym, sesjami i opcjami odzyskiwania"
       },
       "connected-apps": {
         "title": "Połączone aplikacje",

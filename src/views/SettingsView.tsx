@@ -55,6 +55,8 @@ import { ProfileSettings } from '../components/settings/ProfileSettings';
 // QuickProfileCard removed - using Admin-style layout
 import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
+import { AuthenticationAccessPage } from '../components/settings/security/AuthenticationAccessPage';
+import { SecurityOverviewPage } from '../components/settings/security/SecurityOverviewPage';
 import { SecurityOverviewSettings } from '../components/settings/SecurityOverviewSettings';
 import { SessionsActivitySettings } from '../components/settings/SessionsActivitySettings';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
@@ -142,7 +144,7 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
     title: 'Availability',
     subtitle: 'Control when notifications reach you — temporary mute or recurring schedule',
   },
-  // Security
+  // Security (legacy keys kept for URL compat)
   password: { title: 'Password', subtitle: 'Change your password and security settings' },
   mfa: {
     title: 'Two-Factor Authentication',
@@ -158,6 +160,14 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   'sessions-activity': {
     title: 'Sessions & Activity',
     subtitle: 'Monitor active sessions and review login history',
+  },
+  'security-dashboard': {
+    title: 'Security Overview',
+    subtitle: 'Monitor your account security status and manage protection settings',
+  },
+  'auth-access': {
+    title: 'Authentication & Access',
+    subtitle: 'Manage your password, two-factor authentication, sessions, and recovery options',
   },
   // Integrations
   'connected-apps': { title: 'Connected Apps', subtitle: 'Manage third-party app connections' },
@@ -285,19 +295,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       case 'notifications-availability':
         return <AvailabilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
-      // Security (consolidated)
+      // Security (consolidated v2)
+      case 'security-dashboard':
+        return <SecurityOverviewPage currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'auth-access':
+        return <AuthenticationAccessPage currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      // Legacy security routes (redirect to new consolidated views)
       case 'security-overview':
-        return <SecurityOverviewSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+        return <SecurityOverviewPage currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'sessions-activity':
-        return <SessionsActivitySettings />;
-      // Legacy security routes (redirect to consolidated views)
+      case 'sessions':
+      case 'login-history':
+        return <AuthenticationAccessPage currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'password':
       case 'mfa':
       case 'recovery':
-        return <SecurityOverviewSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'sessions':
-      case 'login-history':
-        return <SessionsActivitySettings />;
+        return <AuthenticationAccessPage currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
       // Integrations
       case 'connected-apps':

@@ -1,0 +1,844 @@
+/**
+ * AuthenticationAccessPage — Consolidated Authentication & Access Management
+ *
+ * Single professional screen covering:
+ * 1. Password management (collapsible)
+ * 2. Two-Factor Authentication (collapsible)
+ * 3. Active Sessions (inline list)
+ * 4. Login History (recent feed)
+ * 5. Recovery Options (collapsible)
+ *
+ * Uses unified SettingsSection pattern for consistency with DataControlsSettings.
+ */
+
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  Fingerprint,
+  Globe,
+  History,
+  Key,
+  LifeBuoy,
+  Loader2,
+  Lock,
+  Mail,
+  Monitor,
+  Phone,
+  RefreshCw,
+  Shield,
+  ShieldCheck,
+  ShieldOff,
+  Smartphone,
+  Trash2,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { cn } from '../../../lib/utils';
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
+import { SettingsDivider, SettingsSection } from '../shared';
+
+interface AuthenticationAccessPageProps {
+  currentUser: User;
+  onUpdateUser?: (updates: Partial<User>) => void;
+  className?: string;
+}
+
+interface Session {
+  id: string;
+  deviceInfo: string;
+  device?: string;
+  browser?: string;
+  location?: string;
+  ipAddress?: string;
+  lastActive?: string;
+  lastUsedAt?: string;
+  current: boolean;
+}
+
+interface LoginEvent {
+  id: string;
+  timestamp: string;
+  status: 'success' | 'failed' | 'suspicious';
+  location: string;
+  ip: string;
+  device: string;
+}
+
+type ExpandedPanel = 'password' | 'mfa' | 'recovery' | null;
+
+export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> = ({
+  currentUser,
+  onUpdateUser,
+  className = '',
+}) => {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [expandedPanel, setExpandedPanel] = useState<ExpandedPanel>(null);
+
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  // Sessions state
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
+  // Login history state
+  const [loginHistory, setLoginHistory] = useState<LoginEvent[]>([]);
+
+  // Recovery state
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryPhone, setRecoveryPhone] = useState('');
+  const [backupCodesCount, setBackupCodesCount] = useState(0);
+  const [editingRecovery, setEditingRecovery] = useState<'email' | 'phone' | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [savingRecovery, setSavingRecovery] = useState(false);
+
+  useEffect(() => {
+    loadAllData();
+  }, [currentUser.id]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      const [sessionsRes, historyRes, recoveryRes] = await Promise.all([
+        Api.getActiveSessions().catch(() => ({ sessions: [] })),
+        Api.getLoginHistory().catch(() => []),
+        fetch('/api/settings/recovery', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      ]);
+
+      setSessions((sessionsRes as any)?.sessions || []);
+      setLoginHistory(Array.isArray(historyRes) ? historyRes.slice(0, 10) : []);
+
+      if (recoveryRes) {
+        setRecoveryEmail(recoveryRes.recoveryEmail || '');
+        setRecoveryPhone(recoveryRes.recoveryPhone || '');
+        setBackupCodesCount(recoveryRes.backupCodesCount || 0);
+      }
+    } catch (error) {
+      console.error('Failed to load auth data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePanel = (panel: ExpandedPanel) => {
+    setExpandedPanel((prev) => (prev === panel ? null : panel));
+  };
+
+  // ─── Password Logic ───
+
+  const passwordRequirements = [
+    { met: newPassword.length >= 8, text: t('settings.password.req.length', 'At least 8 characters') },
+    { met: /[A-Z]/.test(newPassword), text: t('settings.password.req.uppercase', 'One uppercase letter') },
+    { met: /[a-z]/.test(newPassword), text: t('settings.password.req.lowercase', 'One lowercase letter') },
+    { met: /[0-9]/.test(newPassword), text: t('settings.password.req.number', 'One number') },
+    { met: /[^A-Za-z0-9]/.test(newPassword), text: t('settings.password.req.special', 'One special character') },
+  ];
+
+  const allRequirementsMet = passwordRequirements.every((r) => r.met);
+  const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!allRequirementsMet || !passwordsMatch) return;
+
+    setSavingPassword(true);
+    try {
+      await Api.changePassword(currentPassword, newPassword);
+      toast.success(t('settings.password.success', 'Password changed successfully'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setExpandedPanel(null);
+    } catch (_error) {
+      toast.error(t('settings.password.error', 'Failed to change password'));
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  // ─── Sessions Logic ───
+
+  const terminateSession = async (sessionId: string) => {
+    try {
+      await Api.revokeSession(sessionId);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      toast.success(t('settings.security.sessionTerminated', 'Session terminated'));
+    } catch (_error) {
+      toast.error(t('settings.security.sessionError', 'Failed to terminate session'));
+    }
+  };
+
+  const revokeAllSessions = async () => {
+    try {
+      await Api.revokeAllSessions();
+      setSessions((prev) => prev.filter((s) => s.current));
+      toast.success(t('settings.security.allSessionsRevoked', 'All other sessions revoked'));
+    } catch (_error) {
+      toast.error(t('settings.security.revokeAllError', 'Failed to revoke sessions'));
+    }
+  };
+
+  const refreshSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const response = await Api.getActiveSessions();
+      setSessions((response as any)?.sessions || []);
+    } catch (_error) {
+      toast.error(t('settings.security.sessionsError', 'Failed to load sessions'));
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  // ─── Recovery Logic ───
+
+  const handleSaveRecovery = async () => {
+    if (!editingRecovery) return;
+    setSavingRecovery(true);
+    try {
+      const updates =
+        editingRecovery === 'email'
+          ? { recoveryEmail: editValue }
+          : { recoveryPhone: editValue };
+
+      const response = await fetch('/api/settings/recovery', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        if (editingRecovery === 'email') setRecoveryEmail(editValue);
+        else setRecoveryPhone(editValue);
+        toast.success(t('settings.recovery.saved', 'Recovery option updated'));
+      }
+      setEditingRecovery(null);
+      setEditValue('');
+    } catch (_error) {
+      toast.error(t('settings.recovery.saveFailed', 'Failed to save'));
+    } finally {
+      setSavingRecovery(false);
+    }
+  };
+
+  const maskEmail = (email: string) => {
+    if (!email) return '';
+    const [local, domain] = email.split('@');
+    if (!domain) return email;
+    return `${local.substring(0, 2)}***@${domain}`;
+  };
+
+  const maskPhone = (phone: string) => {
+    if (!phone) return '';
+    return phone.replace(/(\d{2})\d+(\d{2})/, '$1******$2');
+  };
+
+  const getDeviceIcon = (deviceInfo: string) => {
+    const info = (deviceInfo || '').toLowerCase();
+    if (info.includes('mobile') || info.includes('tablet')) return Smartphone;
+    return Monitor;
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle size={14} className="text-emerald-500" />;
+      case 'failed':
+        return <XCircle size={14} className="text-rose-500" />;
+      case 'suspicious':
+        return <AlertTriangle size={14} className="text-amber-500" />;
+      default:
+        return <CheckCircle size={14} className="text-slate-400" />;
+    }
+  };
+
+  const sectionLabel =
+    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+
+  return (
+    <SettingsSection
+      icon={Lock}
+      title={t('settings.authAccess.title', 'Authentication & Access')}
+      description={t(
+        'settings.authAccess.description',
+        'Manage your password, two-factor authentication, sessions, and recovery options'
+      )}
+      cardId="settings-auth-access"
+      loading={loading}
+      className={className}
+    >
+      <div className="space-y-6">
+        {/* ─── Password Section ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <Key size={14} className="text-violet-400" />
+            {t('settings.authAccess.passwordSection', 'Password')}
+          </h4>
+          <div className="bg-navy-900/30 border border-white/5 rounded-lg overflow-hidden">
+            <button
+              onClick={() => togglePanel('password')}
+              className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-violet-500/10 rounded-lg">
+                  <Key size={16} className="text-violet-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-white">
+                    {t('settings.authAccess.changePassword', 'Change Password')}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {t(
+                      'settings.authAccess.changePasswordDesc',
+                      'Update your password to keep your account secure'
+                    )}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                size={16}
+                className={cn(
+                  'text-slate-500 transition-transform duration-200',
+                  expandedPanel === 'password' && 'rotate-180'
+                )}
+              />
+            </button>
+
+            {expandedPanel === 'password' && (
+              <div className="px-4 pb-4 border-t border-white/5">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4 max-w-md">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      {t('settings.password.current', 'Current Password')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      {t('settings.password.new', 'New Password')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords(!showPasswords)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {newPassword && (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {passwordRequirements.map((req, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            'flex items-center gap-1.5 text-xs',
+                            req.met ? 'text-emerald-400' : 'text-slate-500'
+                          )}
+                        >
+                          {req.met ? <Check size={12} /> : <X size={12} />}
+                          {req.text}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      {t('settings.password.confirm', 'Confirm New Password')}
+                    </label>
+                    <input
+                      type={showPasswords ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                    />
+                    {confirmPassword && !passwordsMatch && (
+                      <p className="text-xs text-rose-400 mt-1">
+                        {t('settings.password.mismatch', 'Passwords do not match')}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!allRequirementsMet || !passwordsMatch || savingPassword}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingPassword ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Key size={14} />
+                    )}
+                    {savingPassword
+                      ? t('common.saving', 'Saving...')
+                      : t('settings.password.update', 'Update Password')}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Two-Factor Authentication Section ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <Fingerprint size={14} className="text-violet-400" />
+            {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
+          </h4>
+          <div className="bg-navy-900/30 border border-white/5 rounded-lg overflow-hidden">
+            <button
+              onClick={() => togglePanel('mfa')}
+              className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'p-2 rounded-lg',
+                    currentUser?.mfaEnabled
+                      ? 'bg-emerald-500/10'
+                      : 'bg-amber-500/10'
+                  )}
+                >
+                  {currentUser?.mfaEnabled ? (
+                    <ShieldCheck size={16} className="text-emerald-400" />
+                  ) : (
+                    <ShieldOff size={16} className="text-amber-400" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-white">
+                      {t('settings.authAccess.twoFactor', 'Two-Factor Authentication')}
+                    </p>
+                    <span
+                      className={cn(
+                        'px-1.5 py-0.5 text-[10px] font-semibold rounded-full',
+                        currentUser?.mfaEnabled
+                          ? 'bg-emerald-500/15 text-emerald-400'
+                          : 'bg-amber-500/15 text-amber-400'
+                      )}
+                    >
+                      {currentUser?.mfaEnabled
+                        ? t('settings.authAccess.on', 'ON')
+                        : t('settings.authAccess.off', 'OFF')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {currentUser?.mfaEnabled
+                      ? t('settings.authAccess.mfaActiveDesc', 'Your account is protected with 2FA')
+                      : t(
+                          'settings.authAccess.mfaInactiveDesc',
+                          'Add an extra layer of security to your account'
+                        )}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                size={16}
+                className={cn(
+                  'text-slate-500 transition-transform duration-200',
+                  expandedPanel === 'mfa' && 'rotate-180'
+                )}
+              />
+            </button>
+
+            {expandedPanel === 'mfa' && (
+              <div className="px-4 pb-4 border-t border-white/5 pt-4">
+                {currentUser?.mfaEnabled ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
+                      <ShieldCheck size={18} className="text-emerald-400" />
+                      <div>
+                        <p className="text-sm font-medium text-emerald-300">
+                          {t('settings.authAccess.mfaEnabled', '2FA is active')}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {t(
+                            'settings.authAccess.mfaEnabledDesc',
+                            'Authenticator app is configured and protecting your account'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t(
+                        'settings.authAccess.mfaManageHint',
+                        'To manage 2FA settings, regenerate backup codes, or disable 2FA, visit the dedicated Two-Factor Authentication page from the sidebar.'
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
+                        <Shield size={16} className="text-violet-400 mb-2" />
+                        <p className="text-xs font-medium text-white">
+                          {t('settings.authAccess.benefit1', 'Prevent Unauthorized Access')}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
+                        <Smartphone size={16} className="text-violet-400 mb-2" />
+                        <p className="text-xs font-medium text-white">
+                          {t('settings.authAccess.benefit2', 'Works Offline')}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
+                        <Key size={16} className="text-violet-400 mb-2" />
+                        <p className="text-xs font-medium text-white">
+                          {t('settings.authAccess.benefit3', 'Backup Codes')}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t(
+                        'settings.authAccess.mfaSetupHint',
+                        'To set up two-factor authentication, navigate to the dedicated 2FA setup page from the sidebar.'
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Active Sessions Section ─── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className={sectionLabel + ' mb-0'}>
+              <Globe size={14} className="text-violet-400" />
+              {t('settings.authAccess.sessionsSection', 'Active Sessions')}
+            </h4>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={refreshSessions}
+                className="p-1.5 text-slate-500 hover:text-violet-400 transition-colors rounded-md hover:bg-white/5"
+              >
+                <RefreshCw size={14} className={loadingSessions ? 'animate-spin' : ''} />
+              </button>
+              {sessions.length > 1 && (
+                <button
+                  onClick={revokeAllSessions}
+                  className="text-xs text-rose-400 hover:text-rose-300 transition-colors px-2 py-1 rounded-md hover:bg-rose-500/10"
+                >
+                  {t('settings.authAccess.revokeAll', 'Revoke All Others')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {sessions.map((session) => {
+              const DeviceIcon = getDeviceIcon(session.deviceInfo || session.device || '');
+              return (
+                <div
+                  key={session.id}
+                  className="flex items-center justify-between p-3 bg-navy-900/30 border border-white/5 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-white/5 rounded-lg">
+                      <DeviceIcon size={16} className="text-slate-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-white">
+                          {session.deviceInfo || session.device || 'Unknown Device'}
+                          {session.browser ? ` · ${session.browser}` : ''}
+                        </p>
+                        {session.current && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 rounded-full">
+                            {t('settings.authAccess.current', 'Current')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {session.location || session.ipAddress || 'Unknown'} ·{' '}
+                        {session.lastActive || session.lastUsedAt || 'Recently'}
+                      </p>
+                    </div>
+                  </div>
+                  {!session.current && (
+                    <button
+                      onClick={() => terminateSession(session.id)}
+                      className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      title={t('settings.authAccess.terminate', 'Terminate')}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {sessions.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <Monitor size={20} className="text-slate-600 mb-2" />
+                <p className="text-xs text-slate-500">
+                  {t('settings.authAccess.noSessions', 'No active sessions found')}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Login History Section ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <History size={14} className="text-violet-400" />
+            {t('settings.authAccess.loginHistorySection', 'Login History')}
+          </h4>
+
+          {loginHistory.length > 0 ? (
+            <div className="space-y-1.5">
+              {loginHistory.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-3 bg-navy-900/30 border border-white/5 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(event.status)}
+                    <div>
+                      <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
+                      <p className="text-xs text-slate-500">
+                        {event.location || 'Unknown'} · {event.ip || ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <History size={20} className="text-slate-600 mb-2" />
+              <p className="text-xs text-slate-500">
+                {t('settings.authAccess.noHistory', 'No login history available')}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Recovery Options Section ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <LifeBuoy size={14} className="text-violet-400" />
+            {t('settings.authAccess.recoverySection', 'Recovery Options')}
+          </h4>
+
+          <div className="space-y-3">
+            {/* Recovery Email */}
+            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-blue-500/10 rounded-lg">
+                    <Mail size={14} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {t('settings.authAccess.recoveryEmail', 'Recovery Email')}
+                    </p>
+                    {editingRecovery !== 'email' && (
+                      <p className="text-xs text-slate-500">
+                        {recoveryEmail
+                          ? maskEmail(recoveryEmail)
+                          : t('settings.authAccess.notConfigured', 'Not configured')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {editingRecovery !== 'email' && (
+                  <div className="flex items-center gap-2">
+                    {recoveryEmail && <Check size={14} className="text-emerald-400" />}
+                    <button
+                      onClick={() => {
+                        setEditingRecovery('email');
+                        setEditValue(recoveryEmail);
+                      }}
+                      className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
+                    >
+                      {recoveryEmail
+                        ? t('common.change', 'Change')
+                        : t('common.add', 'Add')}
+                    </button>
+                  </div>
+                )}
+              </div>
+              {editingRecovery === 'email' && (
+                <div className="flex gap-2 mt-3">
+                  <input
+                    type="email"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder={t('settings.authAccess.emailPlaceholder', 'Enter recovery email')}
+                    className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleSaveRecovery}
+                    disabled={savingRecovery}
+                    className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    {savingRecovery ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingRecovery(null);
+                      setEditValue('');
+                    }}
+                    className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                  >
+                    {t('common.cancel', 'Cancel')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Recovery Phone */}
+            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                    <Phone size={14} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {t('settings.authAccess.recoveryPhone', 'Recovery Phone')}
+                    </p>
+                    {editingRecovery !== 'phone' && (
+                      <p className="text-xs text-slate-500">
+                        {recoveryPhone
+                          ? maskPhone(recoveryPhone)
+                          : t('settings.authAccess.notConfigured', 'Not configured')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {editingRecovery !== 'phone' && (
+                  <div className="flex items-center gap-2">
+                    {recoveryPhone && <Check size={14} className="text-emerald-400" />}
+                    <button
+                      onClick={() => {
+                        setEditingRecovery('phone');
+                        setEditValue(recoveryPhone);
+                      }}
+                      className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
+                    >
+                      {recoveryPhone
+                        ? t('common.change', 'Change')
+                        : t('common.add', 'Add')}
+                    </button>
+                  </div>
+                )}
+              </div>
+              {editingRecovery === 'phone' && (
+                <div className="flex gap-2 mt-3">
+                  <input
+                    type="tel"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder={t('settings.authAccess.phonePlaceholder', '+48...')}
+                    className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleSaveRecovery}
+                    disabled={savingRecovery}
+                    className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    {savingRecovery ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingRecovery(null);
+                      setEditValue('');
+                    }}
+                    className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                  >
+                    {t('common.cancel', 'Cancel')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Backup Codes */}
+            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-violet-500/10 rounded-lg">
+                    <Key size={14} className="text-violet-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {t('settings.authAccess.backupCodes', 'Backup Codes')}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {backupCodesCount > 0
+                        ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
+                            count: backupCodesCount,
+                          })
+                        : t('settings.authAccess.noCodes', 'No backup codes generated')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {backupCodesCount > 0 && <Check size={14} className="text-emerald-400" />}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </SettingsSection>
+  );
+};
+
+export default AuthenticationAccessPage;

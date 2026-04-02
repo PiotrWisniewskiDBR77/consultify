@@ -2602,6 +2602,8 @@
       "sessions": "Active Sessions",
       "loginHistory": "Login History",
       "recovery": "Recovery Options",
+      "securityOverview": "Security Overview",
+      "authAccess": "Authentication & Access",
       "connectedApps": "Connected Apps",
       "calendarSync": "Calendar Sync",
       "apiKeys": "API Keys",
@@ -2731,6 +2733,14 @@
       "recovery": {
         "title": "Recovery Options",
         "subtitle": "Configure account recovery methods"
+      },
+      "security-dashboard": {
+        "title": "Security Overview",
+        "subtitle": "Monitor your account security status and manage protection settings"
+      },
+      "auth-access": {
+        "title": "Authentication & Access",
+        "subtitle": "Manage your password, two-factor authentication, sessions, and recovery options"
       },
       "connected-apps": {
         "title": "Connected Apps",

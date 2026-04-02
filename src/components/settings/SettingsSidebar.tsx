@@ -86,6 +86,8 @@ export type SettingsSection =
   | 'recovery'
   | 'security-overview'
   | 'sessions-activity'
+  | 'security-dashboard'
+  | 'auth-access'
   // Integrations
   | 'connected-apps'
   | 'calendar-sync'
@@ -292,16 +294,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         label: t('settings.sidebar.groups.security', 'SECURITY'),
         items: [
           {
-            id: 'security-overview',
+            id: 'security-dashboard',
             label: t('settings.sidebar.securityOverview', 'Security Overview'),
             icon: Shield,
-            keywords: ['password', 'mfa', '2fa', 'recovery', 'authenticator', 'credentials'],
+            keywords: ['score', 'status', 'protection', 'dashboard', 'mfa', '2fa'],
           },
           {
-            id: 'sessions-activity',
-            label: t('settings.sidebar.sessionsActivity', 'Sessions & Activity'),
-            icon: Globe,
-            keywords: ['devices', 'logged in', 'login history', 'activity', 'sign in'],
+            id: 'auth-access',
+            label: t('settings.sidebar.authAccess', 'Authentication & Access'),
+            icon: Lock,
+            keywords: ['password', 'sessions', 'recovery', 'login', 'devices', 'history'],
           },
         ],
       },
