@@ -1,45 +1,44 @@
-// NOTE: This file uses broad types; refine as backend contracts are clarified.
 /**
- * DataControlsSettings - Enhanced GDPR Compliance Data Controls
+ * DataControlsSettings — Consolidated GDPR & Data Management
  *
- * Features:
- * - Consent management dashboard
- * - Data portability (full GDPR export)
- * - Third-party data sharing toggles
- * - AI training opt-out
- * - Data retention period selector
- * - Right to be forgotten workflow
+ * Single professional screen covering:
+ * 1. GDPR compliance banner
+ * 2. Consent management (toggles)
+ * 3. Data retention period
+ * 4. Data portability (export)
+ * 5. Account deletion (danger zone)
+ * 6. Related legal documents
+ *
+ * Uses unified SettingsSection pattern for consistency with the rest of Settings.
  */
 
 import {
   AlertTriangle,
   BarChart3,
   Brain,
-  Calendar,
-  CheckCircle,
-  ChevronRight,
   Clock,
   Database,
   Download,
-  Eye,
+  ExternalLink,
   FileText,
   Globe,
   Info,
   Loader2,
   Lock,
   Mail,
-  RefreshCw,
   Share2,
   Shield,
   Trash2,
-  XCircle,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
+import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 
 interface DataControlsSettingsProps {
   currentUser: User;
@@ -60,21 +59,6 @@ interface DataRetention {
   autoDelete: boolean;
 }
 
-interface ExportRequest {
-  id: string;
-  status: 'pending' | 'processing' | 'ready' | 'expired';
-  requestedAt: string;
-  expiresAt?: string;
-  downloadUrl?: string;
-}
-
-interface DeletionRequest {
-  id: string;
-  status: 'pending' | 'scheduled' | 'completed' | 'cancelled';
-  requestedAt: string;
-  scheduledFor?: string;
-}
-
 const DEFAULT_CONSENTS: ConsentSettings = {
   analytics: true,
   personalization: true,
@@ -88,6 +72,71 @@ const DEFAULT_RETENTION: DataRetention = {
   autoDelete: false,
 };
 
+const CONSENT_ITEMS: Array<{
+  key: keyof ConsentSettings;
+  icon: React.ElementType;
+  titleKey: string;
+  titleDefault: string;
+  descKey: string;
+  descDefault: string;
+}> = [
+  {
+    key: 'analytics',
+    icon: BarChart3,
+    titleKey: 'settings.data.analytics',
+    titleDefault: 'Usage Analytics',
+    descKey: 'settings.data.analyticsDesc',
+    descDefault: 'Help improve the product by sharing anonymous usage data',
+  },
+  {
+    key: 'personalization',
+    icon: Brain,
+    titleKey: 'settings.data.personalization',
+    titleDefault: 'Personalization',
+    descKey: 'settings.data.personalizationDesc',
+    descDefault: 'Use your data to personalize your experience and recommendations',
+  },
+  {
+    key: 'marketing',
+    icon: Mail,
+    titleKey: 'settings.data.marketing',
+    titleDefault: 'Marketing Communications',
+    descKey: 'settings.data.marketingDesc',
+    descDefault: 'Receive product updates, tips, and promotional offers',
+  },
+  {
+    key: 'thirdPartySharing',
+    icon: Share2,
+    titleKey: 'settings.data.thirdParty',
+    titleDefault: 'Third-Party Data Sharing',
+    descKey: 'settings.data.thirdPartyDesc',
+    descDefault: 'Share data with trusted partners for enhanced features',
+  },
+  {
+    key: 'aiTraining',
+    icon: Brain,
+    titleKey: 'settings.data.aiTraining',
+    titleDefault: 'AI Model Training',
+    descKey: 'settings.data.aiTrainingDesc',
+    descDefault: 'Allow your anonymized data to improve our AI models',
+  },
+];
+
+const RETENTION_OPTIONS = [
+  { value: '30', labelKey: 'settings.data.retention30', labelDefault: '30 days' },
+  { value: '90', labelKey: 'settings.data.retention90', labelDefault: '90 days' },
+  { value: '180', labelKey: 'settings.data.retention180', labelDefault: '6 months' },
+  { value: '365', labelKey: 'settings.data.retention365', labelDefault: '1 year' },
+  { value: 'forever', labelKey: 'settings.data.retentionForever', labelDefault: 'Forever' },
+];
+
+const LEGAL_DOCS = [
+  { to: '/privacy', icon: Shield, titleKey: 'settings.data.privacyPolicy', titleDefault: 'Privacy Policy', desc: 'How we handle your data' },
+  { to: '/cookies', icon: Globe, titleKey: 'settings.data.cookiePolicy', titleDefault: 'Cookie Policy', desc: 'Cookies & tracking' },
+  { to: '/legal/dpa', icon: Database, titleKey: 'settings.data.dpa', titleDefault: 'Data Processing', desc: 'GDPR DPA terms' },
+  { to: '/legal/subprocessors', icon: Lock, titleKey: 'settings.data.subprocessors', titleDefault: 'Sub-processors', desc: 'Third-party services' },
+];
+
 export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   currentUser,
   onUpdateUser,
@@ -98,12 +147,21 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [retention, setRetention] = useState<DataRetention>(DEFAULT_RETENTION);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [exportRequest, setExportRequest] = useState<ExportRequest | null>(null);
-  const [deletionRequest, setDeletionRequest] = useState<DeletionRequest | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [exporting, setExporting] = useState(false);
   const [requestingDeletion, setRequestingDeletion] = useState(false);
+
+  const [originalConsents, setOriginalConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
+  const [originalRetention, setOriginalRetention] = useState<DataRetention>(DEFAULT_RETENTION);
+
+  useEffect(() => {
+    const dirty =
+      JSON.stringify(consents) !== JSON.stringify(originalConsents) ||
+      JSON.stringify(retention) !== JSON.stringify(originalRetention);
+    setIsDirty(dirty);
+  }, [consents, retention, originalConsents, originalRetention]);
 
   useEffect(() => {
     loadSettings();
@@ -112,20 +170,18 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const [consentsRes, retentionRes, exportRes] = await Promise.all([
+      const [consentsRes, retentionRes] = await Promise.all([
         Api.getGdprConsents().catch(() => null),
         Api.getGdprRetention().catch(() => null),
-        Api.getGdprExportStatus().catch(() => null),
       ]);
-
       if (consentsRes?.consents) {
-        setConsents({ ...DEFAULT_CONSENTS, ...consentsRes.consents });
+        const merged = { ...DEFAULT_CONSENTS, ...consentsRes.consents };
+        setConsents(merged);
+        setOriginalConsents(merged);
       }
       if (retentionRes?.retention) {
         setRetention(retentionRes.retention);
-      }
-      if (exportRes?.request) {
-        setExportRequest(exportRes.request);
+        setOriginalRetention(retentionRes.retention);
       }
     } catch (error) {
       console.error('Failed to load data controls:', error);
@@ -134,46 +190,32 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     }
   };
 
-  const handleConsentChange = async (key: keyof ConsentSettings, value: boolean) => {
-    const newConsents = { ...consents, [key]: value };
-    setConsents(newConsents);
-
+  const handleSave = useCallback(async () => {
+    setSaving(true);
     try {
-      await Api.saveGdprConsents(newConsents);
-      toast.success(t('settings.data.consentUpdated', 'Consent preferences updated'));
+      await Promise.all([
+        Api.saveGdprConsents(consents),
+        Api.saveGdprRetention(retention),
+      ]);
+      setOriginalConsents({ ...consents });
+      setOriginalRetention({ ...retention });
+      toast.success(t('settings.data.saved', 'Data control preferences saved'));
     } catch (error) {
-      setConsents(consents); // Revert
-      toast.error(t('settings.data.consentError', 'Failed to update consent'));
+      toast.error(t('settings.data.saveError', 'Failed to save preferences'));
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [consents, retention, t]);
 
-  const handleRetentionChange = async (period: DataRetention['period']) => {
-    const newRetention = { ...retention, period };
-    setRetention(newRetention);
-
-    try {
-      await Api.saveGdprRetention(newRetention);
-      toast.success(t('settings.data.retentionUpdated', 'Data retention period updated'));
-    } catch (error) {
-      setRetention(retention); // Revert
-      toast.error(t('settings.data.retentionError', 'Failed to update retention'));
-    }
-  };
-
-  const handleExportRequest = async () => {
+  const handleExportData = async () => {
     setExporting(true);
     try {
       const response = await Api.requestGdprExport();
       if (response?.request) {
-        setExportRequest(response.request);
         toast.success(
-          t(
-            'settings.data.exportRequested',
-            'Data export requested. You will be notified when ready.'
-          )
+          t('settings.data.exportRequested', 'Data export requested. You will be notified when ready.')
         );
       } else {
-        // Fallback: direct download
         const data = await Api.get('/api/user/data-export');
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -191,30 +233,19 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     }
   };
 
-  const handleDownloadExport = async () => {
-    if (exportRequest?.downloadUrl) {
-      window.open(exportRequest.downloadUrl, '_blank');
-    }
-  };
-
   const handleDeleteRequest = async () => {
     if (deleteConfirmText.toLowerCase() !== 'delete my data') {
       toast.error(t('settings.data.deleteConfirmError', 'Please type "delete my data" to confirm'));
       return;
     }
-
     setRequestingDeletion(true);
     try {
       const response = await Api.requestGdprDeletion();
       if (response?.request) {
-        setDeletionRequest(response.request);
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
         toast.success(
-          t(
-            'settings.data.deletionRequested',
-            'Account deletion scheduled. You will receive a confirmation email.'
-          )
+          t('settings.data.deletionRequested', 'Account deletion scheduled. You will receive a confirmation email.')
         );
       }
     } catch (error) {
@@ -224,437 +255,272 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     }
   };
 
-  const handleCancelDeletion = async () => {
-    if (!deletionRequest) return;
-
-    try {
-      await Api.cancelGdprDeletion(deletionRequest.id);
-      setDeletionRequest(null);
-      toast.success(t('settings.data.deletionCancelled', 'Account deletion cancelled'));
-    } catch (error) {
-      toast.error(t('settings.data.cancelError', 'Failed to cancel deletion'));
-    }
-  };
-
-  const retentionOptions = [
-    { value: '30', label: t('settings.data.retention30', '30 days') },
-    { value: '90', label: t('settings.data.retention90', '90 days') },
-    { value: '180', label: t('settings.data.retention180', '6 months') },
-    { value: '365', label: t('settings.data.retention365', '1 year') },
-    { value: 'forever', label: t('settings.data.retentionForever', 'Forever') },
-  ];
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-      </div>
-    );
-  }
+  const sectionLabel = 'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+  const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
 
   return (
-    <div
-      className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ${className}`}
+    <SettingsSection
+      icon={Database}
+      title={t('settings.data.title', 'Data Controls')}
+      description={t('settings.data.description', 'Manage how your data is collected, used, and stored')}
+      cardId="settings-data-controls"
+      isDirty={isDirty}
+      onSave={handleSave}
+      saving={saving}
+      loading={loading}
+      className={className}
     >
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/25">
-          <Database className="w-7 h-7 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {t('settings.data.title', 'Data Controls')}
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            {t('settings.data.description', 'Manage how your data is collected, used, and stored')}
-          </p>
-        </div>
-      </div>
-
-      {/* GDPR Compliance Banner */}
-      <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 flex items-start gap-4">
-        <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <h4 className="font-semibold text-blue-800 dark:text-blue-400">
-            {t('settings.data.gdprTitle', 'GDPR Compliant')}
-          </h4>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            {t(
-              'settings.data.gdprDesc',
-              'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.'
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Consent Management */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-navy-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-emerald-500" />
-            {t('settings.data.consentsTitle', 'Consent Management')}
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t('settings.data.consentsDesc', 'Choose how we can use your data')}
-          </p>
-        </div>
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
-          <ConsentToggle
-            icon={<BarChart3 className="w-5 h-5" />}
-            title={t('settings.data.analytics', 'Usage Analytics')}
-            description={t(
-              'settings.data.analyticsDesc',
-              'Help improve the product by sharing anonymous usage data'
-            )}
-            checked={consents.analytics}
-            onChange={(checked) => handleConsentChange('analytics', checked)}
-          />
-          <ConsentToggle
-            icon={<Brain className="w-5 h-5" />}
-            title={t('settings.data.personalization', 'Personalization')}
-            description={t(
-              'settings.data.personalizationDesc',
-              'Use your data to personalize your experience and recommendations'
-            )}
-            checked={consents.personalization}
-            onChange={(checked) => handleConsentChange('personalization', checked)}
-          />
-          <ConsentToggle
-            icon={<Mail className="w-5 h-5" />}
-            title={t('settings.data.marketing', 'Marketing Communications')}
-            description={t(
-              'settings.data.marketingDesc',
-              'Receive product updates, tips, and promotional offers'
-            )}
-            checked={consents.marketing}
-            onChange={(checked) => handleConsentChange('marketing', checked)}
-          />
-          <ConsentToggle
-            icon={<Share2 className="w-5 h-5" />}
-            title={t('settings.data.thirdParty', 'Third-Party Data Sharing')}
-            description={t(
-              'settings.data.thirdPartyDesc',
-              'Share data with trusted partners for enhanced features'
-            )}
-            checked={consents.thirdPartySharing}
-            onChange={(checked) => handleConsentChange('thirdPartySharing', checked)}
-          />
-          <ConsentToggle
-            icon={<Brain className="w-5 h-5" />}
-            title={t('settings.data.aiTraining', 'AI Model Training')}
-            description={t(
-              'settings.data.aiTrainingDesc',
-              'Allow your anonymized data to improve our AI models'
-            )}
-            checked={consents.aiTraining}
-            onChange={(checked) => handleConsentChange('aiTraining', checked)}
-            highlight={!consents.aiTraining}
-          />
-        </div>
-      </div>
-
-      {/* Data Retention */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-6">
+        {/* GDPR Compliance Banner */}
+        <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg flex items-start gap-3">
+          <Shield size={18} className="text-violet-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-500" />
-              {t('settings.data.retentionTitle', 'Data Retention')}
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {t('settings.data.retentionDesc', 'Choose how long we keep your data')}
+            <p className="text-sm font-medium text-violet-300">
+              {t('settings.data.gdprTitle', 'GDPR Compliant')}
             </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {retentionOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleRetentionChange(option.value as DataRetention['period'])}
-              className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                retention.period === option.value
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                  : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 flex items-center gap-1">
-          <Info className="w-4 h-4" />
-          {t(
-            'settings.data.retentionNote',
-            'After this period, inactive data will be automatically anonymized or deleted.'
-          )}
-        </p>
-      </div>
-
-      {/* Data Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* View Data */}
-        <DataActionCard
-          icon={<Eye className="w-6 h-6" />}
-          title={t('settings.data.viewData', 'View My Data')}
-          description={t('settings.data.viewDataDesc', 'See all data we have about you')}
-          buttonText={t('settings.data.viewDataBtn', 'View Data')}
-          onClick={() => window.open('/settings/my-data', '_blank')}
-        />
-
-        {/* Export Data */}
-        <DataActionCard
-          icon={<Download className="w-6 h-6" />}
-          title={t('settings.data.exportData', 'Export My Data')}
-          description={
-            exportRequest?.status === 'ready'
-              ? t('settings.data.exportReady', 'Your export is ready to download')
-              : exportRequest?.status === 'processing'
-                ? t('settings.data.exportProcessing', 'Export is being prepared...')
-                : t('settings.data.exportDataDesc', 'Download all your data (GDPR)')
-          }
-          buttonText={
-            exportRequest?.status === 'ready'
-              ? t('settings.data.downloadExport', 'Download')
-              : exportRequest?.status === 'processing'
-                ? t('settings.data.exportPending', 'Processing...')
-                : t('settings.data.requestExport', 'Request Export')
-          }
-          loading={exporting || exportRequest?.status === 'processing'}
-          onClick={exportRequest?.status === 'ready' ? handleDownloadExport : handleExportRequest}
-          status={exportRequest?.status}
-        />
-
-        {/* Delete Data */}
-        <DataActionCard
-          icon={<Trash2 className="w-6 h-6" />}
-          title={t('settings.data.deleteData', 'Delete My Data')}
-          description={
-            deletionRequest?.status === 'scheduled'
-              ? t(
-                  'settings.data.deletionScheduled',
-                  `Deletion scheduled for ${new Date(deletionRequest.scheduledFor!).toLocaleDateString()}`
-                )
-              : t('settings.data.deleteDataDesc', 'Permanently delete your account and data')
-          }
-          buttonText={
-            deletionRequest?.status === 'scheduled'
-              ? t('settings.data.cancelDeletion', 'Cancel Deletion')
-              : t('settings.data.requestDeletion', 'Request Deletion')
-          }
-          onClick={
-            deletionRequest?.status === 'scheduled'
-              ? handleCancelDeletion
-              : () => setShowDeleteConfirm(true)
-          }
-          variant="danger"
-          status={deletionRequest?.status}
-        />
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-900 rounded-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-red-100 dark:bg-red-500/20 rounded-xl">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                {t('settings.data.deleteConfirmTitle', 'Delete All Your Data?')}
-              </h3>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+            <p className="text-xs text-slate-400 mt-0.5">
               {t(
-                'settings.data.deleteConfirmDesc',
-                'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
+                'settings.data.gdprDesc',
+                'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.'
               )}
             </p>
-            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">
-                {t('settings.data.deleteConfirmType', 'Type "delete my data" to confirm:')}
-              </p>
-              <input
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className="w-full px-4 py-2 border border-red-200 dark:border-red-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
-                placeholder="delete my data"
-              />
-            </div>
-            <div className="flex gap-3">
+          </div>
+        </div>
+
+        {/* ─── Consent Management ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <Shield size={14} className="text-violet-400" />
+            {t('settings.data.consentsTitle', 'Consent Management')}
+          </h4>
+          <p className="text-xs text-slate-500 mb-4">
+            {t('settings.data.consentsDesc', 'Choose how we can use your data')}
+          </p>
+          <div className="space-y-3">
+            {CONSENT_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.key} className="flex items-start gap-3">
+                  <div className={cn(
+                    'p-1.5 rounded-md flex-shrink-0 mt-0.5',
+                    consents[item.key]
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-white/5 text-slate-500'
+                  )}>
+                    <Icon size={14} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <SettingsToggle
+                      checked={consents[item.key]}
+                      onChange={(val) => setConsents((prev) => ({ ...prev, [item.key]: val }))}
+                      label={t(item.titleKey, item.titleDefault)}
+                      description={t(item.descKey, item.descDefault)}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Data Retention ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <Clock size={14} className="text-violet-400" />
+            {t('settings.data.retentionTitle', 'Data Retention')}
+          </h4>
+          <p className="text-xs text-slate-500 mb-4">
+            {t('settings.data.retentionDesc', 'Choose how long we keep your data')}
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {RETENTION_OPTIONS.map((option) => (
               <button
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setDeleteConfirmText('');
-                }}
-                className="flex-1 py-3 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
-              <button
-                onClick={handleDeleteRequest}
-                disabled={
-                  requestingDeletion || deleteConfirmText.toLowerCase() !== 'delete my data'
-                }
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {requestingDeletion ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
+                key={option.value}
+                onClick={() => setRetention((prev) => ({ ...prev, period: option.value as DataRetention['period'] }))}
+                className={cn(
+                  'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
+                  retention.period === option.value
+                    ? 'bg-violet-600/20 text-violet-300 border-violet-500 shadow-sm'
+                    : 'bg-navy-800/50 text-slate-400 border-white/5 hover:border-white/20'
                 )}
-                {t('settings.data.confirmDelete', 'Delete Everything')}
+              >
+                {t(option.labelKey, option.labelDefault)}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
+            <Info size={12} />
+            {t(
+              'settings.data.retentionNote',
+              'After this period, inactive data will be automatically anonymized or deleted.'
+            )}
+          </p>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Data Portability ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <Download size={14} className="text-violet-400" />
+            {t('settings.data.portabilityTitle', 'Data Portability')}
+          </h4>
+          <div className={cardClass}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-white">
+                  {t('settings.data.exportData', 'Export Your Data')}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {t(
+                    'settings.data.exportDataDesc',
+                    'Download a copy of all your personal data including profile, settings, activity history, and documents. Processing typically takes 24-48 hours.'
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={handleExportData}
+                disabled={exporting}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
+                  'bg-violet-600/10 text-violet-300 border border-violet-500/30',
+                  'hover:bg-violet-600/20 hover:border-violet-500/50',
+                  'disabled:opacity-50'
+                )}
+              >
+                {exporting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                {exporting
+                  ? t('settings.data.exporting', 'Exporting...')
+                  : t('settings.data.requestExport', 'Request Export')}
               </button>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Privacy Documents */}
-      <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4">
-        <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          {t('settings.data.relatedDocs', 'Related Documents')}
-        </h4>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/privacy"
-            className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-          >
-            <Globe className="w-3 h-3" />
-            {t('settings.data.privacyPolicy', 'Privacy Policy')}
-          </a>
-          <a
-            href="/legal/dpa"
-            className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-          >
-            <Lock className="w-3 h-3" />
-            {t('settings.data.dpa', 'Data Processing Agreement')}
-          </a>
-          <a
-            href="/cookies"
-            className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-          >
-            <Database className="w-3 h-3" />
-            {t('settings.data.cookiePolicy', 'Cookie Policy')}
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
+        <SettingsDivider />
 
-// Consent Toggle Component
-interface ConsentToggleProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  highlight?: boolean;
-}
-
-const ConsentToggle: React.FC<ConsentToggleProps> = ({
-  icon,
-  title,
-  description,
-  checked,
-  onChange,
-  highlight,
-}) => {
-  return (
-    <div
-      className={`p-4 flex items-center justify-between ${highlight ? 'bg-amber-50 dark:bg-amber-500/5' : ''}`}
-    >
-      <div className="flex items-center gap-4">
-        <div
-          className={`p-2 rounded-lg ${checked ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}
-        >
-          {icon}
-        </div>
+        {/* ─── Danger Zone: Delete Account ─── */}
         <div>
-          <p className="font-medium text-slate-900 dark:text-white">{title}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+            <AlertTriangle size={14} />
+            {t('settings.data.dangerZone', 'Danger Zone')}
+          </h4>
+          <div className="bg-rose-500/5 border border-rose-500/20 rounded-lg p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-rose-300">
+                  {t('settings.data.deleteAccount', 'Delete Account & Data')}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {t(
+                    'settings.data.deleteAccountDesc',
+                    'Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.'
+                  )}
+                </p>
+              </div>
+              {!showDeleteConfirm && (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50"
+                >
+                  <Trash2 size={14} />
+                  {t('settings.data.requestDeletion', 'Delete Account')}
+                </button>
+              )}
+            </div>
+
+            {showDeleteConfirm && (
+              <div className="mt-4 p-4 bg-navy-900/50 border border-rose-500/20 rounded-lg">
+                <div className="flex items-center gap-2 text-rose-400 mb-3">
+                  <AlertTriangle size={16} />
+                  <span className="text-sm font-medium">
+                    {t('settings.data.deleteConfirmTitle', 'Are you absolutely sure?')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mb-3">
+                  {t(
+                    'settings.data.deleteConfirmDesc',
+                    'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
+                  )}
+                </p>
+                <label className="text-xs font-medium text-slate-400 mb-1.5 block">
+                  {t('settings.data.deleteConfirmType', 'Type "delete my data" to confirm:')}
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                  placeholder="delete my data"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteRequest}
+                    disabled={requestingDeletion || deleteConfirmText.toLowerCase() !== 'delete my data'}
+                    className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {requestingDeletion ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                    {t('settings.data.confirmDelete', 'Delete Everything')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    className="px-4 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+                  >
+                    {t('common.cancel', 'Cancel')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SettingsDivider />
+
+        {/* ─── Legal Documents ─── */}
+        <div>
+          <h4 className={sectionLabel}>
+            <FileText size={14} className="text-violet-400" />
+            {t('settings.data.relatedDocs', 'Legal Documents')}
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {LEGAL_DOCS.map((doc) => {
+              const Icon = doc.icon;
+              return (
+                <Link
+                  key={doc.to}
+                  to={doc.to}
+                  className="flex items-start gap-3 p-3 bg-navy-900/30 border border-white/5 rounded-lg hover:border-violet-500/30 hover:bg-violet-600/5 transition-all group"
+                >
+                  <Icon size={14} className="text-slate-500 group-hover:text-violet-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-medium text-slate-300 group-hover:text-violet-300">
+                        {t(doc.titleKey, doc.titleDefault)}
+                      </span>
+                      <ExternalLink size={10} className="text-slate-600" />
+                    </div>
+                    <span className="text-[11px] text-slate-500">{doc.desc}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
-        }`}
-      >
-        <span
-          className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
-        />
-      </button>
-    </div>
-  );
-};
-
-// Data Action Card Component
-interface DataActionCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  buttonText: string;
-  onClick: () => void;
-  variant?: 'default' | 'danger';
-  loading?: boolean;
-  status?: string;
-}
-
-const DataActionCard: React.FC<DataActionCardProps> = ({
-  icon,
-  title,
-  description,
-  buttonText,
-  onClick,
-  variant = 'default',
-  loading,
-  status,
-}) => {
-  const isDanger = variant === 'danger';
-
-  return (
-    <div
-      className={`bg-white dark:bg-navy-900 rounded-xl border ${
-        isDanger ? 'border-red-200 dark:border-red-500/30' : 'border-slate-200 dark:border-navy-700'
-      } p-6 flex flex-col`}
-    >
-      <div
-        className={`w-12 h-12 rounded-xl ${
-          isDanger
-            ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
-        } flex items-center justify-center mb-4`}
-      >
-        {icon}
-      </div>
-      <h4
-        className={`font-semibold ${isDanger ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white'} mb-1`}
-      >
-        {title}
-      </h4>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 flex-1">{description}</p>
-      <button
-        onClick={onClick}
-        disabled={loading}
-        className={`w-full py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-          isDanger
-            ? status === 'scheduled'
-              ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
-              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30'
-            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
-        } disabled:opacity-50`}
-      >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : status === 'ready' ? (
-          <Download className="w-4 h-4" />
-        ) : null}
-        {buttonText}
-      </button>
-    </div>
+    </SettingsSection>
   );
 };
 

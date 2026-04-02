@@ -43,7 +43,6 @@ import {
   Shield,
   Sliders,
   Sparkles,
-  Trash2,
   User,
   Webhook,
   Zap,
@@ -85,6 +84,8 @@ export type SettingsSection =
   | 'sessions'
   | 'login-history'
   | 'recovery'
+  | 'security-overview'
+  | 'sessions-activity'
   // Integrations
   | 'connected-apps'
   | 'calendar-sync'
@@ -93,8 +94,6 @@ export type SettingsSection =
   // Data & Privacy
   | 'data-controls'
   | 'privacy'
-  | 'export-data'
-  | 'delete-account'
   // Appearance
   | 'theme'
   | 'accessibility'
@@ -293,34 +292,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         label: t('settings.sidebar.groups.security', 'SECURITY'),
         items: [
           {
-            id: 'password',
-            label: t('settings.sidebar.password', 'Password'),
-            icon: Key,
-            keywords: ['change', 'reset', 'credentials'],
-          },
-          {
-            id: 'mfa',
-            label: t('settings.sidebar.mfa', 'Two-Factor Auth'),
+            id: 'security-overview',
+            label: t('settings.sidebar.securityOverview', 'Security Overview'),
             icon: Shield,
-            keywords: ['2fa', 'authenticator', 'totp'],
+            keywords: ['password', 'mfa', '2fa', 'recovery', 'authenticator', 'credentials'],
           },
           {
-            id: 'sessions',
-            label: t('settings.sidebar.sessions', 'Active Sessions'),
-            icon: Monitor,
-            keywords: ['devices', 'logged in'],
-          },
-          {
-            id: 'login-history',
-            label: t('settings.sidebar.loginHistory', 'Login History'),
-            icon: History,
-            keywords: ['activity', 'sign in'],
-          },
-          {
-            id: 'recovery',
-            label: t('settings.sidebar.recovery', 'Recovery Options'),
-            icon: LifeBuoy,
-            keywords: ['backup', 'email', 'phone'],
+            id: 'sessions-activity',
+            label: t('settings.sidebar.sessionsActivity', 'Sessions & Activity'),
+            icon: Globe,
+            keywords: ['devices', 'logged in', 'login history', 'activity', 'sign in'],
           },
         ],
       },
@@ -360,27 +341,15 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         items: [
           {
             id: 'data-controls',
-            label: t('settings.sidebar.dataControls', 'Data Controls'),
+            label: t('settings.sidebar.dataControls', 'Data & Consent'),
             icon: Database,
-            keywords: ['retention', 'storage'],
+            keywords: ['gdpr', 'retention', 'storage', 'consent', 'export', 'delete', 'account'],
           },
           {
             id: 'privacy',
-            label: t('settings.sidebar.privacy', 'Privacy'),
-            icon: Lock,
-            keywords: ['visibility', 'sharing', 'consent'],
-          },
-          {
-            id: 'export-data',
-            label: t('settings.sidebar.exportData', 'Export Data'),
-            icon: Download,
-            keywords: ['gdpr', 'download', 'backup'],
-          },
-          {
-            id: 'delete-account',
-            label: t('settings.sidebar.deleteAccount', 'Delete Account'),
-            icon: Trash2,
-            keywords: ['close', 'remove', 'deactivate'],
+            label: t('settings.sidebar.privacy', 'Privacy & Visibility'),
+            icon: Shield,
+            keywords: ['visibility', 'sharing', 'online', 'profile', 'activity', 'mentions'],
           },
         ],
       },

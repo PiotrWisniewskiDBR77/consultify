@@ -23,7 +23,6 @@ import { cn } from '@/lib/utils';
 import { MFASetup } from '../components/Profile/MFASetup';
 // Settings components
 import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
-import AccountManagementSettings from '../components/settings/AccountManagementSettings';
 import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
 // Advanced settings (existing components)
 import { SettingsExportImport } from '../components/settings/advanced/SettingsExportImport';
@@ -46,7 +45,6 @@ import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { DesktopSoundsSettings } from '../components/settings/DesktopSoundsSettings';
 import { EmailDigestSettings } from '../components/settings/EmailDigestSettings';
 import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
-import { ExportDataSettings } from '../components/settings/ExportDataSettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
@@ -57,6 +55,8 @@ import { ProfileSettings } from '../components/settings/ProfileSettings';
 // QuickProfileCard removed - using Admin-style layout
 import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
+import { SecurityOverviewSettings } from '../components/settings/SecurityOverviewSettings';
+import { SessionsActivitySettings } from '../components/settings/SessionsActivitySettings';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
 import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
@@ -151,16 +151,22 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   sessions: { title: 'Active Sessions', subtitle: 'View and manage your logged-in devices' },
   'login-history': { title: 'Login History', subtitle: 'Review recent account activity' },
   recovery: { title: 'Recovery Options', subtitle: 'Set up account recovery methods' },
+  'security-overview': {
+    title: 'Security Overview',
+    subtitle: 'Password, two-factor authentication, and recovery options',
+  },
+  'sessions-activity': {
+    title: 'Sessions & Activity',
+    subtitle: 'Monitor active sessions and review login history',
+  },
   // Integrations
   'connected-apps': { title: 'Connected Apps', subtitle: 'Manage third-party app connections' },
   'calendar-sync': { title: 'Calendar Sync', subtitle: 'Connect your calendars' },
   'api-keys': { title: 'API Keys', subtitle: 'Manage your API access keys' },
   webhooks: { title: 'Webhooks', subtitle: 'Configure webhook endpoints' },
   // Data & Privacy
-  'data-controls': { title: 'Data Controls', subtitle: 'Manage your data retention and storage' },
-  privacy: { title: 'Privacy', subtitle: 'Control your privacy settings' },
-  'export-data': { title: 'Export Data', subtitle: 'Download a copy of your data' },
-  'delete-account': { title: 'Delete Account', subtitle: 'Permanently delete your account' },
+  'data-controls': { title: 'Data & Consent', subtitle: 'GDPR compliance, consent management, data retention, and account actions' },
+  privacy: { title: 'Privacy & Visibility', subtitle: 'Control who can see your information and activity' },
   // Appearance
   theme: { title: 'Theme', subtitle: 'Choose your preferred color theme' },
   accessibility: { title: 'Accessibility', subtitle: 'Configure accessibility options' },
@@ -279,22 +285,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       case 'notifications-availability':
         return <AvailabilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
-      // Security
+      // Security (consolidated)
+      case 'security-overview':
+        return <SecurityOverviewSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'sessions-activity':
+        return <SessionsActivitySettings />;
+      // Legacy security routes (redirect to consolidated views)
       case 'password':
-        return <PasswordSettings />;
       case 'mfa':
-        return (
-          <MFASetup
-            isEnabled={currentUser?.mfaEnabled || false}
-            onUpdate={() => onUpdateUser({})}
-          />
-        );
-      case 'sessions':
-        return <ActiveSessionsSettings />;
-      case 'login-history':
-        return <LoginHistorySettings />;
       case 'recovery':
-        return <RecoveryOptionsSettings currentUser={currentUser} />;
+        return <SecurityOverviewSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'sessions':
+      case 'login-history':
+        return <SessionsActivitySettings />;
 
       // Integrations
       case 'connected-apps':
@@ -311,10 +314,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'privacy':
         return <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'export-data':
-        return <ExportDataSettings currentUser={currentUser} />;
-      case 'delete-account':
-        return <AccountManagementSettings />;
 
       // Appearance
       case 'theme':
