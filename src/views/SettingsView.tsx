@@ -30,7 +30,6 @@ import { SettingsExportImport } from '../components/settings/advanced/SettingsEx
 import { SettingsHistory } from '../components/settings/advanced/SettingsHistory';
 import { SettingsTemplates } from '../components/settings/advanced/SettingsTemplates';
 import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
-import { AIAutomationSettings } from '../components/settings/AIAutomationSettings';
 import { AIBehaviorSettings } from '../components/settings/AIBehaviorSettings';
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
 import { AIModelParametersSettings } from '../components/settings/AIModelParametersSettings';
@@ -115,10 +114,6 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
     subtitle: 'Choose AI models and fine-tune generation parameters',
   },
   'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
-  'ai-automation': {
-    title: 'AI Automation',
-    subtitle: 'Configure automatic AI actions and smart routing',
-  },
   'ai-memory': { title: 'Memory & Context', subtitle: 'Control AI memory and context retention' },
   'ai-privacy': {
     title: 'AI Data & Privacy',
@@ -275,8 +270,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <AIModelParametersSettings />;
       case 'ai-autocomplete':
         return <AIAutoCompleteSettings />;
-      case 'ai-automation':
-        return <AIAutomationSettings />;
       case 'ai-memory':
         return <AIMemorySettings />;
       case 'ai-privacy':

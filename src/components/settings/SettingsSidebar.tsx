@@ -71,7 +71,6 @@ export type SettingsSection =
   | 'ai-behavior'
   | 'ai-model-params'
   | 'ai-autocomplete'
-  | 'ai-automation'
   | 'ai-memory'
   | 'ai-privacy'
   | 'ai-prompt-library'
@@ -231,14 +230,6 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             label: t('settings.sidebar.aiAutocomplete', 'Auto-Complete'),
             icon: Zap,
             keywords: ['suggestions', 'completion'],
-          },
-          {
-            id: 'ai-automation',
-            label: t('settings.sidebar.aiAutomationRules', 'Automation'),
-            icon: Settings,
-            badge: 'New',
-            badgeType: 'new',
-            keywords: ['rules', 'triggers', 'auto', 'summarize', 'classify'],
           },
           {
             id: 'ai-memory',
