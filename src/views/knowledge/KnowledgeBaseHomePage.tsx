@@ -75,13 +75,18 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : i18n.language?.startsWith('de') ? 'de' : 'en';
 
   const { data: categories } = useDocsCategories(docsLanguage);
-  const { data: featured } = useDocsFeatured(docsLanguage, 6);
+  const { data: allFeatured } = useDocsFeatured(docsLanguage, 20);
   const { data: searchResults } = useDocsSearch(activeSearch, docsLanguage);
   const { data: tags } = useKnowledgeTags(docsLanguage);
 
   const consultifyCategories = useMemo(() =>
     categories?.filter((c: KbCategory) => c.slug.startsWith('consultify-')) || [],
     [categories]
+  );
+
+  const featured = useMemo(() =>
+    allFeatured?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-')).slice(0, 6) || [],
+    [allFeatured]
   );
 
   const { data: categoryArticles } = useDocsArticles({
@@ -91,7 +96,9 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   });
 
   const displayArticles = useMemo(() => {
-    if (activeSearch && searchResults?.length) return searchResults;
+    if (activeSearch && searchResults?.length) {
+      return searchResults.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'));
+    }
     if (selectedCategory && categoryArticles?.length) return categoryArticles;
     return null;
   }, [activeSearch, searchResults, selectedCategory, categoryArticles]);
