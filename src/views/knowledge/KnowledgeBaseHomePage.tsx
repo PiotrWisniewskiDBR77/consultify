@@ -340,17 +340,33 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-800 hover:shadow-md hover:border-slate-300 dark:hover:border-navy-700'
       )}
     >
+      {/* Thumbnail */}
+      {article.thumbnail_url ? (
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-900 overflow-hidden">
+          <img
+            src={article.thumbnail_url}
+            alt={article.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+          {featured && article.is_featured && (
+            <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-amber-500/90 text-white text-xs font-medium backdrop-blur-sm">
+              {t('kb.card.featured', 'Featured')}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
+          <BookOpen size={32} className="text-white/30" />
+        </div>
+      )}
+
       <div className="p-6 flex-1 flex flex-col">
         {/* Category badge */}
         <div className="flex items-center gap-2 mb-3">
           {article.category_name && (
             <span className="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
               {article.category_name}
-            </span>
-          )}
-          {featured && article.is_featured && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
-              {t('kb.card.featured', 'Featured')}
             </span>
           )}
         </div>

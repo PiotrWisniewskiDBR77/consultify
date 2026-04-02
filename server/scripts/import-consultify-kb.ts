@@ -5,9 +5,12 @@
  *  - Blogs/_LP_KB_READY/Consultify/knowledge_base_manifest.json
  *  - Blogs/Consultify/Blog/<slug>/article_EN.md, article_PL.md, article_DE.md
  *  - Blogs/Consultify/Blog/<slug>/seo.md
+ *  - Blogs/Consultify/Blog/<slug>/assets/images/*.png + *.meta.json
+ *  - Blogs/Consultify/Blog/<slug>/publish.md (image placement)
  *
  * Outputs:
  *  - server/migrations/20260402_consultify_kb_import.sql
+ *  - public/kb/consultify/<slug>/ (hero, analytical, social images)
  */
 
 import * as fs from 'fs';
@@ -72,18 +75,12 @@ function esc(s: string): string {
 }
 
 function readArticleBody(slug: string, lang: string): string {
-  const folders = fs.readdirSync(BLOGS_ROOT).filter(d => {
-    const parts = d.split('_');
-    const rest = parts.slice(1).join('_');
-    return rest === slug || d.endsWith(slug);
-  });
-
-  if (folders.length === 0) {
+  const folder = slugToFolderName(slug);
+  if (!folder) {
     console.warn(`  WARN: No folder found for slug: ${slug}`);
     return '';
   }
 
-  const folder = folders[0];
   const filePath = path.join(BLOGS_ROOT, folder, `article_${lang.toUpperCase()}.md`);
 
   if (!fs.existsSync(filePath)) {
@@ -107,6 +104,116 @@ function readArticleBody(slug: string, lang: string): string {
   }
 
   return content.trim();
+}
+
+interface ImageMeta {
+  heroAlt: string;
+  heroCaption: string;
+  analyticalAlt: string;
+  analyticalCaption: string;
+  socialAlt: string;
+}
+
+function readImageMeta(slug: string): ImageMeta {
+  const folder = slugToFolderName(slug);
+  const defaults: ImageMeta = { heroAlt: '', heroCaption: '', analyticalAlt: '', analyticalCaption: '', socialAlt: '' };
+  if (!folder) return defaults;
+
+  const imgDir = path.join(BLOGS_ROOT, folder, 'assets', 'images');
+  if (!fs.existsSync(imgDir)) return defaults;
+
+  const readLatestMeta = (role: string): { alt: string; caption: string } => {
+    const files = fs.readdirSync(imgDir)
+      .filter(f => f.startsWith(`${role}_`) && f.endsWith('.meta.json'))
+      .sort();
+    const latest = files[files.length - 1];
+    if (!latest) return { alt: '', caption: '' };
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(imgDir, latest), 'utf-8'));
+      return { alt: data.alt_text_en || '', caption: data.caption_en || '' };
+    } catch { return { alt: '', caption: '' }; }
+  };
+
+  const hero = readLatestMeta('hero_16x9');
+  const analytical = readLatestMeta('analytical_16x9');
+  const social = readLatestMeta('social_1x1');
+
+  return {
+    heroAlt: hero.alt,
+    heroCaption: hero.caption,
+    analyticalAlt: analytical.alt,
+    analyticalCaption: analytical.caption,
+    socialAlt: social.alt,
+  };
+}
+
+function injectImagesIntoContent(content: string, slug: string, meta: ImageMeta): string {
+  const heroUrl = `/kb/consultify/${slug}/hero.png`;
+  const analyticalUrl = `/kb/consultify/${slug}/analytical.png`;
+
+  const heroMd = `\n\n![${meta.heroAlt || 'Article hero image'}](${heroUrl})\n\n`;
+  const analyticalMd = `\n\n![${meta.analyticalAlt || 'Analytical illustration'}](${analyticalUrl})\n\n`;
+
+  const lines = content.split('\n');
+  const result: string[] = [];
+  let heroInserted = false;
+  let analyticalInserted = false;
+  let h2Count = 0;
+  const totalH2 = lines.filter(l => /^##\s+/.test(l)).length;
+  const analyticalAfterH2 = Math.max(1, Math.floor(totalH2 * 0.6));
+
+  for (let i = 0; i < lines.length; i++) {
+    result.push(lines[i]);
+
+    if (!heroInserted && /^#\s+/.test(lines[i])) {
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() === '') j++;
+      if (j < lines.length && !/^#/.test(lines[j])) {
+        const nextParaEnd = findParagraphEnd(lines, j);
+        for (let k = i + 1; k <= nextParaEnd; k++) {
+          result.push(lines[k]);
+        }
+        result.push(heroMd);
+        heroInserted = true;
+        i = nextParaEnd;
+        continue;
+      } else {
+        result.push(heroMd);
+        heroInserted = true;
+      }
+    }
+
+    if (!analyticalInserted && /^##\s+/.test(lines[i])) {
+      h2Count++;
+      if (h2Count >= analyticalAfterH2) {
+        let j = i + 1;
+        while (j < lines.length && !/^##?\s+/.test(lines[j])) {
+          result.push(lines[j]);
+          j++;
+        }
+        result.push(analyticalMd);
+        analyticalInserted = true;
+        i = j - 1;
+        continue;
+      }
+    }
+  }
+
+  if (!heroInserted) {
+    result.splice(1, 0, heroMd);
+  }
+  if (!analyticalInserted) {
+    const midpoint = Math.floor(result.length * 0.7);
+    result.splice(midpoint, 0, analyticalMd);
+  }
+
+  return result.join('\n');
+}
+
+function findParagraphEnd(lines: string[], start: number): number {
+  let i = start;
+  while (i < lines.length && lines[i].trim() !== '') i++;
+  return i - 1;
 }
 
 function readSeoData(slug: string): { metaTitle: string; metaDesc: string; primaryKeyword: string } {
@@ -346,29 +453,36 @@ function main() {
       continue;
     }
 
-    const enContent = readArticleBody(article.slug, 'en');
-    const plContent = readArticleBody(article.slug, 'pl');
-    const deContent = readArticleBody(article.slug, 'de');
+    const enContentRaw = readArticleBody(article.slug, 'en');
+    const plContentRaw = readArticleBody(article.slug, 'pl');
+    const deContentRaw = readArticleBody(article.slug, 'de');
 
-    if (!enContent) {
+    if (!enContentRaw) {
       console.warn(`SKIP: Empty EN content for ${article.slug}`);
       continue;
     }
 
-    const readingTime = estimateReadingTime(enContent);
+    const imageMeta = readImageMeta(article.slug);
+    const enContent = injectImagesIntoContent(enContentRaw, article.slug, imageMeta);
+    const plContent = plContentRaw ? injectImagesIntoContent(plContentRaw, article.slug, imageMeta) : '';
+    const deContent = deContentRaw ? injectImagesIntoContent(deContentRaw, article.slug, imageMeta) : '';
+
+    const readingTime = estimateReadingTime(enContentRaw);
     const seo = readSeoData(article.slug);
 
-    const enTitle = extractTitle(enContent) || article.title;
-    const plTitle = extractTitle(plContent) || enTitle;
-    const deTitle = extractTitle(deContent) || enTitle;
+    const enTitle = extractTitle(enContentRaw) || article.title;
+    const plTitle = extractTitle(plContentRaw) || enTitle;
+    const deTitle = extractTitle(deContentRaw) || enTitle;
 
+    const thumbnailUrl = `/kb/consultify/${article.slug}/hero.png`;
+    const socialImageUrl = `/kb/consultify/${article.slug}/social.png`;
     const relatedModules = JSON.stringify(['assessment', 'dashboard', 'roadmap']);
     const targetAudience = JSON.stringify([article.target_persona]);
 
     sql.push(`-- Article ${folder}`);
-    sql.push(`INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES`);
-    sql.push(`  ('${artId}', '${catId}', '${esc(article.slug)}', 'published', ${article.featured ? 1 : 0}, 1, ${readingTime}, '${esc(relatedModules)}', '${esc(targetAudience)}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`);
-    sql.push(`ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = ${article.featured ? 1 : 0}, reading_time_minutes = ${readingTime}, updated_at = CURRENT_TIMESTAMP;`);
+    sql.push(`INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES`);
+    sql.push(`  ('${artId}', '${catId}', '${esc(article.slug)}', 'published', ${article.featured ? 1 : 0}, 1, ${readingTime}, '${esc(thumbnailUrl)}', '${esc(relatedModules)}', '${esc(targetAudience)}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`);
+    sql.push(`ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = ${article.featured ? 1 : 0}, reading_time_minutes = ${readingTime}, thumbnail_url = '${esc(thumbnailUrl)}', updated_at = CURRENT_TIMESTAMP;`);
     sql.push('');
 
     // EN translation

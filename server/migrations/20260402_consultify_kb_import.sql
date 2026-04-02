@@ -332,12 +332,17 @@ ON CONFLICT (tag_id, language) DO NOTHING;
 -- CONSULTIFY KB ARTICLES (50)
 -- ============================================
 -- Article 01_why_traditional_consulting_is_broken
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-cat-consultify-ai-and-decision-making', '01_why_traditional_consulting_is_broken', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-cat-consultify-ai-and-decision-making', '01_why_traditional_consulting_is_broken', 'published', 0, 1, 4, '/kb/consultify/01_why_traditional_consulting_is_broken/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/01_why_traditional_consulting_is_broken/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-01_why_traditional_consulting_is_broken-trans-en', 'kb-consultify-01_why_traditional_consulting_is_broken', 'en', 'Why Traditional Consulting Is Broken', 'strategic work is separated from execution, so money is spent without durable outcomes', 'Most manufacturing and industrial sponsors do not lack advice.
+
+
+![hero image for a thought-leadership article about the failure of traditional consulting Scene: executive boardroom at the moment strategy turns into execution, with closed binders and printed plans pushed to one side of the table while a live working session forms around color-coded initiative cards, ownership markers, and progress tokens on the other side](/kb/consultify/01_why_traditional_consulting_is_broken/hero.png)
+
+
 
 They lack a durable bridge from analysis to governed execution.
 
@@ -387,6 +392,11 @@ A document cannot:
 
 Leaders need live visibility into priorities, assumptions, and execution, not a one-time explanation of what should happen in an ideal quarter.
 
+
+
+![support visual for the idea that strategy without execution fails Scene: split composition showing a dormant consulting output on one side as closed binders, archived folders, and a single completion token, contrasted with an active transformation control surface on the other side built from unlabeled workflow cards, owner markers, milestone chips, and progress rings](/kb/consultify/01_why_traditional_consulting_is_broken/analytical.png)
+
+
 ## What sponsors should expect instead
 
 The credible standard is not "no consultants" and not "AI instead of judgment."
@@ -421,6 +431,11 @@ That is what Consultify is designed to support.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-01_why_traditional_consulting_is_broken-trans-pl', 'kb-consultify-01_why_traditional_consulting_is_broken', 'pl', 'Why Traditional Consulting Is Broken', 'strategic work is separated from execution, so money is spent without durable outcomes', 'Tradycyjny consulting wciąż sprzedaje wygodną iluzję.
+
+
+![hero image for a thought-leadership article about the failure of traditional consulting Scene: executive boardroom at the moment strategy turns into execution, with closed binders and printed plans pushed to one side of the table while a live working session forms around color-coded initiative cards, ownership markers, and progress tokens on the other side](/kb/consultify/01_why_traditional_consulting_is_broken/hero.png)
+
+
 
 Iluzję, że jeśli analiza będzie wystarczająco dobra, firma zmieni się sama.
 
@@ -479,6 +494,11 @@ Liderzy potrzebują systemu, który potrafi:
 Właśnie tutaj tradycyjny consulting staje się zbyt statyczny.
 
 Statyczny deck nie zarządza dynamiczną egzekucją.
+
+
+
+![support visual for the idea that strategy without execution fails Scene: split composition showing a dormant consulting output on one side as closed binders, archived folders, and a single completion token, contrasted with an active transformation control surface on the other side built from unlabeled workflow cards, owner markers, milestone chips, and progress rings](/kb/consultify/01_why_traditional_consulting_is_broken/analytical.png)
+
 
 ## Co zastępuje stary model
 
@@ -545,6 +565,11 @@ ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-01_why_traditional_consulting_is_broken-trans-de', 'kb-consultify-01_why_traditional_consulting_is_broken', 'de', 'Why Traditional Consulting Is Broken', 'strategic work is separated from execution, so money is spent without durable outcomes', 'Traditionelles Consulting verkauft noch immer eine bequeme Illusion.
 
+
+![hero image for a thought-leadership article about the failure of traditional consulting Scene: executive boardroom at the moment strategy turns into execution, with closed binders and printed plans pushed to one side of the table while a live working session forms around color-coded initiative cards, ownership markers, and progress tokens on the other side](/kb/consultify/01_why_traditional_consulting_is_broken/hero.png)
+
+
+
 Die Illusion, dass sich ein Unternehmen von selbst verändert, wenn die Analyse nur scharf genug ist.
 
 Dieses Modell hat jahrzehntelang für Beratungen hervorragend funktioniert. Es produzierte Decks, Workshops, Roadmaps und elegante Executive-Sprache. Aber es scheiterte oft genau an dem Punkt, an dem für den Kunden Wert entstehen sollte: bei der Umsetzung.
@@ -602,6 +627,11 @@ Führungskräfte brauchen ein System, das:
 Genau hier wird traditionelles Consulting zu statisch.
 
 Ein statisches Deck kann keine dynamische Umsetzung steuern.
+
+
+
+![support visual for the idea that strategy without execution fails Scene: split composition showing a dormant consulting output on one side as closed binders, archived folders, and a single completion token, contrasted with an active transformation control surface on the other side built from unlabeled workflow cards, owner markers, milestone chips, and progress rings](/kb/consultify/01_why_traditional_consulting_is_broken/analytical.png)
+
 
 ## Was das alte Modell ersetzt
 
@@ -667,13 +697,13 @@ Consultify ist für das Gegenteil gebaut.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dbf93deb-53ac-46f4-b84e-3dde8c068205', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
+  ('f95dbedc-cf39-46b0-8705-aa451af9215f', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('02eb71ac-386f-405d-85d5-36bfed72b2b5', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
+  ('3d1ace4f-825d-4a7c-a675-56596c981a9d', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5f1ac286-c40b-4fdc-82bc-2ba6d0b2ac1d', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
+  ('28cc74cc-6d34-48da-8982-e6d52db0eb93', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -697,12 +727,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 02_10_questions_before_buying_ai_consulting_platform
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-cat-consultify-ai-and-decision-making', '02_10_questions_before_buying_ai_consulting_platform', 'published', 1, 1, 7, '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 7, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-cat-consultify-ai-and-decision-making', '02_10_questions_before_buying_ai_consulting_platform', 'published', 1, 1, 7, '/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 7, thumbnail_url = '/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform-trans-en', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'en', '10 Questions to Ask Before Buying an AI Consulting Platform', 'buyers evaluating AI consulting tools often get distracted by impressive demos and miss the system requirements that determine real transformation value', 'If you are evaluating an AI consulting platform, the central question is not whether the demo looks intelligent.
+
+
+![show platform buying as a disciplined executive due-diligence moment rather than a demo-room performance Scene: editorial tabletop photograph of a heavy walnut-and-steel decision table with ten distinct physical due-diligence prompts represented by brass markers, clipped blank document layers, sample material swatches, sealed sleeves, and one central comparison tray; no screens, no presentation, no smiling team theater](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png)
+
+
 
 The real question is whether the platform can help your company move from analysis to governed execution with financial clarity and control.
 
@@ -862,6 +897,11 @@ That means buyers should check:
 
 The more manual copying and stitching the team has to do, the less real leverage the platform creates.
 
+
+
+![explain the difference between a generic AI tool and a true transformation management platform Scene: side-by-side enterprise visual metaphor with an isolated analysis engine on one side feeding disconnected charts and warning markers, and an integrated execution system on the other side connecting approvals, governance checkpoints, owners, resource modules, and outcome signals through unlabeled cards and flows](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/analytical.png)
+
+
 ## 8. What does the output actually look like for leadership?
 
 Ask to see real output, not only the nicest product screens.
@@ -972,6 +1012,11 @@ It is a way to avoid buying a modern-looking version of the same old consulting 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform-trans-pl', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'pl', '10 Questions to Ask Before Buying an AI Consulting Platform', 'buyers evaluating AI consulting tools often get distracted by impressive demos and miss the system requirements that determine real transformation value', 'Jeśli oceniasz platformę AI consulting, najważniejsze pytanie nie brzmi, czy demo wygląda inteligentnie.
+
+
+![show platform buying as a disciplined executive due-diligence moment rather than a demo-room performance Scene: editorial tabletop photograph of a heavy walnut-and-steel decision table with ten distinct physical due-diligence prompts represented by brass markers, clipped blank document layers, sample material swatches, sealed sleeves, and one central comparison tray; no screens, no presentation, no smiling team theater](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png)
+
+
 
 Prawdziwe pytanie brzmi, czy ta platforma pomoże Twojej firmie przejść od analizy do nadzorowanej egzekucji z jasną logiką finansową i kontrolą.
 
@@ -1131,6 +1176,11 @@ Dlatego kupujący powinni sprawdzić:
 
 Im więcej ręcznego kopiowania i spinania trzeba robić, tym mniejszą realną dźwignię tworzy platforma.
 
+
+
+![explain the difference between a generic AI tool and a true transformation management platform Scene: side-by-side enterprise visual metaphor with an isolated analysis engine on one side feeding disconnected charts and warning markers, and an integrated execution system on the other side connecting approvals, governance checkpoints, owners, resource modules, and outcome signals through unlabeled cards and flows](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/analytical.png)
+
+
 ## 8. Jak wygląda output dla leadershipu?
 
 Poproś o zobaczenie realnego outputu, a nie tylko najładniejszych ekranów produktu.
@@ -1241,6 +1291,11 @@ To jest sposób, żeby nie kupić nowocześnie wyglądającej wersji tego samego
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform-trans-de', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'de', '10 Questions to Ask Before Buying an AI Consulting Platform', 'buyers evaluating AI consulting tools often get distracted by impressive demos and miss the system requirements that determine real transformation value', 'Wenn Sie eine AI-Consulting-Plattform evaluieren, lautet die zentrale Frage nicht, ob die Demo intelligent wirkt.
+
+
+![show platform buying as a disciplined executive due-diligence moment rather than a demo-room performance Scene: editorial tabletop photograph of a heavy walnut-and-steel decision table with ten distinct physical due-diligence prompts represented by brass markers, clipped blank document layers, sample material swatches, sealed sleeves, and one central comparison tray; no screens, no presentation, no smiling team theater](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png)
+
+
 
 Die eigentliche Frage ist, ob die Plattform Ihrem Unternehmen hilft, von Analyse zu gesteuerter Umsetzung mit finanzieller Klarheit und Kontrolle zu kommen.
 
@@ -1400,6 +1455,11 @@ Darum sollten Käufer prüfen:
 
 Je mehr manuelles Kopieren und Zusammenbauen nötig ist, desto weniger echte Hebelwirkung schafft die Plattform.
 
+
+
+![explain the difference between a generic AI tool and a true transformation management platform Scene: side-by-side enterprise visual metaphor with an isolated analysis engine on one side feeding disconnected charts and warning markers, and an integrated execution system on the other side connecting approvals, governance checkpoints, owners, resource modules, and outcome signals through unlabeled cards and flows](/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/analytical.png)
+
+
 ## 8. Wie sieht der Output für das Leadership tatsächlich aus?
 
 Bitten Sie um echte Outputs, nicht nur um die schönsten Produkt-Screens.
@@ -1510,13 +1570,13 @@ Er ist ein Weg, keine modern aussehende Version desselben alten Consulting-Probl
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1d0fea94-31c8-4949-9091-a227ef953bc3', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
+  ('1e1a126b-864f-4da3-a0fe-4c1bac65eeeb', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2d55272c-5223-49a3-a359-a5064fcc6083', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
+  ('5c410093-9e23-41fa-8250-247c98f9176b', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2e5010d1-7174-4496-81b8-6ae08206348b', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
+  ('a47b4986-b18c-45c7-9bd5-43c63d3cad98', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -1537,12 +1597,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 03_first_30_minutes_in_consultify
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-cat-consultify-execution-and-rollout', '03_first_30_minutes_in_consultify', 'published', 1, 1, 5, '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-cat-consultify-execution-and-rollout', '03_first_30_minutes_in_consultify', 'published', 1, 1, 5, '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-03_first_30_minutes_in_consultify-trans-en', 'kb-consultify-03_first_30_minutes_in_consultify', 'en', 'Your First 30 Minutes in Consultify', 'new users often lose momentum in strategic platforms because the first session feels like setup instead of progress', 'Your first session in Consultify should not feel like software onboarding.
+
+
+![hero image for an onboarding article about a leader using Consultify for the first time Scene: executive entering a transformation workspace where a business challenge, diagnostic, roadmap, and output appear as one connected flow](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
+
+
 
 It should feel like the beginning of structured transformation work.
 
@@ -1674,6 +1739,11 @@ Without that, the platform feels like an interesting tool.
 
 With it, the platform starts acting like an operating system for strategic work.
 
+
+
+![visualize the first 30-minute workflow from context to output Scene: clear step-by-step process visual showing challenge framing, contextual input, diagnostic, roadmap, and leadership-ready summary](/kb/consultify/03_first_30_minutes_in_consultify/analytical.png)
+
+
 ## What users should do immediately after the first session
 
 The first 30 minutes are not the finish line.
@@ -1735,6 +1805,11 @@ But as a system that helps leaders move from uncertainty to a first usable opera
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-03_first_30_minutes_in_consultify-trans-pl', 'kb-consultify-03_first_30_minutes_in_consultify', 'pl', 'Your First 30 Minutes in Consultify', 'new users often lose momentum in strategic platforms because the first session feels like setup instead of progress', 'Pierwsza sesja w Consultify nie powinna przypominać onboardingu do software''u.
+
+
+![hero image for an onboarding article about a leader using Consultify for the first time Scene: executive entering a transformation workspace where a business challenge, diagnostic, roadmap, and output appear as one connected flow](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
+
+
 
 Powinna przypominać początek uporządkowanej pracy transformacyjnej.
 
@@ -1866,6 +1941,11 @@ Bez tego platforma wygląda jak interesujące narzędzie.
 
 Z tym zaczyna działać jak operating system dla pracy strategicznej.
 
+
+
+![visualize the first 30-minute workflow from context to output Scene: clear step-by-step process visual showing challenge framing, contextual input, diagnostic, roadmap, and leadership-ready summary](/kb/consultify/03_first_30_minutes_in_consultify/analytical.png)
+
+
 ## Co użytkownik powinien zrobić zaraz po pierwszej sesji
 
 Pierwsze 30 minut nie jest metą.
@@ -1927,6 +2007,11 @@ Tylko jako system, który pomaga liderowi przejść od niepewności do pierwszej
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-03_first_30_minutes_in_consultify-trans-de', 'kb-consultify-03_first_30_minutes_in_consultify', 'de', 'Your First 30 Minutes in Consultify', 'new users often lose momentum in strategic platforms because the first session feels like setup instead of progress', 'Die erste Session in Consultify sollte sich nicht wie klassisches Software-Onboarding anfühlen.
+
+
+![hero image for an onboarding article about a leader using Consultify for the first time Scene: executive entering a transformation workspace where a business challenge, diagnostic, roadmap, and output appear as one connected flow](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
+
+
 
 Sie sollte sich wie der Beginn strukturierter Transformationsarbeit anfühlen.
 
@@ -2058,6 +2143,11 @@ Ohne das wirkt die Plattform wie ein interessantes Tool.
 
 Damit beginnt sie wie ein Operating System für strategische Arbeit zu wirken.
 
+
+
+![visualize the first 30-minute workflow from context to output Scene: clear step-by-step process visual showing challenge framing, contextual input, diagnostic, roadmap, and leadership-ready summary](/kb/consultify/03_first_30_minutes_in_consultify/analytical.png)
+
+
 ## Was Nutzer direkt nach der ersten Session tun sollten
 
 Die ersten 30 Minuten sind nicht die Ziellinie.
@@ -2119,13 +2209,13 @@ Sondern als System, das Führungskräften hilft, in einer einzigen Session von U
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5f59ae43-a3e8-4414-94d2-3f9d931e4b5e', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
+  ('0610f0af-8899-46d9-8ca1-080aee0396ac', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9508e3d2-1ad5-4858-aa21-fe69734898a7', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
+  ('e70ce753-17bd-4a94-81a3-502b8868d3df', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('414e217e-45ae-4a02-ab70-9201c031f70b', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
+  ('eaead62a-f13e-4122-a092-30ed6dd5c04a', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -2143,12 +2233,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 04_roi_calculator_guide
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-cat-consultify-governance-and-roi', '04_roi_calculator_guide', 'published', 1, 1, 5, '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-04_roi_calculator_guide', 'kb-cat-consultify-governance-and-roi', '04_roi_calculator_guide', 'published', 1, 1, 5, '/kb/consultify/04_roi_calculator_guide/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/04_roi_calculator_guide/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-04_roi_calculator_guide-trans-en', 'kb-consultify-04_roi_calculator_guide', 'en', 'How to Calculate the Real ROI of AI Consulting', 'many leaders evaluate consulting and AI strategy tools without a disciplined financial model, which makes the buying decision feel abstract or political', 'The ROI question is not:
+
+
+![hero image for an executive ROI article about AI consulting Scene: CFO or executive leader reviewing a decision model that compares traditional consulting cost, expected value, and live ROI tracking inside one transformation system](/kb/consultify/04_roi_calculator_guide/hero.png)
+
+
 
 "How much does the platform cost?"
 
@@ -2235,6 +2330,11 @@ Example:
 
 That discipline scales across a portfolio: several initiatives can be compared with the same structure, and governance can revisit probability as delivery evidence arrives.
 
+
+
+![explain ROI as a structured balance of cost, value, speed, and continuity using real objects Scene: top-down physical comparison rig with four equal lanes on one table, each lane expressed by restrained industrial materials and weighted elements only, such as steel weights, timber blocks, glass cylinders, and machined stops showing cost burden, expected value, time-to-value compression, and continuity of execution without literal props](/kb/consultify/04_roi_calculator_guide/analytical.png)
+
+
 ## Step 5: add execution continuity or admit the leakage
 
 A recommendation has lower economic value if the organization cannot run it.
@@ -2289,6 +2389,11 @@ The strongest options in this category are the ones that make strategic value ea
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-04_roi_calculator_guide-trans-pl', 'kb-consultify-04_roi_calculator_guide', 'pl', 'How to Calculate the Real ROI of AI Consulting', 'many leaders evaluate consulting and AI strategy tools without a disciplined financial model, which makes the buying decision feel abstract or political', 'Pytanie o ROI nie brzmi:
+
+
+![hero image for an executive ROI article about AI consulting Scene: CFO or executive leader reviewing a decision model that compares traditional consulting cost, expected value, and live ROI tracking inside one transformation system](/kb/consultify/04_roi_calculator_guide/hero.png)
+
+
 
 "Ile kosztuje platforma?"
 
@@ -2421,6 +2526,11 @@ To ma znaczenie, bo wartość finansowa strategii nie żyje wyłącznie w samej 
 
 Żyje w tym, czy biznes potrafi zamienić ją w mierzalny ruch.
 
+
+
+![explain ROI as a structured balance of cost, value, speed, and continuity using real objects Scene: top-down physical comparison rig with four equal lanes on one table, each lane expressed by restrained industrial materials and weighted elements only, such as steel weights, timber blocks, glass cylinders, and machined stops showing cost burden, expected value, time-to-value compression, and continuity of execution without literal props](/kb/consultify/04_roi_calculator_guide/analytical.png)
+
+
 ## Prosty framework ROI, którego liderzy mogą użyć
 
 Użyj takiej sekwencji:
@@ -2502,6 +2612,11 @@ Są tymi, które ułatwiają tworzenie, śledzenie i obronę wartości strategic
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-04_roi_calculator_guide-trans-de', 'kb-consultify-04_roi_calculator_guide', 'de', 'How to Calculate the Real ROI of AI Consulting', 'many leaders evaluate consulting and AI strategy tools without a disciplined financial model, which makes the buying decision feel abstract or political', 'Die ROI-Frage lautet nicht:
+
+
+![hero image for an executive ROI article about AI consulting Scene: CFO or executive leader reviewing a decision model that compares traditional consulting cost, expected value, and live ROI tracking inside one transformation system](/kb/consultify/04_roi_calculator_guide/hero.png)
+
+
 
 "Was kostet die Plattform?"
 
@@ -2634,6 +2749,11 @@ Das ist wichtig, weil der finanzielle Wert von Strategie nicht nur in der Empfeh
 
 Er lebt darin, ob das Unternehmen die Empfehlung in messbare Bewegung übersetzen kann.
 
+
+
+![explain ROI as a structured balance of cost, value, speed, and continuity using real objects Scene: top-down physical comparison rig with four equal lanes on one table, each lane expressed by restrained industrial materials and weighted elements only, such as steel weights, timber blocks, glass cylinders, and machined stops showing cost burden, expected value, time-to-value compression, and continuity of execution without literal props](/kb/consultify/04_roi_calculator_guide/analytical.png)
+
+
 ## Ein einfaches ROI-Framework für Führungskräfte
 
 Nutzen Sie diese Sequenz:
@@ -2715,13 +2835,13 @@ Sondern die, die strategischen Wert leichter erzeugbar, messbar und verteidigbar
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b212e01e-3566-469c-9553-b34e153a2bc7', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
+  ('7b5950bf-fab1-4101-aef2-d8c47c7599e8', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('27758bb0-aac7-4467-ace6-eee1eda7801c', 'kb-consultify-04_roi_calculator_guide', 'help')
+  ('53c4b5fe-0f17-425f-b404-32fee8449e27', 'kb-consultify-04_roi_calculator_guide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3795a7da-4efb-4f94-a9a7-78343d96c078', 'kb-consultify-04_roi_calculator_guide', 'lp')
+  ('8534a49e-d7d5-409a-ae23-448d9e251154', 'kb-consultify-04_roi_calculator_guide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -2742,12 +2862,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 05_ai_driven_swot
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-cat-consultify-ai-and-decision-making', '05_ai_driven_swot', 'published', 1, 1, 5, '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-05_ai_driven_swot', 'kb-cat-consultify-ai-and-decision-making', '05_ai_driven_swot', 'published', 1, 1, 5, '/kb/consultify/05_ai_driven_swot/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/05_ai_driven_swot/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-05_ai_driven_swot-trans-en', 'kb-consultify-05_ai_driven_swot', 'en', 'AI-Driven SWOT: A Better Way to Pressure-Test Strategy', 'traditional SWOT exercises are often too static, too generic, and too disconnected from real decisions to be strategically useful', 'Most SWOT sessions fail for a simple reason.
+
+
+![hero image for an article reframing SWOT as a strategic pressure test Scene: executive strategy session around a live SWOT matrix that is connected to evidence, risk signals, and decision paths rather than static sticky notes](/kb/consultify/05_ai_driven_swot/hero.png)
+
+
 
 They produce categories, not decisions.
 
@@ -2858,6 +2983,11 @@ The matrix itself is not the outcome.
 
 The quality of the decisions that follow is the outcome.
 
+
+
+![contrast lazy static SWOT with evidence-driven strategic pressure testing through physical construction Scene: one tabletop comparison where a flat abandoned four-zone board sits off to one side while a more credible governed rig uses four material groups, clipped evidence, threat markers, and action stops arranged around a central review spine](/kb/consultify/05_ai_driven_swot/analytical.png)
+
+
 ## Why AI still needs human judgment here
 
 There is a risk in AI-assisted strategy work: teams can confuse speed with truth.
@@ -2929,6 +3059,11 @@ That is the standard worth aiming for.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-05_ai_driven_swot-trans-pl', 'kb-consultify-05_ai_driven_swot', 'pl', 'AI-Driven SWOT: A Better Way to Pressure-Test Strategy', 'traditional SWOT exercises are often too static, too generic, and too disconnected from real decisions to be strategically useful', 'Większość sesji SWOT zawodzi z jednego prostego powodu.
+
+
+![hero image for an article reframing SWOT as a strategic pressure test Scene: executive strategy session around a live SWOT matrix that is connected to evidence, risk signals, and decision paths rather than static sticky notes](/kb/consultify/05_ai_driven_swot/hero.png)
+
+
 
 Produkują kategorie, a nie decyzje.
 
@@ -3039,6 +3174,11 @@ Sama macierz nie jest wynikiem.
 
 Wynikiem jest jakość decyzji, które z niej wychodzą.
 
+
+
+![contrast lazy static SWOT with evidence-driven strategic pressure testing through physical construction Scene: one tabletop comparison where a flat abandoned four-zone board sits off to one side while a more credible governed rig uses four material groups, clipped evidence, threat markers, and action stops arranged around a central review spine](/kb/consultify/05_ai_driven_swot/analytical.png)
+
+
 ## Dlaczego AI nadal potrzebuje tutaj ludzkiego judgmentu
 
 W pracy strategicznej z AI istnieje jedno ryzyko: zespół może pomylić szybkość z prawdą.
@@ -3110,6 +3250,11 @@ To jest standard, do którego warto dążyć.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-05_ai_driven_swot-trans-de', 'kb-consultify-05_ai_driven_swot', 'de', 'AI-Driven SWOT: A Better Way to Pressure-Test Strategy', 'traditional SWOT exercises are often too static, too generic, and too disconnected from real decisions to be strategically useful', 'Die meisten SWOT-Sessions scheitern aus einem einfachen Grund.
+
+
+![hero image for an article reframing SWOT as a strategic pressure test Scene: executive strategy session around a live SWOT matrix that is connected to evidence, risk signals, and decision paths rather than static sticky notes](/kb/consultify/05_ai_driven_swot/hero.png)
+
+
 
 Sie produzieren Kategorien, keine Entscheidungen.
 
@@ -3220,6 +3365,11 @@ Die Matrix selbst ist nicht das Ergebnis.
 
 Die Qualität der Entscheidungen, die daraus folgen, ist das Ergebnis.
 
+
+
+![contrast lazy static SWOT with evidence-driven strategic pressure testing through physical construction Scene: one tabletop comparison where a flat abandoned four-zone board sits off to one side while a more credible governed rig uses four material groups, clipped evidence, threat markers, and action stops arranged around a central review spine](/kb/consultify/05_ai_driven_swot/analytical.png)
+
+
 ## Warum AI hier trotzdem menschliches Judgment braucht
 
 In AI-gestützter Strategiearbeit gibt es ein Risiko: Teams können Geschwindigkeit mit Wahrheit verwechseln.
@@ -3291,13 +3441,13 @@ Das ist der Standard, den es anzustreben lohnt.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d4fe896e-b42a-41e3-9918-905c0b3c8c92', 'kb-consultify-05_ai_driven_swot', 'public_docs')
+  ('29c307b0-cdba-43f3-8fed-87e9b8643e09', 'kb-consultify-05_ai_driven_swot', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('681921a5-6c56-429b-ad29-bb8b6b62eaee', 'kb-consultify-05_ai_driven_swot', 'help')
+  ('ef1e0927-3c36-459b-92d1-ae4eb7c32276', 'kb-consultify-05_ai_driven_swot', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('efca3d66-f97b-4df8-84ed-3210b27d5e81', 'kb-consultify-05_ai_driven_swot', 'lp')
+  ('4e368465-888e-409e-bbf9-b3873cb080b7', 'kb-consultify-05_ai_driven_swot', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -3318,12 +3468,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 06_scenario_planning
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-cat-consultify-ai-and-decision-making', '06_scenario_planning', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-06_scenario_planning', 'kb-cat-consultify-ai-and-decision-making', '06_scenario_planning', 'published', 1, 1, 4, '/kb/consultify/06_scenario_planning/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/06_scenario_planning/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-06_scenario_planning-trans-en', 'kb-consultify-06_scenario_planning', 'en', 'Scenario Planning for Leaders Who Need Better Decisions, Not Futurism', 'many organizations treat scenario planning as a theoretical exercise instead of a practical way to reduce decision risk under uncertainty', 'Scenario planning is often misunderstood.
+
+
+![show scenario planning as a pre-commitment pressure test under real constraint Scene: one large executive table with three alternative capital-allocation constructions made from heavy wood, stone, and machined metal, where only one path remains physically open while the other two are visibly blocked, overloaded, or cut short; no people, no screens, no wall displays, no model scenery, no miniature terrain](/kb/consultify/06_scenario_planning/hero.png)
+
+
 
 Many leaders hear the phrase and think of long-range futurism, trend speculation, or innovation theater.
 
@@ -3439,6 +3594,11 @@ It is not a side workshop.
 
 It is a decision instrument.
 
+
+
+![visualize a practical scenario matrix with decision implications Scene: scenario matrix showing multiple plausible futures with clear implications for revenue, cost, risk, and action paths](/kb/consultify/06_scenario_planning/analytical.png)
+
+
 ## Why scenario planning should connect to action
 
 The work is incomplete until scenarios create action paths.
@@ -3501,6 +3661,11 @@ And that is why it belongs inside a live strategic operating system instead of a
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-06_scenario_planning-trans-pl', 'kb-consultify-06_scenario_planning', 'pl', 'Scenario Planning for Leaders Who Need Better Decisions, Not Futurism', 'many organizations treat scenario planning as a theoretical exercise instead of a practical way to reduce decision risk under uncertainty', 'Scenario planning jest bardzo często źle rozumiany.
+
+
+![show scenario planning as a pre-commitment pressure test under real constraint Scene: one large executive table with three alternative capital-allocation constructions made from heavy wood, stone, and machined metal, where only one path remains physically open while the other two are visibly blocked, overloaded, or cut short; no people, no screens, no wall displays, no model scenery, no miniature terrain](/kb/consultify/06_scenario_planning/hero.png)
+
+
 
 Wielu liderów słyszy to pojęcie i myśli o długoterminowej futurologii, spekulacji trendami albo innowacyjnym teatrze.
 
@@ -3616,6 +3781,11 @@ To nie jest warsztat poboczny.
 
 To instrument decyzyjny.
 
+
+
+![visualize a practical scenario matrix with decision implications Scene: scenario matrix showing multiple plausible futures with clear implications for revenue, cost, risk, and action paths](/kb/consultify/06_scenario_planning/analytical.png)
+
+
 ## Dlaczego scenario planning musi łączyć się z działaniem
 
 Praca nie jest skończona, dopóki scenariusze nie tworzą ścieżek działania.
@@ -3678,6 +3848,11 @@ I dlatego powinno należeć do żywego strategicznego operating system, a nie do
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-06_scenario_planning-trans-de', 'kb-consultify-06_scenario_planning', 'de', 'Scenario Planning for Leaders Who Need Better Decisions, Not Futurism', 'many organizations treat scenario planning as a theoretical exercise instead of a practical way to reduce decision risk under uncertainty', 'Scenario Planning wird häufig missverstanden.
+
+
+![show scenario planning as a pre-commitment pressure test under real constraint Scene: one large executive table with three alternative capital-allocation constructions made from heavy wood, stone, and machined metal, where only one path remains physically open while the other two are visibly blocked, overloaded, or cut short; no people, no screens, no wall displays, no model scenery, no miniature terrain](/kb/consultify/06_scenario_planning/hero.png)
+
+
 
 Viele Führungskräfte hören den Begriff und denken an langfristigen Futurismus, Trendspekulation oder Innovationstheater.
 
@@ -3793,6 +3968,11 @@ Es ist kein Neben-Workshop.
 
 Es ist ein Entscheidungsinstrument.
 
+
+
+![visualize a practical scenario matrix with decision implications Scene: scenario matrix showing multiple plausible futures with clear implications for revenue, cost, risk, and action paths](/kb/consultify/06_scenario_planning/analytical.png)
+
+
 ## Warum Scenario Planning mit Handlung verbunden sein muss
 
 Die Arbeit ist erst vollständig, wenn Szenarien Handlungswege erzeugen.
@@ -3855,13 +4035,13 @@ Und darum gehört es in ein lebendiges strategisches Operating System statt in e
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a63d8b7e-49a4-445a-8098-b5e9b43b45b1', 'kb-consultify-06_scenario_planning', 'public_docs')
+  ('f01960b4-a4de-49ac-83bc-5456e17adfd1', 'kb-consultify-06_scenario_planning', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2827ee18-0d4a-4c67-a589-3c0bf556ca68', 'kb-consultify-06_scenario_planning', 'help')
+  ('f86ed436-9181-432e-bf45-caec5d447186', 'kb-consultify-06_scenario_planning', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('48f76f2f-a0ab-4905-bbec-08a1f9b411cc', 'kb-consultify-06_scenario_planning', 'lp')
+  ('2770f070-6e55-437b-abfe-6dbaff2e76b6', 'kb-consultify-06_scenario_planning', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -3882,12 +4062,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 07_competitive_intelligence
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-cat-consultify-ai-and-decision-making', '07_competitive_intelligence', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President / Strategy Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-07_competitive_intelligence', 'kb-cat-consultify-ai-and-decision-making', '07_competitive_intelligence', 'published', 0, 1, 4, '/kb/consultify/07_competitive_intelligence/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Strategy Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/07_competitive_intelligence/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-07_competitive_intelligence-trans-en', 'kb-consultify-07_competitive_intelligence', 'en', 'Competitive Intelligence Should Improve Decisions, Not Just Monitoring', 'many companies gather competitive information, but too little of it changes strategic choices, timing, or resource allocation', 'Most companies do not suffer from a total lack of competitive information.
+
+
+![hero image for an executive article about competitive intelligence Scene: leadership reviewing market signals, competitor moves, and strategic implications inside one live decision workspace](/kb/consultify/07_competitive_intelligence/hero.png)
+
+
 
 They suffer from weak competitive interpretation.
 
@@ -4009,6 +4194,11 @@ What matters more is whether a move changes:
 
 That is where leadership attention should go.
 
+
+
+![show that competitive intelligence becomes valuable only after ruthless filtering and ranking Scene: one heavy executive review table where a dense pile of non-readable market evidence is physically compressed through a steel sorting gate into one much smaller prioritized evidence stack held by brass weights and one dark exclusion block; avoid neat tray symmetry and avoid any split-poster look](/kb/consultify/07_competitive_intelligence/analytical.png)
+
+
 ## Competitive intelligence should change your roadmap
 
 If competitive intelligence never changes roadmap logic, it is underpowered.
@@ -4076,6 +4266,11 @@ That is the standard worth holding it to.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-07_competitive_intelligence-trans-pl', 'kb-consultify-07_competitive_intelligence', 'pl', 'Competitive Intelligence Should Improve Decisions, Not Just Monitoring', 'many companies gather competitive information, but too little of it changes strategic choices, timing, or resource allocation', 'Większość firm nie cierpi z powodu całkowitego braku informacji o konkurencji.
+
+
+![hero image for an executive article about competitive intelligence Scene: leadership reviewing market signals, competitor moves, and strategic implications inside one live decision workspace](/kb/consultify/07_competitive_intelligence/hero.png)
+
+
 
 Cierpi z powodu słabej interpretacji konkurencyjnej.
 
@@ -4197,6 +4392,11 @@ Znacznie ważniejsze jest to, czy dany ruch zmienia:
 
 I właśnie tam powinien iść fokus leadershipu.
 
+
+
+![show that competitive intelligence becomes valuable only after ruthless filtering and ranking Scene: one heavy executive review table where a dense pile of non-readable market evidence is physically compressed through a steel sorting gate into one much smaller prioritized evidence stack held by brass weights and one dark exclusion block; avoid neat tray symmetry and avoid any split-poster look](/kb/consultify/07_competitive_intelligence/analytical.png)
+
+
 ## Competitive intelligence powinno zmieniać roadmapę
 
 Jeśli competitive intelligence nigdy nie zmienia logiki roadmapy, to znaczy, że jest za słabe.
@@ -4264,6 +4464,11 @@ To jest standard, według którego warto je oceniać.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-07_competitive_intelligence-trans-de', 'kb-consultify-07_competitive_intelligence', 'de', 'Competitive Intelligence Should Improve Decisions, Not Just Monitoring', 'many companies gather competitive information, but too little of it changes strategic choices, timing, or resource allocation', 'Die meisten Unternehmen leiden nicht unter einem totalen Mangel an Wettbewerbsinformationen.
+
+
+![hero image for an executive article about competitive intelligence Scene: leadership reviewing market signals, competitor moves, and strategic implications inside one live decision workspace](/kb/consultify/07_competitive_intelligence/hero.png)
+
+
 
 Sie leiden unter schwacher wettbewerblicher Interpretation.
 
@@ -4385,6 +4590,11 @@ Wichtiger ist, ob ein Move Folgendes verändert:
 
 Dorthin sollte Leadership Attention gehen.
 
+
+
+![show that competitive intelligence becomes valuable only after ruthless filtering and ranking Scene: one heavy executive review table where a dense pile of non-readable market evidence is physically compressed through a steel sorting gate into one much smaller prioritized evidence stack held by brass weights and one dark exclusion block; avoid neat tray symmetry and avoid any split-poster look](/kb/consultify/07_competitive_intelligence/analytical.png)
+
+
 ## Competitive Intelligence sollte Ihre Roadmap verändern
 
 Wenn Competitive Intelligence nie die Roadmap-Logik verändert, ist sie zu schwach.
@@ -4452,13 +4662,13 @@ Das ist der Standard, an dem sie gemessen werden sollte.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c3bb32d9-1df6-44a8-9ea1-5051dad71c34', 'kb-consultify-07_competitive_intelligence', 'public_docs')
+  ('28f79fa7-d8e8-43cb-b095-edf3864b1f48', 'kb-consultify-07_competitive_intelligence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c89cac1f-5887-4b48-b261-ed123e972e02', 'kb-consultify-07_competitive_intelligence', 'help')
+  ('1560983b-8349-4a18-9a4c-7e9a91af55b8', 'kb-consultify-07_competitive_intelligence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2b9631b5-6731-4918-bac4-e3929f32a109', 'kb-consultify-07_competitive_intelligence', 'lp')
+  ('35c21d5e-8a94-416b-a4c2-0ab6041c657b', 'kb-consultify-07_competitive_intelligence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -4479,12 +4689,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 08_strategic_alignment
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-cat-consultify-execution-and-rollout', '08_strategic_alignment', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-08_strategic_alignment', 'kb-cat-consultify-execution-and-rollout', '08_strategic_alignment', 'published', 1, 1, 4, '/kb/consultify/08_strategic_alignment/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/08_strategic_alignment/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-08_strategic_alignment-trans-en', 'kb-consultify-08_strategic_alignment', 'en', 'Strategic Alignment Is Not Agreement. It Is Execution Clarity.', 'many organizations believe they are aligned because the strategy is communicated, while execution still fragments across teams, priorities, and assumptions', 'Many leadership teams say they have an alignment problem.
+
+
+![hero image for an article about strategic alignment and execution clarity Scene: cross-functional leadership and team leads aligned around one live strategic roadmap with visible ownership, dependencies, and outcomes](/kb/consultify/08_strategic_alignment/hero.png)
+
+
 
 What shows up in operations is usually an execution clarity problem: different functions running plausible local optimizations against the same headline strategy, with no shared view of trade-offs, ownership, or what must stop.
 
@@ -4559,6 +4774,11 @@ AI is useful when it reduces friction between strategy, interpretation, and foll
 
 The goal is not to automate alignment. It is to make misalignment and assumption drift visible earlier, before quarters are spent.
 
+
+
+![explain the difference between message alignment and execution alignment through a physical comparison Scene: tabletop contrast between a neat but inert stack of communication packets on one side and a live coordinated operating rig on the other built from grouped priorities, owner markers, dependency bars, and review stops](/kb/consultify/08_strategic_alignment/analytical.png)
+
+
 ## Alignment and prioritization are the same problem stated twice
 
 If leadership tries to align everyone around everything, the system overloads.
@@ -4599,6 +4819,11 @@ That belongs in how you run the program, not only in how you present it.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-08_strategic_alignment-trans-pl', 'kb-consultify-08_strategic_alignment', 'pl', 'Strategic Alignment Is Not Agreement. It Is Execution Clarity.', 'many organizations believe they are aligned because the strategy is communicated, while execution still fragments across teams, priorities, and assumptions', 'Wiele organizacji mówi, że ma problem z alignment.
+
+
+![hero image for an article about strategic alignment and execution clarity Scene: cross-functional leadership and team leads aligned around one live strategic roadmap with visible ownership, dependencies, and outcomes](/kb/consultify/08_strategic_alignment/hero.png)
+
+
 
 W rzeczywistości bardzo często ma problem z klarownością execution.
 
@@ -4714,6 +4939,11 @@ Dlatego alignment jest tak mocno związane z priorytetyzacją.
 
 Jeśli wszystko jest strategiczne, nic nie jest wystarczająco jasne, by się wokół tego alignować.
 
+
+
+![explain the difference between message alignment and execution alignment through a physical comparison Scene: tabletop contrast between a neat but inert stack of communication packets on one side and a live coordinated operating rig on the other built from grouped priorities, owner markers, dependency bars, and review stops](/kb/consultify/08_strategic_alignment/analytical.png)
+
+
 ## Alignment musi łączyć się z governance
 
 Bez governance alignment jest kruche.
@@ -4772,6 +5002,11 @@ I właśnie dlatego powinno żyć w strategicznym operating system, a nie tylko 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-08_strategic_alignment-trans-de', 'kb-consultify-08_strategic_alignment', 'de', 'Strategic Alignment Is Not Agreement. It Is Execution Clarity.', 'many organizations believe they are aligned because the strategy is communicated, while execution still fragments across teams, priorities, and assumptions', 'Viele Organisationen sagen, sie hätten ein Alignment-Problem.
+
+
+![hero image for an article about strategic alignment and execution clarity Scene: cross-functional leadership and team leads aligned around one live strategic roadmap with visible ownership, dependencies, and outcomes](/kb/consultify/08_strategic_alignment/hero.png)
+
+
 
 Was sie oft wirklich haben, ist ein Execution-Clarity-Problem.
 
@@ -4887,6 +5122,11 @@ Darum ist Alignment eng mit Priorisierung verbunden.
 
 Wenn alles strategisch ist, ist nichts klar genug, um sich darum auszurichten.
 
+
+
+![explain the difference between message alignment and execution alignment through a physical comparison Scene: tabletop contrast between a neat but inert stack of communication packets on one side and a live coordinated operating rig on the other built from grouped priorities, owner markers, dependency bars, and review stops](/kb/consultify/08_strategic_alignment/analytical.png)
+
+
 ## Alignment sollte mit Governance verbunden sein
 
 Ohne Governance ist Alignment fragil.
@@ -4945,13 +5185,13 @@ Und darum sollte sie in einem strategischen Operating System leben, nicht nur in
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('55ec2321-4cea-434e-b8d2-a2ddae031cd6', 'kb-consultify-08_strategic_alignment', 'public_docs')
+  ('6f70be92-e321-4db4-a488-e2c575a1e6be', 'kb-consultify-08_strategic_alignment', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('47a74030-1b8c-4ba3-ad77-15120bab113b', 'kb-consultify-08_strategic_alignment', 'help')
+  ('3402d18a-ca79-4055-ab3f-9db488ef8363', 'kb-consultify-08_strategic_alignment', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('920e1f30-7095-4c48-97c9-533a200ed0cc', 'kb-consultify-08_strategic_alignment', 'lp')
+  ('f7346195-b092-4654-aa40-e380a269133b', 'kb-consultify-08_strategic_alignment', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -4972,12 +5212,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 09_data_first_strategy
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-cat-consultify-ai-and-decision-making', '09_data_first_strategy', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-09_data_first_strategy', 'kb-cat-consultify-ai-and-decision-making', '09_data_first_strategy', 'published', 1, 1, 4, '/kb/consultify/09_data_first_strategy/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/09_data_first_strategy/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-09_data_first_strategy-trans-en', 'kb-consultify-09_data_first_strategy', 'en', 'Data-First Strategy: Why Better Decisions Start Before the Board Meeting', 'many strategies are still built on partial visibility, delayed reporting, and leadership opinion rather than sufficiently structured evidence', 'Many strategies fail long before execution.
+
+
+![hero image for an executive article about building strategy on stronger evidence Scene: leadership reviewing a strategic decision supported by live business evidence, trade-offs, and financial implications before a board discussion](/kb/consultify/09_data_first_strategy/hero.png)
+
+
 
 They fail in the way they are formed.
 
@@ -5086,6 +5331,11 @@ That does not make the strategy automatic.
 
 It makes the strategy harder to build on weak interpretation.
 
+
+
+![contrast opinion-led strategy with data-first strategy using physical evidence structures Scene: one tabletop comparison where a soft pile of unsupported narrative materials sits on one side and a sharper evidence-led prioritization rig uses clipped layers, weighted markers, and constrained selection channels on the other](/kb/consultify/09_data_first_strategy/analytical.png)
+
+
 ## The real risk is false precision
 
 There is one danger worth naming clearly.
@@ -5164,6 +5414,11 @@ They start in the quality of the evidence layer underneath the strategy.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-09_data_first_strategy-trans-pl', 'kb-consultify-09_data_first_strategy', 'pl', 'Data-First Strategy: Why Better Decisions Start Before the Board Meeting', 'many strategies are still built on partial visibility, delayed reporting, and leadership opinion rather than sufficiently structured evidence', 'Wiele strategii zawodzi na długo przed execution.
+
+
+![hero image for an executive article about building strategy on stronger evidence Scene: leadership reviewing a strategic decision supported by live business evidence, trade-offs, and financial implications before a board discussion](/kb/consultify/09_data_first_strategy/hero.png)
+
+
 
 Zawodzi już w sposobie, w jaki są formowane.
 
@@ -5272,6 +5527,11 @@ To nie czyni strategii automatyczną.
 
 To sprawia, że trudniej zbudować ją na słabej interpretacji.
 
+
+
+![contrast opinion-led strategy with data-first strategy using physical evidence structures Scene: one tabletop comparison where a soft pile of unsupported narrative materials sits on one side and a sharper evidence-led prioritization rig uses clipped layers, weighted markers, and constrained selection channels on the other](/kb/consultify/09_data_first_strategy/analytical.png)
+
+
 ## Prawdziwe ryzyko to fałszywa precyzja
 
 Jest tu jedno zagrożenie, które warto nazwać wprost.
@@ -5350,6 +5610,11 @@ Zaczynają się w jakości warstwy evidence, na której stoi strategia.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-09_data_first_strategy-trans-de', 'kb-consultify-09_data_first_strategy', 'de', 'Data-First Strategy: Why Better Decisions Start Before the Board Meeting', 'many strategies are still built on partial visibility, delayed reporting, and leadership opinion rather than sufficiently structured evidence', 'Viele Strategien scheitern lange vor der Execution.
+
+
+![hero image for an executive article about building strategy on stronger evidence Scene: leadership reviewing a strategic decision supported by live business evidence, trade-offs, and financial implications before a board discussion](/kb/consultify/09_data_first_strategy/hero.png)
+
+
 
 Sie scheitern in der Art, wie sie gebildet werden.
 
@@ -5458,6 +5723,11 @@ Das macht Strategie nicht automatisch.
 
 Es macht sie schwieriger auf schwacher Interpretation aufzubauen.
 
+
+
+![contrast opinion-led strategy with data-first strategy using physical evidence structures Scene: one tabletop comparison where a soft pile of unsupported narrative materials sits on one side and a sharper evidence-led prioritization rig uses clipped layers, weighted markers, and constrained selection channels on the other](/kb/consultify/09_data_first_strategy/analytical.png)
+
+
 ## Das eigentliche Risiko ist falsche Präzision
 
 Es gibt eine Gefahr, die klar benannt werden sollte.
@@ -5536,13 +5806,13 @@ Sie beginnen in der Qualität der Evidence-Schicht unter der Strategie.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('aa9eae2e-409e-4310-9821-21a98571a362', 'kb-consultify-09_data_first_strategy', 'public_docs')
+  ('535ab1b2-a5c0-4a7b-9cf5-60def864e7aa', 'kb-consultify-09_data_first_strategy', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ddf5a3f3-9df5-47e7-a025-2bd24e6a0757', 'kb-consultify-09_data_first_strategy', 'help')
+  ('8b2aa28c-0acc-4aaf-ada3-2b755efef0e4', 'kb-consultify-09_data_first_strategy', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8412397f-bb08-4fd8-a327-80f7b4f5aab2', 'kb-consultify-09_data_first_strategy', 'lp')
+  ('d6cbfb70-90db-4363-9749-a4ff5186bfd1', 'kb-consultify-09_data_first_strategy', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -5563,12 +5833,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 10_decision_latency
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-cat-consultify-ai-and-decision-making', '10_decision_latency', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-10_decision_latency', 'kb-cat-consultify-ai-and-decision-making', '10_decision_latency', 'published', 1, 1, 4, '/kb/consultify/10_decision_latency/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/10_decision_latency/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-10_decision_latency-trans-en', 'kb-consultify-10_decision_latency', 'en', 'Decision Latency Is a Strategic Cost Most Leaders Still Underestimate', 'many organizations focus on decision quality but fail to measure how much value is lost when important decisions move too slowly through the system', 'Most leaders worry about bad decisions.
+
+
+![hero image for an executive article about decision latency Scene: leadership facing a widening gap between recognized issue and delayed action, with visible time loss and weakening momentum across a live strategic workflow](/kb/consultify/10_decision_latency/hero.png)
+
+
 
 Far fewer worry enough about slow decisions.
 
@@ -5691,6 +5966,11 @@ This does not remove human accountability.
 
 It reduces the waiting time before accountability can act.
 
+
+
+![explain how latency accumulates across recognition, analysis, approval, and action using a physical path Scene: top-down tabletop comparison between a delayed route built from repeated queue trays, hold bars, and approval stops and a compressed route built from one short controlled handoff to action, all expressed through material spacing and distance rather than arrows, icons, or documents, on a clean table with no office equipment](/kb/consultify/10_decision_latency/analytical.png)
+
+
 ## Decision latency should be treated like a management problem
 
 The organization should not see decision delay as a vague cultural issue.
@@ -5756,6 +6036,11 @@ That is why decision latency deserves much more attention than it usually gets.'
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-10_decision_latency-trans-pl', 'kb-consultify-10_decision_latency', 'pl', 'Decision Latency Is a Strategic Cost Most Leaders Still Underestimate', 'many organizations focus on decision quality but fail to measure how much value is lost when important decisions move too slowly through the system', 'Większość liderów martwi się złymi decyzjami.
+
+
+![hero image for an executive article about decision latency Scene: leadership facing a widening gap between recognized issue and delayed action, with visible time loss and weakening momentum across a live strategic workflow](/kb/consultify/10_decision_latency/hero.png)
+
+
 
 Dużo mniej liderów martwi się wystarczająco wolnymi decyzjami.
 
@@ -5878,6 +6163,11 @@ To nie usuwa human accountability.
 
 To skraca czas czekania, zanim accountability będzie mogło zadziałać.
 
+
+
+![explain how latency accumulates across recognition, analysis, approval, and action using a physical path Scene: top-down tabletop comparison between a delayed route built from repeated queue trays, hold bars, and approval stops and a compressed route built from one short controlled handoff to action, all expressed through material spacing and distance rather than arrows, icons, or documents, on a clean table with no office equipment](/kb/consultify/10_decision_latency/analytical.png)
+
+
 ## Decision latency powinno być traktowane jak problem zarządczy
 
 Organizacja nie powinna widzieć opóźnienia decyzyjnego jako mglistego problemu kulturowego.
@@ -5943,6 +6233,11 @@ Właśnie dlatego decision latency zasługuje na dużo większą uwagę, niż zw
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-10_decision_latency-trans-de', 'kb-consultify-10_decision_latency', 'de', 'Decision Latency Is a Strategic Cost Most Leaders Still Underestimate', 'many organizations focus on decision quality but fail to measure how much value is lost when important decisions move too slowly through the system', 'Die meisten Führungskräfte sorgen sich um schlechte Entscheidungen.
+
+
+![hero image for an executive article about decision latency Scene: leadership facing a widening gap between recognized issue and delayed action, with visible time loss and weakening momentum across a live strategic workflow](/kb/consultify/10_decision_latency/hero.png)
+
+
 
 Deutlich weniger sorgen sich genug um langsame Entscheidungen.
 
@@ -6065,6 +6360,11 @@ Das nimmt menschliche Accountability nicht weg.
 
 Es verkürzt die Wartezeit, bevor Accountability handeln kann.
 
+
+
+![explain how latency accumulates across recognition, analysis, approval, and action using a physical path Scene: top-down tabletop comparison between a delayed route built from repeated queue trays, hold bars, and approval stops and a compressed route built from one short controlled handoff to action, all expressed through material spacing and distance rather than arrows, icons, or documents, on a clean table with no office equipment](/kb/consultify/10_decision_latency/analytical.png)
+
+
 ## Decision Latency sollte als Managementproblem behandelt werden
 
 Die Organisation sollte Entscheidungsverzögerung nicht als vages Kulturproblem sehen.
@@ -6130,13 +6430,13 @@ Darum verdient Decision Latency viel mehr Aufmerksamkeit, als sie normalerweise 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('75346dc2-912e-4577-b27a-060ae28144f4', 'kb-consultify-10_decision_latency', 'public_docs')
+  ('81b2eb0d-064b-4f8a-adaa-68ed0584ff59', 'kb-consultify-10_decision_latency', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1ead5a7c-317b-4c82-af14-222bb6b70d94', 'kb-consultify-10_decision_latency', 'help')
+  ('bc42bceb-6a16-4ad0-b541-dae8667553a5', 'kb-consultify-10_decision_latency', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a72c20d4-932e-4ae0-bd9b-3647c62cea01', 'kb-consultify-10_decision_latency', 'lp')
+  ('e145bde0-cf5b-4a62-94ca-0b4275288038', 'kb-consultify-10_decision_latency', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -6157,12 +6457,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 11_strategic_reporting
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-cat-consultify-ai-and-decision-making', '11_strategic_reporting', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-11_strategic_reporting', 'kb-cat-consultify-ai-and-decision-making', '11_strategic_reporting', 'published', 1, 1, 4, '/kb/consultify/11_strategic_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/11_strategic_reporting/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-11_strategic_reporting-trans-en', 'kb-consultify-11_strategic_reporting', 'en', 'Strategic Reporting Should Drive Decisions, Not Just Summaries', 'many organizations produce strategic reports that describe activity but do too little to improve decisions, accountability, or course correction', 'Most strategic reporting looks better than it works.
+
+
+![Leadership team reviewing a live strategic reporting table made of abstract non-readable cards and markers in a boardroom.](/kb/consultify/11_strategic_reporting/hero.png)
+
+
 
 It is polished, structured, and often full of the right language.
 
@@ -6272,6 +6577,11 @@ But the real value is not speed alone.
 
 The real value is getting decision-relevant reporting in front of leadership while there is still time to intervene.
 
+
+
+![Side-by-side strategic reporting metaphor using abstract physical cards and decision tokens instead of dashboard panels.](/kb/consultify/11_strategic_reporting/analytical.png)
+
+
 ## Reporting should be connected to governance
 
 Strategic reporting becomes much stronger when it sits inside a governance system.
@@ -6341,6 +6651,11 @@ That is the standard worth building toward.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-11_strategic_reporting-trans-pl', 'kb-consultify-11_strategic_reporting', 'pl', 'Strategic Reporting Should Drive Decisions, Not Just Summaries', 'many organizations produce strategic reports that describe activity but do too little to improve decisions, accountability, or course correction', 'Większość strategic reporting wygląda lepiej, niż działa.
+
+
+![Leadership team reviewing a live strategic reporting table made of abstract non-readable cards and markers in a boardroom.](/kb/consultify/11_strategic_reporting/hero.png)
+
+
 
 Jest dopracowane, uporządkowane i często pełne właściwego języka.
 
@@ -6450,6 +6765,11 @@ Ale prawdziwa wartość nie leży tylko w szybkości.
 
 Prawdziwa wartość leży w dostarczeniu decision-relevant reporting do leadershipu wtedy, gdy interwencja nadal ma sens.
 
+
+
+![Side-by-side strategic reporting metaphor using abstract physical cards and decision tokens instead of dashboard panels.](/kb/consultify/11_strategic_reporting/analytical.png)
+
+
 ## Reporting powinno być połączone z governance
 
 Strategic reporting staje się dużo mocniejsze, gdy siedzi wewnątrz systemu governance.
@@ -6519,6 +6839,11 @@ To jest standard, do którego warto dążyć.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-11_strategic_reporting-trans-de', 'kb-consultify-11_strategic_reporting', 'de', 'Strategic Reporting Should Drive Decisions, Not Just Summaries', 'many organizations produce strategic reports that describe activity but do too little to improve decisions, accountability, or course correction', 'Die meisten Strategic Reports sehen besser aus, als sie funktionieren.
+
+
+![Leadership team reviewing a live strategic reporting table made of abstract non-readable cards and markers in a boardroom.](/kb/consultify/11_strategic_reporting/hero.png)
+
+
 
 Sie sind sauber, strukturiert und oft voller der richtigen Sprache.
 
@@ -6628,6 +6953,11 @@ Aber der eigentliche Wert liegt nicht nur in Geschwindigkeit.
 
 Der eigentliche Wert liegt darin, entscheidungsrelevantes Reporting vor Leadership zu bringen, solange noch Zeit für Intervention ist.
 
+
+
+![Side-by-side strategic reporting metaphor using abstract physical cards and decision tokens instead of dashboard panels.](/kb/consultify/11_strategic_reporting/analytical.png)
+
+
 ## Reporting sollte mit Governance verbunden sein
 
 Strategic Reporting wird deutlich stärker, wenn es innerhalb eines Governance-Systems sitzt.
@@ -6697,13 +7027,13 @@ Das ist der Standard, den es anzustreben lohnt.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9aa62dd0-d53f-49ae-9c80-f46ae3c42532', 'kb-consultify-11_strategic_reporting', 'public_docs')
+  ('e1c78c1a-d838-487f-b58a-d571972da44c', 'kb-consultify-11_strategic_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('31573a49-5f34-45f5-85d1-ed0adad7cd7d', 'kb-consultify-11_strategic_reporting', 'help')
+  ('4519920d-16ef-4fa8-98d0-a3fbfe636f37', 'kb-consultify-11_strategic_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('34e2ab81-981f-4d9b-a9c5-73f04b9a10ce', 'kb-consultify-11_strategic_reporting', 'lp')
+  ('a1fa0a72-c69c-4c85-9b85-6b06b4a8e5b9', 'kb-consultify-11_strategic_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -6724,12 +7054,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 12_okr_management
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-12_okr_management', 'kb-cat-consultify-governance-and-roi', '12_okr_management', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["COO / Change Leader / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-12_okr_management', 'kb-cat-consultify-governance-and-roi', '12_okr_management', 'published', 0, 1, 4, '/kb/consultify/12_okr_management/hero.png', '["assessment","dashboard","roadmap"]', '["COO / Change Leader / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/12_okr_management/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-12_okr_management-trans-en', 'kb-consultify-12_okr_management', 'en', 'OKR Management Fails When It Stays Outside Execution', 'many organizations adopt OKRs as a planning framework but fail to connect them to ownership, execution discipline, and strategic reality', 'OKRs are rarely the root cause when programs disappoint.
+
+
+![hero image for an executive article about OKR management and execution Scene: leadership and team leads working from one live objective-to-initiative system with visible ownership, review cadence, and outcomes](/kb/consultify/12_okr_management/hero.png)
+
+
 
 The usual failure is implementation: OKRs live in planning documents while real work, capacity, and governance live somewhere else.
 
@@ -6792,6 +7127,11 @@ AI can reduce friction drafting objectives, stress-testing key results for measu
 
 It does not replace the core design question: whether OKR logic is embedded in how the organization runs, including who decides when a key result is no longer credible.
 
+
+
+![Analytical comparison between isolated OKR stacks and a connected execution surface made of abstract cards and markers.](/kb/consultify/12_okr_management/analytical.png)
+
+
 ## What stronger OKR management looks like
 
 In practice, stronger setups share:
@@ -6830,6 +7170,11 @@ That is the standard worth holding sponsors and teams to.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-12_okr_management-trans-pl', 'kb-consultify-12_okr_management', 'pl', 'OKR Management Fails When It Stays Outside Execution', 'many organizations adopt OKRs as a planning framework but fail to connect them to ownership, execution discipline, and strategic reality', 'OKRy nie są problemem.
+
+
+![hero image for an executive article about OKR management and execution Scene: leadership and team leads working from one live objective-to-initiative system with visible ownership, review cadence, and outcomes](/kb/consultify/12_okr_management/hero.png)
+
+
 
 Problemem jest sposób, w jaki wiele organizacji je wdraża.
 
@@ -6939,6 +7284,11 @@ Polega na pokazaniu priorytetów na tyle wyraźnie, by ludzie mogli alignować w
 
 Właśnie dlatego OKRy są przede wszystkim dyscypliną priorytetyzacji, a nie dokumentacji.
 
+
+
+![Analytical comparison between isolated OKR stacks and a connected execution surface made of abstract cards and markers.](/kb/consultify/12_okr_management/analytical.png)
+
+
 ## Jak wygląda lepsze OKR management
 
 Mocniejszy operating model zwykle ma:
@@ -6998,6 +7348,11 @@ To jest standard, którego warto używać.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-12_okr_management-trans-de', 'kb-consultify-12_okr_management', 'de', 'OKR Management Fails When It Stays Outside Execution', 'many organizations adopt OKRs as a planning framework but fail to connect them to ownership, execution discipline, and strategic reality', 'OKRs sind nicht das Problem.
+
+
+![hero image for an executive article about OKR management and execution Scene: leadership and team leads working from one live objective-to-initiative system with visible ownership, review cadence, and outcomes](/kb/consultify/12_okr_management/hero.png)
+
+
 
 Die Art, wie viele Organisationen sie implementieren, ist es.
 
@@ -7107,6 +7462,11 @@ Es bedeutet, Prioritäten sichtbar genug zu machen, damit Menschen Aufwand ausri
 
 Darum sind OKRs im Kern eine Priorisierungsdisziplin, keine Dokumentationsdisziplin.
 
+
+
+![Analytical comparison between isolated OKR stacks and a connected execution surface made of abstract cards and markers.](/kb/consultify/12_okr_management/analytical.png)
+
+
 ## Wie besseres OKR Management aussieht
 
 Ein stärkeres Operating Model hat meist:
@@ -7166,13 +7526,13 @@ Das ist der Standard, den es zu nutzen lohnt.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3053438b-56af-4075-84c3-73b61f2f114b', 'kb-consultify-12_okr_management', 'public_docs')
+  ('0d94c6a3-b5fc-4d1f-885e-de8edc7d127c', 'kb-consultify-12_okr_management', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5b4847dc-f882-481a-90bb-7e8d39725d59', 'kb-consultify-12_okr_management', 'help')
+  ('55f9ef78-ab38-4dce-9273-64729e2abe61', 'kb-consultify-12_okr_management', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2a765c82-f14d-41c9-a32b-e963fc4e61dd', 'kb-consultify-12_okr_management', 'lp')
+  ('51756e11-5821-4f91-978d-1ac52ad0062d', 'kb-consultify-12_okr_management', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7193,12 +7553,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 13_why_board_updates_should_come_from_live_transformation_systems
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-cat-consultify-governance-and-roi', '13_why_board_updates_should_come_from_live_transformation_systems', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-cat-consultify-governance-and-roi', '13_why_board_updates_should_come_from_live_transformation_systems', 'published', 1, 1, 3, '/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems-trans-en', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'en', 'Why Board Updates Should Come From Live Transformation Systems', 'many organizations still build board updates through manual synthesis, late reporting, and slide assembly, which weakens confidence, slows response, and turns governance into presentation work', '**Direct answer:** Board packs work when leadership can trace drift, ownership, and financial implication from the same live program record they govern between meetings, not when teams rebuild the story from slides and spreadsheets the week before the board.
+
+
+![Leadership team comparing fragmented manual board-update materials with an abstract board-ready transformation surface.](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png)
+
+
 
 Most board updates are built to look board-ready.
 
@@ -7273,6 +7638,11 @@ A true board-ready update should make several things explicit:
 
 This is very different from a deck that simply restates progress in executive language.
 
+
+
+![visualize how live transformation systems improve board updates Scene: framework linking priorities, ownership, ROI, deviations, and next decisions into one board-ready output](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/analytical.png)
+
+
 ## Reality check: board reporting often looks most professional exactly when it has drifted furthest from operating truth
 
 The deck is polished.
@@ -7307,6 +7677,11 @@ That is how reporting becomes part of control instead of part of reporting theat
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems-trans-pl', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'pl', 'Why Board Updates Should Come From Live Transformation Systems', 'many organizations still build board updates through manual synthesis, late reporting, and slide assembly, which weakens confidence, slows response, and turns governance into presentation work', 'Wiekszosc board updates jest budowana tak, aby wygladala board-ready.
+
+
+![Leadership team comparing fragmented manual board-update materials with an abstract board-ready transformation surface.](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png)
+
+
 
 To nie znaczy automatycznie, ze jest uzyteczna.
 
@@ -7379,6 +7754,11 @@ Prawdziwie board-ready update powinien jasno pokazywac:
 
 To bardzo cos innego niz deck, ktory tylko przepisuje postep w executive language.
 
+
+
+![visualize how live transformation systems improve board updates Scene: framework linking priorities, ownership, ROI, deviations, and next decisions into one board-ready output](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/analytical.png)
+
+
 ## Reality check: board reporting czesto wyglada najbardziej profesjonalnie dokladnie wtedy, gdy odjechal najdalej od operating truth
 
 Deck jest dopracowany.
@@ -7425,6 +7805,11 @@ Tak raportowanie staje sie czescia kontroli zamiast czescia reporting theater.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems-trans-de', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'de', 'Why Board Updates Should Come From Live Transformation Systems', 'many organizations still build board updates through manual synthesis, late reporting, and slide assembly, which weakens confidence, slows response, and turns governance into presentation work', 'Die meisten Board Updates werden so gebaut, dass sie board-ready aussehen.
+
+
+![Leadership team comparing fragmented manual board-update materials with an abstract board-ready transformation surface.](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png)
+
+
 
 Das macht sie nicht automatisch nutzlich.
 
@@ -7497,6 +7882,11 @@ Ein wirklich board-ready Update sollte mehrere Dinge explizit machen:
 
 Das ist etwas ganz anderes als ein Deck, das Fortschritt nur in executive language wiederholt.
 
+
+
+![visualize how live transformation systems improve board updates Scene: framework linking priorities, ownership, ROI, deviations, and next decisions into one board-ready output](/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/analytical.png)
+
+
 ## Reality check: Board Reporting wirkt oft genau dann am professionellsten, wenn es am weitesten von operating truth abgedriftet ist
 
 Das Deck ist poliert.
@@ -7543,13 +7933,13 @@ So wird Reporting Teil von Kontrolle statt Teil eines reporting theater.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('497f86b8-ced8-4bfa-bebc-17ef48679f74', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
+  ('a74f9cf0-9d67-4d4f-bd14-f0abc1fe90f4', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('204498ef-ec27-4b6e-8616-6e7dd30bf80a', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
+  ('59cacde5-46e6-45d0-9f57-f7f7c28e8234', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4623353f-d20d-4baa-a174-da1361afe342', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
+  ('ffea6435-7ce3-4647-ba46-34b113092731', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7570,12 +7960,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 14_why_strategy_workshops_fail_without_execution_system
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-cat-consultify-execution-and-rollout', '14_why_strategy_workshops_fail_without_execution_system', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["COO / change leader / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-cat-consultify-execution-and-rollout', '14_why_strategy_workshops_fail_without_execution_system', 'published', 1, 1, 3, '/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png', '["assessment","dashboard","roadmap"]', '["COO / change leader / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system-trans-en', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'en', 'Why Strategy Workshops Fail Without an Execution System', 'many organizations invest in strategy workshops that create alignment in the room, but lose force quickly because priorities, ownership, ROI logic, and follow-through remain outside a live system', 'Strategy workshops often feel productive.
+
+
+![show that workshop energy dies when it is not captured by an execution system Scene: one editorial scene on a large strategy table where scattered workshop residue fades into disorder at one end while a compact governed execution surface with priorities, owner markers, intervention stops, and cadence pieces holds the center; no people, no whiteboards, no sticky-note theater](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png)
+
+
 
 People align.
 
@@ -7658,6 +8053,11 @@ When strategy work feeds directly into an execution system, the output of the wo
 
 That is when the workshop stops being a moment and starts becoming an operating mechanism.
 
+
+
+![Tabletop execution metaphor showing workshop output turning into structured execution using abstract cards and markers.](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/analytical.png)
+
+
 ## Reality check: workshops often feel most successful right before the organization tests whether the outputs can survive normal work
 
 The room aligned.
@@ -7696,6 +8096,11 @@ The stronger model is a workshop that flows directly into a system that can gove
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system-trans-pl', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'pl', 'Why Strategy Workshops Fail Without an Execution System', 'many organizations invest in strategy workshops that create alignment in the room, but lose force quickly because priorities, ownership, ROI logic, and follow-through remain outside a live system', 'Strategy workshops czesto wydaja sie produktywne.
+
+
+![show that workshop energy dies when it is not captured by an execution system Scene: one editorial scene on a large strategy table where scattered workshop residue fades into disorder at one end while a compact governed execution surface with priorities, owner markers, intervention stops, and cadence pieces holds the center; no people, no whiteboards, no sticky-note theater](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png)
+
+
 
 Ludzie sie zgrywaja.
 
@@ -7776,6 +8181,11 @@ Gdy praca strategiczna trafia bezposrednio do execution system, output workshopu
 
 Wtedy workshop przestaje byc momentem, a zaczyna byc mechanizmem operacyjnym.
 
+
+
+![Tabletop execution metaphor showing workshop output turning into structured execution using abstract cards and markers.](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/analytical.png)
+
+
 ## Reality check: workshops czesto wydaja sie najbardziej udane tuz przed tym, jak organizacja sprawdza, czy outputy przetrwaja normalna prace
 
 Pokoj sie wyrownal.
@@ -7824,6 +8234,11 @@ Silniejszy model to workshop, ktory przeplywa bezposrednio do systemu rzadzacego
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system-trans-de', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'de', 'Why Strategy Workshops Fail Without an Execution System', 'many organizations invest in strategy workshops that create alignment in the room, but lose force quickly because priorities, ownership, ROI logic, and follow-through remain outside a live system', 'Strategy workshops fuhlen sich oft produktiv an.
+
+
+![show that workshop energy dies when it is not captured by an execution system Scene: one editorial scene on a large strategy table where scattered workshop residue fades into disorder at one end while a compact governed execution surface with priorities, owner markers, intervention stops, and cadence pieces holds the center; no people, no whiteboards, no sticky-note theater](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png)
+
+
 
 Menschen richten sich aus.
 
@@ -7904,6 +8319,11 @@ Wenn Strategiearbeit direkt in ein execution system fliesst, wird der Output des
 
 Dann hort der Workshop auf, ein Moment zu sein, und beginnt, ein operativer Mechanismus zu werden.
 
+
+
+![Tabletop execution metaphor showing workshop output turning into structured execution using abstract cards and markers.](/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/analytical.png)
+
+
 ## Reality check: Workshops wirken oft am erfolgreichsten, kurz bevor die Organisation testet, ob die Outputs normale Arbeit uberleben
 
 Der Raum hat sich ausgerichtet.
@@ -7952,13 +8372,13 @@ Das starkere Modell ist ein Workshop, der direkt in ein System fliesst, das steu
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b05f37f1-3034-490f-a5c9-53392f11bd43', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
+  ('d463b9d0-647e-42a4-8f28-8f0844667fbd', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d00c77af-84cd-407f-a01b-b49bc9674a36', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
+  ('d709a2cf-d3bd-413b-859a-2e791f7f2a80', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f433c57e-e492-463f-8f2a-f855cbe28dce', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
+  ('6f69cb05-8383-4ae4-b515-75dca6a94aa8', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7979,12 +8399,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 15_how_to_keep_transformation_roi_visible_after_kickoff
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-cat-consultify-governance-and-roi', '15_how_to_keep_transformation_roi_visible_after_kickoff', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["CFO / COO / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-cat-consultify-governance-and-roi', '15_how_to_keep_transformation_roi_visible_after_kickoff', 'published', 1, 1, 4, '/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / COO / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff-trans-en', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'en', 'How to Keep Transformation ROI Visible After Kickoff', 'many transformation programs begin with a plausible ROI case, but lose financial visibility after kickoff, which weakens governance, slows intervention, and makes value harder to defend later', '**Direct answer:** After kickoff, ROI visibility fails when the case stays in the approval pack while execution reporting turns into activity updates. It holds when the same system shows which initiatives still carry which assumptions and how actual movement compares to what was projected.
+
+
+![show ROI visibility staying alive after transformation kickoff inside one live system Scene: kickoff deck fading into the background while a live transformation system tracks assumptions, initiatives, ROI signals, and intervention points](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png)
+
+
 
 Transformation ROI is usually most visible before the work begins.
 
@@ -8064,6 +8489,11 @@ A stronger system should make it easy to see:
 
 This keeps the ROI case alive while the program is moving.
 
+
+
+![show ROI visibility as a live habit of review and correction rather than a tidy framework Scene: one dark walnut table with a compact value-control surface where a few weighted impact stacks, one deviation token pulled out of line, and one intervention packet interrupt a regular cadence of review pieces; the scene should feel active and slightly tense, not schematic, and must not include any console, control pad, mixer, or electronic device](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/analytical.png)
+
+
 ## Reality check: ROI visibility usually fades before anyone admits value control is weakening
 
 The program still has updates.
@@ -8096,6 +8526,11 @@ Value is created during execution, which is exactly why the financial case must 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff-trans-pl', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'pl', 'How to Keep Transformation ROI Visible After Kickoff', 'many transformation programs begin with a plausible ROI case, but lose financial visibility after kickoff, which weakens governance, slows intervention, and makes value harder to defend later', 'Transformation ROI jest zwykle najbardziej widoczne przed startem pracy.
+
+
+![show ROI visibility staying alive after transformation kickoff inside one live system Scene: kickoff deck fading into the background while a live transformation system tracks assumptions, initiatives, ROI signals, and intervention points](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png)
+
+
 
 Na tym polega ironia.
 
@@ -8171,6 +8606,11 @@ Silniejszy system powinien pozwalac latwo zobaczyc:
 
 To utrzymuje case ROI przy zyciu, gdy program sie porusza.
 
+
+
+![show ROI visibility as a live habit of review and correction rather than a tidy framework Scene: one dark walnut table with a compact value-control surface where a few weighted impact stacks, one deviation token pulled out of line, and one intervention packet interrupt a regular cadence of review pieces; the scene should feel active and slightly tense, not schematic, and must not include any console, control pad, mixer, or electronic device](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/analytical.png)
+
+
 ## Reality check: widocznosc ROI zwykle zanika, zanim ktokolwiek przyzna, ze kontrola nad wartoscia slabnie
 
 Program nadal ma update''y.
@@ -8215,6 +8655,11 @@ Wartosc powstaje podczas execution, dlatego finansowy case musi pozostac live dl
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff-trans-de', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'de', 'How to Keep Transformation ROI Visible After Kickoff', 'many transformation programs begin with a plausible ROI case, but lose financial visibility after kickoff, which weakens governance, slows intervention, and makes value harder to defend later', 'Transformation ROI ist meist vor dem Start der Arbeit am sichtbarsten.
+
+
+![show ROI visibility staying alive after transformation kickoff inside one live system Scene: kickoff deck fading into the background while a live transformation system tracks assumptions, initiatives, ROI signals, and intervention points](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png)
+
+
 
 Genau darin liegt die Ironie.
 
@@ -8290,6 +8735,11 @@ Ein starkeres System sollte leicht sichtbar machen:
 
 So bleibt der ROI-Case lebendig, wahrend sich das Programm bewegt.
 
+
+
+![show ROI visibility as a live habit of review and correction rather than a tidy framework Scene: one dark walnut table with a compact value-control surface where a few weighted impact stacks, one deviation token pulled out of line, and one intervention packet interrupt a regular cadence of review pieces; the scene should feel active and slightly tense, not schematic, and must not include any console, control pad, mixer, or electronic device](/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/analytical.png)
+
+
 ## Reality check: ROI-Sichtbarkeit verblasst meist, bevor irgendjemand zugibt, dass die Wertkontrolle schwaecher wird
 
 Das Programm hat weiter Updates.
@@ -8334,13 +8784,13 @@ Wert entsteht wahrend der Execution, genau deshalb muss der finanzielle Case lan
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4ce9c997-8cc9-4284-95db-088bc9707dfe', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
+  ('d9bba68b-4d70-4bbd-ac98-f41b8a11ca73', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4c731767-2422-4b2b-b696-6a10715d14a2', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
+  ('61a3cecf-821d-49dd-b0b1-d61528648b77', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f06810c6-91fc-4f48-9d1a-8c6ca4ad9738', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
+  ('8ede6fd0-02cf-43c9-bcd3-22a282e5f2ed', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8361,12 +8811,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 16_why_steering_committees_fail_when_the_system_is_static
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-cat-consultify-governance-and-roi', '16_why_steering_committees_fail_when_the_system_is_static', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-cat-consultify-governance-and-roi', '16_why_steering_committees_fail_when_the_system_is_static', 'published', 0, 1, 3, '/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static-trans-en', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'en', 'Why Steering Committees Fail When the System Is Static', 'many steering committees still review transformation through static decks and delayed summaries, which makes intervention slow, accountability weak, and governance performative instead of useful', 'Steering committees are supposed to improve control.
+
+
+![show static steering as passive review residue confronted by a tighter live control surface Scene: one empty board table where a stale report stack and abandoned committee residue stay at the far edge in shadow, while the foreground is dominated by a compact dark governance board with only a few critical markers, one out-of-place deviation weight, and one unresolved intervention point](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png)
+
+
 
 Often they improve ceremony.
 
@@ -8441,6 +8896,11 @@ The discussion has executive weight.
 
 But if the committee is still reacting to delayed summaries instead of live signals, seriousness of tone is masking weakness of control.
 
+
+
+![Abstract tabletop governance control surface with non-readable priority cards, alerts, and intervention pathways.](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/analytical.png)
+
+
 ## Why static systems weaken accountability
 
 If the system behind the committee is static, accountability also becomes static.
@@ -8484,6 +8944,11 @@ The stronger model is a live steering system that gives leadership enough visibi
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static-trans-pl', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'pl', 'Why Steering Committees Fail When the System Is Static', 'many steering committees still review transformation through static decks and delayed summaries, which makes intervention slow, accountability weak, and governance performative instead of useful', 'Steering committees maja poprawiac kontrole.
+
+
+![show static steering as passive review residue confronted by a tighter live control surface Scene: one empty board table where a stale report stack and abandoned committee residue stay at the far edge in shadow, while the foreground is dominated by a compact dark governance board with only a few critical markers, one out-of-place deviation weight, and one unresolved intervention point](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png)
+
+
 
 Czesto poprawiaja ceremonie.
 
@@ -8558,6 +9023,11 @@ Dyskusja ma executive weight.
 
 Ale jesli committee nadal reaguje na opoznione podsumowania zamiast live signals, powaga tonu maskuje slabosc kontroli.
 
+
+
+![Abstract tabletop governance control surface with non-readable priority cards, alerts, and intervention pathways.](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/analytical.png)
+
+
 ## Dlaczego statyczne systemy oslabiaja accountability
 
 Jesli system stojacy za committee jest statyczny, accountability rowniez staje sie statyczne.
@@ -8613,6 +9083,11 @@ Silniejszy model to live steering system, ktory daje leadership wystarczajaca wi
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static-trans-de', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'de', 'Why Steering Committees Fail When the System Is Static', 'many steering committees still review transformation through static decks and delayed summaries, which makes intervention slow, accountability weak, and governance performative instead of useful', 'Steering committees sollen Kontrolle verbessern.
+
+
+![show static steering as passive review residue confronted by a tighter live control surface Scene: one empty board table where a stale report stack and abandoned committee residue stay at the far edge in shadow, while the foreground is dominated by a compact dark governance board with only a few critical markers, one out-of-place deviation weight, and one unresolved intervention point](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png)
+
+
 
 Oft verbessern sie Zeremonie.
 
@@ -8687,6 +9162,11 @@ Die Diskussion hat executive weight.
 
 Doch wenn das committee weiter auf verspatischte Zusammenfassungen statt auf live signals reagiert, maskiert die Ernsthaftigkeit des Tons die Schwache der Kontrolle.
 
+
+
+![Abstract tabletop governance control surface with non-readable priority cards, alerts, and intervention pathways.](/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/analytical.png)
+
+
 ## Warum statische Systeme Accountability schwachen
 
 Wenn das System hinter dem committee statisch ist, wird auch Accountability statisch.
@@ -8742,13 +9222,13 @@ Das starkere Modell ist ein live steering system, das Leadership genug Sichtbark
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b169bcf6-d228-40dd-8aef-6c02308192d7', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
+  ('c9fe0508-aafb-44a0-9d19-8ff557c35a0e', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0e646af0-b6c8-4674-8977-dec486f37baf', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
+  ('10d4c26a-a6f5-42dd-b5cc-75b29153daf4', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9385afe1-f63b-4677-9757-f07dab6b0578', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
+  ('068811ef-3e34-4bc9-8e31-f216ece1edbb', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8769,12 +9249,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 17_why_transformation_programs_need_one_source_of_truth
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-cat-consultify-execution-and-rollout', '17_why_transformation_programs_need_one_source_of_truth', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-cat-consultify-execution-and-rollout', '17_why_transformation_programs_need_one_source_of_truth', 'published', 1, 1, 4, '/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth-trans-en', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'en', 'Why Transformation Programs Need One Source of Truth', 'many transformation programs still run across separate decks, trackers, meeting notes, and reporting files, which weakens ownership, slows governance, and makes it hard to know what is actually true', 'Transformation programs usually do not fail because there is no information.
+
+
+![show fragmented transformation artifacts converging into one trusted operating source Scene: large editorial table with no people present, where scattered packets, mismatched tokens, and broken handoff pieces sit to one side while one unified central evidence spine gathers priorities, ownership markers, ROI weights, and next-decision cues into one controlled system without arrows or printed mini-cards](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png)
+
+
 
 They fail because the information is scattered.
 
@@ -8857,6 +9342,11 @@ That is exactly what makes the problem persistent, because each artifact can loo
 
 Fragmentation is not only scattered files. It is also competing edits: finance adjusts the value view in one model, operations updates timelines in another, and the program office maintains a third tracker. A serious source-of-truth rule names the system of record, versions or timestamps material changes, and sends conflicts to one escalation path (usually the transformation sponsor or steering chair) with a decision recorded in that same place. Without that closure, teams negotiate in email forever while leadership thinks the program is aligned.
 
+
+
+![Analytical evidence wall with a central source-of-truth spine connecting abstract lanes, signals, and next-decision markers.](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/analytical.png)
+
+
 ## What a real source of truth should contain
 
 A real source of truth should make it possible to see:
@@ -8894,6 +9384,11 @@ The stronger model is one system where the strategy, the work, and the value cas
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth-trans-pl', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'pl', 'Why Transformation Programs Need One Source of Truth', 'many transformation programs still run across separate decks, trackers, meeting notes, and reporting files, which weakens ownership, slows governance, and makes it hard to know what is actually true', 'Programy transformacyjne zwykle nie zawodza dlatego, ze nie ma informacji.
+
+
+![show fragmented transformation artifacts converging into one trusted operating source Scene: large editorial table with no people present, where scattered packets, mismatched tokens, and broken handoff pieces sit to one side while one unified central evidence spine gathers priorities, ownership markers, ROI weights, and next-decision cues into one controlled system without arrows or printed mini-cards](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png)
+
+
 
 Zawodza dlatego, ze informacja jest rozproszona.
 
@@ -8972,6 +9467,11 @@ Steering pack wydaje sie uzywalny.
 
 To wlasnie dlatego problem trwa, bo kazdy artefakt moze wygladac odpowiedzialnie w izolacji, podczas gdy laczny operating model pozostaje sprzeczny.
 
+
+
+![Analytical evidence wall with a central source-of-truth spine connecting abstract lanes, signals, and next-decision markers.](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/analytical.png)
+
+
 ## Co powinno zawierac prawdziwe source of truth
 
 Prawdziwe source of truth powinno pozwalac zobaczyc:
@@ -9019,6 +9519,11 @@ Silniejszy model to jeden system, w ktorym strategia, praca i value case pozosta
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth-trans-de', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'de', 'Why Transformation Programs Need One Source of Truth', 'many transformation programs still run across separate decks, trackers, meeting notes, and reporting files, which weakens ownership, slows governance, and makes it hard to know what is actually true', 'Transformationsprogramme scheitern meist nicht daran, dass keine Information vorhanden ist.
+
+
+![show fragmented transformation artifacts converging into one trusted operating source Scene: large editorial table with no people present, where scattered packets, mismatched tokens, and broken handoff pieces sit to one side while one unified central evidence spine gathers priorities, ownership markers, ROI weights, and next-decision cues into one controlled system without arrows or printed mini-cards](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png)
+
+
 
 Sie scheitern daran, dass die Information verstreut ist.
 
@@ -9097,6 +9602,11 @@ Das Steering-Pack wirkt brauchbar.
 
 Genau das macht das Problem so persistent, denn jedes Artefakt kann in Isolation verantwortungsvoll aussehen, waehrend das kombinierte Operating Model widerspruechlich bleibt.
 
+
+
+![Analytical evidence wall with a central source-of-truth spine connecting abstract lanes, signals, and next-decision markers.](/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/analytical.png)
+
+
 ## Was eine echte source of truth enthalten sollte
 
 Eine echte source of truth sollte sichtbar machen:
@@ -9144,13 +9654,13 @@ Das starkere Modell ist ein System, in dem Strategie, Arbeit und value case eng 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e9800258-142c-4d26-b253-12312711ff70', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
+  ('1982a7ec-ae6f-4ff5-b581-71ab11438e11', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dad65879-930f-49b8-8542-f5e65507d01f', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
+  ('625a3e75-1fba-4f5c-bf4a-c1ae5ab39dc5', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d4006012-fc72-4509-a6d1-139d1844a826', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
+  ('dea8e031-b1bb-48d9-b8fa-d37ac62f0fef', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9171,12 +9681,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 18_how_to_turn_leadership_decisions_into_owned_initiatives
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-cat-consultify-execution-and-rollout', '18_how_to_turn_leadership_decisions_into_owned_initiatives', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["COO / owner / transformation leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-cat-consultify-execution-and-rollout', '18_how_to_turn_leadership_decisions_into_owned_initiatives', 'published', 1, 1, 3, '/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png', '["assessment","dashboard","roadmap"]', '["COO / owner / transformation leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives-trans-en', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'en', 'How to Turn Leadership Decisions Into Owned Initiatives', 'many important leadership decisions never become well-owned initiatives, which creates delay, ambiguity, and a false sense that the organization has already moved when it has only agreed in principle', 'Leadership teams make more decisions than they execute.
+
+
+![show a leadership decision being translated into an owned initiative inside one live transformation system Scene: executive decision at the top flowing into structured initiative ownership, ROI logic, governance checkpoints, and progress tracking](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png)
+
+
 
 That is normal.
 
@@ -9252,6 +9767,11 @@ People assume the organization has already moved.
 
 But if the call did not convert into owned work with review logic and next-step structure, the company captured intent, not motion.
 
+
+
+![Analytical handoff chain showing a sealed decision packet moving into ownership trays and checkpoints.](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/analytical.png)
+
+
 ## Why ownership alone is not enough
 
 Simply naming an owner does not solve the problem.
@@ -9292,6 +9812,11 @@ That is why the real work starts after the decision, not at the moment the decis
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives-trans-pl', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'pl', 'How to Turn Leadership Decisions Into Owned Initiatives', 'many important leadership decisions never become well-owned initiatives, which creates delay, ambiguity, and a false sense that the organization has already moved when it has only agreed in principle', 'Leadership teams podejmuja wiecej decyzji, niz realnie wdrazaja.
+
+
+![show a leadership decision being translated into an owned initiative inside one live transformation system Scene: executive decision at the top flowing into structured initiative ownership, ROI logic, governance checkpoints, and progress tracking](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png)
+
+
 
 To jest normalne.
 
@@ -9367,6 +9892,11 @@ Ludzie zakladaja, ze organizacja juz ruszyla.
 
 Ale jesli ten call nie zamienil sie w owned work z review logic i next-step structure, firma uchwycila intent, a nie motion.
 
+
+
+![Analytical handoff chain showing a sealed decision packet moving into ownership trays and checkpoints.](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/analytical.png)
+
+
 ## Dlaczego samo ownership nie wystarcza
 
 Samo nazwanie ownera nie rozwiazuje problemu.
@@ -9417,6 +9947,11 @@ Dlatego prawdziwa praca zaczyna sie po decyzji, a nie w momencie jej podjecia.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives-trans-de', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'de', 'How to Turn Leadership Decisions Into Owned Initiatives', 'many important leadership decisions never become well-owned initiatives, which creates delay, ambiguity, and a false sense that the organization has already moved when it has only agreed in principle', 'Leadership teams treffen mehr Entscheidungen, als sie wirklich umsetzen.
+
+
+![show a leadership decision being translated into an owned initiative inside one live transformation system Scene: executive decision at the top flowing into structured initiative ownership, ROI logic, governance checkpoints, and progress tracking](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png)
+
+
 
 Das ist normal.
 
@@ -9492,6 +10027,11 @@ Menschen nehmen an, dass die Organisation sich bereits bewegt hat.
 
 Doch wenn der Call nicht in owned work mit review logic und next-step structure ubersetzt wurde, hat das Unternehmen intent festgehalten, nicht motion.
 
+
+
+![Analytical handoff chain showing a sealed decision packet moving into ownership trays and checkpoints.](/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/analytical.png)
+
+
 ## Warum Ownership allein nicht genug ist
 
 Nur einen Owner zu benennen lost das Problem nicht.
@@ -9542,13 +10082,13 @@ Darum beginnt die eigentliche Arbeit nach der Entscheidung und nicht in dem Mome
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('55d44f2e-7d61-419e-a84f-62e8a6169c04', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
+  ('07befa5e-124a-4224-8a65-6d2afd693d76', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0a0ff8d6-93a8-46e5-a5c2-69b432fcb880', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
+  ('8c86f92b-1160-4051-9327-530b8e99c02b', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3350715d-c3b9-4c56-9d90-008b22095212', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
+  ('4b48fedc-145b-41d9-8fe8-52450562f7bb', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9569,12 +10109,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 19_why_transformation_portfolios_fail_without_live_prioritization
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-cat-consultify-governance-and-roi', '19_why_transformation_portfolios_fail_without_live_prioritization', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-cat-consultify-governance-and-roi', '19_why_transformation_portfolios_fail_without_live_prioritization', 'published', 1, 1, 3, '/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization-trans-en', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'en', 'Why Transformation Portfolios Fail Without Live Prioritization', 'many organizations run large transformation portfolios with too many active initiatives, weak reprioritization, and not enough visibility into what should move, pause, or stop as reality changes', 'Most transformation portfolios are not weak because they lack initiatives.
+
+
+![contrast crowded static transformation portfolio management with live portfolio prioritization Scene: overloaded initiative board on one side and a live prioritization system highlighting active trade-offs, ROI, ownership, and stop/start decisions on the other](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png)
+
+
 
 They are weak because they have too many initiatives with too little live prioritization.
 
@@ -9640,6 +10185,11 @@ This is not a sign of instability.
 
 It is a sign that the organization is governing the portfolio instead of merely tracking it.
 
+
+
+![visualize how live prioritization governs a transformation portfolio Scene: framework linking initiative value, progress, risk, ownership, and reprioritization decisions](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/analytical.png)
+
+
 ## Why portfolio discipline should connect to ROI
 
 Prioritization gets much stronger when it is tied to:
@@ -9676,6 +10226,11 @@ The stronger model is a portfolio system that keeps trade-offs visible enough to
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization-trans-pl', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'pl', 'Why Transformation Portfolios Fail Without Live Prioritization', 'many organizations run large transformation portfolios with too many active initiatives, weak reprioritization, and not enough visibility into what should move, pause, or stop as reality changes', 'Wiekszosc portfeli transformacyjnych nie jest slaba dlatego, ze brakuje im inicjatyw.
+
+
+![contrast crowded static transformation portfolio management with live portfolio prioritization Scene: overloaded initiative board on one side and a live prioritization system highlighting active trade-offs, ROI, ownership, and stop/start decisions on the other](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png)
+
+
 
 Jest slaba dlatego, ze ma zbyt wiele inicjatyw i zbyt malo live prioritization.
 
@@ -9741,6 +10296,11 @@ To nie jest oznaka niestabilnosci.
 
 To oznaka, ze organizacja governuje portfolio zamiast jedynie je sledzic.
 
+
+
+![visualize how live prioritization governs a transformation portfolio Scene: framework linking initiative value, progress, risk, ownership, and reprioritization decisions](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/analytical.png)
+
+
 ## Dlaczego dyscyplina portfolio powinna byc polaczona z ROI
 
 Priorytetyzacja staje sie znacznie mocniejsza, gdy jest przypieta do:
@@ -9789,6 +10349,11 @@ Silniejszy model to system portfolio, ktory utrzymuje trade-offy wystarczajaco w
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization-trans-de', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'de', 'Why Transformation Portfolios Fail Without Live Prioritization', 'many organizations run large transformation portfolios with too many active initiatives, weak reprioritization, and not enough visibility into what should move, pause, or stop as reality changes', 'Die meisten Transformationsportfolios sind nicht schwach, weil ihnen Initiativen fehlen.
+
+
+![contrast crowded static transformation portfolio management with live portfolio prioritization Scene: overloaded initiative board on one side and a live prioritization system highlighting active trade-offs, ROI, ownership, and stop/start decisions on the other](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png)
+
+
 
 Sie sind schwach, weil sie zu viele Initiativen und zu wenig live prioritization haben.
 
@@ -9854,6 +10419,11 @@ Das ist kein Zeichen von Instabilitat.
 
 Es ist ein Zeichen dafur, dass die Organisation das Portfolio steuert, statt es nur zu verfolgen.
 
+
+
+![visualize how live prioritization governs a transformation portfolio Scene: framework linking initiative value, progress, risk, ownership, and reprioritization decisions](/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/analytical.png)
+
+
 ## Warum Portfoliodisziplin mit ROI verbunden sein sollte
 
 Priorisierung wird viel starker, wenn sie an Folgendes gekoppelt ist:
@@ -9902,13 +10472,13 @@ Das starkere Modell ist ein Portfoliosystem, das Trade-offs sichtbar genug halt,
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('03467605-b2b2-4794-8dc5-de7fcf20878e', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
+  ('227feced-08af-4d25-9510-cd9873bc0a0e', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a1cdaeac-3f9e-4b7a-9e6f-c97913070582', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
+  ('64a787ec-a706-4003-9699-348b86246451', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2e640956-a3c5-4c08-adbe-2637965995db', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
+  ('919a1aac-f50d-4da8-99bc-6cfd5acf67c9', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9929,12 +10499,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 20_how_to_keep_leadership_alignment_after_the_offsite
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-cat-consultify-execution-and-rollout', '20_how_to_keep_leadership_alignment_after_the_offsite', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-cat-consultify-execution-and-rollout', '20_how_to_keep_leadership_alignment_after_the_offsite', 'published', 1, 1, 3, '/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite-trans-en', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'en', 'How to Keep Leadership Alignment After the Offsite', 'many leadership offsites create temporary clarity and energy, but the alignment fades quickly once executives return to fragmented execution, competing agendas, and separate reporting rhythms', 'Leadership offsites often feel like turning points.
+
+
+![show offsite alignment fading unless it is carried into a live operating system Scene: energized leadership offsite on one side, fading notes in the middle, and a live transformation system preserving priorities and ownership on the other](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png)
+
+
 
 The team aligns.
 
@@ -10010,6 +10585,11 @@ The leadership team still believes it agrees.
 
 That is why drift often re-enters through local interpretation and separate follow-through long before anyone names the alignment as broken.
 
+
+
+![visualize what post-offsite alignment needs to stay alive Scene: framework linking offsite decisions, priorities, owners, review cadence, deviation visibility, and next leadership decisions](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/analytical.png)
+
+
 ## Why this matters for transformation speed
 
 When alignment fades after the offsite:
@@ -10047,6 +10627,11 @@ Otherwise the offsite becomes memorable, but not durable.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite-trans-pl', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'pl', 'How to Keep Leadership Alignment After the Offsite', 'many leadership offsites create temporary clarity and energy, but the alignment fades quickly once executives return to fragmented execution, competing agendas, and separate reporting rhythms', 'Leadership offsites czesto wydaja sie punktami zwrotnymi.
+
+
+![show offsite alignment fading unless it is carried into a live operating system Scene: energized leadership offsite on one side, fading notes in the middle, and a live transformation system preserving priorities and ownership on the other](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png)
+
+
 
 Zespol sie zgrywa.
 
@@ -10120,6 +10705,11 @@ Leadership team nadal wierzy, ze sie zgadza.
 
 Dlatego drift czesto wraca przez lokalne interpretacje i osobny follow-through dlugo przed tym, zanim ktokolwiek nazwie alignment jako zlamany.
 
+
+
+![visualize what post-offsite alignment needs to stay alive Scene: framework linking offsite decisions, priorities, owners, review cadence, deviation visibility, and next leadership decisions](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/analytical.png)
+
+
 ## Dlaczego to ma znaczenie dla predkosci transformacji
 
 Gdy alignment zanika po offsite:
@@ -10167,6 +10757,11 @@ Inaczej offsite staje sie zapamietywalny, ale nietrwaly.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite-trans-de', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'de', 'How to Keep Leadership Alignment After the Offsite', 'many leadership offsites create temporary clarity and energy, but the alignment fades quickly once executives return to fragmented execution, competing agendas, and separate reporting rhythms', 'Leadership offsites fuhlen sich oft wie Wendepunkte an.
+
+
+![show offsite alignment fading unless it is carried into a live operating system Scene: energized leadership offsite on one side, fading notes in the middle, and a live transformation system preserving priorities and ownership on the other](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png)
+
+
 
 Das Team richtet sich aus.
 
@@ -10240,6 +10835,11 @@ Das leadership team glaubt immer noch, sich einig zu sein.
 
 Darum kommt Drift oft uber lokale Interpretation und getrennten Follow-through zuruck, lange bevor jemand das Alignment als gebrochen benennt.
 
+
+
+![visualize what post-offsite alignment needs to stay alive Scene: framework linking offsite decisions, priorities, owners, review cadence, deviation visibility, and next leadership decisions](/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/analytical.png)
+
+
 ## Warum das fur Transformationstempo wichtig ist
 
 Wenn Alignment nach dem Offsite verblasst:
@@ -10287,13 +10887,13 @@ Sonst wird das Offsite erinnerungswurdig, aber nicht dauerhaft.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4e1beb1f-b722-4728-84ee-705695e1dbb7', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
+  ('d41bd193-f2fd-463b-93e5-b8150e985caf', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e12288df-3ee0-4ed0-b2b4-da5e1d4dfb75', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
+  ('0ab50271-9007-4eb2-84c3-4672beeab29d', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c7794d1b-05ad-43a5-927a-a950c5c25172', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
+  ('56907a90-5429-4a4b-b389-50a43bc8fc05', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10314,12 +10914,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 21_how_to_defend_transformation_investment_with_live_value_evidence
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-cat-consultify-governance-and-roi', '21_how_to_defend_transformation_investment_with_live_value_evidence', 'published', 1, 1, 4, '["assessment","dashboard","roadmap"]', '["CFO / Owner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-cat-consultify-governance-and-roi', '21_how_to_defend_transformation_investment_with_live_value_evidence', 'published', 1, 1, 4, '/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence-trans-en', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'en', 'How to Defend Transformation Investment With Live Value Evidence', 'many transformation investments become harder to defend once pressure rises, because leadership still relies on old approval logic instead of live evidence showing what value is real, delayed, or at risk', '**Direct answer:** Defense holds when the next steering or board conversation can open the same live view of assumptions, initiatives, and outcomes, not when the team assembles a fresh rescue narrative under deadline.
+
+
+![Executive team reviewing a physical evidence lane with abstract cards, tokens, and correction markers to defend investment.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png)
+
+
 
 Transformation investment is easiest to approve at the beginning.
 
@@ -10409,6 +11014,11 @@ Transformation investment becomes much easier to defend when:
 
 This shared view makes it harder for the discussion to collapse into opinion.
 
+
+
+![Analytical evidence ledger with abstract trays, tokens, and correction markers showing live value proof.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/analytical.png)
+
+
 ## What strong value defense looks like
 
 A stronger transformation system should make it possible to show:
@@ -10447,6 +11057,11 @@ That is how leadership keeps strategic conviction without relying on blind faith
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence-trans-pl', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'pl', 'How to Defend Transformation Investment With Live Value Evidence', 'many transformation investments become harder to defend once pressure rises, because leadership still relies on old approval logic instead of live evidence showing what value is real, delayed, or at risk', 'Inwestycje transformacyjne najlatwiej zatwierdza sie na poczatku.
+
+
+![Executive team reviewing a physical evidence lane with abstract cards, tokens, and correction markers to defend investment.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png)
+
+
 
 Trudniej broni sie ich pozniej.
 
@@ -10532,6 +11147,11 @@ Inwestycji transformacyjnej broni sie znacznie latwiej, gdy:
 
 Taki wspolny widok utrudnia sprowadzenie rozmowy do samych opinii.
 
+
+
+![Analytical evidence ledger with abstract trays, tokens, and correction markers showing live value proof.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/analytical.png)
+
+
 ## Jak wyglada mocna obrona wartosci
 
 Silniejszy system transformacyjny powinien umozliwiac pokazanie:
@@ -10578,6 +11198,11 @@ Tak leadership utrzymuje strategic conviction bez opierania sie na slepej wierze
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence-trans-de', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'de', 'How to Defend Transformation Investment With Live Value Evidence', 'many transformation investments become harder to defend once pressure rises, because leadership still relies on old approval logic instead of live evidence showing what value is real, delayed, or at risk', 'Transformationsinvestitionen lassen sich am Anfang am leichtesten freigeben.
+
+
+![Executive team reviewing a physical evidence lane with abstract cards, tokens, and correction markers to defend investment.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png)
+
+
 
 Spater werden sie schwerer zu verteidigen.
 
@@ -10663,6 +11288,11 @@ Transformationsinvestitionen lassen sich viel leichter verteidigen, wenn:
 
 Diese gemeinsame Sicht macht es schwerer, dass die Diskussion auf blosse Meinungen reduziert wird.
 
+
+
+![Analytical evidence ledger with abstract trays, tokens, and correction markers showing live value proof.](/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/analytical.png)
+
+
 ## Wie starke Wertverteidigung aussieht
 
 Ein starkeres Transformationssystem sollte zeigen konnen:
@@ -10709,13 +11339,13 @@ So halt Leadership strategische conviction aufrecht, ohne sich auf blinden Glaub
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9952c91b-482c-433d-b938-7b481ced1678', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
+  ('32c82481-c468-4913-a322-db23c7a50226', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c303b76d-af1b-4d81-b6f7-b126e4a962bf', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
+  ('564130eb-19a5-407a-87f1-2da15ead0032', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5b6596aa-b50f-4167-a08f-39c0ef47aa42', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
+  ('3d869e20-4cb9-45b2-aa11-411434a66db1', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10736,12 +11366,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 22_what_monthly_transformation_reviews_should_actually_decide
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-cat-consultify-governance-and-roi', '22_what_monthly_transformation_reviews_should_actually_decide', 'published', 1, 1, 3, '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-cat-consultify-governance-and-roi', '22_what_monthly_transformation_reviews_should_actually_decide', 'published', 1, 1, 3, '/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide-trans-en', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'en', 'What Monthly Transformation Reviews Should Actually Decide', 'many monthly transformation reviews still function as status meetings, which consumes leadership time without improving priorities, intervention quality, or transformation control', 'Many monthly transformation reviews are overbuilt and underpowered.
+
+
+![show a monthly review as a compact decision ritual, not a status meeting Scene: premium editorial photograph of one monthly review table with a small number of physical decision stations for drift, intervention, reprioritization, value change, and accountability arranged around one central review core; no people, no screens, and no engraved or printed labels anywhere](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png)
+
+
 
 They contain:
 
@@ -10825,6 +11460,11 @@ The meeting gets much stronger when it is tied to:
 
 That is what turns a review from a checkpoint into a control mechanism.
 
+
+
+![Analytical radial review chamber with abstract decision stations around a central review core.](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/analytical.png)
+
+
 ## What better monthly reviews look like
 
 A useful monthly transformation review usually has:
@@ -10861,6 +11501,11 @@ If they only summarize what already happened, they are using leadership time wit
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide-trans-pl', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'pl', 'What Monthly Transformation Reviews Should Actually Decide', 'many monthly transformation reviews still function as status meetings, which consumes leadership time without improving priorities, intervention quality, or transformation control', 'Wiele miesiecznych transformation reviews jest przeprojektowanych i jednoczesnie zbyt slabych.
+
+
+![show a monthly review as a compact decision ritual, not a status meeting Scene: premium editorial photograph of one monthly review table with a small number of physical decision stations for drift, intervention, reprioritization, value change, and accountability arranged around one central review core; no people, no screens, and no engraved or printed labels anywhere](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png)
+
+
 
 Zawieraja:
 
@@ -10942,6 +11587,11 @@ Spotkanie staje sie znacznie mocniejsze, gdy jest przypiete do:
 
 To wlasnie zamienia review z checkpointu w mechanizm kontroli.
 
+
+
+![Analytical radial review chamber with abstract decision stations around a central review core.](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/analytical.png)
+
+
 ## Jak wygladaja lepsze monthly reviews
 
 Uzyteczny miesieczny transformation review zwykle ma:
@@ -10990,6 +11640,11 @@ Jesli tylko podsumowuja to, co juz sie wydarzylo, zuzywaja czas leadership bez t
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide-trans-de', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'de', 'What Monthly Transformation Reviews Should Actually Decide', 'many monthly transformation reviews still function as status meetings, which consumes leadership time without improving priorities, intervention quality, or transformation control', 'Viele monatliche transformation reviews sind uberbaut und gleichzeitig zu schwach.
+
+
+![show a monthly review as a compact decision ritual, not a status meeting Scene: premium editorial photograph of one monthly review table with a small number of physical decision stations for drift, intervention, reprioritization, value change, and accountability arranged around one central review core; no people, no screens, and no engraved or printed labels anywhere](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png)
+
+
 
 Sie enthalten:
 
@@ -11071,6 +11726,11 @@ Das Meeting wird viel starker, wenn es an Folgendes gekoppelt ist:
 
 Das verwandelt das Review von einem Checkpoint in einen Kontrollmechanismus.
 
+
+
+![Analytical radial review chamber with abstract decision stations around a central review core.](/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/analytical.png)
+
+
 ## Wie bessere monthly reviews aussehen
 
 Ein nutzliches monatliches transformation review hat meist:
@@ -11119,13 +11779,13 @@ Wenn sie nur zusammenfassen, was bereits passiert ist, verbrauchen sie Leadershi
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6312b74b-55ca-4713-8567-94e0d2e6e464', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
+  ('8270798c-eebb-460f-bfdb-37a00516f267', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2e0565b7-818d-4360-9e65-f648091f7405', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
+  ('1872af4e-1172-42a8-896d-7ae60913528a', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a8bb8610-2e10-4b7c-a36d-6f6a2852016e', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
+  ('9f1e5bb9-fe63-4abb-b29a-9a3ec694adf8', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11146,12 +11806,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 23_how_to_run_quarterly_transformation_resets_without_losing_momentum
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-cat-consultify-governance-and-roi', '23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-cat-consultify-governance-and-roi', '23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'published', 0, 1, 3, '/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum-trans-en', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'en', 'How to Run Quarterly Transformation Resets Without Losing Momentum', 'quarterly checkpoints often turn into full replanning theater or passive readouts, which stalls teams, blurs ownership, and makes the portfolio feel like it restarts every ninety days', '**Direct answer:** run quarterly resets as a tight decision loop on outcomes, capacity, and portfolio trade-offs. Do not use the quarter boundary as an excuse to relitigate the entire strategy or freeze delivery while leadership rewrites slides.
+
+
+![show a quarterly reset as a hard reprioritization cut under constraint, not a neat ceremony Scene: one editorial review table with no people present, where a backlog of unresolved materials has been physically cut down to a smaller surviving set, with rejected pieces pushed aside and one reduced priority line held in place by metal stops and weight](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png)
+
+
 
 Many transformation programs lose speed at quarter boundaries.
 
@@ -11200,6 +11865,11 @@ This keeps the quarter boundary useful without turning it into a program reboot.
 
 A quarterly transformation reset should behave closer to the first row than the second, unless evidence demands replanning.
 
+
+
+![Analytical quarterly reset console made of five grounded physical modules without readable labels.](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/analytical.png)
+
+
 ## Reality check: quarter boundaries often create false permission to reopen what was never actually destabilized
 
 People expect a reset.
@@ -11233,6 +11903,11 @@ If the quarter boundary increases waiting, the reset is working against momentum
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum-trans-pl', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'pl', 'How to Run Quarterly Transformation Resets Without Losing Momentum', 'quarterly checkpoints often turn into full replanning theater or passive readouts, which stalls teams, blurs ownership, and makes the portfolio feel like it restarts every ninety days', '**Bezposrednia odpowiedz:** prowadz kwartalne resety jako ciasna petle decyzyjna na outcomes, capacity i portfolio trade-offs. Nie uzywaj granicy kwartalu jako wymowki do relitigation calej strategii ani zamrozenia delivery podczas gdy leadership przepisuje slajdy.
+
+
+![show a quarterly reset as a hard reprioritization cut under constraint, not a neat ceremony Scene: one editorial review table with no people present, where a backlog of unresolved materials has been physically cut down to a smaller surviving set, with rejected pieces pushed aside and one reduced priority line held in place by metal stops and weight](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png)
+
+
 
 Wiele programow transformacji traci predkosc na granicach kwartalow.
 
@@ -11281,6 +11956,11 @@ To utrzymuje granice kwartalu uzyteczna bez zamiany jej w reboot programu.
 
 Kwartalny transformation reset powinien zachowywac sie blizej pierwszego wiersza niz drugiego, dopoki evidence nie wymaga replanningu.
 
+
+
+![Analytical quarterly reset console made of five grounded physical modules without readable labels.](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/analytical.png)
+
+
 ## Reality check: granice kwartalu czesto tworza falszywe przyzwolenie na otwieranie tego, co nigdy nie zostalo realnie zdestabilizowane
 
 Ludzie oczekuja resetu.
@@ -11316,6 +11996,11 @@ Jesli granica kwartalu zwieksza czekanie, reset dziala przeciwko momentum.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum-trans-de', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'de', 'How to Run Quarterly Transformation Resets Without Losing Momentum', 'quarterly checkpoints often turn into full replanning theater or passive readouts, which stalls teams, blurs ownership, and makes the portfolio feel like it restarts every ninety days', '**Direktantwort:** fuehre vierteljaehrliche Resets als enge Entscheidungsschleife zu Outcomes, Kapazitaet und Portfolio-Trade-offs. Nutze die Quartalsgrenze nicht als Vorwand, die gesamte Strategie neu zu verhandeln oder Delivery einzufrieren, waehrend Leadership Folien umschreibt.
+
+
+![show a quarterly reset as a hard reprioritization cut under constraint, not a neat ceremony Scene: one editorial review table with no people present, where a backlog of unresolved materials has been physically cut down to a smaller surviving set, with rejected pieces pushed aside and one reduced priority line held in place by metal stops and weight](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png)
+
+
 
 Viele Transformationsprogramme verlieren Tempo an Quartalsgrenzen.
 
@@ -11364,6 +12049,11 @@ So bleibt die Quartalsgrenze nuetzlich, ohne zum Programm-Reboot zu werden.
 
 Ein vierteljaehrlicher Transformation-Reset sollte sich naeher an der ersten Zeile verhalten als an der zweiten, solange Evidenz kein Replanning erzwingt.
 
+
+
+![Analytical quarterly reset console made of five grounded physical modules without readable labels.](/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/analytical.png)
+
+
 ## Reality check: Quartalsgrenzen schaffen oft eine falsche Erlaubnis, Dinge neu zu oeffnen, die nie wirklich destabilisiert wurden
 
 Menschen erwarten einen Reset.
@@ -11399,13 +12089,13 @@ Wenn die Quartalsgrenze Warten erhoeht, arbeitet der Reset gegen Momentum.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('89c4df75-540a-4ce7-b4a8-87c9c707210f', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
+  ('f9573cdb-8bde-4599-a7c6-bfb1132d8c53', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('99ba72e1-b51a-4fab-ad06-7a7e8926346c', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
+  ('db61f9bb-d11a-4215-bb92-95bc7b3a2adf', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6c89a3ae-5a31-478b-945a-a3227886fd6b', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
+  ('99862753-fdb9-4f33-8cac-7643c7f8b1c5', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11426,12 +12116,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 24_what_a_transformation_pmo_should_track_every_week
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-cat-consultify-execution-and-rollout', '24_what_a_transformation_pmo_should_track_every_week', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / portfolio office head / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-cat-consultify-execution-and-rollout', '24_what_a_transformation_pmo_should_track_every_week', 'published', 0, 1, 3, '/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / portfolio office head / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week-trans-en', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'en', 'What a Transformation PMO Should Track Every Week', 'weekly PMO cadences often collapse into slide churn and status collection, which hides drift until it is expensive and weakens the link between governance and delivery', '**Direct answer:** track weekly signals across delivery truth, dependency risk, decision latency, value hypothesis health, and sponsor airtime needs. If the weekly pack cannot trigger a specific action, it is probably tracking the wrong things.
+
+
+![Hero image contrasting bulky weekly reporting packs with a concise abstract PMO signal board in an executive room.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png)
+
+
 
 The transformation PMO is not a reporting department.
 
@@ -11483,6 +12178,11 @@ More teams are asked to submit updates.
 
 That expansion can feel like stronger control, but it often means the PMO is compensating for weak decision clarity with more collection work.
 
+
+
+![Analytical visual of a weekly PMO control rail built from seven abstract signal modules with escalation and intervention cues.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when executives treat the weekly pack as an intervention trigger, not a readout obligation.
@@ -11503,6 +12203,11 @@ If it only describes motion, leadership will stay surprised later than it should
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week-trans-pl', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'pl', 'What a Transformation PMO Should Track Every Week', 'weekly PMO cadences often collapse into slide churn and status collection, which hides drift until it is expensive and weakens the link between governance and delivery', '**Bezposrednia odpowiedz:** trackuj co tydzien sygnaly wokol delivery truth, dependency risk, decision latency, value hypothesis health i sponsor airtime needs. Jesli tygodniowy pack nie moze wywolac konkretnej akcji, prawdopodobnie trackuje zle rzeczy.
+
+
+![Hero image contrasting bulky weekly reporting packs with a concise abstract PMO signal board in an executive room.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png)
+
+
 
 Transformation PMO to nie reporting department.
 
@@ -11554,6 +12259,11 @@ Wiecej zespolow proszonych jest o updates.
 
 To moze czuc sie jak silniejsza kontrola, ale czesto znaczy, ze PMO kompensuje slaba jasnosc decyzji wieksza iloscia pracy zbiorczej.
 
+
+
+![Analytical visual of a weekly PMO control rail built from seven abstract signal modules with escalation and intervention cues.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy nie
 
 **Dziala**, gdy executive traktuja tygodniowy pack jako intervention trigger, a nie readout obligation.
@@ -11576,6 +12286,11 @@ Jesli tylko opisuje motion, leadership zostanie zaskoczone pozniej niz powinno.'
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week-trans-de', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'de', 'What a Transformation PMO Should Track Every Week', 'weekly PMO cadences often collapse into slide churn and status collection, which hides drift until it is expensive and weakens the link between governance and delivery', '**Direktantwort:** tracken Sie woechentlich Signale zu Delivery-Wahrheit, Abhaengigkeitsrisiko, Entscheidungslatenz, Gesundheit der Wert-Hypothesen und Sponsor-Luftbedarf. Wenn das woechentliche Paket keine konkrete Aktion ausloesen kann, trackt es wahrscheinlich die falschen Dinge.
+
+
+![Hero image contrasting bulky weekly reporting packs with a concise abstract PMO signal board in an executive room.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png)
+
+
 
 Das Transformation-PMO ist keine Reporting-Abteilung.
 
@@ -11627,6 +12342,11 @@ Mehr Teams sollen Updates liefern.
 
 Das kann sich wie staerkere Kontrolle anfuehlen, bedeutet aber oft, dass das PMO schwache Entscheidungs-Klarheit mit mehr Sammelarbeit kompensiert.
 
+
+
+![Analytical visual of a weekly PMO control rail built from seven abstract signal modules with escalation and intervention cues.](/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/analytical.png)
+
+
 ## Wann es funktioniert und wann nicht
 
 **Funktioniert**, wenn Fuehrungskraefte das woechentliche Paket als Interventionsausloeser behandeln, nicht als Lese-Pflicht.
@@ -11649,13 +12369,13 @@ Wenn es nur Bewegung beschreibt, wird Fuehrung spaeter ueberrascht als noetig.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e5fbb69a-c645-46f8-aecf-8dca924cd7f6', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
+  ('ef8e9abf-c736-4161-a5f6-8025c2a3cd3d', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ff4814b4-4fe5-48a6-add8-10a57d48f1e5', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
+  ('64aa25dc-e2ea-42f7-83ab-8151f909bb1e', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0b79e4fb-98df-4bc3-8dee-d0c3af6a69b0', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
+  ('55f70251-a28b-4883-b04a-90872d36bed1', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11673,12 +12393,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 25_how_to_cut_dead_initiatives_without_political_drift
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-cat-consultify-governance-and-roi', '25_how_to_cut_dead_initiatives_without_political_drift', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Portfolio owner / transformation sponsor / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-cat-consultify-governance-and-roi', '25_how_to_cut_dead_initiatives_without_political_drift', 'published', 0, 1, 3, '/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png', '["assessment","dashboard","roadmap"]', '["Portfolio owner / transformation sponsor / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift-trans-en', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'en', 'How to Cut Dead Initiatives Without Political Drift', 'dead initiatives survive because stopping work is treated as personal defeat, which turns portfolio hygiene into politics and makes the transformation portfolio heavier than the organization can execute', '**Direct answer:** cut dead initiatives with a published stop rule, a single decision forum, explicit trade-off language, and a short wind-down plan that protects people and reputations. If stopping remains informal, politics will fill the gap.
+
+
+![Hero image of leaders calmly moving one initiative into closure using neutral abstract markers on a boardroom table.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png)
+
+
 
 Organizations rarely lack the ability to start transformation work.
 
@@ -11728,6 +12453,11 @@ Leadership still hesitates.
 
 That delay is rarely analytical. It is usually the cost of making the stop official in a system that treats ending work as embarrassment instead of discipline.
 
+
+
+![Analytical image of a controlled closure sequence using trays and abstract tokens to retire one initiative.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/analytical.png)
+
+
 ## Step sequence: how to wind down without drift
 
 1. **Name the decision:** stop, merge, or park with a clear owner and date  
@@ -11756,6 +12486,11 @@ Make stopping governed, criteria-led, and sponsor-owned, and political drift los
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift-trans-pl', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'pl', 'How to Cut Dead Initiatives Without Political Drift', 'dead initiatives survive because stopping work is treated as personal defeat, which turns portfolio hygiene into politics and makes the transformation portfolio heavier than the organization can execute', '**Bezposrednia odpowiedz:** ucinaj martwe initiative z published stop rule, single decision forum, explicit trade-off language i krotkim wind-down planem, ktory chroni ludzi i reputacje. Jesli stopping zostaje informalny, polityka wypelni luke.
+
+
+![Hero image of leaders calmly moving one initiative into closure using neutral abstract markers on a boardroom table.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png)
+
+
 
 Organizacje rzadko brakuje zdolnosci do startu transformation work.
 
@@ -11805,6 +12540,11 @@ Leadership nadal sie waha.
 
 To opoznienie rzadko jest analityczne. Zwykle jest kosztem oficjalnego nazwaniu stopu w systemie, ktory traktuje konczenie pracy jako embarassment zamiast dyscypliny.
 
+
+
+![Analytical image of a controlled closure sequence using trays and abstract tokens to retire one initiative.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/analytical.png)
+
+
 ## Sekwencja krokow: jak wind down bez drift
 
 1. **Name the decision:** stop, merge albo park z czytelnym ownerem i data  
@@ -11833,6 +12573,11 @@ Zrob stopping governed, criteria-led i sponsor-owned, a political drift traci gl
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift-trans-de', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'de', 'How to Cut Dead Initiatives Without Political Drift', 'dead initiatives survive because stopping work is treated as personal defeat, which turns portfolio hygiene into politics and makes the transformation portfolio heavier than the organization can execute', '**Direktantwort:** stoppen Sie tote Initiativen mit einer veroeffentlichten Stopp-Regel, einem einzigen Entscheidungsforum, expliziter Trade-off-Sprache und einem kurzen Wind-down-Plan, der Menschen und Reputation schuetzt. Wenn Stopp informell bleibt, fuellt Politik die Luecke.
+
+
+![Hero image of leaders calmly moving one initiative into closure using neutral abstract markers on a boardroom table.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png)
+
+
 
 Organisationen fehlt selten die Faehigkeit, Transformationsarbeit zu starten.
 
@@ -11882,6 +12627,11 @@ Leadership zoegert trotzdem.
 
 Diese Verzoegerung ist selten analytisch. Meist ist sie der Preis dafuer, einen Stopp in einem System offiziell zu machen, das Arbeitsende als Peinlichkeit statt als Disziplin behandelt.
 
+
+
+![Analytical image of a controlled closure sequence using trays and abstract tokens to retire one initiative.](/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/analytical.png)
+
+
 ## Schrittfolge: Wind-down ohne Drift
 
 1. **Entscheidung benennen:** stop, merge oder park mit klarem Owner und Datum  
@@ -11910,13 +12660,13 @@ Machen Sie Stopp regelgeleitet, kriterienbasiert und sponsor-owned, und politisc
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ef35062d-f9b2-4657-9048-0c3345bcbe40', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
+  ('968e6668-86cd-43d1-89fc-831c80c9becf', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('617d0282-1770-4f74-9f26-d2f03c57cd4a', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
+  ('8127a797-227a-4ea7-a3b3-1c6e5b4d2c74', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('291467b2-0d19-4c9c-9791-759f81ce36eb', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
+  ('8eeda16d-859a-4de1-8b08-56d1f0fc295a', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11937,12 +12687,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-cat-consultify-governance-and-roi', '26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / portfolio steering lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-cat-consultify-governance-and-roi', '26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'published', 0, 1, 3, '/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / portfolio steering lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course-trans-en', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'en', 'When to Replan a Transformation Portfolio and When to Hold Course', 'leadership oscillates between frozen commitment and chaotic replanning, which trains the organization to either ignore the plan or distrust every new version', '**Direct answer:** replan when material assumptions about value, risk, capacity, or external constraints have changed enough to invalidate major commitments. Hold course when the pain is execution discipline, dependency management, or governance latency, because replanning those problems with a new deck does not fix them.
+
+
+![Hero image of a physical threshold gate on a boardroom table separating hold-course blocks from replan evidence stones.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png)
+
+
 
 Transformation portfolios fail in two opposite ways.
 
@@ -11993,6 +12748,11 @@ In those cases, the portfolio needs intervention and execution repair, not a new
 | execution drift without constraint change | hold course, tighten intervention |
 | mixed signals | time-box a focused replan slice, not a whole portfolio rewrite |
 
+
+
+![Analytical image of a threshold gate splitting hold-course and replan lanes using abstract evidence tokens.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/analytical.png)
+
+
 ## Reality check: replanning pressure usually spikes when leadership wants emotional relief faster than operational truth
 
 The current plan feels exposed.
@@ -12021,6 +12781,11 @@ Mixing the two is how portfolios lose credibility.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course-trans-pl', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'pl', 'When to Replan a Transformation Portfolio and When to Hold Course', 'leadership oscillates between frozen commitment and chaotic replanning, which trains the organization to either ignore the plan or distrust every new version', '**Bezposrednia odpowiedz:** replanuj, gdy material assumptions o value, risk, capacity albo external constraints zmienily sie na tyle, ze invaliduja major commitments. Hold course, gdy bol jest execution discipline, dependency management albo governance latency, bo replanning tych problemow nowym deckiem ich nie naprawia.
+
+
+![Hero image of a physical threshold gate on a boardroom table separating hold-course blocks from replan evidence stones.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png)
+
+
 
 Transformation portfolios fail na dwa przeciwne sposoby.
 
@@ -12071,6 +12836,11 @@ Wtedy portfolio potrzebuje interwencji i execution repair, a nie nowej plan narr
 | execution drift bez zmiany constraint | hold course, tighten intervention |
 | mixed signals | time-box focused replan slice, nie cale portfolio rewrite |
 
+
+
+![Analytical image of a threshold gate splitting hold-course and replan lanes using abstract evidence tokens.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/analytical.png)
+
+
 ## Reality check: presja na replanning zwykle rosnie wtedy, gdy leadership chce emocjonalnej ulgi szybciej niz operational truth
 
 Obecny plan czuje sie odsloniety.
@@ -12097,6 +12867,11 @@ Mieszanie tych dwoch to sposob, jak portfolio traci credibility.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course-trans-de', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'de', 'When to Replan a Transformation Portfolio and When to Hold Course', 'leadership oscillates between frozen commitment and chaotic replanning, which trains the organization to either ignore the plan or distrust every new version', '**Direktantwort:** planen Sie neu, wenn sich Annahmen zu Wert, Risiko, Kapazitaet oder externen Randbedingungen so veraendert haben, dass wesentliche Commitments ungueltig werden. Halten Sie Kurs, wenn das Problem Disziplin in der Ausfuehrung, Abhaengigkeitsmanagement oder Entscheidungslatenz in der Governance ist, denn Replanning dieser Probleme mit neuen Folien behebt sie nicht.
+
+
+![Hero image of a physical threshold gate on a boardroom table separating hold-course blocks from replan evidence stones.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png)
+
+
 
 Transformationsportfolio scheitern auf zwei gegenlaeufige Arten.
 
@@ -12147,6 +12922,11 @@ Dann braucht das Portfolio Intervention und Execution-Reparatur, keine neue Plan
 | Execution-Drift ohne Constraint-Aenderung | Kurs halten, Intervention verschaerfen |
 | gemischte Signale | fokussiertes Replanning-Slice zeitlich begrenzen, nicht ganzes Portfolio neu schreiben |
 
+
+
+![Analytical image of a threshold gate splitting hold-course and replan lanes using abstract evidence tokens.](/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/analytical.png)
+
+
 ## Reality check: Replanning-Druck steigt meist dann, wenn Leadership emotionale Entlastung schneller will als operative Wahrheit
 
 Der aktuelle Plan wirkt entbloesst.
@@ -12173,13 +12953,13 @@ Die beiden zu vermischen, ist wie Portfolios Glaubwuerdigkeit verlieren.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('125340b0-3136-48df-89c8-c03e7defe57e', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
+  ('609701a9-e25d-4cc6-8729-184c6c2f2cf0', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8851ac8b-d3a7-4058-afd4-76231634193a', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
+  ('33eba09e-de52-454f-96a1-cd0a323acdcc', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bb3fe875-8c41-4817-b5dc-f0c368d21e85', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
+  ('70a54a76-c35b-414c-a9d8-0eb84f6e8418', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12200,12 +12980,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 27_how_to_make_strategy_assumptions_visible_before_the_board_review
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-cat-consultify-governance-and-roi', '27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Strategy lead / board liaison / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-cat-consultify-governance-and-roi', '27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'published', 0, 1, 3, '/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy lead / board liaison / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review-trans-en', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'en', 'How to Make Strategy Assumptions Visible Before the Board Review', 'board reviews often compress months of ambiguity into a short narrative, which forces directors to judge outcomes without seeing the assumptions that actually drove commitments', '**Direct answer:** publish a one-page assumption register before the board pack lands: each assumption states the claim, the owner, what evidence would confirm or falsify it, and what you will do if it breaks. Boards make better decisions when assumptions are visible, not when they are implied between slide lines.
+
+
+![show exposed assumptions as a source of board discipline and friction, not a tidy register Scene: premium editorial photograph of a board table where one assumption dossier has been opened into a sparse field of blank evidence layers, challenge weights, and one contested marker pulled forward under a metal clip, while a polished narrative packet sits closed, displaced, and secondary](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png)
+
+
 
 Board packs are good at showing intent.
 
@@ -12256,6 +13041,11 @@ No one wants to hand directors a list of what might fail.
 
 But when downside logic stays hidden to protect momentum, the board is not approving a strategy with eyes open. It is approving a conclusion without its conditions.
 
+
+
+![Analytical image of a five-lane strategy assumption register built from physical trays, tokens, and evidence pieces.](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors treat assumptions as governance objects, not as vulnerabilities to hide.
@@ -12276,6 +13066,11 @@ Make assumptions visible early, owned, and testable.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review-trans-pl', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'pl', 'How to Make Strategy Assumptions Visible Before the Board Review', 'board reviews often compress months of ambiguity into a short narrative, which forces directors to judge outcomes without seeing the assumptions that actually drove commitments', '**Bezposrednia odpowiedz:** publikuj jednostronicowy assumption register zanim board pack wyladuje: kazda assumption podaje claim, ownera, co evidence potwierdzi albo obali i co zrobicie, jesli peknie. Boards podejmuja lepsze decyzje, gdy assumptions sa widoczne, a nie gdy sa implied miedzy liniami slajdow.
+
+
+![show exposed assumptions as a source of board discipline and friction, not a tidy register Scene: premium editorial photograph of a board table where one assumption dossier has been opened into a sparse field of blank evidence layers, challenge weights, and one contested marker pulled forward under a metal clip, while a polished narrative packet sits closed, displaced, and secondary](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png)
+
+
 
 Board packi sa dobre w pokazywaniu intent.
 
@@ -12326,6 +13121,11 @@ Nikt nie chce dawac directors listy tego, co moze fail.
 
 Ale gdy downside logic zostaje ukryta, by chronic momentum, board nie zatwierdza strategii z otwartymi oczami. Zatwierdza conclusion bez jej warunkow.
 
+
+
+![Analytical image of a five-lane strategy assumption register built from physical trays, tokens, and evidence pieces.](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy nie
 
 **Dziala**, gdy sponsorzy traktuja assumptions jako governance objects, nie jako vulnerabilities do ukrycia.
@@ -12346,6 +13146,11 @@ Zrob assumptions widoczne wczesnie, owned i testable.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review-trans-de', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'de', 'How to Make Strategy Assumptions Visible Before the Board Review', 'board reviews often compress months of ambiguity into a short narrative, which forces directors to judge outcomes without seeing the assumptions that actually drove commitments', '**Direktantwort:** veroeffentlichen Sie vor dem Board-Pack ein einseitiges Annahmen-Register: jede Annahme nennt die Aussage, den Owner, welche Evidenz sie bestaetigen oder widerlegen wuerde, und was Sie tun, wenn sie bricht. Boards entscheiden besser, wenn Annahmen sichtbar sind, nicht wenn sie zwischen Folienzeilen impliziert werden.
+
+
+![show exposed assumptions as a source of board discipline and friction, not a tidy register Scene: premium editorial photograph of a board table where one assumption dossier has been opened into a sparse field of blank evidence layers, challenge weights, and one contested marker pulled forward under a metal clip, while a polished narrative packet sits closed, displaced, and secondary](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png)
+
+
 
 Board-Packs zeigen Absicht gut.
 
@@ -12396,6 +13201,11 @@ Niemand will Direktoren eine Liste dessen geben, was scheitern koennte.
 
 Doch wenn Downside-Logik verborgen bleibt, um Momentum zu schuetzen, genehmigt das Board keine Strategie mit offenen Augen. Es genehmigt eine Schlussfolgerung ohne ihre Bedingungen.
 
+
+
+![Analytical image of a five-lane strategy assumption register built from physical trays, tokens, and evidence pieces.](/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/analytical.png)
+
+
 ## Wann es funktioniert und wann nicht
 
 **Funktioniert**, wenn Sponsoren Annahmen als Governance-Objekte behandeln, nicht als versteckbare Verletzlichkeiten.
@@ -12416,13 +13226,13 @@ Machen Sie Annahmen frueh sichtbar, mit Ownern und testbarer Evidenz.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ddd68f0b-2c68-4c20-ae9c-6ab5e1be351c', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
+  ('ca74f22d-c07d-466e-a061-85d94743818b', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('657aa114-5908-45cf-bcf4-5f464d84973f', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
+  ('a0bb2f13-5ae5-4e09-9cf5-ab1bb26be837', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e5b0df62-af3c-4d0d-876a-54d77f32f7f4', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
+  ('096b5357-2a01-4522-b883-03817df23896', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12443,12 +13253,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 28_why_transformation_capacity_breaks_before_strategy_does
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-cat-consultify-governance-and-roi', '28_why_transformation_capacity_breaks_before_strategy_does', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["COO / CHRO partner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-cat-consultify-governance-and-roi', '28_why_transformation_capacity_breaks_before_strategy_does', 'published', 0, 1, 3, '/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png', '["assessment","dashboard","roadmap"]', '["COO / CHRO partner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does-trans-en', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'en', 'Why Transformation Capacity Breaks Before Strategy Does', 'leadership keeps refining strategy language while delivery capacity quietly collapses, which makes the portfolio look aligned on paper and impossible in practice', '**Direct answer:** capacity breaks first because real hours, attention spans, and integration load are harder to politic than strategy slides. When capacity is treated as infinite, strategy drift shows up later as missed milestones, quality collapse, and hidden borrowing from run-the-business work.
+
+
+![Hero image of a planning table contrasting a clean strategy packet with an overloaded capacity rack.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png)
+
+
 
 Strategy documents can stay coherent longer than organizations can stay executable.
 
@@ -12500,6 +13315,11 @@ The slide language still feels aligned.
 
 That surface coherence can delay intervention long enough for teams to absorb the overload privately until missed delivery gets misread as commitment failure.
 
+
+
+![Analytical image of five physical workload lanes converging into choke points on a tabletop delivery board.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/analytical.png)
+
+
 ## When this insight changes decisions
 
 This insight matters when it forces:
@@ -12523,6 +13343,11 @@ Capacity fails quietly until the strategy narrative absorbs the blame.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does-trans-pl', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'pl', 'Why Transformation Capacity Breaks Before Strategy Does', 'leadership keeps refining strategy language while delivery capacity quietly collapses, which makes the portfolio look aligned on paper and impossible in practice', '**Bezposrednia odpowiedz:** capacity peka pierwsze, bo real hours, attention spans i integration load sa trudniejsze do polityki niz strategy slides. Gdy capacity jest traktowane jak infinite, strategy drift pokazuje sie pozniej jako missed milestones, quality collapse i hidden borrowing z run-the-business work.
+
+
+![Hero image of a planning table contrasting a clean strategy packet with an overloaded capacity rack.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png)
+
+
 
 Strategy documents moga zostac coherent dluzej niz organizacja moze zostac executable.
 
@@ -12574,6 +13399,11 @@ Jezyk na slajdach nadal czuje sie aligned.
 
 Ta powierzchowna spojnosc potrafi opoznic interwencje wystarczajaco dlugo, by zespoly prywatnie wchlonely overload, a niewykonanie zostalo blednie odczytane jako brak commitment.
 
+
+
+![Analytical image of five physical workload lanes converging into choke points on a tabletop delivery board.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/analytical.png)
+
+
 ## Kiedy ta insight zmienia decyzje
 
 Ta insight ma znaczenie, gdy wymusza:
@@ -12597,6 +13427,11 @@ Capacity failuje cicho, dopoki strategy narrative nie pochlonie winy.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does-trans-de', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'de', 'Why Transformation Capacity Breaks Before Strategy Does', 'leadership keeps refining strategy language while delivery capacity quietly collapses, which makes the portfolio look aligned on paper and impossible in practice', '**Direktantwort:** Kapazitaet bricht zuerst, weil echte Stunden, Aufmerksamkeitsspanne und Integrationslast schwerer zu politisieren sind als Strategie-Folien. Wenn Kapazitaet als unendlich behandelt wird, zeigt sich Strategie-Drift spaeter als verpasste Meilensteine, Qualitaetskollaps und verstecktes Borgen vom Tagesgeschaeft.
+
+
+![Hero image of a planning table contrasting a clean strategy packet with an overloaded capacity rack.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png)
+
+
 
 Strategie-Dokumente koennen laenger koharent bleiben als Organisationen ausfuehrbar bleiben koennen.
 
@@ -12648,6 +13483,11 @@ Die Sprache auf den Folien fuehlt sich weiter aligned an.
 
 Diese Oberflaechen-Koharenz kann Intervention lange genug verzoegern, damit Teams die Ueberlast privat absorbieren, bis verpasste Delivery als Commitment-Problem fehlgelesen wird.
 
+
+
+![Analytical image of five physical workload lanes converging into choke points on a tabletop delivery board.](/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/analytical.png)
+
+
 ## Wann diese Erkenntnis Entscheidungen aendert
 
 Sie zaehlt, wenn sie erzwingt:
@@ -12671,13 +13511,13 @@ Kapazitaet scheitert leise, bis die Strategie-Narrative die Schuld absorbiert.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f6430724-6a2b-4f07-a3f7-957c66fcab18', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
+  ('7290b524-9ff5-4a5f-bd79-35c08cf3d284', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4073b953-aa76-4673-863a-f5e9aa73fc15', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
+  ('637d3807-4475-4145-896c-ed858b6ed2eb', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fb38180e-83df-417a-875c-270888a8480c', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
+  ('ed8951c6-0ae9-40c3-9a28-b0a54b9bbf60', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12698,12 +13538,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 29_how_to_link_transformation_initiatives_to_budget_reality
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-cat-consultify-governance-and-roi', '29_how_to_link_transformation_initiatives_to_budget_reality', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["CFO / PMO lead / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-cat-consultify-governance-and-roi', '29_how_to_link_transformation_initiatives_to_budget_reality', 'published', 0, 1, 3, '/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / PMO lead / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality-trans-en', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'en', 'How to Link Transformation Initiatives to Budget Reality', 'transformation portfolios often float above budget mechanics, which creates surprise cash asks, weak trade-offs, and initiatives that survive because they are politically sticky rather than financially grounded', '**Direct answer:** link every initiative to budget reality with three anchors: approved spend envelope, expected cash curve by quarter, and a governed change rule for scope shifts. If an initiative cannot state those three anchors, it is not ready to compete for portfolio capacity.
+
+
+![Hero image of initiative blocks clipped to a budget board with a cash-curve track in the background.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png)
+
+
 
 Transformation work is not only a priority list.
 
@@ -12744,6 +13589,11 @@ This model is simple enough for executives and strict enough for finance partner
 | narrative-first | themes, milestones, initiative names | late cash surprises |
 | budget-grounded | envelopes, curves, governed changes | more upfront friction, fewer shocks |
 
+
+
+![Analytical image of a funding board with three anchor stations linking initiative tokens to budget and timing controls.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/analytical.png)
+
+
 ## Reality check: budget detachment usually survives because each initiative can sound affordable when viewed alone
 
 No single line looks fatal.
@@ -12772,6 +13622,11 @@ Make envelopes, cash timing, and change rules visible and owned.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality-trans-pl', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'pl', 'How to Link Transformation Initiatives to Budget Reality', 'transformation portfolios often float above budget mechanics, which creates surprise cash asks, weak trade-offs, and initiatives that survive because they are politically sticky rather than financially grounded', '**Bezposrednia odpowiedz:** lacz kazda initiative z budget reality trzema anchorami: approved spend envelope, expected cash curve per quarter i governed change rule dla scope shifts. Jesli initiative nie moze podac tych trzech anchorow, nie jest gotowa konkurowac o portfolio capacity.
+
+
+![Hero image of initiative blocks clipped to a budget board with a cash-curve track in the background.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png)
+
+
 
 Transformation work to nie tylko priority list.
 
@@ -12812,6 +13667,11 @@ Ten model jest prosty dla executive i wystarczajaco strict dla finance partnerow
 | narrative-first | themes, milestones, initiative names | pozne cash surprises |
 | budget-grounded | envelopes, curves, governed changes | wiecej friction na starcie, mniej shocks |
 
+
+
+![Analytical image of a funding board with three anchor stations linking initiative tokens to budget and timing controls.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/analytical.png)
+
+
 ## Reality check: oderwanie od budzetu zwykle utrzymuje sie, bo kazda initiative osobno potrafi brzmiec na przystepna
 
 Zadna pojedyncza linia nie wyglada fatalnie.
@@ -12842,6 +13702,11 @@ Zrob envelopes, cash timing i change rules widoczne i owned.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality-trans-de', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'de', 'How to Link Transformation Initiatives to Budget Reality', 'transformation portfolios often float above budget mechanics, which creates surprise cash asks, weak trade-offs, and initiatives that survive because they are politically sticky rather than financially grounded', '**Direktantwort:** verbinden Sie jede Initiative mit Budgetrealitaet ueber drei Anker: genehmigtes Ausgabenlimit, erwartete Cash-Kurve pro Quartal und eine regelgeleitete Aenderungsregel fuer Scope-Shifts. Wenn eine Initiative diese drei Anker nicht benennen kann, ist sie nicht bereit, um Portfolio-Kapazitaet zu konkurrieren.
+
+
+![Hero image of initiative blocks clipped to a budget board with a cash-curve track in the background.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png)
+
+
 
 Transformationsarbeit ist nicht nur eine Prioritaetenliste.
 
@@ -12882,6 +13747,11 @@ Das Modell ist fuer Fuehrung einfach genug und fuer Finance-Partner streng genug
 | narrative-first | Themen, Meilensteine, Initiativnamen | spaete Cash-Ueberraschungen |
 | budget-grounded | Envelopes, Kurven, regelgeleitete Aenderungen | mehr Friktion vorweg, weniger Schocks |
 
+
+
+![Analytical image of a funding board with three anchor stations linking initiative tokens to budget and timing controls.](/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/analytical.png)
+
+
 ## Reality check: Budget-Abkopplung ueberlebt meist, weil jede Initiative fuer sich bezahlbar klingen kann
 
 Keine einzelne Zeile wirkt fatal.
@@ -12912,13 +13782,13 @@ Machen Sie Envelopes, Cash-Timing und Change-Regeln sichtbar und mit Ownern vers
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4f5039c2-01d3-402a-9d6c-606451b83921', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
+  ('fa55177c-ebae-4348-bca2-dc8931bfdc29', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e8b7cc61-b65f-445a-b79c-de7852f79354', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
+  ('695f0d42-39b0-4551-ad9f-4b6b73af5bc2', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e1027294-151d-4546-9ba6-f25b3280089c', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
+  ('6f51d049-cd6f-4902-a192-ae9c5268c3c7', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12936,12 +13806,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 30_what_executive_sponsors_should_never_delegate_in_transformation
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-cat-consultify-governance-and-roi', '30_what_executive_sponsors_should_never_delegate_in_transformation', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Executive sponsor / CEO / board-facing owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-cat-consultify-governance-and-roi', '30_what_executive_sponsors_should_never_delegate_in_transformation', 'published', 0, 1, 3, '/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / CEO / board-facing owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation-trans-en', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'en', 'What Executive Sponsors Should Never Delegate in Transformation', 'sponsors often delegate transformation ownership in ways that look efficient, which fragments accountability and turns governance into theater because nobody with authority remains visibly responsible for trade-offs', '**Direct answer:** never fully delegate the decisions that reorder priorities, stop work, resolve executive deadlocks, or change what leadership promises to investors and the board. Delegation should execute the portfolio, not replace sponsor judgment on irreversible trade-offs.
+
+
+![Hero image of an executive sponsor at a judgment table with a physical decision gate while teams work in the background.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png)
+
+
 
 Good delegation makes transformation scalable.
 
@@ -12989,6 +13864,11 @@ The team still says leadership is engaged.
 
 But if the hardest stop, merge, and deadlock-breaking calls keep being routed sideways or delayed, support is present while sponsorship is missing.
 
+
+
+![Analytical image of a governance board with execution lanes separated from a sponsor judgment lane by a physical gate.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors model that hard decisions return to them quickly.
@@ -13009,6 +13889,11 @@ Keep trade-offs, stops, deadlocks, value claims, and board alignment where accou
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation-trans-pl', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'pl', 'What Executive Sponsors Should Never Delegate in Transformation', 'sponsors often delegate transformation ownership in ways that look efficient, which fragments accountability and turns governance into theater because nobody with authority remains visibly responsible for trade-offs', '**Bezposrednia odpowiedz:** nigdy w pelni nie deleguj decyzji, ktore reorderuja priorities, stopuja prace, rozwiazuja executive deadlocks albo zmieniaja to, co leadership obiecuje investorom i board. Delegation ma wykonywac portfolio, a nie zastepowac sponsor judgment na irreversible trade-offs.
+
+
+![Hero image of an executive sponsor at a judgment table with a physical decision gate while teams work in the background.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png)
+
+
 
 Dobra delegation robi transformation scalable.
 
@@ -13056,6 +13941,11 @@ Zespol nadal mowi, ze leadership jest engaged.
 
 Ale jesli najtrudniejsze stop, merge i deadlock-breaking calls sa stale przepychane bokiem albo opozniane, support jest obecny, a sponsorship nie.
 
+
+
+![Analytical image of a governance board with execution lanes separated from a sponsor judgment lane by a physical gate.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy nie
 
 **Dziala**, gdy sponsorzy modeluja, ze twarde decyzje szybko do nich wracaja.
@@ -13076,6 +13966,11 @@ Trzymaj trade-offs, stops, deadlocks, value claims i board alignment tam, gdzie 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation-trans-de', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'de', 'What Executive Sponsors Should Never Delegate in Transformation', 'sponsors often delegate transformation ownership in ways that look efficient, which fragments accountability and turns governance into theater because nobody with authority remains visibly responsible for trade-offs', '**Direktantwort:** delegieren Sie niemals vollstaendig Entscheidungen, die Prioritaeten neu ordnen, Arbeit stoppen, Executive-Deadlocks loesen oder aendern, was Fuehrung Investoren und dem Board verspricht. Delegation soll das Portfolio ausfuehren, nicht Sponsor-Urteil bei irreversiblen Trade-offs ersetzen.
+
+
+![Hero image of an executive sponsor at a judgment table with a physical decision gate while teams work in the background.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png)
+
+
 
 Gute Delegation skaliert Transformation.
 
@@ -13123,6 +14018,11 @@ Das Team sagt weiterhin, Leadership sei engagiert.
 
 Doch wenn die haertesten Stop-, Merge- und Deadlock-Entscheidungen seitlich geschoben oder verzoegert werden, ist Support praesent, waehrend Sponsorship fehlt.
 
+
+
+![Analytical image of a governance board with execution lanes separated from a sponsor judgment lane by a physical gate.](/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/analytical.png)
+
+
 ## Wann es funktioniert und wann nicht
 
 **Funktioniert**, wenn Sponsoren vormachen, dass harte Entscheidungen schnell zu ihnen zurueckkehren.
@@ -13143,13 +14043,13 @@ Halten Sie Trade-offs, Stops, Deadlocks, Wert-Behauptungen und Board-Alignment d
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2731a5b8-6464-44a7-8693-accd98e0bd16', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
+  ('ad85e808-9a78-4810-bbed-e536c97f124a', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8e3f0c1f-98c8-46ed-9e6c-e1a1345219e8', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
+  ('c9a8e3e0-f33e-43a9-ae49-7d507cdd32da', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e2026375-bbc4-4cce-83df-7f79ed5e23bd', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
+  ('879a27b9-5048-4d53-b808-c90d6007354e', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13170,12 +14070,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 31_how_to_build_a_live_transformation_risk_register
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-cat-consultify-governance-and-roi', '31_how_to_build_a_live_transformation_risk_register', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Risk owner / transformation PMO / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-cat-consultify-governance-and-roi', '31_how_to_build_a_live_transformation_risk_register', 'published', 0, 1, 3, '/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png', '["assessment","dashboard","roadmap"]', '["Risk owner / transformation PMO / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-31_how_to_build_a_live_transformation_risk_register-trans-en', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'en', 'How to Build a Live Transformation Risk Register', 'risk registers often die in static spreadsheets after approval, which means leadership reviews risks as paperwork while real issues show up late as surprises in delivery and finance', '**Direct answer:** build a live register by treating risks as operational objects: update them when triggers move, tie them to initiatives and assumptions, and review them in the same forums where you review delivery truth and budget variance. A register that only updates quarterly is a compliance artifact, not a control mechanism.
+
+
+![Hero image of a governance table contrasting a faded spreadsheet sheet with a live risk-object board.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png)
+
+
 
 Risk management in transformation is not a document exercise.
 
@@ -13219,6 +14124,11 @@ For each risk entry, capture:
 | static | periodic compliance refresh | surprises in delivery |
 | live | triggers, decisions, and delivery truth | earlier intervention |
 
+
+
+![Analytical image of a six-part live risk register built from trays, tokens, and initiative links.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/analytical.png)
+
+
 ## Reality check: risk registers often look disciplined longest when the organization has stopped expecting them to change decisions
 
 The template is complete.
@@ -13249,6 +14159,11 @@ Make it live, owned, trigger-based, and embedded in real governance forums.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-31_how_to_build_a_live_transformation_risk_register-trans-pl', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'pl', 'How to Build a Live Transformation Risk Register', 'risk registers often die in static spreadsheets after approval, which means leadership reviews risks as paperwork while real issues show up late as surprises in delivery and finance', '**Bezposrednia odpowiedz:** buduj live register, traktujac ryzyka jako operational objects: aktualizuj je, gdy triggers sie ruszaja, wiaz je z initiatives i assumptions i reviewuj w tych samych forumach, gdzie reviewujesz delivery truth i budget variance. Register, ktory aktualizuje sie tylko quarterly, to compliance artifact, nie control mechanism.
+
+
+![Hero image of a governance table contrasting a faded spreadsheet sheet with a live risk-object board.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png)
+
+
 
 Risk management w transformacji to nie document exercise.
 
@@ -13292,6 +14207,11 @@ Dla kazdego risk entry zapisz:
 | static | periodic compliance refresh | surprises w delivery |
 | live | triggers, decisions i delivery truth | wczesniejsza interwencja |
 
+
+
+![Analytical image of a six-part live risk register built from trays, tokens, and initiative links.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/analytical.png)
+
+
 ## Reality check: risk registers najdluzej wygladaja na zdyscyplinowane wtedy, gdy organizacja przestala oczekiwac, ze maja zmieniac decyzje
 
 Template jest complete.
@@ -13322,6 +14242,11 @@ Zrob go live, owned, trigger-based i embedded w real governance forums.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-31_how_to_build_a_live_transformation_risk_register-trans-de', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'de', 'How to Build a Live Transformation Risk Register', 'risk registers often die in static spreadsheets after approval, which means leadership reviews risks as paperwork while real issues show up late as surprises in delivery and finance', '**Direktantwort:** bauen Sie ein live Register, indem Sie Risiken als operative Objekte behandeln: aktualisieren Sie sie, wenn sich Trigger bewegen, verknuepfen Sie sie mit Initiativen und Annahmen, und pruefen Sie sie in denselben Foren wie Delivery-Wahrheit und Budget-Varianz. Ein Register, das nur quartalsweise aktualisiert wird, ist ein Compliance-Artefakt, kein Steuerungsmechanismus.
+
+
+![Hero image of a governance table contrasting a faded spreadsheet sheet with a live risk-object board.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png)
+
+
 
 Risikomanagement in Transformation ist keine Dokumentenuebung.
 
@@ -13365,6 +14290,11 @@ Pro Risiko-Eintrag erfassen:
 | statisch | periodische Compliance-Aktualisierung | Ueberraschungen in Delivery |
 | live | Trigger, Entscheidungen und Delivery-Wahrheit | fruehere Intervention |
 
+
+
+![Analytical image of a six-part live risk register built from trays, tokens, and initiative links.](/kb/consultify/31_how_to_build_a_live_transformation_risk_register/analytical.png)
+
+
 ## Reality check: Risiko-Register wirken oft am laengsten diszipliniert, wenn die Organisation aufgehort hat zu erwarten, dass sie Entscheidungen veraendern
 
 Die Vorlage ist vollstaendig.
@@ -13395,13 +14325,13 @@ Machen Sie es live, owner-gefuehrt, trigger-basiert und in echte Governance-Fore
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b2deb4b0-c105-41ce-bcb7-9be051f056f3', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
+  ('7e69ffa2-7a29-498c-9e84-b4ad90cc36ca', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dd5fa3b5-ccd7-490e-a650-ff8c49c10265', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
+  ('cff7e364-2b94-4ef1-9653-dc4c13dc54b2', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f33785af-2fb8-43f7-b937-fc72a4fda807', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
+  ('64b08f6a-3b19-4061-baed-71dbfcfabefa', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13419,12 +14349,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 32_when_a_transformation_program_needs_intervention_not_more_reporting
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-cat-consultify-execution-and-rollout', '32_when_a_transformation_program_needs_intervention_not_more_reporting', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation owner / sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-cat-consultify-execution-and-rollout', '32_when_a_transformation_program_needs_intervention_not_more_reporting', 'published', 0, 1, 3, '/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting-trans-en', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'en', 'When a Transformation Program Needs Intervention, Not More Reporting', 'struggling programs often get more reporting layers, which increases administrative load without changing ownership, decisions, or the constraints that caused drift in the first place', '**Direct answer:** intervene when the program shows sustained decision latency, recurring deadlocks, budget or capacity breaches without trade-offs, and risk triggers that fire without a recorded response. If the proposed fix is only another report, you are likely treating symptoms while the underlying control problem continues.
+
+
+![Hero image of blurred report packs beside a compact intervention chamber on an executive table.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png)
+
+
 
 Reporting can be necessary.
 
@@ -13473,6 +14408,11 @@ When signals trigger, run a focused intervention cycle:
 | more reporting | visibility artifacts | slower teams, same conflicts |
 | intervention | ownership, trade-offs, governance load | short-term discomfort, restored control |
 
+
+
+![Analytical image of a six-station intervention board built from physical trays, levers, and authority markers.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors accept that intervention is a leadership act, not a PMO task.
@@ -13493,6 +14433,11 @@ Recognize the signals early and act with decision intent.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting-trans-pl', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'pl', 'When a Transformation Program Needs Intervention, Not More Reporting', 'struggling programs often get more reporting layers, which increases administrative load without changing ownership, decisions, or the constraints that caused drift in the first place', '**Bezposrednia odpowiedz:** interweniuj, gdy program pokazuje sustained decision latency, recurring deadlocks, budget albo capacity breaches bez trade-offs i risk triggers, ktore fire bez recorded response. Jesli proposed fix to tylko kolejny report, prawdopodobnie leczysz symptomy, podczas gdy underlying control problem trwa.
+
+
+![Hero image of blurred report packs beside a compact intervention chamber on an executive table.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png)
+
+
 
 Reporting moze byc potrzebny.
 
@@ -13541,6 +14486,11 @@ Gdy sygnaly triggeruja, prowadz focused intervention cycle:
 | wiecej reportingu | visibility artifacts | wolniejsze zespoly, te same konflikty |
 | interwencja | ownership, trade-offs, governance load | krotkoterminowy discomfort, restored control |
 
+
+
+![Analytical image of a six-station intervention board built from physical trays, levers, and authority markers.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy nie
 
 **Dziala**, gdy sponsorzy akceptuja, ze interwencja to leadership act, nie PMO task.
@@ -13561,6 +14511,11 @@ Rozpoznawaj sygnaly wczesnie i dzialaj z decision intent.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting-trans-de', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'de', 'When a Transformation Program Needs Intervention, Not More Reporting', 'struggling programs often get more reporting layers, which increases administrative load without changing ownership, decisions, or the constraints that caused drift in the first place', '**Direktantwort:** intervenieren Sie bei anhaltender Entscheidungslatenz, wiederkehrenden Deadlocks, Budget- oder Kapazitaetsverletzungen ohne Trade-offs und Risiko-Triggern, die ohne dokumentierte Response ausloesen. Wenn der vorgeschlagene Fix nur ein weiterer Report ist, behandeln Sie wahrscheinlich Symptome, waehrend das zugrunde liegende Steuerungsproblem weiterlaeuft.
+
+
+![Hero image of blurred report packs beside a compact intervention chamber on an executive table.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png)
+
+
 
 Reporting kann noetig sein.
 
@@ -13609,6 +14564,11 @@ Wenn Signale ausloesen, fuehren Sie einen fokussierten Interventionszyklus:
 | mehr Reporting | Sichtbarkeits-Artefakte | langsamere Teams, gleiche Konflikte |
 | Intervention | Ownership, Trade-offs, Governance-Last | kurzfristige Unbequemlichkeit, wiederhergestellte Kontrolle |
 
+
+
+![Analytical image of a six-station intervention board built from physical trays, levers, and authority markers.](/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/analytical.png)
+
+
 ## Wann es funktioniert und wann nicht
 
 **Funktioniert**, wenn Sponsoren akzeptieren, dass Intervention ein Fuehrungsakt ist, keine PMO-Aufgabe.
@@ -13629,13 +14589,13 @@ Erkennen Sie Signale frueh und handeln Sie mit Entscheidungsabsicht.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4dce3bdf-5dd2-44ba-84f2-b317d812665c', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
+  ('fb270704-fc75-4d67-936a-5c0bb06d72a6', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b3222c6c-3382-48f1-b265-08fcd0076c75', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
+  ('7e36b0fe-bd77-4481-8246-8c257b2a6786', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0bb65803-d315-4254-8e1c-989219cd5612', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
+  ('93bc871f-1d2e-44ec-aec5-caa9673bc5bc', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13656,12 +14616,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-cat-consultify-governance-and-roi', '33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation owner / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-cat-consultify-governance-and-roi', '33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'published', 0, 1, 4, '/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation owner / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes-trans-en', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'en', 'How to Design a Sponsor Cadence That Actually Changes Transformation Outcomes', 'sponsor calendars fill with passive updates, which preserves visibility while decision latency, ownership gaps, and portfolio trade-offs stay unresolved', '**Direct answer:** design sponsor cadence around a small set of repeating decision slots (portfolio trade-offs, intervention authorizations, capacity resets, and value-proof reviews), each with a time-boxed agenda, evidence submitted before the meeting, and published outcomes. If sponsors mostly hear narratives without choosing what stops, pauses, or changes, the cadence is theater with a senior audience.
+
+
+![Hero image of a sponsor cadence ring on a boardroom table during a calm decision session.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png)
+
+
 
 Sponsor time is the scarcest asset in a transformation.
 
@@ -13716,6 +14681,11 @@ Answer yes/no:
 
 Three or more "no" answers usually means you have a reporting cadence wearing sponsor labels.
 
+
+
+![Analytical image of a sponsor cadence board built from recurring decision stations and timing markers.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/analytical.png)
+
+
 ## Reality check: sponsor cadence often looks strongest right when it becomes easiest to coast on ritual
 
 The meetings are in the calendar.
@@ -13746,6 +14716,11 @@ If your cadence mostly circulates narratives, you are funding storytelling, not 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes-trans-pl', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'pl', 'How to Design a Sponsor Cadence That Actually Changes Transformation Outcomes', 'sponsor calendars fill with passive updates, which preserves visibility while decision latency, ownership gaps, and portfolio trade-offs stay unresolved', 'Rdzeniowy problem: kalendarze sponsorow wypelniaja pasywne aktualizacje, co utrzymuje widocznosc, podczas gdy opoznienia decyzji, luki wlasnosci i kompromisy portfolio pozostaja nierozwiazane  
+
+
+![Hero image of a sponsor cadence ring on a boardroom table during a calm decision session.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png)
+
+
 Glowna obietnica: kadencja sponsora dziala, gdy kazdy kontakt ma intencje decyzji, prog materialow do wczesniejszej lektury i widoczny zapis konsekwencji, a nie gdy optymalizuje frekwencje i wyglad slajdow
 
 **Bezposrednia odpowiedz:** projektuj kadencje sponsora wokol niewielkiej liczby powtarzalnych slotow decyzyjnych (kompromisy portfolio, autoryzacja interwencji, reset zdolnosci operacyjnych i przeglady dowodu wartosci), kazdy z czasowo ograniczona agenda, materialami dowodowymi przed spotkaniem i opublikowanymi skutkami. Jesli sponsorzy glownie sluchaja narracji bez wyboru tego, co ma przestac, pauzowac lub sie zmienic, kadencja jest teatrem z publicznoscia na najwyzszym szczeblu.
@@ -13803,6 +14778,11 @@ Odpowiedz tak/nie:
 
 Trzy lub wiecej odpowiedzi "nie" zwykle oznacza kadencje raportowa z etykietami sponsora.
 
+
+
+![Analytical image of a sponsor cadence board built from recurring decision stations and timing markers.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/analytical.png)
+
+
 ## Reality check: kadencja sponsora czesto wyglada najmocniej wtedy, gdy najlatwiej zaczac plynac na rytuale
 
 Spotkania sa w kalendarzu.
@@ -13833,6 +14813,11 @@ Jesli kadencja glownie krazy narracjami, finansujesz opowiadanie historii, a nie
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes-trans-de', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'de', 'How to Design a Sponsor Cadence That Actually Changes Transformation Outcomes', 'sponsor calendars fill with passive updates, which preserves visibility while decision latency, ownership gaps, and portfolio trade-offs stay unresolved', 'Kernversprechen: Ein Sponsor-Takt funktioniert, wenn jeder Beruehrungspunkt Entscheidungsintention, Vorlese-Anforderung und sichtbare Konsequenzen hat, nicht wenn er Anwesenheit und Slide-Glanz optimiert
+
+
+![Hero image of a sponsor cadence ring on a boardroom table during a calm decision session.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png)
+
+
 
 **Direkte Antwort:** Gestalten Sie den Sponsor-Takt um wenige wiederkehrende Entscheidungsfenster (Portfolio-Kompromisse, Interventionen, Kapazitaets-Resets und Value-Proof-Reviews), jeweils mit zeitlich begrenzter Agenda, vorgelegten Belegen vor dem Termin und veroeffentlichten Ergebnissen. Wenn Sponsoren vor allem Narrative hoeren, ohne zu waehlen, was stoppt, pausiert oder wechselt, ist der Takt Theater mit Fuehrungspublikum.
 
@@ -13889,6 +14874,11 @@ Beantworten Sie mit ja/nein:
 
 Drei oder mehr "nein" bedeuten meist: ein Reporting-Takt mit Sponsor-Etikett.
 
+
+
+![Analytical image of a sponsor cadence board built from recurring decision stations and timing markers.](/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/analytical.png)
+
+
 ## Reality check: Sponsor-Takt wirkt oft genau dann am staerksten, wenn Ritual am leichtesten die Kontrolle ersetzt
 
 Die Meetings stehen im Kalender.
@@ -13919,13 +14909,13 @@ Wenn Ihr Takt vor allem Narrative zirkuliert, finanzieren Sie Storytelling, nich
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('062d6de2-8fe9-414f-806a-6768a943c9e8', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
+  ('16891adf-6843-4cba-9d21-9e54a5817550', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('38c706fe-4ceb-443d-98cf-dedb693d1cac', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
+  ('9b990bd3-6ae7-4c12-b682-b1bdf74dc669', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('aa6f1021-623d-4e0c-8899-8da8f918e90b', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
+  ('0595ba59-32b0-40f8-ae19-925c6bebfba7', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13946,12 +14936,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 34_when_a_transformation_portfolio_should_stop_funding_an_initiative
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-cat-consultify-governance-and-roi', '34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["CFO / portfolio sponsor / transformation steering owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-cat-consultify-governance-and-roi', '34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'published', 0, 1, 4, '/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / portfolio sponsor / transformation steering owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative-trans-en', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'en', 'When a Transformation Portfolio Should Stop Funding an Initiative', 'weak portfolios keep funding initiatives to avoid sponsor conflict, which burns capacity and delays honest portfolio trade-offs while green plans hide structural failure', '**Direct answer:** stop or pause funding when the initiative repeatedly misses decision deadlines tied to value hypotheses, when trailing outcomes diverge from the case without a credible recovery plan, when critical dependencies stay unresolved after a governed escalation path, or when the same risk class returns without recorded portfolio response. Continuing spend to preserve political calm is a portfolio failure mode, not patience.
+
+
+![Hero image of an initiative token arriving at a funding-stop gate beside active lanes and a reallocation tray.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png)
+
+
 
 Portfolio management is not only about starting work.
 
@@ -14007,6 +15002,11 @@ It only proves the portfolio has already paid to learn something it may still re
 | pause with recovery criteria | disciplined ownership | clarity within weeks |
 | stop with documented rationale | adult portfolio hygiene | freed capacity, faster reprioritization |
 
+
+
+![Analytical image of a six-station defunding board with capital markers, evidence tokens, and reallocation trays.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/analytical.png)
+
+
 ## Step sequence: run a defunding forum without drama
 
 1. **Pre-read pack:** value case, trailing proof, dependency map, capacity truth, open risks  
@@ -14035,6 +15035,11 @@ If you never defund, you do not have a portfolio. You have a commitment pile.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative-trans-pl', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'pl', 'When a Transformation Portfolio Should Stop Funding an Initiative', 'weak portfolios keep funding initiatives to avoid sponsor conflict, which burns capacity and delays honest portfolio trade-offs while green plans hide structural failure', 'Rdzeniowy problem: slabe portfolio utrzymuja finansowanie inicjatyw, by uniknac konfliktu sponsorow, co pali zdolnosci operacyjne i opoznia uczciwe kompromisy portfolio, podczas gdy zielone plany ukrywaja strukturalna porazke  
+
+
+![Hero image of an initiative token arriving at a funding-stop gate beside active lanes and a reallocation tray.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png)
+
+
 Glowna obietnica: mozesz zatrzymac lub wstrzymac finansowanie z dyscyplina, gdy peka dowod wartosci, gdy zdolnosci sa nie do odzyskania, gdy impas zaleznosci trwa po eskalacji lub gdy governance nie zapewnia wlasnosci
 
 **Bezposrednia odpowiedz:** zatrzymaj lub wstrzymaj finansowanie, gdy inicjatywa wielokrotnie nie trzyma terminow decyzji powiazanych z hipotezami wartosci, gdy wyniki nastepcze rozjezdzaja sie z biznes case bez wiarygodnego planu odbudowy, gdy krytyczne zaleznosci pozostaja nierozwiazane po rzadzonej sciezce eskalacji lub gdy ta sama klasa ryzyka wraca bez utrwalonej odpowiedzi portfolio. Kontynuacja wydatkow, by zachowac spokoj polityczny, to tryb porazki portfolio, nie cierpliwosc.
@@ -14093,6 +15098,11 @@ Dowodzi tylko, ze portfolio juz zaplacilo za nauke, na ktora moze nadal odmawiac
 | pauza z kryteriami odbudowy | odpowiedzialna wlasnosc | jasnosc w ciagu tygodni |
 | stop z udokumentowana racja | higiena portfolio doroslych | uwolnione zdolnosci, szybsza repriorytetyzacja |
 
+
+
+![Analytical image of a six-station defunding board with capital markers, evidence tokens, and reallocation trays.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/analytical.png)
+
+
 ## Sekwencja krokow: forum wstrzymania finansowania bez dramatu
 
 1. **Pakiet do wczesniejszej lektury:** biznes case, dowod nastepczy, mapa zaleznosci, prawda o zdolnosciach, otwarte ryzyka  
@@ -14121,6 +15131,11 @@ Jesli nigdy nie wstrzymujesz finansowania, nie masz portfolio. Masz stos zobowia
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative-trans-de', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'de', 'When a Transformation Portfolio Should Stop Funding an Initiative', 'weak portfolios keep funding initiatives to avoid sponsor conflict, which burns capacity and delays honest portfolio trade-offs while green plans hide structural failure', 'Kernversprechen: Sie koennen mit Disziplin stoppen oder defunden, wenn Value Proof bricht, Kapazitaet nicht zurueckgewonnen werden kann, Abhaengigkeits-Deadlocks nach Eskalation bleiben oder Governance keine Ownership sichert
+
+
+![Hero image of an initiative token arriving at a funding-stop gate beside active lanes and a reallocation tray.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png)
+
+
 
 **Direkte Antwort:** Stoppen oder pausieren Sie die Finanzierung, wenn die Initiative wiederholt entscheidungsrelevante Termine zu Wert-Hypothesen verpasst, wenn nachlaufende Outcomes ohne glaubwuerdigen Recovery-Plan vom Business Case abweichen, wenn kritische Abhaengigkeiten nach einem regierten Eskalationspfad ungeloest bleiben oder wenn dieselbe Risikoklasse ohne dokumentierte Portfolio-Antwort zurueckkehrt. Ausgaben fortzusetzen, um politische Ruhe zu wahren, ist ein Portfolio-Fail-Modus, nicht Geduld.
 
@@ -14178,6 +15193,11 @@ Es beweist nur, dass das Portfolio bereits bezahlt hat, um etwas zu lernen, auf 
 | pausieren mit Recovery-Kriterien | disziplinierte Ownership | Klarheit innerhalb von Wochen |
 | stoppen mit dokumentierter Begruendung | erwachsene Portfolio-Hygiene | freie Kapazitaet, schnellere Repriorisierung |
 
+
+
+![Analytical image of a six-station defunding board with capital markers, evidence tokens, and reallocation trays.](/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/analytical.png)
+
+
 ## Schrittfolge: Defund-Forum ohne Theater
 
 1. **Vorlese-Pack:** Business Case, nachlaufender Proof, Abhaengigkeitskarte, Kapazitaetswahrheit, offene Risiken  
@@ -14206,13 +15226,13 @@ Wenn Sie nie defunden, haben Sie kein Portfolio. Sie haben einen Verpflichtungss
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6cb70643-ef0c-4fb4-8e60-11989e2fbd4b', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
+  ('3c12b1e4-1beb-45eb-afa6-b9d316f5dbce', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f3b0a160-124c-41ef-9f31-f9bbe74ac356', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
+  ('c6d3a7d1-c152-4aea-b7b1-b757c0738b7a', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c448134f-82db-4b47-9470-13981402671b', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
+  ('abda229b-bec2-4f94-8107-fa909ba4f4ea', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -14233,12 +15253,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 35_what_a_good_escalation_path_looks_like_in_cross_functional_programs
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-cat-consultify-execution-and-rollout', '35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["Program director / transformation PMO lead / interface owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-cat-consultify-execution-and-rollout', '35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'published', 0, 1, 4, '/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Program director / transformation PMO lead / interface owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs-trans-en', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'en', 'What a Good Escalation Path Looks Like in Cross-Functional Programs', 'cross-functional conflicts stall inside working teams because escalation is vague, which increases decision latency and turns every issue into a sponsor surprise or a political side deal', '**Direct answer:** a strong escalation path has three governed levels (working lead, functional executive, portfolio sponsor), each with a maximum age before automatic lift, a minimum evidence packet, and a default action if silence persists (for example, pause scope expansion or reassign dependency owner). If escalation ends in "we will discuss later" without a recorded decision, you have a delay path, not an escalation path.
+
+
+![show escalation as a fast evidence handoff across levels, not a political detour Scene: waist-high editorial—program director sliding a **vacuum-sealed evidence pouch** along a **butcher-block rail** through **three** brushed-brass gate frames (empty hourglasses without numerals) toward an **oak executive forum** edge—pure **physical** routing, **no** org-chart wall, **no** slide deck](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png)
+
+
 
 Cross-functional work fails quietly.
 
@@ -14303,6 +15328,11 @@ People assume that means the issue can be resolved quickly.
 
 But if the path does not define what evidence must arrive, by when, and what happens after silence, access to senior people creates interruption, not control.
 
+
+
+![Analytical image of a three-level escalation board with packet rails, timing gates, and routing markers.](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/analytical.png)
+
+
 ## Checklist: is your escalation path real?
 
 - every cross-functional dependency has named L1 and L2 owners  
@@ -14331,6 +15361,11 @@ If yours has no defaults and no aging, you are not escalating. You are waiting.'
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs-trans-pl', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'pl', 'What a Good Escalation Path Looks Like in Cross-Functional Programs', 'cross-functional conflicts stall inside working teams because escalation is vague, which increases decision latency and turns every issue into a sponsor surprise or a political side deal', 'Rdzeniowy problem: konflikty miedzyfunkcyjne zacinaja sie w zespolach roboczych, bo eskalacja jest niejasna, co zwieksza opoznienie decyzji i zamienia kazdy problem w niespodzianke dla sponsora lub polityczny uklad boczny  
+
+
+![show escalation as a fast evidence handoff across levels, not a political detour Scene: waist-high editorial—program director sliding a **vacuum-sealed evidence pouch** along a **butcher-block rail** through **three** brushed-brass gate frames (empty hourglasses without numerals) toward an **oak executive forum** edge—pure **physical** routing, **no** org-chart wall, **no** slide deck](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png)
+
+
 Glowna obietnica: dobra sciezka eskalacji nazywa poziomy, limity czasu, standardy dowodu, dzialania domyslne i wlascicieli decyzji, tak by impasy zamienialy sie w decyzje portfolio na przewidywalnym zegarze
 
 **Bezposrednia odpowiedz:** silna sciezka eskalacji ma trzy rzadzone poziomy (lider roboczy, wykonawca funkcjonalny, sponsor portfolio), kazdy z maksymalnym wiekiem przed automatycznym podniesieniem, minimalnym pakietem dowodow i dzialaniem domyslnym przy milczeniu (np. wstrzymanie ekspansji zakresu lub zmiana wlasciciela zaleznosci). Jesli eskalacja konczy sie na "omowimy pozniej" bez utrwalonej decyzji, masz sciezke opoznienia, nie eskalacji.
@@ -14398,6 +15433,11 @@ Ludzie zakladaja, ze to znaczy, iz problem da sie szybko rozwiazac.
 
 Ale jesli sciezka nie definiuje, jaki dowod ma przyjsc, do kiedy i co dzieje sie po milczeniu, dostep do seniorow tworzy przerwania, a nie kontrole.
 
+
+
+![Analytical image of a three-level escalation board with packet rails, timing gates, and routing markers.](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/analytical.png)
+
+
 ## Lista kontrolna: czy sciezka eskalacji jest realna?
 
 - kazda zaleznosc miedzyfunkcyjna ma nazwanych wlascicieli L1 i L2  
@@ -14426,6 +15466,11 @@ Jesli nie ma domyslow i starzenia, nie eskalujesz. Czekasz.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs-trans-de', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'de', 'What a Good Escalation Path Looks Like in Cross-Functional Programs', 'cross-functional conflicts stall inside working teams because escalation is vague, which increases decision latency and turns every issue into a sponsor surprise or a political side deal', 'Kernversprechen: Ein guter Eskalationspfad benennt Stufen, Zeitlimits, Evidenzstandards, Default-Aktionen und Entscheidungsowner, damit Deadlocks in Portfolio-Entscheidungen auf einer vorhersagbaren Uhr landen
+
+
+![show escalation as a fast evidence handoff across levels, not a political detour Scene: waist-high editorial—program director sliding a **vacuum-sealed evidence pouch** along a **butcher-block rail** through **three** brushed-brass gate frames (empty hourglasses without numerals) toward an **oak executive forum** edge—pure **physical** routing, **no** org-chart wall, **no** slide deck](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png)
+
+
 
 **Direkte Antwort:** Ein starker Eskalationspfad hat drei regierte Stufen (Arbeitslead, funktionaler Exekutiv-Owner, Portfolio-Sponsor), jeweils mit maximaler Alterung vor automatischem Lift, minimalem Evidenzpaket und Default bei Schweigen (zum Beispiel Scope-Expansion pausieren oder Abhaengigkeits-Owner wechseln). Wenn Eskalation in "wir besprechen spaeter" ohne dokumentierte Entscheidung endet, haben Sie einen Verzoegerungspfad, keine Eskalation.
 
@@ -14492,6 +15537,11 @@ Menschen nehmen an, das bedeute, dass sich das Thema schnell loesen laesst.
 
 Aber wenn der Pfad nicht definiert, welche Evidenz bis wann eintreffen muss und was nach Schweigen passiert, erzeugt der Zugang zu Senior-Leuten Unterbrechung, nicht Kontrolle.
 
+
+
+![Analytical image of a three-level escalation board with packet rails, timing gates, and routing markers.](/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/analytical.png)
+
+
 ## Checkliste: Ist Ihr Eskalationspfad real?
 
 - jede funktionsuebergreifende Abhaengigkeit hat benannte L1- und L2-Owner  
@@ -14520,13 +15570,13 @@ Wenn es keine Defaults und kein Aging gibt, eskalieren Sie nicht. Sie warten.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('57322183-47e3-456a-aa10-e8564159be3a', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
+  ('1e4c2a46-4ab3-4d55-baeb-2afe9a64a793', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d4e05cb1-65c8-4022-bb59-d47cc0c84937', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
+  ('b04035b0-1921-467f-bbb8-e131c87b8b0f', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8db906ee-4c9f-40ca-8b31-0134468ad855', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
+  ('c9cb38b7-a108-49d5-af51-50a37bfa8167', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -14547,12 +15597,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 36_how_to_reduce_governance_debt_in_large_transformation_programs
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-cat-consultify-governance-and-roi', '36_how_to_reduce_governance_debt_in_large_transformation_programs', 'published', 0, 1, 4, '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / chief of staff to sponsor / portfolio operations head"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-cat-consultify-governance-and-roi', '36_how_to_reduce_governance_debt_in_large_transformation_programs', 'published', 0, 1, 4, '/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / chief of staff to sponsor / portfolio operations head"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs-trans-en', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'en', 'How to Reduce Governance Debt in Large Transformation Programs', 'large programs accumulate forums, templates, and approval chains that made sense once, which raises governance load, slows decisions, and hides weak ownership behind busy calendars', '**Direct answer:** reduce governance debt by inventorying every recurring forum against a decision test (does it change funding, scope, ownership, or risk response), then merge or delete what fails, shorten cadence only where risk demands it, and publish a single decision record system-wide. If your transformation spends more hours in governance than in execution corrections, you are paying interest on process instead of buying control.
+
+
+![Hero image of duplicated forum tokens and gates collapsing into one cleaner decision route on an executive table.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png)
+
+
 
 Governance should feel like a control system.
 
@@ -14613,6 +15668,11 @@ Track a small set:
 
 If hours rise while latency rises, debt is growing.
 
+
+
+![Analytical image of duplicated governance lanes being merged and pruned through physical gates and levers.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/analytical.png)
+
+
 ## Reality check: governance debt usually survives because every forum can defend itself in isolation
 
 Each meeting has a reason.
@@ -14643,6 +15703,11 @@ If you only add governance when things wobble, you will never catch up.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs-trans-pl', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'pl', 'How to Reduce Governance Debt in Large Transformation Programs', 'large programs accumulate forums, templates, and approval chains that made sense once, which raises governance load, slows decisions, and hides weak ownership behind busy calendars', 'Rdzeniowy problem: duze programy gromadza fora, szablony i lancuchy akceptacji, ktore kiedys mialy sens, co podnosi obciazenie governance, spowalnia decyzje i ukrywa slaba wlasnosc za zajetymi kalendarzami  
+
+
+![Hero image of duplicated forum tokens and gates collapsing into one cleaner decision route on an executive table.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png)
+
+
 Glowna obietnica: mozesz zamknac dlug governance przez laczenie zdublowanych forow, egzekwowanie SLA decyzji, standaryzacje minimalnego dowodu i pomiar obciazenia governance na dostarczony wynik
 
 **Bezposrednia odpowiedz:** redukuj dlug governance, inwentaryzujac kazde cykliczne forum pod test decyzji (czy zmienia finansowanie, zakres, wlasnosc lub odpowiedz na ryzyko), nastepnie lacz lub usuwaj to, co nie przechodzi, skracaj kadencje tylko tam, gdzie tego wymaga ryzyko, i publikuj jeden zapis decyzji dla calej organizacji. Jesli transformacja spedza wiecej godzin w governance niz na korektach wykonania, placisz odsetki od procesu zamiast kupowac kontrole.
@@ -14706,6 +15771,11 @@ Mierz niewielki zestaw:
 
 Jesli godziny rosna, gdy rosnie opoznienie, dlug rosnie.
 
+
+
+![Analytical image of duplicated governance lanes being merged and pruned through physical gates and levers.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/analytical.png)
+
+
 ## Reality check: dlug governance zwykle utrzymuje sie, bo kazde forum umie obronic sie w izolacji
 
 Kazde spotkanie ma powod.
@@ -14736,6 +15806,11 @@ Jesli dodajesz governance tylko wtedy, gdy cos sie chwieje, nigdy nie nadrobisz.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs-trans-de', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'de', 'How to Reduce Governance Debt in Large Transformation Programs', 'large programs accumulate forums, templates, and approval chains that made sense once, which raises governance load, slows decisions, and hides weak ownership behind busy calendars', 'Kernversprechen: Sie koennen Governance-Schulden abbauen, indem Sie doppelte Foren zusammenfuehren, Entscheidungs-SLAs erzwingen, Mindestevidenz standardisieren und Governance-Last pro geliefertem Outcome messen
+
+
+![Hero image of duplicated forum tokens and gates collapsing into one cleaner decision route on an executive table.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png)
+
+
 
 **Direkte Antwort:** Reduzieren Sie Governance-Schulden, indem Sie jedes wiederkehrende Forum einem Entscheidungstest unterziehen (aendert es Funding, Scope, Ownership oder Risikoantwort), dann mergen oder loeschen Sie, was nicht besteht, verkuerzen Sie Takt nur wo Risiko es verlangt, und veroeffentlichen Sie eine einheitliche Entscheidungsaufzeichnung. Wenn Transformation mehr Stunden in Governance verbringt als in Execution-Korrekturen, zahlen Sie Zinsen auf Prozess statt Kontrolle zu kaufen.
 
@@ -14798,6 +15873,11 @@ Messen Sie wenige Kennzahlen:
 
 Wenn Stunden steigen, waehrend Latenz steigt, waechst Schulden.
 
+
+
+![Analytical image of duplicated governance lanes being merged and pruned through physical gates and levers.](/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/analytical.png)
+
+
 ## Reality check: Governance-Schulden ueberleben meist, weil jedes Forum sich isoliert verteidigen kann
 
 Jedes Meeting hat einen Grund.
@@ -14828,13 +15908,13 @@ Wenn Sie Governance nur bei Wackeln hinzufuegen, holen Sie nie auf.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('86231e2a-eb44-4be5-ab31-84d5e60be582', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
+  ('f0f56eaf-3a38-430f-8a6d-72c2fc766edf', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5319648f-f8da-4c61-aa57-d9c3b77769ca', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
+  ('69a99da4-d5cc-4e08-8e18-5452f19fa3af', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8ef48464-c959-4cf5-bc09-05652f4e6ee3', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
+  ('dca680c0-3533-4ecb-948d-db52e95f937f', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -14852,12 +15932,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 37_when_transformation_metrics_start_driving_the_wrong_behavior
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-cat-consultify-governance-and-roi', '37_when_transformation_metrics_start_driving_the_wrong_behavior', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / metrics owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-cat-consultify-governance-and-roi', '37_when_transformation_metrics_start_driving_the_wrong_behavior', 'published', 0, 1, 3, '/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / metrics owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior-trans-en', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'en', 'When Transformation Metrics Start Driving the Wrong Behavior', 'well-intended KPIs reward activity volume and green status, which pushes teams to optimize narratives, hide dependency risk, and defer hard portfolio trade-offs while leadership loses value proof', '**Direct answer:** metrics are misaligned when people get rewarded for outputs that do not change controlled outcomes, when local teams improve a score by shifting cost or risk elsewhere, or when improving the metric requires more governance work than improving delivery. The fix is not a bigger dashboard. It is reframing metrics around decision latency, value proof, dependency health, capacity truth, and owned risk responses tied to portfolio trade-offs.
+
+
+![Hero image of a metric balance on an executive table with overloaded activity tokens pulling against outcome tokens.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png)
+
+
 
 Metrics are steering wheels.
 
@@ -14903,6 +15988,11 @@ Use as a starter pattern:
 
 If pairs diverge, assume gaming or local optimization until proven otherwise.
 
+
+
+![Analytical image of a tabletop countermetric board with paired signal lanes, balances, and correction weights.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/analytical.png)
+
+
 ## Reality check: metric distortion often starts before anyone is consciously gaming the system
 
 People notice what gets praised.
@@ -14935,6 +16025,11 @@ Fix the steering before you add another scorecard.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior-trans-pl', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'pl', 'When Transformation Metrics Start Driving the Wrong Behavior', 'well-intended KPIs reward activity volume and green status, which pushes teams to optimize narratives, hide dependency risk, and defer hard portfolio trade-offs while leadership loses value proof', 'Rdzeniowy problem: dobrze zamierzone KPI nagradzaja objetosc aktywnosci i zielony status, co pchac zespoly do optymalizacji narracji, ukrywania ryzyka zaleznosci i odkladania ciezkich kompromisow portfolio, podczas gdy przywodztwo traci dowod wartosci  
+
+
+![Hero image of a metric balance on an executive table with overloaded activity tokens pulling against outcome tokens.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png)
+
+
 Glowna obietnica: mozesz wczesnie wykryc niezgodnosc metryk, obserwujac wzorce gry, lokalna optymalizacje, rosnace obciazenie governance oraz rozjazd miedzy raportowanym postepem a wynikami nastepczymi
 
 **Bezposrednia odpowiedz:** metryki sa nieuzgodnione, gdy ludzie dostaja nagrody za efekty, ktore nie zmieniaja kontrolowanych wynikow, gdy lokalne zespoly poprawiaja wynik przez przeniesienie kosztu lub ryzyka gdzie indziej, lub gdy poprawa metryki wymaga wiecej pracy governance niz poprawa dostawy. Rozwiazaniem nie jest wiekszy pulpit. To przeformulowanie metryk wokol opoznienia decyzji, dowodu wartosci, zdrowia zaleznosci, prawdy o zdolnosciach i posiadanych odpowiedzi na ryzyko powiazanych z kompromisami portfolio.
@@ -14983,6 +16078,11 @@ Uzyj jako wzorca startowego:
 
 Jesli pary sie rozjezdzaja, zakladaj gre lub lokalna optymizacje, dopoki nie udowodnisz inaczej.
 
+
+
+![Analytical image of a tabletop countermetric board with paired signal lanes, balances, and correction weights.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/analytical.png)
+
+
 ## Reality check: odksztalcenie metryk czesto zaczyna sie zanim ktokolwiek swiadomie zacznie grac pod system
 
 Ludzie zauwazaja, co jest chwalone.
@@ -15015,6 +16115,11 @@ Napraw kierownice, zanim dodasz kolejna karte wynikow.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior-trans-de', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'de', 'When Transformation Metrics Start Driving the Wrong Behavior', 'well-intended KPIs reward activity volume and green status, which pushes teams to optimize narratives, hide dependency risk, and defer hard portfolio trade-offs while leadership loses value proof', 'Kernversprechen: Sie erkennen Metrik-Misalignment frueh an Spielmustern, lokaler Optimierung, steigender Governance-Last und Divergenz zwischen berichtetem Fortschritt und nachlaufenden Outcomes
+
+
+![Hero image of a metric balance on an executive table with overloaded activity tokens pulling against outcome tokens.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png)
+
+
 
 **Direkte Antwort:** Metriken sind falsch ausgerichtet, wenn Menschen fuer Outputs belohnt werden, die kontrollierte Outcomes nicht aendern, wenn lokale Teams einen Score verbessern, indem sie Kosten oder Risiko verschieben, oder wenn Metrik-Verbesserung mehr Governance-Arbeit erfordert als Delivery-Verbesserung. Die Loesung ist nicht ein groesseres Dashboard. Es ist ein Neu-Rahmen um Entscheidungslatenz, Value Proof, Abhaengigkeitsgesundheit, Kapazitaetswahrheit und Ownership-Risikoantworten mit Portfolio-Kompromissen.
 
@@ -15062,6 +16167,11 @@ Als Startmuster:
 
 Wenn Paare divergieren, nehmen Sie Gaming oder lokale Optimierung an, bis das Gegenteil belegt ist.
 
+
+
+![Analytical image of a tabletop countermetric board with paired signal lanes, balances, and correction weights.](/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/analytical.png)
+
+
 ## Reality check: Metrikverzerrung beginnt oft, bevor irgendjemand bewusst das System spielt
 
 Menschen bemerken, was gelobt wird.
@@ -15094,13 +16204,13 @@ Reparieren Sie die Lenkung, bevor Sie eine weitere Scorecard hinzufuegen.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6d30900a-28db-4e35-a31a-e12c438d668d', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
+  ('f6574bb8-b262-4aa2-8c79-a0c5e4392960', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('80c25e0e-1372-4d67-9cfc-6536308231bf', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
+  ('d9f2dc63-042a-40d2-8632-a87f1ab6e0f3', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('479439a9-a8b5-4f14-8cd8-61b0dcb55b33', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
+  ('2d21546a-c271-426a-b0e8-44b6ad2c4e4d', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -15121,12 +16231,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-cat-consultify-ai-and-decision-making', '38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Strategy owner / transformation sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-cat-consultify-ai-and-decision-making', '38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'published', 0, 1, 3, '/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy owner / transformation sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater-trans-en', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'en', 'How to Keep Strategy Reviews from Turning into Narrative Theater', 'annual or quarterly strategy reviews often become polished storyline sessions, which feels senior while decision latency, portfolio trade-offs, and value proof stay soft', '**Direct answer:** keep strategy reviews honest by requiring a pre-read with named strategic bets, explicit assumptions with falsification signals, a portfolio menu (fund, pause, merge, stop), and time-boxed decision slots for sponsors. If the review ends with alignment language but no recorded trade-offs, you ran a narrative theater production, not a strategy control point.
+
+
+![Hero image of a decision ledger board on an executive review table with a faded narrative pack pushed aside.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png)
+
+
 
 Strategy reviews are supposed to reset direction.
 
@@ -15172,6 +16287,11 @@ At minimum, publish:
 | storyline | inspirational narrative | ambiguous priorities |
 | decision | recorded trade-offs | clearer execution discipline |
 
+
+
+![Analytical image of a grounded strategy review board with evidence lanes, trade-off markers, and outcome gates.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/analytical.png)
+
+
 ## Reality check: strategy theater usually feels most persuasive when the options are least comparable
 
 The story is coherent.
@@ -15202,6 +16322,11 @@ If everyone leaves inspired but nobody leaves accountable, you paid for theater.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater-trans-pl', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'pl', 'How to Keep Strategy Reviews from Turning into Narrative Theater', 'annual or quarterly strategy reviews often become polished storyline sessions, which feels senior while decision latency, portfolio trade-offs, and value proof stay soft', 'Rdzeniowy problem: coroczne lub kwartalne przeglady strategii czesto staja sie wypolerowanymi sesjami opowiesci, co wyglada na seniorskie, podczas gdy opoznienie decyzji, kompromisy portfolio i dowod wartosci pozostaja miekkie  
+
+
+![Hero image of a decision ledger board on an executive review table with a faded narrative pack pushed aside.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png)
+
+
 Glowna obietnica: przeglady strategii pozostaja operacyjne, gdy wymuszaja jawne wybory co do zalozen, fal kapitalowych, zakladow zdolnosciowych i listy rezygnacji wsparte porownywalnymi scenariuszami
 
 **Bezposrednia odpowiedz:** utrzymuj uczciwosc przegladu strategii, wymagajac materialu do wczesniejszej lektury z nazwanymi zakladami strategicznymi, jawnymi zalozeniami z sygnalami falsyfikacji, menu portfolio (finansuj, wstrzymaj, polacz, zatrzymaj) oraz slotow decyzyjnych ograniczonych czasem dla sponsorow. Jesli przeglad konczy sie jezykiem zgodny, ale bez utrwalonych kompromisow, wystawiles teatr narracji, a nie punkt kontroli strategii.
@@ -15250,6 +16375,11 @@ Minimum do publikacji:
 | opowiesc | narracja inspirujaca | niejasne priorytety |
 | decyzja | utrwalone kompromisy | jasniejsza dyscyplina wykonania |
 
+
+
+![Analytical image of a grounded strategy review board with evidence lanes, trade-off markers, and outcome gates.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/analytical.png)
+
+
 ## Reality check: teatr strategii zwykle wydaje sie najbardziej przekonujacy wtedy, gdy opcje sa najmniej porownywalne
 
 Historia jest spojna.
@@ -15280,6 +16410,11 @@ Jesli wszyscy wychodza natchnieni, ale nikt nie wychodzi odpowiedzialny, zaplaci
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater-trans-de', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'de', 'How to Keep Strategy Reviews from Turning into Narrative Theater', 'annual or quarterly strategy reviews often become polished storyline sessions, which feels senior while decision latency, portfolio trade-offs, and value proof stay soft', 'Kernversprechen: Strategie-Reviews bleiben operativ, wenn sie explizite Wahlen zu Annahmen, Kapitalwellen, Capability-Wetten und Stop-doing-Listen mit vergleichbaren Szenarien erzwingen
+
+
+![Hero image of a decision ledger board on an executive review table with a faded narrative pack pushed aside.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png)
+
+
 
 **Direkte Antwort:** Halten Sie Strategie-Reviews ehrlich, indem Sie ein Vorlese-Paket mit benannten strategischen Wetten, expliziten Annahmen mit Falsifikationssignalen, einem Portfolio-Menue (fund, pause, merge, stop) und zeitlich begrenzten Entscheidungsfenstern fuer Sponsoren verlangen. Wenn der Review mit Alignment-Sprache ohne dokumentierte Kompromisse endet, haben Sie Narrativ-Theater produziert, keinen Strategie-Kontrollpunkt.
 
@@ -15327,6 +16462,11 @@ Mindestens veroeffentlichen:
 | Storyline | inspirierendes Narrativ | mehrdeutige Prioritaeten |
 | Entscheidung | dokumentierte Kompromisse | klarere Execution-Disziplin |
 
+
+
+![Analytical image of a grounded strategy review board with evidence lanes, trade-off markers, and outcome gates.](/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/analytical.png)
+
+
 ## Reality check: Strategie-Theater wirkt meist dann am ueberzeugendsten, wenn die Optionen am wenigsten vergleichbar sind
 
 Die Geschichte ist koharent.
@@ -15357,13 +16497,13 @@ Wenn alle inspiriert gehen, aber niemand accountable geht, haben Sie fuer Theate
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0c568275-a3d5-4033-9294-b56d21cc42ca', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
+  ('9982bfd6-1484-4ea9-9c54-65135f6e6b91', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5f09d60f-6c7c-44a0-b723-ebfdcc65bc16', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
+  ('a63b0b95-7097-41f1-8a79-9be86b99ccbc', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9a702a56-09a5-4ea2-b6c7-aab1a90501f1', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
+  ('deb2ac2e-7e20-440b-9df0-5003e8d687f0', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -15384,12 +16524,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 39_what_executives_should_require_before_approving_the_next_wave_of_change
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-cat-consultify-governance-and-roi', '39_what_executives_should_require_before_approving_the_next_wave_of_change', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["CEO / executive sponsor / board-facing transformation lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-cat-consultify-governance-and-roi', '39_what_executives_should_require_before_approving_the_next_wave_of_change', 'published', 0, 1, 3, '/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png', '["assessment","dashboard","roadmap"]', '["CEO / executive sponsor / board-facing transformation lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change-trans-en', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'en', 'What Executives Should Require Before Approving the Next Wave of Change', 'the next wave of change often gets approved on momentum and narrative confidence, which loads capacity before value proof, ownership, and dependency risk are honest', '**Direct answer:** before approving the next wave, require a refreshed value case with trailing proof tied to initiatives, a capacity plan with named executive owners for cross-functional dependencies, a governance map that fits decision SLAs, a risk register with triggers and responses, and an explicit stop-doing list that funds the new wave. If those items are missing, you are approving theater tickets, not a governed program extension.
+
+
+![Hero image of an approval threshold gate on a board table with evidence, capacity, risk, and trade-off markers aligned before passage.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png)
+
+
 
 Waves feel exciting.
 
@@ -15436,6 +16581,11 @@ Refuse:
 - new initiatives added without a defunding or merge decision elsewhere  
 - expanded scope without updated ROI assumptions and kill signals  
 
+
+
+![Analytical image of a tabletop approval board with seven requirement stations built from evidence, capacity, risk, and trade-off markers.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/analytical.png)
+
+
 ## Reality check: wave approval usually breaks when leaders treat portfolio appetite as evidence of capacity
 
 That is why the moment feels reasonable in the room.
@@ -15470,6 +16620,11 @@ If it cannot pass a short evidence gate, pause until it can.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change-trans-pl', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'pl', 'What Executives Should Require Before Approving the Next Wave of Change', 'the next wave of change often gets approved on momentum and narrative confidence, which loads capacity before value proof, ownership, and dependency risk are honest', 'Rdzeniowy problem: nastepna fala zmian czesto dostaje zgode na dynamice i narracyjnej pewnosc, co obciaza zdolnosci, zanim dowod wartosci, wlasnosc i ryzyko zaleznosci sa uczciwe  
+
+
+![Hero image of an approval threshold gate on a board table with evidence, capacity, risk, and trade-off markers aligned before passage.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png)
+
+
 Glowna obietnica: wykonawcy moga odfiltrowac nastepna fale krotkim standardem dowodu obejmujacym dowod wartosci, zdolnosci, obciazenie governance, gotowosc odpowiedzi na ryzyko oraz juz utrwalone kompromisy portfolio
 
 **Bezposrednia odpowiedz:** przed zatwierdzeniem nastepnej fali wymagaj odswiezonego biznes case z dowodem nastepczym powiazanym z inicjatywami, planu zdolnosci z nazwanymi wlascicielami wykonawczymi dla zaleznosci miedzyfunkcyjnych, mapy governance pasujacej do SLA decyzji, rejestru ryzyka z triggerami i odpowiedziami oraz jawnej listy rezygnacji, ktora finansuje nowa fale. Jesli tych elementow brakuje, zatwierdzasz bilety do teatru, a nie rzadzone przedluzenie programu.
@@ -15519,6 +16674,11 @@ Odmawiaj:
 - nowych inicjatyw bez decyzji o wstrzymaniu finansowania lub polaczeniu gdzie indziej  
 - rozszerzenia zakresu bez zaktualizowanych zalozen ROI i sygnalow ubicia  
 
+
+
+![Analytical image of a tabletop approval board with seven requirement stations built from evidence, capacity, risk, and trade-off markers.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/analytical.png)
+
+
 ## Reality check: zgoda na fale zwykle psuje sie wtedy, gdy liderzy traktuja apetyt portfolio jak dowod zdolnosci
 
 Dlatego ten moment wydaje sie rozsadny w sali.
@@ -15553,6 +16713,11 @@ Jesli nie przejdzie krotkiej bramki dowodu, wstrzymaj do czasu, az przejdzie.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change-trans-de', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'de', 'What Executives Should Require Before Approving the Next Wave of Change', 'the next wave of change often gets approved on momentum and narrative confidence, which loads capacity before value proof, ownership, and dependency risk are honest', 'Kernversprechen: Exekutives koennen die naechste Welle mit einem kurzen Evidenzstandard begrenzen, der Value Proof, Kapazitaet, Governance-Last, Risikoantwort-Bereitschaft und dokumentierte Portfolio-Kompromisse abdeckt
+
+
+![Hero image of an approval threshold gate on a board table with evidence, capacity, risk, and trade-off markers aligned before passage.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png)
+
+
 
 **Direkte Antwort:** Vor Freigabe der naechsten Welle verlangen Sie einen aktualisierten Business Case mit nachlaufendem Proof an Initiativen, einen Kapazitaetsplan mit benannten Exekutiv-Ownern fuer funktionsuebergreifende Abhaengigkeiten, eine Governance-Karte, die zu Entscheidungs-SLAs passt, ein Risikoregister mit Triggern und Antworten sowie eine explizite Stop-doing-Liste, die die neue Welle finanziert. Fehlt das, genehmigen Sie Theaterkarten, keine regierte Programmverlaengerung.
 
@@ -15601,6 +16766,11 @@ Lehnen Sie ab:
 - neue Initiativen ohne Defund- oder Merge-Entscheidung woanders  
 - Scope-Erweiterung ohne aktualisierte ROI-Annahmen und Kill-Signale  
 
+
+
+![Analytical image of a tabletop approval board with seven requirement stations built from evidence, capacity, risk, and trade-off markers.](/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/analytical.png)
+
+
 ## Reality check: Wellenfreigabe bricht meist dort, wo Fuehrung Portfolio-Appetit als Beweis fuer Kapazitaet behandelt
 
 Darum fuehlt sich der Moment im Raum vernuenftig an.
@@ -15635,13 +16805,13 @@ Wenn sie ein kurzes Evidenz-Gate nicht passiert, pausieren, bis sie es kann.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ba3d44fd-af94-4d64-90a2-adc139f4b4fc', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
+  ('ee02dd39-c41c-48ad-9dbc-856a2ef9356d', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3855cf1a-e7a6-4bd6-a424-735d3d068581', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
+  ('1e5c8e95-080c-4c46-a19c-540af83ba321', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7b95e171-8202-4005-9106-cf1b71ae1966', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
+  ('8669f781-6b59-4ae2-96a1-d9a2e26a4ba0', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -15662,12 +16832,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 40_how_to_prove_transformation_value_before_the_full_program_finishes
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-cat-consultify-governance-and-roi', '40_how_to_prove_transformation_value_before_the_full_program_finishes', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation owner / finance partner / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-cat-consultify-governance-and-roi', '40_how_to_prove_transformation_value_before_the_full_program_finishes', 'published', 0, 1, 3, '/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / finance partner / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes-trans-en', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'en', 'How to Prove Transformation Value Before the Full Program Finishes', 'value proof is often deferred to the end state, which leaves sponsors deciding on faith while decision latency, scope churn, and portfolio risk accumulate without trailing evidence', '**Direct answer:** prove value before the program ends by defining proof ladders per initiative (baseline, leading signals, trailing outcomes), running time-boxed experiments that can falsify the value case, reconciling benefits to financial lines where possible, and reviewing proof on the same cadence as delivery truth. If your proof plan only activates at go-live, you are managing transformation as a narrative project, not as a portfolio investment.
+
+
+![Hero image of sponsor and finance partner reviewing a physical value-proof ladder on an executive table.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png)
+
+
 
 Full-program finish lines are comforting.
 
@@ -15708,6 +16883,11 @@ For each major initiative, define:
 - costs include governance load and opportunity cost where material  
 - variance has a named cause class: execution, adoption, dependency, or assumption failure  
 
+
+
+![Analytical image of a three-rung value-proof board with evidence trays, milestones, and linked initiative tokens.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/analytical.png)
+
+
 ## Reality check: early value proof usually breaks where teams confuse visible activity with monetizable movement
 
 The dashboard may look busy.
@@ -15738,6 +16918,11 @@ Build the ladder early, or you will argue about value after the money is spent.'
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes-trans-pl', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'pl', 'How to Prove Transformation Value Before the Full Program Finishes', 'value proof is often deferred to the end state, which leaves sponsors deciding on faith while decision latency, scope churn, and portfolio risk accumulate without trailing evidence', 'Rdzeniowy problem: dowod wartosci jest czesto odkladany na stan koncowy, co zostawia sponsorow przy decyzjach na wiare, podczas gdy opoznienie decyzji, dryf zakresu i ryzyko portfolio narastaja bez dowodu nastepczego  
+
+
+![Hero image of sponsor and finance partner reviewing a physical value-proof ladder on an executive table.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png)
+
+
 Glowna obietnica: mozesz wczesnie udowodnic wartosc za pomoca stopniowanych drabin dowodu, ktore wiaza inicjatywy z mierzalnymi wynikami nastepczymi, kontrolowanymi eksperymentami i wyjasnieniami wariancji na poziomie finansow
 
 **Bezposrednia odpowiedz:** udowadniaj wartosc przed koncem programu, definiujac drabiny dowodu na inicjatywe (linia bazowa, sygnaly wyprzedzajace, wyniki nastepcze), prowadzac eksperymenty ograniczone czasowo, ktore moga obalic biznes case, uzgadniajac korzysci z liniami finansowymi tam, gdzie to mozliwe, i przegladajac dowod w tej samej kadencji co prawda o dostawie. Jesli plan dowodu aktywuje sie dopiero przy uruchomieniu, zarzadzasz transformacja jak projektem narracyjnym, a nie inwestycja portfolio.
@@ -15781,6 +16966,11 @@ Dla kazdej wiekszej inicjatywy zdefiniuj:
 - koszty obejmuja obciazenie governance i koszt alternatywny, gdy ma to znaczenie  
 - wariancja ma nazwana klase przyczyny: wykonanie, adopcja, zaleznosc lub porazka zalozen  
 
+
+
+![Analytical image of a three-rung value-proof board with evidence trays, milestones, and linked initiative tokens.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/analytical.png)
+
+
 ## Reality check: wczesny dowod wartosci zwykle psuje sie tam, gdzie zespoly myla widoczna aktywnosc z ruchem, ktory da sie zmonetyzowac
 
 Dashboard moze wygladac aktywnie.
@@ -15811,6 +17001,11 @@ Zbuduj drabine wczesnie, albo bedziesz spierac sie o wartosc po wydaniu pieniedz
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes-trans-de', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'de', 'How to Prove Transformation Value Before the Full Program Finishes', 'value proof is often deferred to the end state, which leaves sponsors deciding on faith while decision latency, scope churn, and portfolio risk accumulate without trailing evidence', 'Kernversprechen: Sie koennen Wert frueh mit gestuften Proof-Laddern belegen, die Initiativen an messbare nachlaufende Outcomes, kontrollierte Experimente und finance-taugliche Varianzerklaerungen binden
+
+
+![Hero image of sponsor and finance partner reviewing a physical value-proof ladder on an executive table.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png)
+
+
 
 **Direkte Antwort:** Beweisen Sie Wert vor Programmende, indem Sie pro Initiative Proof-Ladders definieren (Baseline, fuehrende Signale, nachlaufende Outcomes), zeitlich begrenzte Experimente fahren, die den Business Case falsifizieren koennen, Nutzen wo moeglich mit Finanzlinien abstimmen und Proof im gleichen Takt wie Delivery-Wahrheit reviewen. Wenn Ihr Proof-Plan erst bei Go-Live aktiviert, managen Sie Transformation als Narrativprojekt, nicht als Portfolio-Investment.
 
@@ -15853,6 +17048,11 @@ Pro grosser Initiative definieren Sie:
 - Kosten enthalten Governance-Last und Opportunitaetskosten, wo materiell  
 - Varianz hat eine benannte Ursachenklasse: Execution, Adoption, Abhaengigkeit oder Annahmenversagen  
 
+
+
+![Analytical image of a three-rung value-proof board with evidence trays, milestones, and linked initiative tokens.](/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/analytical.png)
+
+
 ## Reality check: frueher Value-Proof bricht meist dort, wo Teams sichtbare Aktivitaet mit monetarisierbarer Bewegung verwechseln
 
 Das Dashboard kann beschaeftigt aussehen.
@@ -15883,13 +17083,13 @@ Bauen Sie die Leiter frueh, oder Sie streiten ueber Wert, nachdem Geld ausgegebe
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('28b52e60-c899-48af-a74f-0e4bd361bc0f', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
+  ('9ead70a1-0bc5-40a8-868b-9fb2a1716235', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d76d44a9-3635-4c28-a62a-457946a86c3e', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
+  ('f3077554-cc2a-44c2-b58f-a838decfc05d', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fed78b40-b802-442c-9dd4-cd1e0c88627a', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
+  ('feff024f-85f2-4baa-aad4-22fcf9987eea', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -15907,12 +17107,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-cat-consultify-governance-and-roi', '41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / delivery lead / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-cat-consultify-governance-and-roi', '41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'published', 0, 1, 3, '/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / delivery lead / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green-trans-en', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'en', 'When a Transformation Team Is Overloaded Even If the Plan Looks Green', 'plans can stay green while queues, decision latency, and hidden workstreams compress the team, which erodes execution discipline and value proof before risks show up in milestone charts', '**Direct answer:** treat the team as overloaded when decision queues age beyond thresholds, when rework rises while milestones stay green, when key people become single points for multiple initiatives, when governance hours crowd out delivery work, or when dependency resolution slows even though task completion looks fine. Green plans can hide capacity insolvency because schedules tolerate silent borrowing from quality, documentation, and risk management.
+
+
+![Hero image of a plain green plan marker beside a compressed overload structure made of blocks, springs, and gauges.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png)
+
+
 
 Green is a schedule color.
 
@@ -15956,6 +17161,11 @@ If the map surprises you, the plan was already lying politely.
 - **retire governance forums** that consume leads without decisions  
 - **hire or borrow capacity** with explicit sunset, not permanent heroics  
 
+
+
+![Analytical image of a tabletop overload board with queue lanes, blocked handoffs, and pressure indicators.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/analytical.png)
+
+
 ## Reality check: overload usually hides longest in teams that still look dependable
 
 The same people keep saying yes.
@@ -15986,6 +17196,11 @@ Measure queues and ownership concentration, not only milestone color.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green-trans-pl', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'pl', 'When a Transformation Team Is Overloaded Even If the Plan Looks Green', 'plans can stay green while queues, decision latency, and hidden workstreams compress the team, which erodes execution discipline and value proof before risks show up in milestone charts', 'Rdzeniowy problem: plan moze pozostac zielony, podczas gdy kolejki, opoznienie decyzji i ukryte strumienie pracy sciskaja zespol, co obniza dyscypline wykonania i dowod wartosci, zanim ryzyko pojawi sie na wykresach kamieni milowych  
+
+
+![Hero image of a plain green plan marker beside a compressed overload structure made of blocks, springs, and gauges.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png)
+
+
 Glowna obietnica: mozesz wczesnie wykryc przeciazenie, mierzac kolejki decyzji, wskazniki przerobek, kontekstowe przelaczanie miedzy inicjatywami, godziny governance oraz zaleznosc sponsora od niewielkiej liczby nazwanych osob
 
 **Bezposrednia odpowiedz:** traktuj zespol jako przeciazony, gdy kolejki decyzji starzeja sie ponad progi, gdy przerobki rosna, podczas gdy kamienie milowe zostaja zielone, gdy kluczowi ludzie staja sie pojedynczymi punktami dla wielu inicjatyw, gdy godziny governance wypieraja prace dostawcza lub gdy rozstrzyganie zaleznosci zwalnia, choc ukonczenie zadan wyglada dobrze. Zielone plany moga ukrywac niewyplacalnosc zdolnosci, bo harmonogramy znosza ciche pozyczanie od jakosci, dokumentacji i zarzadzania ryzykiem.
@@ -16032,6 +17247,11 @@ Jesli mapa cie zaskakuje, plan juz uprzejmie klamal.
 - **wycofaj fora governance**, ktore zuzywaja lidow bez decyzji  
 - **zatrudnij lub pozycz zdolnosci** z jawnym zakonczeniem, nie stala heroika  
 
+
+
+![Analytical image of a tabletop overload board with queue lanes, blocked handoffs, and pressure indicators.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/analytical.png)
+
+
 ## Reality check: przeciazenie najdluzej ukrywa sie w zespolach, ktore nadal wygladaja na niezawodne
 
 Te same osoby dalej mowia tak.
@@ -16062,6 +17282,11 @@ Mierz kolejki i koncentracje wlasnosci, nie tylko kolor kamienia milowego.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green-trans-de', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'de', 'When a Transformation Team Is Overloaded Even If the Plan Looks Green', 'plans can stay green while queues, decision latency, and hidden workstreams compress the team, which erodes execution discipline and value proof before risks show up in milestone charts', 'Kernversprechen: Sie erkennen Ueberlastung frueh, indem Sie Entscheidungsqueues, Rework-Raten, Kontext-Wechsel zwischen Initiativen, Governance-Stunden und Sponsor-Abhaengigkeit von wenigen benannten Personen messen
+
+
+![Hero image of a plain green plan marker beside a compressed overload structure made of blocks, springs, and gauges.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png)
+
+
 
 **Direkte Antwort:** Behandeln Sie das Team als ueberlastet, wenn Entscheidungsqueues ueber Schwellen altern, wenn Rework steigt waehrend Meilensteine gruen bleiben, wenn Schluesselpersonen Single Points fuer mehrere Initiativen werden, wenn Governance-Stunden Delivery-Arbeit verdraengen oder wenn Abhaengigkeitsaufloesung langsamer wird, obwohl Task-Abschluss gut aussieht. Gruene Plaene koennen Kapazitaets-Insolvenz verbergen, weil Zeitplaene stilles Borgen von Qualitaet, Dokumentation und Risikomanagement tolerieren.
 
@@ -16107,6 +17332,11 @@ Wenn die Karte ueberrascht, hat der Plan bereits hoeflich gelogen.
 - **Governance-Foren stilllegen**, die Leads ohne Entscheidungen verbrauchen  
 - **Kapazitaet einstellen oder leihen** mit explizitem Sunset, nicht dauerhafter Heroik  
 
+
+
+![Analytical image of a tabletop overload board with queue lanes, blocked handoffs, and pressure indicators.](/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/analytical.png)
+
+
 ## Reality check: Ueberlast versteckt sich am laengsten in Teams, die noch zuverlaessig wirken
 
 Dieselben Personen sagen weiterhin ja.
@@ -16137,13 +17367,13 @@ Messen Sie Queues und Owner-Konzentration, nicht nur Meilensteinfarbe.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3178a298-9088-4114-aa5c-48bcaa6239d9', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
+  ('522f7cd5-198b-4112-ba72-907c241bc071', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6b9e1d7f-04bc-43e1-bbed-4c9b298f838d', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
+  ('0afaf441-461b-436f-a60d-e33c130ffe1c', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e9363da8-ff54-41f3-88c9-d1dd3b67ac18', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
+  ('e5c12ac7-d697-4bbe-b1ff-fb35daaee2e9', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -16164,12 +17394,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 42_how_to_reset_transformation_control_after_a_missed_quarter
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-cat-consultify-governance-and-roi', '42_how_to_reset_transformation_control_after_a_missed_quarter', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation sponsor / program director / CFO-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-cat-consultify-governance-and-roi', '42_how_to_reset_transformation_control_after_a_missed_quarter', 'published', 0, 1, 3, '/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / program director / CFO-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter-trans-en', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'en', 'How to Reset Transformation Control After a Missed Quarter', 'a missed quarter often triggers narrative defense and reporting inflation, which delays the portfolio trade-offs, ownership resets, and governance changes that actually restore execution discipline', '**Direct answer:** reset control after a missed quarter by running a time-boxed stabilization week: publish delivery truth versus commitments, identify the top five decision and dependency failures, force continue-pause-merge-stop choices, retire governance debt that did not prevent the miss, and shorten review cadence with explicit decision SLAs until latency improves. If the response is only a recovery story without recorded trade-offs, expect the next quarter to miss for the same structural reasons.
+
+
+![Hero image of a reset-control board on a sponsor table with a broken prior path replaced by a cleaner control route.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png)
+
+
 
 A missed quarter is information.
 
@@ -16225,6 +17460,11 @@ Day 6 to 7:
 | narrative | new storyline | repeated miss pattern |
 | control | recorded trade-offs and SLAs | higher short-term discomfort, better odds |
 
+
+
+![Analytical image of a seven-station reset board with decision gates, retired controls, and recovery checks.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/analytical.png)
+
+
 ## Reality check: after a missed quarter, leaders often ask for confidence before they ask for truth
 
 That is the instinct that keeps the next miss alive.
@@ -16257,6 +17497,11 @@ Reset control with trade-offs, ownership, and governance discipline, or you will
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter-trans-pl', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'pl', 'How to Reset Transformation Control After a Missed Quarter', 'a missed quarter often triggers narrative defense and reporting inflation, which delays the portfolio trade-offs, ownership resets, and governance changes that actually restore execution discipline', 'Rdzeniowy problem: spozniony kwartal czesto wywoluje obrone narracji i inflacje raportowania, co opoznia kompromisy portfolio, resety wlasnosci i zmiany governance, ktore realnie przywracaja dyscypline wykonania  
+
+
+![Hero image of a reset-control board on a sponsor table with a broken prior path replaced by a cleaner control route.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png)
+
+
 Glowna obietnica: mozesz przywrocic kontrole krotka sekwencja stabilizacji, ktora oddziela prawde o dostawie od planow, wymusza jawne kompromisy i zaweza kadencje przegladu, az opoznienie decyzji spadnie
 
 **Bezposrednia odpowiedz:** resetuj kontrole po spoznionym kwartale, prowadzac tygodni stabilizacji ograniczony czasowo: opublikuj prawde o dostawie wobec zobowiazan, zidentyfikuj piec glownych porazek decyzji i zaleznosci, wymus wybor kontynuacja-pauza-polaczenie-stop, wycofaj dlug governance, ktory nie zapobiegl niewykonaniu celu kwartalowego, i skroc puls tygodniowy PMO lub sponsora z jawnymi SLA decyzji, az metryki latencji sie poprawia. Jesli odpowiedzia jest tylko narracja odbudowy bez utrwalonych kompromisow, spodziewaj sie kolejnego niewykonania celu kwartalowego z tych samych strukturalnych powodow.
@@ -16315,6 +17560,11 @@ Dzien 6 do 7:
 | narracja | nowa opowiesc | powtorzenie wzorca niewykonania celu kwartalowego |
 | kontrola | utrwalone kompromisy i SLA | wyzszy krotkoterminowy dyskomfort, lepsze szanse |
 
+
+
+![Analytical image of a seven-station reset board with decision gates, retired controls, and recovery checks.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/analytical.png)
+
+
 ## Reality check: po spoznionym kwartale liderzy czesto najpierw prosza o pewnosc, a dopiero potem o prawde
 
 To jest odruch, ktory utrzymuje przy zyciu kolejne niewykonanie celu.
@@ -16347,6 +17597,11 @@ Resetuj kontrole kompromisami, wlasnoscia i dyscyplina governance albo bedziesz 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter-trans-de', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'de', 'How to Reset Transformation Control After a Missed Quarter', 'a missed quarter often triggers narrative defense and reporting inflation, which delays the portfolio trade-offs, ownership resets, and governance changes that actually restore execution discipline', 'Kernversprechen: Sie setzen Kontrolle mit einer kurzen Stabilisierungssequenz zurueck, die Delivery-Wahrheit von Plaenen trennt, explizite Kompromisse erzwingt und Review-Takt strafft, bis Entscheidungslatenz sinkt
+
+
+![Hero image of a reset-control board on a sponsor table with a broken prior path replaced by a cleaner control route.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png)
+
+
 
 **Direkte Antwort:** Setzen Sie Kontrolle nach einem verpassten Quartal zurueck, indem Sie eine zeitlich begrenzte Stabilisierungswoche fahren: Veroeffentlichen Sie Delivery-Wahrheit versus Commitments, identifizieren Sie die fuenf wichtigsten Entscheidungs- und Abhaengigkeitsfehler, erzwingen Sie continue-pause-merge-stop Entscheidungen, senken Sie Governance-Schulden, die den Miss nicht verhindert haben, und verkuerzen Sie woechentlichen PMO- oder Sponsor-Puls mit expliziten Entscheidungs-SLAs, bis Latenz-Metriken sich erholen. Wenn die Antwort nur eine Recovery-Story ohne dokumentierte Kompromisse ist, erwarten Sie das naechste Quartal aus denselben strukturellen Gruenden zu verpassen.
 
@@ -16404,6 +17659,11 @@ Tag 6 bis 7:
 | Narrativ | neue Storyline | wiederholtes Miss-Muster |
 | Kontrolle | dokumentierte Kompromisse und SLAs | kurzfristiges Unbehagen, bessere Chancen |
 
+
+
+![Analytical image of a seven-station reset board with decision gates, retired controls, and recovery checks.](/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/analytical.png)
+
+
 ## Reality check: nach einem verpassten Quartal fragen Fuehrungskraefte oft erst nach Zuversicht und dann nach Wahrheit
 
 Das ist der Impuls, der den naechsten Miss am Leben haelt.
@@ -16436,13 +17696,13 @@ Setzen Sie Kontrolle mit Kompromissen, Ownership und Governance-Disziplin zuruec
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('714a8812-5145-4449-b75f-8b3db4e02958', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
+  ('fadde2d8-6e08-401e-a3d2-555ae51f6217', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3f3bb26c-8b50-483b-bbc7-c9abe69abb5b', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
+  ('449fd535-85ff-4ceb-8591-b91754e9f6d7', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('85db1da8-f193-4a97-a104-d500c16f4b16', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
+  ('d45fbd78-4f69-44a0-8f77-a1396c5551c9', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -16460,12 +17720,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 43_how_to_define_decision_rights_in_a_transformation_operating_system
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-cat-consultify-execution-and-rollout', '43_how_to_define_decision_rights_in_a_transformation_operating_system', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation governance lead / enterprise architect / COO office partner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-cat-consultify-execution-and-rollout', '43_how_to_define_decision_rights_in_a_transformation_operating_system', 'published', 0, 1, 3, '/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation governance lead / enterprise architect / COO office partner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system-trans-en', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'en', 'How to Define Decision Rights in a Transformation Operating System', 'steering forums review narratives, but decision rights stay implicit, so decision latency rises, escalations multiply, and sponsors absorb work that should be systematized', '**Direct answer:** define decision rights by inventorying recurring transformation decision types (portfolio, funding, scope, dependency release, risk acceptance, vendor selection, people capacity), assigning exactly one accountable approver per type at each governance tier, publishing escalation paths and decision SLAs, and storing outcomes in a single operating record. If rights stay shared or ambiguous, forums will continue to feel busy while execution waits.
+
+
+![Hero image of executives working around a decision-rights board with authority lanes and approval markers.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png)
+
+
 
 Transformation operating systems fail quietly when everyone can comment but nobody can decide.
 
@@ -16517,6 +17782,11 @@ Use this as a working catalog. Adapt names to your portfolio language.
 - governance load drops or stays flat while throughput rises  
 - assumption changes trigger decision records, not side email  
 
+
+
+![Analytical image of a tabletop decision-rights board with authority lanes, escalation gates, and handoff rules.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/analytical.png)
+
+
 ## Reality check: decision rights usually fail where the organization protects multiple vetoes in the name of alignment
 
 Everyone wants a voice.
@@ -16547,6 +17817,11 @@ Make them explicit, time-boxed, and recorded, or your operating system will stay
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system-trans-pl', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'pl', 'How to Define Decision Rights in a Transformation Operating System', 'steering forums review narratives, but decision rights stay implicit, so decision latency rises, escalations multiply, and sponsors absorb work that should be systematized', 'Rdzeniowy problem: fora sterujace omawiaja narracje, ale prawa decyzyjne pozostaja domyslne, wiec rosnie opoznienie decyzji, mnoza sie eskalacje, a sponsorzy przejmuja prace, ktore powinny byc usystematyzowane  
+
+
+![Hero image of executives working around a decision-rights board with authority lanes and approval markers.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png)
+
+
 Glowna obietnica: mozesz wdrozyc lekka mape praw decyzyjnych, ktora laczy typy decyzji z odpowiedzialnymi rolami, ramami czasowymi i zapisami bez budowania kolejnej warstwy biurokracji
 
 **Bezposrednia odpowiedz:** zdefiniuj prawa decyzyjne, inwentaryzujac powtarzalne typy decyzji transformacyjnych (portfolio, finansowanie, zakres, zwolnienie zaleznosci, akceptacja ryzyka, wybor dostawcy, zdolnosci ludzi), przypisujac dokladnie jednego odpowiedzialnego zatwierdzajacego na typ przy kazdym poziomie governance, publikujac sciezki eskalacji i SLA decyzji oraz przechowujac wyniki w jednym zapisie operacyjnym. Jesli prawa pozostaja wspoldzielone lub niejasne, fora beda nadal wydawaly sie zajete, podczas gdy wykonanie czeka.
@@ -16601,6 +17876,11 @@ Uzyj tego jako katalogu roboczego. Dostosuj nazewnictwo do jezyka portfolio.
 - obciazenie governance spada lub jest stale, gdy rosnie przepustowosc  
 - zmiany zalozen wymuszaja zapisy decyzji, nie poboczny e-mail  
 
+
+
+![Analytical image of a tabletop decision-rights board with authority lanes, escalation gates, and handoff rules.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/analytical.png)
+
+
 ## Reality check: prawa decyzyjne zwykle pekaja tam, gdzie organizacja broni wielu wet w imie wyrownania
 
 Kazdy chce miec glos.
@@ -16631,6 +17911,11 @@ Uczyn je jawnymi, ograniczonymi czasowo i utrwalonymi, albo system operacyjny po
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system-trans-de', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'de', 'How to Define Decision Rights in a Transformation Operating System', 'steering forums review narratives, but decision rights stay implicit, so decision latency rises, escalations multiply, and sponsors absorb work that should be systematized', 'Kernversprechen: Sie koennen eine schlanke Entscheidungsrechte-Karte installieren, die Entscheidungstypen mit verantwortlichen Rollen, Zeitboxen und Records verbindet, ohne eine neue Buerokratieschicht zu bauen
+
+
+![Hero image of executives working around a decision-rights board with authority lanes and approval markers.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png)
+
+
 
 **Direkte Antwort:** Definieren Sie Entscheidungsrechte, indem Sie wiederkehrende Transformations-Entscheidungstypen inventarisieren (Portfolio, Funding, Scope, Abhaengigkeits-Freigabe, Risikoakzeptanz, Vendor-Auswahl, Personen-Kapazitaet), pro Typ auf jeder Governance-Stufe genau eine verantwortliche Genehmigerrolle zuweisen, Eskalationspfade und Entscheidungs-SLAs veroeffentlichen und Ergebnisse in einem einzigen Operating-Record speichern. Wenn Rechte geteilt oder mehrdeutig bleiben, wirken Gremien weiter beschaeftigt, waehrend die Execution wartet.
 
@@ -16684,6 +17969,11 @@ Nutzen Sie das als Arbeitskatalog. Passen Sie Namen an Ihre Portfolio-Sprache an
 - Governance-Last sinkt oder flach bleibt, waehrend der Durchsatz steigt  
 - Annahmen-Aenderungen Entscheidungsrecords ausloesen, nicht Side-Email  
 
+
+
+![Analytical image of a tabletop decision-rights board with authority lanes, escalation gates, and handoff rules.](/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/analytical.png)
+
+
 ## Reality check: Entscheidungsrechte brechen meist dort, wo die Organisation mehrere Vetos im Namen der Abstimmung schuetzt
 
 Jeder will eine Stimme haben.
@@ -16714,13 +18004,13 @@ Machen Sie sie explizit, zeitlich begrenzt und dokumentiert, oder Ihr Betriebssy
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3cd79445-2bc9-47a9-866e-7671d76b1e09', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
+  ('73309a2b-1f91-4190-8d88-d85045b76463', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0adffa6c-399f-469c-9303-b844bb8f19ba', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
+  ('184b010d-e0d5-46b7-8305-13d9b57580b0', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b69c6bbd-72a8-4b26-a7c7-d8d0c5d75ea6', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
+  ('e7d4c549-7a81-47f4-91a0-38a091ca4b84', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -16741,12 +18031,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 44_what_a_board_ready_transformation_packet_should_include_every_time
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-cat-consultify-governance-and-roi', '44_what_a_board_ready_transformation_packet_should_include_every_time', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / head of strategy reporting to the board"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-cat-consultify-governance-and-roi', '44_what_a_board_ready_transformation_packet_should_include_every_time', 'published', 0, 1, 3, '/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / head of strategy reporting to the board"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time-trans-en', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'en', 'What a Board-Ready Transformation Packet Should Include Every Time', 'board meetings absorb narrative decks while missing comparable value proof, explicit assumption ledger deltas, and portfolio trade-offs that justify the next funding wave', '**Direct answer:** a board-ready transformation packet should include every time: executive summary with continue-pause-merge-stop recommendations, portfolio view with funding and dependency status, value proof with baseline and variance (not only forecasts), assumption ledger with what changed since last review, risk and intervention list with owners, capacity reality versus plan, and decision asks with explicit options and consequences. If any of these are missing, the board is being asked to bless motion instead of governing outcomes.
+
+
+![Hero image of a compact board packet tray beside pushed-aside slide printouts on a board table.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png)
+
+
 
 Board packets are not storytelling exercises.
 
@@ -16808,6 +18103,11 @@ But if the packet still cannot show:
 
 then the board is seeing refreshed presentation, not improved governance.
 
+
+
+![Analytical image of a grounded board packet system with decision blocks, evidence lanes, and board-action slots.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors want governance, not applause.
@@ -16828,6 +18128,11 @@ Standardize the seven blocks, or each cycle will reopen the same questions with 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time-trans-pl', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'pl', 'What a Board-Ready Transformation Packet Should Include Every Time', 'board meetings absorb narrative decks while missing comparable value proof, explicit assumption ledger deltas, and portfolio trade-offs that justify the next funding wave', 'Rdzeniowy problem: spotkania zarzadu pochlaniaja narracyjne decki, podczas gdy brakuje porownywalnego dowodu wartosci, jawnych delt ksiegi zalozen i kompromisow portfolio uzasadniajacych nastepna fale finansowania  
+
+
+![Hero image of a compact board packet tray beside pushed-aside slide printouts on a board table.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png)
+
+
 Glowna obietnica: mozesz ustandaryzowac zwarty pakiet, ktory zarzad moze zweryfikowac w jednej sesji i ktory laczy rzeczywistosc wykonania z wyborami governance
 
 **Bezposrednia odpowiedz:** boardowy pakiet transformacyjny powinien za kazdym razem zawierac: podsumowanie dla kierownictwa z rekomendacjami kontynuacja-pauza-polaczenie-stop, widok portfolio ze statusem finansowania i zaleznosci, dowod wartosci z linia bazowa i wariancja (nie tylko prognozy), ksiege zalozen z tym, co zmienilo sie od ostatniego przegladu, liste ryzyk i interwencji z wlascicielami, prawde o zdolnosciach wobec planu oraz prosby decyzyjne z jawnymi opcjami i konsekwencjami. Jesli ktorykolwiek z tych elementow zabraknie, zarzad jest proszony o blogoslawienie ruchu zamiast rzadzenia wynikami.
@@ -16892,6 +18197,11 @@ Ale jesli pakiet nadal nie potrafi pokazac:
 
 to zarzad widzi odswiezona prezentacje, a nie lepsze governance.
 
+
+
+![Analytical image of a grounded board packet system with decision blocks, evidence lanes, and board-action slots.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy sponsorzy chca governance, nie aplauz.
@@ -16912,6 +18222,11 @@ Ustandaryzuj siedem blokow, albo kazdy cykl bedzie otwieral te same pytania z no
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time-trans-de', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'de', 'What a Board-Ready Transformation Packet Should Include Every Time', 'board meetings absorb narrative decks while missing comparable value proof, explicit assumption ledger deltas, and portfolio trade-offs that justify the next funding wave', 'Kernversprechen: Sie koennen ein kompaktes Paket standardisieren, das das Board in einer Sitzung pruefen kann und Execution-Realitaet mit Governance-Entscheidungen verbindet
+
+
+![Hero image of a compact board packet tray beside pushed-aside slide printouts on a board table.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png)
+
+
 
 **Direkte Antwort:** Ein boardreifes Transformationspaket sollte jedes Mal enthalten: Executive Summary mit continue-pause-merge-stop Empfehlungen, Portfolio-Ansicht mit Funding- und Abhaengigkeitsstatus, Value-Proof mit Baseline und Varianz (nicht nur Forecasts), Annahmen-Ledger mit Veraenderungen seit dem letzten Review, Risiko- und Interventionsliste mit Ownern, Kapazitaets-Realitaet versus Plan sowie Decision-Asks mit expliziten Optionen und Konsequenzen. Wenn eines fehlt, soll das Board Bewegung segnieren statt Outcomes zu steuern.
 
@@ -16975,6 +18290,11 @@ Aber wenn das Paket immer noch nicht zeigen kann:
 
 dann sieht das Board eine aufgefrischte Praesentation, nicht bessere Governance.
 
+
+
+![Analytical image of a grounded board packet system with decision blocks, evidence lanes, and board-action slots.](/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Sponsoren Governance wollen, keinen Applaus.
@@ -16995,13 +18315,13 @@ Standardisieren Sie die sieben Bloecke, oder jeder Zyklus oeffnet dieselben Frag
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3f49c9ff-0702-4148-9589-07a55ad0ca6c', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
+  ('257809a1-1ebd-4a8b-9066-f8067203c071', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('84a9a77f-dd50-4b82-ad27-d52c3da5a169', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
+  ('d618a481-b1c5-4777-a556-c2fd03e52a30', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('46a9720b-c248-46b1-9693-5f3716edcdb0', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
+  ('6c953864-6001-46dd-8c15-6807898e6866', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -17022,12 +18342,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 45_when_to_rewrite_a_transformation_business_case_and_when_not_to
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-cat-consultify-governance-and-roi', '45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation sponsor / finance partner / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-cat-consultify-governance-and-roi', '45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'published', 0, 1, 3, '/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / finance partner / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to-trans-en', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'en', 'When to Rewrite a Transformation Business Case and When Not To', 'teams rewrite business cases after every shock, burning capacity and resetting governance conversations instead of updating assumptions and decision records', '**Direct answer:** rewrite the full transformation business case when funding logic, scope boundaries, or outcome definition materially change (new strategic mandate, merger, stop-start of a major dependency, or invalidated baseline). Do not rewrite when only timing slipped, a non-core assumption broke, or narrative pressure increased; instead update the assumption ledger, show variance to baseline, and record the portfolio decision. Full rewrites should be rare events that reset comparability on purpose, not weekly morale therapy.
+
+
+![Hero image of finance leader and sponsor reviewing a baseline ledger board beside a rewrite gate on a wooden table.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png)
+
+
 
 Business cases are baselines.
 
@@ -17070,6 +18395,11 @@ The team wants a version that feels easier to explain.
 
 That is exactly when leadership has to ask whether the business changed or only the comfort level changed.
 
+
+
+![Analytical image of a tabletop baseline-governance board with update lanes, rewrite gates, and proof markers.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when finance and sponsors share one definition of material change.
@@ -17092,6 +18422,11 @@ That is how you keep value proof comparable and governance load sane.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to-trans-pl', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'pl', 'When to Rewrite a Transformation Business Case and When Not To', 'teams rewrite business cases after every shock, burning capacity and resetting governance conversations instead of updating assumptions and decision records', 'Rdzeniowy problem: zespoly przepisuja business case po kazdym szoku, palac zdolnosci i resetujac rozmowy governance zamiast aktualizowac zalozenia i zapisy decyzji  
+
+
+![Hero image of finance leader and sponsor reviewing a baseline ledger board beside a rewrite gate on a wooden table.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png)
+
+
 Glowna obietnica: dostajesz prosty zestaw regul dla pelnego przepisania versus kontrolowanej aktualizacji zalozen, aby sponsorzy chronic fokus, a dowod wartosci pozostawal porownywalny
 
 **Bezposrednia odpowiedz:** przepisz caly business case transformacji, gdy zmienia sie materialnie logika finansowania, granice zakresu lub definicja wyniku (nowy mandat strategiczny, fuzja, stop-start glownej zaleznosci lub uniewazniona linia bazowa). Nie przepisuj, gdy poslizgnelo sie tylko tempo, peklo niekluczowe zalozenie lub wzrosla presja narracyjna; zamiast tego zaktualizuj ksiege zalozen, pokaz wariancje do bazy i utrwal decyzje portfolio. Pelne przepisania powinny byc rzadkimi zdarzeniami, ktore celowo resetuja porownywalnosc, a nie cotygodniowa terapia morale.
@@ -17137,6 +18472,11 @@ Zespol chce wersji, ktora latwiej wyjasnic.
 
 To wlasnie wtedy przywodztwo musi zapytac, czy zmienil sie biznes, czy tylko poziom komfortu.
 
+
+
+![Analytical image of a tabletop baseline-governance board with update lanes, rewrite gates, and proof markers.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy finanse i sponsorzy dziela jedna definicje zmiany materialnej.
@@ -17159,6 +18499,11 @@ Tak utrzymujesz porownywalny dowod wartosci i zdrowe obciazenie governance.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to-trans-de', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'de', 'When to Rewrite a Transformation Business Case and When Not To', 'teams rewrite business cases after every shock, burning capacity and resetting governance conversations instead of updating assumptions and decision records', 'Kernversprechen: Sie erhalten einfache Regeln fuer Voll-Rewrite versus kontrolliertes Annahmen-Update, damit Sponsoren Fokus schuetzen und Value-Proof vergleichbar bleibt
+
+
+![Hero image of finance leader and sponsor reviewing a baseline ledger board beside a rewrite gate on a wooden table.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png)
+
+
 
 **Direkte Antwort:** Schreiben Sie den vollen Transformations-Business-Case neu, wenn sich Funding-Logik, Scope-Grenzen oder Outcome-Definition materiell aendern (neues strategisches Mandat, Mergers, Stop-Start einer grossen Abhaengigkeit oder invalidierte Baseline). Schreiben Sie nicht neu, wenn nur Timing rutschte, eine nicht-kern Annahme brach oder Narrativ-Druck stieg; aktualisieren Sie stattdessen das Annahmen-Ledger, zeigen Sie Varianz zur Baseline und dokumentieren Sie die Portfolio-Entscheidung. Volle Rewrites sollten seltene Events sein, die Vergleichbarkeit absichtlich zuruecksetzen, nicht woechentliche Moral-Therapie.
 
@@ -17203,6 +18548,11 @@ Das Team will eine Version, die sich leichter erklaeren laesst.
 
 Genau dann muss Leadership fragen, ob sich das Geschaeft geaendert hat oder nur das Komfortniveau.
 
+
+
+![Analytical image of a tabletop baseline-governance board with update lanes, rewrite gates, and proof markers.](/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Finance und Sponsoren eine gemeinsame Definition materieller Aenderung teilen.
@@ -17225,13 +18575,13 @@ So bleibt Value-Proof vergleichbar und Governance-Last gesund.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('51bbbae4-0ee6-40a8-a30a-0cd3bfea50f6', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
+  ('28dbebac-a1d2-43af-b7c8-50cd5899ffb5', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b40bc792-b0b4-4291-9df6-2f02326ca115', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
+  ('2b900da5-76e9-45a3-bff3-8ad8831a0962', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4036a747-7a44-4cfd-ac31-5d11acec399e', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
+  ('aed68443-605a-4ff8-ac74-ca10365b3efc', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -17252,12 +18602,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-cat-consultify-ai-and-decision-making', '46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / enterprise architect / sponsor chief of staff"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-cat-consultify-ai-and-decision-making', '46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'published', 0, 1, 3, '/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / enterprise architect / sponsor chief of staff"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos-trans-en', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'en', 'How to Manage Transformation Assumptions Without Spreadsheet Chaos', 'assumptions scatter across workbooks, slide footnotes, and email, so reviews rehearse debates instead of testing hypotheses and recording interventions', '**Direct answer:** manage transformation assumptions without spreadsheet chaos by creating one assumption ledger as the system of record: each assumption gets an owner, evidence source, impact class, test method, review cadence, last validation date, and linked decisions. Ban parallel shadow lists in personal files. Route every review to ledger deltas and retire assumptions with a written reason. If assumptions live in twelve tabs, governance will always feel like archaeology.
+
+
+![Hero image of PMO and sponsor reviewing a physical assumption-ledger board while loose tab-like sheets remain secondary.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png)
+
+
 
 Assumptions are liabilities until they are owned and tested.
 
@@ -17302,6 +18657,11 @@ Workstreams keep private trackers "just in case."
 
 Those lists may all look responsible locally, but together they guarantee that the same assumption will be defended, edited, and rediscovered in parallel.
 
+
+
+![Analytical image of a six-field assumption-governance board with owner markers, test tokens, and review gates.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when leadership agrees one system of record beats local elegance.
@@ -17322,6 +18682,11 @@ Run one assumption ledger with owners and tests, or every review will reopen the
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos-trans-pl', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'pl', 'How to Manage Transformation Assumptions Without Spreadsheet Chaos', 'assumptions scatter across workbooks, slide footnotes, and email, so reviews rehearse debates instead of testing hypotheses and recording interventions', 'Rdzeniowy problem: zalozenia rozpraszaja sie po skoroszytach, stopkach slajdow i e-mailu, wiec przeglady powtarzaja debaty zamiast testowac hipotezy i utrwalac interwencje  
+
+
+![Hero image of PMO and sponsor reviewing a physical assumption-ledger board while loose tab-like sheets remain secondary.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png)
+
+
 Glowna obietnica: mozesz prowadzic jedna ksiege zalozen z wlascicielami, planami testow i statusem, ktora skaluje sie ze zlozonoscia portfolio
 
 **Bezposrednia odpowiedz:** zarzadzaj zalozeniami transformacji bez chaosu arkuszy, tworzac jedna ksiege zalozen jako zrodlo prawdy: kazde zalozenie ma wlasciciela, zrodlo dowodu, klase wplywu, metode testu, kadencje przegladu, date ostatniej walidacji i powiazane decyzje. Zakaz rownoleglych ciennych list w plikach osobistych. Kieruj kazdy przeglad na delty ksiegi i wycofuj zalozenia z pisanym powodem. Jesli zalozenia zyja w dwunastu kartach, governance zawsze bedzie jak archeologia.
@@ -17369,6 +18734,11 @@ Strumienie pracy trzymaja prywatne trackery "na wszelki wypadek."
 
 Te listy moga lokalnie wygladac odpowiedzialnie, ale razem gwarantuja, ze to samo zalozenie bedzie bronione, edytowane i odkrywane na nowo rownolegle.
 
+
+
+![Analytical image of a six-field assumption-governance board with owner markers, test tokens, and review gates.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy przywodztwo zgadza sie, ze jedno zrodlo prawdy bije lokalna elegancje.
@@ -17389,6 +18759,11 @@ Prowadz jedna ksiege zalozen z wlascicielami i testami, albo kazdy przeglad bedz
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos-trans-de', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'de', 'How to Manage Transformation Assumptions Without Spreadsheet Chaos', 'assumptions scatter across workbooks, slide footnotes, and email, so reviews rehearse debates instead of testing hypotheses and recording interventions', 'Kernversprechen: Sie koennen ein einziges Annahmen-Ledger mit Ownern, Testplaenen und Status fuehren, das mit Portfolio-Komplexitaet skaliert
+
+
+![Hero image of PMO and sponsor reviewing a physical assumption-ledger board while loose tab-like sheets remain secondary.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png)
+
+
 
 **Direkte Antwort:** Managen Sie Transformations-Annahmen ohne Spreadsheet-Chaos, indem Sie ein Annahmen-Ledger als System-of-Record aufsetzen: jede Annahme bekommt Owner, Evidence-Quelle, Impact-Klasse, Testmethode, Review-Takt, letztes Validierungsdatum und verknuepfte Entscheidungen. Verbieten Sie parallele Schattenlisten in persoenlichen Files. Lenken Sie jedes Review auf Ledger-Deltas und pensionieren Sie Annahmen mit schriftlicher Begruendung. Wenn Annahmen in zwoelf Tabs leben, fuehlt Governance immer wie Archaeologie.
 
@@ -17435,6 +18810,11 @@ Workstreams behalten private Tracker "nur fuer den Fall."
 
 Diese Listen moegen lokal verantwortungsvoll wirken, aber zusammen garantieren sie, dass dieselbe Annahme parallel verteidigt, editiert und wiederentdeckt wird.
 
+
+
+![Analytical image of a six-field assumption-governance board with owner markers, test tokens, and review gates.](/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Leadership einem System-of-Record vor lokaler Eleganz den Vorzug gibt.
@@ -17455,13 +18835,13 @@ Fuehren Sie ein Annahmen-Ledger mit Ownern und Tests, oder jedes Review oeffnet 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4ad026c6-10fa-44f4-9e78-56697fa70851', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
+  ('f4229b28-8a82-4d47-9175-516dce447950', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c2d14677-a8b0-4eae-bf1b-5ca748c6eb44', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
+  ('9a738c23-95c3-45ac-b90f-a9be01910143', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('48b095bb-78d5-4673-9274-d28842651e36', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
+  ('b116cb03-fa7b-402c-b54b-553140fb1e06', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -17479,12 +18859,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 47_what_a_good_transformation_capacity_model_should_make_visible
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-cat-consultify-governance-and-roi', '47_what_a_good_transformation_capacity_model_should_make_visible', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation COO / portfolio lead / HR business partner supporting change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-cat-consultify-governance-and-roi', '47_what_a_good_transformation_capacity_model_should_make_visible', 'published', 0, 1, 3, '/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation COO / portfolio lead / HR business partner supporting change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible-trans-en', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'en', 'What a Good Transformation Capacity Model Should Make Visible', 'plans stay green while named people carry impossible loads, so execution slips and sponsors misread the problem as motivation instead of capacity math', '**Direct answer:** a good transformation capacity model should make visible: named capacity by role and initiative (not only FTE counts), contention when the same person sits on multiple critical paths, sponsor and leadership hours consumed by forums, change saturation by team and time window, dependency waits that burn capacity, and slack required for intervention work. If your model only shows budget and headcount, you are forecasting finance, not execution.
+
+
+![Hero image of a portfolio forum gathered around a physical capacity-visibility board beside a calm plan marker.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png)
+
+
 
 Capacity is the hidden constraint in most transformations.
 
@@ -17540,6 +18925,11 @@ The monthly capacity number can still look rational.
 
 But once contention disappears into averages, leadership can no longer see which names are carrying the hidden conflict that will break execution first.
 
+
+
+![Analytical image of a six-layer capacity-visibility board with queue lanes, handoff gates, and contention blocks.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors accept that saying no is capacity planning.
@@ -17560,6 +18950,11 @@ Make capacity visible by name, hour, and contention, or execution discipline wil
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible-trans-pl', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'pl', 'What a Good Transformation Capacity Model Should Make Visible', 'plans stay green while named people carry impossible loads, so execution slips and sponsors misread the problem as motivation instead of capacity math', 'Rdzeniowy problem: plany pozostaja zielone, podczas gdy nazwani ludzie nosza niemozliwe obciazenia, wiec wykonanie sie poslizguje, a sponsorzy mylnie czytaja problem jako motywacje zamiast matematyki zdolnosci  
+
+
+![Hero image of a portfolio forum gathered around a physical capacity-visibility board beside a calm plan marker.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png)
+
+
 Glowna obietnica: mozesz zdefiniowac model zdolnosci, ktory obnaza obciazenie rol, konflikt zasobow i opor governance w tym samym widoku co kamienie milowe dostawy
 
 **Bezposrednia odpowiedz:** dobry model zdolnosci transformacji powinien uwidaczniac: nazwana zdolnosc wedlug roli i inicjatywy (nie tylko etaty), konflikt, gdy ta sama osoba siedzi na wielu sciezkach krytycznych, godziny sponsora i kierownictwa pochloniete przez fora, nasycenie zmiana wedlug zespolu i okna czasowego, oczekiwanie w zaleznosciach, ktore pali zdolnosci, oraz luz wymagany do pracy interwencyjnej. Jesli model pokazuje tylko budzet i etaty, prognozujesz finanse, nie wykonanie.
@@ -17618,6 +19013,11 @@ Miesieczna liczba zdolnosci nadal moze wygladac racjonalnie.
 
 Ale gdy konflikt znika w srednich, kierownictwo przestaje widziec, ktore nazwiska niosa ukryty konflikt, ktory jako pierwszy zlamie wykonanie.
 
+
+
+![Analytical image of a six-layer capacity-visibility board with queue lanes, handoff gates, and contention blocks.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy sponsorzy akceptuja, ze powiedzenie nie jest planowaniem zdolnosci.
@@ -17638,6 +19038,11 @@ Uwidacznij zdolnosc po nazwisku, godzinie i konflikcie, albo dyscyplina wykonani
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible-trans-de', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'de', 'What a Good Transformation Capacity Model Should Make Visible', 'plans stay green while named people carry impossible loads, so execution slips and sponsors misread the problem as motivation instead of capacity math', 'Kernversprechen: Sie koennen ein Kapazitaetsmodell definieren, das Rollenlast, Contention und Governance-Drag in derselben Ansicht wie Delivery-Meilensteine zeigt
+
+
+![Hero image of a portfolio forum gathered around a physical capacity-visibility board beside a calm plan marker.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png)
+
+
 
 **Direkte Antwort:** Ein gutes Transformations-Kapazitaetsmodell sollte sichtbar machen: benannte Kapazitaet nach Rolle und Initiative (nicht nur FTE-Zahlen), Contention wenn dieselbe Person auf mehreren kritischen Pfaden sitzt, Sponsor- und Fuehrungsstunden fuer Gremien, Change-Saettigung nach Team und Zeitfenster, Dependency-Wartezeiten die Kapazitaet verbrennen, und Puffer fuer Interventionsarbeit. Wenn Ihr Modell nur Budget und Kopfzahl zeigt, forecasten Sie Finance, nicht Execution.
 
@@ -17695,6 +19100,11 @@ Die monatliche Kapazitaetszahl kann weiterhin rational aussehen.
 
 Doch sobald Contention in Durchschnittswerten verschwindet, kann die Fuehrung nicht mehr sehen, welche Namen den versteckten Konflikt tragen, der Execution zuerst brechen wird.
 
+
+
+![Analytical image of a six-layer capacity-visibility board with queue lanes, handoff gates, and contention blocks.](/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Sponsoren akzeptieren, dass Nein-sagen Kapazitaetsplanung ist.
@@ -17715,13 +19125,13 @@ Machen Sie Kapazitaet sichtbar nach Name, Stunde und Contention, oder Execution-
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('68ebb875-7ed7-4565-ad88-487970698d63', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
+  ('de818fba-d020-4031-87b4-9c74c580f768', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7d484c75-3e88-4ef5-b463-c22c8e5c9093', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
+  ('519d1a27-b945-4229-8c48-05e5f50a3a3e', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e11f9848-bf2c-405a-857c-04d298116d07', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
+  ('e2f88fdc-9aaf-4a50-a3aa-1332725c9f9f', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -17742,12 +19152,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-cat-consultify-governance-and-roi', '48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead working with HR partners"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-cat-consultify-governance-and-roi', '48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'published', 0, 1, 3, '/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead working with HR partners"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem-trans-en', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'en', 'When Change Exhaustion Is a Governance Problem, Not a People Problem', 'fatigue gets framed as engagement failure while governance load, decision latency, and portfolio churn stay unmeasured, so fixes target communications instead of system design', '**Direct answer:** change exhaustion is a governance problem, not a people problem, when symptoms cluster: rising decision latency, more recurring forums with fewer recorded outcomes, increasing status production hours, repeated re-baselining without portfolio trade-offs, sponsor calendar density without decision SLAs, and teams frozen by cross-dependencies. If those signals are present, training and town halls will not fix the root cause. You need fewer decisions in flight, clearer rights, and retired governance debt.
+
+
+![Hero image of a governance-fatigue balance with burden blocks outweighed by a clean control counterweight.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png)
+
+
 
 Fatigue is data.
 
@@ -17791,6 +19206,11 @@ The surface symptoms seem human first.
 
 But many organizations only see the fatigue after months of decision churn, duplicated proof work, and unresolved dependencies have already been draining capacity underneath.
 
+
+
+![Analytical image of a fatigue-diagnosis board with burden tokens, control levers, and recovery buffers.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when sponsors accept that empathy without system change is incomplete.
@@ -17811,6 +19231,11 @@ People deserve a system that does not waste their capacity on repeated proof of 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem-trans-pl', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'pl', 'When Change Exhaustion Is a Governance Problem, Not a People Problem', 'fatigue gets framed as engagement failure while governance load, decision latency, and portfolio churn stay unmeasured, so fixes target communications instead of system design', 'Rdzeniowy problem: zmeczenie jest ramowane jako porazka zaangazowania, podczas gdy obciazenie governance, opoznienie decyzji i zamet portfolio pozostaja niemierzone, wiec naprawy celuja w komunikacje zamiast w projekt systemu  
+
+
+![Hero image of a governance-fatigue balance with burden blocks outweighed by a clean control counterweight.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png)
+
+
 Glowna obietnica: mozesz diagnozowac wyczerpanie sygnalami governance i interweniowac zmianami portfolio i kadencji, ktore przywracaja dyscypline wykonania
 
 **Bezposrednia odpowiedz:** wyczerpanie zmiana to problem governance, nie ludzi, gdy symptomy sie grupuja: rosnace opoznienie decyzji, wiecej powtarzalnych forow z mniejsza liczba utrwalonych wynikow, rosnace godziny produkcji statusu, powtarzane ustalanie bazy bez kompromisow portfolio, gestosc kalendarza sponsora bez SLA decyzji oraz zespoly zamrozone przez zaleznosci krzyzowe. Jesli te sygnaly sa obecne, szkolenia i town hall nie naprawia przyczyny. Potrzebujesz mniej decyzji w locie, jasniejszych praw i wycofanego dlugu governance.
@@ -17857,6 +19282,11 @@ Objawy na powierzchni wygladaja najpierw po ludzku.
 
 Ale wiele organizacji widzi to zmeczenie dopiero po miesiacach zametu decyzji, zduplikowanej pracy dowodowej i nierozwiazanych zaleznosci, ktore juz wczesniej drenowaly zdolnosci pod spodem.
 
+
+
+![Analytical image of a fatigue-diagnosis board with burden tokens, control levers, and recovery buffers.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy sponsorzy akceptuja, ze empatia bez zmiany systemu jest niepelna.
@@ -17877,6 +19307,11 @@ Ludzie zasluguja na system, ktory nie marnuje ich zdolnosci na powtarzany dowod 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem-trans-de', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'de', 'When Change Exhaustion Is a Governance Problem, Not a People Problem', 'fatigue gets framed as engagement failure while governance load, decision latency, and portfolio churn stay unmeasured, so fixes target communications instead of system design', 'Kernversprechen: Sie koennen Exhaustion mit Governance-Signalen diagnostizieren und mit Portfolio- und Takt-Aenderungen eingreifen, die Execution-Disziplin wiederherstellen
+
+
+![Hero image of a governance-fatigue balance with burden blocks outweighed by a clean control counterweight.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png)
+
+
 
 **Direkte Antwort:** Change Exhaustion ist ein Governance-Problem, kein People-Problem, wenn Symptome clustern: steigende Entscheidungslatenz, mehr wiederkehrende Gremien mit weniger dokumentierten Outcomes, steigende Status-Produktionsstunden, wiederholtes Re-Baselining ohne Portfolio-Kompromisse, Sponsor-Kalender-Dichte ohne Entscheidungs-SLAs und Teams eingefroren durch Cross-Dependencies. Wenn diese Signale da sind, fixen Training und Townhalls nicht die Root Cause. Sie brauchen weniger laufende Entscheidungen, klarere Rechte und pensionierte Governance-Schulden.
 
@@ -17922,6 +19357,11 @@ Die Symptome an der Oberflaeche wirken zuerst menschlich.
 
 Doch viele Organisationen sehen diese Ermuedung erst, nachdem Monate von Entscheidungs-Churn, doppelter Proof-Arbeit und ungeloesten Abhaengigkeiten bereits Kapazitaet darunter abgezogen haben.
 
+
+
+![Analytical image of a fatigue-diagnosis board with burden tokens, control levers, and recovery buffers.](/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Sponsoren akzeptieren, dass Empathie ohne Systemaenderung unvollstaendig ist.
@@ -17942,13 +19382,13 @@ Menschen verdienen ein System, das ihre Kapazitaet nicht mit wiederholtem Beweis
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b95e9f47-3ffa-4529-840d-3cf8471e61f8', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
+  ('ed086ce0-154a-4ba9-9a17-4c6b8d49e58a', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0c1f3a4d-b4b5-4001-9fdf-f8d4792bee1d', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
+  ('ada47cb5-d790-4706-9069-35d5568fa1dc', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('68f96219-f406-4189-a88d-58ba547aa52a', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
+  ('b9dc8219-9224-4ac8-83ea-3271a147c372', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -17966,12 +19406,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-cat-consultify-execution-and-rollout', '49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Transformation PMO director / transformation office lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-cat-consultify-execution-and-rollout', '49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'published', 0, 1, 3, '/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO director / transformation office lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory-trans-en', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'en', 'How to Keep a Transformation PMO From Becoming a Reporting Factory', 'PMO teams drown in slide refresh cycles and status assembly, which crowds out dependency clearing, risk intervention, and decision preparation for sponsors', '**Direct answer:** keep a transformation PMO from becoming a reporting factory by defining three non-negotiable outputs each week: decision-ready packets for sponsors, cleared or escalated top dependencies, and updated risk and assumption records tied to value proof. Cap status production hours. Automate or template repetitive views from the system of record. Measure PMO success by decision latency reduction and dependency aging, not by slide count. If the PMO cannot point to decisions it enabled, it is a publishing house.
+
+
+![Hero image of a PMO table shifting from report stacks toward a compact decision-facilitation board.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png)
+
+
 
 PMO value is decision facilitation.
 
@@ -18020,6 +19465,11 @@ Someone else asks for one extra weekly view.
 
 None of those requests looks fatal alone, but together they quietly turn the PMO into a service desk for presentation demand instead of an operating team for decision flow.
 
+
+
+![Analytical image of a grounded PMO operating board with packet trays, dependency lanes, and action slots.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when leadership agrees standardized packets beat bespoke theater.
@@ -18040,6 +19490,11 @@ Invert the model: records first, decisions second, slides last.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory-trans-pl', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'pl', 'How to Keep a Transformation PMO From Becoming a Reporting Factory', 'PMO teams drown in slide refresh cycles and status assembly, which crowds out dependency clearing, risk intervention, and decision preparation for sponsors', 'Rdzeniowy problem: zespoly PMO ugrzezaja w cyklach odswiezania slajdow i skladania statusu, co wypiera czyszczenie zaleznosci, interwencje ryzyka i przygotowanie decyzji dla sponsorow  
+
+
+![Hero image of a PMO table shifting from report stacks toward a compact decision-facilitation board.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png)
+
+
 Glowna obietnica: mozesz odwrocic model operacyjny PMO tak, aby raportowanie bylo produktem ubocznym zywych zapisow, a zespol sprzedawal jakosc decyzji, nie objetosc deckow
 
 **Bezposrednia odpowiedz:** nie daj PMO transformacji stac sie fabryka raportow, definiujac trzy niepodlegajace negocjacji wyniki tygodniowo: pakiety gotowe do decyzji dla sponsorow, oczyszczone lub eskalowane najwazniejsze zaleznosci oraz zaktualizowane zapisy ryzyka i zalozen powiazane z dowodem wartosci. Ogranicz godziny produkcji statusu. Automatyzuj lub szablonuj powtarzalne widoki ze zrodla prawdy. Mierz sukces PMO po redukcji opoznienia decyzji i starzeniu zaleznosci, nie po liczbie slajdow. Jesli PMO nie wskaze decyzji, ktore umozliwilo, to dom wydawniczy.
@@ -18091,6 +19546,11 @@ Ktos inny prosi o jeszcze jeden cotygodniowy widok.
 
 Zadna z tych prosb nie wyglada osobno groznie, ale razem po cichu zamieniaja PMO w service desk dla popytu na prezentacje zamiast zespol operacyjny dla przeplywu decyzji.
 
+
+
+![Analytical image of a grounded PMO operating board with packet trays, dependency lanes, and action slots.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy przywodztwo zgadza sie, ze ustandaryzowane pakiety bija niestandardowy teatr.
@@ -18111,6 +19571,11 @@ Odwroc model: najpierw zapisy, potem decyzje, na koncu slajdy.')
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory-trans-de', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'de', 'How to Keep a Transformation PMO From Becoming a Reporting Factory', 'PMO teams drown in slide refresh cycles and status assembly, which crowds out dependency clearing, risk intervention, and decision preparation for sponsors', 'Kernversprechen: Sie koennen das PMO-Betriebsmodell invertieren, sodass Reporting ein Nebenprodukt von Live-Records ist und das Team Entscheidungsqualitaet statt Deck-Volumen liefert
+
+
+![Hero image of a PMO table shifting from report stacks toward a compact decision-facilitation board.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png)
+
+
 
 **Direkte Antwort:** Halten Sie ein Transformations-PMO davon ab, eine Reporting-Fabrik zu werden, indem Sie drei nicht verhandelbare Outputs pro Woche definieren: decision-ready Pakete fuer Sponsoren, geclearte oder eskalierte Top-Dependencies sowie aktualisierte Risiko- und Annahmen-Records gebunden an Value-Proof. Deckeln Sie Status-Produktionsstunden. Automatisieren oder templaten Sie wiederkehrende Ansichten aus dem System-of-Record. Messen Sie PMO-Erfolg an Entscheidungslatenz-Reduktion und Dependency-Alterung, nicht an Slide-Count. Wenn das PMO nicht zeigen kann, welche Entscheidungen es ermoeglichte, ist es ein Verlag.
 
@@ -18161,6 +19626,11 @@ Jemand sonst verlangt noch eine zusaetzliche woechentliche Sicht.
 
 Keine dieser Anfragen wirkt fuer sich fatal, aber zusammen verwandeln sie das PMO leise in einen Service-Desk fuer Praesentationsnachfrage statt in ein Operating-Team fuer Entscheidungsfluss.
 
+
+
+![Analytical image of a grounded PMO operating board with packet trays, dependency lanes, and action slots.](/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Leadership standardisierte Pakete vor bespoke Theater bevorzugt.
@@ -18181,13 +19651,13 @@ Invertieren Sie das Modell: Records zuerst, Entscheidungen zweitens, Slides zule
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4d89cce2-5a6b-4387-ba60-de420b1a5677', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
+  ('0d13f6e4-18d6-49f5-a2f8-6eb3f55b3569', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e4987ed4-7242-4af6-b207-91d9d5743167', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
+  ('bc7eacd2-51b9-48d8-b88e-becf7f886539', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('64a97bc9-0611-4103-867e-d76b687fb0e4', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
+  ('e512dbbb-1068-4cad-adb4-8f9fdbcab7b4', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -18205,12 +19675,17 @@ INSERT INTO kb_article_tags (article_id, tag_id) VALUES
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 50_how_to_turn_transformation_management_into_a_repeatable_operating_system
-INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-cat-consultify-execution-and-rollout', '50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'published', 0, 1, 3, '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead accountable for multi-year change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, updated_at = CURRENT_TIMESTAMP;
+INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-cat-consultify-execution-and-rollout', '50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'published', 0, 1, 3, '/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead accountable for multi-year change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system-trans-en', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'en', 'How to Turn Transformation Management Into a Repeatable Operating System', 'each wave reinvents governance, tooling, and reporting, which raises governance load and destroys comparability of value proof across years', '**Direct answer:** turn transformation management into a repeatable operating system by freezing a small set of stable objects and rules: one portfolio truth with trade-off grammar, one assumption ledger with owners and tests, one risk and intervention model with triggers, explicit decision rights and SLAs by tier, a capacity view that names contention, value proof tied to baseline variance, and a board or executive packet template that does not change shape every quarter. Add a review cadence map that states what each forum decides versus what it only hears. If objects and cadence shift each wave, you are running projects, not an operating system.
+
+
+![show transformation management as a repeatable operating discipline rather than hero-driven improvisation Scene: one premium editorial operations table centered on a repeatable material loop of portfolio pieces, cadence gates, capacity markers, and ledger elements arranged as a stable operating system with no people present, no printed packet pages visible, and no directional arrows](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png)
+
+
 
 Repeatability is not rigidity.
 
@@ -18283,6 +19758,11 @@ then the operating system has not been installed.
 
 The organization is repeating ceremony, not governance.
 
+
+
+![Analytical image of a tabletop operating-system board with install lanes, cadence gates, and stabilization anchors.](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/analytical.png)
+
+
 ## When this works versus when it fails
 
 **Works** when leadership treats the OS as shared infrastructure.
@@ -18303,6 +19783,11 @@ Repeatable transformation management is a designed operating system with stable 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system-trans-pl', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'pl', 'How to Turn Transformation Management Into a Repeatable Operating System', 'each wave reinvents governance, tooling, and reporting, which raises governance load and destroys comparability of value proof across years', 'Rdzeniowy problem: kazda fala wynajduje na nowo governance, narzedzia i raportowanie, co podnosi obciazenie governance i niszczy porownywalnosc dowodu wartosci miedzy latami  
+
+
+![show transformation management as a repeatable operating discipline rather than hero-driven improvisation Scene: one premium editorial operations table centered on a repeatable material loop of portfolio pieces, cadence gates, capacity markers, and ledger elements arranged as a stable operating system with no people present, no printed packet pages visible, and no directional arrows](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png)
+
+
 Glowna obietnica: mozesz zdefiniowac powtarzalny system operacyjny ze stabilnymi obiektami (portfolio, zalozenia, ryzyka, decyzje, zdolnosc, dowod wartosci) i przewidywalna kadencja przegladu
 
 **Bezposrednia odpowiedz:** przeksztalc zarzadzanie transformacja w powtarzalny system operacyjny, zamrazajac maly zestaw stabilnych obiektow i regul: jedna prawda portfolio z gramatyka kompromisow, jedna ksiega zalozen z wlascicielami i testami, jeden model ryzyka i interwencji z progami, jawne prawa decyzji i SLA wedlug poziomu, widok zdolnosci nazwijacy konflikt, dowod wartosci powiazany z wariancja do bazy oraz szablon pakietu dla zarzadu lub kierownictwa, ktory nie zmienia ksztaltu co kwartal. Dodaj mape kadencji przegladu, ktora mowi, co kazde forum decyduje, a co tylko slucha. Jesli obiekty i kadencja zmieniaja sie co fale, prowadzisz projekty, nie system operacyjny.
@@ -18378,6 +19863,11 @@ to system operacyjny nie zostal zainstalowany.
 
 Organizacja powtarza ceremonie, a nie governance.
 
+
+
+![Analytical image of a tabletop operating-system board with install lanes, cadence gates, and stabilization anchors.](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/analytical.png)
+
+
 ## Kiedy to dziala, a kiedy zawodzi
 
 **Dziala**, gdy przywodztwo traktuje OS jako wspolna infrastrukture.
@@ -18398,6 +19888,11 @@ Powtarzalne zarzadzanie transformacja to zaprojektowany system operacyjny ze sta
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system-trans-de', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'de', 'How to Turn Transformation Management Into a Repeatable Operating System', 'each wave reinvents governance, tooling, and reporting, which raises governance load and destroys comparability of value proof across years', 'Kernversprechen: Sie koennen ein wiederholbares Betriebssystem mit stabilen Objekten (Portfolio, Annahmen, Risiken, Entscheidungen, Kapazitaet, Value-Proof) und vorhersagbarem Review-Takt definieren
+
+
+![show transformation management as a repeatable operating discipline rather than hero-driven improvisation Scene: one premium editorial operations table centered on a repeatable material loop of portfolio pieces, cadence gates, capacity markers, and ledger elements arranged as a stable operating system with no people present, no printed packet pages visible, and no directional arrows](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png)
+
+
 
 **Direkte Antwort:** Verwandeln Sie Transformationsmanagement in ein wiederholbares Betriebssystem, indem Sie eine kleine Menge stabiler Objekte und Regeln einfrieren: eine Portfolio-Wahrheit mit Trade-off-Grammatik, ein Annahmen-Ledger mit Ownern und Tests, ein Risiko- und Interventions-Modell mit Triggern, explizite Entscheidungsrechte und SLAs pro Stufe, eine Kapazitaets-Ansicht die Contention benennt, Value-Proof gebunden an Baseline-Varianz, und ein Board- oder Executive-Paket-Template, das nicht jedes Quartal die Form wechselt. Ergaenzen Sie eine Review-Takt-Karte, die sagt, was jedes Gremium entscheidet versus nur anhoert. Wenn Objekte und Takt jede Welle wechseln, fuehren Sie Projekte, kein Betriebssystem.
 
@@ -18472,6 +19967,11 @@ dann ist das Betriebssystem nicht installiert worden.
 
 Die Organisation wiederholt Zeremonie, nicht Governance.
 
+
+
+![Analytical image of a tabletop operating-system board with install lanes, cadence gates, and stabilization anchors.](/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/analytical.png)
+
+
 ## Wann es funktioniert versus wann es scheitert
 
 **Funktioniert**, wenn Fuehrung das OS als geteilte Infrastruktur behandelt.
@@ -18492,13 +19992,13 @@ Wiederholbares Transformationsmanagement ist ein designed Betriebssystem mit sta
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('28508b8d-141f-41cd-9b84-87dae914a201', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
+  ('4803558c-b9de-49a1-837a-8b79aa8601bf', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('130b51e0-eb34-4243-a8d2-4730f8b9476a', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
+  ('98368ad4-44a9-453e-b660-143eb3f28c42', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('748a68ea-4821-4ec1-bfcf-e9d1537250dd', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
+  ('66a56324-2b07-4dbf-a57a-674bf7f7e0b5', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES

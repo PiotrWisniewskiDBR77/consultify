@@ -196,6 +196,17 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   {copied ? t('kb.article.copied', 'Copied!') : t('kb.article.share', 'Share')}
                 </button>
               </div>
+
+              {/* Hero Image */}
+              {article.thumbnail_url && (
+                <div className="mt-8 rounded-2xl overflow-hidden shadow-lg">
+                  <img
+                    src={article.thumbnail_url}
+                    alt={article.title}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
             </header>
 
             {/* Markdown Body */}
@@ -224,6 +235,22 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                     return <h3 id={id} {...props}>{children}</h3>;
                   },
+                  img: ({ src, alt, ...props }) => (
+                    <figure className="my-8">
+                      <img
+                        src={src}
+                        alt={alt || ''}
+                        className="w-full rounded-xl shadow-md"
+                        loading="lazy"
+                        {...props}
+                      />
+                      {alt && !alt.startsWith('Article hero') && !alt.startsWith('Analytical') && (
+                        <figcaption className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400 italic">
+                          {alt}
+                        </figcaption>
+                      )}
+                    </figure>
+                  ),
                 }}
               >
                 {article.content}
