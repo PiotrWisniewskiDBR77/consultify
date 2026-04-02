@@ -2,7 +2,7 @@
  * Knowledge Base Category Page
  * Route: /knowledge-base/:categorySlug
  *
- * Lists all articles within a KB section (category).
+ * Dark glass aesthetic matching the LP.
  */
 
 import { ArrowRight, BookOpen, ChevronRight, Clock, Eye, Home } from 'lucide-react';
@@ -31,17 +31,32 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   const otherArticles = articles?.filter((a: KbArticleListItem) => !a.is_featured) || [];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950">
+    <div className="min-h-screen bg-[#0A0A1F] text-white relative overflow-hidden">
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+            mask: 'radial-gradient(ellipse at 50% 20%, black 0%, transparent 72%)',
+            WebkitMask: 'radial-gradient(ellipse at 50% 20%, black 0%, transparent 72%)',
+          }}
+        />
+        <div className="absolute top-[-15%] right-[10%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.15)_0%,transparent_65%)] blur-[80px]" />
+      </div>
+
       {/* Breadcrumb */}
-      <div className="border-b border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-purple-600 transition-colors">
+      <div className="relative z-10 border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <nav className="flex items-center gap-2 text-sm text-white/40">
+            <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-400 transition-colors">
               <Home size={14} />
               <span>{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
             </Link>
             <ChevronRight size={14} />
-            <span className="text-slate-900 dark:text-white font-medium">
+            <span className="text-white font-semibold">
               {category?.name || categorySlug}
             </span>
           </nav>
@@ -49,47 +64,46 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
         <div className="max-w-3xl">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-[1.05]">
             {category?.name || categorySlug}
           </h1>
           {category?.description && (
-            <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
+            <p className="mt-4 text-lg text-white/45 font-medium leading-relaxed">
               {category.description}
             </p>
           )}
-          <div className="mt-4 text-sm text-slate-400">
+          <div className="mt-4 text-sm text-white/30 font-semibold">
             {articles?.length || 0} {t('kb.articles', 'articles')}
           </div>
         </div>
       </div>
 
       {/* Articles */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl border border-slate-200 dark:border-navy-800 p-6">
-                <div className="h-4 bg-slate-200 dark:bg-navy-800 rounded w-1/3 mb-4" />
-                <div className="h-5 bg-slate-200 dark:bg-navy-800 rounded w-full mb-2" />
-                <div className="h-5 bg-slate-200 dark:bg-navy-800 rounded w-2/3 mb-4" />
-                <div className="h-3 bg-slate-200 dark:bg-navy-800 rounded w-full mb-2" />
-                <div className="h-3 bg-slate-200 dark:bg-navy-800 rounded w-4/5" />
+              <div key={i} className="animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+                <div className="aspect-[16/9] rounded-lg bg-white/[0.04] mb-4" />
+                <div className="h-4 bg-white/[0.06] rounded w-2/3 mb-3" />
+                <div className="h-3 bg-white/[0.04] rounded w-full mb-2" />
+                <div className="h-3 bg-white/[0.04] rounded w-4/5" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             {featuredArticles.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <BookOpen size={18} className="text-purple-500" />
+                <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 uppercase tracking-[0.15em]">
+                  <BookOpen size={18} className="text-primary-400" />
                   {t('kb.category.featured', 'Featured')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredArticles.map((article: KbArticleListItem) => (
-                    <ArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
+                    <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
                   ))}
                 </div>
               </div>
@@ -98,13 +112,13 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
             {otherArticles.length > 0 && (
               <div>
                 {featuredArticles.length > 0 && (
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  <h2 className="text-lg font-black text-white mb-6 uppercase tracking-[0.15em]">
                     {t('kb.category.all', 'All Articles')}
                   </h2>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {otherArticles.map((article: KbArticleListItem) => (
-                    <ArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
+                    <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
                   ))}
                 </div>
               </div>
@@ -116,62 +130,67 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   );
 };
 
-const ArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: string }> = ({ article, categorySlug }) => {
+const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: string }> = ({ article, categorySlug }) => {
   const { t } = useTranslation();
 
   return (
     <Link
       to={`/knowledge-base/${categorySlug}/${article.slug}`}
-      className="group flex flex-col rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 hover:shadow-md hover:border-slate-300 dark:hover:border-navy-700 transition-all overflow-hidden"
+      className={cn(
+        'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
+        'border-white/[0.06] bg-white/[0.025] backdrop-blur-sm',
+        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+        'hover:shadow-[0_0_40px_-12px_rgba(124,58,237,0.20)]'
+      )}
     >
-      {/* Thumbnail */}
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-900 overflow-hidden">
+        <div className="relative aspect-[16/9] overflow-hidden bg-[#0D0828]">
           <img
             src={article.thumbnail_url}
             alt={article.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
             loading="lazy"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1F]/60 via-transparent to-transparent" />
           {article.is_featured && (
-            <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-amber-500/90 text-white text-xs font-medium backdrop-blur-sm">
+            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white">
               {t('kb.card.featured', 'Featured')}
             </span>
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
-          <BookOpen size={32} className="text-white/30" />
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-[#0D0828] to-[#12082E] flex items-center justify-center">
+          <BookOpen size={32} className="text-white/15" />
         </div>
       )}
 
-      <div className="p-6 flex-1 flex flex-col">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-2">
+      <div className="p-5 flex-1 flex flex-col">
+        <h3 className="text-[15px] font-bold text-white group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
           {article.title}
         </h3>
         {article.summary && (
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 line-clamp-3 flex-1">
+          <p className="mt-2 text-xs text-white/40 line-clamp-2 leading-relaxed flex-1">
             {article.summary}
           </p>
         )}
-        <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+        <div className="mt-4 flex items-center gap-4 text-[11px] text-white/30 font-medium">
           <span className="flex items-center gap-1">
-            <Clock size={12} />
+            <Clock size={11} />
             {article.reading_time_minutes} {t('kb.card.min', 'min')}
           </span>
           {article.view_count > 0 && (
             <span className="flex items-center gap-1">
-              <Eye size={12} />
+              <Eye size={11} />
               {article.view_count}
             </span>
           )}
         </div>
       </div>
-      <div className="px-6 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between">
-        <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+      <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
+        <span className="text-xs font-bold text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
-        <ArrowRight size={14} className="text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight size={13} className="text-primary-400 group-hover:translate-x-1 transition-transform" />
       </div>
     </Link>
   );
