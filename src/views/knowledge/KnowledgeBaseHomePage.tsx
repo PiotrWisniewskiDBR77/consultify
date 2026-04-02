@@ -18,7 +18,6 @@ import {
   Rocket,
   Search,
   Shield,
-  Sparkles,
   Tag,
   X,
 } from 'lucide-react';
@@ -145,8 +144,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-xs font-bold text-primary-300 tracking-wide mb-8">
-              <Sparkles size={14} className="text-primary-300" />
-              <span>{t('kb.hero.badge', '50 expert articles on transformation management')}</span>
+              <span>{t('kb.hero.badge', '50+ expert articles on transformation management')}</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.0]">
