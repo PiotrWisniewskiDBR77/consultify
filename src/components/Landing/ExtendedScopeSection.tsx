@@ -40,7 +40,7 @@ export const ExtendedScopeSection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-white/70"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70"
           >
             <BriefcaseBusiness size={12} className="text-primary-300" />
             {t('landing.extendedScope.badge', 'Beyond classic consulting')}
@@ -50,7 +50,7 @@ export const ExtendedScopeSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="mt-5 text-4xl lg:text-5xl font-black text-white tracking-tight"
+            className="mt-5 text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight"
           >
             {t(
               'landing.extendedScope.heading',
@@ -62,7 +62,7 @@ export const ExtendedScopeSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="mt-4 text-base text-white/55 max-w-3xl mx-auto"
+            className="mt-4 text-base text-slate-500 dark:text-white/55 max-w-3xl mx-auto"
           >
             {t(
               'landing.extendedScope.sub',
@@ -81,18 +81,18 @@ export const ExtendedScopeSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08 }}
                 viewport={{ once: true }}
-                className="rounded-3xl border border-white/[0.06] bg-white/[0.035] p-7 backdrop-blur-xl"
+                className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-7 backdrop-blur-xl"
               >
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-primary-500/12 bg-primary-500/10">
                   <Icon size={22} className="text-primary-300" />
                 </div>
-                <h3 className="text-2xl font-black text-white mb-3">{scope.title}</h3>
-                <p className="text-sm text-white/58 leading-relaxed mb-5">{scope.description}</p>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{scope.title}</h3>
+                <p className="text-sm text-slate-500 dark:text-white/58 leading-relaxed mb-5">{scope.description}</p>
                 <div className="space-y-2">
                   {scope.bullets.map((bullet) => (
                     <div
                       key={bullet}
-                      className="rounded-2xl border border-white/[0.045] bg-white/[0.02] px-4 py-3 text-sm text-white/65 transition-colors hover:bg-white/[0.035]"
+                      className="rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-600 dark:text-white/65 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                     >
                       {bullet}
                     </div>

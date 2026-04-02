@@ -85,7 +85,7 @@ export const HowItWorksSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4"
+            className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
           >
             {t('landing.howItWorks.heading', 'From idea to measurable results')}
             <span
@@ -106,7 +106,7 @@ export const HowItWorksSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="text-base text-white/50 max-w-xl mx-auto"
+            className="text-base text-slate-500 dark:text-white/50 max-w-xl mx-auto"
           >
             {t(
               'landing.howItWorks.sub',
@@ -159,8 +159,8 @@ export const HowItWorksSection: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-black text-white leading-snug mb-2">{step.title}</h3>
-                <p className="text-xs text-white/45 leading-relaxed">{step.description}</p>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug mb-2">{step.title}</h3>
+                <p className="text-xs text-slate-500 dark:text-white/45 leading-relaxed">{step.description}</p>
               </motion.button>
             );
           })}
@@ -197,13 +197,13 @@ export const HowItWorksSection: React.FC = () => {
                   {t('landing.howItWorks.techBadge', 'The technology behind the magic')}
                 </span>
               </div>
-              <h3 className="text-2xl font-black text-white mb-4 leading-tight">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
                 {t(
                   'landing.howItWorks.techTitle',
                   'Powered by DBR77 Vector, our proprietary AI model.'
                 )}
               </h3>
-              <p className="text-sm text-white/55 leading-relaxed">
+              <p className="text-sm text-slate-500 dark:text-white/55 leading-relaxed">
                 {t(
                   'landing.howItWorks.techDesc',
                   'Built on 1,000+ real transformation engagements and delivered through secure deployment paths. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation.'
@@ -243,8 +243,8 @@ export const HowItWorksSection: React.FC = () => {
                     border: `1px solid ${item.color}25`,
                   }}
                 >
-                  <div className="text-sm font-black text-white mb-0.5">{item.label}</div>
-                  <div className="text-[11px] text-white/40 leading-snug">{item.desc}</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">{item.label}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-white/40 leading-snug">{item.desc}</div>
                 </div>
               ))}
             </div>
