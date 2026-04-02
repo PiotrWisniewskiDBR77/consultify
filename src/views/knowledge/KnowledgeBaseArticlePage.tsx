@@ -3,6 +3,8 @@
  * Route: /knowledge-base/:categorySlug/:articleSlug
  *
  * Full article view with dark glass aesthetic matching the LP.
+ * Includes: SEO meta, JSON-LD, canonical, scroll progress, mobile TOC,
+ * Web Share API, social share, and feedback persistence.
  */
 
 import { motion } from 'framer-motion';
@@ -10,16 +12,21 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   Copy,
   Eye,
   Home,
   Link as LinkIcon,
+  Linkedin,
+  Share2,
   ThumbsDown,
   ThumbsUp,
+  Twitter,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { Link, useParams } from 'react-router-dom';
@@ -35,6 +42,80 @@ interface TocItem {
   level: number;
 }
 
+function useScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return progress;
+}
+
+function useArticleSeo(article: any, categorySlug?: string) {
+  useEffect(() => {
+    if (!article) return;
+
+    const title = `${article.title} | Consultify`;
+    const description = article.summary || '';
+    const url = `${window.location.origin}/knowledge-base/${categorySlug}/${article.slug}`;
+
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!content) { el?.remove(); return; }
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.content = content;
+    };
+
+    setMeta('name', 'description', description);
+    setMeta('property', 'og:title', title);
+    setMeta('property', 'og:description', description);
+    setMeta('property', 'og:type', 'article');
+    setMeta('property', 'og:url', url);
+    if (article.thumbnail_url) setMeta('property', 'og:image', article.thumbnail_url);
+    setMeta('name', 'twitter:card', 'summary_large_image');
+    setMeta('name', 'twitter:title', title);
+    setMeta('name', 'twitter:description', description);
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = url;
+
+    let jsonLd = document.querySelector('script[data-kb-jsonld]') as HTMLScriptElement | null;
+    if (!jsonLd) { jsonLd = document.createElement('script'); jsonLd.type = 'application/ld+json'; jsonLd.setAttribute('data-kb-jsonld', ''); document.head.appendChild(jsonLd); }
+    jsonLd.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description: description,
+      url: url,
+      ...(article.thumbnail_url && { image: article.thumbnail_url }),
+      ...(article.reading_time_minutes && { timeRequired: `PT${article.reading_time_minutes}M` }),
+      publisher: { '@type': 'Organization', name: 'Consultify', url: 'https://consultify.ai' },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Knowledge Base', item: `${window.location.origin}/knowledge-base` },
+          { '@type': 'ListItem', position: 2, name: article.category_name || categorySlug, item: `${window.location.origin}/knowledge-base/${categorySlug}` },
+          { '@type': 'ListItem', position: 3, name: article.title },
+        ],
+      },
+    });
+
+    return () => {
+      document.querySelector('link[rel="canonical"]')?.remove();
+      document.querySelector('script[data-kb-jsonld]')?.remove();
+    };
+  }, [article, categorySlug]);
+}
+
 export const KnowledgeBaseArticlePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { categorySlug, articleSlug } = useParams<{ categorySlug: string; articleSlug: string }>();
@@ -42,17 +123,29 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
   const { data: article, isLoading, error } = useDocsArticle(articleSlug || '', docsLanguage);
   const trackView = useDocsTrackView();
-  const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '', docsLanguage, 4);
+  const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '');
 
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [mobileTocOpen, setMobileTocOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const articleRef = useRef<HTMLElement>(null);
+
+  const scrollProgress = useScrollProgress();
+  useArticleSeo(article, categorySlug);
 
   useEffect(() => {
     if (article?.id) {
-      trackView.mutate({ articleId: article.id, source: 'knowledge_base' });
+      trackView.mutate(article.id);
     }
   }, [article?.id]);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const toc = useMemo<TocItem[]>(() => {
     if (!article?.content) return [];
@@ -96,6 +189,31 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
+  const handleShare = useCallback(async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: article?.title, url: window.location.href });
+        return;
+      } catch { /* user cancelled or not supported */ }
+    }
+    handleCopyLink();
+  }, [article?.title, handleCopyLink]);
+
+  const handleFeedback = useCallback((type: 'up' | 'down') => {
+    setFeedback(type);
+    try {
+      fetch(`/api/public/kb-v8/articles/${articleSlug}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, source: 'knowledge_base' }),
+      }).catch(() => {});
+    } catch { /* silent */ }
+  }, [articleSlug]);
+
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article?.title || '')}`;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A1F]">
@@ -130,6 +248,14 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0A1F] text-white relative overflow-hidden">
+      {/* Scroll progress bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-[3px] bg-transparent">
+        <div
+          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-[width] duration-100"
+          style={{ width: `${scrollProgress * 100}%` }}
+        />
+      </div>
+
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
@@ -142,14 +268,14 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           <nav className="flex items-center gap-2 text-sm text-white/40">
             <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-400 transition-colors">
               <Home size={14} />
-              <span>{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
+              <span className="hidden sm:inline">{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
             </Link>
             <ChevronRight size={14} />
-            <Link to={`/knowledge-base/${categorySlug}`} className="hover:text-primary-400 transition-colors">
+            <Link to={`/knowledge-base/${categorySlug}`} className="hover:text-primary-400 transition-colors truncate max-w-[200px]">
               {article.category_name || categorySlug}
             </Link>
-            <ChevronRight size={14} />
-            <span className="text-white/70 font-medium truncate max-w-xs">
+            <ChevronRight size={14} className="hidden sm:block" />
+            <span className="text-white/70 font-medium truncate max-w-xs hidden sm:block">
               {article.title}
             </span>
           </nav>
@@ -157,9 +283,42 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        {/* Mobile TOC */}
+        {toc.length > 2 && (
+          <div className="xl:hidden mb-8">
+            <button
+              onClick={() => setMobileTocOpen(!mobileTocOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm text-white/50 hover:border-white/[0.15] transition-colors"
+            >
+              <span className="font-semibold">{t('kb.article.toc', 'On this page')}</span>
+              {mobileTocOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {mobileTocOpen && (
+              <nav className="mt-2 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-1">
+                {toc.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    onClick={() => setMobileTocOpen(false)}
+                    className={cn(
+                      'block text-[13px] py-1.5 transition-colors',
+                      item.level === 2 ? 'pl-2' : 'pl-5',
+                      activeHeading === item.id
+                        ? 'text-primary-400 font-semibold'
+                        : 'text-white/40 hover:text-white/60'
+                    )}
+                  >
+                    {item.text}
+                  </a>
+                ))}
+              </nav>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-12">
           {/* Main Content */}
-          <article className="flex-1 min-w-0 max-w-3xl">
+          <article ref={articleRef} className="flex-1 min-w-0 max-w-3xl">
             <motion.header
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -185,7 +344,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 </p>
               )}
 
-              <div className="mt-6 flex items-center gap-6 text-sm text-white/30">
+              <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-white/30">
                 <span className="flex items-center gap-1.5">
                   <Clock size={14} />
                   {article.reading_time_minutes} {t('kb.card.min', 'min read')}
@@ -196,16 +355,35 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     {article.view_count} {t('kb.article.views', 'views')}
                   </span>
                 )}
-                <button
-                  onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 hover:text-primary-400 transition-colors"
-                >
-                  {copied ? <Copy size={14} /> : <LinkIcon size={14} />}
-                  {copied ? t('kb.article.copied', 'Copied!') : t('kb.article.share', 'Share')}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 hover:text-primary-400 transition-colors"
+                    title={t('kb.article.share', 'Share')}
+                  >
+                    {copied ? <Copy size={14} /> : <Share2 size={14} />}
+                    {copied ? t('kb.article.copied', 'Copied!') : t('kb.article.share', 'Share')}
+                  </button>
+                  <a
+                    href={linkedInShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#0A66C2] transition-colors"
+                    title="Share on LinkedIn"
+                  >
+                    <Linkedin size={14} />
+                  </a>
+                  <a
+                    href={twitterShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors"
+                    title="Share on X"
+                  >
+                    <Twitter size={14} />
+                  </a>
+                </div>
               </div>
-
-              {/* Hero image is embedded in the markdown content */}
             </motion.header>
 
             {/* Markdown Body */}
@@ -263,7 +441,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
               </p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setFeedback('up')}
+                  onClick={() => handleFeedback('up')}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all',
                     feedback === 'up'
@@ -275,7 +453,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   {t('kb.article.yes', 'Yes')}
                 </button>
                 <button
-                  onClick={() => setFeedback('down')}
+                  onClick={() => handleFeedback('down')}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all',
                     feedback === 'down'
@@ -286,6 +464,11 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   <ThumbsDown size={14} />
                   {t('kb.article.no', 'No')}
                 </button>
+                {feedback && (
+                  <span className="text-xs text-white/25 ml-2">
+                    {t('kb.article.thanksFeedback', 'Thank you for your feedback')}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -305,6 +488,11 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                       <h4 className="font-bold text-sm text-white group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
                         {related.title}
                       </h4>
+                      {related.summary && (
+                        <p className="mt-2 text-xs text-white/35 line-clamp-2 leading-relaxed">
+                          {related.summary}
+                        </p>
+                      )}
                       <div className="mt-3 flex items-center gap-1 text-xs text-primary-400 font-bold">
                         <span>{t('kb.card.read', 'Read article')}</span>
                         <ArrowRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
@@ -355,6 +543,17 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Back to top button */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/40 hover:text-white hover:bg-white/[0.1] transition-all shadow-lg backdrop-blur-sm"
+          aria-label="Back to top"
+        >
+          <ChevronUp size={18} />
+        </button>
+      )}
     </div>
   );
 };

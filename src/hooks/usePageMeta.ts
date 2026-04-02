@@ -77,6 +77,13 @@ function getMetaForPath(path: string): PageMeta {
       description: 'Consultify legal documents and policies.',
     };
   }
+  if (path.startsWith('/knowledge-base')) {
+    return {
+      title: `Knowledge Base — ${BRAND}`,
+      description:
+        'Expert guides on transformation management, AI consulting, governance, and execution for enterprise leaders.',
+    };
+  }
 
   return { title: BRAND, description: '' };
 }
