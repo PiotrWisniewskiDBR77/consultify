@@ -20,11 +20,16 @@ import {
   MessageSquare,
   RefreshCw,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Provider, UserIntegration, useUserIntegrations } from '../../hooks/useUserIntegrations';
+import {
+  V8SyncApi,
+  type V8SyncCatalogConnector,
+  type V8SyncIntegrationInventoryRow,
+} from '../../services/api/v8/sync';
 
 // Slack icon
 const SlackIcon = () => (
@@ -142,6 +147,14 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [v8Catalog, setV8Catalog] = useState<V8SyncCatalogConnector[]>([]);
+  const [v8Integrations, setV8Integrations] = useState<V8SyncIntegrationInventoryRow[]>([]);
+  const [v8Loading, setV8Loading] = useState(false);
+  const [v8Error, setV8Error] = useState<string | null>(null);
+  const [v8ConnectOpen, setV8ConnectOpen] = useState(false);
+  const [v8SelectedConnector, setV8SelectedConnector] = useState<V8SyncCatalogConnector | null>(null);
+  const [v8DraftConfig, setV8DraftConfig] = useState<Record<string, string>>({});
+  const [v8Connecting, setV8Connecting] = useState(false);
 
   const {
     integrations,
@@ -154,6 +167,53 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     testConnection,
     refresh,
   } = useUserIntegrations();
+
+  const refreshV8 = useCallback(async () => {
+    setV8Loading(true);
+    setV8Error(null);
+    try {
+      const [catalogRes, integrationsRes] = await Promise.all([
+        V8SyncApi.getConnectors(),
+        V8SyncApi.getIntegrations(),
+      ]);
+      setV8Catalog((catalogRes?.connectors || []) as V8SyncCatalogConnector[]);
+      setV8Integrations((integrationsRes?.integrations || []) as V8SyncIntegrationInventoryRow[]);
+    } catch (e: any) {
+      setV8Error(
+        e?.data?.error ||
+          e?.message ||
+          t('settings.integrations.v8LoadFailed', 'Failed to load connector catalog')
+      );
+    } finally {
+      setV8Loading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    refreshV8();
+  }, [refreshV8]);
+
+  const v8LatestByConnector = useMemo(() => {
+    const map = new Map<string, V8SyncIntegrationInventoryRow>();
+    for (const row of v8Integrations) {
+      const id = String(row.connectorId || '').trim();
+      if (!id) continue;
+      if (!map.has(id)) map.set(id, row);
+    }
+    return map;
+  }, [v8Integrations]);
+
+  const v8FilteredCatalog = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return v8Catalog.filter((c) => {
+      if (!q) return true;
+      return (
+        String(c.name || '').toLowerCase().includes(q) ||
+        String(c.id || '').toLowerCase().includes(q) ||
+        String(c.category || '').toLowerCase().includes(q)
+      );
+    });
+  }, [v8Catalog, searchQuery]);
 
   // Filter providers by category and search
   const filteredProviders = providers.filter((provider) => {
@@ -220,6 +280,56 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const getProviderIcon = (providerId: string) => {
     const Icon = PROVIDER_ICONS[providerId] || Link2;
     return <Icon className="w-5 h-5" />;
+  };
+
+  const openV8Connect = (connector: V8SyncCatalogConnector) => {
+    setV8SelectedConnector(connector);
+    const nextDraft: Record<string, string> = {};
+    (connector.configFields || []).forEach((f) => {
+      nextDraft[f] = '';
+    });
+    setV8DraftConfig(nextDraft);
+    setV8ConnectOpen(true);
+  };
+
+  const submitV8Connect = async () => {
+    if (!v8SelectedConnector) return;
+    setV8Connecting(true);
+    try {
+      const rawConfig: Record<string, unknown> = {};
+      Object.entries(v8DraftConfig).forEach(([k, v]) => {
+        if (String(v || '').trim().length > 0) rawConfig[k] = v.trim();
+      });
+
+      const initiated = await V8SyncApi.connectIntegration(v8SelectedConnector.id, {
+        displayName: v8SelectedConnector.name,
+        config: rawConfig,
+      });
+
+      const integrationId = initiated?.integration?.id;
+      if (!integrationId) {
+        throw new Error('Missing integration id');
+      }
+
+      const configured = await V8SyncApi.configureIntegration(integrationId, { config: rawConfig });
+      const authUrl = configured?.externalAuth?.authUrl;
+      if (authUrl) {
+        window.open(authUrl, '_blank', 'noopener,noreferrer,width=900,height=780');
+      }
+
+      toast.success(t('settings.integrations.connectStarted', 'Connection started'));
+      setV8ConnectOpen(false);
+      setV8SelectedConnector(null);
+      await refreshV8();
+    } catch (e: any) {
+      toast.error(
+        e?.data?.error ||
+          e?.message ||
+          t('settings.integrations.connectError', 'Failed to initiate connection')
+      );
+    } finally {
+      setV8Connecting(false);
+    }
   };
 
   if (loading) {
@@ -563,6 +673,204 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           })
         )}
       </div>
+
+      {/* V8 connector catalog (tenant sync) */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {t('settings.integrations.v8CatalogTitle', 'Sync connector catalog')}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t(
+                'settings.integrations.v8CatalogDesc',
+                'Connect external systems for governed sync. Admin can monitor who connected what.'
+              )}
+            </p>
+          </div>
+          <button
+            onClick={refreshV8}
+            disabled={v8Loading}
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+            title={t('common.refresh', 'Refresh')}
+          >
+            <RefreshCw size={18} className={v8Loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+
+        {v8Error && (
+          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+            <AlertCircle size={16} />
+            {v8Error}
+          </div>
+        )}
+
+        <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden bg-white dark:bg-navy-800/40">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-navy-900/40 text-slate-500 dark:text-slate-400">
+                <tr className="text-left text-xs">
+                  <th className="px-3 py-2 w-10" />
+                  <th className="px-3 py-2">{t('settings.integrations.catalogApp', 'App')}</th>
+                  <th className="px-3 py-2 hidden md:table-cell">
+                    {t('settings.integrations.catalogCapabilities', 'Capabilities')}
+                  </th>
+                  <th className="px-3 py-2 w-28">{t('settings.integrations.catalogStatus', 'Status')}</th>
+                  <th className="px-3 py-2 w-28" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-navy-700/50">
+                {v8FilteredCatalog.map((conn) => {
+                  const Icon = (PROVIDER_ICONS as any)[conn.id] || Link2;
+                  const existing = v8LatestByConnector.get(conn.id);
+                  const isConnected = Boolean(existing);
+                  return (
+                    <tr
+                      key={conn.id}
+                      className="text-slate-700 dark:text-slate-200 hover:bg-slate-50/70 dark:hover:bg-navy-800/40"
+                    >
+                      <td className="px-3 py-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-700 dark:text-slate-200">
+                          <Icon className="w-4 h-4" />
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                          {conn.name}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-500">
+                          {conn.category}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 hidden md:table-cell">
+                        <div className="flex flex-wrap gap-1">
+                          {(conn.capabilities || []).slice(0, 4).map((cap) => (
+                            <span
+                              key={cap}
+                              className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700/60 text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600"
+                            >
+                              {cap}
+                            </span>
+                          ))}
+                          {(conn.capabilities || []).length > 4 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-slate-100/60 dark:bg-navy-700/30 text-[10px] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700">
+                              +{(conn.capabilities || []).length - 4}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {isConnected ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                            <Check size={12} /> {t('common.connected', 'Connected')}
+                          </span>
+                        ) : conn.comingSoon ? (
+                          <span className="text-xs text-slate-500 italic">
+                            {t('settings.integrations.comingSoon', 'Coming soon')}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {t('settings.integrations.ready', 'Ready')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {isConnected ? null : conn.comingSoon ? (
+                          <span className="text-xs text-slate-400">—</span>
+                        ) : (
+                          <button
+                            onClick={() => openV8Connect(conn)}
+                            className="px-3 py-1 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
+                          >
+                            {t('common.connect', 'Connect')}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {v8FilteredCatalog.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                    >
+                      {t('settings.integrations.noResults', 'No integrations found')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* V8 connect modal */}
+      {v8ConnectOpen && v8SelectedConnector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('settings.integrations.connectModalTitle', 'Connect')}
+                  {': '} {v8SelectedConnector.name}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {t(
+                    'settings.integrations.connectModalDesc',
+                    'Provide required fields. If OAuth is required, a new window will open.'
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setV8ConnectOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                aria-label={t('common.close', 'Close')}
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              {(v8SelectedConnector.configFields || []).length === 0 ? (
+                <div className="text-sm text-slate-600 dark:text-slate-300">
+                  {t('settings.integrations.noConfigNeeded', 'No additional configuration required.')}
+                </div>
+              ) : (
+                (v8SelectedConnector.configFields || []).map((field) => (
+                  <div key={field} className="space-y-1">
+                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {field}
+                    </div>
+                    <input
+                      value={v8DraftConfig[field] || ''}
+                      onChange={(e) =>
+                        setV8DraftConfig((prev) => ({ ...prev, [field]: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand"
+                      placeholder={t('settings.integrations.fieldPlaceholder', 'Enter value')}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="p-4 pt-0 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setV8ConnectOpen(false)}
+                className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={submitV8Connect}
+                disabled={v8Connecting}
+                className="px-3 py-2 text-sm rounded-lg bg-brand hover:bg-brand-dark text-white transition-colors disabled:opacity-50"
+              >
+                {v8Connecting ? t('common.working', 'Working…') : t('common.connect', 'Connect')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Help text */}
       <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/50 rounded-lg p-3 space-y-1">

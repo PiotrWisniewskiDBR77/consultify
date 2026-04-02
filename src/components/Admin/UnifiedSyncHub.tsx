@@ -2786,11 +2786,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           />
         </div>
         <button
-          onClick={() => setShowConnectModal(true)}
+          onClick={() => window.location.assign('/settings/integrations')}
           className="h-9 px-4 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
         >
           <Plus size={16} />
-          {t('integrations.syncHub.connectNew', 'Connect')}
+          {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
         </button>
       </div>
 
@@ -2809,10 +2809,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {t('integrations.syncHub.noIntegrations', 'No integrations connected')}
           </p>
           <button
-            onClick={() => setShowConnectModal(true)}
+            onClick={() => window.location.assign('/settings/integrations')}
             className="mt-3 px-4 py-2 text-sm text-violet-400 border border-violet-500/30 hover:bg-violet-500/10 rounded-lg transition-colors"
           >
-            {t('integrations.syncHub.connectFirst', 'Connect your first integration')}
+            {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
           </button>
           {catalog.length > 0 && (
             <div className="mt-10 text-left">
@@ -2885,12 +2885,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             type="button"
             onClick={() => {
               setActiveTab('apps');
-              setShowConnectModal(true);
+              window.location.assign('/settings/integrations');
             }}
             className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors"
           >
             <Plus size={14} />
-            {t('integrations.syncHub.connectNew', 'Connect')}
+            {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
           </button>
         </div>
       )}
