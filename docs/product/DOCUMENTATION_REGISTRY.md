@@ -930,6 +930,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: delivery-grade plan for user-level integrations SSOT, admin monitoring-only sync posture, API keys productization, and Public API v1 (Tasks + Calendar)
   - **Authority**: Highest for PO1 implementation scope/DoD and the intended Admin-vs-Settings ownership split for integrations + API keys
 
+- `docs/product/INTEGRATION_CONNECTOR_SPECS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: complete technical specification for all 20 integration connectors — OAuth flows, scopes, API endpoints, rate limits, Node.js SDKs, token storage, webhook patterns, and environment variables for Gmail, Outlook, Slack, Teams, Google Calendar, Outlook Calendar, Apple Calendar, Calendly, Jira, Asana, Trello, ClickUp, Monday.com, Notion, Todoist, Linear, Google Drive, OneDrive, Dropbox, Box
+  - **Authority**: Highest for connector implementation details, required scopes, and authentication flows
+
 - `docs/product/CONNECTOR_RUNTIME_JOBS_AND_STORAGE_MODEL_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: implementation-grade queue, worker, job, dead-letter, retention and storage model for connector runtime
