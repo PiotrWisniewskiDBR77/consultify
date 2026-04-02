@@ -47,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../../lib/utils';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { MFASetup } from '../../Profile/MFASetup';
 import { SettingsDivider, SettingsSection } from '../shared';
 
 interface AuthenticationAccessPageProps {
@@ -486,60 +487,11 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             </button>
 
             {expandedPanel === 'mfa' && (
-              <div className="px-4 pb-4 border-t border-white/5 pt-4">
-                {currentUser?.mfaEnabled ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
-                      <ShieldCheck size={18} className="text-emerald-400" />
-                      <div>
-                        <p className="text-sm font-medium text-emerald-300">
-                          {t('settings.authAccess.mfaEnabled', '2FA is active')}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {t(
-                            'settings.authAccess.mfaEnabledDesc',
-                            'Authenticator app is configured and protecting your account'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {t(
-                        'settings.authAccess.mfaManageHint',
-                        'To manage 2FA settings, regenerate backup codes, or disable 2FA, visit the dedicated Two-Factor Authentication page from the sidebar.'
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
-                        <Shield size={16} className="text-violet-400 mb-2" />
-                        <p className="text-xs font-medium text-white">
-                          {t('settings.authAccess.benefit1', 'Prevent Unauthorized Access')}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
-                        <Smartphone size={16} className="text-violet-400 mb-2" />
-                        <p className="text-xs font-medium text-white">
-                          {t('settings.authAccess.benefit2', 'Works Offline')}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
-                        <Key size={16} className="text-violet-400 mb-2" />
-                        <p className="text-xs font-medium text-white">
-                          {t('settings.authAccess.benefit3', 'Backup Codes')}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {t(
-                        'settings.authAccess.mfaSetupHint',
-                        'To set up two-factor authentication, navigate to the dedicated 2FA setup page from the sidebar.'
-                      )}
-                    </p>
-                  </div>
-                )}
+              <div className="border-t border-white/5 pt-4 pb-2">
+                <MFASetup
+                  isEnabled={currentUser?.mfaEnabled || false}
+                  onUpdate={() => onUpdateUser?.({})}
+                />
               </div>
             )}
           </div>
