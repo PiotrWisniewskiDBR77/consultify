@@ -34,6 +34,8 @@ import {
   ShieldAlert,
   Trash2,
   Unplug,
+  Users,
+  List,
   X,
   XCircle,
   Zap,
@@ -76,7 +78,32 @@ import { useAppStore } from '../../store/useAppStore';
 
 type IntegrationStatus = 'connected' | 'disconnected' | 'error' | 'pending' | 'requires_reauth';
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
-type TabId = 'apps' | 'health' | 'webhooks' | 'audit';
+type TabId = 'apps' | 'health' | 'users' | 'logs' | 'webhooks' | 'audit';
+
+interface AdminIntegrationOwnershipItem {
+  integrationId: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  connectorId: string;
+  integrationName: string;
+  category: string;
+  status: string;
+  updatedAt: string | null;
+}
+
+interface AdminIntegrationConnectionLogItem {
+  id: string;
+  userId: string | null;
+  integrationId: string;
+  connectorId: string;
+  eventType: string;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
 
 interface SyncRun {
   id: string;
@@ -430,6 +457,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [usersSearchQuery, setUsersSearchQuery] = useState('');
+  const [ownershipItems, setOwnershipItems] = useState<AdminIntegrationOwnershipItem[]>([]);
+  const [ownershipLoading, setOwnershipLoading] = useState(false);
+  const [ownershipError, setOwnershipError] = useState<string | null>(null);
+  const [connectionLogItems, setConnectionLogItems] = useState<AdminIntegrationConnectionLogItem[]>(
+    []
+  );
+  const [connectionLogTotal, setConnectionLogTotal] = useState(0);
+  const [connectionLogLoading, setConnectionLogLoading] = useState(false);
+  const [connectionLogError, setConnectionLogError] = useState<string | null>(null);
+  const [connectionLogEventType, setConnectionLogEventType] = useState<string>('');
+  const [connectionLogConnectorId, setConnectionLogConnectorId] = useState<string>('');
+  const [connectionLogLimit, setConnectionLogLimit] = useState<number>(50);
+  const [connectionLogOffset, setConnectionLogOffset] = useState<number>(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -725,6 +766,55 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchAdminOwnership = useCallback(async () => {
+    setOwnershipLoading(true);
+    setOwnershipError(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/integrations/users`, { headers: getHeaders() });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as { items?: AdminIntegrationOwnershipItem[] };
+      setOwnershipItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e: any) {
+      setOwnershipItems([]);
+      setOwnershipError(e?.message || 'Failed to load integrations ownership');
+    } finally {
+      setOwnershipLoading(false);
+    }
+  }, []);
+
+  const fetchAdminConnectionLogs = useCallback(async () => {
+    setConnectionLogLoading(true);
+    setConnectionLogError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', String(connectionLogLimit));
+      params.set('offset', String(connectionLogOffset));
+      if (connectionLogEventType.trim()) params.set('eventType', connectionLogEventType.trim());
+      if (connectionLogConnectorId.trim())
+        params.set('connectorId', connectionLogConnectorId.trim());
+
+      const res = await fetch(`${API_URL}/admin/integrations/logs?${params.toString()}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as { items?: AdminIntegrationConnectionLogItem[]; total?: number };
+      setConnectionLogItems(Array.isArray(data.items) ? data.items : []);
+      setConnectionLogTotal(Number(data.total || 0));
+    } catch (e: any) {
+      setConnectionLogItems([]);
+      setConnectionLogTotal(0);
+      setConnectionLogError(e?.message || 'Failed to load connection logs');
+    } finally {
+      setConnectionLogLoading(false);
+    }
+  }, [connectionLogConnectorId, connectionLogEventType, connectionLogLimit, connectionLogOffset]);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -784,6 +874,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     if (activeTab !== 'webhooks') return;
     void fetchV8RefreshPolicies();
   }, [activeTab, fetchV8RefreshPolicies]);
+
+  useEffect(() => {
+    if (activeTab !== 'users') return;
+    void fetchAdminOwnership();
+  }, [activeTab, fetchAdminOwnership]);
+
+  useEffect(() => {
+    if (activeTab !== 'logs') return;
+    void fetchAdminConnectionLogs();
+  }, [activeTab, fetchAdminConnectionLogs]);
 
   // ── Actions ──────────────────────────────────────────────────
 
@@ -1649,6 +1749,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       label: t('integrations.syncHub.tabs.health', 'Sync Health'),
       icon: <Activity size={16} />,
       badge: errors.length > 0 ? errors.length : undefined,
+    },
+    {
+      id: 'users',
+      label: t('integrations.syncHub.tabs.users', 'Users'),
+      icon: <Users size={16} />,
+      badge: ownershipItems.length > 0 ? ownershipItems.length : undefined,
+    },
+    {
+      id: 'logs',
+      label: t('integrations.syncHub.tabs.logs', 'Connection logs'),
+      icon: <List size={16} />,
+      badge: connectionLogTotal > 0 ? connectionLogTotal : undefined,
     },
     {
       id: 'webhooks',
@@ -3502,6 +3614,255 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     </div>
   );
 
+  // ── Users tab (monitoring) ────────────────────────────────────
+
+  const filteredOwnershipItems = useMemo(() => {
+    const q = usersSearchQuery.trim().toLowerCase();
+    if (!q) return ownershipItems;
+    return ownershipItems.filter((item) => {
+      const name = `${item.firstName || ''} ${item.lastName || ''}`.trim().toLowerCase();
+      const email = String(item.email || '').toLowerCase();
+      const connector = String(item.connectorId || '').toLowerCase();
+      const status = String(item.status || '').toLowerCase();
+      const integrationName = String(item.integrationName || '').toLowerCase();
+      return (
+        name.includes(q) ||
+        email.includes(q) ||
+        connector.includes(q) ||
+        status.includes(q) ||
+        integrationName.includes(q)
+      );
+    });
+  }, [ownershipItems, usersSearchQuery]);
+
+  const renderUsersTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            value={usersSearchQuery}
+            onChange={(e) => setUsersSearchQuery(e.target.value)}
+            placeholder={t('integrations.syncHub.usersSearch', 'Search users, connectors, status…')}
+            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50"
+          />
+        </div>
+        <button
+          onClick={() => void fetchAdminOwnership()}
+          disabled={ownershipLoading}
+          className="h-9 px-4 bg-navy-800 hover:bg-navy-700 text-slate-200 text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
+        >
+          <RefreshCw size={16} className={ownershipLoading ? 'animate-spin' : ''} />
+          {t('common.refresh', 'Refresh')}
+        </button>
+      </div>
+
+      {ownershipError && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+          {ownershipError}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-navy-900/40 text-slate-500">
+              <tr className="text-left text-xs">
+                <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.integration', 'Integration')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.status', 'Status')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.updated', 'Updated')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-navy-700/40">
+              {ownershipLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                    <Loader2 className="inline-block mr-2 animate-spin" size={16} />
+                    {t('integrations.syncHub.loading', 'Loading integrations…')}
+                  </td>
+                </tr>
+              ) : filteredOwnershipItems.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                    {t('integrations.syncHub.noOwnership', 'No user integrations tracked yet')}
+                  </td>
+                </tr>
+              ) : (
+                filteredOwnershipItems.map((item) => {
+                  const userLabel =
+                    `${item.firstName || ''} ${item.lastName || ''}`.trim() ||
+                    item.email ||
+                    item.userId;
+                  return (
+                    <tr key={`${item.integrationId}:${item.userId}`} className="text-slate-200">
+                      <td className="px-3 py-2.5">
+                        <div className="text-sm font-medium text-white">{userLabel}</div>
+                        {item.email && (
+                          <div className="text-xs text-slate-500 mt-0.5">{item.email}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-navy-800 border border-navy-700 text-slate-300">
+                          {item.connectorId}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="text-sm text-slate-100">{item.integrationName}</div>
+                        <div className="text-xs text-slate-600 mt-0.5">{item.integrationId}</div>
+                      </td>
+                      <td className="px-3 py-2.5">{renderStatusChip(item.status as IntegrationStatus)}</td>
+                      <td className="px-3 py-2.5 text-slate-500 text-xs">
+                        {item.updatedAt ? timeAgo(item.updatedAt) : '—'}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Connection logs tab (monitoring) ──────────────────────────
+
+  const renderLogsTab = () => (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">{t('integrations.syncHub.filter', 'Filter')}</span>
+          <select
+            value={connectionLogEventType}
+            onChange={(e) => {
+              setConnectionLogOffset(0);
+              setConnectionLogEventType(e.target.value);
+            }}
+            className="h-9 px-3 bg-navy-800 border border-navy-700 rounded-lg text-sm text-slate-200"
+          >
+            <option value="">{t('integrations.syncHub.eventAll', 'All events')}</option>
+            <option value="connect_initiated">connect_initiated</option>
+            <option value="configuration_submitted">configuration_submitted</option>
+            <option value="external_auth_prepared">external_auth_prepared</option>
+            <option value="external_auth_callback_received">external_auth_callback_received</option>
+            <option value="disconnect_requested">disconnect_requested</option>
+            <option value="reauth_started">reauth_started</option>
+            <option value="error">error</option>
+          </select>
+          <input
+            value={connectionLogConnectorId}
+            onChange={(e) => {
+              setConnectionLogOffset(0);
+              setConnectionLogConnectorId(e.target.value);
+            }}
+            placeholder={t('integrations.syncHub.connectorId', 'connectorId')}
+            className="h-9 px-3 bg-navy-800 border border-navy-700 rounded-lg text-sm text-slate-200 placeholder-slate-500"
+          />
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => void fetchAdminConnectionLogs()}
+            disabled={connectionLogLoading}
+            className="h-9 px-4 bg-navy-800 hover:bg-navy-700 text-slate-200 text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
+          >
+            <RefreshCw size={16} className={connectionLogLoading ? 'animate-spin' : ''} />
+            {t('common.refresh', 'Refresh')}
+          </button>
+        </div>
+      </div>
+
+      {connectionLogError && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+          {connectionLogError}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-navy-900/40 text-slate-500">
+              <tr className="text-left text-xs">
+                <th className="px-3 py-2">{t('integrations.syncHub.time', 'Time')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.event', 'Event')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.integration', 'Integration')}</th>
+                <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-navy-700/40">
+              {connectionLogLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                    <Loader2 className="inline-block mr-2 animate-spin" size={16} />
+                    {t('integrations.syncHub.loading', 'Loading integrations…')}
+                  </td>
+                </tr>
+              ) : connectionLogItems.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                    {t('integrations.syncHub.noLogs', 'No connection events recorded yet')}
+                  </td>
+                </tr>
+              ) : (
+                connectionLogItems.map((row) => (
+                  <tr key={row.id} className="text-slate-200">
+                    <td className="px-3 py-2.5 text-xs text-slate-500">
+                      {timeAgo(row.createdAt)}
+                      <div className="text-[11px] text-slate-600 mt-0.5">
+                        {new Date(row.createdAt).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-navy-800 border border-navy-700 text-slate-300">
+                        {row.connectorId}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="text-sm font-medium text-white">{row.eventType}</div>
+                      {row.metadata && (
+                        <div className="text-[11px] text-slate-600 mt-0.5 truncate max-w-[520px]">
+                          {JSON.stringify(row.metadata)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">{row.integrationId}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">{row.userId || '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <div>
+          {t('integrations.syncHub.showing', 'Showing')} {connectionLogItems.length} / {connectionLogTotal}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setConnectionLogOffset(Math.max(0, connectionLogOffset - connectionLogLimit))}
+            disabled={connectionLogOffset === 0}
+            className="px-3 py-2 rounded-lg border border-navy-700 bg-navy-800/50 hover:bg-navy-800 text-slate-200 disabled:opacity-40 transition-colors"
+          >
+            {t('common.prev', 'Prev')}
+          </button>
+          <button
+            onClick={() => setConnectionLogOffset(connectionLogOffset + connectionLogLimit)}
+            disabled={connectionLogOffset + connectionLogLimit >= connectionLogTotal}
+            className="px-3 py-2 rounded-lg border border-navy-700 bg-navy-800/50 hover:bg-navy-800 text-slate-200 disabled:opacity-40 transition-colors"
+          >
+            {t('common.next', 'Next')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── Permissions & Scopes tab ─────────────────────────────────
 
   const renderScopesTab = () => (
@@ -3824,6 +4185,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         >
           {activeTab === 'apps' && renderAppsTab()}
           {activeTab === 'health' && renderHealthTab()}
+          {activeTab === 'users' && renderUsersTab()}
+          {activeTab === 'logs' && renderLogsTab()}
           {activeTab === 'webhooks' && renderScopesTab()}
           {activeTab === 'audit' && renderAuditTab()}
         </motion.div>

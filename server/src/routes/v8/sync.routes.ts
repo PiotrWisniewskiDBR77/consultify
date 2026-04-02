@@ -42,6 +42,7 @@ import {
   getGovernedExternalAuthConfigFields,
 } from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
+import { logIntegrationConnectionEvent } from '../../services/integrationConnectionLogService.js';
 import {
   executeRefreshExecution,
   storeRefreshExecutionSecret,
@@ -549,6 +550,16 @@ router.post(
       ]
     );
     await setIntegrationOwner({ integrationId, organizationId, ownerUserId: actorId });
+    await logIntegrationConnectionEvent({
+      organizationId,
+      userId: actorId,
+      integrationId,
+      connectorId: connector.id,
+      eventType: 'connect_initiated',
+      metadata: { authType: connector.authType },
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
 
     await logIntegrationAudit(
       organizationId,
@@ -693,7 +704,32 @@ router.post(
         mode: 'connect',
         config: nextConfig,
       });
+      await logIntegrationConnectionEvent({
+        organizationId,
+        userId: actorId,
+        integrationId,
+        connectorId: connector.id,
+        eventType: 'external_auth_prepared',
+        metadata: {
+          mode: 'connect',
+          expiresAt: externalAuth.expiresAt,
+          callbackUrl: externalAuth.callbackUrl,
+        },
+        ipAddress: typeof req.ip === 'string' ? req.ip : null,
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+      });
     }
+
+    await logIntegrationConnectionEvent({
+      organizationId,
+      userId: actorId,
+      integrationId,
+      connectorId: connector.id,
+      eventType: 'configuration_submitted',
+      metadata: { configuredFields, onboardingStatus },
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
 
     return res.json({
       data: {

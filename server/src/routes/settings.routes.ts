@@ -12,6 +12,7 @@ import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -1064,6 +1065,16 @@ router.post(
         ]
       );
       await setIntegrationOwner({ integrationId, organizationId, ownerUserId: userId });
+      await logIntegrationConnectionEvent({
+        organizationId,
+        userId,
+        integrationId,
+        connectorId: connector.id,
+        eventType: 'connect_initiated',
+        metadata: { source: 'settings', provider: connector.id },
+        ipAddress: typeof req.ip === 'string' ? req.ip : null,
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+      });
 
       const integrations = await loadIntegrations(userId);
       await saveIntegrations(
@@ -1088,6 +1099,16 @@ router.post(
           config,
         });
         authUrl = session.authUrl;
+        await logIntegrationConnectionEvent({
+          organizationId,
+          userId,
+          integrationId,
+          connectorId: connector.id,
+          eventType: 'external_auth_prepared',
+          metadata: { source: 'settings', mode: 'connect', callbackUrl: session.callbackUrl, expiresAt: session.expiresAt },
+          ipAddress: typeof req.ip === 'string' ? req.ip : null,
+          userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+        });
       }
 
       return res.json({

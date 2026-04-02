@@ -10,6 +10,7 @@ import { Router } from 'express';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { listIntegrationConnectionEvents } from '../services/integrationConnectionLogService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 
@@ -108,6 +109,35 @@ router.get(
       byStatus,
       byConnector,
     });
+  })
+);
+
+router.get(
+  '/logs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
+    const offset = typeof req.query.offset === 'string' ? Number(req.query.offset) : undefined;
+    const userId = typeof req.query.userId === 'string' ? req.query.userId.trim() : undefined;
+    const connectorId =
+      typeof req.query.connectorId === 'string' ? req.query.connectorId.trim() : undefined;
+    const integrationId =
+      typeof req.query.integrationId === 'string' ? req.query.integrationId.trim() : undefined;
+    const eventType = typeof req.query.eventType === 'string' ? req.query.eventType.trim() : undefined;
+
+    const data = await listIntegrationConnectionEvents({
+      organizationId: orgId,
+      limit,
+      offset,
+      userId,
+      connectorId,
+      integrationId,
+      eventType,
+    });
+
+    return res.json(data);
   })
 );
 

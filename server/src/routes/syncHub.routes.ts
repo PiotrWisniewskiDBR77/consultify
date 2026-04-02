@@ -24,6 +24,7 @@ import {
 } from '../services/integrationHubService.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
 import { consumeSyncExternalAuthSession } from '../services/syncExternalAuthSessionService.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   checkRateLimit,
   getIntegrationHealth,
@@ -213,6 +214,17 @@ router.get(
         );
     }
 
+    await logIntegrationConnectionEvent({
+      organizationId: session.organizationId,
+      userId: null,
+      integrationId: session.integrationId,
+      connectorId: session.connectorId,
+      eventType: 'external_auth_callback_received',
+      metadata: { mode: session.mode, hasCode: Boolean(code) },
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
+
     let callbackMaterialization: {
       credentialStored: true;
       refreshSecretStored: boolean;
@@ -334,6 +346,16 @@ router.post(
 
     const result = await connectIntegration(orgId, connectorId, config);
     await setIntegrationOwner({ integrationId: result.id, organizationId: orgId, ownerUserId: userId });
+    await logIntegrationConnectionEvent({
+      organizationId: orgId,
+      userId,
+      integrationId: result.id,
+      connectorId,
+      eventType: 'connect_initiated',
+      metadata: { displayName: displayName || null },
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
 
     if (displayName) {
       await dbRun(`UPDATE integrations SET display_name = ? WHERE id = ?`, [
@@ -371,7 +393,22 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const intId = String(req.params.integrationId);
+    const integration = (await dbAll(
+      `SELECT connector_id FROM integrations WHERE id = ? AND organization_id = ?`,
+      [intId, orgId]
+    )) as Array<{ connector_id: string }> | null;
+    const connectorId = integration?.[0]?.connector_id || 'unknown';
     await disconnectIntegration(intId);
+    await logIntegrationConnectionEvent({
+      organizationId: orgId,
+      userId,
+      integrationId: intId,
+      connectorId,
+      eventType: 'disconnect_requested',
+      metadata: {},
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
 
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
     await logAudit(orgId, intId, 'disconnected', userId, actorName, {});
@@ -404,6 +441,16 @@ router.post(
       [intId, orgId]
     )) as Array<{ connector_id: string }> | null;
     const connectorId = integration?.[0]?.connector_id;
+    await logIntegrationConnectionEvent({
+      organizationId: orgId,
+      userId,
+      integrationId: intId,
+      connectorId: connectorId || 'unknown',
+      eventType: 'reauth_started',
+      metadata: {},
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
 
     let refreshResult: { success: boolean; error?: string } = { success: false };
 

@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import adminIntegrationsRouter from '../adminIntegrations.routes.js';
 
 const dbAll = vi.fn();
+const dbRun = vi.fn();
 vi.mock('../../utils/DbPromise.js', () => ({
   all: (...args: any[]) => dbAll(...args),
+  run: (...args: any[]) => dbRun(...args),
 }));
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
@@ -30,6 +32,8 @@ function createApp(): Express {
 describe('Admin integrations monitoring routes (PO1)', () => {
   beforeEach(() => {
     dbAll.mockReset();
+    dbRun.mockReset();
+    dbRun.mockResolvedValue({ success: true });
   });
 
   it('lists user↔integration ownership items', async () => {
@@ -66,6 +70,31 @@ describe('Admin integrations monitoring routes (PO1)', () => {
     expect(res.status).toBe(200);
     expect(res.body.totals.total).toBe(2);
     expect(res.body.byStatus[0].status).toBe('connected');
+  });
+
+  it('returns connection logs with pagination', async () => {
+    dbAll.mockResolvedValueOnce([{ count: 1 }]); // total
+    dbAll.mockResolvedValueOnce([
+      {
+        id: 'ice-1',
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        integration_id: 'int-1',
+        connector_id: 'jira',
+        event_type: 'connect_initiated',
+        metadata: JSON.stringify({ source: 'settings' }),
+        ip_address: '127.0.0.1',
+        user_agent: 'test',
+        created_at: '2026-04-02T00:00:00.000Z',
+      },
+    ]); // items
+
+    const app = createApp();
+    const res = await request(app).get('/api/admin/integrations/logs?limit=10&offset=0');
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].connectorId).toBe('jira');
   });
 });
 
