@@ -12,14 +12,19 @@ import {
   Activity,
   AlertTriangle,
   ArrowUpRight,
+  Briefcase,
+  Calendar,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clock,
+  Database,
   ExternalLink,
+  FileText,
   Layers,
   Link2Off,
   Loader2,
+  MessageSquare,
   Pause,
   Play,
   Plus,
@@ -195,6 +200,35 @@ interface V8RefreshPolicyTarget {
   providerLabel: string;
   connectorId: string;
   integrationName: string;
+}
+
+// ── Connector icons ─────────────────────────────────────────────
+
+const SlackIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+  </svg>
+);
+
+const CONNECTOR_ICONS: Record<string, React.ElementType> = {
+  slack: SlackIcon,
+  teams: MessageSquare,
+  jira: Database,
+  clickup: CheckCircle2,
+  hubspot: MessageSquare,
+  monday: Calendar,
+  asana: CheckCircle2,
+  notion: FileText,
+  trello: CheckCircle2,
+  salesforce: Briefcase,
+  zoho_crm: Briefcase,
+};
+
+function renderConnectorIcon(connectorId: string, name: string): React.ReactNode {
+  const Icon = CONNECTOR_ICONS[connectorId];
+  if (Icon) return <Icon />;
+  const letter = (name || connectorId || '?').trim().slice(0, 1).toUpperCase();
+  return <span className="text-xs font-semibold text-slate-200">{letter}</span>;
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -399,6 +433,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showComingSoonCatalog, setShowComingSoonCatalog] = useState(false);
   const [editingPendingConfigId, setEditingPendingConfigId] = useState<string | null>(null);
   const [savingPendingConfigId, setSavingPendingConfigId] = useState<string | null>(null);
   const [pendingConfigDrafts, setPendingConfigDrafts] = useState<
@@ -1399,12 +1434,164 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     catalog.forEach((c) => {
       const cat = c.category;
       if (!groups[cat]) groups[cat] = [];
-      if (!selectedCategory || cat === selectedCategory) {
-        groups[cat].push(c);
-      }
+      groups[cat].push(c);
     });
     return groups;
-  }, [catalog, selectedCategory]);
+  }, [catalog]);
+
+  const renderCatalogTable = useCallback(
+    (opts?: { inModal?: boolean }) => {
+      const connectedIds = new Set(integrations.map((i) => i.connectorId));
+      const categories = Object.keys(categorizedCatalog)
+        .filter((cat) => {
+          if (selectedCategory && !opts?.inModal) return true;
+          if (selectedCategory && cat !== selectedCategory) return false;
+          const rows = categorizedCatalog[cat] || [];
+          return rows.some((c) => showComingSoonCatalog || !c.comingSoon);
+        })
+        .sort((a, b) => a.localeCompare(b));
+
+      if (categories.length === 0) return null;
+
+      return (
+        <div className={opts?.inModal ? 'space-y-4' : 'space-y-5'}>
+          {categories.map((cat) => {
+            if (opts?.inModal && selectedCategory && cat !== selectedCategory) return null;
+            const rows = (categorizedCatalog[cat] || []).filter(
+              (c) => showComingSoonCatalog || !c.comingSoon
+            );
+            if (rows.length === 0) return null;
+
+            return (
+              <div key={cat}>
+                <div className="text-xs text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <span>{CATEGORY_ICONS[cat]}</span>
+                  {CATEGORY_LABELS[cat] || cat}
+                </div>
+                <div className="rounded-xl border border-navy-700/50 overflow-hidden bg-navy-800/20">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-navy-900/40 text-slate-400">
+                        <tr className="text-left text-xs">
+                          <th className="px-3 py-2 w-10" />
+                          <th className="px-3 py-2">{t('integrations.syncHub.catalogApp', 'App')}</th>
+                          <th className="px-3 py-2 hidden md:table-cell">
+                            {t('integrations.syncHub.catalogCapabilities', 'Capabilities')}
+                          </th>
+                          <th className="px-3 py-2 hidden lg:table-cell">
+                            {t('integrations.syncHub.catalogSetup', 'Setup')}
+                          </th>
+                          <th className="px-3 py-2 w-28">
+                            {t('integrations.syncHub.catalogStatus', 'Status')}
+                          </th>
+                          <th className="px-3 py-2 w-28" />
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-navy-700/40">
+                        {rows.map((conn) => {
+                          const isConnected = connectedIds.has(conn.id);
+                          const connectable = !conn.comingSoon;
+                          const status = isConnected
+                            ? 'connected'
+                            : conn.comingSoon
+                              ? 'coming_soon'
+                              : 'ready';
+                          return (
+                            <tr key={conn.id} className="text-slate-200 hover:bg-navy-800/40">
+                              <td className="px-3 py-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-navy-900/40 border border-navy-700/60 flex items-center justify-center text-slate-200">
+                                  {renderConnectorIcon(conn.id, conn.name)}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <div className="text-sm text-white">{conn.name}</div>
+                                <div className="text-[11px] text-slate-500">{conn.id}</div>
+                              </td>
+                              <td className="px-3 py-2.5 hidden md:table-cell">
+                                <div className="flex flex-wrap gap-1">
+                                  {(conn.capabilities || []).slice(0, 4).map((cap) => (
+                                    <span
+                                      key={cap}
+                                      className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
+                                    >
+                                      {cap}
+                                    </span>
+                                  ))}
+                                  {(conn.capabilities || []).length > 4 && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 border border-navy-700">
+                                      +{(conn.capabilities || []).length - 4}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5 hidden lg:table-cell">
+                                <div className="flex flex-wrap gap-1">
+                                  {(conn.configFields || []).slice(0, 4).map((field) => (
+                                    <span
+                                      key={field}
+                                      className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
+                                    >
+                                      {formatConfigFieldLabel(field)}
+                                    </span>
+                                  ))}
+                                  {(conn.configFields || []).length > 4 && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 border border-navy-700">
+                                      +{(conn.configFields || []).length - 4}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                {status === 'connected' ? (
+                                  <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
+                                    <CheckCircle2 size={12} />{' '}
+                                    {t('integrations.syncHub.alreadyConnected', 'Connected')}
+                                  </span>
+                                ) : status === 'coming_soon' ? (
+                                  <span className="text-xs text-slate-500 italic">
+                                    {t('integrations.syncHub.comingSoon', 'Coming soon')}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-400">
+                                    {t('integrations.syncHub.ready', 'Ready')}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                {isConnected ? null : connectable ? (
+                                  <button
+                                    onClick={() => handleConnect(conn.id)}
+                                    className="px-3 py-1 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+                                  >
+                                    {t('integrations.syncHub.connect', 'Connect')}
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-slate-600">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+    [
+      categorizedCatalog,
+      integrations,
+      selectedCategory,
+      showComingSoonCatalog,
+      t,
+      // functions used in render
+      handleConnect,
+    ]
+  );
 
   const getRefreshRuntimeRef = useCallback(
     (integrationId: string): V8SyncRefreshSecretRef | null => {
@@ -2627,6 +2814,48 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           >
             {t('integrations.syncHub.connectFirst', 'Connect your first integration')}
           </button>
+          {catalog.length > 0 && (
+            <div className="mt-10 text-left">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <div className="text-sm font-medium text-white">
+                    {t('integrations.syncHub.availableConnectors', 'Available connectors')}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {t(
+                      'integrations.syncHub.availableConnectorsHint',
+                      'Browse what can be connected for this tenant.'
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowComingSoonCatalog(false)}
+                    className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                      !showComingSoonCatalog
+                        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                        : 'text-slate-400 hover:text-white border border-navy-700'
+                    }`}
+                  >
+                    {t('integrations.syncHub.readyOnly', 'Ready')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowComingSoonCatalog(true)}
+                    className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                      showComingSoonCatalog
+                        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                        : 'text-slate-400 hover:text-white border border-navy-700'
+                    }`}
+                  >
+                    {t('integrations.syncHub.showAll', 'All')}
+                  </button>
+                </div>
+              </div>
+              {renderCatalogTable()}
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-2">{filtered.map(renderIntegrationRow)}</div>
@@ -3445,8 +3674,6 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const renderConnectModal = () => {
     if (!showConnectModal) return null;
-    const connectedIds = new Set(integrations.map((i) => i.connectorId));
-    const categories = Object.keys(categorizedCatalog);
 
     return (
       <div
@@ -3500,65 +3727,38 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {categories.map((cat) => (
-              <div key={cat}>
-                <div className="text-xs text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <span>{CATEGORY_ICONS[cat]}</span>
-                  {CATEGORY_LABELS[cat] || cat}
-                </div>
-                <div className="space-y-1.5">
-                  {categorizedCatalog[cat].map((conn) => {
-                    const isConnected = connectedIds.has(conn.id);
-                    return (
-                      <div
-                        key={conn.id}
-                        className="flex items-center justify-between p-2.5 rounded-lg bg-navy-800/40 border border-navy-700/40 hover:border-navy-600 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg">{CATEGORY_ICONS[conn.category] || '🔌'}</span>
-                          <div>
-                            <div className="text-sm text-white">{conn.name}</div>
-                            <div className="text-xs text-slate-500">
-                              {conn.capabilities.slice(0, 3).join(', ')}
-                            </div>
-                            {!!conn.configFields?.length && (
-                              <div className="mt-1 flex flex-wrap gap-1">
-                                {conn.configFields.slice(0, 3).map((field) => (
-                                  <span
-                                    key={field}
-                                    className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
-                                  >
-                                    {formatConfigFieldLabel(field)}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {isConnected ? (
-                          <span className="text-xs text-emerald-400 flex items-center gap-1">
-                            <CheckCircle2 size={12} />{' '}
-                            {t('integrations.syncHub.alreadyConnected', 'Connected')}
-                          </span>
-                        ) : conn.comingSoon ? (
-                          <span className="text-xs text-slate-500 italic">
-                            {t('integrations.syncHub.comingSoon', 'Coming soon')}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleConnect(conn.id)}
-                            className="px-3 py-1 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
-                          >
-                            {t('integrations.syncHub.connect', 'Connect')}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between gap-3 px-4 pb-3">
+            <div className="text-xs text-slate-500">
+              {t('integrations.syncHub.catalogHint', 'Pick an app to connect for this tenant.')}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowComingSoonCatalog(false)}
+                className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                  !showComingSoonCatalog
+                    ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                    : 'text-slate-400 hover:text-white border border-navy-700'
+                }`}
+              >
+                {t('integrations.syncHub.readyOnly', 'Ready')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowComingSoonCatalog(true)}
+                className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                  showComingSoonCatalog
+                    ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                    : 'text-slate-400 hover:text-white border border-navy-700'
+                }`}
+              >
+                {t('integrations.syncHub.showAll', 'All')}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {renderCatalogTable({ inModal: true })}
           </div>
         </motion.div>
       </div>
