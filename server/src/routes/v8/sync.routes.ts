@@ -16,6 +16,7 @@ import {
   syncIntegration,
   updateIntegrationStatus,
 } from '../../services/integrationHubService.js';
+import { setIntegrationOwner } from '../../services/integrationOwnershipService.js';
 import {
   checkRateLimit,
   getIntegrationHealth,
@@ -547,6 +548,7 @@ router.post(
         connector.authType,
       ]
     );
+    await setIntegrationOwner({ integrationId, organizationId, ownerUserId: actorId });
 
     await logIntegrationAudit(
       organizationId,

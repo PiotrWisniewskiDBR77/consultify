@@ -22,6 +22,7 @@ import {
   syncIntegration,
   updateIntegrationStatus,
 } from '../services/integrationHubService.js';
+import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
 import { consumeSyncExternalAuthSession } from '../services/syncExternalAuthSessionService.js';
 import {
   checkRateLimit,
@@ -332,6 +333,7 @@ router.post(
     if (!connector) return res.status(400).json({ error: 'Unknown connector' });
 
     const result = await connectIntegration(orgId, connectorId, config);
+    await setIntegrationOwner({ integrationId: result.id, organizationId: orgId, ownerUserId: userId });
 
     if (displayName) {
       await dbRun(`UPDATE integrations SET display_name = ? WHERE id = ?`, [

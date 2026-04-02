@@ -11,6 +11,7 @@ import { createAccountDeletionRequest, createDataExportRequest } from '../servic
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
+import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -1062,6 +1063,7 @@ router.post(
           connector.authType,
         ]
       );
+      await setIntegrationOwner({ integrationId, organizationId, ownerUserId: userId });
 
       const integrations = await loadIntegrations(userId);
       await saveIntegrations(

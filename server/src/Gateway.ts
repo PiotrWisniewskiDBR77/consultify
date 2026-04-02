@@ -12,6 +12,7 @@ import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
+import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -512,6 +513,7 @@ export class ApiGateway {
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
+      app.use('/api/admin/integrations', adminIntegrationsRoutes);
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
