@@ -17,10 +17,20 @@ export function resolveLegacySyncSettingsEntry(
   return `${ROUTES.SETTINGS.ROOT}/connected-apps`;
 }
 
+const LEGACY_AI_SECTION_MAP: Record<string, string> = {
+  'ai-instructions': 'ai-behavior',
+  'ai-personality': 'ai-behavior',
+  'ai-model': 'ai-model-params',
+  'ai-parameters': 'ai-model-params',
+};
+
 export function normalizeSettingsSectionFromPath(pathname: string): string {
   const pathSection = pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
   if (pathSection === 'integrations') {
     return 'connected-apps';
+  }
+  if (LEGACY_AI_SECTION_MAP[pathSection]) {
+    return LEGACY_AI_SECTION_MAP[pathSection];
   }
   return pathSection;
 }

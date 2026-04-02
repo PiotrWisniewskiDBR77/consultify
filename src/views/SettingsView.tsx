@@ -30,13 +30,12 @@ import { SettingsExportImport } from '../components/settings/advanced/SettingsEx
 import { SettingsHistory } from '../components/settings/advanced/SettingsHistory';
 import { SettingsTemplates } from '../components/settings/advanced/SettingsTemplates';
 import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
-import { AIInstructionsSettings } from '../components/settings/AIInstructionsSettings';
+import { AIAutomationSettings } from '../components/settings/AIAutomationSettings';
+import { AIBehaviorSettings } from '../components/settings/AIBehaviorSettings';
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
-import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
-import { AIParametersSettings } from '../components/settings/AIParametersSettings';
-import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
-// import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
-// New components (to be created)
+import { AIModelParametersSettings } from '../components/settings/AIModelParametersSettings';
+import { AIPrivacySettings } from '../components/settings/AIPrivacySettings';
+import { AIPromptLibrarySettings } from '../components/settings/AIPromptLibrarySettings';
 import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
@@ -107,17 +106,33 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   },
   language: { title: 'Language', subtitle: 'Choose your preferred language' },
   // AI & Automation
-  'ai-instructions': { title: 'AI Instructions', subtitle: 'Customize how AI responds to you' },
-  'ai-model': { title: 'Model Selection', subtitle: 'Choose your preferred AI model' },
-  'ai-parameters': { title: 'AI Parameters', subtitle: 'Fine-tune AI response settings' },
-  'ai-usage': {
-    title: 'AI Usage Dashboard',
-    subtitle: 'Monitor your AI usage and token consumption',
+  'ai-behavior': {
+    title: 'Behavior & Instructions',
+    subtitle: 'Define how the AI communicates — prompt, tone, style, and context',
+  },
+  'ai-model-params': {
+    title: 'Model & Parameters',
+    subtitle: 'Choose AI models and fine-tune generation parameters',
+  },
+  'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
+  'ai-automation': {
+    title: 'AI Automation',
+    subtitle: 'Configure automatic AI actions and smart routing',
+  },
+  'ai-memory': { title: 'Memory & Context', subtitle: 'Control AI memory and context retention' },
+  'ai-privacy': {
+    title: 'AI Data & Privacy',
+    subtitle: 'Control data access, retention, and compliance settings',
+  },
+  'ai-prompt-library': {
+    title: 'Prompt Library',
+    subtitle: 'Save and organize reusable prompts for different contexts',
   },
   'ai-voice': { title: 'Voice & TTS', subtitle: 'Configure voice input and text-to-speech' },
-  'ai-memory': { title: 'AI Memory', subtitle: 'Manage AI context and memory settings' },
-  'ai-personality': { title: 'AI Personality', subtitle: 'Set AI tone and communication style' },
-  'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
+  'ai-usage': {
+    title: 'Usage Dashboard',
+    subtitle: 'Monitor your AI usage and token consumption',
+  },
   // Notifications
   'notifications-overview': {
     title: 'Notifications',
@@ -254,22 +269,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <LanguageSettings />;
 
       // AI & Automation
-      case 'ai-instructions':
-        return <AIInstructionsSettings />;
-      case 'ai-model':
-        return <AIModelSelectionSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'ai-parameters':
-        return <AIParametersSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'ai-usage':
-        return <AIUsageDashboard currentUser={currentUser} />;
-      case 'ai-voice':
-        return <VoiceSettings />;
+      case 'ai-behavior':
+        return <AIBehaviorSettings />;
+      case 'ai-model-params':
+        return <AIModelParametersSettings />;
+      case 'ai-autocomplete':
+        return <AIAutoCompleteSettings />;
+      case 'ai-automation':
+        return <AIAutomationSettings />;
       case 'ai-memory':
         return <AIMemorySettings />;
-      case 'ai-personality':
-        return <AIPersonalitySettings />;
-      case 'ai-autocomplete':
-        return <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'ai-privacy':
+        return <AIPrivacySettings />;
+      case 'ai-prompt-library':
+        return <AIPromptLibrarySettings />;
+      case 'ai-voice':
+        return <VoiceSettings />;
+      case 'ai-usage':
+        return <AIUsageDashboard currentUser={currentUser} />;
 
       // Notifications
       case 'notifications-overview':

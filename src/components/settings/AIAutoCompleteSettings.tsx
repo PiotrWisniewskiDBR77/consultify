@@ -1,216 +1,195 @@
 /**
- * AIAutoCompleteSettings - Auto-complete configuration
+ * AIAutoCompleteSettings - Auto-complete & suggestions configuration
+ *
+ * Rebuilt to use unified SettingsSection pattern.
  *
  * Features:
- * - Enable/disable auto-complete
- * - Sensitivity slider
- * - Suggestions in comments toggle
+ *  - Enable/disable auto-suggestions
+ *  - Sensitivity slider
+ *  - Suggestions in comments toggle
+ *  - Trigger contexts (fields, documents, chat)
  */
 
-import { AlertCircle, CheckCircle, Loader2, Save, Zap } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { User } from '../../types';
+import {
+  SettingsDivider,
+  SettingsFormRow,
+  SettingsSection,
+  SettingsToggle,
+} from './shared';
 
-interface AIAutoCompleteSettingsProps {
-  currentUser: User;
-  onUpdateUser: (updates: Partial<User>) => void;
-}
-
-interface AIAutoCompletePreferences {
+interface AutoCompletePreferences {
   enabled: boolean;
   sensitivity: number;
   suggestionsInComments: boolean;
+  suggestInDocuments: boolean;
+  suggestInChat: boolean;
 }
 
-export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({
-  currentUser,
-  onUpdateUser,
-}) => {
+const defaultPreferences: AutoCompletePreferences = {
+  enabled: true,
+  sensitivity: 0.5,
+  suggestionsInComments: true,
+  suggestInDocuments: true,
+  suggestInChat: true,
+};
+
+export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [autoSuggestions, setAutoSuggestions] = useState<boolean>(true);
-  const [sensitivity, setSensitivity] = useState<number>(0.5);
-  const [suggestionsInComments, setSuggestionsInComments] = useState<boolean>(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [preferences, setPreferences] = useState<AutoCompletePreferences>(defaultPreferences);
+  const [originalPreferences, setOriginalPreferences] =
+    useState<AutoCompletePreferences>(defaultPreferences);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
   useEffect(() => {
-    const loadPreferences = async () => {
+    const load = async () => {
       try {
+        setLoading(true);
         const response = await Api.getAIAutoComplete();
-        if (response?.preferences && typeof response.preferences === 'object') {
-          const prefs = response.preferences;
-          setAutoSuggestions(prefs.enabled !== false);
-          setSensitivity(typeof prefs.sensitivity === 'number' ? prefs.sensitivity : 0.5);
-          setSuggestionsInComments(prefs.suggestionsInComments !== false);
+        if (response?.preferences) {
+          const merged = { ...defaultPreferences, ...response.preferences };
+          setPreferences(merged);
+          setOriginalPreferences(merged);
         }
       } catch (err) {
-        console.error('Failed to load auto-complete preferences', err);
+        console.error('Failed to load auto-complete settings:', err);
+      } finally {
+        setLoading(false);
       }
     };
-    loadPreferences();
+    load();
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    setSaveStatus('idle');
-
+  const handleSave = useCallback(async () => {
+    setSaving(true);
     try {
-      await Api.saveAIAutoComplete({
-        enabled: autoSuggestions,
-        sensitivity,
-        suggestionsInComments,
-      });
-
-      setSaveStatus('success');
-      toast.success(t('settings.ai.autocomplete.saved', 'Auto-complete preferences saved'));
-
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error: any) {
-      setSaveStatus('error');
-      toast.error(
-        error.message ||
-          t('settings.ai.autocomplete.error', 'Failed to save auto-complete preferences')
-      );
+      await Api.saveAIAutoComplete(preferences);
+      setOriginalPreferences(preferences);
+      toast.success(t('settings.ai.autocompleteSaved', 'Auto-complete settings saved'));
+    } catch {
+      toast.error(t('settings.ai.autocompleteError', 'Failed to save auto-complete settings'));
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
+  }, [preferences, t]);
+
+  const update = <K extends keyof AutoCompletePreferences>(
+    key: K,
+    value: AutoCompletePreferences[K]
+  ) => {
+    setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <Zap size={20} />
-          {t('settings.ai.autocomplete.title', 'Auto-Complete & Suggestions')}
-        </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t(
-            'settings.ai.autocomplete.subtitle',
-            'Configure AI-powered auto-complete and suggestions'
-          )}
-        </p>
-      </div>
-
-      {/* Auto-Suggestions Toggle */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-        <div>
-          <label className="text-sm font-medium text-slate-900 dark:text-white">
-            {t('settings.ai.autocomplete.enable', 'Enable Auto-Suggestions')}
-          </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('settings.ai.autocomplete.enableDesc', 'Get AI-powered suggestions as you type')}
-          </p>
-        </div>
-        <button
-          onClick={() => setAutoSuggestions(!autoSuggestions)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            autoSuggestions ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform ${
-              autoSuggestions ? 'translate-x-6' : 'translate-x-1'
-            }`}
+    <div className={className}>
+      <SettingsSection
+        icon={Zap}
+        title={t('settings.ai.autocompleteTitle', 'Auto-Complete & Suggestions')}
+        description={t(
+          'settings.ai.autocompleteDesc',
+          'Configure AI-powered auto-complete behavior and where suggestions appear.'
+        )}
+        cardId="settings-ai-autocomplete"
+        isDirty={isDirty}
+        onSave={handleSave}
+        saving={saving}
+        loading={loading}
+      >
+        <div className="space-y-6">
+          {/* Master toggle */}
+          <SettingsToggle
+            checked={preferences.enabled}
+            onChange={(checked) => update('enabled', checked)}
+            label={t('settings.ai.enableAutoSuggestions', 'Enable Auto-Suggestions')}
+            description={t(
+              'settings.ai.enableAutoSuggestionsDesc',
+              'Get AI-powered suggestions as you type across the application.'
+            )}
           />
-        </button>
-      </div>
 
-      {autoSuggestions && (
-        <>
-          {/* Sensitivity */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t('settings.ai.autocomplete.sensitivity', 'Suggestion Sensitivity')}
-              </label>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                {Math.round(sensitivity * 100)}%
-              </span>
-            </div>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={sensitivity}
-                onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>{t('settings.ai.autocomplete.less', 'Less Frequent')}</span>
-                <span>{t('settings.ai.autocomplete.more', 'More Frequent')}</span>
-              </div>
-            </div>
-          </div>
+          {preferences.enabled && (
+            <>
+              <SettingsDivider />
 
-          {/* Suggestions in Comments */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-            <div>
-              <label className="text-sm font-medium text-slate-900 dark:text-white">
-                {t('settings.ai.autocomplete.comments', 'Suggestions in Comments')}
-              </label>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'settings.ai.autocomplete.commentsDesc',
-                  'Show AI suggestions when writing comments'
+              {/* Sensitivity */}
+              <SettingsFormRow
+                label={t('settings.ai.sensitivity', 'Suggestion Sensitivity')}
+                description={t(
+                  'settings.ai.sensitivityDesc',
+                  'Higher sensitivity triggers suggestions more frequently.'
                 )}
-              </p>
-            </div>
-            <button
-              onClick={() => setSuggestionsInComments(!suggestionsInComments)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                suggestionsInComments ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform ${
-                  suggestionsInComments ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </>
-      )}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={preferences.sensitivity}
+                      onChange={(e) => update('sensitivity', Number(e.target.value))}
+                      className="flex-1 accent-violet-500"
+                    />
+                    <span className="text-sm font-mono text-white w-12 text-right">
+                      {Math.round(preferences.sensitivity * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-500">
+                    <span>{t('settings.ai.lessFrequent', 'Less Frequent')}</span>
+                    <span>{t('settings.ai.moreFrequent', 'More Frequent')}</span>
+                  </div>
+                </div>
+              </SettingsFormRow>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              {t('common.saving', 'Saving...')}
-            </>
-          ) : (
-            <>
-              <Save size={16} />
-              {t('common.save', 'Save')}
+              <SettingsDivider />
+
+              {/* Context toggles */}
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-4">
+                  {t('settings.ai.suggestIn', 'Show Suggestions In')}
+                </h4>
+                <div className="space-y-4">
+                  <SettingsToggle
+                    checked={preferences.suggestionsInComments}
+                    onChange={(checked) => update('suggestionsInComments', checked)}
+                    label={t('settings.ai.suggestComments', 'Comments & Discussions')}
+                    description={t(
+                      'settings.ai.suggestCommentsDesc',
+                      'Show AI suggestions when writing comments on tasks and artifacts.'
+                    )}
+                  />
+                  <SettingsToggle
+                    checked={preferences.suggestInDocuments}
+                    onChange={(checked) => update('suggestInDocuments', checked)}
+                    label={t('settings.ai.suggestDocuments', 'Documents & Reports')}
+                    description={t(
+                      'settings.ai.suggestDocumentsDesc',
+                      'Suggest completions when editing documents and report content.'
+                    )}
+                  />
+                  <SettingsToggle
+                    checked={preferences.suggestInChat}
+                    onChange={(checked) => update('suggestInChat', checked)}
+                    label={t('settings.ai.suggestChat', 'AI Chat Input')}
+                    description={t(
+                      'settings.ai.suggestChatDesc',
+                      'Auto-complete prompts in the AI chat interface.'
+                    )}
+                  />
+                </div>
+              </div>
             </>
           )}
-        </button>
-      </div>
-
-      {/* Success/Error Messages */}
-      {saveStatus === 'success' && (
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-          <CheckCircle size={16} />
-          {t('settings.ai.autocomplete.saved', 'Auto-complete preferences saved')}
         </div>
-      )}
-      {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
-          <AlertCircle size={16} />
-          {t('settings.ai.autocomplete.error', 'Failed to save auto-complete preferences')}
-        </div>
-      )}
+      </SettingsSection>
     </div>
   );
 };

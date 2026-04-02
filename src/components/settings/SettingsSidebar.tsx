@@ -68,14 +68,15 @@ export type SettingsSection =
   | 'regional'
   | 'language'
   // AI & Automation
-  | 'ai-instructions'
-  | 'ai-model'
-  | 'ai-parameters'
-  | 'ai-usage'
-  | 'ai-voice'
-  | 'ai-memory'
-  | 'ai-personality'
+  | 'ai-behavior'
+  | 'ai-model-params'
   | 'ai-autocomplete'
+  | 'ai-automation'
+  | 'ai-memory'
+  | 'ai-privacy'
+  | 'ai-prompt-library'
+  | 'ai-voice'
+  | 'ai-usage'
   // Notifications
   | 'notifications-overview'
   | 'notifications-email'
@@ -214,36 +215,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         label: t('settings.sidebar.groups.aiAutomation', 'AI & AUTOMATION'),
         items: [
           {
-            id: 'ai-instructions',
-            label: t('settings.sidebar.aiInstructions', 'AI Instructions'),
+            id: 'ai-behavior',
+            label: t('settings.sidebar.aiBehavior', 'Behavior & Instructions'),
             icon: Brain,
-            keywords: ['prompt', 'system', 'behavior'],
+            keywords: ['prompt', 'system', 'behavior', 'personality', 'tone', 'style', 'instructions'],
           },
           {
-            id: 'ai-model',
-            label: t('settings.sidebar.aiModel', 'Model Selection'),
+            id: 'ai-model-params',
+            label: t('settings.sidebar.aiModelParams', 'Model & Parameters'),
             icon: Sparkles,
-            keywords: ['gpt', 'claude', 'gemini', 'llm'],
-          },
-          {
-            id: 'ai-parameters',
-            label: t('settings.sidebar.aiParameters', 'Parameters'),
-            icon: Sliders,
-            keywords: ['temperature', 'tokens', 'context'],
-          },
-          {
-            id: 'ai-usage',
-            label: t('settings.sidebar.aiUsage', 'Usage Dashboard'),
-            icon: Zap,
-            badge: 'New',
-            badgeType: 'new',
-            keywords: ['tokens', 'cost', 'usage', 'stats'],
-          },
-          {
-            id: 'ai-personality',
-            label: t('settings.sidebar.aiPersonality', 'Personality'),
-            icon: User,
-            keywords: ['tone', 'style', 'voice'],
+            keywords: ['gpt', 'claude', 'gemini', 'llm', 'temperature', 'tokens'],
           },
           {
             id: 'ai-autocomplete',
@@ -252,16 +233,42 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             keywords: ['suggestions', 'completion'],
           },
           {
+            id: 'ai-automation',
+            label: t('settings.sidebar.aiAutomationRules', 'Automation'),
+            icon: Settings,
+            badge: 'New',
+            badgeType: 'new',
+            keywords: ['rules', 'triggers', 'auto', 'summarize', 'classify'],
+          },
+          {
             id: 'ai-memory',
-            label: t('settings.sidebar.aiMemory', 'Memory'),
+            label: t('settings.sidebar.aiMemory', 'Memory & Context'),
             icon: Database,
-            keywords: ['context', 'history', 'remember'],
+            keywords: ['context', 'history', 'remember', 'retention'],
+          },
+          {
+            id: 'ai-privacy',
+            label: t('settings.sidebar.aiPrivacy', 'Data & Privacy'),
+            icon: Shield,
+            keywords: ['privacy', 'data', 'access', 'audit', 'compliance'],
+          },
+          {
+            id: 'ai-prompt-library',
+            label: t('settings.sidebar.aiPromptLibrary', 'Prompt Library'),
+            icon: BookOpen,
+            keywords: ['prompts', 'templates', 'saved', 'library'],
           },
           {
             id: 'ai-voice',
             label: t('settings.sidebar.aiVoice', 'Voice & TTS'),
             icon: Mic,
             keywords: ['speech', 'text to speech', 'audio'],
+          },
+          {
+            id: 'ai-usage',
+            label: t('settings.sidebar.aiUsage', 'Usage Dashboard'),
+            icon: Zap,
+            keywords: ['tokens', 'cost', 'usage', 'stats'],
           },
         ],
       },
