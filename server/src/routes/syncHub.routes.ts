@@ -161,16 +161,12 @@ router.get(
       connectors = connectors.filter((c) => c.category === String(category));
     }
 
-    // Add availability status and "coming soon" flag
-    const catalog = connectors.map((c) => {
-      const isV2Ready = ['slack', 'jira', 'gmail', 'asana', 'teams'].includes(c.id);
-      return {
-        ...c,
-        isAvailable: true,
-        isV2Ready,
-        comingSoon: !isV2Ready,
-      };
-    });
+    const catalog = connectors.map((c) => ({
+      ...c,
+      isAvailable: true,
+      isV2Ready: true,
+      comingSoon: false,
+    }));
 
     return res.json({ connectors: catalog });
   })

@@ -476,16 +476,13 @@ router.get(
       connectors = connectors.filter((c) => c.category === category);
     }
 
-    const catalog = connectors.map((c) => {
-      const isV2Ready = ['slack', 'jira', 'gmail', 'asana', 'teams'].includes(c.id);
-      return {
-        ...c,
-        configFields: getConnectorConfigFields(c.id, c.configFields),
-        isAvailable: true,
-        isV2Ready,
-        comingSoon: !isV2Ready,
-      };
-    });
+    const catalog = connectors.map((c) => ({
+      ...c,
+      configFields: getConnectorConfigFields(c.id, c.configFields),
+      isAvailable: true,
+      isV2Ready: true,
+      comingSoon: false,
+    }));
 
     return res.json({
       data: { connectors: catalog, count: catalog.length },

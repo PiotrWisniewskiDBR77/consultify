@@ -705,13 +705,30 @@ router.put(
 // ===========================================
 
 const defaultIntegrationProviders = [
-  { id: 'slack', name: 'Slack', capabilities: ['notifications', 'actions'] },
-  { id: 'teams', name: 'Microsoft Teams', capabilities: ['notifications'] },
-  { id: 'jira', name: 'Jira', capabilities: ['sync', 'notifications'] },
-  { id: 'clickup', name: 'ClickUp', capabilities: ['sync', 'notifications'] },
-  { id: 'asana', name: 'Asana', capabilities: ['sync'] },
-  { id: 'notion', name: 'Notion', capabilities: ['sync'] },
-  { id: 'trello', name: 'Trello', capabilities: ['sync'] },
+  // Email & Communication
+  { id: 'gmail', name: 'Gmail', capabilities: ['email', 'contacts'], category: 'email' },
+  { id: 'outlook', name: 'Microsoft Outlook', capabilities: ['email', 'contacts'], category: 'email' },
+  { id: 'slack', name: 'Slack', capabilities: ['messages', 'notifications'], category: 'email' },
+  { id: 'teams', name: 'Microsoft Teams', capabilities: ['messages', 'meetings'], category: 'email' },
+  // Calendar
+  { id: 'google_calendar', name: 'Google Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
+  { id: 'outlook_calendar', name: 'Outlook Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
+  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', capabilities: ['events'], category: 'calendar' },
+  { id: 'calendly', name: 'Calendly', capabilities: ['scheduling', 'events'], category: 'calendar' },
+  // Task Management
+  { id: 'jira', name: 'Jira', capabilities: ['issues', 'sprints'], category: 'task_management' },
+  { id: 'asana', name: 'Asana', capabilities: ['tasks', 'projects'], category: 'task_management' },
+  { id: 'trello', name: 'Trello', capabilities: ['boards', 'cards'], category: 'task_management' },
+  { id: 'clickup', name: 'ClickUp', capabilities: ['tasks', 'spaces'], category: 'task_management' },
+  { id: 'monday', name: 'Monday.com', capabilities: ['boards', 'items'], category: 'task_management' },
+  { id: 'notion', name: 'Notion', capabilities: ['databases', 'pages'], category: 'task_management' },
+  { id: 'todoist', name: 'Todoist', capabilities: ['tasks', 'projects'], category: 'task_management' },
+  { id: 'linear', name: 'Linear', capabilities: ['issues', 'projects'], category: 'task_management' },
+  // Cloud Storage
+  { id: 'google_drive', name: 'Google Drive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  { id: 'onedrive', name: 'OneDrive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  { id: 'dropbox', name: 'Dropbox', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  { id: 'box', name: 'Box', capabilities: ['files', 'workflows'], category: 'cloud_storage' },
 ];
 
 type IntegrationEntry = {

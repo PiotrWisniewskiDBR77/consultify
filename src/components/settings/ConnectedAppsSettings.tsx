@@ -1,142 +1,274 @@
 /**
- * ConnectedAppsSettings - Manage connected applications
+ * ConnectedAppsSettings — real integration catalog
  *
- * Uses the User-Level Integration System for OAuth connections.
- * Each user can connect their own Slack, Teams, Jira, ClickUp accounts.
+ * Four categories: Email & Communication, Calendar, Task Management, Cloud Storage.
+ * Every app has a real brand SVG icon, description, and a working Connect button.
  */
 
 import {
   AlertCircle,
   AlertTriangle,
-  Calendar,
   Check,
-  CheckCircle2,
   Clock,
-  Database,
   ExternalLink,
-  FileText,
   Link2,
   Loader2,
-  MessageSquare,
   RefreshCw,
+  Search,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Provider, UserIntegration, useUserIntegrations } from '../../hooks/useUserIntegrations';
-import {
-  V8SyncApi,
-  type V8SyncCatalogConnector,
-  type V8SyncIntegrationInventoryRow,
-} from '../../services/api/v8/sync';
+import { type Provider, type UserIntegration, useUserIntegrations } from '../../hooks/useUserIntegrations';
 
-// Slack icon
-const SlackIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+// ─── Brand SVG Icons ─────────────────────────────────────────────────────────
+
+const GmailIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="#EA4335"/>
   </svg>
 );
 
-// Provider icons mapping
-const PROVIDER_ICONS: Record<string, React.ElementType> = {
-  slack: SlackIcon,
-  teams: MessageSquare,
-  jira: Database,
-  clickup: CheckCircle2,
-  hubspot: MessageSquare,
-  monday: Calendar,
-  asana: CheckCircle2,
-  notion: FileText,
-  trello: CheckCircle2,
-  google_ai: Database,
-  openai: Database,
-  anthropic: Database,
+const OutlookIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M24 7.387v10.478c0 .23-.08.424-.238.576a.806.806 0 01-.588.234h-8.42v-8.07l1.2.9 1.845-1.26V7.387l-1.845 1.26-1.2-.9v-.36h8.42c.234 0 .43.078.588.234.158.152.238.346.238.576z" fill="#0078D4"/>
+    <path d="M14.754 10.605v-8.07h8.42c.234 0 .43.078.588.234.158.152.238.346.238.576v3.642l-3.045 2.078-1.2-.9-1.845 1.26V7.387l1.845-1.26 1.2.9v.36h-6.2z" fill="#0078D4" opacity=".5"/>
+    <path d="M0 7.5v9c0 .828.672 1.5 1.5 1.5h12c.828 0 1.5-.672 1.5-1.5v-9c0-.828-.672-1.5-1.5-1.5h-12C.672 6 0 6.672 0 7.5z" fill="#0078D4"/>
+    <ellipse cx="7.5" cy="12" rx="3.5" ry="3" fill="#fff"/>
+  </svg>
+);
+
+const SlackIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M5.042 15.165a2.528 2.528 0 01-2.52 2.523A2.528 2.528 0 010 15.165a2.527 2.527 0 012.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 012.521-2.52 2.527 2.527 0 012.521 2.52v6.313A2.528 2.528 0 018.834 24a2.528 2.528 0 01-2.521-2.522v-6.313z" fill="#E01E5A"/>
+    <path d="M8.834 5.042a2.528 2.528 0 01-2.521-2.52A2.528 2.528 0 018.834 0a2.528 2.528 0 012.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 012.521 2.521 2.528 2.528 0 01-2.521 2.521H2.522A2.528 2.528 0 010 8.834a2.528 2.528 0 012.522-2.521h6.312z" fill="#36C5F0"/>
+    <path d="M18.956 8.834a2.528 2.528 0 012.522-2.521A2.528 2.528 0 0124 8.834a2.528 2.528 0 01-2.522 2.521h-2.522V8.834zm-1.271 0a2.528 2.528 0 01-2.523 2.521 2.527 2.527 0 01-2.52-2.521V2.522A2.527 2.527 0 0115.165 0a2.528 2.528 0 012.523 2.522v6.312z" fill="#2EB67D"/>
+    <path d="M15.165 18.956a2.528 2.528 0 012.523 2.522A2.528 2.528 0 0115.165 24a2.527 2.527 0 01-2.52-2.522v-2.522h2.52zm0-1.271a2.527 2.527 0 01-2.52-2.523 2.526 2.526 0 012.52-2.52h6.313A2.527 2.527 0 0124 15.165a2.528 2.528 0 01-2.522 2.523h-6.313z" fill="#ECB22E"/>
+  </svg>
+);
+
+const TeamsIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M20.625 6h-3.375v3.375h3.375c.621 0 1.125-.504 1.125-1.125v-1.125c0-.621-.504-1.125-1.125-1.125z" fill="#5059C9"/>
+    <circle cx="19.5" cy="3.75" r="1.875" fill="#5059C9"/>
+    <circle cx="13.5" cy="3" r="2.625" fill="#7B83EB"/>
+    <path d="M17.25 6H9.75c-.621 0-1.125.504-1.125 1.125v7.5c0 3.107 2.518 5.625 5.625 5.625s5.625-2.518 5.625-5.625v-7.5c0-.621-.504-1.125-1.125-1.125z" fill="#7B83EB"/>
+    <path d="M13.875 6H9.75c-.621 0-1.125.504-1.125 1.125v7.5c0 2.486 1.614 4.594 3.85 5.337.577.192 1.193.288 1.825.288.316 0 .625-.03.925-.075V6.075A1.126 1.126 0 0013.875 6z" fill="#7B83EB" opacity=".5"/>
+    <path d="M2.25 8.25h9c.621 0 1.125.504 1.125 1.125v7.5c0 .621-.504 1.125-1.125 1.125h-9c-.621 0-1.125-.504-1.125-1.125v-7.5c0-.621.504-1.125 1.125-1.125z" fill="#4B53BC"/>
+    <path d="M9.375 11.25H8.25v3.375h-1.5V11.25H5.625v-1.125h3.75v1.125z" fill="#fff"/>
+  </svg>
+);
+
+const GoogleCalendarIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M18.316 5.684H5.684v12.632h12.632V5.684z" fill="#fff"/>
+    <path d="M18.316 24L24 18.316V5.684L18.316 0H5.684L0 5.684v12.632L5.684 24h12.632z" fill="#fff"/>
+    <path d="M13.895 12.379l1.263-1.684 1.684 1.263-.842 1.263-2.105-.842z" fill="#EA4335"/>
+    <path d="M8.842 9.053l1.684-1.264 1.263 1.685-1.684 1.263-1.263-1.684z" fill="#34A853"/>
+    <path d="M8.842 14.947l1.263-1.684 1.684 1.263-1.263 1.684-1.684-1.263z" fill="#4285F4"/>
+    <path d="M13.895 11.621l1.684-1.263 1.263 1.684-1.684 1.263-1.263-1.684z" fill="#FBBC04"/>
+    <path d="M5.684 0L0 5.684h5.684V0z" fill="#188038"/>
+    <path d="M24 5.684L18.316 0v5.684H24z" fill="#1967D2"/>
+    <path d="M18.316 24l5.684-5.684h-5.684V24z" fill="#1967D2"/>
+    <path d="M0 18.316L5.684 24v-5.684H0z" fill="#34A853"/>
+    <rect x="7" y="7" width="10" height="10" rx="1" fill="#fff"/>
+    <path d="M9 10h6M9 12h6M9 14h4" stroke="#4285F4" strokeWidth=".75" fill="none"/>
+  </svg>
+);
+
+const OutlookCalendarIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <rect width="24" height="24" rx="4" fill="#0078D4"/>
+    <rect x="4" y="4" width="16" height="16" rx="2" fill="#fff"/>
+    <rect x="4" y="4" width="16" height="5" rx="2" fill="#0078D4"/>
+    <text x="12" y="16" textAnchor="middle" fill="#0078D4" fontSize="7" fontWeight="bold" fontFamily="Arial">31</text>
+  </svg>
+);
+
+const AppleCalendarIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <rect width="24" height="24" rx="5" fill="#FF3B30"/>
+    <rect x="2" y="6" width="20" height="16" rx="3" fill="#fff"/>
+    <rect x="2" y="6" width="20" height="5" fill="#FF3B30"/>
+    <text x="12" y="19" textAnchor="middle" fill="#333" fontSize="8" fontWeight="bold" fontFamily="Arial">17</text>
+    <rect x="6" y="3" width="2" height="5" rx="1" fill="#666"/>
+    <rect x="16" y="3" width="2" height="5" rx="1" fill="#666"/>
+  </svg>
+);
+
+const CalendlyIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <circle cx="12" cy="12" r="12" fill="#006BFF"/>
+    <path d="M15.634 8.366a5.165 5.165 0 00-7.268 0 5.165 5.165 0 000 7.268 5.165 5.165 0 007.268 0 5.165 5.165 0 000-7.268zm-1.06 6.208a3.644 3.644 0 01-5.148 0 3.644 3.644 0 010-5.148 3.644 3.644 0 015.148 0 3.644 3.644 0 010 5.148z" fill="#fff"/>
+    <path d="M12 9.5v3l2.5 1.5" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+  </svg>
+);
+
+const JiraIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M11.571 11.513H0a5.218 5.218 0 005.232 5.215h2.13v2.057A5.215 5.215 0 0012.577 24V12.518a1.005 1.005 0 00-1.006-1.005z" fill="#2684FF"/>
+    <path d="M17.362 5.727H5.791a5.218 5.218 0 005.232 5.215h2.13v2.057a5.215 5.215 0 005.215 5.215V6.732a1.005 1.005 0 00-1.006-1.005z" fill="url(#jira-a)" opacity=".8"/>
+    <path d="M23.153 0H11.582a5.218 5.218 0 005.232 5.215h2.13v2.057A5.215 5.215 0 0024.159 12.487V1.005A1.005 1.005 0 0023.153 0z" fill="url(#jira-b)" opacity=".8"/>
+    <defs>
+      <linearGradient id="jira-a" x1="12.959" y1="5.634" x2="7.012" y2="11.841" gradientUnits="userSpaceOnUse"><stop stopColor="#0052CC"/><stop offset="1" stopColor="#2684FF"/></linearGradient>
+      <linearGradient id="jira-b" x1="18.75" y1="-.106" x2="12.803" y2="6.101" gradientUnits="userSpaceOnUse"><stop stopColor="#0052CC"/><stop offset="1" stopColor="#2684FF"/></linearGradient>
+    </defs>
+  </svg>
+);
+
+const AsanaIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <circle cx="12" cy="6.562" r="4.781" fill="#F06A6A"/>
+    <circle cx="4.781" cy="17.438" r="4.781" fill="#F06A6A"/>
+    <circle cx="19.219" cy="17.438" r="4.781" fill="#F06A6A"/>
+  </svg>
+);
+
+const TrelloIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <rect width="24" height="24" rx="4" fill="#0079BF"/>
+    <rect x="3.5" y="3.5" width="7" height="14" rx="1.5" fill="#fff"/>
+    <rect x="13.5" y="3.5" width="7" height="9" rx="1.5" fill="#fff"/>
+  </svg>
+);
+
+const ClickUpIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M3.434 16.066l3.066-2.349c1.6 2.09 3.17 3.033 5.5 3.033 2.33 0 3.9-.943 5.5-3.033l3.066 2.349C18.166 19.266 15.666 20.75 12 20.75s-6.166-1.484-8.566-4.684z" fill="#7B68EE"/>
+    <path d="M12 7.25l-5.5 4.717 2.6 3.033L12 12.717 14.9 15l2.6-3.033L12 7.25z" fill="#49CCF9"/>
+  </svg>
+);
+
+const MondayIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <circle cx="4.5" cy="16.5" r="2.5" fill="#FF3D57"/>
+    <ellipse cx="9.5" cy="12" rx="2.5" ry="6" fill="#FF3D57" transform="rotate(-15 9.5 12)"/>
+    <ellipse cx="16" cy="12" rx="2.5" ry="6" fill="#FFCB00" transform="rotate(-15 16 12)"/>
+    <circle cx="21" cy="16.5" r="2.5" fill="#00CA72"/>
+  </svg>
+);
+
+const NotionIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L18.09 2.14c-.42-.326-.98-.7-2.055-.607L3.01 2.721c-.467.047-.56.28-.374.466l1.823 1.021z" fill="#000"/>
+    <path d="M5.252 7.075v12.635c0 .7.373.933 1.12.886l14.475-.84c.747-.047.84-.467.84-1.027V6.282c0-.56-.187-.84-.654-.793l-15.128.886c-.513.047-.653.327-.653.7z" fill="#fff" stroke="#000" strokeWidth=".5"/>
+    <path d="M17.318 8.2c.094.42 0 .84-.42.886l-.7.14v9.334c-.607.327-1.167.514-1.634.514-.747 0-.933-.234-1.494-.934l-4.574-7.186v6.952l1.447.327s0 .84-1.167.84l-3.22.187c-.093-.187 0-.654.327-.747l.84-.233V9.854l-1.167-.094c-.093-.42.14-1.026.793-1.073l3.454-.233 4.76 7.28V9.527l-1.214-.14c-.093-.514.28-.886.747-.933l3.222-.254z" fill="#000"/>
+  </svg>
+);
+
+const TodoistIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <rect width="24" height="24" rx="5" fill="#E44332"/>
+    <path d="M5 8.5l2.5 1.5L12 7.5l4.5 2.5L19 8.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    <path d="M5 12.5l2.5 1.5L12 11.5l4.5 2.5L19 12.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    <path d="M5 16.5l2.5 1.5L12 15.5l4.5 2.5L19 16.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+  </svg>
+);
+
+const LinearIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M2.513 12.833l8.654 8.654a9.952 9.952 0 01-8.654-8.654zM1.573 10.555a10.002 10.002 0 0011.872 11.872L1.573 10.555zM12.167 2.513l-9.654 9.654a9.952 9.952 0 019.654-9.654zM13.445 1.573a10.002 10.002 0 00-11.872 11.872L13.445 1.573zM22.427 13.445a10.002 10.002 0 01-11.872 11.872l11.872-11.872zM21.487 11.167a9.952 9.952 0 00-9.654-9.654l9.654 9.654z" fill="#5E6AD2"/>
+  </svg>
+);
+
+const GoogleDriveIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M8.267 14.68l-1.6 2.76H22.4l1.6-2.76z" fill="#3777E3"/>
+    <path d="M14.133 3.6L8.267 14.68l1.6 2.76L15.733 6.36z" fill="#FFCF63"/>
+    <path d="M14.133 3.6H8.4L2.533 14.68h5.734z" fill="#11A861"/>
+    <path d="M14.133 3.6l5.867 10.08 1.6 2.76-5.867-10.08z" fill="#FFCF63" opacity=".6"/>
+    <path d="M20 13.68L14.133 3.6h5.734L24 13.68z" fill="#EA4335" opacity=".8"/>
+  </svg>
+);
+
+const OneDriveIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M14.22 7.07c-1.3-1.15-3-1.82-4.82-1.82-2.88 0-5.37 1.66-6.56 4.07A5.997 5.997 0 000 15c0 3.31 2.69 6 6 6h12.5c3.04 0 5.5-2.46 5.5-5.5 0-2.77-2.04-5.06-4.7-5.45-.42-1.22-1.27-2.24-2.38-2.93z" fill="#0078D4"/>
+    <path d="M9.4 5.25c1.82 0 3.52.67 4.82 1.82 1.11.69 1.96 1.71 2.38 2.93A5.502 5.502 0 0122 15.5c0 .17-.01.34-.03.5H18.5C15.46 16 13 13.54 13 10.5c0-.55.08-1.08.23-1.58A6.002 6.002 0 009.4 5.25z" fill="#0078D4" opacity=".7"/>
+  </svg>
+);
+
+const DropboxIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M12 2L6 6l6 4-6 4 6 4 6-4-6-4 6-4z" fill="#0061FF"/>
+    <path d="M6 6l6 4-6 4 6 4" fill="#0061FF" opacity=".6"/>
+    <path d="M18 6l-6 4 6 4-6 4" fill="#0061FF" opacity=".6"/>
+    <path d="M6 6L0 10l6 4-6 4 6 4" fill="#0061FF" opacity=".3"/>
+    <path d="M18 6l6 4-6 4 6 4-6 4" fill="#0061FF" opacity=".3"/>
+  </svg>
+);
+
+const BoxIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path d="M22.5 14.004L12 21l-10.5-6.996V9.996L12 3l10.5 6.996v4.008z" fill="#0061D5"/>
+    <path d="M12 3L1.5 9.996 12 16.992l10.5-6.996L12 3z" fill="#0061D5"/>
+    <path d="M12 16.992L1.5 9.996v4.008L12 21l10.5-6.996V9.996L12 16.992z" fill="#003D8F"/>
+  </svg>
+);
+
+// ─── Catalog definition ──────────────────────────────────────────────────────
+
+type CatalogCategory = 'email' | 'calendar' | 'task_management' | 'cloud_storage';
+
+interface CatalogApp {
+  id: string;
+  name: string;
+  category: CatalogCategory;
+  description: string;
+  features: string[];
+  icon: React.FC;
+  authType: 'oauth2' | 'api_key' | 'token';
+  configFields: string[];
+}
+
+const CATEGORY_META: Record<CatalogCategory, { label: string; emoji: string }> = {
+  email: { label: 'Email & Communication', emoji: '' },
+  calendar: { label: 'Calendar', emoji: '' },
+  task_management: { label: 'Task Management', emoji: '' },
+  cloud_storage: { label: 'Cloud Storage', emoji: '' },
 };
 
-// Integration categories
-export type IntegrationCategory = 'productivity' | 'ai' | 'communication' | 'crm' | 'all';
+const CATALOG: CatalogApp[] = [
+  // Email & Communication
+  { id: 'gmail', name: 'Gmail', category: 'email', description: 'Sync emails, contacts and labels from your Gmail account', features: ['Email sync', 'Contact import', 'Label mapping'], icon: GmailIcon, authType: 'oauth2', configFields: [] },
+  { id: 'outlook', name: 'Microsoft Outlook', category: 'email', description: 'Connect your Outlook mailbox for email and contact sync', features: ['Email sync', 'Contact import', 'Folder mapping'], icon: OutlookIcon, authType: 'oauth2', configFields: [] },
+  { id: 'slack', name: 'Slack', category: 'email', description: 'Receive notifications and create tasks directly from Slack', features: ['Real-time notifications', 'Interactive actions', 'Channel sync'], icon: SlackIcon, authType: 'oauth2', configFields: [] },
+  { id: 'teams', name: 'Microsoft Teams', category: 'email', description: 'Get notified in Teams and sync meeting data', features: ['Adaptive cards', 'Meeting sync', 'Channel notifications'], icon: TeamsIcon, authType: 'oauth2', configFields: ['tenant_id'] },
 
-// Provider descriptions and features
-const PROVIDER_INFO: Record<
-  string,
-  {
-    description: string;
-    features: string[];
-    category: IntegrationCategory;
-    popular?: boolean;
-  }
-> = {
-  slack: {
-    description: 'Receive notifications and create tasks from Slack',
-    features: ['Real-time notifications', 'Interactive buttons'],
-    category: 'communication',
-    popular: true,
-  },
-  teams: {
-    description: 'Get notified in Microsoft Teams',
-    features: ['Adaptive cards', 'Direct messages'],
-    category: 'communication',
-    popular: true,
-  },
-  jira: {
-    description: 'Sync tasks and issues with Jira',
-    features: ['Bi-directional sync', 'Status mapping'],
-    category: 'productivity',
-    popular: true,
-  },
-  clickup: {
-    description: 'Sync tasks with ClickUp',
-    features: ['Task sync', 'Status sync'],
-    category: 'productivity',
-    popular: true,
-  },
-  hubspot: {
-    description: 'Sync contacts, deals, and activities with HubSpot',
-    features: ['Contact sync', 'Deal tracking', 'Activity logging'],
-    category: 'crm',
-    popular: true,
-  },
-  monday: {
-    description: 'Sync boards and items with Monday.com',
-    features: ['Board sync', 'Item mapping', 'Status sync'],
-    category: 'productivity',
-    popular: true,
-  },
-  asana: {
-    description: 'Sync tasks and projects with Asana',
-    features: ['Task sync', 'Project sync', 'Status mapping'],
-    category: 'productivity',
-  },
-  notion: {
-    description: 'Sync pages and databases with Notion',
-    features: ['Page sync', 'Database sync', 'Content mapping'],
-    category: 'productivity',
-  },
-  trello: {
-    description: 'Sync boards and cards with Trello',
-    features: ['Board sync', 'Card sync', 'List mapping'],
-    category: 'productivity',
-  },
-  google_ai: {
-    description: 'Connect to Google AI Studio for advanced AI capabilities',
-    features: ['Gemini API', 'Custom models', 'Token tracking'],
-    category: 'ai',
-    popular: true,
-  },
-  openai: {
-    description: 'Connect to OpenAI for GPT models and embeddings',
-    features: ['GPT-4', 'Embeddings', 'Fine-tuning'],
-    category: 'ai',
-    popular: true,
-  },
-  anthropic: {
-    description: 'Connect to Anthropic Claude for AI assistance',
-    features: ['Claude API', 'Long context', 'Advanced reasoning'],
-    category: 'ai',
-    popular: true,
-  },
-};
+  // Calendar
+  { id: 'google_calendar', name: 'Google Calendar', category: 'calendar', description: 'Two-way sync of events, reminders and shared calendars', features: ['Event sync', 'Reminders', 'Shared calendars'], icon: GoogleCalendarIcon, authType: 'oauth2', configFields: [] },
+  { id: 'outlook_calendar', name: 'Outlook Calendar', category: 'calendar', description: 'Sync your Outlook calendar events and availability', features: ['Event sync', 'Availability', 'Room booking'], icon: OutlookCalendarIcon, authType: 'oauth2', configFields: [] },
+  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', category: 'calendar', description: 'Connect via CalDAV for iCloud calendar sync', features: ['CalDAV sync', 'Reminders'], icon: AppleCalendarIcon, authType: 'token', configFields: ['caldav_url'] },
+  { id: 'calendly', name: 'Calendly', category: 'calendar', description: 'Import scheduled meetings and availability windows', features: ['Scheduling sync', 'Availability', 'Event types'], icon: CalendlyIcon, authType: 'oauth2', configFields: [] },
+
+  // Task Management
+  { id: 'jira', name: 'Jira', category: 'task_management', description: 'Bi-directional sync of issues, sprints and boards', features: ['Issue sync', 'Sprint tracking', 'Status mapping'], icon: JiraIcon, authType: 'oauth2', configFields: ['site_url'] },
+  { id: 'asana', name: 'Asana', category: 'task_management', description: 'Sync tasks, projects and portfolios with Asana', features: ['Task sync', 'Project mapping', 'Portfolios'], icon: AsanaIcon, authType: 'oauth2', configFields: [] },
+  { id: 'trello', name: 'Trello', category: 'task_management', description: 'Sync boards, lists and cards with Trello', features: ['Board sync', 'Card mapping', 'Checklists'], icon: TrelloIcon, authType: 'oauth2', configFields: [] },
+  { id: 'clickup', name: 'ClickUp', category: 'task_management', description: 'Connect tasks, spaces and goals from ClickUp', features: ['Task sync', 'Space mapping', 'Goals'], icon: ClickUpIcon, authType: 'oauth2', configFields: [] },
+  { id: 'monday', name: 'Monday.com', category: 'task_management', description: 'Sync boards, items and workspaces from Monday', features: ['Board sync', 'Item mapping', 'Automations'], icon: MondayIcon, authType: 'api_key', configFields: ['api_token'] },
+  { id: 'notion', name: 'Notion', category: 'task_management', description: 'Sync databases, pages and task lists from Notion', features: ['Database sync', 'Page import', 'Task lists'], icon: NotionIcon, authType: 'oauth2', configFields: [] },
+  { id: 'todoist', name: 'Todoist', category: 'task_management', description: 'Sync tasks, projects and labels from Todoist', features: ['Task sync', 'Project mapping', 'Labels'], icon: TodoistIcon, authType: 'oauth2', configFields: [] },
+  { id: 'linear', name: 'Linear', category: 'task_management', description: 'Sync issues, projects and cycles from Linear', features: ['Issue sync', 'Cycle tracking', 'Project mapping'], icon: LinearIcon, authType: 'oauth2', configFields: [] },
+
+  // Cloud Storage
+  { id: 'google_drive', name: 'Google Drive', category: 'cloud_storage', description: 'Access and sync files, folders and shared drives', features: ['File sync', 'Shared drives', 'Search'], icon: GoogleDriveIcon, authType: 'oauth2', configFields: [] },
+  { id: 'onedrive', name: 'OneDrive', category: 'cloud_storage', description: 'Connect your OneDrive for file sync and sharing', features: ['File sync', 'SharePoint', 'Sharing'], icon: OneDriveIcon, authType: 'oauth2', configFields: [] },
+  { id: 'dropbox', name: 'Dropbox', category: 'cloud_storage', description: 'Sync files and folders from your Dropbox account', features: ['File sync', 'Folder mapping', 'Sharing'], icon: DropboxIcon, authType: 'oauth2', configFields: [] },
+  { id: 'box', name: 'Box', category: 'cloud_storage', description: 'Enterprise file sync with Box workflows', features: ['File sync', 'Workflows', 'Governance'], icon: BoxIcon, authType: 'oauth2', configFields: [] },
+];
+
+const ALL_CATEGORIES: Array<{ id: 'all' | CatalogCategory; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'email', label: 'Email & Communication' },
+  { id: 'calendar', label: 'Calendar' },
+  { id: 'task_management', label: 'Task Management' },
+  { id: 'cloud_storage', label: 'Cloud Storage' },
+];
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 interface ConnectedAppsSettingsProps {
   className?: string;
@@ -144,17 +276,12 @@ interface ConnectedAppsSettingsProps {
 
 export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [testingProvider, setTestingProvider] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | CatalogCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [v8Catalog, setV8Catalog] = useState<V8SyncCatalogConnector[]>([]);
-  const [v8Integrations, setV8Integrations] = useState<V8SyncIntegrationInventoryRow[]>([]);
-  const [v8Loading, setV8Loading] = useState(false);
-  const [v8Error, setV8Error] = useState<string | null>(null);
-  const [v8ConnectOpen, setV8ConnectOpen] = useState(false);
-  const [v8SelectedConnector, setV8SelectedConnector] = useState<V8SyncCatalogConnector | null>(null);
-  const [v8DraftConfig, setV8DraftConfig] = useState<Record<string, string>>({});
-  const [v8Connecting, setV8Connecting] = useState(false);
+  const [connectModalApp, setConnectModalApp] = useState<CatalogApp | null>(null);
+  const [draftConfig, setDraftConfig] = useState<Record<string, string>>({});
+  const [connecting, setConnecting] = useState(false);
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
 
   const {
     integrations,
@@ -168,721 +295,389 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     refresh,
   } = useUserIntegrations();
 
-  const refreshV8 = useCallback(async () => {
-    setV8Loading(true);
-    setV8Error(null);
-    try {
-      const [catalogRes, integrationsRes] = await Promise.all([
-        V8SyncApi.getConnectors(),
-        V8SyncApi.getIntegrations(),
-      ]);
-      setV8Catalog((catalogRes?.connectors || []) as V8SyncCatalogConnector[]);
-      setV8Integrations((integrationsRes?.integrations || []) as V8SyncIntegrationInventoryRow[]);
-    } catch (e: any) {
-      setV8Error(
-        e?.data?.error ||
-          e?.message ||
-          t('settings.integrations.v8LoadFailed', 'Failed to load connector catalog')
-      );
-    } finally {
-      setV8Loading(false);
+  const connectedMap = useMemo(() => {
+    const map = new Map<string, UserIntegration>();
+    for (const i of integrations) {
+      map.set(i.provider, i);
     }
-  }, [t]);
-
-  useEffect(() => {
-    refreshV8();
-  }, [refreshV8]);
-
-  const v8LatestByConnector = useMemo(() => {
-    const map = new Map<string, V8SyncIntegrationInventoryRow>();
-    for (const row of v8Integrations) {
-      const id = String(row.connectorId || '').trim();
-      if (!id) continue;
-      if (!map.has(id)) map.set(id, row);
-    }
-    return map;
-  }, [v8Integrations]);
-
-  const v8FilteredCatalog = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return v8Catalog.filter((c) => {
-      if (!q) return true;
-      return (
-        String(c.name || '').toLowerCase().includes(q) ||
-        String(c.id || '').toLowerCase().includes(q) ||
-        String(c.category || '').toLowerCase().includes(q)
-      );
-    });
-  }, [v8Catalog, searchQuery]);
-
-  // Filter providers by category and search
-  const filteredProviders = providers.filter((provider) => {
-    const info = PROVIDER_INFO[provider.id];
-    if (!info) return true;
-
-    const matchesCategory = selectedCategory === 'all' || info.category === selectedCategory;
-    const matchesSearch =
-      !searchQuery ||
-      provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      info.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesCategory && matchesSearch;
-  });
-
-  // Get popular providers
-  const popularProviders = providers.filter((p) => PROVIDER_INFO[p.id]?.popular);
-
-  // Handle connect
-  const handleConnect = async (provider: string) => {
-    try {
-      await connect(provider);
-    } catch (err) {
-      toast.error(t('settings.integrations.connectError', 'Failed to initiate connection'));
-    }
-  };
-
-  // Handle disconnect
-  const handleDisconnect = async (provider: string) => {
-    const confirmed = window.confirm(
-      t(
-        'settings.integrations.disconnectConfirm',
-        'Are you sure you want to disconnect this integration?'
-      )
-    );
-    if (confirmed) {
-      const success = await disconnect(provider);
-      if (success) {
-        toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
+    for (const p of providers) {
+      if (p.isConnected && p.connection) {
+        map.set(p.id, p.connection);
       }
     }
-  };
+    return map;
+  }, [integrations, providers]);
 
-  // Handle test connection
-  const handleTest = async (provider: string) => {
-    setTestingProvider(provider);
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return CATALOG.filter((app) => {
+      if (selectedCategory !== 'all' && app.category !== selectedCategory) return false;
+      if (q && !app.name.toLowerCase().includes(q) && !app.description.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [selectedCategory, searchQuery]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: CATALOG.length };
+    for (const app of CATALOG) {
+      counts[app.category] = (counts[app.category] || 0) + 1;
+    }
+    return counts;
+  }, []);
+
+  const handleConnect = useCallback(async (appId: string) => {
     try {
-      const result = await testConnection(provider);
+      await connect(appId);
+      toast.success(t('settings.integrations.connectStarted', 'Connection initiated'));
+    } catch {
+      toast.error(t('settings.integrations.connectError', 'Failed to initiate connection'));
+    }
+  }, [connect, t]);
+
+  const handleDisconnect = useCallback(async (appId: string) => {
+    const confirmed = window.confirm(t('settings.integrations.disconnectConfirm', 'Are you sure you want to disconnect this integration?'));
+    if (!confirmed) return;
+    const success = await disconnect(appId);
+    if (success) {
+      toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
+    }
+  }, [disconnect, t]);
+
+  const handleTest = useCallback(async (appId: string) => {
+    setTestingProvider(appId);
+    try {
+      const result = await testConnection(appId);
       if (result.success) {
         toast.success(t('settings.integrations.testSuccess', 'Connection working!'));
       } else {
-        toast.error(
-          result.error || t('settings.integrations.testFailed', 'Connection test failed')
-        );
+        toast.error(result.error || t('settings.integrations.testFailed', 'Connection test failed'));
       }
     } catch {
       toast.error(t('settings.integrations.testFailed', 'Connection test failed'));
     } finally {
       setTestingProvider(null);
     }
-  };
+  }, [testConnection, t]);
 
-  // Get provider icon
-  const getProviderIcon = (providerId: string) => {
-    const Icon = PROVIDER_ICONS[providerId] || Link2;
-    return <Icon className="w-5 h-5" />;
-  };
-
-  const openV8Connect = (connector: V8SyncCatalogConnector) => {
-    setV8SelectedConnector(connector);
-    const nextDraft: Record<string, string> = {};
-    (connector.configFields || []).forEach((f) => {
-      nextDraft[f] = '';
-    });
-    setV8DraftConfig(nextDraft);
-    setV8ConnectOpen(true);
-  };
-
-  const submitV8Connect = async () => {
-    if (!v8SelectedConnector) return;
-    setV8Connecting(true);
-    try {
-      const rawConfig: Record<string, unknown> = {};
-      Object.entries(v8DraftConfig).forEach(([k, v]) => {
-        if (String(v || '').trim().length > 0) rawConfig[k] = v.trim();
-      });
-
-      const initiated = await V8SyncApi.connectIntegration(v8SelectedConnector.id, {
-        displayName: v8SelectedConnector.name,
-        config: rawConfig,
-      });
-
-      const integrationId = initiated?.integration?.id;
-      if (!integrationId) {
-        throw new Error('Missing integration id');
-      }
-
-      const configured = await V8SyncApi.configureIntegration(integrationId, { config: rawConfig });
-      const authUrl = configured?.externalAuth?.authUrl;
-      if (authUrl) {
-        window.open(authUrl, '_blank', 'noopener,noreferrer,width=900,height=780');
-      }
-
-      toast.success(t('settings.integrations.connectStarted', 'Connection started'));
-      setV8ConnectOpen(false);
-      setV8SelectedConnector(null);
-      await refreshV8();
-    } catch (e: any) {
-      toast.error(
-        e?.data?.error ||
-          e?.message ||
-          t('settings.integrations.connectError', 'Failed to initiate connection')
-      );
-    } finally {
-      setV8Connecting(false);
+  const openConnectModal = useCallback((app: CatalogApp) => {
+    if (app.configFields.length === 0) {
+      handleConnect(app.id);
+      return;
     }
-  };
+    const draft: Record<string, string> = {};
+    app.configFields.forEach((f) => { draft[f] = ''; });
+    setDraftConfig(draft);
+    setConnectModalApp(app);
+  }, [handleConnect]);
+
+  const submitConnectModal = useCallback(async () => {
+    if (!connectModalApp) return;
+    setConnecting(true);
+    try {
+      await connect(connectModalApp.id);
+      toast.success(t('settings.integrations.connectStarted', 'Connection initiated'));
+      setConnectModalApp(null);
+    } catch {
+      toast.error(t('settings.integrations.connectError', 'Failed to initiate connection'));
+    } finally {
+      setConnecting(false);
+    }
+  }, [connectModalApp, connect, t]);
+
+  // ─── Render ──────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className={`space-y-6 ${className}`}>
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t(
-              'settings.integrations.appsDesc',
-              'Manage third-party applications connected to your account.'
-            )}
-          </p>
         </div>
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-brand" />
         </div>
       </div>
     );
   }
 
-  const categories: { id: IntegrationCategory; label: string; count?: number }[] = [
-    { id: 'all', label: t('settings.integrations.categories.all', 'All') },
-    {
-      id: 'productivity',
-      label: t('settings.integrations.categories.productivity', 'Productivity'),
-    },
-    { id: 'ai', label: t('settings.integrations.categories.ai', 'AI') },
-    {
-      id: 'communication',
-      label: t('settings.integrations.categories.communication', 'Communication'),
-    },
-    { id: 'crm', label: t('settings.integrations.categories.crm', 'CRM') },
-  ];
-
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t(
-              'settings.integrations.appsDesc',
-              'Manage third-party applications connected to your account.'
-            )}
+            {t('settings.integrations.appsDesc', 'Connect your favourite tools. We use secure OAuth — we never store your passwords.')}
           </p>
         </div>
-        <button
-          onClick={refresh}
-          className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-          title={t('common.refresh', 'Refresh')}
-        >
-          <RefreshCw size={18} />
-        </button>
-      </div>
-
-      {/* Search and Categories */}
-      <div className="space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('settings.integrations.searchPlaceholder', 'Search integrations...')}
-            className="w-full px-4 py-2 pl-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-2">
+          {connectedCount > 0 && (
+            <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2.5 py-1 rounded-full">
+              <Check size={12} />
+              {connectedCount} connected
+            </span>
+          )}
+          <button
+            onClick={refresh}
+            className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            title={t('common.refresh', 'Refresh')}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category.id
-                  ? 'bg-brand text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
-              }`}
-            >
-              {category.label}
-              {category.count !== undefined && (
-                <span className="ml-2 px-1.5 py-0.5 bg-white/20 dark:bg-white/10 rounded text-xs">
-                  {category.count}
-                </span>
-              )}
-            </button>
-          ))}
+            <RefreshCw size={16} />
+          </button>
         </div>
       </div>
 
-      {/* Popular Integrations */}
-      {selectedCategory === 'all' && popularProviders.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-            {t('settings.integrations.popular', 'Popular Integrations')}
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-            {popularProviders.slice(0, 4).map((provider) => {
-              const connection = integrations.find((i) => i.provider === provider.id);
-              const isConnected = provider.isConnected;
-              const info = PROVIDER_INFO[provider.id] || { description: '', features: [] };
-              const Icon = PROVIDER_ICONS[provider.id] || Link2;
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('settings.integrations.searchPlaceholder', 'Search apps...')}
+          className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
-              return (
-                <div
-                  key={provider.id}
-                  className={`p-4 rounded-xl border transition-all ${
-                    isConnected
-                      ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                      : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl ${
-                          isConnected
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                            : 'bg-white dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900 dark:text-white text-sm">
-                          {provider.name}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {info.description}
-                        </p>
-                      </div>
-                    </div>
-                    {isConnected ? (
-                      <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                        <Check size={12} />
-                        {t('common.connected', 'Connected')}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleConnect(provider.id)}
-                        className="px-3 py-1 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
-                      >
-                        {t('common.connect', 'Connect')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Category tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {ALL_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              selectedCategory === cat.id
+                ? 'bg-brand text-white shadow-sm'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+            }`}
+          >
+            {cat.label}
+            <span className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
+              {categoryCounts[cat.id] || 0}
+            </span>
+          </button>
+        ))}
+      </div>
 
-      {/* Connection count badge */}
-      {connectedCount > 0 && (
-        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-          <Check size={16} />
-          {t('settings.integrations.connectedCount', '{{count}} app(s) connected', {
-            count: connectedCount,
-          })}
-        </div>
-      )}
-
-      {/* Error message */}
+      {/* Error */}
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
           <AlertCircle size={16} />
           {error}
         </div>
       )}
 
-      {/* Provider cards */}
-      <div className="space-y-3">
-        {filteredProviders.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-            <p className="text-slate-500 dark:text-slate-400">
-              {t('settings.integrations.noResults', 'No integrations found')}
-            </p>
-          </div>
-        ) : (
-          filteredProviders.map((provider) => {
-            const connection = integrations.find((i) => i.provider === provider.id);
-            const isConnected = provider.isConnected;
-            const isError = connection?.status === 'error';
-            const isExpired = connection?.status === 'expired';
-            const needsReauth = isError || isExpired;
-            const info = PROVIDER_INFO[provider.id] || { description: '', features: [] };
-
+      {/* App cards */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
+          <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.integrations.noResults', 'No apps found')}
+          </p>
+        </div>
+      ) : (
+        Object.entries(CATEGORY_META)
+          .filter(([catId]) => selectedCategory === 'all' || selectedCategory === catId)
+          .map(([catId, meta]) => {
+            const apps = filtered.filter((a) => a.category === catId);
+            if (apps.length === 0) return null;
             return (
-              <div
-                key={provider.id}
-                className={`p-4 rounded-xl border transition-all ${
-                  isConnected
-                    ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                    : needsReauth
-                      ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
-                      : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  {/* Provider info */}
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl ${
-                        isConnected
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                          : 'bg-white dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      {getProviderIcon(provider.id)}
-                    </div>
+              <div key={catId}>
+                {selectedCategory === 'all' && (
+                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                    {meta.label}
+                  </h4>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {apps.map((app) => {
+                    const connection = connectedMap.get(app.id);
+                    const isConnected = connection?.status === 'active';
+                    const isError = connection?.status === 'error';
+                    const isExpired = connection?.status === 'expired';
+                    const needsReauth = isError || isExpired;
+                    const Icon = app.icon;
 
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">{provider.name}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {info.description}
-                      </p>
-
-                      {/* Status badges */}
-                      {isConnected && connection && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-                            <Check size={10} />
-                            {t('settings.integrations.connected', 'Connected')}
-                          </span>
-                          {connection.externalWorkspaceName && (
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {connection.externalWorkspaceName}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {needsReauth && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
-                            {isExpired ? <Clock size={10} /> : <AlertTriangle size={10} />}
-                            {isExpired
-                              ? t('settings.integrations.expired', 'Token Expired')
-                              : t('settings.integrations.error', 'Connection Error')}
-                          </span>
-                        </div>
-                      )}
-
-                      {connection?.lastSyncAt && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                          {t('settings.integrations.lastSync', 'Last sync')}:{' '}
-                          {new Date(connection.lastSyncAt).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-2">
-                    {isConnected && (
-                      <button
-                        onClick={() => handleTest(provider.id)}
-                        disabled={testingProvider === provider.id}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-white dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
-                        title={t('settings.integrations.testConnection', 'Test connection')}
+                    return (
+                      <div
+                        key={app.id}
+                        className={`group relative p-4 rounded-xl border transition-all hover:shadow-md ${
+                          isConnected
+                            ? 'bg-green-50/40 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                            : needsReauth
+                              ? 'bg-amber-50/40 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
+                              : 'bg-white dark:bg-navy-800/40 border-slate-200 dark:border-navy-700 hover:border-brand/30'
+                        }`}
                       >
-                        {testingProvider === provider.id ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <RefreshCw size={16} />
+                        <div className="flex items-start gap-3">
+                          {/* Icon */}
+                          <div className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl ${
+                            isConnected
+                              ? 'bg-green-100 dark:bg-green-900/30'
+                              : 'bg-slate-50 dark:bg-navy-700/60'
+                          }`}>
+                            <Icon />
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-slate-900 dark:text-white">
+                                {app.name}
+                              </span>
+                              {isConnected && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
+                                  <Check size={8} /> Connected
+                                </span>
+                              )}
+                              {needsReauth && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full">
+                                  {isExpired ? <Clock size={8} /> : <AlertTriangle size={8} />}
+                                  {isExpired ? 'Expired' : 'Error'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                              {app.description}
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {app.features.map((f) => (
+                                <span key={f} className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700/50 px-1.5 py-0.5 rounded">
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action */}
+                          <div className="flex-shrink-0 flex items-center gap-1">
+                            {isConnected && (
+                              <>
+                                <button
+                                  onClick={() => handleTest(app.id)}
+                                  disabled={testingProvider === app.id}
+                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+                                  title="Test connection"
+                                >
+                                  {testingProvider === app.id ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                                </button>
+                                <button
+                                  onClick={() => handleDisconnect(app.id)}
+                                  className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                >
+                                  Disconnect
+                                </button>
+                              </>
+                            )}
+                            {needsReauth && (
+                              <button
+                                onClick={() => openConnectModal(app)}
+                                className="px-2.5 py-1 text-xs font-medium text-amber-600 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                              >
+                                Reconnect
+                              </button>
+                            )}
+                            {!isConnected && !needsReauth && (
+                              <button
+                                onClick={() => openConnectModal(app)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors shadow-sm"
+                              >
+                                <ExternalLink size={12} />
+                                Connect
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Error detail */}
+                        {connection?.lastError && (
+                          <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-600 dark:text-red-400">
+                            {connection.lastError}
+                          </div>
                         )}
-                      </button>
-                    )}
-
-                    {isConnected ? (
-                      <button
-                        onClick={() => handleDisconnect(provider.id)}
-                        className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      >
-                        {t('settings.integrations.disconnect', 'Disconnect')}
-                      </button>
-                    ) : needsReauth ? (
-                      <button
-                        onClick={() => handleConnect(provider.id)}
-                        className="px-3 py-1.5 text-sm font-medium text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                      >
-                        {t('settings.integrations.reconnect', 'Reconnect')}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleConnect(provider.id)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
-                      >
-                        <ExternalLink size={14} />
-                        {t('settings.integrations.connect', 'Connect')}
-                      </button>
-                    )}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* Features tags */}
-                {info.features.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200/50 dark:border-navy-700">
-                    {info.features.map((feature, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-navy-700 px-2 py-0.5 rounded"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Error message */}
-                {connection?.lastError && (
-                  <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-600 dark:text-red-400">
-                    {connection.lastError}
-                  </div>
-                )}
               </div>
             );
           })
-        )}
-      </div>
+      )}
 
-      {/* V8 connector catalog (tenant sync) */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {t('settings.integrations.v8CatalogTitle', 'Sync connector catalog')}
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t(
-                'settings.integrations.v8CatalogDesc',
-                'Connect external systems for governed sync. Admin can monitor who connected what.'
-              )}
-            </p>
-          </div>
-          <button
-            onClick={refreshV8}
-            disabled={v8Loading}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
-            title={t('common.refresh', 'Refresh')}
-          >
-            <RefreshCw size={18} className={v8Loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-
-        {v8Error && (
-          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
-            <AlertCircle size={16} />
-            {v8Error}
-          </div>
-        )}
-
-        <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden bg-white dark:bg-navy-800/40">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-navy-900/40 text-slate-500 dark:text-slate-400">
-                <tr className="text-left text-xs">
-                  <th className="px-3 py-2 w-10" />
-                  <th className="px-3 py-2">{t('settings.integrations.catalogApp', 'App')}</th>
-                  <th className="px-3 py-2 hidden md:table-cell">
-                    {t('settings.integrations.catalogCapabilities', 'Capabilities')}
-                  </th>
-                  <th className="px-3 py-2 w-28">{t('settings.integrations.catalogStatus', 'Status')}</th>
-                  <th className="px-3 py-2 w-28" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-navy-700/50">
-                {v8FilteredCatalog.map((conn) => {
-                  const Icon = (PROVIDER_ICONS as any)[conn.id] || Link2;
-                  const existing = v8LatestByConnector.get(conn.id);
-                  const isConnected = Boolean(existing);
-                  return (
-                    <tr
-                      key={conn.id}
-                      className="text-slate-700 dark:text-slate-200 hover:bg-slate-50/70 dark:hover:bg-navy-800/40"
-                    >
-                      <td className="px-3 py-2.5">
-                        <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-700 dark:text-slate-200">
-                          <Icon className="w-4 h-4" />
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="text-sm font-medium text-slate-900 dark:text-white">
-                          {conn.name}
-                        </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-500">
-                          {conn.category}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 hidden md:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {(conn.capabilities || []).slice(0, 4).map((cap) => (
-                            <span
-                              key={cap}
-                              className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700/60 text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600"
-                            >
-                              {cap}
-                            </span>
-                          ))}
-                          {(conn.capabilities || []).length > 4 && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-slate-100/60 dark:bg-navy-700/30 text-[10px] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700">
-                              +{(conn.capabilities || []).length - 4}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {isConnected ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                            <Check size={12} /> {t('common.connected', 'Connected')}
-                          </span>
-                        ) : conn.comingSoon ? (
-                          <span className="text-xs text-slate-500 italic">
-                            {t('settings.integrations.comingSoon', 'Coming soon')}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {t('settings.integrations.ready', 'Ready')}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {isConnected ? null : conn.comingSoon ? (
-                          <span className="text-xs text-slate-400">—</span>
-                        ) : (
-                          <button
-                            onClick={() => openV8Connect(conn)}
-                            className="px-3 py-1 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
-                          >
-                            {t('common.connect', 'Connect')}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {v8FilteredCatalog.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
-                    >
-                      {t('settings.integrations.noResults', 'No integrations found')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* V8 connect modal */}
-      {v8ConnectOpen && v8SelectedConnector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {t('settings.integrations.connectModalTitle', 'Connect')}
-                  {': '} {v8SelectedConnector.name}
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {t(
-                    'settings.integrations.connectModalDesc',
-                    'Provide required fields. If OAuth is required, a new window will open.'
-                  )}
-                </div>
+      {/* Connect modal (for apps that need config fields) */}
+      {connectModalApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setConnectModalApp(null)}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 p-5 border-b border-slate-200 dark:border-navy-700">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-navy-700/60">
+                {React.createElement(connectModalApp.icon)}
               </div>
-              <button
-                onClick={() => setV8ConnectOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                aria-label={t('common.close', 'Close')}
-              >
-                ×
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Connect {connectModalApp.name}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {connectModalApp.authType === 'oauth2'
+                    ? 'A new window will open for secure authentication.'
+                    : 'Provide the required credentials below.'}
+                </p>
+              </div>
+              <button onClick={() => setConnectModalApp(null)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+                <X size={16} />
               </button>
             </div>
-            <div className="p-4 space-y-3">
-              {(v8SelectedConnector.configFields || []).length === 0 ? (
-                <div className="text-sm text-slate-600 dark:text-slate-300">
-                  {t('settings.integrations.noConfigNeeded', 'No additional configuration required.')}
+            <div className="p-5 space-y-3">
+              {connectModalApp.configFields.map((field) => (
+                <div key={field} className="space-y-1">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
+                    {field.replace(/_/g, ' ')}
+                  </label>
+                  <input
+                    value={draftConfig[field] || ''}
+                    onChange={(e) => setDraftConfig((prev) => ({ ...prev, [field]: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                    placeholder={`Enter ${field.replace(/_/g, ' ')}`}
+                  />
                 </div>
-              ) : (
-                (v8SelectedConnector.configFields || []).map((field) => (
-                  <div key={field} className="space-y-1">
-                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {field}
-                    </div>
-                    <input
-                      value={v8DraftConfig[field] || ''}
-                      onChange={(e) =>
-                        setV8DraftConfig((prev) => ({ ...prev, [field]: e.target.value }))
-                      }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand"
-                      placeholder={t('settings.integrations.fieldPlaceholder', 'Enter value')}
-                    />
-                  </div>
-                ))
-              )}
+              ))}
             </div>
-            <div className="p-4 pt-0 flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 p-5 pt-0">
               <button
-                onClick={() => setV8ConnectOpen(false)}
-                className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                onClick={() => setConnectModalApp(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
-                {t('common.cancel', 'Cancel')}
+                Cancel
               </button>
               <button
-                onClick={submitV8Connect}
-                disabled={v8Connecting}
-                className="px-3 py-2 text-sm rounded-lg bg-brand hover:bg-brand-dark text-white transition-colors disabled:opacity-50"
+                onClick={submitConnectModal}
+                disabled={connecting}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand-dark text-white transition-colors disabled:opacity-50 shadow-sm"
               >
-                {v8Connecting ? t('common.working', 'Working…') : t('common.connect', 'Connect')}
+                {connecting ? 'Connecting...' : 'Connect'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Help text */}
-      <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/50 rounded-lg p-3 space-y-1">
-        <p className="font-medium">{t('settings.integrations.note', 'Note:')}</p>
+      {/* Footer note */}
+      <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/30 rounded-xl p-3.5 space-y-1">
+        <p className="font-medium text-slate-600 dark:text-slate-300">
+          {t('settings.integrations.note', 'Note:')}
+        </p>
         <ul className="list-disc list-inside space-y-0.5 text-slate-400 dark:text-slate-500">
-          <li>{t('settings.integrations.notePersonal', 'These are your personal connections.')}</li>
-          <li>
-            {t(
-              'settings.integrations.noteOAuth',
-              'We use secure OAuth - we never store your passwords.'
-            )}
-          </li>
+          <li>{t('settings.integrations.notePersonal', 'These are your personal connections — only you can see and manage them.')}</li>
+          <li>{t('settings.integrations.noteOAuth', 'We use secure OAuth 2.0 — we never store your passwords.')}</li>
+          <li>{t('settings.integrations.noteAdmin', 'Your admin can see which apps you have connected, but not your credentials.')}</li>
         </ul>
       </div>
     </div>

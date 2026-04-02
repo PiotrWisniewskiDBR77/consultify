@@ -23,14 +23,10 @@ import { getTableColumns } from '../utils/dbSchema.js';
 // ==========================================
 
 export const CATEGORIES = {
-  ERP: 'erp',
-  CRM: 'crm',
-  PROJECT_MANAGEMENT: 'project_management',
-  BI: 'business_intelligence',
-  COMMUNICATION: 'communication',
-  HRIS: 'hris',
-  FINANCE: 'finance',
-  COLLABORATION: 'collaboration',
+  EMAIL: 'email',
+  CALENDAR: 'calendar',
+  TASK_MANAGEMENT: 'task_management',
+  CLOUD_STORAGE: 'cloud_storage',
 } as const;
 
 export const STATUS = {
@@ -54,168 +50,172 @@ export interface Connector {
 }
 
 export const CONNECTORS: Record<string, Connector> = {
-  // ERP
-  sap: {
-    id: 'sap',
-    name: 'SAP',
-    category: CATEGORIES.ERP,
-    capabilities: ['finance', 'procurement', 'inventory', 'projects'],
+  // ── Email & Communication ─────────────────────────────────────
+  gmail: {
+    id: 'gmail',
+    name: 'Gmail',
+    category: CATEGORIES.EMAIL,
+    capabilities: ['email', 'contacts', 'labels'],
     authType: 'oauth2',
-    configFields: ['instance_url', 'client_id', 'client_secret'],
+    configFields: [],
   },
-  oracle_erp: {
-    id: 'oracle_erp',
-    name: 'Oracle ERP Cloud',
-    category: CATEGORIES.ERP,
-    capabilities: ['finance', 'projects', 'procurement'],
+  outlook: {
+    id: 'outlook',
+    name: 'Microsoft Outlook',
+    category: CATEGORIES.EMAIL,
+    capabilities: ['email', 'contacts', 'folders'],
     authType: 'oauth2',
-    configFields: ['tenant_id', 'client_id', 'client_secret'],
+    configFields: [],
   },
-  dynamics_365: {
-    id: 'dynamics_365',
-    name: 'Microsoft Dynamics 365',
-    category: CATEGORIES.ERP,
-    capabilities: ['finance', 'sales', 'projects'],
-    authType: 'oauth2',
-    configFields: ['tenant_id', 'environment_url'],
-  },
-
-  // CRM
-  salesforce: {
-    id: 'salesforce',
-    name: 'Salesforce',
-    category: CATEGORIES.CRM,
-    capabilities: ['contacts', 'opportunities', 'accounts', 'campaigns'],
-    authType: 'oauth2',
-    configFields: ['instance_url', 'client_id', 'client_secret'],
-  },
-  hubspot: {
-    id: 'hubspot',
-    name: 'HubSpot',
-    category: CATEGORIES.CRM,
-    capabilities: ['contacts', 'deals', 'companies', 'marketing'],
-    authType: 'oauth2',
-    configFields: ['portal_id'],
-  },
-  zoho_crm: {
-    id: 'zoho_crm',
-    name: 'Zoho CRM',
-    category: CATEGORIES.CRM,
-    capabilities: ['leads', 'contacts', 'deals', 'accounts'],
-    authType: 'oauth2',
-    configFields: ['organization_id'],
-  },
-
-  // Project Management
-  jira: {
-    id: 'jira',
-    name: 'Jira',
-    category: CATEGORIES.PROJECT_MANAGEMENT,
-    capabilities: ['issues', 'projects', 'sprints', 'boards'],
-    authType: 'oauth2',
-    configFields: ['site_url', 'cloud_id'],
-  },
-  asana: {
-    id: 'asana',
-    name: 'Asana',
-    category: CATEGORIES.PROJECT_MANAGEMENT,
-    capabilities: ['tasks', 'projects', 'workspaces', 'portfolios'],
-    authType: 'oauth2',
-    configFields: ['workspace_gid'],
-  },
-  monday: {
-    id: 'monday',
-    name: 'Monday.com',
-    category: CATEGORIES.PROJECT_MANAGEMENT,
-    capabilities: ['boards', 'items', 'updates', 'workspaces'],
-    authType: 'api_key',
-    configFields: ['api_token'],
-  },
-  azure_devops: {
-    id: 'azure_devops',
-    name: 'Azure DevOps',
-    category: CATEGORIES.PROJECT_MANAGEMENT,
-    capabilities: ['work_items', 'projects', 'pipelines', 'repos'],
-    authType: 'oauth2',
-    configFields: ['organization_url'],
-  },
-
-  // BI
-  powerbi: {
-    id: 'powerbi',
-    name: 'Microsoft Power BI',
-    category: CATEGORIES.BI,
-    capabilities: ['reports', 'dashboards', 'datasets'],
-    authType: 'oauth2',
-    configFields: ['workspace_id'],
-  },
-  tableau: {
-    id: 'tableau',
-    name: 'Tableau',
-    category: CATEGORIES.BI,
-    capabilities: ['workbooks', 'views', 'datasources'],
-    authType: 'token',
-    configFields: ['site_url', 'site_id'],
-  },
-  looker: {
-    id: 'looker',
-    name: 'Looker',
-    category: CATEGORIES.BI,
-    capabilities: ['dashboards', 'looks', 'explores'],
-    authType: 'api_key',
-    configFields: ['base_url', 'client_id', 'client_secret'],
-  },
-
-  // Communication
   slack: {
     id: 'slack',
     name: 'Slack',
-    category: CATEGORIES.COMMUNICATION,
+    category: CATEGORIES.EMAIL,
     capabilities: ['messages', 'channels', 'notifications'],
     authType: 'oauth2',
-    configFields: ['workspace_id'],
+    configFields: [],
   },
   teams: {
     id: 'teams',
     name: 'Microsoft Teams',
-    category: CATEGORIES.COMMUNICATION,
-    capabilities: ['messages', 'channels', 'meetings', 'notifications'],
+    category: CATEGORIES.EMAIL,
+    capabilities: ['messages', 'channels', 'meetings'],
     authType: 'oauth2',
     configFields: ['tenant_id'],
   },
-  gmail: {
-    id: 'gmail',
-    name: 'Gmail / Google Workspace',
-    category: CATEGORIES.COMMUNICATION,
-    capabilities: ['email', 'calendar', 'contacts'],
+
+  // ── Calendar ──────────────────────────────────────────────────
+  google_calendar: {
+    id: 'google_calendar',
+    name: 'Google Calendar',
+    category: CATEGORIES.CALENDAR,
+    capabilities: ['events', 'reminders', 'shared_calendars'],
     authType: 'oauth2',
-    configFields: ['domain'],
+    configFields: [],
+  },
+  outlook_calendar: {
+    id: 'outlook_calendar',
+    name: 'Outlook Calendar',
+    category: CATEGORIES.CALENDAR,
+    capabilities: ['events', 'reminders', 'shared_calendars'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  apple_calendar: {
+    id: 'apple_calendar',
+    name: 'Apple Calendar (iCal)',
+    category: CATEGORIES.CALENDAR,
+    capabilities: ['events', 'reminders'],
+    authType: 'token',
+    configFields: ['caldav_url'],
+  },
+  calendly: {
+    id: 'calendly',
+    name: 'Calendly',
+    category: CATEGORIES.CALENDAR,
+    capabilities: ['scheduling', 'events', 'availability'],
+    authType: 'oauth2',
+    configFields: [],
   },
 
-  // Cloud Storage
+  // ── Task Management ───────────────────────────────────────────
+  jira: {
+    id: 'jira',
+    name: 'Jira',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['issues', 'projects', 'sprints', 'boards'],
+    authType: 'oauth2',
+    configFields: ['site_url'],
+  },
+  asana: {
+    id: 'asana',
+    name: 'Asana',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['tasks', 'projects', 'portfolios'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  trello: {
+    id: 'trello',
+    name: 'Trello',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['boards', 'cards', 'lists'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  clickup: {
+    id: 'clickup',
+    name: 'ClickUp',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['tasks', 'spaces', 'lists', 'goals'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  monday: {
+    id: 'monday',
+    name: 'Monday.com',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['boards', 'items', 'workspaces'],
+    authType: 'api_key',
+    configFields: ['api_token'],
+  },
+  notion: {
+    id: 'notion',
+    name: 'Notion',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['databases', 'pages', 'tasks'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  todoist: {
+    id: 'todoist',
+    name: 'Todoist',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['tasks', 'projects', 'labels'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+  linear: {
+    id: 'linear',
+    name: 'Linear',
+    category: CATEGORIES.TASK_MANAGEMENT,
+    capabilities: ['issues', 'projects', 'cycles'],
+    authType: 'oauth2',
+    configFields: [],
+  },
+
+  // ── Cloud Storage ─────────────────────────────────────────────
   google_drive: {
     id: 'google_drive',
     name: 'Google Drive',
-    category: CATEGORIES.COLLABORATION,
-    capabilities: ['files', 'folders', 'sharing', 'search'],
+    category: CATEGORIES.CLOUD_STORAGE,
+    capabilities: ['files', 'folders', 'sharing'],
     authType: 'oauth2',
-    configFields: ['root_folder_id'],
+    configFields: [],
   },
   onedrive: {
     id: 'onedrive',
-    name: 'OneDrive / SharePoint',
-    category: CATEGORIES.COLLABORATION,
-    capabilities: ['files', 'folders', 'sharing', 'sites'],
+    name: 'OneDrive',
+    category: CATEGORIES.CLOUD_STORAGE,
+    capabilities: ['files', 'folders', 'sharing'],
     authType: 'oauth2',
-    configFields: ['tenant_id', 'site_id'],
+    configFields: [],
   },
   dropbox: {
     id: 'dropbox',
     name: 'Dropbox',
-    category: CATEGORIES.COLLABORATION,
-    capabilities: ['files', 'folders', 'sharing', 'paper'],
+    category: CATEGORIES.CLOUD_STORAGE,
+    capabilities: ['files', 'folders', 'sharing'],
     authType: 'oauth2',
-    configFields: ['root_folder_id'],
+    configFields: [],
+  },
+  box: {
+    id: 'box',
+    name: 'Box',
+    category: CATEGORIES.CLOUD_STORAGE,
+    capabilities: ['files', 'folders', 'sharing', 'workflows'],
+    authType: 'oauth2',
+    configFields: [],
   },
 };
 
