@@ -45,6 +45,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
   const navLinks = [
     { label: t('nav.product', 'Product'), href: ROUTES.WELCOME },
+    { label: t('nav.knowledgeBase', 'Knowledge Base'), href: ROUTES.KNOWLEDGE_BASE_PUBLIC },
     { label: t('nav.pricing', 'Pricing'), href: ROUTES.PRICING },
     { label: t('nav.partners', 'Partners'), href: ROUTES.BECOME_PARTNER },
     { label: t('nav.help', 'Help'), href: ROUTES.DOCS },

@@ -31,7 +31,7 @@ export interface HelpConfig {
  * Update these values to change help content across the app
  */
 export const HELP_CONFIG: HelpConfig = {
-  docsBaseUrl: '/docs',
+  docsBaseUrl: '/knowledge-base',
   guides: [],
   knowledgeBaseCategories: [],
   notifyEndpoint: '/api/help/knowledge-base/notify',

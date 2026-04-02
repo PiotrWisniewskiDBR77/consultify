@@ -323,6 +323,15 @@ const ExecutiveView = React.lazy(() =>
 );
 
 // Documentation Portal (Public)
+const KnowledgeBaseHomePage = React.lazy(() =>
+  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({ default: m.KnowledgeBaseHomePage }))
+);
+const KnowledgeBaseCategoryPage = React.lazy(() =>
+  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({ default: m.KnowledgeBaseCategoryPage }))
+);
+const KnowledgeBaseArticlePage = React.lazy(() =>
+  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({ default: m.KnowledgeBaseArticlePage }))
+);
 const DocsLayout = React.lazy(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
 );
@@ -674,6 +683,11 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug" element={<DocsCategoryView />} />
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
+
+        {/* Knowledge Base - Public Product KB */}
+        <Route path="/knowledge-base" element={<KnowledgeBaseHomePage />} />
+        <Route path="/knowledge-base/:categorySlug" element={<KnowledgeBaseCategoryPage />} />
+        <Route path="/knowledge-base/:categorySlug/:articleSlug" element={<KnowledgeBaseArticlePage />} />
 
         {/* Public Form Page (Table Platform) — no auth required */}
         <Route

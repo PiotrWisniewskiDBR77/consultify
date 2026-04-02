@@ -81,6 +81,10 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
       title: t('landing.footer.resources.title', 'Resources'),
       links: [
         {
+          label: t('landing.footer.resources.knowledgeBase', 'Knowledge Base'),
+          href: ROUTES.KNOWLEDGE_BASE_PUBLIC,
+        },
+        {
           label: t('landing.footer.resources.masterclass', 'Masterclass'),
           href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
           external: true,

@@ -126,11 +126,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   };
 
   const handleExploreAll = () => {
-    if (onTrialClick) {
-      onTrialClick();
-      return;
-    }
-    navigate(ROUTES.TRIAL_ENTRY);
+    navigate(ROUTES.KNOWLEDGE_BASE_PUBLIC);
   };
 
   if (isLoading) {

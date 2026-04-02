@@ -205,6 +205,7 @@ export const ROUTES = {
   // Knowledge & Pricing
   DOCS: '/docs',
   KNOWLEDGE_BASE: '/knowledge',
+  KNOWLEDGE_BASE_PUBLIC: '/knowledge-base',
   PRICING: '/pricing',
   APP_PRICING: '/app/pricing',
   EXECUTIVE: '/executive',
@@ -491,6 +492,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
   if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;
+  if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE_PUBLIC)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
 
