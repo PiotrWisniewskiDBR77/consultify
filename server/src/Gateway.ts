@@ -38,6 +38,7 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
+import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
@@ -499,6 +500,7 @@ export class ApiGateway {
       app.use('/api/media-ingestion', mediaIngestionRoutes);
       app.use('/api/llm', llmRoutes);
       app.use('/api/tasks', taskRoutes);
+      app.use('/api/public/v1', publicApiV1Routes);
       app.use('/api/notifications', notificationRoutes);
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);

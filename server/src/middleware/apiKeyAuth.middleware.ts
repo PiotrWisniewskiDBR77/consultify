@@ -15,18 +15,30 @@
  * - Usage tracking
  */
 
+import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 
 import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/apiKeyService.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
+type ResolvedApiKey = {
+  kind: 'org' | 'user';
+  id: string;
+  organizationId: string;
+  userId?: string;
+  permissions: string[];
+  rateLimit: number;
+};
+
 interface ApiKeyRequest extends Request {
-  apiKey?: ApiKey;
+  apiKey?: ResolvedApiKey;
   organizationId?: string;
+  userId?: string;
 }
 
 // ==========================================
@@ -101,8 +113,8 @@ export async function apiKeyAuth(
     // Get client IP
     const ip = getClientIp(req);
 
-    // Validate key
-    const validatedKey = await ApiKeyService.validateKey(apiKey, ip);
+    // Validate key (org keys first, then user keys)
+    const validatedKey = await resolveApiKey(apiKey, ip);
 
     if (!validatedKey) {
       logger.warn('[APIKeyAuth] Invalid API key attempt', {
@@ -117,7 +129,7 @@ export async function apiKeyAuth(
     }
 
     // Check rate limit
-    const rateLimit = checkRateLimit(validatedKey.id, validatedKey.rateLimit);
+    const rateLimit = checkRateLimit(`${validatedKey.kind}:${validatedKey.id}`, validatedKey.rateLimit);
 
     res.setHeader('X-RateLimit-Limit', validatedKey.rateLimit.toString());
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());
@@ -135,6 +147,7 @@ export async function apiKeyAuth(
     // Attach to request
     req.apiKey = validatedKey;
     req.organizationId = validatedKey.organizationId;
+    req.userId = validatedKey.userId;
 
     next();
   } catch (error) {
@@ -153,7 +166,7 @@ export function requireApiKeyPermission(permission: string) {
       return;
     }
 
-    if (!ApiKeyService.hasPermission(req.apiKey, permission)) {
+    if (!hasPermission(req.apiKey, permission)) {
       res.status(403).json({
         error: 'Permission denied',
         message: `This action requires the '${permission}' permission.`,
@@ -208,6 +221,96 @@ export function hybridAuth(
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
+
+function hasPermission(key: ResolvedApiKey, permission: string): boolean {
+  if (key.permissions.includes(API_KEY_PERMISSIONS.FULL_ACCESS)) return true;
+  return key.permissions.includes(permission);
+}
+
+async function resolveApiKey(plainTextKey: string, ip?: string): Promise<ResolvedApiKey | null> {
+  const orgKey = await ApiKeyService.validateKey(plainTextKey, ip);
+  if (orgKey) {
+    return {
+      kind: 'org',
+      id: orgKey.id,
+      organizationId: orgKey.organizationId,
+      permissions: orgKey.permissions,
+      rateLimit: orgKey.rateLimit,
+    };
+  }
+
+  return await validateUserApiKey(plainTextKey);
+}
+
+type UserApiKeyRow = {
+  id: string;
+  user_id: string;
+  key_hash: string;
+  permissions: string | null;
+  rate_limit: number | null;
+};
+
+function sha256(raw: string): string {
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+async function validateUserApiKey(plainTextKey: string): Promise<ResolvedApiKey | null> {
+  // Backwards-compatible: older rows stored plaintext `ck_...` in `key_hash`.
+  const raw = plainTextKey.startsWith('ck_') ? plainTextKey.slice(3) : plainTextKey;
+  const hashed = sha256(raw);
+
+  const row = await dbGet<UserApiKeyRow>(
+    `SELECT id, user_id, key_hash, permissions, rate_limit
+     FROM user_api_keys
+     WHERE is_active = 1
+       AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+       AND (key_hash = ? OR key_hash = ?)
+     LIMIT 1`,
+    [hashed, plainTextKey],
+    { fallback: false }
+  );
+
+  if (!row) return null;
+
+  const orgRow = await dbGet<{ organization_id: string }>(
+    `SELECT organization_id FROM users WHERE id = ? LIMIT 1`,
+    [row.user_id],
+    { fallback: false }
+  );
+  const organizationId = orgRow?.organization_id;
+  if (!organizationId) return null;
+
+  // If legacy plaintext matched, upgrade in place to hashed storage.
+  if (row.key_hash === plainTextKey) {
+    await dbRun(
+      `UPDATE user_api_keys SET key_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [hashed, row.id],
+      { fallback: false }
+    );
+  }
+
+  await dbRun(
+    `UPDATE user_api_keys SET last_used_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [row.id],
+    { fallback: false }
+  );
+
+  let permissions: string[] = [];
+  try {
+    permissions = row.permissions ? (JSON.parse(row.permissions) as string[]) : [];
+  } catch {
+    permissions = [];
+  }
+
+  return {
+    kind: 'user',
+    id: row.id,
+    organizationId,
+    userId: row.user_id,
+    permissions,
+    rateLimit: Number(row.rate_limit || 1000),
+  };
+}
 
 /**
  * Extract API key from request

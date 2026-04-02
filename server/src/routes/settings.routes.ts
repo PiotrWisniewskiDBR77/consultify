@@ -3,6 +3,7 @@
  * API endpoints for settings including user preferences
  */
 
+import crypto from 'crypto';
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -3799,12 +3800,13 @@ const ensureUserApiKeysTable = async () => {
 };
 
 const generateApiKey = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let key = 'ck_'; // consultify key prefix
-  for (let i = 0; i < 32; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return key;
+  // 256-bit random key; URL-safe via hex.
+  return `ck_${crypto.randomBytes(32).toString('hex')}`;
+};
+
+const hashApiKey = (plainTextKey: string): string => {
+  const raw = plainTextKey.startsWith('ck_') ? plainTextKey.slice(3) : plainTextKey;
+  return crypto.createHash('sha256').update(raw).digest('hex');
 };
 
 /**
@@ -3850,8 +3852,7 @@ router.post(
     const apiKey = generateApiKey();
     const keyPrefix = apiKey.substring(0, 10);
 
-    // In production, hash the key before storing
-    const keyHash = apiKey; // Should use bcrypt in production
+    const keyHash = hashApiKey(apiKey);
 
     await dbRun(
       `INSERT INTO user_api_keys (id, user_id, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
@@ -3941,11 +3942,12 @@ router.post(
 
     const newKey = generateApiKey();
     const keyPrefix = newKey.substring(0, 10);
+    const keyHash = hashApiKey(newKey);
 
     await dbRun(
       `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
-      [newKey, keyPrefix, id, userId]
+      [keyHash, keyPrefix, id, userId]
     );
 
     logger.info(`[settings] API key ${id} rotated for user ${userId}`);
