@@ -172,8 +172,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
     <section className="relative z-10 px-6 min-h-screen flex flex-col">
       {/* ── Ambient Background Layer ── */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        {/* Deep gradient base */}
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+        {/* Deep gradient base — light slate/violet wash in light mode */}
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_42%,#f1f5f9_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
 
         {/* Primary violet blob — top-left */}
         <motion.div
@@ -237,8 +237,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
           }}
         />
 
-        {/* Radial vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.50)_70%,rgba(0,0,0,0.72)_100%)]" />
+        {/* Radial vignette — edges fade to white in light mode */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(255,255,255,0.55)_70%,rgba(255,255,255,0.92)_100%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.50)_70%,rgba(0,0,0,0.72)_100%)]" />
       </div>
 
       {/* ── Content ── */}
@@ -266,11 +266,11 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.06 }}
-              className="font-black tracking-tight leading-[1.0] text-white"
+              className="font-black tracking-tight leading-[1.0] text-slate-900 dark:text-white"
               style={{ fontSize: 'clamp(40px, 5.5vw, 88px)' }}
             >
               <span className="block">{t('landing.profitHero.h1.line1', 'Consultify gives teams')}</span>
-              <span className="block text-white/75 mt-1">
+              <span className="block text-slate-700 dark:text-white/75 mt-1">
                 {t('landing.profitHero.h1.line2', 'consulting intelligence')}
               </span>
               <span
@@ -291,7 +291,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.14 }}
-              className="text-base md:text-lg text-white/60 font-medium leading-relaxed max-w-lg"
+              className="text-base md:text-lg text-slate-600 dark:text-white/60 font-medium leading-relaxed max-w-lg"
             >
               {t(
                 'landing.epicHero.sub',
@@ -343,26 +343,12 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   trackFunnelEvent('landing_demo_clicked', { cta: 'open_demo_now', variant });
                   onOpenDemoNow();
                 }}
-                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-white
-                  transition-all duration-300 active:scale-[0.98]"
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    'rgba(255,255,255,0.09)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor =
-                    'rgba(168,85,247,0.45)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    'rgba(255,255,255,0.05)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor =
-                    'rgba(255,255,255,0.18)';
-                }}
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-slate-900 dark:text-white
+                  transition-all duration-300 active:scale-[0.98]
+                  bg-slate-100 dark:bg-white/05 border border-slate-300 dark:border-white/18
+                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.09] dark:hover:border-[rgba(168,85,247,0.45)]"
               >
-                <Play size={14} className="text-white/70" fill="currentColor" />
+                <Play size={14} className="text-slate-600 dark:text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
               </button>
             </motion.div>
@@ -371,13 +357,13 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.28 }}
-              className="max-w-xl rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm"
+              className="max-w-xl rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] p-4 backdrop-blur-sm"
             >
               <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-300">
                 <Sparkles size={12} />
                 <span>{t('landing.epicHero.annaBadge', 'Start with Anna')}</span>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-white/60">
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-white/60">
                 {t(
                   'landing.epicHero.annaSub',
                   'Not sure whether to start with a demo or a trial? Anna can explain fit, pricing, and security before you choose your next step.'
@@ -386,7 +372,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               <div className="mt-4">
                 <button
                   onClick={handleAnnaOpen}
-                  className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/12 px-3.5 py-2 text-xs font-semibold text-violet-100 transition-all duration-200 hover:bg-violet-500/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-violet-300/40 dark:border-violet-300/20 bg-violet-500/15 dark:bg-violet-500/12 px-3.5 py-2 text-xs font-semibold text-violet-900 dark:text-violet-100 transition-all duration-200 hover:bg-violet-500/25 dark:hover:bg-violet-500/20"
                 >
                   <Sparkles size={12} />
                   <span>{t('landing.epicHero.annaPrimaryCta', 'Ask Anna first')}</span>
@@ -397,7 +383,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   <button
                     key={item.key}
                     onClick={() => handleAnnaPrompt(item.prompt, item.key)}
-                    className="rounded-full border border-white/12 bg-white/[0.035] px-3.5 py-2 text-xs font-semibold text-white/75 transition-all duration-200 hover:bg-white/[0.07] hover:text-white"
+                    className="rounded-full border border-slate-200 dark:border-white/12 bg-slate-50 dark:bg-white/[0.035] px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-white/75 transition-all duration-200 hover:bg-slate-200/80 dark:hover:bg-white/[0.07] hover:text-slate-900 dark:hover:text-white"
                   >
                     {item.label}
                   </button>
@@ -410,13 +396,13 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.35 }}
-              className="flex items-center gap-3 text-xs text-white/35"
+              className="flex items-center gap-3 text-xs text-slate-500 dark:text-white/35"
             >
               <div className="flex -space-x-2">
                 {['#7c3aed', '#a855f7', '#06b6d4', '#10b981'].map((color, i) => (
                   <div
                     key={i}
-                    className="w-6 h-6 rounded-full border-2 border-[#0A0A1F] flex items-center justify-center text-[7px] font-black text-white"
+                    className="w-6 h-6 rounded-full border-2 border-white dark:border-[#0A0A1F] flex items-center justify-center text-[7px] font-black text-white"
                     style={{ background: color }}
                   >
                     {['M', 'J', 'K', 'A'][i]}
@@ -474,8 +460,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
         >
           {/* Left: Spotify tagline + No credit card */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 bg-white/[0.04] border border-white/10 backdrop-blur-sm">
-              <span className="text-xs font-black text-white/50 uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 backdrop-blur-sm">
+              <span className="text-xs font-black text-slate-600 dark:text-white/50 uppercase tracking-widest">
                 {t(
                   'landing.profitHero.billboardShort',
                   'One workflow from diagnosis to execution to measurable results.'
@@ -483,7 +469,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               </span>
             </div>
 
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/25">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/25">
               <CheckCircle2 size={11} className="text-emerald-500" />
               <span>{t('landing.epicHero.noCC', 'No credit card required')}</span>
             </div>
