@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
     '**/test-results/**',
     '**/dist/**',
     '**/data/**',
+    '**/Blogs/**',
+    '**/server/public/**',
     // Codex/Cursor scratch worktrees can churn (tsconfig changes) and cause reload loops
     '**/.codex-worktrees/**',
     /\/\.codex-worktrees\//,
@@ -79,6 +81,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/kb': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     preview: {
@@ -104,6 +111,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/kb': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     define: {
@@ -121,6 +133,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
+      entries: ['index.html', 'src/**/*.{ts,tsx}'],
       include: [
         'react',
         'react-dom',

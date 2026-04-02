@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import UserControllerRaw from '../../controllers/UserController.js';
 const UserController = UserControllerRaw as any;
-import { asyncHandler } from '../../middleware/asyncHandler.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
