@@ -43,25 +43,22 @@ import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSetti
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
 import { DataControlsSettings } from '../components/settings/DataControlsSettings';
 import { DeveloperSettings } from '../components/settings/DeveloperSettings';
-import { DNDModeSettings } from '../components/settings/DNDModeSettings';
-import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
+import { DesktopSoundsSettings } from '../components/settings/DesktopSoundsSettings';
+import { EmailDigestSettings } from '../components/settings/EmailDigestSettings';
 import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
 import { ExportDataSettings } from '../components/settings/ExportDataSettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
-import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { PasswordSettings } from '../components/settings/PasswordSettings';
 import { PrivacySettings } from '../components/settings/PrivacySettings';
 import { ProfileSettings } from '../components/settings/ProfileSettings';
-import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
 // QuickProfileCard removed - using Admin-style layout
-import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
 import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
-import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
+import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
@@ -130,30 +127,21 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   },
   // Notifications
   'notifications-overview': {
-    title: 'Notifications',
-    subtitle: 'Control how and when you receive notifications',
+    title: 'Channels & Categories',
+    subtitle: 'Control how and when you receive notifications across all channels',
   },
-  'notifications-email': {
-    title: 'Email Notifications',
-    subtitle: 'Manage email notification preferences',
+  'notifications-email-digest': {
+    title: 'Email & Digest',
+    subtitle: 'Choose which emails you receive and how they are summarized',
   },
-  'notifications-push': {
-    title: 'Push Notifications',
-    subtitle: 'Configure browser and mobile push notifications',
+  'notifications-desktop-sounds': {
+    title: 'Desktop & Sounds',
+    subtitle: 'Configure how notifications appear on screen and what sounds they play',
   },
-  'notifications-sounds': {
-    title: 'Sound Notifications',
-    subtitle: 'Set notification sounds and volume',
+  'notifications-availability': {
+    title: 'Availability',
+    subtitle: 'Control when notifications reach you — temporary mute or recurring schedule',
   },
-  'notifications-quiet-hours': {
-    title: 'Quiet Hours',
-    subtitle: 'Schedule times when notifications are muted',
-  },
-  'notifications-digest': {
-    title: 'Notification Digest',
-    subtitle: 'Configure notification summary emails',
-  },
-  'notifications-dnd': { title: 'Do Not Disturb', subtitle: 'Temporarily pause all notifications' },
   // Security
   password: { title: 'Password', subtitle: 'Change your password and security settings' },
   mfa: {
@@ -284,18 +272,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       // Notifications
       case 'notifications-overview':
         return <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'notifications-email':
-        return <EmailNotificationsSettings />;
-      case 'notifications-push':
-        return <PushNotificationsSettings />;
-      case 'notifications-sounds':
-        return <SoundNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'notifications-quiet-hours':
-        return <QuietHoursSettings currentUser={currentUser} onUpdate={() => onUpdateUser({})} />;
-      case 'notifications-digest':
-        return <NotificationDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
-      case 'notifications-dnd':
-        return <DNDModeSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'notifications-email-digest':
+        return <EmailDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'notifications-desktop-sounds':
+        return <DesktopSoundsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+      case 'notifications-availability':
+        return <AvailabilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
       // Security
       case 'password':

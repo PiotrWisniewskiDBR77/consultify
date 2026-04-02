@@ -42,11 +42,9 @@ import {
   Settings,
   Shield,
   Sliders,
-  Smartphone,
   Sparkles,
   Trash2,
   User,
-  Volume2,
   Webhook,
   Zap,
 } from 'lucide-react';
@@ -78,12 +76,9 @@ export type SettingsSection =
   | 'ai-usage'
   // Notifications
   | 'notifications-overview'
-  | 'notifications-email'
-  | 'notifications-push'
-  | 'notifications-sounds'
-  | 'notifications-quiet-hours'
-  | 'notifications-digest'
-  | 'notifications-dnd'
+  | 'notifications-email-digest'
+  | 'notifications-desktop-sounds'
+  | 'notifications-availability'
   // Security
   | 'password'
   | 'mfa'
@@ -269,45 +264,27 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         items: [
           {
             id: 'notifications-overview',
-            label: t('settings.sidebar.notificationsOverview', 'Overview'),
+            label: t('settings.sidebar.notificationsOverview', 'Channels & Categories'),
             icon: Bell,
-            keywords: ['alerts', 'notifications'],
+            keywords: ['alerts', 'notifications', 'channels'],
           },
           {
-            id: 'notifications-email',
-            label: t('settings.sidebar.notificationsEmail', 'Email'),
+            id: 'notifications-email-digest',
+            label: t('settings.sidebar.notificationsEmailDigest', 'Email & Digest'),
             icon: Mail,
-            keywords: ['email', 'digest'],
+            keywords: ['email', 'digest', 'summary', 'daily', 'weekly'],
           },
           {
-            id: 'notifications-push',
-            label: t('settings.sidebar.notificationsPush', 'Push'),
-            icon: Smartphone,
-            keywords: ['mobile', 'desktop', 'browser'],
+            id: 'notifications-desktop-sounds',
+            label: t('settings.sidebar.notificationsDesktopSounds', 'Desktop & Sounds'),
+            icon: Monitor,
+            keywords: ['push', 'desktop', 'browser', 'audio', 'alert', 'tone', 'sound'],
           },
           {
-            id: 'notifications-sounds',
-            label: t('settings.sidebar.notificationsSounds', 'Sounds'),
-            icon: Volume2,
-            keywords: ['audio', 'alert', 'tone'],
-          },
-          {
-            id: 'notifications-quiet-hours',
-            label: t('settings.sidebar.quietHours', 'Quiet Hours'),
+            id: 'notifications-availability',
+            label: t('settings.sidebar.notificationsAvailability', 'Availability'),
             icon: Moon,
-            keywords: ['schedule', 'silent', 'pause'],
-          },
-          {
-            id: 'notifications-digest',
-            label: t('settings.sidebar.digest', 'Digest'),
-            icon: Mail,
-            keywords: ['summary', 'daily', 'weekly'],
-          },
-          {
-            id: 'notifications-dnd',
-            label: t('settings.sidebar.dnd', 'Do Not Disturb'),
-            icon: Moon,
-            keywords: ['focus', 'block', 'silent'],
+            keywords: ['quiet hours', 'dnd', 'do not disturb', 'focus', 'schedule', 'silent', 'pause'],
           },
         ],
       },
