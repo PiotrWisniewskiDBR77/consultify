@@ -94,6 +94,12 @@ app.get('/api/kb-diag', async (_req: Request, res: Response) => {
     const migHistory = await db.query(
       `SELECT filename FROM tp_migration_history WHERE filename LIKE '%739%' OR filename LIKE '%kb%' OR filename LIKE '%consultify%' ORDER BY filename`
     ).catch(() => ({ rows: [] }));
+    const migTotal = await db.query(
+      `SELECT COUNT(*) as cnt FROM tp_migration_history`
+    ).catch(() => ({ rows: [{ cnt: -1 }] }));
+    const migLast = await db.query(
+      `SELECT filename, applied_at FROM tp_migration_history ORDER BY applied_at DESC LIMIT 3`
+    ).catch(() => ({ rows: [] }));
     const tables = await db.query(
       `SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'kb_%' ORDER BY table_name`
     ).catch(() => ({ rows: [] }));
@@ -105,7 +111,9 @@ app.get('/api/kb-diag', async (_req: Request, res: Response) => {
       DISABLE_TP_MIGRATIONS: process.env.DISABLE_TP_MIGRATIONS,
     };
     res.json({
-      migrations: migHistory.rows.map((r: any) => r.filename),
+      migrations_kb: migHistory.rows.map((r: any) => r.filename),
+      migrations_total: migTotal.rows[0]?.cnt,
+      migrations_last3: migLast.rows,
       tables: tables.rows.map((r: any) => r.table_name),
       categories: catCount.rows[0]?.cnt,
       articles: artCount.rows[0]?.cnt,
