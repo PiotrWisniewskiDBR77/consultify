@@ -5,61 +5,59 @@ Funnel stage: Consideration
 Core problem: leadership oscillates between frozen commitment and chaotic replanning, which trains the organization to either ignore the plan or distrust every new version  
 Main promise: portfolio steering becomes steadier when replanning is triggered by explicit evidence thresholds instead of mood, pressure, or a fresh strategy workshop
 
-replan when material assumptions about value, risk, capacity, or external constraints have changed enough to invalidate major commitments. Hold course when the pain is execution discipline, dependency management, or governance latency, because replanning those problems with a new deck does not fix them. Transformation portfolios fail in two opposite ways.
+Transformation portfolios fail in two opposite ways.
 
-Some fail because leadership will not change the plan when reality shifts.
+Some fail because leadership will not change the plan when reality shifts. Others fail because leadership changes the plan whenever anxiety rises. Both patterns break trust. Teams either learn to ignore the roadmap or learn that every quarter brings a new storyline and a reset of accountability.
 
-Others fail because leadership changes the plan whenever anxiety rises. Both patterns break trust.
+The steadier path is threshold discipline: replan when the world changed enough to invalidate major commitments; hold course when the pain is execution hygiene, dependency management, or governance latency, because a new deck does not fix those problems.
 
 ## The replanning mistake: treating anxiety as evidence
 
-Replanning feels productive.
+Replanning feels productive. It produces new slides, new timelines, and temporary relief. If the underlying issue is weak execution discipline, replanning mostly moves blame onto a fresh plan without improving capacity or decision throughput. That is expensive theater.
 
-It produces new slides, new timelines, and a temporary sense of control. But if the underlying issue is weak execution hygiene, replanning mostly resets accountability without improving capacity. That is expensive theater.
+The question to ask is not whether the room feels better afterward. It is whether the portfolio’s constraints actually changed.
 
 ## Evidence thresholds that justify a real replan
 
-Use these as a decision checklist. If multiple items are true, replanning is more likely to be rational than reactive.
+Use these as a decision checklist. Hypothesis framing helps: define thresholds when the portfolio is approved, not under pressure.
 
-1. **Value case shift:** the initiative economics changed materially based on new data, not new opinions  
-2. **Constraint shift:** legal, regulatory, supply, or customer reality changed the feasible set  
-3. **Capacity collapse:** the organization can no longer staff the committed portfolio without unacceptable theft from run-the-business work  
-4. **Strategic redirection:** the enterprise strategy changed in a way that reorders the transformation thesis  
-5. **Risk realization:** a major risk converted into a structural blocker that cannot be mitigated inside the current design
+**Value case shift:** initiative economics changed materially based on new data, not new opinions.
 
-Hypothesis framing: these thresholds should be defined when the portfolio is approved, not invented under pressure.
+**Constraint shift:** legal, regulatory, supply, customer, or security reality changed the feasible set.
+
+**Capacity collapse:** the organization cannot staff the committed portfolio without unacceptable theft from run-the-business work.
+
+**Strategic redirection:** enterprise strategy changed in a way that reorders the transformation thesis.
+
+**Risk realization:** a major risk became a structural blocker that cannot be mitigated inside the current design.
+
+When multiple items are true, replanning is more likely rational than reactive.
+
+> **Hold-course signal:** chronic slip without a change in external constraints often means intervene and repair execution, not rewrite the narrative.
 
 ## When holding course is the stronger move
 
-Hold course when the signals look like: chronic slip without a change in external constraints; repeated rescoping that avoids hard stop decisions; weak cross-functional ownership and decision latency; reporting improvements that never change what teams actually do.
+Hold course when patterns look like repeated rescoping that avoids hard stops, weak cross-functional ownership, decision latency, or reporting improvements that never change what teams do. In those cases, the portfolio needs intervention and execution repair.
 
-In those cases, the portfolio needs intervention and execution repair, not a new plan narrative.
+Mixing the two modes—replanning execution problems as if they were strategy problems—trains the organization to treat plans as disposable and sponsors as optional.
 
-## Simple decision matrix
+## A simple decision matrix
 
-| Signal pattern | Likely best move |
-| --- | --- |
-| external constraint or economics materially changed | replan with explicit trade-offs |
-| execution drift without constraint change | hold course, tighten intervention |
-| mixed signals | time-box a focused replan slice, not a whole portfolio rewrite |
+If external constraints or economics materially changed, replan with explicit trade-offs. If execution drifted without constraint change, hold course and tighten intervention. If signals are mixed, time-box a focused replan slice instead of rewriting the whole portfolio.
 
-## Reality check: replanning pressure usually spikes when leadership wants emotional relief faster than operational truth
+The goal is to avoid both rigidity and whiplash.
 
-The current plan feels exposed. The misses are visible. A new version promises a reset.
+## Reality check: replanning pressure spikes when leaders want relief faster than truth
 
-That is exactly why teams need threshold discipline, because a cleaner storyline can reduce discomfort long before it improves the portfolio.
+The current plan feels exposed. Misses are visible. A new version promises a reset. That is exactly when teams need thresholds, because a cleaner storyline can reduce discomfort long before it improves the portfolio.
 
 ## How Consultify reduces replan thrash
 
-Consultify keeps portfolio signals, ROI logic, deviations, and ownership in one place so replan conversations anchor to recorded thresholds instead of fresh slide narratives.
-
-When evidence contrasts with anxiety, leadership can see which assumptions moved and which initiatives shifted, distinguishing evidence-based replanning from cycle fatigue.
-
-The same record carries hold-course versus replan logic forward so debates do not reset to slide zero each time.
+Consultify keeps portfolio signals, ROI logic, deviations, and ownership in one place so replan conversations anchor to recorded thresholds instead of fresh slide narratives. When evidence contrasts with anxiety, leadership can see which assumptions moved and which initiatives should change—distinguishing evidence-based replanning from cycle fatigue.
 
 ## Bottom line
 
-Replan when the world changed. Hold course when execution and governance need repair. Mixing the two is how portfolios lose credibility.
+Replan when the world changed. Hold course when execution and governance need repair. Mixing the two is how portfolios lose credibility—and how teams learn that strategy is something leadership says, not something the organization runs.
 
 ---
 

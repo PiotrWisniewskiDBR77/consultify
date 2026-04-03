@@ -5,59 +5,57 @@ Funnel stage: Evaluation
 Core problem: weekly PMO cadences often collapse into slide churn and status collection, which hides drift until it is expensive and weakens the link between governance and delivery  
 Main promise: a weekly PMO view becomes decision-useful when it tracks a short list of signals that predict intervention, not a long list of activities that only describe motion
 
-track weekly signals across delivery truth, dependency risk, decision latency, value hypothesis health, and sponsor airtime needs. If the weekly pack cannot trigger a specific action, it is probably tracking the wrong things. The transformation PMO is not a reporting department.
+The transformation PMO is not a reporting department.
 
-It is the operating rhythm that keeps transformation governable between monthly and quarterly forums.
+It is the operating rhythm that keeps transformation governable between monthly and quarterly forums. When the weekly rhythm optimizes for completeness, governance feels heavy and control stays light. When it optimizes for signals that force action, leadership gets earlier intervention and fewer surprises.
 
-When the weekly rhythm is wrong, governance feels heavy and control stays light.
+If the weekly pack cannot trigger a specific owner action when something worsens, it is probably tracking the wrong things.
 
 ## The weekly PMO mistake: activity lists
 
-Weak weekly PMO packs often optimize for: percent complete; task lists; meeting attendance; generic RAG status. Those fields can be necessary.
+Weak weekly packs often emphasize percent complete, task lists, meeting attendance, and generic red-amber-green status. Those fields can be necessary for delivery management. They are rarely sufficient to answer whether the portfolio is still under control.
 
-They are rarely sufficient to answer whether the portfolio is still under control.
+Control questions are different: where is truth diverging from plan, where are decisions stuck, where is capacity breaking, and which value hypotheses are weakening?
 
-## Weekly tracking checklist (decision-oriented)
+## Weekly tracking checklist: decision-oriented
 
-Use this as the minimum viable weekly PMO lens. Each line should map to an owner action if the signal worsens.
+Use the following as a minimum viable weekly PMO lens. Each line should map to an owner action if the signal worsens.
 
 1. **Delivery truth:** what actually shipped versus what was committed for the week, by initiative  
 2. **Dependency risk:** which cross-functional dependencies moved, slipped, or became contested  
 3. **Decision latency:** which decisions are waiting, on whom, and past what reasonable threshold  
-4. **Value hypothesis health:** which initiatives have new evidence for or against the value case  
+4. **Value hypothesis health:** which initiatives gained or lost evidence for the value case  
 5. **Resource reality:** where capacity is overloaded, borrowed, or silently throttled  
-6. **Issue aging:** which blockers are older than the agreed escalation threshold  
-7. **Governance queue:** what must reach sponsor or board decision paths and by when
+6. **Issue aging:** which blockers exceed the agreed escalation threshold  
+7. **Governance queue:** what must reach sponsor or board paths, by when, and what decision is needed  
 
-If an item on the weekly pack does not connect to one of these buckets, question whether it belongs weekly.
+If an item cannot connect to one of these buckets, question whether it belongs in a weekly forum.
 
-## Step sequence: how to run the weekly PMO loop
+> **Weekly PMO standard:** every line should answer “so what decision or escalation does this force if it gets worse?”
 
-**Pre-close:** owners submit deltas, not full rewrites, against the checklist; **Triage:** PMO tags each delta as inform, decide, or escalate; **Forum:** time-box decisions and owners; defer narrative to appendix; **Publish:** one record of decisions, trade-offs, and next-week commitments.
+## How to run the weekly PMO loop
 
-## Reality check: weekly PMO tracking usually gets heavier right before it gets less useful
+**Pre-close:** owners submit deltas, not full rewrites, against the checklist. **Triage:** the PMO tags each delta as inform, decide, or escalate. **Forum:** time-box decisions and owners; defer narrative to an appendix. **Publish:** one record of decisions, trade-offs, and next-week commitments.
 
-The pack gets longer. More fields are added. More teams are asked to submit updates.
+The weekly loop fails when it becomes a read-in. It succeeds when it clears decision debt before it compounds.
 
-That expansion can feel like stronger control, but it often means the PMO is compensating for weak decision clarity with more collection work.
+## Reality check: packs get heavier right before they get less useful
+
+The pack grows. More fields appear. More teams submit updates. That expansion can feel like stronger control while actually compensating for weak decision clarity with collection work.
+
+If executives use the weekly forum as a performance review of slides, teams will optimize for green reporting. If they use it as an intervention trigger, teams will optimize for early signal.
 
 ## When this works versus when it fails
 
-**Works** when executives treat the weekly pack as an intervention trigger, not a readout obligation.
-
-**Fails** when the PMO optimizes for completeness and teams optimize for green reporting.
+It works when executives treat the weekly pack as a control instrument, not an obligation to be endured. It fails when the PMO optimizes for completeness and the portfolio optimizes for narrative safety.
 
 ## How Consultify fits the weekly PMO model
 
-Consultify maps weekly checklist signals to initiative and ROI context in one live record so the PMO loop starts from operating truth rather than reassembled slides.
-
-That is how weekly governance stays operational instead of performative.
+Consultify maps weekly checklist signals to initiative and ROI context in one live record so the PMO loop starts from operating truth rather than reassembled slides. That is how weekly governance stays operational instead of performative.
 
 ## Bottom line
 
-Weekly PMO tracking should predict where control is slipping.
-
-If it only describes motion, leadership will stay surprised later than it should.
+Weekly PMO tracking should predict where control is slipping. If it only describes motion, leadership will stay surprised later than it should—and the PMO will be blamed for visibility that never turned into authority.
 
 ---
 

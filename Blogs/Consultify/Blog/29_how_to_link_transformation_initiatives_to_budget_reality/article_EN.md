@@ -5,50 +5,55 @@ Funnel stage: Evaluation
 Core problem: transformation portfolios often float above budget mechanics, which creates surprise cash asks, weak trade-offs, and initiatives that survive because they are politically sticky rather than financially grounded  
 Main promise: initiatives become governable when each one has a visible budget lane, a cash timing profile, and an explicit decision rule for overruns
 
-link every initiative to budget reality with three anchors: approved spend envelope, expected cash curve by quarter, and a governed change rule for scope shifts. If an initiative cannot state those three anchors, it is not ready to compete for portfolio capacity. Transformation work is not only a priority list. It is also a cash and capacity commitment.
+Transformation work is not only a priority list. It is a cash and capacity commitment.
 
-When the link is weak, the portfolio behaves like a strategy wishlist with a hidden invoice.
+When the link to budget reality is weak, the portfolio behaves like a strategy wishlist with a hidden invoice. Stage-gate documents drift from operational spending. Vendor contracts move faster than portfolio governance. Shadow work hides in departmental budgets. Benefits cases float without a clear path to measurable budget effects.
+
+The portfolio shows green status while finance feels rising run-rate pressure. That disconnect is a governance failure, not a communication glitch.
 
 ## Why initiatives drift from budget reality
 
-Drift usually comes from: stage-gate documents that do not match operational spending; vendor contracts that move faster than portfolio governance; shadow work funded through departmental budgets; benefits cases that are not tied to measurable budget effects.
+Drift usually comes from mismatched artifacts: approvals that do not match how money actually moves, initiatives funded through multiple lanes without a reconciled owner, and benefits logic that never ties to the financial mechanisms leadership will use when trade-offs get hard.
 
-Illustrative pattern: the portfolio shows green status while finance sees rising run-rate pressure.
+Illustrative pattern: each initiative sounds affordable alone; the combined load is not modeled until it becomes a crisis.
 
 ## The three-anchor linkage model
 
-**Envelope:** the maximum approved spend the initiative is allowed to consume without a new decision; **Cash curve:** when money leaves the organization by quarter, including vendor milestones and internal cost; **Change rule:** what happens when scope changes, including who can approve deltas and what gets stopped to fund them.
+**Envelope:** the maximum approved spend the initiative may consume without a new decision.  
+**Cash curve:** when money leaves the organization by quarter, including vendor milestones and internal cost.  
+**Change rule:** what happens when scope shifts—who can approve deltas, what stops to fund increases, and how portfolio trade-offs are recorded.
 
-This model is simple enough for executives and strict enough for finance partners.
+This model is simple enough for executives and strict enough for finance partners. It turns “we agreed” into “we are authorized to spend under these constraints.”
 
-## Step sequence: how to implement linkage without bureaucracy hell
+> **Readiness test:** if an initiative cannot state envelope, cash curve, and change rule, it is not ready to compete honestly for portfolio capacity.
 
-**Baseline:** map each initiative to a budget owner and a chart-of-accounts lane; **Instrument:** connect milestones to expected cash events, not only deliverables; **Review:** include budget variance as a first-class signal in PMO and sponsor forums; **Decide:** treat overrun as a portfolio decision, not only a project manager problem.
+## Implement linkage without bureaucracy hell
 
-## Comparison: narrative portfolio versus budget-grounded portfolio
+**Baseline:** map each initiative to a budget owner and a chart-of-accounts lane. **Instrument:** connect milestones to expected cash events, not only deliverables. **Review:** treat budget variance as a first-class signal in PMO and sponsor forums. **Decide:** treat overrun as a portfolio decision, not only a project manager problem.
 
-| Portfolio mode | what leadership sees | typical failure |
-| --- | --- | --- |
-| narrative-first | themes, milestones, initiative names | late cash surprises |
-| budget-grounded | envelopes, curves, governed changes | more upfront friction, fewer shocks |
+The point is not perfect forecasting. The point is early visibility and governed response when reality diverges.
 
-## Reality check: budget detachment usually survives because each initiative can sound affordable when viewed alone
+## Narrative-first versus budget-grounded portfolios
 
-No single line looks fatal. Each team can explain its ask. Each sponsor can defend one more exception. But portfolios fail on the combined load, not on the persuasiveness of one initiative in isolation.
+Narrative-first portfolios show themes, milestones, and initiative names. They fail late with cash surprises. Budget-grounded portfolios show envelopes, curves, and governed changes. They create more upfront friction and fewer shocks because trade-offs happen while options still exist.
+
+## Reality check: detachment survives because every line sounds affordable alone
+
+No single initiative looks fatal in isolation. Each team can explain its ask. Each sponsor can defend one more exception. Portfolios fail on combined load, not on the persuasiveness of one slide.
+
+Linkage forces the combined question: what are we spending, when does cash leave, and what rule applies when the plan moves?
 
 ## When this works versus when it fails
 
-**Works** when CFO and sponsor share one definition of "approved to spend."
-
-**Fails** when budget linkage is a one-time exercise during the business case, then ignored during execution.
+It works when CFO and sponsor share one definition of “approved to spend.” It fails when budget linkage is a one-time business case exercise and then ignored during execution. Living linkage is weekly and monthly behavior, not a launch artifact.
 
 ## How Consultify supports budget-grounded governance
 
-Consultify keeps ROI logic, initiative status, and leadership decisions in one live system so budget conversations reference the same envelopes, cash timing, and change rules the delivery organization uses weekly.
+Consultify keeps ROI logic, initiative status, and leadership decisions in one live system so budget conversations reference the same envelopes, cash timing, and change rules delivery uses week to week.
 
 ## Bottom line
 
-If initiatives are not linked to budget reality, the portfolio is not fully governed. Make envelopes, cash timing, and change rules visible and owned.
+If initiatives are not linked to budget reality, the portfolio is not fully governed. Make envelopes, cash timing, and change rules visible, owned, and reviewed—so finance and transformation stop running parallel stories.
 
 ---
 

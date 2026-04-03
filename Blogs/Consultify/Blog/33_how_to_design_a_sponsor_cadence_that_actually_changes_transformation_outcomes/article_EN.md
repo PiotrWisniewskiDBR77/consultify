@@ -5,69 +5,61 @@ Funnel stage: Consideration
 Core problem: sponsor calendars fill with passive updates, which preserves visibility while decision latency, ownership gaps, and portfolio trade-offs stay unresolved  
 Main promise: a sponsor cadence works when each touchpoint has a decision intent, a pre-read bar, and a visible record of consequences, not when it optimizes for attendance and slide polish
 
-design sponsor cadence around a small set of repeating decision slots (portfolio trade-offs, intervention authorizations, capacity resets, and value-proof reviews), each with a time-boxed agenda, evidence submitted before the meeting, and published outcomes. If sponsors mostly hear narratives without choosing what stops, pauses, or changes, the cadence is theater with a senior audience. Sponsor time is the scarcest asset in a transformation.
+Sponsor time is the scarcest asset in a transformation.
 
-When it is spent on restated status, the program looks governed while control erodes. The fix is not more meetings.
+When it is spent on restated status, the program looks governed while control erodes. The fix is not more meetings. It is a cadence built to reduce decision latency and governance load at the same time: fewer, sharper touchpoints with explicit outcomes.
 
-It is a cadence built to reduce decision latency and governance load at the same time.
+If sponsors mostly hear narratives without choosing what stops, pauses, or changes, the cadence is theater with a senior audience.
 
-## What a weak sponsor cadence optimizes for
+## What weak sponsor cadence optimizes for
 
-Weak cadences often optimize for: comfort through familiar slide formats; broad attendance instead of accountable owners; consensus language instead of recorded trade-offs; quarterly storytelling instead of weekly or monthly decision hygiene.
+Weak cadences optimize for comfort through familiar slide formats, broad attendance instead of accountable owners, consensus language instead of recorded trade-offs, and quarterly storytelling instead of weekly or monthly decision hygiene.
 
-That pattern increases governance load for teams and decreases execution discipline for the portfolio.
+That pattern increases load on teams and decreases execution discipline for the portfolio. Everyone is busy; nobody is deciding.
 
-## Sponsor cadence design principles
+## Design principles for sponsor-grade cadence
 
-Use these as non-negotiable design rules: **One primary decision per forum:** if everything is important, nothing gets decided; **Pre-read bar:** decisions arrive with comparable options, numbers, and named owners; **Explicit trade-off menu:** stop, pause, merge, fund, defund, or reprioritize must be visible; **Intervention readiness:** sponsor forums authorize time-boxed intervention when signals trigger; **Consequence publishing:** what changed, by whom, and what will be measured next.
+**One primary decision per forum:** if everything is important, nothing gets decided.  
+**Pre-read bar:** decisions arrive with comparable options, numbers, and named owners—not surprises in the room.  
+**Explicit trade-off menu:** stop, pause, merge, fund, defund, or reprioritize must be visible options, not implied.  
+**Intervention readiness:** sponsor forums authorize time-boxed intervention when signals trigger.  
+**Consequence publishing:** what changed, by whom, and what will be measured next.
 
-## Cadence blueprint (example rhythm)
+These rules are how cadence converts time into portfolio movement.
 
-This is a template, not a universal law. Adjust to portfolio size and risk.
+> **Cadence test:** can you state the decision intent of each sponsor touchpoint in one sentence?
 
-| Touchpoint | decision intent | minimum evidence |
-| --- | --- | --- |
-| weekly sponsor pulse (30 minutes) | unblock decision latency and dependency deadlocks | decision queue with ages and owners |
-| monthly portfolio review | reprioritize and authorize intervention | variance to plan, capacity truth, value-proof deltas |
-| quarterly value proof | confirm next wave funding against outcomes | trailing metrics tied to initiatives, not only narratives |
+## A practical rhythm template
 
-If a touchpoint cannot name its decision intent in one sentence, redesign it.
+Adjust to portfolio size and risk. One useful pattern:
 
-## Checklist: is your sponsor cadence decision-grade?
+**Weekly sponsor pulse (about thirty minutes):** clear decision latency and dependency deadlocks—decision queue with ages and owners, not initiative tours.  
+**Monthly portfolio review:** reprioritize and authorize intervention—variance to plan, capacity truth, value-proof deltas.  
+**Quarterly value proof:** confirm next-wave funding against outcomes—trailing metrics tied to initiatives, not only narratives.
 
-Answer yes/no:
+If a touchpoint cannot name its decision intent, redesign it before you add more attendees.
 
-- sponsors receive decisions to make before the meeting, not only slides to admire  
-- trade-offs are explicit and recorded, including what will not be done  
-- escalation paths have time limits and default actions if silence persists  
-- metrics connect to behavior you want, not only activity volume  
-- review cadence shortens when risk rises, it does not drift into monthly comfort
+## Is your cadence decision-grade?
 
-Three or more "no" answers usually means you have a reporting cadence wearing sponsor labels.
+Quick yes or no checks: sponsors receive decisions to make before the meeting, not only slides to admire; trade-offs are explicit and recorded, including what will not be done; escalation paths have time limits and default actions if silence persists; metrics connect to behavior you want, not only activity volume; review cadence tightens when risk rises instead of drifting into monthly comfort.
 
-## Reality check: sponsor cadence often looks strongest right when it becomes easiest to coast on ritual
+Several “no” answers usually mean you have a reporting cadence wearing sponsor labels.
 
-The meetings are in the calendar. Attendance is stable. The pack arrives on time.
+## Reality check: ritual stability can mask decay
 
-That can create the feeling of strong sponsorship even when the forum is no longer clearing harder decisions and is only proving that the ritual still exists.
+The meetings are in the calendar. Attendance is stable. The pack arrives on time. That can feel like strong sponsorship even when the forum no longer clears harder decisions and only proves the ritual still exists.
 
 ## When this works versus when it fails
 
-**Works** when the sponsor group is small enough to decide and disciplined enough to publish consequences.
-
-**Fails** when cadence becomes a performance forum where teams compete for narrative wins instead of portfolio control.
+It works when the sponsor group is small enough to decide and disciplined enough to publish consequences. It fails when cadence becomes a performance forum where teams compete for narrative wins instead of portfolio control.
 
 ## How Consultify supports sponsor-grade cadence without slide factories
 
-Consultify gives sponsors a single rhythm for decision-grade touchpoints, so cadence stays tied to ownership, variances, and recorded trade-offs instead of recurring read-ins.
-
-When signals, decisions, and value proof live in one system, sponsor forums spend time on choices, not on reconstructing reality from fragmented packs.
+Consultify keeps sponsor-ready signals, decisions, and value proof in one live system so forums spend time on choices, not reconstructing reality from fragmented packs. Cadence time converts into portfolio movement when the same objects are refreshed between meetings.
 
 ## Bottom line
 
-Sponsor cadence changes outcomes when it reduces decision latency and records portfolio trade-offs.
-
-If your cadence mostly circulates narratives, you are funding storytelling, not transformation control.
+Sponsor cadence changes outcomes when it reduces decision latency and records portfolio trade-offs. If your cadence mostly circulates narratives, you are funding storytelling—not transformation control.
 
 ---
 

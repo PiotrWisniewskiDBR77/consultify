@@ -5,61 +5,61 @@ Funnel stage: Consideration
 Core problem: dead initiatives survive because stopping work is treated as personal defeat, which turns portfolio hygiene into politics and makes the transformation portfolio heavier than the organization can execute  
 Main promise: you can stop weak initiatives without political drift when stopping uses visible rules, recorded trade-offs, and sponsor-led closure instead of hallway negotiations
 
-cut dead initiatives with a published stop rule, a single decision forum, explicit trade-off language, and a short wind-down plan that protects people and reputations. If stopping remains informal, politics will fill the gap. Organizations rarely lack the ability to start transformation work. They often lack a disciplined ability to stop it.
+Organizations rarely lack the ability to start transformation work. They often lack a disciplined ability to stop it.
 
-That gap is expensive because dead initiatives consume attention, budget tokens, and credibility.
+When stopping is informal, politics fills the gap. Dead initiatives consume attention, budget tokens, and credibility. Teams defend continuity because the system punishes visible retreat, even when the value case no longer holds. That is not always stubbornness. It is often a rational response to ambiguous rules and high personal stakes.
 
 ## Why stopping feels political even when it is rational
 
-Stopping an initiative threatens: narrative consistency for the owner; perceived commitment to stakeholders; internal status tied to the program label. So teams defend continuity even when the value case no longer holds. That is not always stubbornness.
+Stopping threatens narrative consistency for owners, perceived commitment to stakeholders, and internal status tied to program labels. Without a governed path, the conversation becomes personal: who lost, who blinked, who gets blamed.
 
-Often it is a rational response to a system that punishes visible retreat.
+The alternative is to make stopping a portfolio act with criteria, forums, and recorded trade-offs—so the decision references evidence and priority, not character.
 
-## A stop rule framework (use before debate)
+## A stop rule framework: define before debate
 
-Adopt a small set of stop triggers that are defined up front and applied consistently:
+Adopt a small set of stop triggers up front and apply them consistently:
 
-1. **Value failure:** repeated misses on measurable outcomes tied to the original hypothesis  
-2. **Dependency deadlock:** blocked for longer than the agreed threshold without a credible path  
-3. **Capacity breach:** the initiative cannot be staffed without stealing from higher-priority work  
-4. **Strategic displacement:** leadership has explicitly reprioritized and this initiative is not in the cut line
+**Value failure:** repeated misses on outcomes tied to the original hypothesis, without a bounded recovery experiment.
 
-Illustrative pattern: organizations that publish stop rules reduce ad hoc blame because the decision references criteria, not personalities.
+**Dependency deadlock:** blocked longer than an agreed threshold without a credible path or executive decision.
 
-## Comparison: political stop versus governed stop
+**Capacity breach:** the initiative cannot be staffed without chronic theft from higher-priority work.
 
-| Stop style | What usually happens | Cost |
-| --- | --- | --- |
-| hallway negotiation | inconsistent outcomes, hidden deals | trust erosion |
-| sponsor-led governed stop | explicit trade-offs, recorded rationale | short-term discomfort, long-term clarity |
+**Strategic displacement:** leadership has explicitly reprioritized and this initiative is outside the new cut line.
 
-## Reality check: weak initiatives often survive not because the case is strong, but because nobody wants to own the visible ending
+Published rules reduce ad hoc blame because the conversation returns to criteria. The emotional load does not disappear, but it stops being arbitrary.
 
-The value case is fading. The team already senses it. Leadership still hesitates.
+> **Governed stop:** one decision forum, explicit trade-off language, and a short wind-down plan that protects people and interfaces.
 
-That delay is rarely analytical. It is usually the cost of making the stop official in a system that treats ending work as embarrassment instead of discipline.
+## Political stop versus governed stop
 
-## Step sequence: how to wind down without drift
+Hallway negotiation produces inconsistent outcomes and hidden deals. Trust erodes because teams perceive favoritism. Sponsor-led governed closure produces short-term discomfort and long-term clarity because the rationale and trade-offs are visible.
 
-**Name the decision:** stop, merge, or park with a clear owner and date; **Publish the rationale:** criteria-based explanation, not a performance review; **Capture the trade-off:** what capacity or risk is freed, and what is deferred; **Close interfaces:** dependencies, vendors, reporting lines, and governance slots; **Reallocate explicitly:** where the freed capacity goes, by name and priority.
+The goal is not to make stopping pleasant. It is to make stopping legible.
+
+## Reality check: weak initiatives often survive because nobody wants to own the ending
+
+The value case is fading. The team senses it. Leadership hesitates because making the stop official is expensive in a culture that treats ending work as embarrassment instead of discipline.
+
+The delay is rarely analytical. It is social. Governed stopping moves the decision into a forum where the portfolio, not an individual, is accountable for the cut.
+
+## How to wind down without drift
+
+**Name the decision:** stop, merge, or park, with a clear owner and date. **Publish the rationale:** criteria-based explanation, not a performance review dressed as strategy. **Capture the trade-off:** what capacity or risk is freed, and what is deferred. **Close interfaces:** dependencies, vendors, reporting lines, and governance slots. **Reallocate explicitly:** where freed capacity goes, by name and priority.
+
+If reallocation stays vague, the portfolio will refill with noise and the stop will feel pointless.
 
 ## When this works versus when it fails
 
-**Works** when sponsors model stopping as portfolio hygiene, not punishment.
-
-**Fails** when only weak initiatives owned by weak sponsors get stopped, while protected work stays immune.
+It works when sponsors model stopping as hygiene, not punishment. It fails when only weak initiatives owned by weak sponsors get stopped while protected work stays immune. In that world, rules become theater.
 
 ## How Consultify supports governed stopping
 
-Consultify keeps stop criteria, prioritization, ROI logic, and initiative status live in one transformation workspace.
-
-That anchors stop decisions in evidence and trade-offs instead of narrative defense, with a visible record of what stopped and where freed capacity went next.
+Consultify keeps stop criteria, prioritization, ROI logic, and initiative status live in one transformation workspace. Stop-or-continue decisions anchor in signals and trade-offs instead of narrative defense, with a visible record of what stopped and where capacity went next.
 
 ## Bottom line
 
-Dead initiatives persist when stopping is socially expensive and procedurally vague.
-
-Make stopping governed, criteria-led, and sponsor-owned, and political drift loses its main fuel.
+Dead initiatives persist when stopping is socially expensive and procedurally vague. Make stopping criteria-led, sponsor-owned, and recorded, and political drift loses its main fuel.
 
 ---
 
