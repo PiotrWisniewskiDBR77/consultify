@@ -69,6 +69,34 @@ const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: s
 };
 
 const DEFAULT_ACCENT = SECTION_ACCENT['consultify-decisions-that-ship'];
+const SECTION_META: Record<
+  string,
+  {
+    eyebrow: string;
+    hook: string;
+    chips: string[];
+    statLabel: string;
+  }
+> = {
+  'consultify-why-transformations-fail': {
+    eyebrow: 'Failure patterns',
+    hook: 'Where stalled programs, dead initiatives, and governance theater finally become visible.',
+    chips: ['Governance', 'Risk', 'Leadership'],
+    statLabel: 'warning signs',
+  },
+  'consultify-the-money-question': {
+    eyebrow: 'Board logic',
+    hook: 'ROI defense, budget linkage, and board-ready evidence before the next capital ask.',
+    chips: ['ROI', 'Board Room', 'Portfolio'],
+    statLabel: 'board cases',
+  },
+  'consultify-decisions-that-ship': {
+    eyebrow: 'Execution moves',
+    hook: 'Turn decision latency into owned initiatives, cleaner prioritization, and faster follow-through.',
+    chips: ['Execution', 'AI Strategy', 'Decision Speed'],
+    statLabel: 'execution plays',
+  },
+};
 
 const ARTICLES_PER_PAGE = 12;
 const CARD_TAG_LIMIT = 4;
@@ -224,37 +252,95 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         {/* Section Navigation Cards — clickable, link to category page */}
         <section className="relative z-10 px-6 pb-12">
           <div className="max-w-7xl mx-auto">
+            <div className="mb-6 flex items-end justify-between gap-6">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
+                  {t('kb.sections.eyebrow', 'Choose the tension you want to solve')}
+                </p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  {t('kb.sections.title', 'Three sharper ways into the library')}
+                </h2>
+              </div>
+              <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
+                {t(
+                  'kb.sections.subtitle',
+                  'Each lane is framed around a real executive tension, so people can enter through failure, money, or execution instead of generic taxonomy.'
+                )}
+              </p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {consultifyCategories.map((category: KbCategory) => {
                 const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
+                const meta = SECTION_META[category.slug] || {
+                  eyebrow: t('kb.sections.defaultEyebrow', 'Category'),
+                  hook: category.description || '',
+                  chips: [],
+                  statLabel: t('kb.sections.defaultStatLabel', 'articles'),
+                };
                 return (
                   <Link
                     key={category.id}
                     to={`/knowledge-base/${category.slug}`}
                     className={cn(
-                      'group relative flex items-start gap-4 p-6 rounded-2xl border transition-all duration-300 text-left',
-                      `border-slate-200 bg-white/90 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.06] dark:bg-white/[0.025] dark:hover:bg-white/[0.04]`,
+                      'group relative overflow-hidden rounded-[28px] border p-6 text-left transition-all duration-300',
+                      'min-h-[260px] md:min-h-[290px]',
+                      `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
                       accent.glow
                     )}
                   >
-                    <div className={cn(
-                      'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br',
-                      accent.gradient
-                    )}>
-                      {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
+                    <div className="pointer-events-none absolute inset-0">
+                      <div className={cn('absolute right-[-18%] top-[-10%] h-40 w-40 rounded-full blur-3xl opacity-25', accent.bg)} />
+                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-900 text-sm tracking-tight dark:text-white">
-                        {category.name}
-                      </h3>
-                      {category.description && (
-                        <p className="mt-1.5 text-xs text-slate-600 line-clamp-2 leading-relaxed dark:text-white/45">
-                          {category.description}
-                        </p>
-                      )}
-                      <div className={cn('mt-3 flex items-center gap-1 text-xs font-bold', accent.text)}>
-                        <span>{category.article_count} {t('kb.articles', 'articles')}</span>
-                        <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                    <div className="relative flex h-full flex-col">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
+                            {meta.eyebrow}
+                          </p>
+                          <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
+                            {category.name}
+                          </h3>
+                        </div>
+                        <div className={cn(
+                          'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
+                          accent.gradient
+                        )}>
+                          {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
+                        </div>
+                      </div>
+
+                      <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
+                        {meta.hook}
+                      </p>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {meta.chips.map((chip) => (
+                          <span
+                            key={chip}
+                            className={cn(
+                              'rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
+                              'border-slate-200 bg-slate-50 text-slate-700 dark:border-white/[0.09] dark:bg-white/[0.06] dark:text-white/78'
+                            )}
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="mt-auto flex items-end justify-between gap-4 pt-8">
+                        <div>
+                          <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                            {category.article_count}
+                          </div>
+                          <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
+                            {meta.statLabel}
+                          </div>
+                        </div>
+                        <div className={cn('inline-flex items-center gap-2 text-sm font-bold', accent.text)}>
+                          <span>{t('kb.sections.openLane', 'Open lane')}</span>
+                          <ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
+                        </div>
                       </div>
                     </div>
                   </Link>
