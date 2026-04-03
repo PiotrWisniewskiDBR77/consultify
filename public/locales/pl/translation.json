@@ -3230,7 +3230,21 @@
   "kb": {
     "article": {
       "listen": "Słuchaj",
-      "stopListening": "Zatrzymaj"
+      "stopListening": "Zatrzymaj",
+      "toc": "Na tej stronie",
+      "backToKb": "Wszystkie artykuły",
+      "notFound": "Artykuł nie znaleziony",
+      "views": "wyświetleń",
+      "share": "Udostępnij",
+      "copied": "Skopiowano!",
+      "helpful": "Czy ten artykuł był pomocny?",
+      "yes": "Tak",
+      "no": "Nie",
+      "thanksFeedback": "Dziękujemy",
+      "prev": "Poprzedni artykuł",
+      "next": "Następny artykuł",
+      "related": "Powiązane artykuły",
+      "backToCategory": "Wróć do kategorii"
     },
     "lane": {
       "failurePatterns": "Wzorce porażek",
@@ -3283,6 +3297,9 @@
       "placeholder": "Szukaj artykułów...",
       "noResults": "Nie znaleziono artykułów",
       "noResultsHint": "Spróbuj innych słów kluczowych lub przeglądaj kategorie poniżej."
+    },
+    "section": {
+      "viewAll": "Zobacz wszystkie"
     }
   },
   "cloud": {

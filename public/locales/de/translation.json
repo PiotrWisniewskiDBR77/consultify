@@ -1094,7 +1094,76 @@
   "kb": {
     "article": {
       "listen": "Anhören",
-      "stopListening": "Stopp"
+      "stopListening": "Stopp",
+      "toc": "Auf dieser Seite",
+      "backToKb": "Alle Artikel",
+      "notFound": "Artikel nicht gefunden",
+      "views": "Aufrufe",
+      "share": "Teilen",
+      "copied": "Kopiert!",
+      "helpful": "War dieser Artikel hilfreich?",
+      "yes": "Ja",
+      "no": "Nein",
+      "thanksFeedback": "Vielen Dank",
+      "prev": "Vorheriger Artikel",
+      "next": "Nächster Artikel",
+      "related": "Verwandte Artikel",
+      "backToCategory": "Zurück zur Kategorie"
+    },
+    "lane": {
+      "failurePatterns": "Fehlermuster",
+      "boardLogic": "Vorstandslogik",
+      "executionMoves": "Umsetzungsschritte"
+    },
+    "chip": {
+      "governance": "Governance",
+      "risk": "Risiko",
+      "leadership": "Führung",
+      "roi": "ROI",
+      "boardRoom": "Vorstandszimmer",
+      "portfolio": "Portfolio",
+      "execution": "Umsetzung",
+      "aiStrategy": "KI-Strategie",
+      "decisionSpeed": "Entscheidungstempo"
+    },
+    "stat": {
+      "warningSigns": "Warnsignale",
+      "boardCases": "Vorstandsfälle",
+      "executionPlays": "Umsetzungsschritte"
+    },
+    "sections": {
+      "eyebrow": "Wählen Sie die Spannung, die Sie lösen möchten",
+      "title": "Drei gezieltere Wege in die Bibliothek",
+      "subtitle": "Jeder Pfad ist um eine reale Führungsspannung herum aufgebaut – Einstieg über Fehler, Geld oder Umsetzung statt generischer Kategorien.",
+      "openLane": "Pfad öffnen",
+      "defaultEyebrow": "Kategorie",
+      "defaultStatLabel": "Artikel"
+    },
+    "hero": {
+      "badge": "50+ Expertenartikel zum Transformationsmanagement",
+      "title": "Wissensdatenbank",
+      "subtitle": "Lesen Sie die Leitfäden, die Führungskräfte nutzen, bevor sie Budgets freigeben, Rollouts starten oder ROI verteidigen."
+    },
+    "featured": {
+      "title": "Ausgewählte Artikel",
+      "subtitle": "Starten Sie hier mit den wichtigsten Erkenntnissen.",
+      "badge": "Empfohlen"
+    },
+    "browse": {
+      "title": "Nach Kategorie durchsuchen",
+      "subtitle": "Entdecken Sie unser vollständiges Wissensarchiv."
+    },
+    "card": {
+      "readArticle": "Artikel lesen",
+      "minRead": "Min. Lesezeit"
+    },
+    "search": {
+      "placeholder": "Artikel suchen...",
+      "noResults": "Keine Artikel gefunden",
+      "noResultsHint": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie die Kategorien unten."
+    },
+    "section": {
+      "viewAll": "Alle anzeigen"
     }
   },
   "settings": {

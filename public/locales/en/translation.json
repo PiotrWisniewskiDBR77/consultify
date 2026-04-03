@@ -3115,7 +3115,21 @@
   "kb": {
     "article": {
       "listen": "Listen",
-      "stopListening": "Stop"
+      "stopListening": "Stop",
+      "toc": "On this page",
+      "backToKb": "All articles",
+      "notFound": "Article not found",
+      "views": "views",
+      "share": "Share",
+      "copied": "Copied!",
+      "helpful": "Was this article helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "thanksFeedback": "Thank you",
+      "prev": "Previous article",
+      "next": "Next article",
+      "related": "Related Articles",
+      "backToCategory": "Back to category"
     },
     "lane": {
       "failurePatterns": "Failure patterns",
@@ -3168,6 +3182,9 @@
       "placeholder": "Search articles...",
       "noResults": "No articles found",
       "noResultsHint": "Try different keywords or browse categories below."
+    },
+    "section": {
+      "viewAll": "View all"
     }
   },
   "cloud": {
