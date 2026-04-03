@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { ROUTES } from '@/routes/routeConfig';
 import { updateAnnaLpCtaContext, readAnnaLpCtaContext } from '@/services/annaLpCtaContext';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
@@ -28,6 +30,7 @@ interface TrialEntryViewProps {
 }
 
 export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) => {
+  const navigate = useNavigate();
   const [accessCode, setAccessCode] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -290,7 +293,11 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
               <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
                 Dla Konsultantów
               </div>
-              <button className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group">
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.CONSULTANT.INVITES)}
+                className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group"
+              >
                 Zamów kody dostępowe
                 <ChevronRight
                   size={14}
@@ -302,7 +309,11 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
               <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
                 Ecosystem
               </div>
-              <button className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group">
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.AFFILIATE)}
+                className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group"
+              >
                 Program poleceń Phase G
                 <ChevronRight
                   size={14}
