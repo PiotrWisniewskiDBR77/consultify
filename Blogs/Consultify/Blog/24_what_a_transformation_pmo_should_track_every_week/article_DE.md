@@ -1,64 +1,62 @@
-# Was ein Transformation-PMO woechentlich tracken sollte
+# Was ein Transformations-PMO jede Woche tracken sollte
 
-Target persona: Transformation-PMO-Lead / Leiter Portfolio Office / Programmdirektor  
-Funnel stage: Evaluation  
-Core problem: woechentliche PMO-Takte verkommen oft zu Folien-Churn und Status-Sammlung, was Drift verbirgt bis es teuer wird und die Verbindung zwischen Governance und Delivery schwaecht  
-Main promise: eine woechentliche PMO-Sicht wird entscheidungsnuetzlich, wenn sie eine kurze Liste von Signalen trackt, die Intervention vorhersagen, nicht eine lange Liste von Aktivitaeten, die nur Bewegung beschreiben
+Zielpersona: Transformations-PMO-Lead / Leiterin Portfolio Office / Programmdirektorin  
+Funnel-Stufe: Bewertung  
+Kernproblem: Wöchentliche PMO-Takte verkommen oft zu Folien-Churn und Status-Sammlung: Drift bleibt verborgen, bis er teuer wird – und die Verbindung zwischen Governance und Delivery schwächt sich.  
+Hauptversprechen: Eine wöchentliche PMO-Sicht wird entscheidungsnützlich, wenn sie eine kurze Liste von Signalen trackt, die Intervention vorhersagen – nicht eine lange Liste von Aktivitäten, die nur Bewegung beschreiben.
 
-**Direktantwort:** tracken Sie woechentlich Signale zu Delivery-Wahrheit, Abhaengigkeitsrisiko, Entscheidungslatenz, Gesundheit der Wert-Hypothesen und Sponsor-Luftbedarf. Wenn das woechentliche Paket keine konkrete Aktion ausloesen kann, trackt es wahrscheinlich die falschen Dinge. Das Transformation-PMO ist keine Reporting-Abteilung.
+Das Transformations-PMO ist keine Reporting-Abteilung.
 
-Es ist der Operating Rhythm, der Transformation zwischen monatlichen und vierteljaehrlichen Foren steuerbar haelt.
+Es ist der Betriebsrhythmus, der Transformation zwischen monatlichen und vierteljährlichen Foren steuerbar hält. Optimiert der wöchentliche Rhythmus auf Vollständigkeit, fühlt sich Governance schwer an und die Kontrolle leicht. Optimiert er auf Signale, die Handlung erzwingen, bekommt die Führung frühere Intervention und weniger Überraschungen.
 
-Wenn der woechentliche Rhythmus falsch ist, wirkt Governance schwer und Kontrolle bleibt leicht.
+Kann das wöchentliche Paket bei Verschlechterung keine konkrete Owner-Aktion auslösen, trackt es wahrscheinlich die falschen Dinge.
 
-## Der woechentliche PMO-Fehler: Aktivitaetslisten
+## Der wöchentliche PMO-Fehler: Aktivitätslisten
 
-Schwache woechentliche PMO-Pakete optimieren oft fuer: Prozent fertig; Aufgabenlisten; Meeting-Teilnahme; generischen RAG-Status. Diese Felder koennen noetig sein.
+Schwache wöchentliche Pakete betonen oft Prozent fertig, Aufgabenlisten, Meeting-Teilnahme und generischen Rot-Gelb-Grün-Status. Diese Felder können für Delivery-Management nötig sein. Sie reichen selten, um zu beantworten, ob das Portfolio noch unter Kontrolle ist.
 
-Sie reichen selten, um zu beantworten, ob das Portfolio noch unter Kontrolle ist.
+Kontrollfragen sind andere: Wo weicht die Wahrheit vom Plan ab, wo stecken Entscheidungen fest, wo bricht Kapazität, und welche Wert-Hypothesen schwächen sich?
 
-## Woechentliches Tracking-Checklist (entscheidungsorientiert)
+## Wöchentliche Tracking-Checkliste: entscheidungsorientiert
 
-Nutzen Sie das als minimum viable weekly PMO lens. Jede Zeile sollte auf eine Owner-Aktion mappen, wenn das Signal schlechter wird.
+Nutzen Sie Folgendes als minimal tragfähige wöchentliche PMO-Linse. Jede Zeile sollte bei Verschlechterung auf eine Owner-Aktion abbilden.
 
-1. **Delivery-Wahrheit:** was wurde tatsaechlich geliefert versus was fuer die Woche zugesagt war, pro Initiative  
-2. **Abhaengigkeitsrisiko:** welche funktionsuebergreifenden Abhaengigkeiten haben sich verschoben, verzoegert oder werden umstritten  
-3. **Entscheidungslatenz:** welche Entscheidungen warten, bei wem, und laenger als welcher angemessene Schwellenwert  
-4. **Gesundheit der Wert-Hypothesen:** welche Initiativen haben neue Evidenz fuer oder gegen den Value Case  
-5. **Ressourcenrealitaet:** wo Kapazitaet ueberlastet, geborgen oder still gedrosselt ist  
-6. **Issue-Alterung:** welche Blocker aelter sind als der vereinbarte Eskalationsschwellenwert  
-7. **Governance-Queue:** was in Sponsor- oder Board-Entscheidungspfade muss und bis wann
+1. **Delivery-Wahrheit:** was tatsächlich geliefert wurde versus was für die Woche zugesagt war – pro Initiative  
+2. **Abhängigkeitsrisiko:** welche funktionsübergreifenden Abhängigkeiten sich bewegt, verzögert oder umstritten haben  
+3. **Entscheidungslatenz:** welche Entscheidungen warten, bei wem, und über welchen angemessenen Schwellenwert hinaus  
+4. **Gesundheit der Wert-Hypothesen:** welche Initiativen Evidenz für oder gegen den Wertfall gewonnen oder verloren haben  
+5. **Ressourcenrealität:** wo Kapazität überlastet, „geliehen“ oder still gedrosselt ist  
+6. **Issue-Alterung:** welche Blocker den vereinbarten Eskalationsschwellenwert überschreiten  
+7. **Governance-Warteschlange:** was bis wann in Sponsor- oder Board-Pfade muss und welche Entscheidung nötig ist  
 
-Wenn ein Punkt im woechentlichen Paket nicht zu einem dieser Buckets gehoert, fragen Sie, ob er woechentlich gehoert.
+Lässt sich ein Punkt keinem dieser Eimer zuordnen, hinterfragen Sie, ob er ins wöchentliche Forum gehört.
 
-## Schrittfolge: wie Sie die woechentliche PMO-Schleife fuehren
+> **Wöchentlicher PMO-Standard:** jede Zeile beantwortet „Welche Entscheidung oder Eskalation erzwingt das, wenn es schlechter wird?“
 
-**Pre-Close:** Owner liefern Deltas, keine vollstaendigen Rewrites, gegen die Checklist; **Triage:** PMO markiert jedes Delta als inform, decide oder escalate; **Forum:** Entscheidungen und Owner zeitlich begrenzen; Narrativ in den Anhang; **Publish:** ein Protokoll von Entscheidungen, Trade-offs und Commitments fuer die naechste Woche.
+## Wie Sie die wöchentliche PMO-Schleife führen
 
-## Reality check: woechentliches PMO-Tracking wird meist schwerer, kurz bevor es weniger nuetzlich wird
+**Pre-Close:** Owner liefern Deltas, keine vollständigen Rewrites, gegen die Checkliste. **Triage:** Das PMO markiert jedes Delta als informieren, entscheiden oder eskalieren. **Forum:** Entscheidungen und Owner zeitlich begrenzen; Narrativ in den Anhang. **Publish:** ein Protokoll aus Entscheidungen, Trade-offs und Commitments für die nächste Woche.
 
-Das Paket wird laenger. Es werden mehr Felder hinzugefuegt. Mehr Teams sollen Updates liefern.
+Die wöchentliche Schleife scheitert, wenn sie zum Vorlesen wird. Sie gelingt, wenn sie Entscheidungsschulden abträgt, bevor es sich aufstaut.
 
-Das kann sich wie staerkere Kontrolle anfuehlen, bedeutet aber oft, dass das PMO schwache Entscheidungs-Klarheit mit mehr Sammelarbeit kompensiert.
+## Reality Check: Pakete werden schwerer – kurz bevor sie weniger nützlich werden
 
-## Wann es funktioniert und wann nicht
+Das Paket wächst. Es kommen mehr Felder. Mehr Teams liefern Updates. Diese Ausdehnung kann sich wie stärkere Kontrolle anfühlen – kompensiert aber oft schwache Entscheidungsklarheit mit Sammelarbeit.
 
-**Funktioniert**, wenn Fuehrungskraefte das woechentliche Paket als Interventionsausloeser behandeln, nicht als Lese-Pflicht.
+Nutzen Führungskräfte das wöchentliche Forum als Folien-Performance-Review, optimieren Teams grünes Reporting. Nutzen sie es als Interventionsauslöser, optimieren sie frühe Signale.
 
-**Scheitert**, wenn das PMO Vollstaendigkeit optimiert und Teams gruenes Reporting optimieren.
+## Wann das funktioniert – und wann es scheitert
 
-## Wie Consultify zum woechentlichen PMO-Modell passt
+Es funktioniert, wenn Führungskräfte das wöchentliche Paket als Steuerinstrument behandeln – nicht als Pflicht zum Ertragen. Es scheitert, wenn das PMO Vollständigkeit optimiert und das Portfolio narrative Sicherheit.
 
-Consultify ist darauf ausgelegt, repetitive Consulting-artige Rekonstruktion von Transformationsrealitaet zu reduzieren.
+## Wie Consultify zum wöchentlichen PMO-Modell passt
 
-Es kann Initiative-Signale, ROI-Logik und Abweichungs-Hinweise live halten, sodass das woechentliche PMO bei aktueller Wahrheit startet statt bei neu zusammengesetzten Folien. So bleibt woechentliche Governance operativ statt performativ.
+Consultify mappt wöchentliche Checklist-Signale auf Initiativen- und ROI-Kontext in einem lebendigen Datensatz, damit die PMO-Schleife von Betriebswahrheit startet – nicht von neu zusammengesetzten Folien. So bleibt wöchentliche Governance operativ statt performativ.
 
 ## Fazit
 
-Woechentliches PMO-Tracking sollte vorhersagen, wo die Kontrolle ausgleitet.
-
-Wenn es nur Bewegung beschreibt, wird Fuehrung spaeter ueberrascht als noetig.
+Wöchentliches PMO-Tracking soll vorhersagen, wo die Kontrolle ausgleitet. Beschreibt es nur Bewegung, wird die Führung später überrascht als nötig – und das PMO wird für Sichtbarkeit beschuldigt, die nie zu Autorität wurde.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Kostenlosen Trial starten](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*
+*Consultify gibt PMO-Teams ein lebendiges System für Initiativen-Signale, ROI-Logik und Abweichungshinweise – damit wöchentliche Foren auf Maßnahmen statt auf Folien-Rekonstruktion fokussieren. [Kostenlosen Test starten](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*

@@ -1,51 +1,60 @@
-# Jak zrobic strategy assumptions widocznymi przed board review
+# Jak uczynić założenia strategii widocznymi przed przeglądem rady
 
-Target persona: Strategy lead / board liaison / transformation sponsor  
-Funnel stage: Awareness  
-Core problem: board reviews czesto kompresuja miesiace ambiguity w krotka narrative, co zmusza directors do oceny outcomes bez widzenia assumptions, ktore faktycznie napedzaly commitments  
-Main promise: board-ready transformation governance poprawia sie, gdy assumptions sa publikowane wczesnie jako testable claims z ownerami, evidence plans i explicit downside cases
+Docelowa persona: Lider strategii / łącznik z radą / sponsor transformacji  
+Etap lejka: Świadomość  
+Główny problem: przeglądy rady często kompresują miesiące niejasności w krótką narrację, co zmusza członków rady do oceny wyników bez widzenia założeń, które faktycznie napędzały zobowiązania  
+Główna obietnica: zarządzanie transformacją gotowe pod radę poprawia się, gdy założenia publikuje się wcześnie jako twierdzenia podlegające weryfikacji — z właścicielami, planami dowodowymi i jawnymi scenariuszami downside
 
-**Bezposrednia odpowiedz:** publikuj jednostronicowy assumption register zanim board pack wyladuje: kazda assumption podaje claim, ownera, co evidence potwierdzi albo obali i co zrobicie, jesli peknie. Boards podejmuja lepsze decyzje, gdy assumptions sa widoczne, a nie gdy sa implied miedzy liniami slajdow. Board packi sa dobre w pokazywaniu intent. Slabsze w pokazywaniu tego, co musi byc prawda, zeby intent zadzialal.
+Pakiety pod radę dobrze pokazują intencję. Słabiej pokazują, co musi być prawdą, by intencja zadziałała.
 
-Ta luka zamienia board conversations w retrospective blame games, gdy rzeczywistosc sie rozjezdza.
+Gdy założenia pozostają domniemane między wierszami slajdów, rozmowy rady stają się retrospektywne i kruche, gdy rzeczywistość się rozjeżdża. Od członków rady oczekuje się oceny wyników bez widoczności zakładów, które kierownictwo faktycznie poczyniło. Od sponsorów — obrony wniosków bez wspólnego zapisu warunków.
 
-## Co powinno byc widoczne przed review
+Uczynienie założeń widocznymi to nie pesymizm. To higiena zarządzania: pozwala radzie ocenić logikę, a nie tylko nagłówki.
 
-Minimum to explicite pokazac: demand i revenue drivers, na ktore stawiasz; cost i productivity assumptions powiazane z transformation outcomes; dependency assumptions miedzy functions, suppliers i systems; timing assumptions dla capacity, hiring i integration; risk assumptions o regulation, security i operational stability. Illustrative note: celem nie jest perfect prediction. Celem jest shared visibility tego, co przewidujesz.
+## Co powinno być widoczne przed przeglądem
 
-## Szablon assumption register (lightweight)
+Co najmniej uczyń jawnymi sterowniki popytu i przychodów, na które stawiasz, założenia kosztów i produktywności powiązane z wynikami transformacji, założenia zależności między funkcjami i dostawcami, założenia czasowe dla zdolności i zatrudnienia oraz założenia ryzyka dotyczące regulacji, bezpieczeństwa i stabilności operacyjnej.
 
-Dla kazdej assumption zapisz: **Statement:** pojedyncze zdanie claim, nie slogan; **Owner:** nazwany executive accountability za monitoring; **Evidence plan:** jakie data albo milestone to przetestuje i do kiedy; **Break plan:** jaka decyzja albo zmiana portfolio, jesli assumption fail; **Link do initiatives:** ktore initiative najbardziej zaleza od tej assumption.
+Celem nie jest idealna predykcja. Celem jest wspólna widoczność tego, co przewidujecie, kto monitoruje i co zrobicie, gdy założenie pęknie.
 
-To wystarczajaca struktura, by boards zadawaly ostrzejsze pytania bez zamiany meetingu w workshop.
+## Lekki rejestr założeń
 
-## Porownanie: hidden assumptions versus visible assumptions
+Dla każdego założenia zapisz:
 
-| Tryb | board experience | typowa porazka |
-| --- | --- | --- |
-| hidden assumptions | directors inferuja intent z narrative | pozne niespodzianki |
-| visible assumptions | directors testuja logike i trade-offs wczesniej | wiecej friction na starcie, mniej shocks pozniej |
+**Stwierdzenie:** jedno zdanie-twierdzenie, a nie slogan.  
+**Właściciel:** nazwany executive odpowiedzialny za monitorowanie.  
+**Plan dowodu:** jakie dane lub kamień milowy je zweryfikują i do kiedy.  
+**Plan na pęknięcie:** jaka decyzja lub zmiana portfela, jeśli założenie nie wytrzyma.  
+**Powiązane inicjatywy:** od której pracy to założenie najbardziej zależy.
 
-## Reality check: assumption visibility czesto psuje sie tam, gdzie zespoly mysla, ze pokazanie downside oslabi case
+To wystarczająca struktura na ostrzejsze pytania bez zamiany spotkania rady w warsztat.
 
-Pack ma dawac confidence. Sponsor chce clean story. Nikt nie chce dawac directors listy tego, co moze fail. Ale gdy downside logic zostaje ukryta, by chronic momentum, board nie zatwierdza strategii z otwartymi oczami. Zatwierdza conclusion bez jej warunkow.
+> **Standard gotowości pod radę:** członkowie rady widzą, co obaliłoby strategię — nie tylko to, co kierownictwo ma nadzieję, że się stanie.
 
-## Kiedy to dziala, a kiedy nie
+## Ukryte założenia kontra widoczne założenia
 
-**Dziala**, gdy sponsorzy traktuja assumptions jako governance objects, nie jako vulnerabilities do ukrycia.
+Ukryte założenia zmuszają członków rady do wnioskowania intencji z narracji. To produkuje późne niespodzianki. Widoczne założenia tworzą więcej tarcia na starcie i mniej szoków później, bo logika downside jest częścią obiektu akceptacji.
 
-**Nie dziala**, gdy register staje sie boilerplate, ktorego nikt nie aktualizuje po approvie.
+Rada nie zatwierdza nastroju. Zatwierdza tezę z warunkami.
 
-## Jak Consultify wspiera assumption visibility
+## Rzeczywistość: zespoły ukrywają downside, by chronić pęd
 
-Consultify to AI-powered transformation management, ktore zastepuje repetitive consulting phases live systemem dla strategy, ROI, governance i execution.
+Pakiet potrzebuje pewności siebie. Sponsor chce czystej historii. Nikt nie chce wręczać radzie listy tego, co może nie wyjść. Gdy logika downside zostaje ukryta, by chronić pęd, rada zatwierdza wniosek bez jego warunków. To nie silniejsze zarządzanie. To odroczony spór.
 
-Moze utrzymywac assumptions polaczone z initiatives, deviations i leadership outputs, wiec board widzi ta sama underlying logic co operating team week to week.
+## Kiedy to działa, a kiedy zawodzi
+
+Działa, gdy sponsorzy traktują założenia jako obiekty zarządzania, a nie słabości do ukrycia. Zawodzi, gdy rejestr staje się szablonem, którego nikt nie aktualizuje po akceptacji. Statyczny rejestr to kolejny artefakt ze slajdów.
+
+Założenia powinny odświeżać się w tym samym rytmie co rzeczywistość inicjatyw — w przeciwnym razie rada widzi eksponat muzealny, podczas gdy operacje żyją gdzie indziej.
+
+## Jak Consultify wspiera widoczność założeń
+
+Consultify trzyma założenia strategii, właścicieli, plany dowodu i na pęknięcie oraz powiązane inicjatywy w jednej przestrzeni pracy, więc materiały pod radę śledzą obiekty, które program odświeża z tygodnia na tydzień. Członkowie rady widzą twierdzenia podlegające weryfikacji i logikę downside przed spotkaniem, zaciskając łańcuch od wniosków ze slajdów do operacyjnego zarządzania.
 
 ## Podsumowanie
 
-Jesli board widzi tylko conclusions, nie moze govern logiki. Zrob assumptions widoczne wczesnie, owned i testable.
+Jeśli rada widzi tylko wnioski, nie może rządzić logiką. Uczyń założenia widocznymi wcześnie, z właścicielami, podlegające weryfikacji i utrzymywane — tak by akceptacja znaczyła to, co wszyscy myślą, że znaczy, gdy warunki się zmienią.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify łączy założenia strategii z żywymi sygnałami inicjatyw i logiką ROI, by narracje pod radę pozostawały spięte z operacyjną rzeczywistością. [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

@@ -1,61 +1,70 @@
-# Co dobry model zdolnosci transformacji powinien uwidaczniac
+# Co dobry model zdolności transformacji powinien uwidaczniać
 
-Persona docelowa: COO transformacji / lider portfolio / partner HR wspierajacy zmiane Etap lejka: Swiadomosc Rdzeniowy problem: plany pozostaja zielone, podczas gdy nazwani ludzie nosza niemozliwe obciazenia, wiec wykonanie sie poslizguje, a sponsorzy mylnie czytaja problem jako motywacje zamiast matematyki zdolnosci Glowna obietnica: mozesz zdefiniowac model zdolnosci, ktory obnaza obciazenie rol, konflikt zasobow i opor governance w tym samym widoku co kamienie milowe dostawy
+Docelowa persona: COO transformacji / lider portfela / partner HR wspierający zmianę  
+Etap lejka: świadomość  
+Główny problem: plan zostaje zielony, podczas gdy nazwane osoby dźwigają niemożliwe obciążenie — wykonanie się ślizga, a sponsorzy błędnie czytają problem jako motywację zamiast matematyki zdolności  
+Główna obietnica: możesz zdefiniować model zdolności, który w tym samym widoku co kamienie milowe dostaw ujawnia obciążenie ról, kontencję i governance drag
 
-**Bezposrednia odpowiedz:** dobry model zdolnosci transformacji powinien uwidaczniac: nazwana zdolnosc wedlug roli i inicjatywy (nie tylko etaty), konflikt, gdy ta sama osoba siedzi na wielu sciezkach krytycznych, godziny sponsora i kierownictwa pochloniete przez fora, nasycenie zmiana wedlug zespolu i okna czasowego, oczekiwanie w zaleznosciach, ktore pali zdolnosci, oraz luz wymagany do pracy interwencyjnej. Jesli model pokazuje tylko budzet i etaty, prognozujesz finanse, nie wykonanie. Zdolnosc to ukryty ogranicznik w wiekszosci transformacji. Wykresy etatow klama uprzejmie. Nazwane godziny i konflikt mowia prawde.
+Zdolności to ukryty constraint większości transformacji. Wykresy etatów kłamią uprzejmie. Sumy budżetowe wygładzają kontencję. Matematyka FTE wyobraża sobie wymienne godziny.
 
-## Szesc warstw widocznosci
+Wykonanie jednak biegnie przez nazwane osoby, konkretne umiejętności, skończony czas leadership i kolejki zależności, które palą zdolności nawet gdy zadania wyglądają na „w toku”. Dobry model zdolności uwidacznia tę rzeczywistość tam, gdzie sponsorzy już patrzą na zdrowie portfela — żeby kompromisy stały się nieuniknione, zanim bohaterstwo stanie się kulturą.
 
-1. **Obciazenie przypisaniami nazwanymi** Kto jest odpowiedzialny w ilu inicjatywach z ile godzin tygodniowo zarezerwowanych.
+> **Co leadership powinno widzieć w jednym widoku:** nazwane obciążenie, kontencję na ścieżce krytycznej, governance drag, nasycenie według zespołu, czas oczekiwania w kolejce zależności oraz rezerwę na pracę interwencyjną.
 
-2. **Konflikt na sciezce krytycznej** Gdzie jedna osoba blokuje jednoczesnie wiele strumieni.
+## Sześć warstw widoczności, które zmieniają decyzje
 
-3. **Opor governance** Godziny na steering, przygotowanie i produkcje statusu wobec produkcji decyzji.
+**1. Obciążenie przypisań nazwanych**  
+Kto jest odpowiedzialny w ilu inicjatywach, z ile godzin tygodniowo zarezerwowanych — nie „mamy pięć osób”.
 
-4. **Nasycenie zmiana** Ile rownoczesnych zmian trafia w te same zespoly operacyjne wg miesiaca.
+**2. Kontencja na ścieżce krytycznej**  
+Gdzie jedna osoba blokuje jednocześnie wiele strumieni i jakie opcje ulgi istnieją (pauza, scalenie, pożyczka, repriorytetyzacja).
 
-5. **Czas kolejki zaleznosci** Gdzie praca czeka na decyzje lub zewnetrzne wydania, choc zespoly sa "zajete."
+**3. Governance drag**  
+Godziny w sterowaniu, przygotowaniu i produkcji statusu versus zapisany output decyzyjny. Drag to pozycja w bilansie zdolności.
 
-6. **Rezerwa interwencyjna** Bufor zdolnosci na stabilizacje, przerobke i reakcje na ryzyko.
+**4. Nasycenie zmianą**  
+Ile równoległych zmian uderza w te same zespoły operacyjne w tym samym miesiącu. Nasycenie to wejście do sekwencji, nie tylko problem komunikacji.
 
-## Rama: test zielonego planu
+**5. Czas oczekiwania w kolejce zależności**  
+Gdzie praca czeka na decyzje lub zewnętrzne release’y, choć zespoły są zajęte. Czekanie to nie bezczynność; pożera uwagę i harmonogram.
 
-Plan nie jest wiarygodny, dopoki nie przejdzie trzech kontroli.
+**6. Rezerwa interwencyjna**  
+Bufor zdolności zarezerwowany na stabilizację, przeróbki i reakcję na ryzyko. Jeśli każda godzina jest zarezerwowana na „plan”, plan nie ma amortyzatora.
 
-| Kontrola | pytanie |
+## Test zielonego planu: trzy kontrole wiarygodności
+
+Plan nie jest wiarygodny, dopóki nie przejdzie tych kontroli:
+
+| Kontrola | Pytanie |
 | --- | --- |
-| nazwana rzeczywistosc | czy kazda krytyczna rola ma nazwana osobe z godzinami |
-| konflikt | czy jakakolwiek nazwa wystepuje na wiecej niz dwoch sciezkach krytycznych bez ulgi |
-| governance | czy czas sponsora obejmuje przygotowanie i domkniecia, nie tylko dlugosc spotkania |
+| Nazwana rzeczywistość | Czy każda krytyczna rola ma nazwaną osobę z godzinami — nie rodzinę ról? |
+| Kontencja | Czy jakiekolwiek nazwisko występuje na więcej niż dwóch ścieżkach krytycznych bez jawnej ulgi? |
+| Governance | Czy czas sponsora obejmuje przygotowanie i follow-upy, nie tylko długość spotkania? |
 
-## Lista kontrolna: model ma klase decyzyjna, gdy
+Jeśli plan nie przechodzi tych kontroli, „zielony” to artefakt raportowania do czasu naprawy zdolności.
 
-- przeciazone nazwy wyzwalaja kompromisy portfolio, nie rozmowy motywacyjne  
-- obciazenie PMO jest widoczne obok obciazenia zespolu dostawczego  
-- widok nasycenia informuje sekwencjonowanie, nie tylko objetosc komunikacji  
-- zalozenia zdolnosci pojawiaja sie w ksiedze zalozen  
-- zmiany kadrowe produkuja zaktualizowane plany w jednym cyklu przegladu
+## Lista kontrolna: model jest gotowy pod decyzję, gdy
 
-## Reality check: modele zdolnosci zwykle zawodza tam, gdzie przestaja nazywac ludzi, a zaczynaja usredniac bol
+- Przeciążone nazwiska wywołują kompromisy portfelowe, nie pogawędki motywacyjne.  
+- Obciążenie PMO jest widoczne obok obciążenia zespołów dostaw.  
+- Nasycenie informuje sekwencję, nie tylko objętość komunikacji.  
+- Założenia zdolności pojawiają się w rejestrze założeń.  
+- Zmiany kadrowe produkują zaktualizowane plany w jednym cyklu przeglądu.
 
-Arkusz nadal moze wygladac na zbilansowany. Stan zatrudnienia nadal moze wygladac na wystarczajacy. Miesieczna liczba zdolnosci nadal moze wygladac racjonalnie. Ale gdy konflikt znika w srednich, kierownictwo przestaje widziec, ktore nazwiska niosa ukryty konflikt, ktory jako pierwszy zlamie wykonanie.
+## Dlaczego uśrednianie ukrywa punkt zerowy
 
-## Kiedy to dziala, a kiedy zawodzi
+Modele zdolności zawodzą, gdy przestają nazywać ludzi i zaczynają uśredniać ból. Arkusz może wyglądać na zrównoważony. Etaty mogą wyglądać wystarczająco. Miesięczna zdolność może wyglądać racjonalnie.
 
-**Dziala**, gdy sponsorzy akceptuja, ze powiedzenie nie jest planowaniem zdolnosci. **Zawodzi**, gdy model staje sie polityka etatow bez prawdy godzin.
+Gdy kontencja znika w średnich, leadership nie widzi, które nazwisko niesie ukryty konflikt, który pierwszy połamie wykonanie. Nazywanie to nie mikromanagement. To sposób, w jaki portfele odkrywają, gdzie musi paść „nie”.
 
-## Jak Consultify laczy zdolnosc z decyzjami portfolio
+## Jak Consultify łączy zdolności z decyzjami portfelowymi
 
-Consultify to zarzadzanie transformacja wspierane AI, zaprojektowane aby zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy zdolnosc, zaleznosci i decyzje dziela jeden system, przeciazenie pojawia sie jako sygnal portfolio wczesnie na interwencje.
+Consultify pokazuje nazwanych właścicieli, godziny, kontencję i obciążenie zależnościami obok wyborów portfelowych, więc zielony plan nie może maskować czerwonej ławki. Gdy zdolności, zależności i decyzje dzielą jeden system, przeciążenie wychodzi na jaw wcześniej, póki opcje jeszcze istnieją.
 
 ## Podsumowanie
 
-Zielone plany z czerwonymi ludzmi to wada governance.
-
-Uwidacznij zdolnosc po nazwisku, godzinie i konflikcie, albo dyscyplina wykonania peknie zanim metryki.
+Zielone plany z czerwonymi ludźmi to porażka governance. Uczyń zdolności widoczne według nazwiska, godzin i kontencji — albo dyscyplina wykonania pęknie, zanim pękną metryki, a sponsorzy błędnie odczytają wrak jako problem motywacji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify łączy nazwane zdolności, zależności i kompromisy portfelowe, więc przeciążenie wychodzi jako sygnał decyzyjny zamiast późnej niespodzianki na spotkaniach statusowych. [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

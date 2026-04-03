@@ -1,60 +1,64 @@
-# Kiedy replanowac transformation portfolio, a kiedy hold course
+# Kiedy przeplanować portfel transformacji, a kiedy utrzymać kurs
 
-Target persona: CFO / transformation sponsor / portfolio steering lead  
-Funnel stage: Consideration  
-Core problem: leadership oscyluje miedzy frozen commitment a chaotic replanning, co uczy organizacje albo ignorowac plan, albo nie ufac kazdej nowej wersji  
-Main promise: portfolio steering staje sie stabilniejsze, gdy replanning jest triggerowany przez explicit evidence thresholds zamiast mood, pressure albo fresh strategy workshop
+Docelowa persona: CFO / sponsor transformacji / lider sterowania portfelem  
+Etap lejka: Rozważanie  
+Główny problem: kierownictwo oscyluje między zamrożonym zobowiązaniem a chaotycznym przeplanowaniem, co uczy organizację albo ignorować plan, albo nie ufać każdej nowej wersji  
+Główna obietnica: sterowanie portfelem robi się stabilniejsze, gdy przeplanowanie jest uruchamiane przez jawne progi dowodowe zamiast nastroju, presji czy świeżego warsztatu strategicznego
 
-**Bezposrednia odpowiedz:** replanuj, gdy material assumptions o value, risk, capacity albo external constraints zmienily sie na tyle, ze invaliduja major commitments. Hold course, gdy bol jest execution discipline, dependency management albo governance latency, bo replanning tych problemow nowym deckiem ich nie naprawia. Transformation portfolios fail na dwa przeciwne sposoby.
+Portfele transformacyjne zawodzą na dwa przeciwne sposoby.
 
-Niektore fail, bo leadership nie zmieni planu, gdy rzeczywistosc sie przesuwa. Inne fail, bo leadership zmienia plan, gdy rosnie anxiety. Oba wzorce lamia trust.
+Jedne zawodzą, bo kierownictwo nie zmieni planu, gdy rzeczywistość się przesuwa. Inne — bo zmienia plan, gdy rośnie niepokój. Oba wzorce łamią zaufanie. Zespoły albo uczą się ignorować roadmapę, albo uczą się, że każdy kwartał przynosi nową historię i reset odpowiedzialności.
 
-## Blad replanningu: traktowanie anxiety jako evidence
+Stabilniejsza ścieżka to dyscyplina progów: przeplanuj, gdy świat zmienił się na tyle, by unieważnić główne zobowiązania; utrzymaj kurs, gdy ból to higiena wykonania, zarządzanie zależnościami lub opóźnienie decyzji w zarządzaniu — bo nowy deck tych problemów nie naprawi.
 
-Replanning czuje sie productive. Daje nowe slajdy, nowe timeline i tymczasowe poczucie kontroli. Ale jesli underlying issue to slaba execution hygiene, replanning glownie resetuje accountability bez poprawy capacity. To drogi teatr.
+## Błąd przeplanowania: traktowanie niepokoju jako dowodu
 
-## Evidence thresholds, ktore uzasadniaja real replan
+Przeplanowanie czuje się produktywnie. Daje nowe slajdy, nowe harmonogramy i tymczasową ulgę. Jeśli problemem u podstaw jest słaba dyscyplina wykonania, przeplanowanie głównie przenosi winę na świeży plan bez poprawy zdolności ani przepustowości decyzji. To drogi teatr.
 
-Uzyj tego jako decision checklist. Jesli wiele pozycji jest true, replanning jest bardziej racjonalny niz reactive.
+Pytanie brzmi nie tylko, czy sala czuje się potem lepiej. Chodzi o to, czy ograniczenia portfela faktycznie się zmieniły.
 
-1. **Value case shift:** initiative economics zmienily sie materialnie na podstawie nowych danych, nie nowych opinii  
-2. **Constraint shift:** legal, regulatory, supply albo customer reality zmienily feasible set  
-3. **Capacity collapse:** organizacja nie moze juz staffed committed portfolio bez unacceptable theft z run-the-business work  
-4. **Strategic redirection:** enterprise strategy zmienila sie tak, ze reorderuje transformation thesis  
-5. **Risk realization:** major risk konwertuje sie w structural blocker, ktorego nie da zmitigowac w obecnym designie
+## Progi dowodowe uzasadniające realne przeplanowanie
 
-Hypothesis framing: te thresholds powinny byc zdefiniowane przy approvie portfolio, nie wymyslane pod pressure.
+Użyj ich jako listy kontrolnej decyzji. Ramowanie hipotez pomaga: zdefiniuj progi przy akceptacji portfela, nie pod presją.
 
-## Kiedy hold course to silniejszy ruch
+**Przesunięcie przypadku wartości:** ekonomika inicjatyw zmieniła się istotnie na podstawie nowych danych, a nie nowych opinii.
 
-Hold course, gdy sygnaly wygladaja jak: chronic slip bez zmiany external constraints; repeated rescoping, ktore unika hard stop decisions; slabe cross-functional ownership i decision latency; reporting improvements, ktore nigdy nie zmieniaja tego, co zespoly faktycznie robia.
+**Przesunięcie ograniczeń:** prawo, regulacje, łańcuch dostaw, klienci lub bezpieczeństwo zmieniły zbiór wykonalny.
 
-Wtedy portfolio potrzebuje interwencji i execution repair, a nie nowej plan narrative.
+**Załamanie zdolności:** organizacja nie jest w stanie obsadzić zobowiązanego portfela bez niedopuszczalnego „kradzenia” z pracy utrzymania bieżącego biznesu.
 
-## Prosta decision matrix
+**Zmiana kierunku strategicznego:** strategia przedsiębiorstwa zmieniła się tak, że porządkuje tezę transformacji.
 
-| Wzorzec sygnalu | Prawdopodobnie najlepszy ruch |
-| --- | --- |
-| external constraint albo economics zmienily sie materialnie | replan z explicit trade-offs |
-| execution drift bez zmiany constraint | hold course, tighten intervention |
-| mixed signals | time-box focused replan slice, nie cale portfolio rewrite |
+**Realizacja ryzyka:** duże ryzyko stało się strukturalną blokadą, której nie da się złagodzić w obecnym projekcie.
 
-## Reality check: presja na replanning zwykle rosnie wtedy, gdy leadership chce emocjonalnej ulgi szybciej niz operational truth
+Gdy wiele pozycji jest prawdziwych, przeplanowanie jest częściej racjonalne niż reaktywne.
 
-Obecny plan czuje sie odsloniety. Missy sa widoczne. Nowa wersja obiecuje reset.
+> **Sygnał utrzymania kursu:** chroniczny poślizg bez zmiany zewnętrznych ograniczeń często oznacza interwencję i naprawę wykonania, a nie przepisanie narracji.
 
-Wlasnie dlatego zespoly potrzebuja dyscypliny thresholdow, bo czystsza story potrafi zmniejszyc discomfort duzo wczesniej niz poprawi portfolio.
+## Kiedy utrzymanie kursu jest silniejszym ruchem
 
-## Jak Consultify redukuje replan thrash
+Utrzymaj kurs, gdy wzorce wyglądają jak powtarzane zmiany zakresu unikające twardych zatrzymań, słaba własność międzyfunkcyjna, opóźnienie decyzji albo usprawnienia raportowania, które nigdy nie zmieniają tego, co zespoły faktycznie robią. W takich przypadkach portfel potrzebuje interwencji i naprawy wykonania.
 
-Consultify wspiera live transformation management: priorities, ROI logic, deviations i ownership w jednym systemie.
+Mieszanie dwóch trybów — przeplanowywanie problemów wykonania tak, jakby to były problemy strategii — uczy organizację traktować plany jako jednorazowe i sponsorów jako opcjonalnych.
 
-Gdy assumptions i sygnaly zostaja widoczne, leadership moze rozroznic evidence-based replanning od anxiety-based replanning.
+## Prosta macierz decyzyjna
+
+Jeśli zewnętrzne ograniczenia lub ekonomika zmieniły się istotnie, przeplanuj z jawnymi kompromisami. Jeśli wykonanie dryfowało bez zmiany ograniczeń, utrzymaj kurs i zaostrz interwencję. Jeśli sygnały są mieszane, ogranicz czasem wąski wycinek przeplanowania zamiast przepisywać cały portfel.
+
+Celem jest uniknięcie zarówno sztywności, jak i szarpania.
+
+## Rzeczywistość: presja na przeplanowanie rośnie, gdy liderzy chcą ulgi szybciej niż prawdy
+
+Obecny plan czuje się odsłonięty. Nietrafienia są widoczne. Nowa wersja obiecuje reset. Dokładnie wtedy zespoły potrzebują progów, bo czystsza historia może zmniejszyć dyskomfort długo zanim poprawi portfel.
+
+## Jak Consultify ogranicza chaos przeplanowań
+
+Consultify utrzymuje sygnały portfela, logikę ROI, odchylenia i własność w jednym miejscu, więc rozmowy o przeplanowaniu kotwiczą w utrwalonych progach zamiast w świeżej narracji ze slajdów. Gdy dowód kontrastuje z niepokojem, kierownictwo widzi, które założenia się przesunęły i które inicjatywy powinny się zmienić — rozróżniając przeplanowanie oparte na dowodach od zmęczenia cyklem.
 
 ## Podsumowanie
 
-Replanuj, gdy swiat sie zmienil. Hold course, gdy execution i governance potrzebuja repair. Mieszanie tych dwoch to sposob, jak portfolio traci credibility.
+Przeplanuj, gdy świat się zmienił. Utrzymaj kurs, gdy wykonanie i zarządzanie potrzebują naprawy. Mieszanie obu to sposób, w jaki portfele tracą wiarygodność — i w jaki zespoły uczą się, że strategia to coś, co mówi kierownictwo, a nie coś, co organizacja prowadzi.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy trial](https://consultify.ai/demo).*
+*Consultify utrzymuje założenia portfela, sygnały ROI i odchylenia widoczne, by sponsorzy odróżniali przeplanowanie oparte na dowodach od reaktywnego resetu decków. [Otwórz demo](https://consultify.ai) lub [Rozpocznij bezpłatny okres próbny](https://consultify.ai/demo).*

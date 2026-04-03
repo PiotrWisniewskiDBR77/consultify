@@ -1,62 +1,62 @@
-# Co transformation PMO powinien trackowac co tydzien
+# Czego biuro PMO transformacji powinno śledzić co tydzień
 
-Target persona: Transformation PMO lead / portfolio office head / program director  
-Funnel stage: Evaluation  
-Core problem: tygodniowe PMO cadence czesto zapadaja sie w slide churn i zbieranie statusu, co ukrywa drift dopoki nie robi sie drogo i oslabia link miedzy governance a delivery  
-Main promise: tygodniowy widok PMO staje sie decision-useful, gdy trackuje krotka liste sygnalow, ktore przewiduja interwencje, a nie dluga liste aktywnosci, ktore tylko opisuja motion
+Docelowa persona: Lider PMO transformacji / szef biura portfela / dyrektor programu  
+Etap lejka: Ocena  
+Główny problem: tygodniowe rytmy PMO często zapadają się w mielenie slajdów i zbieranie statusu, co ukrywa dryf, dopóki nie robi się drogo, i osłabia powiązanie między zarządzaniem a dostarczaniem  
+Główna obietnica: tygodniowy widok PMO staje się użyteczny decyzyjnie, gdy śledzi krótką listę sygnałów przewidujących interwencję — a nie długą listę działań, które tylko opisują ruch
 
-**Bezposrednia odpowiedz:** trackuj co tydzien sygnaly wokol delivery truth, dependency risk, decision latency, value hypothesis health i sponsor airtime needs. Jesli tygodniowy pack nie moze wywolac konkretnej akcji, prawdopodobnie trackuje zle rzeczy. Transformation PMO to nie reporting department.
+PMO transformacji to nie dział raportowania.
 
-To operating rhythm, ktory utrzymuje transformacje governable miedzy miesiecznymi i kwartalnymi forumami. Gdy tygodniowy rhythm jest zly, governance ciezkie, a kontrola lekka.
+To rytm operacyjny, który utrzymuje transformację pod kontrolą zarządzania między miesięcznymi i kwartalnymi forami. Gdy tygodniowy rytm optymalizuje kompletność, zarządzanie czuje się ciężkie, a kontrola lekka. Gdy optymalizuje sygnały wymuszające działanie, kierownictwo dostaje wcześniejszą interwencję i mniej niespodzianek.
 
-## Blad tygodniowego PMO: listy aktywnosci
+Jeśli tygodniowy pakiet nie może przy pogorszeniu sytuacji uruchomić konkretnej akcji właściciela, prawdopodobnie śledzi niewłaściwe rzeczy.
 
-Slabe tygodniowe PMO packi czesto optymalizuja pod: percent complete; task lists; meeting attendance; generyczny RAG status. Te pola moga byc potrzebne.
+## Błąd tygodniowego PMO: listy aktywności
 
-Rzadko wystarczaja, by odpowiedziec czy portfolio jest nadal pod kontrola.
+Słabe tygodniowe pakiety często akcentują procent ukończenia, listy zadań, frekwencję na spotkaniach i ogólny status czerwony–żółty–zielony. Te pola mogą być potrzebne do zarządzania dostarczaniem. Rzadko wystarczają, by odpowiedzieć, czy portfel wciąż jest pod kontrolą.
 
-## Tygodniowy tracking checklist (orientacja decyzyjna)
+Pytania o kontrolę są inne: gdzie prawda rozjeżdża się z planem, gdzie decyzje utknęły, gdzie pęka zdolność i które hipotezy wartości słabną?
 
-Uzyj tego jako minimum viable weekly PMO lens. Kazda linia powinna mapowac na owner action, jesli sygnal sie pogarsza.
+## Tygodniowa lista kontrolna: zorientowana na decyzje
 
-1. **Delivery truth:** co faktycznie shipped versus co bylo committed na ten tydzien, per initiative  
-2. **Dependency risk:** ktore cross-functional dependencies sie przesunely, slipped albo staly sie contested  
-3. **Decision latency:** ktore decyzje czekaja, u kogo i ponad jaki reasonable threshold  
-4. **Value hypothesis health:** ktore initiative maja nowe evidence za albo przeciw value case  
-5. **Resource reality:** gdzie capacity jest overloaded, borrowed albo cicho throttled  
-6. **Issue aging:** ktore blockers sa starsze niz uzgodniony escalation threshold  
-7. **Governance queue:** co musi trafic do sponsor albo board decision paths i do kiedy
+Użyj poniższego jako minimalnej soczewki tygodniowego PMO. Każda linia powinna mapować na działanie właściciela, jeśli sygnał się pogarsza.
 
-Jesli pozycja na tygodniowym packu nie laczy sie z jednym z tych bucketow, pytaj czy nalezy ja co tydzien.
+1. **Prawda dostarczania:** co faktycznie zostało dostarczone wobec tego, co zobowiązano na dany tydzień, wg inicjatywy  
+2. **Ryzyko zależności:** które zależności międzyfunkcyjne się przesunęły, poślizgnęły lub stały się sporne  
+3. **Opóźnienie decyzji:** które decyzje czekają, u kogo i ponad jaki uzasadniony próg  
+4. **Kondycja hipotezy wartości:** które inicjatywy zyskały lub straciły dowód dla przypadku wartości  
+5. **Rzeczywistość zasobów:** gdzie zdolność jest przeciążona, „pożyczona” lub cicho dławiona  
+6. **Starzenie się problemów:** które blokery przekraczają uzgodniony próg eskalacji  
+7. **Kolejka zarządzania:** co musi trafić na ścieżki decyzyjne sponsorów lub rady, do kiedy i jakiej decyzji potrzeba  
 
-## Sekwencja krokow: jak prowadzic tygodniowa petle PMO
+Jeśli pozycja nie łączy się z jednym z tych koszyków, warto zapytać, czy należy do tygodniowego forum.
 
-**Pre-close:** ownerzy skladaja deltas, nie pelne rewrites, wzgledem checklisty; **Triage:** PMO taguje kazdy delta jako inform, decide albo escalate; **Forum:** time-box decyzji i ownerow; narrative do appendix; **Publish:** jeden zapis decyzji, trade-offow i commitow na nastepny tydzien.
+> **Standard tygodniowego PMO:** każda linia odpowiada na pytanie: „jaką decyzję lub eskalację to wymusza, jeśli się pogorszy?”
 
-## Reality check: weekly PMO tracking zwykle robi sie ciezszy tuz przed tym, jak staje sie mniej uzyteczny
+## Jak prowadzić tygodniową pętlę PMO
 
-Pack robi sie dluzszy. Dochodzi wiecej pol. Wiecej zespolow proszonych jest o updates.
+**Przed domknięciem:** właściciele składają delty, a nie pełne przepisywania, względem listy kontrolnej. **Triaż:** PMO oznacza każdą deltę jako informuj, decyduj lub eskaluj. **Forum:** ogranicz czas decyzji i właścicieli; narrację przenieś do aneksu. **Publikacja:** jeden zapis decyzji, kompromisów i zobowiązań na następny tydzień.
 
-To moze czuc sie jak silniejsza kontrola, ale czesto znaczy, ze PMO kompensuje slaba jasnosc decyzji wieksza iloscia pracy zbiorczej.
+Tygodniowa pętla zawodzi, gdy staje się odczytem. Udaje się, gdy czyści dług decyzyjny zanim urośnie.
 
-## Kiedy to dziala, a kiedy nie
+## Rzeczywistość: pakiety robią się cięższe tuż przed tym, jak stają się mniej użyteczne
 
-**Dziala**, gdy executive traktuja tygodniowy pack jako intervention trigger, a nie readout obligation.
+Pakiet rośnie. Pojawia się więcej pól. Więcej zespołów składa aktualizacje. Ta ekspansja może czuć się jak silniejsza kontrola, podczas gdy w praktyce kompensuje słabą jasność decyzji pracą zbierania.
 
-**Nie dziala**, gdy PMO optymalizuje completeness, a zespoly optymalizuja green reporting.
+Jeśli executive używają tygodniowego forum jako przeglądu występu ze slajdami, zespoły optymalizują zielone raportowanie. Jeśli jako wyzwalacza interwencji — optymalizują wczesny sygnał.
+
+## Kiedy to działa, a kiedy zawodzi
+
+Działa, gdy executive traktują tygodniowy pakiet jako instrument kontroli, a nie obowiązek do zniesienia. Zawodzi, gdy PMO optymalizuje kompletność, a portfel — bezpieczeństwo narracji.
 
 ## Jak Consultify pasuje do modelu tygodniowego PMO
 
-Consultify jest zbudowany, by redukowac repetitive consulting-style rekonstrukcje transformation reality.
-
-Moze utrzymywac initiative signals, ROI logic i deviation cues live, wiec tygodniowe PMO zaczyna od current truth zamiast reassembled slides. Tak tygodniowe governance zostaje operational zamiast performative.
+Consultify mapuje sygnały z tygodniowej listy kontrolnej na kontekst inicjatyw i ROI w jednym żywym zapisie, więc pętla PMO startuje od operacyjnej prawdy zamiast ponownie składanych slajdów. Tak tygodniowe zarządzanie zostaje operacyjne zamiast performatywnego.
 
 ## Podsumowanie
 
-Tygodniowe PMO tracking powinno przewidywac, gdzie kontrola sie wyslizguje.
-
-Jesli tylko opisuje motion, leadership zostanie zaskoczone pozniej niz powinno.
+Tygodniowe śledzenie PMO powinno przewidywać, gdzie wymyka się kontrola. Jeśli tylko opisuje ruch, kierownictwo zostanie zaskoczone później, niż powinno — a PMO usłyszy zarzut o widoczność, która nigdy nie zamieniła się w autorytet.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij darmowy trial](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify daje zespołom PMO żywy system sygnałów inicjatyw, logiki ROI i wskazówek odchyleń, by tygodniowe fora skupiały się na działaniach, a nie na odbudowie slajdów. [Rozpocznij bezpłatny okres próbny](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

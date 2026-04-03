@@ -1,67 +1,68 @@
-# Jak zdefiniowac prawa decyzyjne w systemie operacyjnym transformacji
+# Jak zdefiniować prawa decyzyjne w systemie operacyjnym transformacji
 
-Persona docelowa: Lider governance transformacji / architekt korporacyjny / partner biura COO Etap lejka: Rozwazanie Rdzeniowy problem: fora sterujace omawiaja narracje, ale prawa decyzyjne pozostaja domyslne, wiec rosnie opoznienie decyzji, mnoza sie eskalacje, a sponsorzy przejmuja prace, ktore powinny byc usystematyzowane Glowna obietnica: mozesz wdrozyc lekka mape praw decyzyjnych, ktora laczy typy decyzji z odpowiedzialnymi rolami, ramami czasowymi i zapisami bez budowania kolejnej warstwy biurokracji
+Docelowa persona: lider governance transformacji / architekt korporacyjny / partner biura COO  
+Etap lejka: rozważanie  
+Główny problem: fora sterujące przeglądają narracje, ale prawa decyzyjne pozostają domyślne — rośnie opóźnienie decyzyjne, mnożą się eskalacje, a sponsorzy przejmują pracę, którą powinien systematyzować system  
+Główna obietnica: możesz wdrożyć lekką mapę praw decyzyjnych, która wiąże typy decyzji z odpowiedzialnymi rolami, ramami czasowymi i zapisami — bez budowania kolejnej warstwy biurokracji
 
-**Bezposrednia odpowiedz:** zdefiniuj prawa decyzyjne, inwentaryzujac powtarzalne typy decyzji transformacyjnych (portfolio, finansowanie, zakres, zwolnienie zaleznosci, akceptacja ryzyka, wybor dostawcy, zdolnosci ludzi), przypisujac dokladnie jednego odpowiedzialnego zatwierdzajacego na typ przy kazdym poziomie governance, publikujac sciezki eskalacji i SLA decyzji oraz przechowujac wyniki w jednym zapisie operacyjnym. Jesli prawa pozostaja wspoldzielone lub niejasne, fora beda nadal wydawaly sie zajete, podczas gdy wykonanie czeka.
+Systemy operacyjne transformacji cicho zawodzą, gdy każdy może komentować, a nikt nie może zdecydować. Fora brzmią seniorsko. Kalendarze wyglądają poważnie. Tymczasem wykonanie czeka, bo „wyrównanie” stało się rozproszonym wetem, a żadna rola nie ma końcowej odpowiedzialności za zdefiniowaną klasę decyzji.
 
-Systemy operacyjne transformacji cicho zawodza, gdy kazdy moze komentowac, ale nikt nie moze decydowac. Prawa decyzyjne nie sa uprzejmoscia.
+Prawa decyzyjne to nie grzeczność. To minimalna struktura, która utrzymuje sponsorship w zdrowiu: kto decyduje, o czym, do kiedy i gdzie zapisany jest wynik, żeby zespoły mogły iść naprzód bez co miesięcznego ponownego spierania się o ten sam wątek.
 
-To minimalna struktura, ktora utrzymuje sponsorowanie w zdolnosci i dyscypline wykonania.
+> **Co w praktyce znaczy „jawne prawa”:** jeden odpowiedzialny approver na klasę decyzji na każdym poziomie, plus ścieżka eskalacji i SLA — opublikowane tam, gdzie zespoły mogą na nich polegać.
 
-## Czym sa prawa decyzyjne (a czym nie sa)
+## Czym są prawa decyzyjne (a czym nie są)
 
-Prawa decyzyjne oznaczaja: nazwana role odpowiedzialna za zdefiniowana klase decyzji; granice czasu dla decyzji; utrwalony wynik, na ktorym moga polegac inni.
+Prawa decyzyjne oznaczają: nazwaną rolę odpowiedzialną za zdefiniowaną klasę decyzji; granicę czasu decyzji; zapisany wynik, względem którego inni mogą wykonywać.
 
-Prawa decyzyjne nie sa: rytualami konsensusu; opcjonalnym podpisem sponsora po wykonanej pracy; plakatem RACI, z ktorego nikt nie korzysta na zywych forach.
+Nie są konsensusem na wszystko. Nie są opcjonalnym podpisem sponsora po tym, jak praca jest już zrobiona. I nie są plakatem RACI, który nigdy nie pojawia się na żywych forach.
 
-## Inwentarz typow decyzji (zestaw startowy)
+Jeśli wasze prawa żyją tylko na slajdzie z warsztatu sprzed roku — nie macie praw. Macie nostalgię.
 
-Uzyj tego jako katalogu roboczego. Dostosuj nazewnictwo do jezyka portfolio.
+## Startowa inwentaryzacja: klasy decyzji, które pożerają godziny leadership
 
-| Klasa decyzji | typowe pytanie | tryb awarii bez praw |
+Używaj tego katalogu jako zestawu roboczego. Zmień nazwy, by pasowały do języka portfela.
+
+| Klasa decyzji | Typowe pytanie | Tryb awarii bez praw |
 | --- | --- | --- |
-| kompromis portfolio | kontynuacja, pauza, polaczenie, stop | nieskonczone repriorytetyzacje |
-| bramka finansowania | zwolnienie nastepnej transzy | cieniowe wydatki |
-| granica zakresu | w fali lub poza | pelzajacy zakres |
-| zwolnienie zaleznosci | odblokowanie pracy miedzy zespolami | starzenie sie kolejek |
-| akceptacja ryzyka | wdrozenie przy znanym narazeniu | nieformalne zrzeczenia sie |
-| zmiana dostawcy lub partnera | zmiana lub status quo | opozniony procurement |
-| zobowiazanie zdolnosci | nazwane godziny lub role | przeciazone nazwiska na zielonych planach |
+| Kompromis portfelowy | Kontynuuj, pauzuj, scal, zatrzymaj | Nieskończone repriorytetyzacje |
+| Bramka finansowania | Zwolnij następną transzę | Cienkie wydatki i nieformalne zobowiązania |
+| Granica zakresu | W fali czy poza | Pełzający zakres w przebraniu „małych próśb” |
+| Zwolnienie zależności | Odblokuj pracę między zespołami | Starzenie kolejek i pasywne czekanie |
+| Akceptacja ryzyka | Wypuszczaj przy znanym ryzyku | Nieformalne zwolnienia i ukryta odpowiedzialność |
+| Zmiana dostawcy lub partnera | Zmień lub zostań | Opóźnienia procurementu stają się opóźnieniami programu |
+| Zobowiązanie zdolności | Nazwane godziny lub role | Przeciążone nazwiska na zielonych planach |
 
-## Piecioetapowa sekwencja wdrozenia
+Chodzi nie o perfekcję za pierwszym razem, lecz o pokrycie: decyzje, które realnie palą czas executive, nie powinny pozostawać domyślne.
 
-Wypisz dziesiec decyzji, ktore pochlonely najwiecej godzin przywodztwa w ostatnim kwartale; Przypisz kazda decyzje do jednej odpowiedzialnej roli na poziom (zespol roboczy, program, portfolio, zarzad); Dodaj SLA decyzji: rekomendacja, decyzja, eskalacja; Wycofaj nakladajace sie fora duplikujace ta sama klase decyzji; Opublikuj mape i egzekwuj ja na trzech nastepnych spotkaniach na zywo.
+## Pięciokrokowa sekwencja wdrożenia
 
-## Lista kontrolna: prawa decyzyjne sa realne, gdy
+**Wypisz dziesięć decyzji**, które pożarły najwięcej godzin leadership w ostatnim kwartale. **Zmapuj każdą decyzję** na jedną odpowiedzialną rolę na poziom: zespół roboczy, program, portfel, zarząd (w razie potrzeby). **Dodaj SLA decyzji** prostą gramatyką: rekomenduj, zdecyduj, eskaluj — każde w ramie czasowej. **Wycofaj nakładające się fora**, które duplikują tę samą klasę decyzji bez dodatkowego pokrycia ryzyka. **Opublikuj mapę** i egzekwuj ją na trzech następnych żywych spotkaniach, w tym co się dzieje, gdy pakiety przychodzą niekompletne.
 
-- kazda klasa decyzji ma jednego odpowiedzialnego zatwierdzajacego na poziom  
-- spotkania maja jawne wyniki, nie tylko podsumowania dyskusji  
-- eskalacja jest rzadka, bo istnieja SLA  
-- obciazenie governance spada lub jest stale, gdy rosnie przepustowosc  
-- zmiany zalozen wymuszaja zapisy decyzji, nie poboczny e-mail
+Mapy praw zawodzą, gdy traktuje się je jak artefakty. Działają, gdy traktuje się je jak reguły operacyjne.
 
-## Reality check: prawa decyzyjne zwykle pekaja tam, gdzie organizacja broni wielu wet w imie wyrownania
+## Lista kontrolna: prawa decyzyjne są realne, gdy
 
-Kazdy chce miec glos. Zaden lider nie chce zostac pominiety. Forum chce szerokiego buy-in zanim zapadnie zobowiazanie. Ale gdy kilka rol moze skutecznie zatrzymac te sama decyzje, a zadna z nich nie niesie finalnej odpowiedzialnosci, wyrownanie zamienia sie w licencjonowane opoznienie.
+- Każda klasa decyzji ma jednego odpowiedzialnego approvera na poziom.  
+- Spotkania kończą się jawnymi wynikami, nie tylko podsumowaniami dyskusji.  
+- Eskalacja rzadziej, bo SLA istnieją i są używane.  
+- Obciążenie governance spada lub jest płaskie, podczas gdy throughput rośnie.  
+- Zmiany założeń wywołują zapisy decyzji, nie poboczne wątki mailowe.
 
-## Kiedy to dziala, a kiedy zawodzi
+## Dlaczego „wiele wet” staje się licencją na opóźnienie
 
-**Dziala**, gdy sponsorzy chca mniej heroizmu i jasniejszej wlasnosci.
+Organizacje chronią wiele wet w imię wyrównania. Każdy chce głosu. Żaden lider nie chce być ominęty. Forum chce szerokiego buy-inu przed zobowiązaniem.
 
-**Zawodzi**, gdy mapowanie praw staje sie cwiczeniem w obwinianiu zamiast naprawy przepustowosci.
+Gdy kilka ról może w praktyce zatrzymać tę samą decyzję bez tego, by jedna z nich nosiła końcową odpowiedzialność, wyrównanie zamienia się w licencjonowane opóźnienie. Prawa decyzyjne mają przełamać ten impas bez usuwania uzasadnionego nadzoru nad ryzykiem — oddzielając wkład od odpowiedzialności.
 
-## Jak Consultify utrzymuje prawa decyzyjne operacyjnie
+## Jak Consultify utrzymuje prawa decyzyjne operacyjne
 
-Consultify to zarzadzanie transformacja wspierane AI, zaprojektowane aby zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy typy decyzji, SLA i wyniki zyja w jednym systemie, governance przestaje recyklowac te same pytania i zaczyna je zamykac.
+Consultify mapuje klasy decyzji, SLA i zapisane wyniki w jednej warstwie operacyjnej, więc domyślne prawa nie mogą chować się w notatkach ze spotkań. Gdy typy decyzji, SLA i wyniki żyją w jednym systemie, governance przestaje recyklingować te same pytania i zaczyna je zamykać.
 
 ## Podsumowanie
 
-Domyslne prawa decyzyjne sa drogie.
-
-Uczyn je jawnymi, ograniczonymi czasowo i utrwalonymi, albo system operacyjny pozostanie kalendarzem spotkan z dobrymi intencjami.
+Domyślne prawa decyzyjne są drogie. Uczyń je jawnymi, ograniczonymi czasem i zapisanymi — albo wasz system operacyjny pozostanie kalendarzem spotkań z dobrymi intencjami, a sponsorzy będą płacić za bohaterstwo zamiast za throughput.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify trzyma typy decyzji, SLA i zapisane wyniki w jednym żywym systemie transformacji zamiast w rozproszonych deckach i wątkach skrzynki. [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

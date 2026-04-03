@@ -1,49 +1,52 @@
-# Jak zarzadzac zalozeniami transformacji bez chaosu arkuszy
+# Jak zarządzać założeniami transformacji bez chaosu arkuszy
 
-Persona docelowa: Lider PMO transformacji / architekt korporacyjny / szef gabinetu sponsora Etap lejka: Ocena Rdzeniowy problem: zalozenia rozpraszaja sie po skoroszytach, stopkach slajdow i e-mailu, wiec przeglady powtarzaja debaty zamiast testowac hipotezy i utrwalac interwencje Glowna obietnica: mozesz prowadzic jedna ksiege zalozen z wlascicielami, planami testow i statusem, ktora skaluje sie ze zlozonoscia portfolio
+Docelowa persona: lider PMO transformacji / architekt korporacyjny / chief of staff sponsora  
+Etap lejka: ewaluacja  
+Główny problem: założenia rozpraszają się po skoroszytach, przypisach do slajdów i mailach — przeglądy powtarzają debaty zamiast testować hipotezy i rejestrować interwencje  
+Główna obietnica: możesz prowadzić jeden rejestr założeń z właścicielami, planami testów i statusem, który skaluje się ze złożonością portfela
 
-**Bezposrednia odpowiedz:** zarzadzaj zalozeniami transformacji bez chaosu arkuszy, tworzac jedna ksiege zalozen jako zrodlo prawdy: kazde zalozenie ma wlasciciela, zrodlo dowodu, klase wplywu, metode testu, kadencje przegladu, date ostatniej walidacji i powiazane decyzje. Zakaz rownoleglych ciennych list w plikach osobistych. Kieruj kazdy przeglad na delty ksiegi i wycofuj zalozenia z pisanym powodem. Jesli zalozenia zyja w dwunastu kartach, governance zawsze bedzie jak archeologia. Zalozenia sa zobowiazaniami, dopoki nie maja wlasciciela i testu. Arkusze sprawdzaja sie jako kalkulatory. Slabo sprawdzaja sie jako systemy governance.
+Założenia to zobowiązania do czasu, dopóki nie mają właściciela, testu i powiązania z decyzją. Arkusze są w porządku jako kalkulatory. Słabo sprawdzają się jako systemy governance — bo przybywają zakładki, wersje się rozjeżdżają, a każdy zespół cicho utrzymuje „prawdziwą” listę, która lokalnie czuje się najbezpieczniej.
 
-## Pola ksiegi (minimalny rekord)
+Rezultat jest przewidywalny: każdy przegląd na nowo otwiera te same spory w nowym formatowaniu. Sponsorzy słyszą pewność bez porównywalności. Finanse słyszą narracje bez stabilnego zapisu tego, co się zmieniło i dlaczego.
 
-Kazdy wiersz powinien odpowiedziec na szesc pytan bez otwierania innego pliku.
+> **Co robi zdrowy rejestr:** wymusza stwierdzenia podlegające obaleniu, nazwanych właścicieli i jawne konsekwencje, gdy rzeczywistość się nie zgadza — bez zamieniania każdego spotkania w archeologię.
 
-**Stwierdzenie zalozenia** (jedno zdanie, mozliwe do obalenia); **Wlasciciel** (nazwana rola, nie skrzynka zespolu); **Wplyw jesli falsz** (korzysci, koszt, harmonogram, klasa ryzyka); **Dowod lub sygnal** (co potwierdzi prawde lub falsz); **Plan testu** (co zaobserwujecie w tym cyklu); **Odniesienie decyzji** (co sie zmieni, gdy zalozenie peknie).
+## Minimalny wiarygodny zapis: co każdy wiersz musi odpowiedzieć
 
-## Sekwencja krokow: migracja z rozlewu arkuszy
+Każde założenie powinno odpowiedzieć na sześć pytań bez otwierania innego pliku.
 
-Zamroz nowe karty zalozen na dwa tygodnie; Zaimportuj trzydziesci najwazniejszych zalozen do ksiegi z przypisanymi wlascicielami; Przeprowadz jeden przeglad portfolio uzywajac wylacznie delt ksiegi; Usun duplikaty list po potwierdzeniu z interesariuszami; Dodaj zmiany zalozen do standardowej agendy kadencji przegladu jako pierwsze dziesiec minut.
+**Stwierdzenie założenia:** jedno zdanie, podlegające obaleniu. **Właściciel:** nazwana rola, nie skrzynka zespołu. **Skutek jeśli źle:** klasa korzyści, kosztu, harmonogramu lub ryzyka — wystarczająco, by priorytetyzować uwagę. **Dowód lub sygnał:** co w realnym świecie potwierdziłoby prawdę lub fałsz. **Plan testu:** co obserwujecie w tym cyklu i co znaczy „wystarczająco dobry dowód”. **Powiązanie decyzyjne:** co się zmienia, gdy założenie pęka — pauza, pivot, przesunięcie finansowania, działanie na zależności.
 
-## Lista kontrolna: dyscyplina ksiegi dziala, gdy
+Jeśli nie potrafisz sformułować powiązania decyzyjnego, nie masz jeszcze governance — masz komentarz.
 
-- sponsorzy moga otworzyc jeden widok i zobaczyc, co zmienilo sie od ostatniego przegladu  
-- zlamane zalozenia produkuja zapisy decyzji, nie korytarzowe ustalenia  
-- decki slajdow odnosza ID z ksiegi zamiast przepisywac zalozenia  
-- mniej spotkan konczy sie na "powinnismy to sledzic" bez wlasciciela  
-- pakiety zarzadu i PMO czerpia te sama prawde o zalozeniach
+## Migracja z rozrostu arkuszy: praktyczne przejście
 
-## Reality check: chaos zalozen zwykle utrzymuje sie, bo kazdy zespol mysli, ze jego lokalna lista jest najbezpieczniejsza
+**Zamroź nowe zakładki założeń** na dwa tygodnia — bez wyjątków bez zgody sponsora. **Zaimportuj trzydzieści najważniejszych założeń** do rejestru z przypisanymi właścicielami, nawet jeśli brzmienie jest niedoskonałe. **Przeprowadź jeden przegląd portfela**, używając wyłącznie delt rejestru jako pierwszego bloku agendy. **Usuń zduplikowane listy** po potwierdzeniu równoważności przez interesariuszy — bolesne, ale konieczne. **Dodaj zmiany założeń** do standardowej kadencji jako stałe pierwsze dziesięć minut, nie opcjonalny dodatek.
 
-Finanse trzymaja jedna wersje. PMO trzyma druga. Strumienie pracy trzymaja prywatne trackery "na wszelki wypadek."
+Przejście jest tak kulturowe, jak techniczne. Leadership sygnalizuje, że jeden system prawdy bije lokalną elegancję.
 
-Te listy moga lokalnie wygladac odpowiedzialnie, ale razem gwarantuja, ze to samo zalozenie bedzie bronione, edytowane i odkrywane na nowo rownolegle.
+## Lista kontrolna: dyscyplina rejestru działa, gdy
 
-## Kiedy to dziala, a kiedy zawodzi
+- Sponsorzy mogą otworzyć jeden widok i zobaczyć, co zmieniło się od ostatniego przeglądu.  
+- Złamane założenia produkują zapisy decyzji, nie korytarzowe porozumienia.  
+- Decki odwołują się do ID rejestru zamiast przepisywać założenia.  
+- Mniej spotkań kończy się „powinniśmy to śledzić” bez właściciela.  
+- Pakiety pod zarząd i PMO ciągną tę samą prawdę o założeniach.
 
-**Dziala**, gdy przywodztwo zgadza sie, ze jedno zrodlo prawdy bije lokalna elegancje. **Zawodzi**, gdy ksiega staje sie zrzutem bez wlascicieli i testow.
+## Dlaczego lokalne listy brzmią racjonalnie — i tworzą chaos
 
-## Jak Consultify zastepuje archeologie zalozen
+Finanse trzyma jedną wersję. PMO drugą. Strumienie pracy prywatne trackery „na wszelki wypadek”.
 
-Consultify to zarzadzanie transformacja wspierane AI, zaprojektowane aby zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
+Każda lista lokalnie może wyglądać odpowiedzialnie. Razem gwarantują, że to samo założenie będzie bronione, edytowane i na nowo odkrywane równolegle — podczas gdy governance pali godziny na uzgadnianie rzeczywistości.
 
-Gdy zalozenia, dowod wartosci i decyzje dziela jeden kregoslup, przeglady testuja rzeczywistosc zamiast ja przepisywac.
+## Jak Consultify zastępuje archeologię założeń
+
+Consultify trzyma rejestr założeń, właścicieli, testy i haczyki decyzyjne w jednym systemie prawdy, więc przeglądy ciągną jedną prawdę zamiast konkurujących arkuszy. Gdy założenia, dowód wartości i decyzje dzielą kręgosłup, przeglądy testują rzeczywistość zamiast ją przepisywać.
 
 ## Podsumowanie
 
-Chaos arkuszy to wybor governance.
-
-Prowadz jedna ksiege zalozen z wlascicielami i testami, albo kazdy przeglad bedzie otwieral te same argumenty w nowym formatowaniu.
+Chaos arkuszy to wybór governance. Prowadź jeden rejestr założeń z właścicielami i testami — albo każdy przegląd na nowo otworzy te same spory w nowym opakowaniu — a portfel będzie mylił ruch z uczeniem się.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy trial](https://consultify.ai/demo).*
+*Consultify trzyma założenia, dowody i decyzje w jednej żywej warstwie, więc przeglądy ciągną delty rejestru zamiast otwierać dwanaście wersji skoroszytów. [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy okres próbny](https://consultify.ai/demo).*

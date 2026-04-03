@@ -1,56 +1,57 @@
-# Jak nie dac PMO transformacji stac sie fabryka raportow
+# Jak nie pozwolić, by PMO transformacji stało się fabryką raportów
 
-Persona docelowa: Dyrektor PMO transformacji / lider biura transformacji Etap lejka: Ocena Rdzeniowy problem: zespoly PMO ugrzezaja w cyklach odswiezania slajdow i skladania statusu, co wypiera czyszczenie zaleznosci, interwencje ryzyka i przygotowanie decyzji dla sponsorow Glowna obietnica: mozesz odwrocic model operacyjny PMO tak, aby raportowanie bylo produktem ubocznym zywych zapisow, a zespol sprzedawal jakosc decyzji, nie objetosc deckow
+Docelowa persona: dyrektor PMO transformacji / lider biura transformacji  
+Etap lejka: ewaluacja  
+Główny problem: zespoły PMO toną w cyklach odświeżania slajdów i składania statusu — co wypiera czyszczenie zależności, interwencję na ryzyku i przygotowanie decyzji dla sponsorów  
+Główna obietnica: możesz odwrócić model operacyjny PMO tak, by raportowanie było produktem ubocznym żywych zapisów, a zespół sprzedawał jakość decyzji, nie wolumen decków
 
-**Bezposrednia odpowiedz:** nie daj PMO transformacji stac sie fabryka raportow, definiujac trzy niepodlegajace negocjacji wyniki tygodniowo: pakiety gotowe do decyzji dla sponsorow, oczyszczone lub eskalowane najwazniejsze zaleznosci oraz zaktualizowane zapisy ryzyka i zalozen powiazane z dowodem wartosci. Ogranicz godziny produkcji statusu. Automatyzuj lub szablonuj powtarzalne widoki ze zrodla prawdy. Mierz sukces PMO po redukcji opoznienia decyzji i starzeniu zaleznosci, nie po liczbie slajdow. Jesli PMO nie wskaze decyzji, ktore umozliwilo, to dom wydawniczy. Wartosc PMO to ulatwianie decyzji. Raportowanie to praca wspierajaca. Gdy praca wspierajaca staje sie glownym zadaniem, wykonanie czeka.
+Wartość PMO to fasilitacja decyzji. Raportowanie to praca wspierająca.
 
-## Rama odwrocenia
+Gdy praca wspierająca staje się głównym zadaniem, wykonanie czeka. Sponsorzy dostają ruch. Zależności starzeją się. Ryzyka zostają na grzecznych listach „obserwacji”. Założenia rozpraszają się po deckach. A PMO — często najzdolniejszy zespół w programie — spędza talent na formatowaniu zamiast na interwencji.
 
-| tryb fabryki | tryb facylitacji |
+Odwrócenie jest proste do wypowiedzenia i trudne do egzekwowania: najpierw odświeżaj system prawdy, potem produkuj cienkie standardowe pakiety; mierz sukces opóźnieniem decyzyjnym i starzeniem zależności — nie przepustowością slajdów.
+
+> **Co zdrowe PMO sprzedaje co tydzień:** pakiety gotowe pod decyzję, wyczyszczone lub eskalowane zależności oraz zaktualizowane zapisy ryzyka i założeń powiązane z dowodem wartości.
+
+## Tryb fabryki versus tryb fasilitacji
+
+| Tryb fabryki | Tryb fasilitacji |
 | --- | --- |
-| niestandardowy deck na forum | standardowy pakiet z zapisow |
-| status jako narracja | status jako delta oparta na wyjatkach |
-| PMO posiada formatowanie | wlasciciele posiadaja fakty w systemie |
-| sukces to slajdy na czas | sukces to decyzje na czas |
+| Niestandardowy deck na forum | Standardowy pakiet z zapisów |
+| Status jako narracja | Status jako delta oparta na wyjątkach |
+| PMO posiada formatowanie | Właściciele posiadają fakty w systemie |
+| Sukces to slajdy na czas | Sukces to decyzje na czas |
 
-## Tygodniowy rytm operacyjny (minimum)
+To nie argument przeciw wizualizacjom. To argument przeciw bespoke teatrowi jako głównemu produktowi PMO.
 
-Poniedzialek: odswiez liste starzenia zaleznosci i przypisz wlascicieli czyszczenia.
+## Tygodniowy rytm operacyjny: minimalna wiarygodna kadencja
 
-Srodek tygodnia: przygotuj pakiet sponsora: wymagane decyzje, opcje, konsekwencje.
+**Poniedziałek:** odśwież starzenie zależności i przypisz właścicieli czyszczenia z datami. **W środku tygodnia:** przygotuj pakiet sponsora — wymagane decyzje, opcje, konsekwencje — z linkami do ID w zapisie. **Piątek:** zamknij pętlę: zapisz wyniki, zaktualizuj powiązania z rejestrem założeń i opublikuj, co się zmieniło.
 
-Piatek: domknij petle: utrwal wyniki i zaktualizuj powiazania ksiegi zalozen.
+Jeśli piątek to „dokończ deck”, tydzień się nie udał. Jeśli piątek to „zamknij decyzje”, PMO robi swoją prawdziwą robotę.
 
 ## Lista kontrolna: PMO jest zdrowe, gdy
 
-- sponsorzy dostaja decyzje, nie tylko aktualizacje  
-- powtarzalne decki sie kurcza, bo wyjatki niosa historie  
-- godziny PMO ida na usuwanie blokad i przygotowanie wyborow  
-- szablony raportow mapuja na ID ksiegi i ryzyka  
-- mniej spotkan, bo zapisy odpowiadaja na przewidywalne pytania
+- Sponsorzy dostają decyzje, nie tylko aktualizacje.  
+- Cykliczne decki kurczą się, bo wyjątki niosą historię.  
+- Godziny PMO idą na usuwanie blokad i przygotowanie wyborów.  
+- Szablony raportowania mapują się na ID rejestru i ryzyka.  
+- Mniej spotkań, bo zapisy odpowiadają na przewidywalne pytania.
 
-## Reality check: rozrost raportowania PMO zwykle bierze sie stad, ze kazda prosba interesariusza brzmi osobno rozsadnie
+## Dlaczego rozrost raportowania rośnie cicho
 
-Jeden lider chce inny przekroj. Drugi chce wiecej kontekstu. Ktos inny prosi o jeszcze jeden cotygodniowy widok.
+Każda prośba interesariusza brzmi osobno rozsądnie. Jeden lider chce innego cięcia. Ktoś inny chce więcej kontekstu. Kolejna osoba prosi o jeden dodatkowy widok tygodniowo.
 
-Zadna z tych prosb nie wyglada osobno groznie, ale razem po cichu zamieniaja PMO w service desk dla popytu na prezentacje zamiast zespol operacyjny dla przeplywu decyzji.
+Żadna z tych próśb nie wygląda sama w sobie na zabójstwo. Razem zamieniają PMO w helpdesk prezentacji zamiast zespół operacyjny dla przepływu decyzji. Remedium to dyscyplina leadership: ustandaryzowane pakiety, limit godzin na status i nagrody za szybsze decyzje — nie ładniejsze slajdy.
 
-## Kiedy to dziala, a kiedy zawodzi
+## Jak Consultify przesuwa pracę PMO z publikowania na operowanie
 
-**Dziala**, gdy przywodztwo zgadza sie, ze ustandaryzowane pakiety bija niestandardowy teatr.
-
-**Zawodzi**, gdy sponsorzy nadal nagradzaja ladniejsze slajdy szybszymi decyzjami.
-
-## Jak Consultify przesuwa prace PMO z publikowania na operacje
-
-Consultify to zarzadzanie transformacja wspierane AI, zaprojektowane aby zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy zrodlo prawdy pozostaje aktualne, energia PMO przechodzi z montazu na interwencje i wsparcie decyzji.
+Consultify odwraca pracę PMO, trzymając najpierw aktualny system prawdy, potem cienką warstwę slajdów wskazującą na ID rejestru, ryzyka i prośby decyzyjne. Gdy zapisy są żywe, energia PMO przechodzi ze składania na interwencję i wsparcie decyzji.
 
 ## Podsumowanie
 
-PMO, ktore tylko raportuje, to podatek od wykonania. Odwroc model: najpierw zapisy, potem decyzje, na koncu slajdy.
+PMO, które tylko raportuje, to podatek od wykonania. Odwróć model: najpierw zapisy, potem decyzje, na końcu slajdy — albo najlepsi operatorzy spędzą karierę na odświeżaniu zielonego, podczas gdy portfel pod spodem dryfuje w czerwień.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy trial](https://consultify.ai/demo).*
+*Consultify utrzymuje zapisy portfela na bieżąco, więc czas PMO przechodzi ze składania decków na czyszczenie zależności i przygotowanie decyzji sponsora. [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy okres próbny](https://consultify.ai/demo).*

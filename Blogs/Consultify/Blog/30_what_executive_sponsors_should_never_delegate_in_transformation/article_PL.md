@@ -1,53 +1,54 @@
-# Czego executive sponsorzy nigdy nie powinni delegowac w transformacji
+# Czego sponsorzy executive nigdy nie powinni delegować w transformacji
 
-Target persona: Executive sponsor / CEO / board-facing owner  
-Funnel stage: Consideration  
-Core problem: sponsorzy czesto deleguja transformation ownership w sposob, ktory wyglada na efficient, co fragmentuje accountability i zamienia governance w theater, bo nikt z authority nie zostaje widzialnie odpowiedzialny za trade-offs  
-Main promise: transformation control poprawia sie, gdy sponsorzy trzymaja krotka liste non-delegable: trade-offs, stop decisions, cross-functional deadlocks, integrity value story i escalation do board
+Docelowa persona: Sponsor executive / CEO / właściciel raportujący do rady  
+Etap lejka: Rozważanie  
+Główny problem: sponsorzy często delegują własność transformacji w sposób wyglądający na efektywny, co rozbija rozliczalność i zamienia zarządzanie w teatr, bo nikt z mandatu nie zostaje widocznie odpowiedzialny za kompromisy  
+Główna obietnica: kontrola nad transformacją poprawia się, gdy sponsorzy utrzymują krótką listę niedelegowalną: kompromisy, decyzje o zatrzymaniu, impasy międzyfunkcyjne, spójność narracji wartości oraz wyrównanie z radą
 
-**Bezposrednia odpowiedz:** nigdy w pelni nie deleguj decyzji, ktore reorderuja priorities, stopuja prace, rozwiazuja executive deadlocks albo zmieniaja to, co leadership obiecuje investorom i board. Delegation ma wykonywac portfolio, a nie zastepowac sponsor judgment na irreversible trade-offs. Dobra delegation robi transformation scalable. Zla delegation robi transformation ungovernable. Roznica nie jest intent.
+Dobra delegacja skaluje transformację. Zła czyni ją niemożliwą do zarządzania.
 
-To ktore decyzje zostaja u osoby, ktora moze absorbowac political cost.
+Różnica nie leży w intencji. Leży w tym, które decyzje zostają u osoby, która może ponieść koszt polityczny i przełożyć pracę między funkcjami. Gdy te decyzje dryfują do komitetów bez oparcia sponsora, rozliczalność się rozmywa. Organizacja wciąż prowadzi spotkania, wciąż produkuje decki i wciąż traci kontrolę — bo nikt z autorytetu nie jest na haku za niewygodne kompromisy.
 
-## Co sponsorzy powinni delegowac bez winy
+## Co sponsorzy powinni delegować bez poczucia winy
 
-Sponsorzy powinni delegowac: detailed planning i dependency management owned by PMO i program leads; routine status synthesis i meeting discipline; vendor delivery oversight w approved scope; analytics work, ktore wspiera decyzje bez ich zastepowania. Delegation tu zwieksza predkosc.
+Sponsorzy powinni delegować szczegółowe planowanie i zarządzanie zależnościami własnościowe przez PMO i liderów programów, rutynową syntezę statusu i dyscyplinę spotkań, nadzór nad dostarczaniem u dostawców w zatwierdzonym zakresie oraz pracę analityczną wspierającą decyzje bez ich zastępowania.
 
-## Lista non-delegable (trzymaj to explicit)
+Delegacja tu zwiększa prędkość. Czyści kalendarz sponsora pod osąd, który tylko on może wykonać.
 
-**Portfolio trade-offs:** co przyspiesza, pauzuje, scala albo stopuje, gdy capacity jest finite; **Stop i merge decisions:** zwlaszcza gdy stopping dotyka careers, budgets albo external commitments; **Executive deadlock breaking:** konflikty, ktore wymagaja authority, nie facilitation; **Value story integrity:** co leadership twierdzi jako outcomes, timing i risk appetite; **Board i investor alignment:** co jest obiecane externally i co wymaga disclosure, gdy rzeczywistosc sie przesuwa.
+## Lista niedelegowalna: trzymaj ją jawną
 
-Jesli to dryfuje do committees bez sponsor backing, accountability sie diffuseuje.
+**Kompromisy portfela:** co przyspiesza, pauzuje, scala lub zatrzymuje, gdy zdolność jest skończona.  
+**Decyzje o zatrzymaniu i scaleniu:** zwłaszcza gdy zatrzymanie dotyka karier, budżetów lub zobowiązań zewnętrznych.  
+**Rozbijanie impasów executive:** konflikty wymagające autorytetu, a nie samej fasilitacji.  
+**Spójność narracji wartości:** to, co kierownictwo twierdzi o wynikach, czasie i apetycie na ryzyko.  
+**Wyrównanie z radą i inwestorami:** co obiecane jest na zewnątrz i co wymaga ujawnienia, gdy rzeczywistość się przesuwa.
 
-## Porownanie: execution delegation versus judgment delegation
+Jeśli te kwestie lądują w forach, które nie mogą zdecydować — albo gorzej, w forach decydujących bez własności sponsora — portfel staje się politycznie bezpieczny i ekonomicznie słaby.
 
-| Typ delegation | rola sponsora | ryzyko przy over-delegation |
-| --- | --- | --- |
-| execution | set constraints, remove blockers | slows delivery, jesli za hands-on |
-| judgment on trade-offs | decide i own consequences | portfolio staje sie politically safe i economically weak |
+> **Reguła kciuka:** jeśli decyzja przełożyłaby władzę, pieniądze lub zewnętrzną wiarygodność, sponsor nie powinien znikać z niej.
 
-## Reality check: over-delegation czesto chowa sie za wygladem sponsor support
+## Delegacja wykonania kontra delegacja osądu
 
-Sponsor nadal bywa na key meetings. Jezyk nadal brzmi committed. Zespol nadal mowi, ze leadership jest engaged. Ale jesli najtrudniejsze stop, merge i deadlock-breaking calls sa stale przepychane bokiem albo opozniane, support jest obecny, a sponsorship nie.
+Delegacja wykonania ustawia ograniczenia i usuwa blokady; nadmierne zaangażowanie spowalnia dostarczanie. Delegacja osądu w kompromisach bez obecności sponsora czyni portfel niemożliwym do zarządzania. Sponsor nie musi prowadzić planu prac. Musi przejąć cięcia.
 
-## Kiedy to dziala, a kiedy nie
+## Rzeczywistość: nadmierna delegacja chowa się za widocznym wsparciem
 
-**Dziala**, gdy sponsorzy modeluja, ze twarde decyzje szybko do nich wracaja.
+Sponsor wciąż bywa na kluczowych spotkaniach. Język wciąż brzmi zaangażowany. Zespół wciąż mówi, że kierownictwo jest obecne. Jeśli najtrudniejsze decyzje o zatrzymaniu, scaleniu i rozbiciu impasów wciąż idą na bok lub się zacinają, wsparcie jest obecne, a sponsorowanie — nie.
 
-**Nie dziala**, gdy sponsorzy chca outcomes bez owning discomfort stopu albo repriorytetyzacji.
+Zespoły to zauważają. Optymalizują przetrwanie w niejasnym mandacie.
 
-## Jak Consultify wspiera sponsor-level control bez slide factories
+## Kiedy to działa, a kiedy zawodzi
 
-Consultify to AI-powered transformation management majace zastapic repetitive consulting phases live systemem dla strategy, ROI, governance i execution.
+Działa, gdy sponsorzy pokazują, że twarde decyzje szybko do nich wracają. Zawodzi, gdy sponsorzy chcą wyników bez przejmowania dyskomfortu zatrzymania lub ponownej priorytetyzacji. Wtedy zarządzanie staje się występem: poważny ton, miękkie konsekwencje.
 
-Pomaga sponsorom operowac na current signals i decision history zamiast reconstructed narratives.
+## Jak Consultify wspiera kontrolę na poziomie sponsora bez fabryk slajdów
+
+Consultify utrzymuje decyzje o kompromisach, wybory zatrzymania lub zmiany priorytetów oraz uzasadnienia w jednej historii operacyjnej zamiast rozrzucać je po deckach i mailach. Sponsorzy ćwiczą osąd ze wspólnego zapisu: do czego zobowiązał wcześniej portfel, które twarde rozmowy wciąż wiszą i gdzie wykonanie się rozjeżdża — tak by delegacja obejmowała dostarczanie, podczas gdy autorytet zostaje przy niewygodnych kompromisach.
 
 ## Podsumowanie
 
-Delegation nie powinna usuwac authority.
-
-Trzymaj trade-offs, stops, deadlocks, value claims i board alignment tam, gdzie accountability faktycznie moze przylgnac.
+Delegacja nie powinna usuwać autorytetu. Trzymaj kompromisy, zatrzymania, impasy, twierdzenia o wartości i wyrównanie z radą tam, gdzie rozliczalność faktycznie może przylgnąć. Wszystko inne może — i powinno — przejść do zespołów zbudowanych pod prędkość.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Poznaj metodologię](https://consultify.ai/demo).*
+*Consultify daje sponsorom żywą widoczność kompromisów portfela, sygnałów inicjatyw i historii decyzji, by osąd pozostawał ugruntowany, a praca wykonawcza delegowana. [Otwórz demo](https://consultify.ai) lub [Poznaj metodologię](https://consultify.ai/demo).*

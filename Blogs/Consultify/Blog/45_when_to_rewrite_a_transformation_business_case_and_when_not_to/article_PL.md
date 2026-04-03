@@ -1,58 +1,67 @@
-# Kiedy przepisac business case transformacji, a kiedy nie
+# Kiedy przepisać case biznesowy transformacji, a kiedy nie
 
-Persona docelowa: Sponsor transformacji / partner finansowy / wlasciciel portfolio Etap lejka: Rozwazanie Rdzeniowy problem: zespoly przepisuja business case po kazdym szoku, palac zdolnosci i resetujac rozmowy governance zamiast aktualizowac zalozenia i zapisy decyzji Glowna obietnica: dostajesz prosty zestaw regul dla pelnego przepisania versus kontrolowanej aktualizacji zalozen, aby sponsorzy chronic fokus, a dowod wartosci pozostawal porownywalny
+Docelowa persona: sponsor transformacji / partner finansów / właściciel portfela  
+Etap lejka: rozważanie  
+Główny problem: zespoły przepisują case’y po każdym szoku, paląc zdolności i resetując rozmowy governance zamiast aktualizować założenia i zapisy decyzji  
+Główna obietnica: prosty zestaw reguł: pełny przepis versus kontrolowana aktualizacja założeń — żeby sponsorzy chronili fokus, a dowód wartości pozostawał porównywalny
 
-**Bezposrednia odpowiedz:** przepisz caly business case transformacji, gdy zmienia sie materialnie logika finansowania, granice zakresu lub definicja wyniku (nowy mandat strategiczny, fuzja, stop-start glownej zaleznosci lub uniewazniona linia bazowa). Nie przepisuj, gdy poslizgnelo sie tylko tempo, peklo niekluczowe zalozenie lub wzrosla presja narracyjna; zamiast tego zaktualizuj ksiege zalozen, pokaz wariancje do bazy i utrwal decyzje portfolio. Pelne przepisania powinny byc rzadkimi zdarzeniami, ktore celowo resetuja porownywalnosc, a nie cotygodniowa terapia morale. Business case to linie bazowe.
+Case’y biznesowe to linie bazowe. Jeśli co miesiąc kasujesz linię bazową, nie możesz udowodnić wartości, nauczyć się, które założenia były złe, ani prowadzić uczciwych rozmów portfelowych o wariancji.
 
-Jesli co miesiac usuwasz baze, nie udowodnisz wartosci ani nie nauczysz sie, ktore zalozenia byly zle.
+A wiele zespołów reaguje na dyskomfort przepisaniem: nowy sponsor, zły kwartał, ostrzejsze pytanie z finansów, nagłówek konkurencji. Przepisanie brzmi jak postęp. Często to unikanie — drogi reset, który niszczy porównywalność i od zera restartuje spory governance.
 
-## Drzewo decyzyjne: przepisanie versus aktualizacja
+Dyscyplina operacyjna jest prostsza: przepisuj rzadko i świadomie; aktualizuj założenia stale; rejestruj decyzje, gdy rzeczywistość się rusza.
 
-Uzyj tej sekwencji przed autoryzacja pracy.
+> **Co sponsorzy powinni chronić:** stabilny komparator i widoczną historię założeń — żeby portfel mógł się uczyć bez narracyjnego wymykania się odpowiedzialności.
 
-Czy zmienila sie **zdefiniowana koncowka**? Jesli tak, rozwaz pelne przepisanie; Czy **granice zakresu** zmienily sie na tyle, ze korzysci i koszty nie sa porownywalne? Jesli tak, rozwaz pelne przepisanie; Czy zmienila sie **struktura finansowania** transz, bramek lub traktowania kapitalu? Jesli tak, rozwaz pelne przepisanie; Czy problemem jest **czas, wariancja wykonania lub pojedyncze zlamane zalozenie**? Jesli tak, aktualizuj ksiege i wariancje, unikaj przepisania; Czy silnikiem jest **dyskomfort polityczny** bez zmiany strukturalnej? Jesli tak, nie przepisuj; przeprowadz forum decyzyjne.
+## Drzewo decyzyjne: przepis versus aktualizacja
 
-## Porownanie: zamet przepisan versus dyscyplina ksiegi
+Przejdź tę sekwencję przed upoważnieniem dużej pracy nad case’em.
 
-| Sygnal | zamet przepisan | dyscyplina ksiegi |
+**Czy zdefiniowany wynik się zmienił?** Jeśli tak — rozważ pełny przepis.  
+**Czy granice zakresu zmieniły się na tyle, że korzyści i koszty nie są porównywalne?** Jeśli tak — rozważ pełny przepis.  
+**Czy struktura finansowania zmieniła transze, bramki lub traktowanie kapitału w sposób istotny?** Jeśli tak — rozważ pełny przepis.  
+**Czy problem to timing, wariancja wykonania lub pojedyncze złamane założenie?** Jeśli tak — zaktualizuj rejestr i wariancję; unikaj przepisu.  
+**Czy motor to dyskomfort polityczny bez zmiany strukturalnej?** Jeśli tak — nie przepisuj — uruchom forum decyzyjne i utrzymuj linię bazową uczciwą.
+
+Celem jest oddzielenie zmiany strukturalnej od presji emocjonalnej.
+
+## Chaos przepisów versus dyscyplina rejestru
+
+| Sygnał | Chaos przepisów | Dyscyplina rejestru |
 | --- | --- | --- |
-| szok kwartalny | nowa wersja case | delta zalozen plus decyzja |
-| zmiana sponsora | pelny reset narracji | nota transferu wlasnosci plus ta sama baza |
-| niewykonanie | przeramowane korzysci | wyjasniona wariancja, utrwalone kompromisy |
-| uczenie sie | stary case wycofany | hipotezy wycofane z dowodem |
+| Szok kwartalny | Nowa wersja case’u | Delta założeń plus decyzja |
+| Zmiana sponsora | Pełny reset narracji | Notatka transferu własności plus ta sama linia bazowa |
+| Miss | Przeformułowane korzyści | Wyjaśniona wariancja, zapisane kompromisy |
+| Uczenie się | Stary case wyrzucony | Hipotezy wycofane z dowodem |
 
-## Lista kontrolna: pozwolenie na przepisanie (wszystkie musza byc prawdziwe)
+Dyscyplina rejestru to sposób, w jaki finanse i operacje zostają wyrównane, gdy świat się rusza. Przepisy powinny być rzadkimi zdarzeniami, które celowo resetują porównywalność — nie cotygodniową terapią morale.
 
-- definicja wyniku lub granica zakresu zmienila sie materialnie  
-- finanse wymagaja nowej bazy dla audytu lub sledzenia kapitalu  
-- governance zgodilo sie, ze stary case nie jest juz legitnym komparatorem  
-- zdolnosci sa zaplanowane na prace przepisania bez kradziezy dostawy  
-- archiwum ksiegi zalozen chroni poprzednia baze do uczenia sie
+## Pozwolenie na przepis: wszystkie warunki muszą być spełnione
 
-## Reality check: presja na przepisanie zwykle rosnie najszybciej wtedy, gdy stara historia staje sie niewygodna do obrony
+Traktuj pełne przepisy jako drogie działania portfelowe. Wymagaj:
 
-Wariancja wyglada gorzej niz plan. Sponsor chce czystszej narracji. Zespol chce wersji, ktora latwiej wyjasnic.
+- Zmieniła się z definicji istotnie definicja wyniku lub granica zakresu.  
+- Finanse wymagają nowej linii bazowej pod audyt lub śledzenie kapitału.  
+- Governance uzgodniło, że stary case nie jest już legitimnym komparatorem.  
+- Zdolności na pracę przepisową są zaplanowane bez kradzieży dostaw.  
+- Poprzednia linia bazowa jest zarchiwizowana w historii założeń, żeby uczenie się przetrwało.
 
-To wlasnie wtedy przywodztwo musi zapytac, czy zmienil sie biznes, czy tylko poziom komfortu.
+Jeśli nie możesz spełnić tych warunków, prawdopodobnie potrzebujesz ścieżki aktualizacji — nie resetu.
 
-## Kiedy to dziala, a kiedy zawodzi
+## Dlaczego presja na przepis rośnie, gdy historia staje się niewygodna
 
-**Dziala**, gdy finanse i sponsorzy dziela jedna definicje zmiany materialnej.
+Wariancja wygląda gorzej niż w planie. Sponsor chce czystszej narracji. Zespół chce wersji łatwiejszej do wyjaśnienia.
 
-**Zawodzi**, gdy przepisanie staje sie kryjowka dla slabej dyscypliny wykonania.
+Dokładnie wtedy leadership musi zapytać, czy biznes się zmienił — czy tylko poziom komfortu. Jeśli tylko komfort, przepis kupuje chwilową ulgę i trwałą nieprzejrzystość.
 
-## Jak Consultify utrzymuje uczciwosc case bez nieskonczonych wersji
+## Jak Consultify utrzymuje uczciwość case’ów bez nieskończonych wersji
 
-Consultify to zarzadzanie transformacja wspierane AI, zaprojektowane aby zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy zalozenia, wariancja i decyzje zyja razem, przywodztwo aktualizuje rzeczywistosc bez kasowania historii.
+Consultify łączy wersje case’ów z historią założeń i rządzonymi aktualizacjami, więc finanse widzą, co się zmieniło, kiedy i dlaczego — bez utraty poprzedniej linii bazowej. Gdy założenia, wariancja i decyzje żyją razem, leadership aktualizuje rzeczywistość bez kasowania historii.
 
 ## Podsumowanie
 
-Przepisuj rzadko i swiadomie. Aktualizuj zalozenia wciaz.
-
-Tak utrzymujesz porownywalny dowod wartosci i zdrowe obciazenie governance.
+Przepisuj rzadko i świadomie. Aktualizuj założenia stale. Tak utrzymujesz porównywalny dowód wartości, rozsądne obciążenie governance i widoczne uczenie się — zamiast restartować ten sam spór pod nową okładką.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify łączy założenia, wariancję i decyzje portfelowe, żeby zespoły aktualizowały rzeczywistość bez startowania od zera nowego case’u co kwartał. [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

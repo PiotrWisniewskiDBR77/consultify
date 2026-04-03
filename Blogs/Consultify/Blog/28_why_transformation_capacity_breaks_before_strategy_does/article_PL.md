@@ -1,60 +1,56 @@
-# Dlaczego transformation capacity peka zanim strategy
+# Dlaczego zdolność transformacji pęka, zanim pęka strategia
 
-Target persona: COO / CHRO partner / transformation sponsor  
-Funnel stage: Awareness  
-Core problem: leadership dopracowuje strategy language, podczas gdy delivery capacity cicho sie zapada, co robi portfolio aligned na papierze i niemozliwe w praktyce  
-Main promise: rozpoznanie capacity jako wczesniejszego constraint pomaga sponsorom interweniowac, zanim strategy narrative stanie sie blame magnet dla teamow, ktore nigdy nie byly resourced do execution
+Docelowa persona: COO / partner CHRO / sponsor transformacji  
+Etap lejka: Świadomość  
+Główny problem: kierownictwo dopracowuje język strategii, podczas gdy zdolność dostarczania cicho się załamuje, co czyni portfel spójnym na papierze i niemożliwym w praktyce  
+Główna obietnica: uznanie zdolności za wcześniejsze ograniczenie pomaga sponsorom interweniować, zanim narracja strategii stanie się magnesem na winę dla zespołów, które nigdy nie zostały odpowiednio zasobione
 
-**Bezposrednia odpowiedz:** capacity peka pierwsze, bo real hours, attention spans i integration load sa trudniejsze do polityki niz strategy slides. Gdy capacity jest traktowane jak infinite, strategy drift pokazuje sie pozniej jako missed milestones, quality collapse i hidden borrowing z run-the-business work.
+Dokumenty strategiczne mogą dłużej pozostawać spójne niż organizacja wykonalna.
 
-Strategy documents moga zostac coherent dluzej niz organizacja moze zostac executable.
+Zdolność pęka pierwsza, bo prawdziwe godziny, rozpiętość uwagi i obciążenie integracyjne trudniej „upolitycznić” niż slajdy. Gdy zdolność jest traktowana jak nieskończona, dryf pokazuje się później jako nietrafione kamienie milowe, załamanie jakości i ukryte „pożyczanie” z pracy utrzymania bieżącego biznesu. Kierownictwo wtedy błędnie czyta objaw jako brak zaangażowania lub zamęt strategiczny, podczas gdy wiążącym ograniczeniem od początku było zasobienie i podatek koordynacyjny.
 
-Ta asymetria to powod, dla ktorego wiele transformacji wyglada strategicznie sound az do momentu, gdy failuje operacyjnie.
+## Iluzja zdolności
 
-## Iluzja capacity
+Zdolność łatwo niedoszacować, bo chowa się w częściowych alokacjach rozłożonych na zbyt wielu właścicielach, obciążeniu spotkaniami, które nie jest modelowane jako praca, podatku integracyjnym między systemami i dostawcami oraz progach wypalenia, które nie pojawiają się w planach zatrudnienia.
 
-Capacity latwo underestimate, bo chowa sie w: partial allocations rozlozone na zbyt wielu ownerow; meeting load, ktore nie jest modelowane jako praca; integration tax miedzy systems, vendors i functions; burnout thresholds, ktore nie pojawiaja sie w staffing plans.
+Zespoły mogą zgadzać się na priorytety, podczas gdy kalendarze implikują inną rzeczywistość. Sponsorzy mogą popierać portfel, podczas gdy role-wąskie gardła siedzą na wielu ścieżkach krytycznych. Historia strategii zostaje stabilna; podłoże wykonania pęka.
 
-Illustrative pattern: zespoly zgadzaja sie na priorities, podczas gdy ich kalendarze nadal implikuja inna rzeczywistosc.
+> **Wczesne ostrzeżenie:** nazwane godziny, role-wąskie gardła, gęstość integracji, nieformalne pożyczanie od zespołów „run the business” i wiek kolejki decyzji się psują, podczas gdy język strategii pozostaje bez zmian.
 
-## Dlaczego strategy wyglada fine, podczas gdy execution sie napina
+## Dlaczego strategia wygląda dobrze, podczas gdy wykonanie się napina
 
-Strategy moze zostac stabilna, gdy jest glownie narrative.
+Strategia może pozostawać stabilna, gdy jest głównie narracją. Wykonanie nie może pozostać stabilne, gdy rekrutacja się opóźnia, eksperci są dzieleni między konkurujące programy, zależności narastają szybciej niż domknięcia, a fora zarządzania mnożą się bez usuwania starej pracy.
 
-Execution nie moze zostac stabilne, gdy: hiring lags; subject matter experts sa wspoldzieleni miedzy competing programs; dependencies stackuja sie szybciej niz closures; governance forums mnoza sie bez usuwania starej pracy. Strategy deck nie zawsze odzwierciedla te constraints.
+Deck nie zawsze odzwierciedla te ograniczenia. Ta asymetria jest powodem, dla którego transformacje wyglądają strategicznie sensownie aż do operacyjnej porażki.
 
-## Prosta diagnostic checklist
+## Lista diagnostyczna na poziomie sponsora
 
-Uzywaj tego weekly albo biweekly na poziomie sponsor:
+Przeglądaj co tydzień lub co dwa tygodnie:
 
-1. **Named hours:** kto ma ile godzin tygodniowo na transformation work, po nazwisku  
-2. **Bottleneck roles:** ktore role sa na wielu critical paths  
-3. **Integration load:** ile cross-system releases albo cutovers siedzi w nastepnych trzydziestu dniach  
-4. **Borrowing signals:** gdzie run-the-business teamy informalnie zaslaniaja transformation gaps  
-5. **Decision throughput:** ile decyzji czeka i jak dlugo czekaja
+**Nazwane godziny:** kto ma ile czasu na pracę transformacyjną, po imieniu — nie fikcja działowa.  
+**Role-wąskie gardła:** które role pojawiają się na wielu ścieżkach krytycznych.  
+**Obciążenie integracyjne:** ile wydań między-systemowych lub przecięć w najbliższych trzydziestu dniach.  
+**Sygnały pożyczania:** gdzie zespoły „run the business” nieformalnie zasłaniają luk transformacji.  
+**Przepustowość decyzji:** ile decyzji czeka i jak długo czekają.
 
-Jesli te sygnaly sie psuja, podczas gdy strategy story zostaje unchanged, masz capacity problem w stroju strategy.
+Jeśli te sygnały się psują, podczas gdy narracja strategii pozostaje bez zmian, prawdopodobnie masz problem zdolności i przepustowości w przebraniu strategii.
 
-## Reality check: zalamanie capacity czesto pozostaje politycznie niewidzialne az do chwili, gdy organizacja zdazy juz zamienic je w problem narracji
+## Rzeczywistość: załamanie długo pozostaje niewidoczne, aż zamieni się w walkę o narrację
 
-Strategia nadal brzmi spojnie. Priorytety nadal wydaja sie uzgodnione. Jezyk na slajdach nadal czuje sie aligned.
+Strategia wciąż brzmi spójnie. Priorytety wciąż wydają się uzgodnione. Język slajdów wciąż czuje się wyrównany. Powierzchowna spójność opóźnia interwencję, dopóki zespoły prywatnie nie wchłoną przeciążenia. Wtedy nietrafione dostarczanie bywa błędnie czytane jako słabe zaangażowanie zamiast niemożliwego obciążenia.
 
-Ta powierzchowna spojnosc potrafi opoznic interwencje wystarczajaco dlugo, by zespoly prywatnie wchlonely overload, a niewykonanie zostalo blednie odczytane jako brak commitment.
+## Kiedy ta perspektywa zmienia decyzje
 
-## Kiedy ta insight zmienia decyzje
+Traktowanie zdolności jako wcześniejszego ograniczenia wymusza trudniejsze wybory portfela: mniej równoległych inicjatyw, jawne decyzje o zatrzymaniu lub scaleniu, plany zatrudnienia spięte z zobowiązaniami oraz cięcia w zarządzaniu, które zmniejszają podatek koordynacyjny. Nic z tego nie wymaga przepisania nagłówka strategii. Wymaga uczciwości co do tego, co organizacja realnie udźwignie.
 
-Ta insight ma znaczenie, gdy wymusza: mniej concurrent initiatives; explicit stop albo merge decisions; real staffing plans powiazane z portfolio commitments; governance cuts, ktore redukuja coordination tax.
+## Jak Consultify sprawia, że zdolność i strategia są razem czytelne
 
-## Jak Consultify robi capacity i strategy razem czytelne
-
-Consultify jest transformation management, ktore laczy strategy, ROI, governance i execution w jednym operating system.
-
-Gdy initiative load, ownership i deviation signals zostaja live, sponsorzy widza capacity stress wczesniej niz ujawnilby to kolejny strategy workshop.
+Consultify prowadzi zarządzanie transformacją jako jeden system, więc obciążenie inicjatywami, pokrycie własnością, kolejki decyzji i sygnały odchyleń czytają się razem zamiast jako rozłączone kropki statusu. Sponsorzy widzą wzorce przeciążenia obok kontekstu ROI, co ujawnia stres zdolności, zanim narracja strategii pochłonie winę.
 
 ## Podsumowanie
 
-Strategy nie failuje pierwsza tak czesto, jak wyglada, ze failuje pierwsza. Capacity failuje cicho, dopoki strategy narrative nie pochlonie winy.
+Strategia nie zawodzi pierwsza tak często, jak wygląda, że zawodzi pierwsza. Zdolność zawodzi cicho, dopóki narracja nie pęknie. Nazwanie tego wcześnie to jedna z najwyższej dźwigni interwencji, jaką sponsor może wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify ujawnia obciążenie inicjatywami, własność i sygnały odchyleń obok logiki ROI, by stres zdolności był widoczny, zanim pęknie narracja strategii. [Poznaj metodologię](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

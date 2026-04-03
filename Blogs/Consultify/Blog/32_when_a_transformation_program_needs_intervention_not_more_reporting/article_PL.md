@@ -1,60 +1,63 @@
-# Kiedy transformation program potrzebuje interwencji, a nie wiecej reportingu
+# Kiedy program transformacji potrzebuje interwencji, a nie kolejnego raportowania
 
-Target persona: Transformation owner / sponsor / board-facing lead  
-Funnel stage: Consideration  
-Core problem: zmagajace sie programy czesto dostaja wiecej reporting layers, co zwieksza administrative load bez zmiany ownership, decyzji ani constraints, ktore spowodowaly drift  
-Main promise: mozesz rozpoznac intervention moments wczesnie, obserwujac decision latency, repeated scope rewrites, budget variance bez portfolio response i ryzyka, ktore wracaja pod nowymi nazwami
+Docelowa persona: Właściciel transformacji / sponsor / lider raportujący do rady  
+Etap lejka: Rozważanie  
+Główny problem: zmagające się programy często dostają kolejne warstwy raportowania, co zwiększa obciążenie administracyjne bez zmiany własności, decyzji ani ograniczeń, które spowodowały dryf  
+Główna obietnica: momenty interwencji można rozpoznać wcześnie, obserwując opóźnienie decyzji, powtarzane przepisywanie zakresu, wariancję budżetu bez reakcji portfela oraz ryzyka, które wracają pod nowymi nazwami
 
-**Bezposrednia odpowiedz:** interweniuj, gdy program pokazuje sustained decision latency, recurring deadlocks, budget albo capacity breaches bez trade-offs i risk triggers, ktore fire bez recorded response. Jesli proposed fix to tylko kolejny report, prawdopodobnie leczysz symptomy, podczas gdy underlying control problem trwa. Reporting moze byc potrzebny. Rzadko wystarcza, gdy program traci kontrole.
+Raportowanie może być konieczne. Rzadko wystarcza, gdy program traci kontrolę.
 
-Failure mode jest znajomy: kazdy nowy dashboard obiecuje visibility, podczas gdy te same nierozwiazane konflikty trwaja.
+Znany tryb awarii jest krótkoterminowo pocieszający: dodaj kolejny pulpit, kolejne pole, kolejny tygodniowy rollup. Widoczność rośnie. Nierozwiązane konflikty zostają. Zespoły spędzają więcej czasu na narracji i mniej na decyzjach. Sponsorzy odkładają niewygodne wybory, bo sala ma „więcej przejrzystości”, jakby to był brakujący składnik.
 
-## Pulapka reportingu
+Interwencja jest inna. To zastosowanie autorytetu do kompromisów: naprawiona własność, zmniejszony lub scalony zakres, zmienione finansowanie, obciążenie zarządzania i utrwalone konsekwencje.
 
-Wiecej reportingu czuje sie odpowiedzialnie.
+## Pułapka raportowania
 
-On tez: konsumuje owner time, ktore moglobo isc na decyzje; tworzy illusion kontroli przez color coding; opoznia uncomfortable sponsor choices; uczy zespoly optymalizowac narrative zamiast outcomes.
+Więcej raportowania czuje się odpowiedzialnie. Pożera też czas właścicieli, który mógłby pójść na decyzje, tworzy iluzję kontroli przez kodowanie kolorami, opóźnia wybory sponsorów i uczy zespoły optymalizować narrację zamiast wyników.
 
-Illustrative pattern: status poprawia sie w deckach, podczas gdy delivery i finance sie rozjezdzaja.
+Gdy status w deckach się poprawia, podczas gdy dostarczanie i finanse się rozjeżdżają, nie patrzysz na problem metryk. Patrzysz na problem kontroli.
 
-## Sygnaly interwencji (uzyj jako leadership checklist)
+## Sygnały interwencji: lista kontrolna kierownictwa
 
-Traktuj program jako wymagajacy interwencji, a nie wiecej reportingu, gdy kilka z nich utrzymuje sie:
+Traktuj program jako wymagający interwencji — a nie więcej raportowania — gdy utrzymuje się kilka z poniższych:
 
-1. **Decision latency:** te same decyzje czekaja ponad uzgodniony threshold tydzien po tygodniu  
-2. **Ownership gaps:** critical interfaces nie maja named accountable executive owner  
-3. **Scope churn:** repeated rescoping bez stop, merge albo reprioritization decisions  
-4. **Budget drift:** spend albo cash timing rusza bez governed portfolio response  
-5. **Risk recurrence:** ta sama klasa issue wraca pod renamed risks albo new initiatives  
-6. **Dependency deadlock:** cross-functional conflicts zostaja unresolved po escalation
+**Opóźnienie decyzji:** te same decyzje czekają ponad uzgodniony próg tydzień po tygodniu.  
+**Luki własności:** krytyczne interfejsy nie mają nazwanego odpowiedzialnego executive.  
+**Chaos zakresu:** powtarzane zmiany zakresu bez decyzji o zatrzymaniu, scaleniu lub ponownej priorytetyzacji.  
+**Dryf budżetu:** wydatki lub timing gotówki się przesuwają bez rządzonej reakcji portfela.  
+**Powrót ryzyka:** ta sama klasa problemu wraca pod przemianowanymi ryzykami lub nowymi inicjatywami.  
+**Impas zależności:** konflikty międzyfunkcyjne pozostają nierozwiązane po eskalacji.
 
-## Playbook interwencji (krotki)
+Jeśli te wzorce są stabilne, kolejny raport nie zastąpi autorytetu.
 
-Gdy sygnaly triggeruja, prowadz focused intervention cycle: **Name the control failure:** decision, capacity, dependency albo value-case failure; **Time-box decision forum:** mala sponsor group, explicit decision asks; **Force trade-offs:** co stopuje, pauzuje albo scala, by restore control; **Change governance load:** usuwaj forumy, ktore nie decyduja, dodawaj tylko to, co zamyka decyzje; **Record consequences:** publikuj, co sie zmienilo i co bedzie measured next.
+> **Test interwencji:** jeśli proponowana naprawa to tylko „będziemy to lepiej śledzić”, prawdopodobnie leczysz objawy.
 
-## Porownanie: wzrost reportingu versus interwencja
+## Krótki playbook interwencji
 
-| Odpowiedz | co sie zmienia | typowy rezultat |
-| --- | --- | --- |
-| wiecej reportingu | visibility artifacts | wolniejsze zespoly, te same konflikty |
-| interwencja | ownership, trade-offs, governance load | krotkoterminowy discomfort, restored control |
+**Nazwij awarię kontroli:** decyzji, zdolności, zależności lub przypadku wartości — wybierz główną.  
+**Ogranicz czasem forum decyzyjne:** mała grupa sponsorów, jawne pytania decyzyjne, materiały dowodowe do wcześniejszej lektury.  
+**Wymuś kompromisy:** co zatrzymujemy, pauzujemy lub scalamy, by przywrócić kontrolę.  
+**Zmień obciążenie zarządzania:** usuń fora, które nie decydują; dodawaj tylko to, co zamyka decyzje.  
+**Utrwal konsekwencje:** opublikuj, co się zmieniło i co zostanie zmierzone dalej.
 
-## Kiedy to dziala, a kiedy nie
+Interwencja powinna być niewygodna na spotkaniu i wyjaśniająca tydzień później.
 
-**Dziala**, gdy sponsorzy akceptuja, ze interwencja to leadership act, nie PMO task.
+## Wzrost raportowania kontra interwencja
 
-**Nie dziala**, gdy interwencja staje sie kolejna workshop series bez closure.
+Więcej raportowania zmienia artefakty widoczności i często spowalnia zespoły, podczas gdy konflikty zostają. Interwencja zmienia własność, kompromisy i obciążenie zarządzania. Tworzy krótkoterminowy dyskomfort i przywróconą kontrolę.
 
-## Jak Consultify przesuwa wysilek z reporting packs na decyzje
+## Kiedy to działa, a kiedy zawodzi
 
-Consultify to AI-powered transformation management zaprojektowane, by zastapic repetitive consulting phases live systems dla strategy, ROI, governance i execution.
+Działa, gdy sponsorzy akceptują interwencję jako akt przywództwa, a nie zadanie PMO. Zawodzi, gdy interwencja staje się kolejną serią warsztatów bez domknięcia — jeszcze jedną formą ruchu bez decyzji.
 
-Gdy sygnaly i decyzje zyja w jednym miejscu, leadership spedza mniej czasu na rekonstrukcji rzeczywistosci i wiecej na jej zmianie.
+## Jak Consultify przesuwa wysiłek z pakietów raportowych na decyzje
+
+Consultify koncentruje sygnały interwencji, luki własności i decyzje o kompromisach w jednej warstwie operacyjnej, więc kierownictwo pracuje ze wspólnego zapisu zamiast dokładać nowe pakiety. Gdy opóźnienie decyzji, dryf budżetu i powracające klasy ryzyka siedzą w jednym widoku, sponsorzy mogą odpowiadać kompromisami i utrwalonymi decyzjami.
 
 ## Podsumowanie
 
-Jesli program potrzebuje interwencji, kolejny report nie zastapi authority, trade-offs i governed change. Rozpoznawaj sygnaly wczesnie i dzialaj z decision intent.
+Jeśli program potrzebuje interwencji, kolejny raport nie zastąpi autorytetu, kompromisów i rządzonej zmiany. Rozpoznawaj sygnały wcześnie i działaj z intencją decyzyjną — zanim organizacja znormalizuje stałą pracę narracyjną jako „zarządzanie”.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy trial](https://consultify.ai/demo).*
+*Consultify koncentruje sygnały transformacji, decyzje i logikę ROI w jednym żywym systemie, by sponsorzy interweniowali na faktach zamiast dokładać warstwy raportowania. [Otwórz demo](https://consultify.ai) lub [Rozpocznij bezpłatny okres próbny](https://consultify.ai/demo).*

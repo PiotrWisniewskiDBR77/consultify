@@ -1,56 +1,66 @@
 # So verhindern Sie, dass Strategie-Reviews zu Narrativ-Theater werden
 
-Zielpersona: Strategy Owner / Transformations-Sponsor / boardnahe Fuehrungskraft  
+Zielpersona: Strategy Owner / Transformations-Sponsor / boardnahe Führungskraft  
+Funnel-Stufe: Überlegung  
+Kernproblem: Jährliche oder quartalsweise Strategie-Reviews werden oft zu polierten Story-Sessions – sie wirken senior, während Entscheidungslatenz, Portfolio-Kompromisse und Wertnachweis weich bleiben.  
+Hauptversprechen: Strategie-Reviews bleiben operativ, wenn sie explizite Entscheidungen zu Annahmen, Kapitalwellen, Capability-Wetten und Stop-doing-Listen mit vergleichbaren Szenarien erzwingen.
 
-Trichterphase: Ueberlegung Kernproblem: jaehrliche oder quartalsweise Strategie-Reviews werden oft zu polierten Story-Sessions, die senior wirken, waehrend Entscheidungslatenz, Portfolio-Kompromisse und Value Proof weich bleiben Kernversprechen: Strategie-Reviews bleiben operativ, wenn sie explizite Wahlen zu Annahmen, Kapitalwellen, Capability-Wetten und Stop-doing-Listen mit vergleichbaren Szenarien erzwingen
+Strategie-Reviews sind teuer, weil sie entscheidend sein sollen. Sie bündeln die teuerste Aufmerksamkeit des Unternehmens, setzen mehrjährige Verpflichtungen und prägen, was die Organisation ablehnen wird.
 
-Halten Sie Strategie-Reviews ehrlich, indem Sie ein Vorlese-Paket mit benannten strategischen Wetten, expliziten Annahmen mit Falsifikationssignalen, einem Portfolio-Menue (fund, pause, merge, stop) und zeitlich begrenzten Entscheidungsfenstern fuer Sponsoren verlangen. Wenn der Review mit Alignment-Sprache ohne dokumentierte Kompromisse endet, haben Sie Narrativ-Theater produziert, keinen Strategie-Kontrollpunkt. Strategie-Reviews sollen die Richtung zuruecksetzen. Sie setzen oft Slides zurueck.
+Driften sie ins Narrativ-Theater, fühlen sie sich weiter wichtig an. Die Geschichten sind schlüssig. Der Ehrgeiz klingt ernst. Die Visuals wirken unvermeidlich. Verlässt der Raum aber mit Alignment-Sprache und ohne dokumentierte Kompromisse, hat die Organisation eine Performance gekauft – keinen Kontrollpunkt.
 
-Der Unterschied ist, ob Exekutives mit Entscheidungen oder mit Applaus gehen.
+> **Was Führungskräfte mitnehmen sollten:** benannte Wetten, explizit verschobene Wetten mit Revisit-Triggern, gestoppte Arbeit mit Kapazitätsfolgen – und ein Takt, der am Annahmenrisiko hängt, nicht allein an Kalendergewohnheit.
 
-## Narrativ-Theater-Muster (erkennen)
+## Theater-Muster erkennen
 
-Theater zeigt sich als: lange Marktgeschichten ohne Entscheidungsfrage; Szenarioarbeit ohne Bindung an Funding oder Kapazitaet; Strategiethemen, die jede Funktion als "ja, machen wir schon" lesen kann; starke Visuals mit schwacher Vergleichbarkeit der Optionen; Follow-up-Listen ohne Owner und Daten.
+Theater heißt nicht „zu viele Folien“. Theater heißt: Es fehlt Entscheidungsstruktur.
 
-Das erhoeht Governance-Last nachgelagert, weil Teams raten, was Strategie meinte.
+Lange Marktgeschichten ohne Entscheidungsfrage. Szenarioarbeit ohne Bindung an Funding oder Kapazität. Strategische Themen so vage, dass jede Funktion Alignment beanspruchen kann. Starke Visuals, während Optionen nicht vergleichbar bleiben. Follow-up-Listen ohne Owner und Termine, sodass die Umsetzung zum Rätselraten wird.
 
-## Operative Regeln fuer Strategie-Reviews
+Diese Muster erhöhen nachgelagert die Governance-Last, weil Teams Strategie über Politik statt über veröffentlichte Entscheidungen interpretieren müssen.
 
-Uebernehmen Sie diese Regeln fuer das Forum: **Eine Seite Wetten:** worin Sie falsch liegen, wenn die Strategie scheitert; **Annahmen-Ledger:** jede Annahme hat Owner, Review-Datum und Kill-Signal; **Portfolio-Menue:** explizite Wahlen zu Initiativen und Wellen, nicht nur Themen; **Kapazitaetswahrheit:** wo die Arbeit in Funktionen und Fuehrungszeit landet; **Stop-doing-Liste:** welche Depriorisierung die Wetten freikauft, die Sie finanzieren wollen.
+## Operating-Regeln, die Reviews ehrlich halten
 
-## Rahmen: Strategie-Entscheidungsoutputs (muessen veroeffentlicht werden)
+Übernehmen Sie absichtlich langweilige Regeln – langweilige Regeln liefern Entscheidungen.
 
-Mindestens veroeffentlichen: **gewaehlte Wetten** mit Funding und Owner; **verschobene Wetten** mit Revisit-Trigger; **gestoppte Arbeit** mit Kapazitaetskonsequenz; **naechster Review-Takt** gekoppelt an Annahmenrisiko, nicht Kalendergewohnheit.
+**Eine Seite Wetten:** Worin Sie falsch liegen, wenn die Strategie scheitert. **Annahmen-Ledger:** Jede Annahme hat Owner, Review-Datum und Kill-Signal. **Portfolio-Menü:** Explizite Entscheidungen zu Initiativen und Wellen, nicht nur Themen. **Kapazitätswahrheit:** Wo die Arbeit in Funktionen und Führungszeit landet – nicht „wir werden es besetzen“. **Stop-doing-Liste:** Welche Depriorisierung die Wetten freikauft, die Sie finanzieren wollen.
 
-## Vergleich: Storyline-Review versus Entscheidungs-Review
+Kann der Review diese Outputs nicht liefern, ist er nicht bereit für einen Strategiezyklus – er ist ein Entwurfsgespräch.
 
-| Review-Typ | primaeres Artefakt | typisches Kontrollergebnis |
+## Entscheidungs-Outputs jedes Mal veröffentlichen
+
+Mindestens veröffentlichen:
+
+- **Gewählte Wetten** mit Funding und Owner  
+- **Verschobene Wetten** mit Revisit-Trigger an Evidenz gebunden, nicht an Stimmung  
+- **Gestoppte Arbeit** mit Konsequenz für die Kapazität (was wird möglich, weil Sie stoppen)  
+- **Nächster Review-Takt** getrieben davon, welche Annahmen fragil sind – nicht von Quartals-Trägheit  
+
+So wird Strategie operativ: Die Organisation kann Umsetzungsentscheidungen auf einen dokumentierten Weggabelungspunkt zurückführen.
+
+## Storyline-Review versus Entscheidungs-Review
+
+| Review-Typ | Primäres Artefakt | Typisches Kontrollergebnis |
 | --- | --- | --- |
-| Storyline | inspirierendes Narrativ | mehrdeutige Prioritaeten |
-| Entscheidung | dokumentierte Kompromisse | klarere Execution-Disziplin |
+| Storyline | Inspirierendes Narrativ | Mehrdeutige Prioritäten |
+| Entscheidung | Dokumentierte Kompromisse | Klarere Execution-Disziplin |
 
-## Reality check: Strategie-Theater wirkt meist dann am ueberzeugendsten, wenn die Optionen am wenigsten vergleichbar sind
+Der zweite Typ braucht weiter Narrativkompetenz – aber Narrativ dient der Vergleichbarkeit, nicht dem Applaus.
 
-Die Geschichte ist koharent. Die Ambition klingt ernsthaft. Die Visuals lassen den Pfad unvermeidlich wirken.
+## Warum poliertes Narrativ falsche Sicherheit erzeugt
 
-Genau deshalb brauchen Fuehrungskraefte Vergleichbarkeits-Disziplin, denn poliertes Narrativ kann falsche Sicherheit erzeugen, wo harte Wahlstruktur noch fehlt.
+Die Geschichte kann schlüssig sein, während die Optionen am wenigsten vergleichbar sind. Das ist der gefährliche Moment: Führung empfindet Klarheit, weil die Sprache glatt ist, obwohl das Portfolio-Menü noch implizit ist.
 
-## Wann es funktioniert und wann nicht
+Vergleichbarkeitsdisziplin zwingt Optionen in dieselbe Form: Kosten, Risiken, Abhängigkeiten und was sich verschiebt, wenn Sie A versus B wählen. Das ist im Raum unangenehmer – am Montagmorgen deutlich nützlicher.
 
-**Funktioniert**, wenn Sponsoren Mehrdeutigkeit als Schulden behandeln, die im Raum geklaert werden muss. **Scheitert**, wenn Strategie-Review zur Markenuebung ohne Portfolio-Zaehne wird.
+## Wie Consultify Strategie-Wetten mit ROI und Execution-Protokollen verbindet
 
-## Wie Consultify Strategiewetten mit ROI und Execution-Aufzeichnungen verbindet
-
-Consultify ist KI-gestuetztes Transformationsmanagement, das repetitive Beratungsphasen durch Live-Systeme fuer Strategie, ROI, Governance und Execution ersetzt.
-
-Wenn strategische Annahmen, ROI-Cases und Entscheidungen ein System teilen, verbringen Strategie-Reviews Zeit mit Wellenwahl, nicht mit Geschichtsschreibung.
+Consultify führt Strategie-Wetten, Annahmen und Execution-Protokolle in einer Struktur zusammen, damit Reviews Menüs und dokumentierte Entscheidungen ausgeben statt nur narrativen Abschluss. Teilen strategische Annahmen, ROI-Cases und Entscheidungen ein System, verbringt der Review Zeit mit Wellenwahl – nicht mit Geschichtsschreibung.
 
 ## Fazit
 
-Strategie-Reviews verdienen ihre Kosten nur, wenn sie dokumentierte Kompromisse produzieren.
-
-Wenn alle inspiriert gehen, aber niemand accountable geht, haben Sie fuer Theater bezahlt.
+Strategie-Reviews verdienen ihre Kosten nur, wenn sie dokumentierte Kompromisse produzieren. Geht jeder inspiriert, aber niemand mit klarer Verantwortung – haben Sie für Theater bezahlt, und die Umsetzung zahlt doppelt.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo öffnen](https://consultify.ai) oder [Kostenlosen Trial starten](https://consultify.ai/demo).*
+*Consultify verknüpft strategische Annahmen, ROI-Cases und Umsetzungsentscheidungen, damit Strategie-Reviews Wellen und Kapazität mit nachvollziehbaren Protokollen wählen. [Demo öffnen](https://consultify.ai) oder [Kostenlose Testversion starten](https://consultify.ai/demo).*

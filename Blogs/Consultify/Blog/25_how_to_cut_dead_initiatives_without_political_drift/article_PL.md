@@ -1,64 +1,66 @@
-# Jak ucinac martwe initiative bez political drift
+# Jak ucinać martwe inicjatywy bez politycznego dryfu
 
-Target persona: Portfolio owner / transformation sponsor / COO  
-Funnel stage: Consideration  
-Core problem: martwe initiative przezycja, bo stop work jest traktowany jak personal defeat, co zamienia portfolio hygiene w polityke i robi transformation portfolio ciezsze niz organizacja moze wykonac  
-Main promise: mozesz zatrzymac slabe initiative bez political drift, gdy stopping uzywa widocznych regul, recorded trade-offs i sponsor-led closure zamiast hallway negotiations
+Docelowa persona: Właściciel portfela / sponsor transformacji / COO  
+Etap lejka: Rozważanie  
+Główny problem: martwe inicjatywy przeżywają, bo wstrzymanie pracy jest traktowane jak osobista porażka, co zamienia higienę portfela w politykę i czyni portfel transformacyjnie cięższym, niż organizacja jest w stanie wykonać  
+Główna obietnica: można zatrzymać słabe inicjatywy bez politycznego dryfu, gdy zatrzymanie opiera się na widocznych zasadach, utrwalonych kompromisach i domykaniu prowadzonym przez sponsorów zamiast negocjacji w korytarzu
 
-**Bezposrednia odpowiedz:** ucinaj martwe initiative z published stop rule, single decision forum, explicit trade-off language i krotkim wind-down planem, ktory chroni ludzi i reputacje. Jesli stopping zostaje informalny, polityka wypelni luke. Organizacje rzadko brakuje zdolnosci do startu transformation work. Czesto brakuje dyscypliny do stopu.
+Organizacjom rzadko brakuje zdolności do startu pracy transformacyjnej. Często brakuje dyscypliny, by ją zatrzymać.
 
-Ta luka jest droga, bo martwe initiative konsumuja uwage, budget tokens i credibility.
+Gdy zatrzymanie jest nieformalne, polityka wypełnia lukę. Martwe inicjatywy pożerają uwagę, tokeny budżetowe i wiarygodność. Zespoły bronią ciągłości, bo system karze widoczny odwrót, nawet gdy przypadek wartości już nie trzyma. To nie zawsze upór. Często to racjonalna odpowiedź na niejasne zasady i wysokie stawki osobiste.
 
-## Dlaczego stopping czuje sie polityczny, nawet gdy jest racjonalny
+## Dlaczego zatrzymanie czuje się polityczne, nawet gdy jest racjonalne
 
-Stop initiative zagraza: narrative consistency dla ownera; postrzeganemu commitment wobec stakeholderow; internal status zwiazanemu z program label. Wiec zespoly bronia continuity, nawet gdy value case juz nie trzyma. To nie zawsze upor. Czesto to racjonalna odpowiedz na system, ktory karze visible retreat.
+Zagraża spójności narracji właścicieli, postrzeganemu zobowiązaniu wobec interesariuszy i wewnętrznemu statusowi związanemu z etykietą programu. Bez rządzonej ścieżki rozmowa staje się osobista: kto przegrał, kto mrugnął, kto dostanie winę.
 
-## Framework stop rule (uzyj przed debata)
+Alternatywa to uczynienie zatrzymania aktem portfela z kryteriami, forami i utrwalonymi kompromisami — tak by decyzja odwoływała się do dowodu i priorytetu, a nie do charakteru.
 
-Przyjmij maly zestaw stop triggers zdefiniowanych z gory i stosowanych konsekwentnie:
+## Ramy reguł zatrzymania: zdefiniuj przed debatą
 
-1. **Value failure:** powtarzajace sie missy na measurable outcomes powiazane z original hypothesis  
-2. **Dependency deadlock:** blocked ponad uzgodniony threshold bez credible path  
-3. **Capacity breach:** initiative nie moze byc staffed bez kradziezy z wyzszym priorytetem  
-4. **Strategic displacement:** leadership explicite repriorytetyzowalo i initiative nie jest w cut line
+Przyjmij z góry mały zestaw wyzwalaczy zatrzymania i stosuj go konsekwentnie:
 
-Illustrative pattern: organizacje, ktore publikuja stop rules, redukuja ad hoc blame, bo decyzja odnosi sie do criteria, nie osobowosci.
+**Porażka wartości:** powtarzające się nietrafienia w wyniki powiązane z pierwotną hipotezą, bez ograniczonego eksperymentu odbudowy.
 
-## Porownanie: political stop versus governed stop
+**Impas zależności:** blokada dłużej niż uzgodniony próg bez wiarygodnej ścieżki ani decyzji executive.
 
-| Styl stopu | Co zwykle sie dzieje | Koszt |
-| --- | --- | --- |
-| hallway negotiation | niespojne outcome, hidden deals | trust erosion |
-| sponsor-led governed stop | explicit trade-offs, recorded rationale | krotkoterminowy discomfort, dlugoterminowa clarity |
+**Naruszenie zdolności:** inicjatywy nie da się obsadzić bez chronicznego „kradzenia” z pracy o wyższym priorytecie.
 
-## Reality check: slabe initiative czesto przezywaja nie dlatego, ze case jest mocny, tylko dlatego, ze nikt nie chce wziac na siebie widocznego konca
+**Przesunięcie strategiczne:** kierownictwo wyraźnie zmieniło priorytety, a ta inicjatywa jest poza nową linią cięcia.
 
-Value case slabnie. Zespol juz to czuje. Leadership nadal sie waha.
+Opublikowane zasady ograniczają ad hoc obwinianie, bo rozmowa wraca do kryteriów. Obciążenie emocjonalne nie znika, ale przestaje być arbitralne.
 
-To opoznienie rzadko jest analityczne. Zwykle jest kosztem oficjalnego nazwaniu stopu w systemie, ktory traktuje konczenie pracy jako embarassment zamiast dyscypliny.
+> **Rządzone zatrzymanie:** jedno forum decyzyjne, jawny język kompromisów i krótki plan domknięcia chroniący ludzi i interfejsy.
 
-## Sekwencja krokow: jak wind down bez drift
+## Polityczne zatrzymanie kontra rządzone zatrzymanie
 
-**Name the decision:** stop, merge albo park z czytelnym ownerem i data; **Publish the rationale:** criteria-based explanation, nie performance review; **Capture the trade-off:** jaka capacity albo risk jest freed i co jest deferred; **Close interfaces:** dependencies, vendors, reporting lines i governance slots; **Reallocate explicitly:** gdzie idzie freed capacity, po nazwisku i priorytecie.
+Negocjacje w korytarzu dają niespójne wyniki i ukryte układy. Zaufanie eroduje, bo zespoły widzą faworyzację. Rządzone domykanie prowadzone przez sponsorów daje krótkoterminowy dyskomfort i długoterminową jasność, bo uzasadnienie i kompromisy są widoczne.
 
-## Kiedy to dziala, a kiedy nie
+Celem nie jest przyjemne zatrzymanie. Celem jest czytelne zatrzymanie.
 
-**Dziala**, gdy sponsorzy modeluja stopping jako portfolio hygiene, nie kare.
+## Rzeczywistość: słabe inicjatywy często przeżywają, bo nikt nie chce przejąć końca
 
-**Nie dziala**, gdy tylko slabe initiative owned by weak sponsors sa stopowane, podczas gdy chroniona praca zostaje immune.
+Przypadek wartości słabnie. Zespół to czuje. Kierownictwo waha się, bo oficjalne zatrzymanie jest drogie w kulturze, która traktuje kończenie pracy jak wstyd zamiast dyscypliny.
 
-## Jak Consultify wspiera governed stopping
+Opóźnienie rzadko jest analityczne. Jest społeczne. Rządzone zatrzymanie przenosi decyzję do forum, w którym odpowiedzialny jest portfel, a nie pojedyncza osoba.
 
-Consultify jest pod prioritization, ROI logic i initiative status na zywo.
+## Jak domknąć bez dryfu
 
-To ulatwia anchor stop decisions w evidence i trade-offs zamiast narrative defense.
+**Nazwij decyzję:** zatrzymanie, scalenie lub parkowanie, z jasnym właścicielem i datą. **Opublikuj uzasadnienie:** wyjaśnienie oparte na kryteriach, a nie przegląd występu przebrany za strategię. **Utrwal kompromis:** jaka zdolność lub ryzyko zostało uwolnione i co zostało odłożone. **Zamknij interfejsy:** zależności, dostawcy, linie raportowania i sloty zarządzania. **Przydziel wprost:** dokąd idzie uwolniona zdolność, po nazwisku i priorytecie.
+
+Jeśli przydział pozostaje mglisty, portfel zapełni się szumem, a zatrzymanie poczuje się bezcelowe.
+
+## Kiedy to działa, a kiedy zawodzi
+
+Działa, gdy sponsorzy pokazują, że zatrzymanie to higiena, nie kara. Zawodzi, gdy zatrzymywane są tylko słabe inicjatywy słabych sponsorów, podczas gdy chroniona praca pozostaje nienaruszalna. Wtedy zasady stają się teatrem.
+
+## Jak Consultify wspiera rządzone zatrzymanie
+
+Consultify utrzymuje kryteria zatrzymania, priorytetyzację, logikę ROI i status inicjatyw na żywo w jednej przestrzeni transformacji. Decyzje „zatrzymać czy kontynuować” kotwiczą w sygnałach i kompromisach zamiast w obronie narracji, z widocznym zapisem tego, co zatrzymano i dokąd poszła zdolność.
 
 ## Podsumowanie
 
-Martwe initiative trwaja, gdy stopping jest socially expensive i proceduralnie vague.
-
-Zrob stopping governed, criteria-led i sponsor-owned, a political drift traci glowne paliwo.
+Martwe inicjatywy trwają, gdy zatrzymanie jest społecznie drogie i proceduralnie mgliste. Uczyń zatrzymanie opartym na kryteriach, przejętym przez sponsorów i utrwalonym — a polityczny dryf traci główne paliwo.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Poznaj metodologię](https://consultify.ai/demo).*
+*Consultify czyni kondycję inicjatyw, logikę ROI i priorytetyzację widocznymi, by decyzje „zatrzymać czy kontynuować” odwoływały się do żywych sygnałów zamiast obrony narracji. [Otwórz demo](https://consultify.ai) lub [Poznaj metodologię](https://consultify.ai/demo).*

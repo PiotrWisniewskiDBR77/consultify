@@ -9,7 +9,7 @@
  *  - Blogs/Consultify/Blog/<slug>/publish.md (image placement)
  *
  * Outputs:
- *  - server/migrations/20260403_consultify_kb_import_v3.sql
+ *  - server/migrations/20260403_consultify_kb_import_v5.sql
  *  - public/kb/consultify/<slug>/ (hero, analytical, social images)
  */
 
@@ -25,7 +25,7 @@ const BLOGS_ROOT = path.join(ROOT, 'Blogs', 'Consultify', 'Blog');
 const MANIFEST_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'knowledge_base_manifest.json');
 const RENDERER_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'renderer_manifest.json');
 const RELATION_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'relation_manifest.json');
-const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v3.sql');
+const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v5.sql');
 
 interface ManifestArticle {
   canonical_id: string;
@@ -74,7 +74,7 @@ function esc(s: string): string {
   return s.replace(/'/g, "''");
 }
 
-function readArticleBody(slug: string, lang: string): string {
+function readArticleFile(slug: string, lang: string): string {
   const folder = slugToFolderName(slug);
   if (!folder) {
     console.warn(`  WARN: No folder found for slug: ${slug}`);
@@ -88,7 +88,11 @@ function readArticleBody(slug: string, lang: string): string {
     return '';
   }
 
-  let content = fs.readFileSync(filePath, 'utf-8');
+  return fs.readFileSync(filePath, 'utf-8');
+}
+
+function stripArticleMetadata(content: string): string {
+  if (!content) return '';
 
   const lines = content.split('\n');
   let bodyStart = 0;
@@ -264,7 +268,7 @@ function main() {
 
   const sql: string[] = [];
 
-  sql.push(`-- Migration: 20260403_consultify_kb_import_v3.sql`);
+  sql.push(`-- Migration: 20260403_consultify_kb_import_v5.sql`);
   sql.push(`-- Purpose: Import 50 Consultify knowledge base articles with EN/PL/DE translations`);
   sql.push(`-- Source: Blogs/_LP_KB_READY/Consultify manifests + Blogs/Consultify/Blog/ articles`);
   sql.push(`-- Date: 2026-04-02`);
@@ -535,9 +539,13 @@ function main() {
       continue;
     }
 
-    const enContentRaw = readArticleBody(article.slug, 'en');
-    const plContentRaw = readArticleBody(article.slug, 'pl');
-    const deContentRaw = readArticleBody(article.slug, 'de');
+    const enFileRaw = readArticleFile(article.slug, 'en');
+    const plFileRaw = readArticleFile(article.slug, 'pl');
+    const deFileRaw = readArticleFile(article.slug, 'de');
+
+    const enContentRaw = stripArticleMetadata(enFileRaw);
+    const plContentRaw = stripArticleMetadata(plFileRaw);
+    const deContentRaw = stripArticleMetadata(deFileRaw);
 
     if (!enContentRaw) {
       console.warn(`SKIP: Empty EN content for ${article.slug}`);
@@ -552,9 +560,9 @@ function main() {
     const readingTime = estimateReadingTime(enContentRaw);
     const seo = readSeoData(article.slug);
 
-    const enTitle = extractTitle(enContentRaw) || article.title;
-    const plTitle = extractTitle(plContentRaw) || enTitle;
-    const deTitle = extractTitle(deContentRaw) || enTitle;
+    const enTitle = extractTitle(enFileRaw) || article.title;
+    const plTitle = extractTitle(plFileRaw) || enTitle;
+    const deTitle = extractTitle(deFileRaw) || enTitle;
 
     const thumbnailUrl = `/kb/consultify/${article.slug}/hero.png`;
     const socialImageUrl = `/kb/consultify/${article.slug}/social.png`;

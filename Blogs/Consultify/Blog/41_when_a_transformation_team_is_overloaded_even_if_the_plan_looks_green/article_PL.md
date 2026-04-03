@@ -1,54 +1,61 @@
-# Kiedy zespol transformacji jest przeciazony, nawet jesli plan wyglada na zielony
+# Kiedy zespół transformacji jest przeciążony, choć plan wygląda na zielono
 
-Persona docelowa: Lider PMO transformacji / lider dostawy / sponsor Etap lejka: Rozwazanie Rdzeniowy problem: plan moze pozostac zielony, podczas gdy kolejki, opoznienie decyzji i ukryte strumienie pracy sciskaja zespol, co obniza dyscypline wykonania i dowod wartosci, zanim ryzyko pojawi sie na wykresach kamieni milowych Glowna obietnica: mozesz wczesnie wykryc przeciazenie, mierzac kolejki decyzji, wskazniki przerobek, kontekstowe przelaczanie miedzy inicjatywami, godziny governance oraz zaleznosc sponsora od niewielkiej liczby nazwanych osob
+Docelowa persona: lider PMO transformacji / lider dostaw / sponsor  
+Etap lejka: rozważanie  
+Główny problem: plan może zostać zielony, podczas gdy kolejki, opóźnienie decyzyjne i ukryte strumienie pracy ściskają zespół — co niszczy dyscyplinę wykonania i dowód wartości, zanim ryzyko pojawi się na wykresach kamieni milowych  
+Główna obietnica: wcześnie wykryjesz przeciążenie, mierząc kolejki decyzyjne, wskaźniki przeróbek, przełączanie kontekstu między inicjatywami, godziny governance oraz zależność sponsora od małej liczby nazwanych osób
 
-**Bezposrednia odpowiedz:** traktuj zespol jako przeciazony, gdy kolejki decyzji starzeja sie ponad progi, gdy przerobki rosna, podczas gdy kamienie milowe zostaja zielone, gdy kluczowi ludzie staja sie pojedynczymi punktami dla wielu inicjatyw, gdy godziny governance wypieraja prace dostawcza lub gdy rozstrzyganie zaleznosci zwalnia, choc ukonczenie zadan wyglada dobrze. Zielone plany moga ukrywac niewyplacalnosc zdolnosci, bo harmonogramy znosza ciche pozyczanie od jakosci, dokumentacji i zarzadzania ryzykiem. Zielony to kolor harmonogramu. To nie jest wypowiedz o prawdzie o zdolnosciach.
+Zielony to kolor harmonogramu. To nie stwierdzenie o prawdzie zdolności.
 
-Przeciazenie jest czesto niewidoczne, dopoki ktos nie odejdzie, audyt nie znajdzie luk lub zaleznosc nie eksploduje.
+W złożonych transformacjach plan może pozostać zielony, podczas gdy organizacja po cichu pożycza od jakości, dokumentacji, zarządzania ryzykiem i czasu na regenerację. To pożyczanie nie jest darmowe. Pojawia się później jako przegapione kwartały, ustalenia audytowe, eksplozje zależności i rotacja wśród ludzi, którzy byli „zawsze niezawodni”.
 
-## Sygnaly przeciazenia, ktore przetrwaja zielone plany
+Przeciążenie często jest niewidoczne, dopóki nie stanie się kryzysem — nie dlatego, że liderzy są lekkomyślni, ale dlatego, że wykresy kamieni milowych nigdy nie były projektowane pod kolejki, kontencję ani czas oczekiwania na decyzje.
 
-Zwracaj uwage na kilka naraz: **Listy oczekujacych decyzji** rosna, podczas gdy statusy pozostaja pewne siebie; **Te same nazwiska** pojawiaja sie jako wlasciciele na wielu sciezkach krytycznych; **Praca po godzinach** staje sie norma dla kluczowych lidow; **Zadania jakosci i ryzyka** cicho przesuwaja sie na "nastepny sprint" w kolko; **Eskalacje** trwaja dluzej, choc predkosc zadan wyglada stabilnie; **Praca nad dowodem wartosci** jest odkladana, podczas gdy raportowanie kamieni milowych zostaje wypolerowane.
+> **Co sponsorzy powinni traktować jako czerwony sygnał:** te same nazwiska na każdej ścieżce krytycznej, rosnące kolejki decyzyjne przy pewnym statusie oraz godziny governance wypierające korekty w dostawach.
 
-## Porownanie: zielony harmonogram versus zielone zdolnosci
+## Sygnały, które przeżywają zielone plany
 
-| Widok | co mierzy | martwe pole |
+Obserwuj kilka naraz, nie pojedyncze irytacje.
+
+**Listy oczekiwania na decyzje rosną**, podczas gdy decki executive pozostają wypolerowane. **Te same osoby** występują jako właściciele w wielu ścieżkach krytycznych. **Praca po godzinach** normalizuje się dla kluczowych liderów. **Zadania jakości i ryzyka** cicho ślizgają się na „następny sprint” raz po raz. **Eskalacje trwają dłużej**, choć prędkość zadań wygląda stabilnie. **Praca nad dowodem wartości** jest odkładana, podczas gdy raportowanie kamieni milowych jest na bieżąco.
+
+To wzorzec niewypłacalności zdolności: system płaci za widoczny zielony niewidzialnym długiem.
+
+## Zielony harmonogram versus zielone zdolności
+
+| Widok | Co mierzy | Ślepa plamka |
 | --- | --- | --- |
-| zielony harmonogram | planowane daty wobec raportowanego ukonczenia | ukryte pozyczanie od pracy poza kamieniami milowymi |
-| zielone zdolnosci | przepustosc z ochrona dla przerobek i wieku kolejki | wymaga uczciwego logowania |
+| Zielony harmonogram | Planowane daty versus zgłaszane ukończenie | Ukryte pożyczanie od pracy poza kamieniami milowymi |
+| Zielone zdolności | Przepustowość z strażnikami na przeróbki i wiek kolejki | Wymaga uczciwego logowania i uwagi sponsora |
 
-## Sekwencja krokow: zdiagnozuj przeciazenie w tydzien
+Zielone zdolności są trudniejsze, bo nazywają ludzi i kompromisy. Dlatego też zapobiegają późnym niespodziankom.
 
-**Eksportuj kolejke decyzji** z wiekiem i wlascicielami; **Zmapuj koncentracje wlascicieli** na inicjatywach; **Probkuj dwa tygodnie** realnej alokacji pracy lidow; **Przejrzyj odlozone zadania ryzyka i jakosci** jako zestaw portfolio; **Porownaj godziny governance** do godzin dostawy dla tych samych lidow. Jesli mapa cie zaskakuje, plan juz uprzejmie klamal.
+## Zdiagnozuj przeciążenie w jeden tydzień
 
-## Menu interwencji (wybierz jeden glowny ruch)
+**Eksportuj kolejkę decyzji** z wiekiem i właścicielami. **Zmapuj koncentrację własności** na inicjatywach i zależnościach. **Próbkuj dwa tygodnie** faktycznej alokacji pracy liderów — nie tylko narracji z kart pracy. **Przejrzyj odłożone zadania ryzyka i jakości** jako zestaw portfelowy, nie jako izolowane problemy zespołów. **Porównaj godziny governance do godzin dostaw** dla tych samych nazwisk.
 
-**wstrzymaj ekspansje zakresu**, az kolejki spadna ponizej progu; **polacz inicjatywy**, ktore dziela jeden przeciazony szkielet zespolu; **podziel wlasnosc**, by nikt nie trzymal wiecej niz jednej krytycznej sciezki eskalacji; **wycofaj fora governance**, ktore zuzywaja lidow bez decyzji; **zatrudnij lub pozycz zdolnosci** z jawnym zakonczeniem, nie stala heroika.
+Jeśli mapa cię zaskakuje, plan już uprzejmie kłamał.
 
-## Reality check: przeciazenie najdluzej ukrywa sie w zespolach, ktore nadal wygladaja na niezawodne
+## Menu interwencji: wybierz jeden główny ruch
 
-Te same osoby dalej mowia tak. Terminy na papierze nadal sa dotrzymywane. Spotkania nadal sie odbywaja.
+**Wstrzymaj rozszerzanie zakresu**, dopóki kolejki nie spadną poniżej progu. **Scal inicjatywy**, które dzielą jeden przeciążony rdzeń zespołu. **Podziel własność**, żeby jedna osoba nie trzymała więcej niż jednej krytycznej ścieżki eskalacji bez jawnej ulgi. **Wycofaj fora governance**, które pożerają liderów bez produkcji decyzji. **Zatrudnij lub pożycz zdolności** z jawnym zachodem słońca — nie stałym bohaterstwem.
 
-Ta niezawodnosc moze maskowac fakt, ze zespol placi za zielony status pozyczaniem od dokumentacji, reakcji na ryzyko, coachingu i czasu na odzyskanie sil.
+Błąd to lekkie wybranie pięciu ruchów naraz. Przeciążenie to problem portfela; potrzebuje decyzji portfelowej.
 
-## Kiedy to dziala, a kiedy nie
+## Dlaczego niezawodne zespoły najdłużej ukrywają przeciążenie
 
-**Dziala**, gdy sponsorzy akceptuja, ze zielone plany moga maskowac niewyplacalnosc.
+Te same osoby wciąż mówią tak. Terminy wciąż są spełniane na papierze. Spotkania wciąż się odbywają.
 
-**Nie dziala**, gdy naprawy przeciazenia staja sie mowami motywacyjnymi bez kompromisow portfolio.
+Ta niezawodność może maskować fakt, że zespół płaci za zielony status pożyczką od pracy, która zapobiega następnemu upadkowi. Sponsorzy powinni traktować utrzymane bohaterstwo jako sygnał governance, nie jako komplement.
 
-## Jak Consultify pokazuje kolejki, decyzje i sygnaly zdolnosci razem
+## Jak Consultify pokazuje kolejki, decyzje i sygnały zdolności razem
 
-Consultify to zarzadzanie transformacja wspierane przez AI, zaprojektowane tak, by zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy decyzje, zaleznosci i prawda o dostawie zyja razem, przeciazenie pojawia sie jako wzorce, nie jako prywatne cierpienie.
+Consultify pokazuje głębokość kolejki, presję zależności i obciążenie decyzyjne obok koloru kamienia milowego, więc zielone plany nie mogą ukryć niewypłacalności w warstwie pracy. Gdy decyzje, zależności i prawda o dostawach żyją razem, przeciążenie widać jako wzorce — nie jako prywatne cierpienie.
 
 ## Podsumowanie
 
-Przeciazenie to problem portfolio przebrany za nastroj kadrowy.
-
-Mierz kolejki i koncentracje wlasnosci, nie tylko kolor kamienia milowego.
+Przeciążenie to problem portfela w przebraniu nastroju kadrowego. Mierz kolejki i koncentrację własności, nie tylko kolor kamienia milowego — albo odkryjesz prawdę, gdy odejdą najlepsi ludzie i zależności w końcu się zderzą.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy trial](https://consultify.ai/demo).*
+*Consultify pokazuje kolejki decyzji, starzenie zależności i prawdę o dostawach razem, więc zielone plany nie mogą ukryć niewypłacalności zdolności przed sponsorami. [Otwórz demo](https://consultify.ai) lub [Rozpocznij darmowy okres próbny](https://consultify.ai/demo).*

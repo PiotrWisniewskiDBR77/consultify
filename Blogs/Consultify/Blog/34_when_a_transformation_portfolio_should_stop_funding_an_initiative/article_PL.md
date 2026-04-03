@@ -1,68 +1,67 @@
-# Kiedy portfolio transformacji powinno przestac finansowac inicjatywe
+# Kiedy portfel transformacji powinien przestać finansować inicjatywę
 
-Persona docelowa: CFO / sponsor portfolio / wlasciciel sterowania transformacja Etap lejka: Decyzja Rdzeniowy problem: slabe portfolio utrzymuja finansowanie inicjatyw, by uniknac konfliktu sponsorow, co pali zdolnosci operacyjne i opoznia uczciwe kompromisy portfolio, podczas gdy zielone plany ukrywaja strukturalna porazke Glowna obietnica: mozesz zatrzymac lub wstrzymac finansowanie z dyscyplina, gdy peka dowod wartosci, gdy zdolnosci sa nie do odzyskania, gdy impas zaleznosci trwa po eskalacji lub gdy governance nie zapewnia wlasnosci
+Docelowa persona: CFO / sponsor portfela / właściciel sterowania transformacją  
+Etap lejka: Decyzja  
+Główny problem: słabe portfele utrzymują finansowanie inicjatyw, by uniknąć konfliktu sponsorów, co pali zdolności i opóźnia uczciwe kompromisy portfela, podczas gdy zielone plany ukrywają strukturalną porażkę  
+Główna obietnica: można zatrzymać lub wstrzymać finansowanie z dyscypliną, gdy pęka dowód wartości, zdolność jest nie do odzyskania, impasy zależności trwają po eskalacji albo zarządzanie nie zapewnia własności
 
-**Bezposrednia odpowiedz:** zatrzymaj lub wstrzymaj finansowanie, gdy inicjatywa wielokrotnie nie trzyma terminow decyzji powiazanych z hipotezami wartosci, gdy wyniki nastepcze rozjezdzaja sie z biznes case bez wiarygodnego planu odbudowy, gdy krytyczne zaleznosci pozostaja nierozwiazane po rzadzonej sciezce eskalacji lub gdy ta sama klasa ryzyka wraca bez utrwalonej odpowiedzi portfolio. Kontynuacja wydatkow, by zachowac spokoj polityczny, to tryb porazki portfolio, nie cierpliwosc. Zarzadzanie portfolio to nie tylko uruchamianie pracy. To tez konczenie pracy, ktora nie zwroci kontrolowanej wartosci.
+Zarządzanie portfelem to nie tylko uruchamianie pracy. To też kończenie pracy, która nie zwróci kontrolowanej wartości.
 
-Bez dyscypliny wstrzymywania finansowania transformacja staje sie zbiorem drogich zobowiazan, ktore zagluszaja zdolnosci na to, co nadal ma sciezke do dowodu.
+Bez dyscypliny wstrzymywania finansowania transformacja staje się zbiorem drogich zobowiązań, które zagłuszają zdolność na inicjatywy, które wciąż mają wiarygodną ścieżkę do dowodu. Kontynuacja wydatków, by zachować polityczny spokój, to tryb awarii portfela, nie cierpliwość.
 
-## Ukryty koszt "jeszcze jednego kwartalu"
+## Ukryty koszt „jeszcze jednego kwartału”
 
-Organizacje czesto daja kolejny kwartal, bo: sponsorzy boja sie widocznej porazki; zespoly obiecuja narracje odbudowy; finanse nie maja prostej reguly czesciowego stopu; fora governance unikaja utrwalania kompromisow.
+Organizacje przyznają kolejny kwartał, bo sponsorzy boją się widocznej porażki, zespoły obiecują odbudowę, finanse nie mają prostej reguły częściowego zatrzymania, a zarządzanie unika utrwalania kompromisów. Ten wzorzec rozciąga wykonanie, zwiększa obciążenie zarządzania i uczy portfela optymalizować narrację ponad wyniki.
 
-Ten wzorzec zwieksza obciazenie governance, rozciaga dyscypline wykonania i uczy portfolio optymalizacji narracji ponad wyniki.
+Nadzieja to nie strategia portfela. Dowód i własność — tak.
 
-## Framework decyzji o wstrzymaniu finansowania (uzyj w sterowaniu)
+## Ramy decyzji o wstrzymaniu finansowania dla sterowania
 
-Traktuj kazda linie jako trigger wymuszajacy jawna decyzje kontynuacji, pauzy, polaczenia lub stopu:
+Traktuj każdą linię jako wyzwalacz wymuszający jawne kontynuowanie, pauzę, scalenie lub zatrzymanie:
 
-1. **Peicie dowodu wartosci:** metryki nastepcze zaprzeczaja biznes case przez dwa kolejne cykle przegladu bez ograniczonego eksperymentu retestu zalozen  
-2. **Naruszenie opoznienia decyzji:** nazwane decyzje wykonawcze czekaja ponad prog, podczas gdy wydatki trwaja  
-3. **Impas zaleznosci:** blokery miedzyfunkcyjne przetrwaja eskalacje bez dzialania na poziomie portfolio  
-4. **Niewyplacalnosc zdolnosci:** inicjatywa pozycza zdolnosci w sposob wymuszajacy chroniczne kompromisy jakosci lub bezpieczenstwa gdzie indziej  
-5. **Powrot ryzyka:** ta sama klasa problemu wraca pod nowymi nazwami ryzyka bez utrwalonej odpowiedzi  
-6. **Porazka governance:** wymagane fora nie zapewniaja frekwencji, wynikow ani publikacji konsekwencji
+**Pęknięcie dowodu wartości:** metryki następcze zaprzeczają przypadkowi wartości przez kolejne cykle przeglądu bez ograniczonego eksperymentu ponownego testu założeń.  
+**Naruszenie opóźnienia decyzji:** nazwane decyzje executive czekają ponad uzgodniony próg, podczas gdy wydatki trwają.  
+**Impas zależności:** blokery międzyfunkcyjne przetrwają eskalację bez działania na poziomie portfela.  
+**Niewypłacalność zdolności:** inicjatywa „pożycza” zdolność w sposób wymuszający chroniczne kompromisy jakości lub bezpieczeństwa gdzie indziej.  
+**Powrót ryzyka:** ta sama klasa problemu wraca pod przemianowanymi ryzykami bez utrwalonego zapisu rządzonej reakcji.  
+**Awaria zarządzania:** wymagane fora nie zapewniają frekwencji, wyników ani publikacji konsekwencji.
 
-Jeden trigger wymaga analizy.
+Jeden wyzwalacz wymaga analizy. Kilka zwykle oznacza, że portfel powinien przestać finansować lub wymusić twardy reset — a nie kolejne przedłużenie na narracji.
 
-Wiele triggerow zwykle oznacza, ze portfolio powinno przestac finansowac lub wymusic twardy reset, a nie przedluzac na nadziei.
+> **Higiena dojrzałego portfela:** zatrzymanie to przywództwo, gdy kryteria są widoczne; kontynuacja to przywództwo, gdy dowód jest realny.
 
-## Reality check: wstrzymywanie finansowania zwykle zawodzi, bo organizacja nadal traktuje utopiony wysilek jak dowod przyszlego zwrotu
+## Poniesiony wysiłek to nie przyszły zwrot
 
-Dlatego kolejny kwartal wydaje sie emocjonalnie racjonalny. Ludzie pamietaja prace juz wykonana. Sponsorzy pamietaja obietnice juz zlozone. Finanse widza wydatki juz poniesione. Ale nic z tego nie dowodzi, ze inicjatywa nadal ma kontrolowana sciezke do wartosci.
+Kolejny kwartał czuje się emocjonalnie racjonalnie, bo ludzie pamiętają już wykonaną pracę i złożone obietnice. Finanse widzi już poniesione wydatki. Nic z tego nie dowodzi, że kontrolowana ścieżka do wartości wciąż istnieje. Dowodzi tylko, że portfel zapłacił za naukę, na którą wciąż może odmówić reakcji.
 
-Dowodzi tylko, ze portfolio juz zaplacilo za nauke, na ktora moze nadal odmawiac reakcji.
+Wstrzymanie finansowania jest jaśniejsze, gdy decyzje odwołują się do kryteriów, a nie wstydu.
 
-## Porownanie: przedluzenie versus stop
+## Przedłużenie kontra pauza kontra zatrzymanie
 
-| Ruch portfolio | co sygnalizuje | typowy skutek |
-| --- | --- | --- |
-| przedluzenie bez nowego planu dowodu | strach przed optyka | wiecej wydatkow, ta sama luka kontroli |
-| pauza z kryteriami odbudowy | odpowiedzialna wlasnosc | jasnosc w ciagu tygodni |
-| stop z udokumentowana racja | higiena portfolio doroslych | uwolnione zdolnosci, szybsza repriorytetyzacja |
+Przedłużenie bez nowego planu dowodu często sygnalizuje strach przed optyką i tendencję ma do pogłębiania tej samej luki kontroli. Pauza z kryteriami odbudowy daje jasność w ciągu tygodni. Zatrzymanie z udokumentowanym uzasadnieniem uwalnia zdolność i przyspiesza ponowną priorytetyzację.
 
-## Sekwencja krokow: forum wstrzymania finansowania bez dramatu
+Wiarygodność portfela rośnie, gdy wszystkie trzy opcje są realnymi narzędziami, a nie moralnymi osądami.
 
-**Pakiet do wczesniejszej lektury:** biznes case, dowod nastepczy, mapa zaleznosci, prawda o zdolnosciach, otwarte ryzyka; **Jedno pytanie decyzyjne:** kontynuacja, pauza z kryteriami, polaczenie lub stop; **Debata ograniczona czasem:** narracja do aneksu, nie do godziny decyzji; **Publikacja konsekwencji:** zmiana finansowania, zmiany wlascicieli i co bedzie mierzone dalej; **Rebalans portfolio:** przypisanie zdolnosci do inicjatyw z jasniejszymi sciezkami dowodu.
+## Prowadź forum wstrzymania finansowania z mniejszym dramatem
 
-## Kiedy to dziala, a kiedy nie
+**Pakiet do wcześniejszej lektury:** przypadek wartości, dowód następczy, mapa zależności, prawda o zdolnościach, otwarte ryzyka.  
+**Jedno pytanie decyzyjne:** kontynuacja, pauza z kryteriami, scalenie lub zatrzymanie.  
+**Debata ograniczona czasem:** narracja do aneksu, nie do godziny decyzji.  
+**Publikacja konsekwencji:** zmiana finansowania, zmiany właścicieli i co zostanie zmierzone dalej.  
+**Rebalans portfela:** ponowne przypisanie zdolności do inicjatyw z jaśniejszymi ścieżkami dowodu.
 
-**Dziala**, gdy sponsorzy akceptuja, ze konczenie pracy to przywodztwo, nie wstyd.
+## Kiedy to działa, a kiedy zawodzi
 
-**Nie dziala**, gdy wstrzymanie finansowania staje sie kara osobista zamiast kontroli portfolio, co pchac zespoly pod ziemie.
+Działa, gdy sponsorzy traktują zatrzymanie jako przywództwo, a nie wstyd. Zawodzi, gdy wstrzymanie finansowania staje się karą osobistą, co pcha zespoły pod ziemię i utrudnia zaufanie do dowodów.
 
-## Jak Consultify czyni kompromisy portfolio audytowalnymi
+## Jak Consultify czyni kompromisy portfela możliwe do audytu
 
-Consultify to zarzadzanie transformacja wspierane przez AI, zaprojektowane tak, by zastapic powtarzalne fazy konsultingowe zywymi systemami strategii, ROI, governance i wykonania.
-
-Gdy logika ROI, decyzje i triggery ryzyka zyja razem, wstrzymanie finansowania jest aktem rzadzonym popartym dowodem, nie negocjacja w korytarzu.
+Consultify utrzymuje wyzwalacze wstrzymania, przypadki ROI i decyzje portfela w jednym, możliwym do audytu wątku, więc działania zatrzymania lub pauzy lądują z dowodem w zapisie forum, a nie w korytarzowych odwróceniach. Gdy logika ROI, decyzje i wyzwalacze ryzyka żyją razem, zmiany finansowania pozostają rządzone.
 
 ## Podsumowanie
 
-Zdrowe portfolio przestaje finansowac inicjatywy, ktore nie spelniaja standardow dowodu, wlasnosci lub zaleznosci.
-
-Jesli nigdy nie wstrzymujesz finansowania, nie masz portfolio. Masz stos zobowiazan.
+Zdrowe portfele przestają finansować inicjatywy, które nie spełniają standardów dowodu, własności ani zależności. Jeśli nigdy nie wstrzymujesz finansowania, nie masz portfela — masz stos zobowiązań, który pożera przyszłość.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij darmowy trial](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*
+*Consultify łączy hipotezy ROI, decyzje i wyzwalacze ryzyka, by zatrzymania i ponowne priorytetyzacje portfela pozostawały oparte na dowodzie zamiast politycznie odkładane. [Rozpocznij bezpłatny okres próbny](https://consultify.ai) lub [Otwórz demo](https://consultify.ai/demo).*

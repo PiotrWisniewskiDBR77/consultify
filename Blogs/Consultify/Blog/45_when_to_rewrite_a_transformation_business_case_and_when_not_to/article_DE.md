@@ -1,58 +1,67 @@
-# Wann Sie einen Transformations-Business-Case neu schreiben sollten und wann nicht
+# Wann Sie einen Transformations-Business-Case neu schreiben sollten – und wann nicht
 
 Zielpersona: Transformations-Sponsor / Finance-Partner / Portfolio-Owner  
+Funnel-Stufe: Überlegung  
+Kernproblem: Teams schreiben Business Cases nach jedem Schock neu, verbrennen Kapazität und setzen Governance-Gespräche zurück – statt Annahmen und Entscheidungsprotokolle zu aktualisieren.  
+Hauptversprechen: Sie erhalten einfache Regeln für Voll-Rewrite versus kontrolliertes Annahmen-Update, damit Sponsoren den Fokus schützen und der Wertnachweis vergleichbar bleibt.
 
-Trichterphase: Consideration Kernproblem: Teams schreiben Business Cases nach jedem Schock neu, verbrennen Kapazitaet und setzen Governance-Gespraeche zurueck, statt Annahmen und Entscheidungsrecords zu aktualisieren Kernversprechen: Sie erhalten einfache Regeln fuer Voll-Rewrite versus kontrolliertes Annahmen-Update, damit Sponsoren Fokus schuetzen und Value-Proof vergleichbar bleibt
+Business Cases sind Baselines. Löschen Sie die Baseline jeden Monat, können Sie keinen Wert belegen, nicht lernen, welche Annahmen falsch waren, und keine ehrlichen Portfolio-Gespräche über Varianz führen.
 
-Schreiben Sie den vollen Transformations-Business-Case neu, wenn sich Funding-Logik, Scope-Grenzen oder Outcome-Definition materiell aendern (neues strategisches Mandat, Mergers, Stop-Start einer grossen Abhaengigkeit oder invalidierte Baseline). Schreiben Sie nicht neu, wenn nur Timing rutschte, eine nicht-kern Annahme brach oder Narrativ-Druck stieg; aktualisieren Sie stattdessen das Annahmen-Ledger, zeigen Sie Varianz zur Baseline und dokumentieren Sie die Portfolio-Entscheidung. Volle Rewrites sollten seltene Events sein, die Vergleichbarkeit absichtlich zuruecksetzen, nicht woechentliche Moral-Therapie. Business Cases sind Baselines.
+Viele Teams reagieren auf Unbehagen dennoch mit Rewrite: neuer Sponsor, schlechtes Quartal, schärfere Finance-Frage, Wettbewerber-Schlagzeile. Rewrites fühlen sich wie Fortschritt an. Oft ist es Vermeidung – ein teurer Reset, der Vergleichbarkeit zerstört und Governance-Debatten von Null neu startet.
 
-Wenn Sie die Baseline jeden Monat loeschen, koennen Sie Value nicht belegen und nicht lernen, welche Annahmen falsch waren.
+Die Operating-Disziplin ist einfacher: selten und bewusst neu schreiben; Annahmen laufend aktualisieren; bei jeder Realitätsverschiebung Entscheidungen protokollieren.
+
+> **Was Sponsoren schützen sollten:** einen stabilen Vergleich und eine sichtbare Annahmen-Historie – damit das Portfolio lernen kann, ohne sich per Narrativ der Rechenschaft zu entziehen.
 
 ## Entscheidungsbaum: Rewrite versus Update
 
-Nutzen Sie diese Sequenz vor Arbeitserlaubnis.
+Gehen Sie diese Sequenz durch, bevor Sie große Case-Arbeit freigeben.
 
-Hat sich das **definierte Outcome** geaendert? Wenn ja, Voll-Rewrite pruefen; Haben sich **Scope-Grenzen** so geaendert, dass Nutzen und Kosten nicht vergleichbar sind? Wenn ja, Voll-Rewrite pruefen; Hat sich **Funding-Struktur** Tranchen, Gates oder Kapitalbehandlung geaendert? Wenn ja, Voll-Rewrite pruefen; Ist das Thema **Timing, Execution-Varianz oder eine einzelne gebrochene Annahme**? Wenn ja, Ledger und Varianz updaten, kein Rewrite; Ist der Treiber **politisches Unbehagen** ohne strukturelle Aenderung? Wenn ja, kein Rewrite; Decision-Forum fahren.
+**Hat sich das definierte Outcome geändert?** Wenn ja, Voll-Rewrite erwägen.  
+**Haben sich Scope-Grenzen so geändert, dass Nutzen und Kosten nicht vergleichbar sind?** Wenn ja, Voll-Rewrite erwägen.  
+**Hat sich die Funding-Struktur (Tranchen, Gates, Kapitalbehandlung) materiell geändert?** Wenn ja, Voll-Rewrite erwägen.  
+**Geht es um Timing, Execution-Varianz oder eine einzelne gebrochene Annahme?** Wenn ja, Ledger und Varianz aktualisieren – kein Rewrite.  
+**Ist der Treiber politisches Unbehagen ohne strukturelle Änderung?** Wenn ja, nicht neu schreiben – Entscheidungsforum fahren und die Baseline ehrlich halten.
 
-## Vergleich: Rewrite-Churn versus Ledger-Disziplin
+Ziel ist, strukturelle Änderung von emotionalem Druck zu trennen.
+
+## Rewrite-Churn versus Ledger-Disziplin
 
 | Signal | Rewrite-Churn | Ledger-Disziplin |
 | --- | --- | --- |
-| Quartals-Schock | neue Case-Version | Annahmen-Delta plus Entscheidung |
-| Sponsor-Wechsel | voller Narrativ-Reset | Ownership-Transfer-Notiz plus gleiche Baseline |
-| Miss | Benefits neu gerahmt | Varianz erklaert, Kompromisse dokumentiert |
-| Lernen | alter Case verworfen | Hypothesen mit Evidence pensioniert |
+| Quartals-Schock | Neue Case-Version | Annahmen-Delta plus Entscheidung |
+| Sponsor-Wechsel | Voller Narrativ-Reset | Ownership-Transfer-Notiz plus gleiche Baseline |
+| Miss | Benefits neu gerahmt | Varianz erklärt, Kompromisse dokumentiert |
+| Lernen | Alter Case verworfen | Hypothesen mit Evidence pensioniert |
 
-## Checkliste: Erlaubnis zum Rewrite (alles muss wahr sein)
+Ledger-Disziplin hält Finance und Operations aligned, während sich die Welt bewegt. Rewrites sollten seltene Ereignisse sein, die Vergleichbarkeit absichtlich zurücksetzen – keine wöchentliche Moraltherapie.
 
-- Outcome-Definition oder Scope-Grenze aenderte sich materiell  
-- Finance braucht neue Baseline fuer Audit oder Kapital-Tracking  
-- Governance stimmte zu, dass der alte Case kein legitimer Comparator mehr ist  
-- Kapazitaet ist fuer Rewrite-Arbeit budgetiert ohne Delivery zu stehlen  
-- Annahmen-Ledger-Archiv bewahrt die fruehere Baseline zum Lernen
+## Erlaubnis zum Rewrite: alles muss zutreffen
 
-## Reality check: Rewrite-Druck steigt meist am schnellsten, sobald die alte Geschichte unbequem zu verteidigen wird
+Behandeln Sie Voll-Rewrites als teure Portfolio-Aktionen. Verlangen Sie:
 
-Die Varianz sieht schlechter aus als geplant. Der Sponsor will ein saubereres Narrativ. Das Team will eine Version, die sich leichter erklaeren laesst.
+- Outcome-Definition oder Scope-Grenze hat sich materiell geändert.  
+- Finance braucht eine neue Baseline für Audit oder Kapital-Tracking.  
+- Governance hat zugestimmt, dass der alte Case kein legitimer Comparator mehr ist.  
+- Kapazität ist für Rewrite-Arbeit budgetiert, ohne der Delivery zu stehlen.  
+- Die frühere Baseline ist in der Annahmen-Historie archiviert, damit das Lernen erhalten bleibt.
 
-Genau dann muss Leadership fragen, ob sich das Geschaeft geaendert hat oder nur das Komfortniveau.
+Erfüllen Sie diese Bedingungen nicht, brauchen Sie wahrscheinlich einen Update-Pfad – keinen Reset.
 
-## Wann es funktioniert versus wann es scheitert
+## Warum Rewrite-Druck steigt, wenn die Story unbequem wird
 
-**Funktioniert**, wenn Finance und Sponsoren eine gemeinsame Definition materieller Aenderung teilen.
+Die Varianz sieht schlechter aus als geplant. Der Sponsor will ein saubereres Narrativ. Das Team will eine Version, die sich leichter erklären lässt.
 
-**Scheitert**, wenn Rewrite ein Versteck fuer schwache Execution-Disziplin wird.
+Genau dann muss Führung fragen, ob sich das Geschäft geändert hat – oder nur das Komfortniveau. Hat sich nur das Komfortniveau geändert, kauft ein Rewrite kurzfristige Erleichterung und dauerhafte Undurchsichtigkeit.
 
-## Wie Consultify Cases ehrlich haelt ohne endlose Versionen
+## Wie Consultify Cases ehrlich hält ohne endlose Versionen
 
-Consultify ist KI-gestuetztes Transformationsmanagement, das repetitive Beratungsphasen durch Live-Systeme fuer Strategie, ROI, Governance und Execution ersetzen soll.
-
-Wenn Annahmen, Varianz und Entscheidungen zusammenleben, aktualisiert Leadership Realitaet ohne History zu loeschen.
+Consultify verknüpft Case-Versionen mit Annahmen-Historie und geregelten Updates, damit Finance sieht, was sich wann und warum geändert hat – ohne die frühere Baseline zu verlieren. Leben Annahmen, Varianz und Entscheidungen zusammen, aktualisiert Führung die Realität, ohne die Historie zu löschen.
 
 ## Fazit
 
-Selten und bewusst neu schreiben. Annahmen laufend aktualisieren. So bleibt Value-Proof vergleichbar und Governance-Last gesund.
+Selten und bewusst neu schreiben. Annahmen laufend aktualisieren. So bleibt der Wertnachweis vergleichbar, die Governance-Last beherrschbar und das Lernen sichtbar – statt dass unter neuem Deckblatt dasselbe Argument von vorn beginnt.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Methodik erkunden](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*
+*Consultify verbindet Annahmen, Varianz und Portfolio-Entscheidungen, damit Teams die Realität aktualisieren können, ohne jedes Quartal einen Business Case von Null zu starten. [Methodik erkunden](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*

@@ -1,65 +1,70 @@
-# Was ein gutes Transformations-Kapazitaetsmodell sichtbar machen sollte
+# Was ein gutes Transformations-Kapazitätsmodell sichtbar machen sollte
 
-Zielpersona: Transformations-COO / Portfolio-Lead / HR-Business-Partner fuer Change  
+Zielpersona: Transformations-COO / Portfolio-Lead / HR-Business-Partner für Change  
+Funnel-Stufe: Bewusstsein  
+Kernproblem: Pläne bleiben grün, während benannte Personen unmögliche Lasten tragen – die Umsetzung rutscht, und Sponsoren lesen das Problem als Motivation statt als Kapazitätsrechnung.  
+Hauptversprechen: Sie können ein Kapazitätsmodell definieren, das Rollenlast, Konkurrenz und Governance-Drag in derselben Ansicht wie Delivery-Meilensteine zeigt.
 
-Trichterphase: Awareness Kernproblem: Plaene bleiben gruen, waehrend benannte Personen unmoegliche Lasten tragen, wodurch Execution rutscht und Sponsoren das Problem als Motivation statt Kapazitaets-Mathematik lesen Kernversprechen: Sie koennen ein Kapazitaetsmodell definieren, das Rollenlast, Contention und Governance-Drag in derselben Ansicht wie Delivery-Meilensteine zeigt
+Kapazität ist die versteckte Constraint in den meisten Transformationen. Headcount-Charts lügen höflich. Budgetsummen glätten Konkurrenz. FTE-Rechnung stellt sich austauschbare Stunden vor.
 
-Ein gutes Transformations-Kapazitaetsmodell sollte sichtbar machen: benannte Kapazitaet nach Rolle und Initiative (nicht nur FTE-Zahlen), Contention wenn dieselbe Person auf mehreren kritischen Pfaden sitzt, Sponsor- und Fuehrungsstunden fuer Gremien, Change-Saettigung nach Team und Zeitfenster, Dependency-Wartezeiten die Kapazitaet verbrennen, und Puffer fuer Interventionsarbeit. Wenn Ihr Modell nur Budget und Kopfzahl zeigt, forecasten Sie Finance, nicht Execution.
+Die Umsetzung läuft jedoch über benannte Menschen, spezifische Skills, endliche Führungs-Luft und Abhängigkeits-Warteschlangen, die Kapazität verbrennen, obwohl Tasks „in Bearbeitung“ wirken. Ein gutes Kapazitätsmodell macht diese Realität dort sichtbar, wo Sponsoren ohnehin Portfolio-Gesundheit suchen – damit Kompromisse unvermeidbar werden, bevor Heldentaten zur Kultur werden.
 
-Kapazitaet ist die versteckte Constraint in den meisten Transformationen. Headcount-Charts luegen hoeflich. Benannte Stunden und Contention sagen die Wahrheit.
+> **Was Führung in einer Ansicht sehen sollte:** benannte Last, Konkurrenz auf dem kritischen Pfad, Governance-Drag, Sättigung nach Team, Wartezeit in Abhängigkeiten und Reserve für Interventionsarbeit.
 
-## Die sechs Sichtbarkeits-Layer
+## Sechs Sichtbarkeitsebenen, die Entscheidungen verändern
 
-1. **Benannte Zuweisungslast** Wer ist in wie vielen Initiativen verantwortlich mit welchen woechhentlich gebuchten Stunden.
+**1. Benannte Zuweisungslast**  
+Wer ist in wie vielen Initiativen verantwortlich, mit welchen wöchentlich gebuchten Stunden – nicht „wir haben fünf Leute“.
 
-2. **Kritischer-Pfad-Contention** Wo eine Person gleichzeitig mehrere Streams blockiert.
+**2. Konkurrenz auf dem kritischen Pfad**  
+Wo eine Person gleichzeitig mehrere Ströme blockiert und welche Entlastungsoptionen es gibt (Pause, Zusammenführen, leihen, repriorisieren).
 
-3. **Governance-Drag** Stunden in Steering, Vorbereitung und Status-Produktion versus Entscheidungs-Output.
+**3. Governance-Drag**  
+Stunden in Steering, Vorbereitung und Status-Produktion versus dokumentierter Entscheidungs-Output. Drag ist eine Kapazitätszeile.
 
-4. **Change-Saettigung** Wie viele parallele Changes dieselben Operating-Teams pro Monat treffen.
+**4. Change-Sättigung**  
+Wie viele parallele Veränderungen dieselben Operating-Teams im selben Monat treffen. Sättigung ist ein Sequencing-Input – nicht allein ein Kommunikationsthema.
 
-5. **Dependency-Queue-Zeit** Wo Arbeit auf Entscheidungen oder externe Releases wartet, obwohl Teams "beschaeftigt" sind. 6. **Interventions-Reserve** Pufferkapazitaet fuer Stabilisierung, Rework und Risiko-Reaktion.
+**5. Abhängigkeits-Wartezeit**  
+Wo Arbeit auf Entscheidungen oder externe Releases wartet, obwohl Teams beschäftigt sind. Warten ist nicht untätig; es bindet Aufmerksamkeit und Zeitplan.
 
-## Framework: Gruenplan-Test
+**6. Interventions-Reserve**  
+Pufferkapazität für Stabilisierung, Rework und Risikoantwort. Ist jede Stunde auf „Plan“ gebucht, hat der Plan keinen Stoßdämpfer.
 
-Ein Plan ist nicht glaubwuerdig, bis er drei Checks besteht.
+## Der Grünplan-Test: drei Glaubwürdigkeits-Checks
+
+Ein Plan ist nicht glaubwürdig, bis er diese Checks besteht:
 
 | Check | Frage |
 | --- | --- |
-| benannte Realitaet | hat jede kritische Rolle eine benannte Person mit Stunden |
-| Contention | erscheint ein Name auf mehr als zwei kritischen Pfaden ohne Entlastung |
-| Governance | beinhaltet Sponsor-Zeit Vorbereitung und Follow-ups, nicht nur Meeting-Laenge |
+| Benannte Realität | Hat jede kritische Rolle eine benannte Person mit Stunden – keine Rollenfamilie? |
+| Konkurrenz | Erscheint ein Name auf mehr als zwei kritischen Pfaden ohne explizite Entlastung? |
+| Governance | Umfasst Sponsor-Zeit Vorbereitung und Follow-ups – nicht nur Meeting-Länge? |
 
-## Checkliste: Modell ist decision-grade, wenn
+Besteht der Plan diese Checks nicht, ist „grün“ ein Reporting-Artefakt, bis die Kapazität repariert ist.
 
-- ueberlastete Namen Portfolio-Kompromisse ausloesen, keine Pep-Talks  
-- PMO-Last sichtbar ist neben Delivery-Team-Last  
-- Saettigungs-Ansicht Sequencing informiert, nicht nur Kommunikationsvolumen  
-- Kapazitaets-Annahmen im Annahmen-Ledger stehen  
-- Staffing-Aenderungen Plaene innerhalb eines Review-Zyklus aktualisieren
+## Checkliste: Das Modell ist entscheidungsreif, wenn
 
-## Reality check: Kapazitaetsmodelle scheitern meist dort, wo sie aufhoeren Menschen zu benennen und anfangen Schmerz zu mitteln
+- Überlastete Namen Portfolio-Kompromisse auslösen, nicht Motivationsreden.  
+- PMO-Last neben Delivery-Team-Last sichtbar ist.  
+- Sättigung das Sequencing informiert, nicht nur das Kommunikationsvolumen.  
+- Kapazitäts-Annahmen im Annahmen-Ledger stehen.  
+- Personaländerungen die Pläne innerhalb eines Review-Zyklus aktualisieren.
 
-Die Tabelle kann weiterhin ausgeglichen aussehen. Die Kopfzahl kann weiterhin ausreichend wirken. Die monatliche Kapazitaetszahl kann weiterhin rational aussehen.
+## Warum Mittelwerte den Bruchpunkt verstecken
 
-Doch sobald Contention in Durchschnittswerten verschwindet, kann die Fuehrung nicht mehr sehen, welche Namen den versteckten Konflikt tragen, der Execution zuerst brechen wird.
+Kapazitätsmodelle scheitern, wenn sie aufhören, Menschen zu benennen, und anfangen, Schmerz zu mitteln. Die Tabelle kann ausgeglichen wirken. Die Kopfzahl kann ausreichend wirken. Die Monatskapazität kann rational wirken.
 
-## Wann es funktioniert versus wann es scheitert
+Verschwindet Konkurrenz in Durchschnitten, sieht Führung nicht, welche Namen den versteckten Konflikt tragen, der die Umsetzung zuerst bricht. Benennen ist kein Mikromanagement. So entdeckt das Portfolio, wo „Nein“ passieren muss.
 
-**Funktioniert**, wenn Sponsoren akzeptieren, dass Nein-sagen Kapazitaetsplanung ist. **Scheitert**, wenn das Modell Kopfzahl-Politik ohne Stunden-Wahrheit wird.
+## Wie Consultify Kapazität mit Portfolio-Entscheidungen verbindet
 
-## Wie Consultify Kapazitaet mit Portfolio-Entscheidungen verbindet
-
-Consultify ist KI-gestuetztes Transformationsmanagement, das repetitive Beratungsphasen durch Live-Systeme fuer Strategie, ROI, Governance und Execution ersetzen soll.
-
-Wenn Kapazitaet, Dependencies und Entscheidungen ein System teilen, erscheint Ueberlast frueh genug als Portfolio-Signal zum Eingreifen.
+Consultify zeigt benannte Owner, Stunden, Konkurrenz und Abhängigkeitslast neben Portfolio-Entscheidungen – damit ein grüner Plan keine rote Bank verdecken kann. Teilen Kapazität, Abhängigkeiten und Entscheidungen ein System, tritt Überlast früh genug als Signal auf, solange Optionen noch bestehen.
 
 ## Fazit
 
-Gruene Plaene mit roten Menschen sind ein Governance-Fehler.
-
-Machen Sie Kapazitaet sichtbar nach Name, Stunde und Contention, oder Execution-Disziplin bricht bevor die Metriken es tun.
+Grüne Pläne mit roten Menschen sind ein Governance-Versagen. Machen Sie Kapazität nach Name, Stunde und Konkurrenz sichtbar – oder die Execution-Disziplin bricht, bevor die Kennzahlen es tun, und Sponsoren lesen das Wrack als Motivationsproblem.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Methodik erkunden](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*
+*Consultify verbindet benannte Kapazität, Abhängigkeiten und Portfolio-Kompromisse, damit Überlast als Entscheidungssignal sichtbar wird statt als späte Überraschung in Status-Meetings. [Methodik erkunden](https://consultify.ai) oder [Demo öffnen](https://consultify.ai/demo).*
