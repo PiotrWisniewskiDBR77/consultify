@@ -23,9 +23,9 @@ async function ensureMigrationTable(): Promise<void> {
   `);
 }
 
+const MIGRATION_PATTERN = /^(7\d{2}|\d{8})_.*\.sql$/;
+
 function getMigrationsDir(): string {
-  // Resolve relative to compiled output: dist/src/services/tablePlatform/ → dist/../migrations
-  // Also handle running from source: src/services/tablePlatform/ → ../../migrations
   const candidates = [
     path.resolve(__dirname_esm, '../../../../migrations'),
     path.resolve(__dirname_esm, '../../../migrations'),
@@ -35,7 +35,7 @@ function getMigrationsDir(): string {
 
   for (const dir of candidates) {
     if (fs.existsSync(dir)) {
-      const files = fs.readdirSync(dir).filter((f) => /^7\d{2}_.*\.sql$/.test(f));
+      const files = fs.readdirSync(dir).filter((f) => MIGRATION_PATTERN.test(f));
       if (files.length > 0) return dir;
     }
   }
@@ -48,11 +48,12 @@ function getMigrationsDir(): string {
 function discoverMigrationFiles(dir: string): string[] {
   return fs
     .readdirSync(dir)
-    .filter((f) => /^7\d{2}_.*\.sql$/.test(f))
+    .filter((f) => MIGRATION_PATTERN.test(f))
     .sort((a, b) => {
-      const numA = parseInt(a.split('_')[0], 10);
-      const numB = parseInt(b.split('_')[0], 10);
-      return numA - numB;
+      const prefixA = a.split('_')[0];
+      const prefixB = b.split('_')[0];
+      if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
+      return prefixA.localeCompare(prefixB);
     });
 }
 

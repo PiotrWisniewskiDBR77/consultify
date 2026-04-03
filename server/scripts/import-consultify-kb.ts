@@ -25,7 +25,7 @@ const BLOGS_ROOT = path.join(ROOT, 'Blogs', 'Consultify', 'Blog');
 const MANIFEST_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'knowledge_base_manifest.json');
 const RENDERER_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'renderer_manifest.json');
 const RELATION_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'relation_manifest.json');
-const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260402_consultify_kb_import.sql');
+const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v2.sql');
 
 interface ManifestArticle {
   canonical_id: string;
@@ -264,10 +264,26 @@ function main() {
 
   const sql: string[] = [];
 
-  sql.push(`-- Migration: 20260402_consultify_kb_import.sql`);
+  sql.push(`-- Migration: 20260403_consultify_kb_import_v2.sql`);
   sql.push(`-- Purpose: Import 50 Consultify knowledge base articles with EN/PL/DE translations`);
   sql.push(`-- Source: Blogs/_LP_KB_READY/Consultify manifests + Blogs/Consultify/Blog/ articles`);
   sql.push(`-- Date: 2026-04-02`);
+  sql.push('');
+
+  sql.push('-- ============================================');
+  sql.push('-- CLEANUP: Remove previous Consultify KB data');
+  sql.push('-- ============================================');
+  sql.push(`DELETE FROM kb_article_tags WHERE article_id LIKE 'kb-consultify-%';`);
+  sql.push(`DELETE FROM kb_article_collections WHERE article_id LIKE 'kb-consultify-%';`);
+  sql.push(`DELETE FROM kb_surface_bindings WHERE article_id LIKE 'kb-consultify-%';`);
+  sql.push(`DELETE FROM kb_article_translations WHERE article_id LIKE 'kb-consultify-%';`);
+  sql.push(`DELETE FROM kb_articles WHERE id LIKE 'kb-consultify-%';`);
+  sql.push(`DELETE FROM kb_tag_translations WHERE tag_id LIKE 'kb-tag-%';`);
+  sql.push(`DELETE FROM kb_tags WHERE id LIKE 'kb-tag-%';`);
+  sql.push(`DELETE FROM kb_collection_translations WHERE collection_id LIKE 'kb-coll-consultify%';`);
+  sql.push(`DELETE FROM kb_collections WHERE id LIKE 'kb-coll-consultify%';`);
+  sql.push(`DELETE FROM kb_category_translations WHERE category_id LIKE 'kb-cat-consultify-%';`);
+  sql.push(`DELETE FROM kb_categories WHERE id LIKE 'kb-cat-consultify-%';`);
   sql.push('');
 
   // --- Categories for Consultify KB sections ---

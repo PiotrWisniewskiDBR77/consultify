@@ -2516,13 +2516,19 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
     return;
   }
 
+  const migrationPattern = /^(7\d{2}|\d{8})_.*\.sql$/;
   const allFiles = fs
     .readdirSync(migrationsDir)
-    .filter((f: string) => /^7\d{2}_.*\.sql$/.test(f))
-    .sort();
+    .filter((f: string) => migrationPattern.test(f))
+    .sort((a: string, b: string) => {
+      const prefixA = a.split('_')[0];
+      const prefixB = b.split('_')[0];
+      if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
+      return prefixA.localeCompare(prefixB);
+    });
 
   if (allFiles.length === 0) {
-    logger.info(`${TAG} No 7xx migration files found`);
+    logger.info(`${TAG} No migration files found`);
     return;
   }
 

@@ -1,7 +1,22 @@
--- Migration: 20260402_consultify_kb_import.sql
+-- Migration: 20260403_consultify_kb_import_v2.sql
 -- Purpose: Import 50 Consultify knowledge base articles with EN/PL/DE translations
 -- Source: Blogs/_LP_KB_READY/Consultify manifests + Blogs/Consultify/Blog/ articles
 -- Date: 2026-04-02
+
+-- ============================================
+-- CLEANUP: Remove previous Consultify KB data
+-- ============================================
+DELETE FROM kb_article_tags WHERE article_id LIKE 'kb-consultify-%';
+DELETE FROM kb_article_collections WHERE article_id LIKE 'kb-consultify-%';
+DELETE FROM kb_surface_bindings WHERE article_id LIKE 'kb-consultify-%';
+DELETE FROM kb_article_translations WHERE article_id LIKE 'kb-consultify-%';
+DELETE FROM kb_articles WHERE id LIKE 'kb-consultify-%';
+DELETE FROM kb_tag_translations WHERE tag_id LIKE 'kb-tag-%';
+DELETE FROM kb_tags WHERE id LIKE 'kb-tag-%';
+DELETE FROM kb_collection_translations WHERE collection_id LIKE 'kb-coll-consultify%';
+DELETE FROM kb_collections WHERE id LIKE 'kb-coll-consultify%';
+DELETE FROM kb_category_translations WHERE category_id LIKE 'kb-cat-consultify-%';
+DELETE FROM kb_categories WHERE id LIKE 'kb-cat-consultify-%';
 
 -- ============================================
 -- CONSULTIFY KB CATEGORIES (3 sections)
@@ -516,13 +531,13 @@ Sondern weil das Modell für eine langsamere Welt und für geringeren Druck auf 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('cc846016-0de2-449b-88b4-5669996b70f3', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
+  ('eeb189b9-f5a5-420a-b432-03c735686334', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c223fef9-dfce-4789-aee1-601d537aad96', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
+  ('6ed52597-82d4-43df-9d99-d79441b86c24', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e4a9fb98-d7f5-408a-bd0b-aeee1de89cfe', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
+  ('45949bf6-29d9-48e3-985f-ad21e2774070', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -1207,13 +1222,13 @@ Er ist ein Weg, keine modern aussehende Version desselben alten Consulting-Probl
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5329b150-4064-46b8-9ac2-f74c0935968b', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
+  ('9cf89fd3-9ac1-4093-b011-e817b123910a', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9886c8be-bcd1-4bf6-a76a-d6824892abaa', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
+  ('fe6beb1d-1437-4553-8871-8de522bb2375', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ab778e91-ec68-4895-aae1-feedbc6eeaa4', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
+  ('4976203d-c0a1-4e8b-ab00-4582a42b421b', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -1580,13 +1595,13 @@ Sondern als System, das Führungskräften hilft, in einer einzigen Session von U
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8e434e7b-839e-4720-9151-65a045698215', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
+  ('28e48a73-2b27-44fa-b24d-c7e1afd0f053', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('78674fb6-85a9-4ea0-894b-8955b0de0788', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
+  ('61db87b7-89c6-4fbf-b032-ce06fa17161a', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bfa0fb9f-4214-4cee-8183-c3a515b5c728', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
+  ('af0efba6-7b9b-4ca5-9811-8fe8e9fe8707', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -1961,13 +1976,13 @@ Sondern die, die strategischen Wert leichter erzeugbar, messbar und verteidigbar
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('72d4d45a-41e3-437c-83eb-c065af4d9aff', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
+  ('68a0d257-d623-453a-97c1-5dc42daaa33d', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('353471b1-c629-4ba4-936a-36eebc2c0bd4', 'kb-consultify-04_roi_calculator_guide', 'help')
+  ('043c3afb-5a3a-4867-8a08-608dcbc45d11', 'kb-consultify-04_roi_calculator_guide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('943db84e-4bff-498f-aadf-8b46073ab0a1', 'kb-consultify-04_roi_calculator_guide', 'lp')
+  ('6a230ffc-de89-46c4-8994-5e9ab3857061', 'kb-consultify-04_roi_calculator_guide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -2287,13 +2302,13 @@ AI-Driven SWOT wird wertvoll, wenn es Leadership hilft, die Realität schneller 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a427cba8-d194-40f9-a9c2-a6621beb1de5', 'kb-consultify-05_ai_driven_swot', 'public_docs')
+  ('b962dd2b-720a-4f54-9aaa-823b82ce1496', 'kb-consultify-05_ai_driven_swot', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6da557e4-7578-4b89-8035-69bda8301176', 'kb-consultify-05_ai_driven_swot', 'help')
+  ('7a566a67-b6f7-418f-893b-c33b8449ed5f', 'kb-consultify-05_ai_driven_swot', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('29419cf5-048b-4829-a420-071c2a09d6ad', 'kb-consultify-05_ai_driven_swot', 'lp')
+  ('11e61b5c-52ca-44af-a713-1f8bbf65c1cb', 'kb-consultify-05_ai_driven_swot', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -2612,13 +2627,13 @@ Sie werden besser im Vorbereiten, Vergleichen und Handeln unter Unsicherheit. Da
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('129271bf-5753-4dbe-9967-9b41c1f14a07', 'kb-consultify-06_scenario_planning', 'public_docs')
+  ('aada7347-8fe5-418d-936c-d094be757d1c', 'kb-consultify-06_scenario_planning', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('913559ea-76d2-4137-95cf-28a5f2b4189b', 'kb-consultify-06_scenario_planning', 'help')
+  ('43d89ded-9a1e-49fc-a82a-c56c5142164b', 'kb-consultify-06_scenario_planning', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4020874d-1a36-4229-bf56-1ba474ccd1be', 'kb-consultify-06_scenario_planning', 'lp')
+  ('01c24e08-f105-4ef9-a05d-5e4366f41c75', 'kb-consultify-06_scenario_planning', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -2954,13 +2969,13 @@ Sie ist wertvoll, weil sie Leadership hilft, früher zu entscheiden, klüger zu 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4e03c712-d32c-40f2-b9fd-68a9b8ff15c8', 'kb-consultify-07_competitive_intelligence', 'public_docs')
+  ('504170b6-27b1-4b28-90c5-c0dc90539792', 'kb-consultify-07_competitive_intelligence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bc3a671d-6bcb-47ca-a3c9-ceae388d96f7', 'kb-consultify-07_competitive_intelligence', 'help')
+  ('dfd510db-d5f8-4041-8011-d3dcb40cea2e', 'kb-consultify-07_competitive_intelligence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('88f12d0c-c022-4215-905b-2ceb368e7c7f', 'kb-consultify-07_competitive_intelligence', 'lp')
+  ('b1d6ef8a-ed15-46b8-ac48-330953ccae18', 'kb-consultify-07_competitive_intelligence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -3282,13 +3297,13 @@ Sie ist der Zustand, in dem die Organisation sich mit gemeinsamen Prioritäten, 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1ae49f1f-d064-47c4-9972-ba395ec5f11d', 'kb-consultify-08_strategic_alignment', 'public_docs')
+  ('77fc08c5-3fba-49db-a9ee-1b1b7ba6dc86', 'kb-consultify-08_strategic_alignment', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9b920504-dfe1-45bb-9232-f1c347ca85be', 'kb-consultify-08_strategic_alignment', 'help')
+  ('05035a5e-7921-4307-9cc6-12bcf47fe9ee', 'kb-consultify-08_strategic_alignment', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e66d5570-82ee-4bba-a456-b172ffb1300b', 'kb-consultify-08_strategic_alignment', 'lp')
+  ('7e88593e-b139-44c2-a5b3-54242e240541', 'kb-consultify-08_strategic_alignment', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -3639,13 +3654,13 @@ Das schafft: bessere Priorisierung; klarere Trade-offs; weniger politischen Drif
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9bd732c2-4a9c-4f1c-8e41-41d2cd443e91', 'kb-consultify-09_data_first_strategy', 'public_docs')
+  ('885fcf94-21de-4ac0-ba34-b0ace8627081', 'kb-consultify-09_data_first_strategy', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('02ffe476-ab9a-40da-82eb-dd2e15039eb8', 'kb-consultify-09_data_first_strategy', 'help')
+  ('79e56769-5ac8-42c4-b9a5-544ebaa107c9', 'kb-consultify-09_data_first_strategy', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('62ad86ca-e2be-458e-8e64-6771288ae5b2', 'kb-consultify-09_data_first_strategy', 'lp')
+  ('e0f36538-cd54-44ba-91ca-f9f58eb1ad41', 'kb-consultify-09_data_first_strategy', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -3952,13 +3967,13 @@ Darum verdient Decision Latency viel mehr Aufmerksamkeit, als sie normalerweise 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ad7cc492-0e84-4a86-a022-fdf8c9e81322', 'kb-consultify-10_decision_latency', 'public_docs')
+  ('633cefb4-c1e7-461d-bdd9-02c28699b0a8', 'kb-consultify-10_decision_latency', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('72cee429-fb27-45b5-bbad-9f928114c87a', 'kb-consultify-10_decision_latency', 'help')
+  ('f1d181d4-cd3e-4afc-9ef2-50bed531e05a', 'kb-consultify-10_decision_latency', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3d4b5031-ade4-46e0-b94b-4f75c2804f0c', 'kb-consultify-10_decision_latency', 'lp')
+  ('e50fa293-9b05-4cb7-a0b1-ac78a02aebe9', 'kb-consultify-10_decision_latency', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -4281,13 +4296,13 @@ Das bedeutet: besseres Strategic Reporting ist: klarer; selektiver; entscheidung
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5f8fbdcb-085f-451b-b2c2-3f28ca824918', 'kb-consultify-11_strategic_reporting', 'public_docs')
+  ('cadcf318-95fc-4732-80c8-8c902e01a756', 'kb-consultify-11_strategic_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5bc71384-8b43-480e-9480-a72b41771106', 'kb-consultify-11_strategic_reporting', 'help')
+  ('fac3250b-4f76-4c0e-b494-88a7697834c5', 'kb-consultify-11_strategic_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('495d88af-04ab-484c-9c30-10eaa09d0489', 'kb-consultify-11_strategic_reporting', 'lp')
+  ('684cc9f1-47d9-4a21-92d7-501e9a7b60a0', 'kb-consultify-11_strategic_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -4574,13 +4589,13 @@ Es gelingt, wenn Objectives, Ownership, Initiatives und Reporting eng genug verb
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a1ba2a5d-2915-4b7c-b79f-39331cc39aa8', 'kb-consultify-12_okr_management', 'public_docs')
+  ('44cf9c6d-2f8e-46e2-bc18-a17b7179ac29', 'kb-consultify-12_okr_management', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ef040569-9823-4358-a349-164d4d322de1', 'kb-consultify-12_okr_management', 'help')
+  ('b9ed2ca7-3e1a-47af-811c-6f610a8a0527', 'kb-consultify-12_okr_management', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b47ea78e-3f2c-4a10-8106-9b2253788808', 'kb-consultify-12_okr_management', 'lp')
+  ('656cf04a-7b5c-4da5-b4c5-03e7abc0628a', 'kb-consultify-12_okr_management', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -4845,13 +4860,13 @@ So wird Reporting Teil von Kontrolle statt Teil eines reporting theater.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('14d3c58c-5351-4a95-9c1a-e70d63b6447e', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
+  ('9b288830-8dee-4658-a53d-a141c0c5a2f5', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('732e7728-19a6-49c8-9ea3-f40cab0a7294', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
+  ('7c9b1df7-8a0d-4658-bc7e-1c83be235098', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8b3209f7-0282-4da6-beab-c4a9611f01ce', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
+  ('dfd2a410-3384-4c86-9d27-a66298cd5983', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -5116,13 +5131,13 @@ Das starkere Modell ist ein Workshop, der direkt in ein System fliesst, das steu
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2706d965-a960-418d-9a1a-c34eaec58844', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
+  ('6269122d-d28a-44ed-8725-502ee372a146', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fa14be07-e4ea-41d5-8e58-061b6776d374', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
+  ('28a8a790-a153-4a63-bf03-dcf9bd139f98', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2c5881f2-8760-434d-b39f-850fc1cb1e5a', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
+  ('cdd80adf-e0ac-410a-a7ff-9aaeca79f856', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -5355,13 +5370,13 @@ Wert entsteht wahrend der Execution, genau deshalb muss der finanzielle Case lan
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a5416a6b-cee9-479b-b337-be6a7b217efd', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
+  ('a0c1e722-a608-4cc8-a2d2-15d61b0780a9', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8f668707-b62f-4aa1-86f4-ce3df697eec2', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
+  ('6b04a609-dca0-4881-953a-a9ede2b6d20a', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5f1b725a-434b-48a4-be14-7c6aa84610f6', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
+  ('beddfb23-3c65-40c6-b058-4ec4517ffd4e', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -5640,13 +5655,13 @@ Das starkere Modell ist ein live steering system, das Leadership genug Sichtbark
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ab12b06d-b28f-4250-8dbd-b6b71c5bcc75', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
+  ('a26359a3-551c-4da1-8d82-009611a893be', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('05694498-80c1-4ada-9c06-80c4b02221e9', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
+  ('f3ac87ff-d9c8-460a-be10-cc35f9aa096c', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8f89653c-a199-45b4-840a-473df6876414', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
+  ('6c2a4f3c-db61-4e73-a3d6-3b1d9eb28e68', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -5906,13 +5921,13 @@ Das starkere Modell ist ein System, in dem Strategie, Arbeit und value case eng 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('15208b13-b513-4673-9efd-90836a6b86f9', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
+  ('051c3390-c312-40f8-b48b-00dc121fccc0', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a39beffe-9360-40d6-834a-f50acfa0c555', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
+  ('d66052a8-7397-4dae-8112-4f11d7b4ffa2', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('71a1b9f2-aabd-4fb3-95a5-a58b10ba536e', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
+  ('dbe228f0-cbd0-41f0-99f9-1e1d6d8ab869', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -6200,13 +6215,13 @@ Darum beginnt die eigentliche Arbeit nach der Entscheidung und nicht in dem Mome
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('43da90a7-4b8a-464a-8297-ce6cc8c050f5', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
+  ('86e9ce2e-c9b7-41fb-abbc-45fd53e27a66', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('42d7ff0e-adbe-4136-bdce-95173a302b0c', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
+  ('5138a508-8c38-4af5-a352-aaa05af7834e', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2d27b5d9-a614-4afb-bd63-e78043988ee4', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
+  ('1212f3f8-5a08-499a-97bd-4c7ba63b675c', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -6457,13 +6472,13 @@ Das starkere Modell ist ein Portfoliosystem, das Trade-offs sichtbar genug halt,
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('72fc600f-6736-4b38-8b18-c527d277a9ae', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
+  ('afc909f3-6c1d-4875-820d-5a185775d886', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b5c490da-8f12-44ec-9144-01bb18dd7acf', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
+  ('476f680a-8632-404b-822e-9df7d62de53d', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('60485c8c-1493-4906-9798-6e973d8feaf1', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
+  ('039f1f6d-75d0-4af1-b1ab-d9b0d8c91d1a', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -6763,13 +6778,13 @@ Leadership alignment nach dem Offsite uberlebt nur dann, wenn Entscheidungen, Pr
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('39f4e04b-8fb7-4ba7-8dda-cab05f7e7fb0', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
+  ('8473df62-42f3-4cdc-9ea2-a58d02e4809d', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('38e9f329-16ad-4ff2-84bd-2221187eeb53', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
+  ('e8a332fb-0c21-44c8-9ef4-3f65774dda4e', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3f7e367f-8730-45b2-b0d7-f686321b7461', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
+  ('13e65bac-4ff3-4495-8bbe-a32167335f86', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7052,13 +7067,13 @@ So halt Leadership strategische conviction aufrecht, ohne sich auf blinden Glaub
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4acc3fa5-ceb1-4973-b026-c891a6c956b0', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
+  ('2e5fed2b-b0aa-43e5-8c27-c3eb79141905', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('28c218d2-4a70-41ac-9507-b507fcf6a109', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
+  ('19b5950e-eb21-40eb-b29d-401339b81b74', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dbeaabce-f66c-486e-95da-f3913178e5d8', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
+  ('e312095d-0a89-4a03-83b0-62a8bc011b4a', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7310,13 +7325,13 @@ Wenn sie nur zusammenfassen, was bereits passiert ist, verbrauchen sie Leadershi
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a04aef3b-92a2-494d-ba12-d17ca876c8d7', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
+  ('9018db39-68ed-41b9-9f0c-602cfcef326c', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a3c68d4b-e593-453f-9422-1a271dcefbbe', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
+  ('0cb22716-9766-4fdb-89c0-270e1e6107f7', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('98cc7ebc-82f9-4ee7-9598-11f2fe64a987', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
+  ('66e772fc-6dc9-45f5-a8c1-016ac576ea24', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7549,13 +7564,13 @@ Wenn die Quartalsgrenze Warten erhoeht, arbeitet der Reset gegen Momentum.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7360d752-b0d7-4034-8826-e8f1c00087ed', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
+  ('477fd9d7-75e5-40aa-8562-fb98ecf22d8a', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fc25adb1-874c-4e79-8be7-22f64d59f918', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
+  ('31c43e11-6235-4a03-8274-1578d5ae25aa', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('16b04dab-4bc5-49c1-8ff6-21852dbe1f6b', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
+  ('1dbb8196-1bb5-4594-85f1-2764009391ef', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -7790,13 +7805,13 @@ Wenn es nur Bewegung beschreibt, wird Fuehrung spaeter ueberrascht als noetig.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('cbd0710e-dcce-4201-a7fd-acf5cc1807e2', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
+  ('36fd1945-487c-40c3-8403-a72f0546d27c', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('313e1ad1-98c2-402d-aaec-6090c1740951', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
+  ('2a88a355-ba47-45f4-8da0-7a4a7488551a', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1ea86ab7-8f38-4187-a2b0-5b2938a9fb71', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
+  ('192cb4d5-2153-41d3-9b07-b94001a6328b', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8039,13 +8054,13 @@ Machen Sie Stopp regelgeleitet, kriterienbasiert und sponsor-owned, und politisc
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('46d3c275-0df6-4be9-9512-61c88d019e93', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
+  ('a87a49d3-15bb-4f1c-93ba-b48b55609e1c', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e1f7cb72-8472-45f0-9bf1-c57288dfd530', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
+  ('696562ec-3612-4cf0-b22f-5427386be385', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('79c2a146-cc95-4526-aa11-1becc8c620df', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
+  ('c350b847-5687-4bd4-9b86-1e98532133d3', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8279,13 +8294,13 @@ Die beiden zu vermischen, ist wie Portfolios Glaubwuerdigkeit verlieren.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b001ba9e-a8c2-4827-93f2-4f65a53baab9', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
+  ('88a5b8c6-3043-4721-9de7-ddbb980ddd86', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6041deeb-6cb3-4099-8f0d-2865499c0500', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
+  ('d5605495-40dd-4550-b1b9-e5787f5e695b', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0c0a2517-1f93-4c1a-8f6c-09230b1f2d45', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
+  ('043e09f4-affb-4bfd-9387-c3920874a7fb', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8489,13 +8504,13 @@ Wenn das Board nur Schlussfolgerungen sieht, kann es die Logik nicht steuern. Ma
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b9be8b8f-81f7-4ec8-8314-ce6523303967', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
+  ('3303381c-8807-4dd0-ae73-f16f319ff51c', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2279027f-338f-4db7-a86a-3a251a028b54', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
+  ('5f2b67ac-074e-4ad0-913f-506eea876222', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bfa32ee3-8b8a-405f-bc74-3e7d38eb90df', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
+  ('1c18b2dc-ac3a-4c32-b1fc-2269f2e15a1c', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8719,13 +8734,13 @@ Kapazitaet scheitert leise, bis die Strategie-Narrative die Schuld absorbiert.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('27b1b41d-2e89-43e6-88b5-5a501723ca1c', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
+  ('ec1c3987-96a5-4d0c-80db-bda2ca8986df', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('05d2b464-c29e-47ae-aeae-7f6f8bb943b7', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
+  ('8fec2194-8268-4ef9-87a5-430b85949a5d', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7e04f1a6-bfaf-442e-86ed-5b48a354fc75', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
+  ('ae7e78de-ef4b-45ef-bdd8-cfbf638275d5', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -8940,13 +8955,13 @@ Machen Sie Envelopes, Cash-Timing und Change-Regeln sichtbar und mit Ownern vers
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9081ff94-ad72-4c59-9745-14ea322db7a9', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
+  ('8acc6a02-4323-4b0a-af62-89a7e98c0f94', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('aca61d03-e635-4659-9d02-dc21d50dba58', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
+  ('bb1595d5-9470-4810-b984-ad358f13ccf1', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('61ee5241-ddec-4d96-8c70-8c52aa326104', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
+  ('55103ce1-7fb8-4942-a9b8-2249351d2e87', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9152,13 +9167,13 @@ Halten Sie Trade-offs, Stops, Deadlocks, Wert-Behauptungen und Board-Alignment d
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9f419d36-eeeb-44a8-ab8d-de7cf0351c8f', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
+  ('74bb9637-3666-40b9-a7ea-55988bb22585', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8deedf8b-eff2-4327-9372-24b38413044a', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
+  ('1f79d10d-0338-44ab-be27-20d9210708bb', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bc37dbf6-4837-4b9c-9cb5-8e4376cb679f', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
+  ('d9c2953c-81ed-4707-b472-e11257758a49', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9369,13 +9384,13 @@ Machen Sie es live, owner-gefuehrt, trigger-basiert und in echte Governance-Fore
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ddf75675-3531-4a65-ba40-22b3af4d4b55', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
+  ('12033eb8-5aae-4fc9-9aa7-2b67a507174a', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ee932893-2e17-459c-a747-23231f4e0e56', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
+  ('7b827bf6-c40c-4ce1-9308-09c67b4c767f', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6ebb41fe-3dec-4cc9-b818-86eb679e3776', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
+  ('dbad6651-bffb-434e-9e61-429abee805b1', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9600,13 +9615,13 @@ Wenn ein Programm Intervention braucht, ersetzt ein weiterer Report keine Autori
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('783daa92-055a-40ac-9938-88c77b199975', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
+  ('37e1b34e-52bc-4891-8f01-4d17e4a5d1e7', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('aaf465d7-ddfd-4804-b06e-98aa558db9fe', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
+  ('56c47476-0136-4669-aa9a-1b346461b278', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('24ac09bd-ffff-4a0b-be2e-7fc52df6c09e', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
+  ('d60fe701-05c5-470d-aabb-d4699c16b8f3', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -9876,13 +9891,13 @@ Wenn Ihr Takt vor allem Narrative zirkuliert, finanzieren Sie Storytelling, nich
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9d73c172-affc-4e25-896f-af7037017f7f', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
+  ('37cd8f8c-6c14-48b0-b9c1-92ce24b4e143', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e3e25283-5773-4989-a4aa-d25b1ed28245', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
+  ('10bdb461-9782-4b6b-a7c4-1cd05062186e', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('30bd8811-7a30-4267-819d-76d9d526402a', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
+  ('7151db2d-5cb8-446d-968a-f23a63638849', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10136,13 +10151,13 @@ Wenn Sie nie defunden, haben Sie kein Portfolio. Sie haben einen Verpflichtungss
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('baea35aa-76b3-435c-8b03-f0cf2ec97022', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
+  ('34efb6e4-a3ea-42e8-aff3-f5b84aadc5d9', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b87a0a11-168a-4e6d-95d3-41bdb47387c4', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
+  ('0a08126a-f94e-4fec-858b-15b68048756a', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f907ecfe-e29d-4a89-8827-24352a2bf824', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
+  ('dcc3242f-c9ca-461a-af9a-72a3650d9081', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10411,13 +10426,13 @@ Wenn es keine Defaults und kein Aging gibt, eskalieren Sie nicht. Sie warten.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('216aa92f-9d80-43ab-a451-4cddf2079367', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
+  ('a800124c-6406-4ab3-a2c6-9242cb050343', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f48210fb-2782-4d93-9e12-c52131a050a2', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
+  ('8a166ddd-4daf-4fc1-aac8-0bd07c97712a', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2b059838-ed6d-4d5e-a3d3-e5ecc3d1f8e3', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
+  ('979cde78-98f9-4401-a9c8-0297bdf8c5ff', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10656,13 +10671,13 @@ Governance-Schulden abbauen ist ein expliziter Portfolio-Akt: mergen, loeschen, 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ee190adc-c5a0-47e8-919a-3a24dd22f2c5', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
+  ('a4dd0a7b-fee0-479a-8aeb-67bee4c7bc5c', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('acadda51-4894-4b44-9dca-9980cbd82e2d', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
+  ('65106f99-7ead-4543-b4b4-f1fe34580d72', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ff5f7b5c-3c6f-40a5-a266-71f59459ba99', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
+  ('71822195-7f51-4f1d-9dd8-b8f9fcd3fdd6', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -10912,13 +10927,13 @@ Reparieren Sie die Lenkung, bevor Sie eine weitere Scorecard hinzufuegen.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9028ab85-2296-4de6-87f8-872a0aa95292', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
+  ('c7aa3500-00b0-4c9b-b712-d942c0ebf4c1', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('155ee148-f077-468f-a661-ae7bc859470b', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
+  ('1f37f896-f5bc-4f28-af20-d72396488c14', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f4801f4c-9f6f-4098-a2e2-d02899bcc435', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
+  ('cb328ed4-8453-4561-9331-efebf85d5d51', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11152,13 +11167,13 @@ Wenn alle inspiriert gehen, aber niemand accountable geht, haben Sie fuer Theate
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('cf0ee5e9-cdbc-4241-b9ae-94403a0e4bf3', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
+  ('9c5d5ac9-fe87-40ba-97e9-3577fd5af9ab', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('712fc689-3410-4823-a618-63872b9c3e66', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
+  ('1f019f3a-87fb-4f6b-afd6-d61f41d4d171', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d57eb067-99cc-44ba-a299-2995314d51df', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
+  ('e7e9d91b-9448-4ec0-bfe3-94827e85a42c', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11399,13 +11414,13 @@ Wenn sie ein kurzes Evidenz-Gate nicht passiert, pausieren, bis sie es kann.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fbbd8599-2f10-4ebd-b5a2-a9194ae9730c', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
+  ('50591e77-c4ea-45df-adb2-413d4ca73e4b', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3a598f45-c638-42be-a828-f9507ba8e8a4', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
+  ('42cebd81-abfc-4fec-8463-cb2bad708149', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ac2b086e-c63b-415a-a7f0-ad132ac28f97', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
+  ('5008a1a3-45c9-4cdb-9937-82f2c7b14d49', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11625,13 +11640,13 @@ Bauen Sie die Leiter frueh, oder Sie streiten ueber Wert, nachdem Geld ausgegebe
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1d301af7-b650-41ac-93dc-b771a328c4cd', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
+  ('e4e1d069-bcdc-49aa-9a03-78b010141997', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0c60b7db-5f0f-43c6-823c-2274a0c3a829', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
+  ('253d34df-f8ff-40da-9398-ba2016866e16', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fcb5a525-7f88-4c14-8b88-4ddb295b53ca', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
+  ('2c662078-f84e-4c7b-8dcf-e5dd8930e548', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -11844,13 +11859,13 @@ Ueberlastung ist ein Portfolio-Problem im Kostuem einer Personalstimmung. Messen
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8c35feb2-08d3-4e89-9e91-aadad24b72a9', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
+  ('2a03213a-8367-4a5c-bb3c-f8b260b0ef59', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0b7169e2-abc4-4cd4-9aa9-9c63b26aaaa5', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
+  ('6bce14f9-66ef-44db-b1c1-e04676ac3774', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e981c929-704c-4c4c-a9fa-174cff3c8525', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
+  ('bad30435-6eaf-4d73-acd7-f83aac129bbc', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12098,13 +12113,13 @@ Setzen Sie Kontrolle mit Kompromissen, Ownership und Governance-Disziplin zuruec
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dbdbafa8-ae43-4d70-8579-c932af20e168', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
+  ('49169d83-51c4-4b42-a832-e929de5cec49', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ea687e0a-9d7b-47f6-bc10-0f53a83264c2', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
+  ('9cff4575-8b81-4780-bd31-9e87868c7f4b', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6c2e4340-65d0-4931-9f55-80c6617eb29a', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
+  ('a26b2034-4004-4193-9811-174505eb4092', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12362,13 +12377,13 @@ Machen Sie sie explizit, zeitlich begrenzt und dokumentiert, oder Ihr Betriebssy
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f5c515a4-d557-4380-aee7-f2bc79d6e4fe', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
+  ('a03e0b39-9ae1-4e2e-87d4-67a95cfcaca1', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a0ac5bce-ec56-4135-8108-ac697ac2ba42', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
+  ('4da3e77f-d7f7-40a9-9618-bbbac241ca2c', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8f19f574-8f76-42c0-84df-fa4d09ae9e57', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
+  ('23d736e0-9a88-4706-b3b3-00c86f0bbf3a', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12639,13 +12654,13 @@ Standardisieren Sie die sieben Bloecke, oder jeder Zyklus oeffnet dieselben Frag
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('87d59dbb-5b14-4b38-a3ad-5e577dc99362', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
+  ('fa8a6883-682e-45ad-a840-74382db5759e', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('eab1915a-26c7-4e2d-a21b-467894ae9a25', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
+  ('cb4ca1da-3af2-4ba3-b032-2f748d51952b', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e1343731-3c57-4531-8c5a-c41ec76e60ff', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
+  ('b183d5dd-6c4c-4b39-93ce-3bc4e87c4e24', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -12875,13 +12890,13 @@ Selten und bewusst neu schreiben. Annahmen laufend aktualisieren. So bleibt Valu
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7ecce7a9-88ca-42fa-8a0b-5095a4dc58a1', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
+  ('9b04be4d-b37c-445d-9f15-e26c548df016', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7007dc47-0577-4c7e-b81e-0925ae364bf0', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
+  ('cf3683c0-ef28-4223-aae7-250e7f0909d3', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('262ef4a1-4984-45f5-8a47-13f7902542e1', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
+  ('16500d14-8f9d-4ef6-92f2-705b126ee75e', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13090,13 +13105,13 @@ Fuehren Sie ein Annahmen-Ledger mit Ownern und Tests, oder jedes Review oeffnet 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6dbfc193-bbea-4413-b724-b9d436fb7474', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
+  ('de8edaed-3dc7-43f0-8c7a-427634c3b69d', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d6821b95-87d1-43e6-aaf1-584f8f73d7c2', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
+  ('d523942a-b4b0-44a2-8a58-988c2cd6b18b', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('12036450-daa7-4781-a4e1-f8293eba12f6', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
+  ('2d3865ef-7099-4bfa-862c-1b91d8262e2a', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13343,13 +13358,13 @@ Machen Sie Kapazitaet sichtbar nach Name, Stunde und Contention, oder Execution-
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('57ce6ce4-f395-420b-bef9-c17b9a7bed85', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
+  ('702dfeb3-d3fd-41fe-8f27-7e0470874b4d', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6c07ba04-2de3-45c2-9a13-fd2f6b2d7612', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
+  ('81b3c9b3-e0bf-4a57-9403-61f86bb451dc', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7c2985fe-ce03-4df6-a486-632d0fdde275', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
+  ('2952d22f-7016-4c99-8282-e47d4fbee829', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13577,13 +13592,13 @@ Menschen verdienen ein System, das ihre Kapazitaet nicht mit wiederholtem Beweis
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c6a0e378-8053-46e1-a03a-ba4af2ca70aa', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
+  ('258c50e9-ec7e-4f19-9315-dc95dca4b23f', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('367d2cda-2766-498c-8d1a-ff1fc6bdfdad', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
+  ('2c47af8c-e5f2-4cb7-b973-64f5458018e6', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6eb37804-72fb-466d-b19c-b1f1d639d3f9', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
+  ('c5f8fea3-5aac-4d35-9f24-f208c41eab01', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -13806,13 +13821,13 @@ Invertieren Sie das Modell: Records zuerst, Entscheidungen zweitens, Slides zule
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f08c99b1-153f-4d7d-aa39-45195141020c', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
+  ('89e668df-d7b7-4f7c-bec2-2eb635fbc3e0', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('65ca4174-2669-4602-84e7-79f903cb3d9a', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
+  ('0f059735-8814-4480-858e-ebd447e66b11', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('94396507-0204-45b9-aeed-18c48ab1c763', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
+  ('1b3c4466-b752-438d-80b8-93e3b8e424b7', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
@@ -14081,13 +14096,13 @@ Wiederholbares Transformationsmanagement ist ein designed Betriebssystem mit sta
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('07a3570f-5019-4803-af93-45acb816cab2', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
+  ('0808a90c-3504-4a9a-981a-776834d97901', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9a29f10e-1370-4c94-93ce-2260bf51d480', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
+  ('d2e44971-4091-4040-8d75-75f3e9a75530', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d14c6604-cb01-43d1-9673-cf4c3fa41a7c', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
+  ('0fa39dc5-220a-4f66-99fb-970aa6514eba', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
