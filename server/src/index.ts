@@ -87,6 +87,35 @@ import systemHealthRoutes from './routes/system-health.routes.js';
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
 
+// Temporary KB migration diagnostics (remove after blog launch)
+app.get('/api/kb-diag', async (_req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const migHistory = await db.query(
+      `SELECT filename FROM tp_migration_history WHERE filename LIKE '%739%' OR filename LIKE '%kb%' OR filename LIKE '%consultify%' ORDER BY filename`
+    ).catch(() => ({ rows: [] }));
+    const tables = await db.query(
+      `SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'kb_%' ORDER BY table_name`
+    ).catch(() => ({ rows: [] }));
+    const catCount = await db.query(`SELECT COUNT(*) as cnt FROM kb_categories`).catch(() => ({ rows: [{ cnt: -1 }] }));
+    const artCount = await db.query(`SELECT COUNT(*) as cnt FROM kb_articles`).catch(() => ({ rows: [{ cnt: -1 }] }));
+    const envFlags = {
+      ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL,
+      DB_MANAGED_SCHEMA: process.env.DB_MANAGED_SCHEMA,
+      DISABLE_TP_MIGRATIONS: process.env.DISABLE_TP_MIGRATIONS,
+    };
+    res.json({
+      migrations: migHistory.rows.map((r: any) => r.filename),
+      tables: tables.rows.map((r: any) => r.table_name),
+      categories: catCount.rows[0]?.cnt,
+      articles: artCount.rows[0]?.cnt,
+      envFlags,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Test route to verify server is working
 app.get('/test-frontend-path', (req: Request, res: Response) => {
   const testPaths = [
