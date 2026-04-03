@@ -8,10 +8,14 @@
 
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Check,
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  Filter,
   Loader2,
   Sparkles,
   UserPlus,
@@ -50,6 +54,50 @@ interface ResourcesAnalysisProps {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sort helpers                                                       */
+/* ------------------------------------------------------------------ */
+
+type SortColumn = 'person' | 'role' | 'initiatives' | 'workload' | 'status';
+type SortDir = 'asc' | 'desc';
+
+const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDir: SortDir }> = ({
+  column,
+  currentCol,
+  currentDir,
+}) => {
+  if (column !== currentCol) return <ArrowUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return currentDir === 'asc' ? (
+    <ArrowUp size={12} className="text-primary-500" />
+  ) : (
+    <ArrowDown size={12} className="text-primary-500" />
+  );
+};
+
+const SortableHeader: React.FC<{
+  label: string;
+  column: SortColumn;
+  currentCol: SortColumn;
+  currentDir: SortDir;
+  onSort: (col: SortColumn) => void;
+  align?: 'left' | 'center' | 'right';
+  className?: string;
+}> = ({ label, column, currentCol, currentDir, onSort, align = 'left', className = '' }) => (
+  <th
+    className={`text-${align} px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 ${className}`}
+  >
+    <button
+      onClick={() => onSort(column)}
+      className={`inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors ${
+        align === 'center' ? 'mx-auto' : ''
+      }`}
+    >
+      {label}
+      <SortIcon column={column} currentCol={currentCol} currentDir={currentDir} />
+    </button>
+  </th>
+);
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -70,6 +118,12 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   const [aiRunning, setAiRunning] = useState(false);
   const [applyingProposalIdx, setApplyingProposalIdx] = useState<number | null>(null);
 
+  // Sort & filter state
+  const [sortCol, setSortCol] = useState<SortColumn>('workload');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
   /* ---------- derived stats ---------- */
 
   const overallocatedCount = allocations.filter((a) => a.status === 'overallocated').length;
@@ -77,18 +131,60 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   const underutilizedCount = allocations.filter((a) => a.status === 'underutilized').length;
   const totalInitiatives = initiatives.length;
 
-  const sortedAllocations = useMemo(
-    () =>
-      [...allocations].sort((a, b) => {
-        const statusOrder: Record<string, number> = {
-          overallocated: 0,
-          ok: 1,
-          underutilized: 2,
-        };
-        return (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
-      }),
+  const uniqueRoles = useMemo(
+    () => Array.from(new Set(allocations.map((a) => a.role))).sort(),
     [allocations]
   );
+
+  const handleSort = useCallback(
+    (col: SortColumn) => {
+      if (sortCol === col) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortCol(col);
+        setSortDir(col === 'workload' || col === 'initiatives' ? 'desc' : 'asc');
+      }
+    },
+    [sortCol]
+  );
+
+  const sortedAllocations = useMemo(() => {
+    let list = [...allocations];
+
+    if (roleFilter !== 'all') {
+      list = list.filter((a) => a.role === roleFilter);
+    }
+
+    const statusOrder: Record<string, number> = {
+      overallocated: 0,
+      ok: 1,
+      underutilized: 2,
+    };
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      switch (sortCol) {
+        case 'person':
+          cmp = a.resourceName.localeCompare(b.resourceName);
+          break;
+        case 'role':
+          cmp = a.role.localeCompare(b.role);
+          break;
+        case 'initiatives':
+          cmp = a.allocatedInitiatives.length - b.allocatedInitiatives.length;
+          break;
+        case 'workload':
+          cmp = a.utilizationPercent - b.utilizationPercent;
+          break;
+        case 'status':
+          cmp = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+          break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    return list;
+  }, [allocations, roleFilter, sortCol, sortDir]);
 
   /* ---------- helpers ---------- */
 
@@ -454,30 +550,112 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
       {/* Team workload table */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
+        <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {t('initiatives.analysis.resources.teamWorkload', 'Team workload')}
           </h3>
+          {roleFilter !== 'all' && (
+            <button
+              onClick={() => setRoleFilter('all')}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
+                bg-primary-500/10 text-primary-600 dark:text-primary-400
+                hover:bg-primary-500/20 transition-colors"
+            >
+              <X size={10} />
+              {roleFilter}
+            </button>
+          )}
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700">
               <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-8" />
-              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.person', 'Person')}
+              <SortableHeader
+                label={t('initiatives.analysis.resources.person', 'Person')}
+                column="person"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="left"
+              />
+              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 relative">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleSort('role')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
+                    {t('initiatives.analysis.resources.role', 'Role')}
+                    <SortIcon column="role" currentCol={sortCol} currentDir={sortDir} />
+                  </button>
+                  <button
+                    onClick={() => setShowRoleDropdown((v) => !v)}
+                    className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors ${
+                      roleFilter !== 'all'
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    <Filter size={12} />
+                  </button>
+                </div>
+                {showRoleDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowRoleDropdown(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-navy-900
+                      border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg py-1 min-w-[180px]">
+                      <button
+                        onClick={() => { setRoleFilter('all'); setShowRoleDropdown(false); }}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
+                          roleFilter === 'all' ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {t('initiatives.analysis.resources.allRoles', 'All roles')}
+                      </button>
+                      {uniqueRoles.map((role) => (
+                        <button
+                          key={role}
+                          onClick={() => { setRoleFilter(role); setShowRoleDropdown(false); }}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
+                            roleFilter === role ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </th>
-              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.role', 'Role')}
-              </th>
-              <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-24">
-                {t('initiatives.analysis.resources.initiatives', 'Initiatives')}
-              </th>
-              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-48">
-                {t('initiatives.analysis.resources.workload', 'Workload')}
-              </th>
-              <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-28">
-                {t('initiatives.analysis.resources.status', 'Status')}
-              </th>
+              <SortableHeader
+                label={t('initiatives.analysis.resources.initiatives', 'Initiatives')}
+                column="initiatives"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="center"
+                className="w-24"
+              />
+              <SortableHeader
+                label={t('initiatives.analysis.resources.workload', 'Workload')}
+                column="workload"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="left"
+                className="w-48"
+              />
+              <SortableHeader
+                label={t('initiatives.analysis.resources.status', 'Status')}
+                column="status"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="center"
+                className="w-28"
+              />
             </tr>
           </thead>
           <tbody>
