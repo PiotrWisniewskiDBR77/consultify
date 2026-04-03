@@ -100,9 +100,9 @@ import {
   computeRAG,
   exportReportPDF,
   RAG_CONFIG,
-  ReportCompactPanel,
   type ReportDef as ReportCompactDef,
 } from './ReportCompactPanel';
+import { type ReportDataContext, ReportDocumentView } from './ReportDocumentView';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -2075,6 +2075,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
+  const handleOpenReport = useCallback((report: { id: string; title: string }) => {
+    const docId = `report:${report.id}`;
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'execution',
+      name: report.title,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === docId)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(docId);
+    setIsSidePanelOpen(false);
+  }, []);
+
   const handleOpenSidePanel = useCallback((row: FullInitiative) => {
     setActiveDocumentId(null);
     setSelectedInitiative(row);
@@ -3606,8 +3623,69 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
 
   const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
-  const [reportPanelOpen, setReportPanelOpen] = useState(false);
-  const [reportPanelId, setReportPanelId] = useState<string | null>(null);
+  const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+
+  const reportDataContext = useMemo((): ReportDataContext => ({
+    initiatives: filteredInitiatives.map((i) => ({
+      id: i.id,
+      name: i.name,
+      status: i.status,
+      health: initiativeHealthMap.get(i.id)?.health,
+      progress: (i as any).progressPercent ?? (i as any).progress,
+      owner: (i as any).ownerName || (i as any).owner?.name,
+      targetDate: (i as any).targetDate,
+      priority: (i as any).priority,
+    })),
+    tasks: tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      priority: (t as any).priority,
+      dueDate: t.dueDate,
+      assigneeName: (t as any).assigneeName || (t as any).assignee?.name,
+      initiativeId: (t as any).initiativeId,
+      initiativeName: (t as any).initiativeName,
+    })),
+    decisions: decisions.map((d) => ({
+      id: d.id,
+      title: d.title,
+      status: d.status,
+      priority: (d as any).priority,
+      dueDate: (d as any).dueDate,
+      ownerName: (d as any).ownerName || (d as any).owner?.name,
+      relatedObjectId: (d as any).relatedObjectId,
+    })),
+    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
+    riskSignals: riskSignals.map((r) => ({
+      id: (r as any).id,
+      title: r.title,
+      initiativeName: r.initiativeName,
+      severity: r.severity,
+      description: r.description,
+      suggestedAction: r.suggestedAction,
+    })),
+    delaySignals: delaySignals.map((d) => ({
+      entityName: d.entityName,
+      deviationType: d.deviationType,
+      daysDeviation: d.daysDeviation,
+      severity: d.severity,
+    })),
+    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
+      id: d.id,
+      title: d.title,
+      ownerName: (d as any).ownerName || (d as any).owner?.name,
+      dueDate: (d as any).dueDate,
+    })),
+    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
+    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      dueDate: (t as any).dueDate,
+      assigneeName: (t as any).assigneeName,
+    })),
+    progressPercent: execSnapshot?.overview?.progressPercent ?? null,
+    totalInitiatives: filteredInitiatives.length,
+  }), [filteredInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, execSnapshot, initiativeHealthMap]);
 
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
@@ -3846,22 +3924,23 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
 
     if (viewMode === 'table') {
       type ReportRow = ReportDef & { title: string };
-      const selectedReport = reportPanelId
-        ? (reportCatalog.find((r) => r.id === reportPanelId) as ReportRow | undefined) ?? null
+      const selectedReportPreviewId = reportPreviewId;
+      const selectedReport = selectedReportPreviewId
+        ? (reportCatalog.find((r) => r.id === selectedReportPreviewId) as ReportRow | undefined) ?? null
         : null;
       const reportIds = reportCatalog.map((r) => r.id);
 
       return (
         <div className="h-full overflow-hidden">
           <TableWithPreviewLayout<ReportRow>
-            selectedId={reportPanelId}
+            selectedId={selectedReportPreviewId}
             selectedItem={selectedReport}
-            onSelect={setReportPanelId}
+            onSelect={setReportPreviewId}
             itemIds={reportIds}
             getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
             onOpenFull={(id) => {
-              setReportPanelId(id);
-              setReportPanelOpen(true);
+              const r = reportCatalog.find((x) => x.id === id);
+              if (r) handleOpenReport(r);
             }}
             renderPreview={(item) => renderReportPreviewBody(item)}
             renderPreviewFooter={(item) => renderReportPreviewFooter(item)}
@@ -3869,11 +3948,11 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             <FilterableTable
               columns={reportColumns}
               data={reportCatalog as any[]}
-              selectedRowId={reportPanelId}
-              onRowClick={(row) => setReportPanelId(String(row.id))}
+              selectedRowId={selectedReportPreviewId}
+              onRowClick={(row) => setReportPreviewId(String(row.id))}
               onRowDoubleClick={(row) => {
-                setReportPanelId(String(row.id));
-                setReportPanelOpen(true);
+                const r = reportCatalog.find((x) => x.id === row.id);
+                if (r) handleOpenReport(r);
               }}
               activeFilters={reportFilters}
               onFilterChange={setReportFilters}
@@ -3908,21 +3987,12 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {reportCatalog.map((report) => {
-            const isSelected = reportPanelId === report.id && reportPanelOpen;
             return (
               <button
                 key={report.id}
                 type="button"
-                onClick={() => {
-                  setReportPanelId(report.id);
-                  setReportPanelOpen(true);
-                }}
-                onDoubleClick={() => handleGenerateReport(report)}
-                className={`group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left ${
-                  isSelected
-                    ? 'border-cyan-400 dark:border-cyan-600 shadow-md ring-1 ring-cyan-400/20'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30'
-                }`}
+                onClick={() => handleOpenReport(report)}
+                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -3945,7 +4015,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
                         </div>
                       </div>
                     </div>
-                    <ChevronRight size={14} className={`text-slate-300 dark:text-slate-600 transition-transform ${isSelected ? 'text-cyan-500' : 'group-hover:text-cyan-500'}`} />
+                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500" />
                   </div>
 
                   {report.highlights.length > 0 && (
@@ -4427,6 +4497,20 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     }
 
     if (activeDocumentId) {
+      if (activeDocumentId.startsWith('report:')) {
+        const reportId = activeDocumentId.replace('report:', '');
+        const report = reportCatalog.find((r) => r.id === reportId);
+        if (report) {
+          return (
+            <ReportDocumentView
+              report={report as ReportCompactDef}
+              data={reportDataContext}
+              onBack={handleShowList}
+              onGenerateAI={(r) => handleGenerateReport(r as ReportDef)}
+            />
+          );
+        }
+      }
       return (
         <InitiativeDocumentView
           initiativeId={activeDocumentId}
@@ -4621,15 +4705,6 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             ? (initiativeHealthMap.get(sidePanelInitiative.id)?.whyRed ?? null)
             : null
         }
-      />
-      <ReportCompactPanel
-        report={reportPanelId ? (reportCatalog.find((r) => r.id === reportPanelId) as ReportCompactDef | undefined) ?? null : null}
-        isOpen={reportPanelOpen}
-        onClose={() => {
-          setReportPanelOpen(false);
-          setReportPanelId(null);
-        }}
-        onGenerate={(r) => handleGenerateReport(r as ReportDef)}
       />
     </>
   );
