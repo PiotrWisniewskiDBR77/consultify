@@ -3860,8 +3860,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             itemIds={reportIds}
             getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
             onOpenFull={(id) => {
-              const r = reportCatalog.find((x) => x.id === id);
-              if (r) handleGenerateReport(r);
+              setReportPanelId(id);
+              setReportPanelOpen(true);
             }}
             renderPreview={(item) => renderReportPreviewBody(item)}
             renderPreviewFooter={(item) => renderReportPreviewFooter(item)}
@@ -3872,8 +3872,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
               selectedRowId={reportPanelId}
               onRowClick={(row) => setReportPanelId(String(row.id))}
               onRowDoubleClick={(row) => {
-                const r = reportCatalog.find((x) => x.id === row.id);
-                if (r) handleGenerateReport(r);
+                setReportPanelId(String(row.id));
+                setReportPanelOpen(true);
               }}
               activeFilters={reportFilters}
               onFilterChange={setReportFilters}
