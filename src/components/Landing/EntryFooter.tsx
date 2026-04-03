@@ -130,7 +130,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
           {/* Brand Column - Spans 2 on large */}
           <div className="col-span-2 space-y-6">
             {/* Logo */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <img
                 src="/assets/logos/logo-light.svg?v=20260319"
                 alt="Consultify"
@@ -141,9 +141,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
                 alt="Consultify"
                 className="hidden h-8 w-auto dark:block"
               />
-              <span className="text-lg font-black tracking-tight text-navy-950 dark:text-white uppercase">
-                Consultify
-              </span>
             </div>
 
             {/* Tagline */}
