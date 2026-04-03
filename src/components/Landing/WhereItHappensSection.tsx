@@ -38,8 +38,8 @@ export const WhereItHappensSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary-500/30 bg-primary-600/10 mb-5"
           >
-            <Zap size={12} className="text-primary-300" />
-            <span className="text-xs font-bold text-primary-300 uppercase tracking-wider">
+            <Zap size={12} className="text-primary-600 dark:text-primary-300" />
+            <span className="text-xs font-bold text-primary-600 dark:text-primary-300 uppercase tracking-wider">
               {t('landing.whereItHappens.badge', 'What Consultify does')}
             </span>
           </motion.div>
@@ -83,22 +83,19 @@ export const WhereItHappensSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.07, duration: 0.35 }}
-                className="group relative p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.02)',
-                }}
+                className="group relative p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02]
+                  bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]
+                  shadow-sm dark:shadow-none"
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.boxShadow =
                     `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
-                  (e.currentTarget as HTMLDivElement).style.borderColor =
-                    `${visual.accentColor}40`;
+                  el.style.borderColor = `${visual.accentColor}40`;
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    'inset 0 0 0 1px rgba(255,255,255,0.02)';
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.boxShadow = '';
+                  el.style.borderColor = '';
                 }}
               >
                 <div
@@ -165,13 +162,10 @@ export const WhereItHappensSection: React.FC = () => {
           className="text-center mt-14"
         >
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-slate-400 dark:text-white/35 font-medium"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-slate-400 dark:text-white/35 font-medium
+              bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]"
           >
-            <Target size={12} className="text-primary-400" />
+            <Target size={12} className="text-primary-600 dark:text-primary-400" />
             {t(
               'landing.whereItHappens.closingNote',
               'One category promise, one product surface, one path from understanding to measurable results.'

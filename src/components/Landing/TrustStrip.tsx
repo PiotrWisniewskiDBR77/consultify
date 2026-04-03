@@ -69,7 +69,7 @@ export const TrustStrip: React.FC = () => {
           className="flex flex-col items-center gap-3"
         >
           <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-white/30">
-            <Globe size={13} className="text-primary-400" />
+            <Globe size={13} className="text-primary-600 dark:text-primary-400" />
             <span className="font-medium">
               {t('landing.compliance.dataResidency', 'Data residency')}
             </span>

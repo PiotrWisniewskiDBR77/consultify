@@ -81,7 +81,7 @@ export const ValueJourneySection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70"
           >
-            <Compass size={12} className="text-primary-300" />
+            <Compass size={12} className="text-primary-600 dark:text-primary-300" />
             {t('landing.valueJourney.badge', 'How the platform creates value')}
           </motion.div>
           <motion.h2
@@ -140,7 +140,7 @@ export const ValueJourneySection: React.FC = () => {
                   key={title}
                   className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/12 bg-violet-500/10 text-sm font-black text-violet-300">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/12 bg-violet-500/10 text-sm font-black text-violet-600 dark:text-violet-300">
                     {index + 1}
                   </div>
                   <div>
@@ -182,7 +182,7 @@ export const ValueJourneySection: React.FC = () => {
                   key={title}
                   className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-500/12 bg-cyan-500/10 text-sm font-black text-cyan-300">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-500/12 bg-cyan-500/10 text-sm font-black text-cyan-600 dark:text-cyan-300">
                     {index + 1}
                   </div>
                   <div>

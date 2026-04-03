@@ -126,6 +126,80 @@ export interface V8ExecutionRaidMitigationPayload {
   mitigationStatus?: 'OPEN' | 'IN_PROGRESS' | 'MITIGATED' | 'ACCEPTED' | 'CLOSED';
 }
 
+// ── Manager Lane Analysis Types ────────────────────────────────────────────
+
+export interface V8LaneObservation {
+  id: string;
+  metric: string;
+  scope: string;
+  since?: string;
+  trend: 'rising' | 'stable' | 'improving';
+  severity: 'info' | 'warning' | 'critical';
+  entityId?: string;
+  entityName?: string;
+}
+
+export interface V8LaneInsight {
+  id: string;
+  observationIds: string[];
+  interpretation: string;
+  isSystemic: boolean;
+  requiresAction: boolean;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface V8LaneEffect {
+  id: string;
+  insightId: string;
+  consequence: string;
+  blastRadius: number;
+  costImpact?: string;
+  timelineImpact?: string;
+  affectedEntities?: Array<{ id: string; name: string; type: string }>;
+}
+
+export interface V8LaneSuggestion {
+  id: string;
+  action: string;
+  reason: string;
+  expectedOutcome: string;
+  cost: string;
+  feasibility: 'immediate' | 'manager_decision' | 'leadership_decision' | 'not_feasible_now';
+  requiresApproval: boolean;
+  recommendedOwner?: string;
+  category: 'operational' | 'organizational' | 'governance' | 'quality';
+}
+
+export interface V8LaneDecision {
+  id: string;
+  suggestionId: string;
+  state: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  notes?: string;
+}
+
+export interface V8LaneExecutionPlan {
+  id: string;
+  decisionId: string;
+  tasks: Array<{ title: string; owner: string; deadline: string; status: string }>;
+  beforeState?: string;
+  afterState?: string;
+  verificationStatus: 'pending' | 'in_progress' | 'verified' | 'failed';
+}
+
+export interface V8LaneAnalysisResponse {
+  observations: V8LaneObservation[];
+  insights: V8LaneInsight[];
+  effects: V8LaneEffect[];
+  suggestions: V8LaneSuggestion[];
+  decisions: V8LaneDecision[];
+  executionPlan: V8LaneExecutionPlan[];
+  severity: 'ok' | 'warning' | 'critical';
+  confidence: 'high' | 'medium' | 'low' | 'degraded';
+  lastRefreshed: string;
+}
+
 export const V8ExecutionControlApi = {
   getRiskSignals: (projectId?: string) =>
     v8Get<{ signals: V8ExecutionRiskSignal[]; count: number }>(
@@ -220,4 +294,54 @@ export const V8ExecutionControlApi = {
 
   createBudgetEntry: (payload: V8ExecutionBudgetEntryPayload) =>
     v8Post<{ success: boolean; id: string }>('/execution-control/budget/entries', payload),
+
+  // ── Manager Lane Analysis (6-Lane Cockpit) ──────────────────────────────
+
+  getControlTowerQueues: (projectId?: string) =>
+    v8Get<{ queues: Record<string, unknown[]>; counts: Record<string, number> }>(
+      '/execution-control/control-tower/queues',
+      projectId ? { projectId } : undefined
+    ),
+
+  getControlTowerItemDetail: (entityType: string, entityId: string, projectId?: string) =>
+    v8Get<{ why: string[]; whatNext: string[]; affectsNext: string[] }>(
+      `/execution-control/control-tower/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}/drill-down`,
+      projectId ? { projectId } : undefined
+    ),
+
+  getLaneAnalysis: (laneId: string, projectId?: string) =>
+    v8Get<V8LaneAnalysisResponse>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/analysis`,
+      projectId ? { projectId } : undefined
+    ),
+
+  submitLaneDecision: (laneId: string, payload: { suggestionId: string; state: string; notes?: string }) =>
+    v8Post<{ success: boolean; decisionId: string }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/decisions`,
+      payload
+    ),
+
+  executeLanePlan: (laneId: string, payload: { decisionId: string }) =>
+    v8Post<{ success: boolean; planId: string }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/execute`,
+      payload
+    ),
+
+  getLaneVerification: (laneId: string, projectId?: string) =>
+    v8Get<{ plans: V8LaneExecutionPlan[] }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/verification`,
+      projectId ? { projectId } : undefined
+    ),
+
+  interveneReassign: (payload: { entityType: string; entityId: string; newOwnerId: string; reason?: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/reassign', payload),
+
+  interveneSmooth: (payload: { entityId: string; strategy: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/smooth', payload),
+
+  interveneReplan: (payload: { entityId: string; newDeadline: string; reason: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/replan', payload),
+
+  interveneEscalate: (payload: { entityId: string; severity: string; message: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/escalate', payload),
 };

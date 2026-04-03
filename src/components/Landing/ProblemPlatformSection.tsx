@@ -40,7 +40,7 @@ export const ProblemPlatformSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70"
           >
-            <Sparkles size={12} className="text-primary-300" />
+            <Sparkles size={12} className="text-primary-600 dark:text-primary-300" />
             {t('landing.problemPlatform.badge', 'Why this category matters')}
           </motion.div>
           <motion.h2
@@ -152,7 +152,7 @@ export const ProblemPlatformSection: React.FC = () => {
               ))}
             </div>
 
-            <p className="text-sm font-semibold text-primary-300">
+            <p className="text-sm font-semibold text-primary-600 dark:text-primary-300">
               {t(
                 'landing.problemPlatform.pattern.summary',
                 'Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow.'

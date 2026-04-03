@@ -3,6 +3,9 @@
  *
  * Full-screen view for each manager module opened as a dynamic tab.
  * Six modules: action-queue, decisions, blockers, workload, risk, people-change
+ *
+ * V2: Uses LaneCockpitShell with full Obs->Ins->Eff->Sug->Dec->Exec cycle
+ * when lane analysis data is available; falls back to legacy renderers otherwise.
  */
 
 import {
@@ -17,12 +20,19 @@ import {
   Target,
   Users,
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  V8ExecutionControlApi,
+  type V8LaneAnalysisResponse,
+} from '../../services/api/v8/execution-control';
 import type { FullInitiative, Task } from '../../types';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { LaneCockpitShell } from './Manager/LaneCockpitShell';
+import type { ProblemEntry } from './Manager/LaneProblemList';
+import type { LaneAction, LaneAnalysis, MetricDef } from './Manager/types';
 import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
 
 // ---------------------------------------------------------------------------
@@ -532,6 +542,107 @@ const EmptyState: React.FC<{ text: string; icon?: React.ReactNode }> = ({ text, 
 // MAIN COMPONENT
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// ANALYSIS DATA HOOKS
+// ---------------------------------------------------------------------------
+
+function useLaneAnalysis(moduleId: string, projectId?: string) {
+  const [analysis, setAnalysis] = useState<LaneAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAnalysis = useCallback(async () => {
+    setLoading(true);
+    try {
+      const resp = await V8ExecutionControlApi.getLaneAnalysis(moduleId, projectId);
+      setAnalysis(resp as LaneAnalysis);
+    } catch {
+      setAnalysis(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [moduleId, projectId]);
+
+  useEffect(() => {
+    fetchAnalysis();
+  }, [fetchAnalysis]);
+
+  return { analysis, loading, refresh: fetchAnalysis };
+}
+
+function buildProblemsFromAnalysis(analysis: LaneAnalysis | null): ProblemEntry[] {
+  if (!analysis) return [];
+  return analysis.insights
+    .filter((i) => i.requiresAction)
+    .map((i) => ({
+      id: i.id,
+      label: i.interpretation,
+      severity: i.isSystemic ? 'critical' as const : 'warning' as const,
+      secondaryLabel: `${i.observationIds.length} observation(s)`,
+    }));
+}
+
+function buildMetricsFromLegacy(moduleId: string, data: ManagerModuleDataContext): MetricDef[] {
+  switch (moduleId) {
+    case 'action-queue': {
+      const byType: Record<string, number> = {};
+      data.actionQueueItems.forEach((i) => { byType[i.type] = (byType[i.type] || 0) + 1; });
+      return [
+        { label: 'Total Items', value: data.actionQueueItems.length },
+        { label: 'Decisions', value: byType['decision_overdue'] || 0, variant: (byType['decision_overdue'] || 0) > 0 ? 'warn' : undefined },
+        { label: 'Risks', value: byType['risk_high'] || 0, variant: (byType['risk_high'] || 0) > 0 ? 'critical' : undefined },
+        { label: 'KPI Deviations', value: byType['kpi_deviation_no_plan'] || 0 },
+      ];
+    }
+    case 'decisions':
+      return [
+        { label: 'Overdue', value: data.overdueDecisions.length, variant: data.overdueDecisions.length > 0 ? 'critical' : undefined },
+        { label: 'Pending', value: data.decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length },
+        { label: 'Approved', value: data.decisions.filter((d) => String(d.status).toUpperCase() === 'APPROVED').length },
+      ];
+    case 'blockers':
+      return [
+        { label: 'Blocked', value: data.blocked.length, variant: data.blocked.length > 0 ? 'critical' : undefined },
+        { label: 'Critical Risks', value: data.riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length },
+        { label: 'Due Soon', value: data.dueSoonTasks.length },
+      ];
+    case 'workload': {
+      const assignees: Record<string, { total: number }> = {};
+      data.tasks.forEach((t: any) => {
+        const a = t.assigneeName || t.assignee?.name || 'Unassigned';
+        if (!assignees[a]) assignees[a] = { total: 0 };
+        assignees[a].total++;
+      });
+      const overloaded = Object.values(assignees).filter((s) => s.total > 10).length;
+      return [
+        { label: 'Total Tasks', value: data.tasks.length },
+        { label: 'People', value: Object.keys(assignees).filter((n) => n !== 'Unassigned').length },
+        { label: 'Overloaded', value: overloaded, variant: overloaded > 0 ? 'warn' : undefined },
+      ];
+    }
+    case 'risk':
+      return [
+        { label: 'Risk Signals', value: data.riskSignals.length, variant: data.riskSignals.length > 3 ? 'warn' : undefined },
+        { label: 'Critical', value: data.riskSignals.filter((r) => r.severity === 'CRITICAL').length, variant: data.riskSignals.filter((r) => r.severity === 'CRITICAL').length > 0 ? 'critical' : undefined },
+        { label: 'Delay Signals', value: data.delaySignals.length },
+        { label: 'Blocked', value: data.blocked.length },
+      ];
+    case 'people-change': {
+      const withoutOwner = data.initiatives.filter((i: any) => !i.ownerId && !i.assigneeId);
+      return [
+        { label: 'Initiatives', value: data.initiatives.length },
+        { label: 'Missing Owners', value: withoutOwner.length, variant: withoutOwner.length > 0 ? 'warn' : undefined },
+        { label: 'Missing Dates', value: data.missingDates.length },
+      ];
+    }
+    default:
+      return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------------------------
+
 export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   moduleId,
   data,
@@ -541,6 +652,91 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   const icon = MODULE_ICONS[moduleId];
   const title = MODULE_TITLES[moduleId] || moduleId;
 
+  const { analysis, loading, refresh } = useLaneAnalysis(
+    moduleId,
+    data.projectId
+  );
+
+  const metrics = useMemo(
+    () => buildMetricsFromLegacy(moduleId, data),
+    [moduleId, data]
+  );
+
+  const problems = useMemo(
+    () => buildProblemsFromAnalysis(analysis),
+    [analysis]
+  );
+
+  const handleAction = useCallback(async (action: LaneAction) => {
+    try {
+      switch (action.type) {
+        case 'approve':
+          await V8ExecutionControlApi.submitLaneDecision(moduleId, {
+            suggestionId: action.targetId,
+            state: 'approved',
+          });
+          break;
+        case 'reject':
+          await V8ExecutionControlApi.submitLaneDecision(moduleId, {
+            suggestionId: action.targetId,
+            state: 'rejected',
+          });
+          break;
+        case 'defer':
+          await V8ExecutionControlApi.submitLaneDecision(moduleId, {
+            suggestionId: action.targetId,
+            state: 'deferred',
+          });
+          break;
+        case 'escalate':
+          await V8ExecutionControlApi.submitLaneDecision(moduleId, {
+            suggestionId: action.targetId,
+            state: 'pending_approval',
+            notes: 'Escalated',
+          });
+          break;
+        case 'execute':
+          await V8ExecutionControlApi.executeLanePlan(moduleId, {
+            decisionId: action.targetId,
+          });
+          break;
+        default:
+          break;
+      }
+      refresh();
+    } catch {
+      // silently fail — lane analysis endpoint may not be deployed yet
+    }
+  }, [moduleId, refresh]);
+
+  // When analysis is available, use the new cockpit shell
+  if (analysis || loading) {
+    return (
+      <LaneCockpitShell
+        laneId={moduleId as any}
+        title={title}
+        icon={icon}
+        analysis={analysis}
+        metrics={metrics}
+        problems={problems}
+        loading={loading}
+        onBack={onBack}
+        onAction={handleAction}
+        onRefresh={refresh}
+      >
+        {moduleId === 'people-change' && (
+          <div className="mt-4 bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 rounded-xl overflow-hidden">
+            <PeopleChangeWorkspace
+              initiativeId={undefined}
+              projectId={data.projectId}
+            />
+          </div>
+        )}
+      </LaneCockpitShell>
+    );
+  }
+
+  // Fallback to legacy renderers when backend endpoint is not available
   const renderer = MODULE_RENDERERS[moduleId];
   const ComponentRenderer = MODULE_COMPONENT_RENDERERS[moduleId];
 
@@ -556,7 +752,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
             {icon}
           </div>
           <div>
-            <h1 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h1>
+            <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
             <p className="text-[11px] text-slate-400 dark:text-slate-500">
               {t('execution.manager.moduleSubtitle', 'Execution Management · {{date}}', { date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) })}
             </p>

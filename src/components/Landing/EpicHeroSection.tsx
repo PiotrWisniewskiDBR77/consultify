@@ -255,8 +255,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.45 }}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm"
             >
-              <Sparkles size={12} className="text-primary-300" />
-              <span className="text-xs font-bold text-primary-300 tracking-wide">
+              <Sparkles size={12} className="text-primary-600 dark:text-primary-300" />
+              <span className="text-xs font-bold text-primary-600 dark:text-primary-300 tracking-wide">
                 {t('landing.epicHero.eyebrow', 'Consulting Intelligence Platform')}
               </span>
             </motion.div>
@@ -345,8 +345,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 }}
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-slate-900 dark:text-white
                   transition-all duration-300 active:scale-[0.98]
-                  bg-slate-100 dark:bg-white/05 border border-slate-300 dark:border-white/18
-                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.09] dark:hover:border-[rgba(168,85,247,0.45)]"
+                  bg-slate-100 dark:bg-white/[0.10] border border-slate-300 dark:border-white/[0.22]
+                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(168,85,247,0.50)]"
               >
                 <Play size={14} className="text-slate-600 dark:text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
@@ -359,7 +359,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.5, delay: 0.28 }}
               className="max-w-xl rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] p-4 backdrop-blur-sm"
             >
-              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-300">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-600 dark:text-primary-300">
                 <Sparkles size={12} />
                 <span>{t('landing.epicHero.annaBadge', 'Start with Anna')}</span>
               </div>

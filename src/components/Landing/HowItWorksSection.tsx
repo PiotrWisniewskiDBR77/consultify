@@ -36,8 +36,8 @@ export const HowItWorksSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 mb-5"
           >
-            <Play size={11} className="text-cyan-400" fill="currentColor" />
-            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+            <Play size={11} className="text-cyan-600 dark:text-cyan-400" fill="currentColor" />
+            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
               {t('landing.howItWorks.badge', 'How it works')}
             </span>
           </motion.div>
@@ -92,7 +92,9 @@ export const HowItWorksSection: React.FC = () => {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.08 }}
                 onClick={() => setActiveStep(idx)}
-                className="text-left p-5 rounded-2xl transition-all duration-300"
+                className={`text-left p-5 rounded-2xl transition-all duration-300 ${
+                  isActive ? '' : 'bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07]'
+                }`}
                 style={{
                   background: isActive
                     ? `rgba(${step.color
@@ -100,10 +102,10 @@ export const HowItWorksSection: React.FC = () => {
                         .match(/.{2}/g)
                         ?.map((h) => parseInt(h, 16))
                         .join(',')},0.12)`
-                    : 'rgba(255,255,255,0.03)',
+                    : undefined,
                   border: isActive
                     ? `1px solid ${step.color}50`
-                    : '1px solid rgba(255,255,255,0.07)',
+                    : undefined,
                   boxShadow: isActive ? `0 0 30px -10px ${step.glow}` : 'none',
                 }}
               >
@@ -136,11 +138,7 @@ export const HowItWorksSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="relative rounded-2xl p-8 md:p-10 overflow-hidden"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(124,58,237,0.25)',
-          }}
+          className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-slate-50 dark:bg-white/[0.03] border border-violet-300/25 dark:border-violet-600/25"
         >
           {/* Glow */}
           <div
@@ -156,8 +154,8 @@ export const HowItWorksSection: React.FC = () => {
           <div className="relative grid md:grid-cols-2 gap-8 items-center">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Cpu size={18} className="text-primary-400" />
-                <span className="text-xs font-black text-primary-400 uppercase tracking-widest">
+                <Cpu size={18} className="text-primary-600 dark:text-primary-400" />
+                <span className="text-xs font-black text-primary-600 dark:text-primary-400 uppercase tracking-widest">
                   {t('landing.howItWorks.techBadge', 'The technology behind the magic')}
                 </span>
               </div>
@@ -177,7 +175,7 @@ export const HowItWorksSection: React.FC = () => {
                 href="https://vector.dbr77.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition-colors hover:text-cyan-200"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 dark:text-cyan-300 transition-colors hover:text-cyan-500 dark:hover:text-cyan-200"
               >
                 {t('landing.howItWorks.techExplore', 'Explore DBR77 Vector')}
                 <ArrowRight size={14} />

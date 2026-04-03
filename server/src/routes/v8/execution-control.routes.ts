@@ -1088,4 +1088,199 @@ router.get(
   })
 );
 
+// ────────────────────────────────────────────────────────────────
+// Manager 6-Lane Cockpit — analysis, decision, execution, verify
+// ────────────────────────────────────────────────────────────────
+
+import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
+
+const VALID_LANES = new Set([
+  'action-queue', 'decisions', 'blockers', 'workload', 'risk', 'people-change',
+]);
+
+const LaneDecisionSchema = z.object({
+  suggestionId: z.string().min(1),
+  state: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+const LaneExecuteSchema = z.object({
+  decisionId: z.string().min(1),
+});
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/analysis
+ * Full 6-section analysis for a lane.
+ */
+router.get(
+  '/manager/lanes/:laneId/analysis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const analysis = await analyzeLane(organizationId, laneId, projectId);
+    return res.json({
+      data: analysis,
+      meta: executionControlMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/decisions
+ * Submit a decision on a suggestion.
+ */
+router.post(
+  '/manager/lanes/:laneId/decisions',
+  validateBody(LaneDecisionSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { suggestionId, state, notes } = req.body;
+    const id = `ldec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      await dbRun(
+        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
+        [id, organizationId, laneId, suggestionId, state, userId, notes || null]
+      );
+    } catch {
+      // table may not exist — create it on the fly
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS lane_decisions (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          lane_id TEXT NOT NULL,
+          suggestion_id TEXT NOT NULL,
+          state TEXT NOT NULL DEFAULT 'proposed',
+          decided_by TEXT,
+          decided_at TIMESTAMPTZ,
+          notes TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `, []);
+      await dbRun(
+        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [id, organizationId, laneId, suggestionId, state, userId, notes || null]
+      );
+    }
+
+    return res.json({
+      data: { success: true, decisionId: id },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/execute
+ * Create execution plan from an approved decision.
+ */
+router.post(
+  '/manager/lanes/:laneId/execute',
+  validateBody(LaneExecuteSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { decisionId } = req.body;
+    const planId = `lep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS lane_execution_plans (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          lane_id TEXT NOT NULL,
+          decision_id TEXT NOT NULL,
+          tasks_json TEXT DEFAULT '[]',
+          before_state TEXT,
+          after_state TEXT,
+          verification_status TEXT DEFAULT 'pending',
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `, []);
+    } catch {
+      // table exists
+    }
+
+    await dbRun(
+      `INSERT INTO lane_execution_plans (id, organization_id, lane_id, decision_id, tasks_json, verification_status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, '[]', 'pending', NOW(), NOW())`,
+      [planId, organizationId, laneId, decisionId]
+    );
+
+    // Update the decision state to in_execution
+    try {
+      await dbRun(
+        `UPDATE lane_decisions SET state = 'in_execution', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [decisionId, organizationId]
+      );
+    } catch {
+      // best effort
+    }
+
+    return res.json({
+      data: { success: true, planId },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/verification
+ * Get execution plans for verification readback.
+ */
+router.get(
+  '/manager/lanes/:laneId/verification',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+
+    let plans: any[] = [];
+    try {
+      plans = ((await dbAll(
+        `SELECT id, decision_id as "decisionId", tasks_json as "tasksJson",
+                before_state as "beforeState", after_state as "afterState",
+                verification_status as "verificationStatus"
+         FROM lane_execution_plans
+         WHERE organization_id = ? AND lane_id = ?
+         ORDER BY created_at DESC`,
+        [organizationId, laneId]
+      )) || []) as any[];
+
+      plans = plans.map((p) => ({
+        ...p,
+        tasks: p.tasksJson ? JSON.parse(p.tasksJson) : [],
+      }));
+    } catch {
+      // table may not exist
+    }
+
+    return res.json({
+      data: { plans },
+      meta: executionControlMeta(),
+    });
+  })
+);
+
 export default router;
