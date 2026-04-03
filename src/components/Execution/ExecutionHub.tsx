@@ -103,6 +103,7 @@ import {
   type ReportDef as ReportCompactDef,
 } from './ReportCompactPanel';
 import { type ReportDataContext, ReportDocumentView } from './ReportDocumentView';
+import { type ManagerModuleDataContext, type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -2092,6 +2093,34 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
+  const MANAGER_MODULES: { id: ManagerModuleId; title: string }[] = [
+    { id: 'action-queue', title: 'Action Queue' },
+    { id: 'decisions', title: 'Decisions & Approvals' },
+    { id: 'blockers', title: 'Blockers & Escalations' },
+    { id: 'workload', title: 'Resource & Workload' },
+    { id: 'risk', title: 'Execution Risk' },
+    { id: 'people-change', title: 'People & Change' },
+  ];
+
+  const handleOpenManagerModule = useCallback((moduleId: ManagerModuleId) => {
+    const mod = MANAGER_MODULES.find((m) => m.id === moduleId);
+    if (!mod) return;
+    const docId = `manager:${mod.id}`;
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'manager',
+      name: mod.title,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === docId)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(docId);
+    setIsSidePanelOpen(false);
+  }, []);
+
   const handleOpenSidePanel = useCallback((row: FullInitiative) => {
     setActiveDocumentId(null);
     setSelectedInitiative(row);
@@ -3687,6 +3716,128 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     totalInitiatives: filteredInitiatives.length,
   }), [filteredInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, execSnapshot, initiativeHealthMap]);
 
+  // MANAGER — operator cockpit
+  // ---------------------------------------------------------------------------
+  const managerMetrics = useMemo(() => {
+    const kpiAlerts = actionQueueItems.filter(
+      (item) => item.type === 'kpi_deviation_no_plan'
+    ).length;
+    const overdueItems = actionQueueItems.filter(
+      (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
+    ).length;
+    const blockedCount = actionCenter.blocked.length;
+    const missingDatesCount = actionCenter.missingDates.length;
+    return { kpiAlerts, overdueItems, blockedCount, missingDatesCount };
+  }, [actionQueueItems, actionCenter]);
+
+  const interventionSuggestions = useMemo(() => {
+    const suggestions: { id: string; action: string; reason: string; expected: string; icon: React.ReactNode; severity: 'high' | 'medium' | 'low' }[] = [];
+
+    if (managerMetrics.blockedCount > 0) {
+      suggestions.push({
+        id: 'unblock',
+        action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
+        reason: t('execution.manager.suggestions.unblockReason', '{{count}} initiative(s) blocked — delivery stalled.', { count: managerMetrics.blockedCount }),
+        expected: t('execution.manager.suggestions.unblockExpected', 'Unblocked initiatives resume delivery.'),
+        icon: <AlertTriangle size={14} className="text-rose-500" />,
+        severity: 'high',
+      });
+    }
+
+    if (managerMetrics.overdueItems > 0) {
+      suggestions.push({
+        id: 'escalate-decisions',
+        action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
+        reason: t('execution.manager.suggestions.escalateReason', '{{count}} approval(s) past due — blocking downstream work.', { count: managerMetrics.overdueItems }),
+        expected: t('execution.manager.suggestions.escalateExpected', 'Decision queue clears, dependent tasks unblock.'),
+        icon: <Scale size={14} className="text-amber-500" />,
+        severity: 'high',
+      });
+    }
+
+    if (managerMetrics.missingDatesCount > 0) {
+      suggestions.push({
+        id: 'fill-dates',
+        action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
+        reason: t('execution.manager.suggestions.replanReason', '{{count}} initiative(s) have no target date — timeline invisible.', { count: managerMetrics.missingDatesCount }),
+        expected: t('execution.manager.suggestions.replanExpected', 'Timeline becomes credible; slippage detection activates.'),
+        icon: <Clock size={14} className="text-cyan-500" />,
+        severity: 'medium',
+      });
+    }
+
+    if (managerMetrics.kpiAlerts > 0) {
+      suggestions.push({
+        id: 'address-kpi',
+        action: t('execution.manager.suggestions.addressKpi', 'Create recovery plans for KPI deviations'),
+        reason: t('execution.manager.suggestions.addressKpiReason', '{{count}} KPI deviation(s) without a plan.', { count: managerMetrics.kpiAlerts }),
+        expected: t('execution.manager.suggestions.addressKpiExpected', 'Deviations get action plans, confidence improves.'),
+        icon: <Target size={14} className="text-fuchsia-500" />,
+        severity: 'medium',
+      });
+    }
+
+    if (actionCenter.dueSoonTasks.length > 3) {
+      suggestions.push({
+        id: 'smooth-workload',
+        action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
+        reason: t('execution.manager.suggestions.smoothReason', '{{count}} tasks due soon — potential resource crunch.', { count: actionCenter.dueSoonTasks.length }),
+        expected: t('execution.manager.suggestions.smoothExpected', 'Workload spread evenly; no single-point overload.'),
+        icon: <Users size={14} className="text-violet-500" />,
+        severity: 'low',
+      });
+    }
+
+    return suggestions;
+  }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
+
+  const managerDataContext = useMemo((): ManagerModuleDataContext => ({
+    initiatives: filteredInitiatives,
+    tasks,
+    decisions: decisions.map((d) => ({
+      id: d.id,
+      title: d.title,
+      status: d.status,
+      priority: (d as any).priority,
+      dueDate: (d as any).dueDate,
+      ownerName: (d as any).ownerName || (d as any).owner?.name,
+      relatedObjectId: (d as any).relatedObjectId,
+      relatedObjectName: (d as any).relatedObjectName,
+    })),
+    actionQueueItems: actionQueueItems.map((item) => ({
+      type: item.type,
+      id: item.id,
+      title: item.title,
+      initiativeName: item.initiativeName,
+      dueDate: item.dueDate,
+      severity: item.severity,
+      impact: item.impact,
+      periodStart: item.periodStart,
+    })),
+    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
+    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
+      id: d.id,
+      title: d.title,
+      ownerName: (d as any).ownerName || (d as any).owner?.name,
+      dueDate: d.dueDate,
+      relatedObjectId: (d as any).relatedObjectId,
+      relatedObjectName: (d as any).relatedObjectName,
+    })),
+    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
+    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      dueDate: (t as any).dueDate,
+      assigneeName: (t as any).assigneeName,
+    })),
+    riskSignals,
+    delaySignals,
+    interventionSuggestions,
+    kpiAlerts: managerMetrics.kpiAlerts,
+    projectId: currentProjectId || undefined,
+    onInitiativeClick: handleOpenSidePanel,
+  }), [filteredInitiatives, tasks, decisions, actionQueueItems, actionCenter, riskSignals, delaySignals, interventionSuggestions, managerMetrics.kpiAlerts, currentProjectId, handleOpenSidePanel]);
+
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
       const prompt = `Generate an execution report: "${report.title}" for audience "${report.audience}".
@@ -4046,92 +4197,79 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
   };
 
   // ---------------------------------------------------------------------------
-  // MANAGER — operator cockpit
-  // ---------------------------------------------------------------------------
-  const managerMetrics = useMemo(() => {
-    const kpiAlerts = actionQueueItems.filter(
-      (item) => item.type === 'kpi_deviation_no_plan'
-    ).length;
-    const overdueItems = actionQueueItems.filter(
-      (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
-    ).length;
-    const blockedCount = actionCenter.blocked.length;
-    const missingDatesCount = actionCenter.missingDates.length;
-    return { kpiAlerts, overdueItems, blockedCount, missingDatesCount };
-  }, [actionQueueItems, actionCenter]);
-
-  const interventionSuggestions = useMemo(() => {
-    const suggestions: { id: string; action: string; reason: string; expected: string; icon: React.ReactNode; severity: 'high' | 'medium' | 'low' }[] = [];
-
-    if (managerMetrics.blockedCount > 0) {
-      suggestions.push({
-        id: 'unblock',
-        action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
-        reason: t('execution.manager.suggestions.unblockReason', '{{count}} initiative(s) blocked — delivery stalled.', { count: managerMetrics.blockedCount }),
-        expected: t('execution.manager.suggestions.unblockExpected', 'Unblocked initiatives resume delivery.'),
-        icon: <AlertTriangle size={14} className="text-rose-500" />,
-        severity: 'high',
-      });
-    }
-
-    if (managerMetrics.overdueItems > 0) {
-      suggestions.push({
-        id: 'escalate-decisions',
-        action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
-        reason: t('execution.manager.suggestions.escalateReason', '{{count}} approval(s) past due — blocking downstream work.', { count: managerMetrics.overdueItems }),
-        expected: t('execution.manager.suggestions.escalateExpected', 'Decision queue clears, dependent tasks unblock.'),
-        icon: <Scale size={14} className="text-amber-500" />,
-        severity: 'high',
-      });
-    }
-
-    if (managerMetrics.missingDatesCount > 0) {
-      suggestions.push({
-        id: 'fill-dates',
-        action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
-        reason: t('execution.manager.suggestions.replanReason', '{{count}} initiative(s) have no target date — timeline invisible.', { count: managerMetrics.missingDatesCount }),
-        expected: t('execution.manager.suggestions.replanExpected', 'Timeline becomes credible; slippage detection activates.'),
-        icon: <Clock size={14} className="text-cyan-500" />,
-        severity: 'medium',
-      });
-    }
-
-    if (managerMetrics.kpiAlerts > 0) {
-      suggestions.push({
-        id: 'address-kpi',
-        action: t('execution.manager.suggestions.addressKpi', 'Create recovery plans for KPI deviations'),
-        reason: t('execution.manager.suggestions.addressKpiReason', '{{count}} KPI deviation(s) without a plan.', { count: managerMetrics.kpiAlerts }),
-        expected: t('execution.manager.suggestions.addressKpiExpected', 'Deviations get action plans, confidence improves.'),
-        icon: <Target size={14} className="text-fuchsia-500" />,
-        severity: 'medium',
-      });
-    }
-
-    if (actionCenter.dueSoonTasks.length > 3) {
-      suggestions.push({
-        id: 'smooth-workload',
-        action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
-        reason: t('execution.manager.suggestions.smoothReason', '{{count}} tasks due soon — potential resource crunch.', { count: actionCenter.dueSoonTasks.length }),
-        expected: t('execution.manager.suggestions.smoothExpected', 'Workload spread evenly; no single-point overload.'),
-        icon: <Users size={14} className="text-violet-500" />,
-        severity: 'low',
-      });
-    }
-
-    return suggestions;
-  }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
-
-  const [managerDrillDown, setManagerDrillDown] = useState<string | null>(null);
-
   const renderManagerCockpit = () => {
     const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
+    const withoutOwner = filteredInitiatives.filter((i: any) => !i.ownerId && !i.assigneeId).length;
+    const highRisks = riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length;
 
-    const initiativesWithoutBaseline = filteredInitiatives.filter(
-      (i) => !(i as any).plannedStartDate && !(i as any).plannedEndDate
-    ).length;
-    const initiativesWithoutOwner = filteredInitiatives.filter(
-      (i) => !(i as any).ownerId && !(i as any).assigneeId
-    ).length;
+    const tiles: {
+      id: ManagerModuleId;
+      icon: React.ReactNode;
+      title: string;
+      description: string;
+      metrics: { label: string; value: number | string; variant?: 'default' | 'warn' | 'critical' }[];
+    }[] = [
+      {
+        id: 'action-queue',
+        icon: <ClipboardList size={20} className="text-cyan-500" />,
+        title: t('execution.manager.tile.actionQueue', 'Action Queue'),
+        description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
+        metrics: [
+          { label: 'Items', value: actionQueueItems.length, variant: actionQueueItems.length > 0 ? 'warn' : 'default' },
+          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
+        ],
+      },
+      {
+        id: 'decisions',
+        icon: <Scale size={20} className="text-amber-500" />,
+        title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
+        description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
+        metrics: [
+          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
+          { label: 'Pending', value: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length },
+        ],
+      },
+      {
+        id: 'blockers',
+        icon: <AlertTriangle size={20} className="text-rose-500" />,
+        title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
+        description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
+        metrics: [
+          { label: 'Blocked', value: blockedCount, variant: blockedCount > 0 ? 'critical' : 'default' },
+          { label: 'Critical risks', value: highRisks, variant: highRisks > 0 ? 'warn' : 'default' },
+        ],
+      },
+      {
+        id: 'workload',
+        icon: <Users size={20} className="text-violet-500" />,
+        title: t('execution.manager.tile.workload', 'Resource & Workload'),
+        description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
+        metrics: [
+          { label: 'Tasks', value: tasks.length },
+          { label: 'Due soon', value: actionCenter.dueSoonTasks.length, variant: actionCenter.dueSoonTasks.length > 3 ? 'warn' : 'default' },
+        ],
+      },
+      {
+        id: 'risk',
+        icon: <Shield size={20} className="text-rose-500" />,
+        title: t('execution.manager.tile.risk', 'Execution Risk'),
+        description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
+        metrics: [
+          { label: 'Risk signals', value: riskSignals.length, variant: riskSignals.length > 3 ? 'warn' : 'default' },
+          { label: 'Delays', value: delaySignals.length, variant: delaySignals.length > 2 ? 'warn' : 'default' },
+        ],
+      },
+      {
+        id: 'people-change',
+        icon: <Users size={20} className="text-emerald-500" />,
+        title: t('execution.manager.tile.peopleChange', 'People & Change'),
+        description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
+        metrics: [
+          { label: 'Missing owners', value: withoutOwner, variant: withoutOwner > 0 ? 'warn' : 'default' },
+          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+        ],
+      },
+    ];
 
     return (
       <div className="p-4 space-y-5">
@@ -4141,341 +4279,43 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
           </Callout>
         )}
-        {filteredInitiatives.length > 0 && (initiativesWithoutBaseline > 0 || initiativesWithoutOwner > 0) && (
-          <Callout variant="warning" title={t('execution.manager.dataGaps', 'Data quality gaps detected')}>
-            {initiativesWithoutBaseline > 0 && (
-              <span className="block text-xs">
-                {t('execution.manager.missingBaseline', '{{count}} initiative(s) have no baseline dates — timeline risk detection is incomplete.', { count: initiativesWithoutBaseline })}
-              </span>
-            )}
-            {initiativesWithoutOwner > 0 && (
-              <span className="block text-xs">
-                {t('execution.manager.missingOwner', '{{count}} initiative(s) have no assigned owner — accountability gaps exist.', { count: initiativesWithoutOwner })}
-              </span>
-            )}
-          </Callout>
-        )}
 
-        {/* A. Manager KPIs — clickable for drill-down per §6.4 */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
-          {([
-            {
-              id: 'action-items',
-              label: t('execution.manager.kpi.actionItems', 'Action items'),
-              value: actionQueueItems.length,
-              sub: t('execution.manager.kpi.actionItemsSub', 'Need review this cycle'),
-              color: 'text-cyan-500',
-              borderHover: 'hover:border-cyan-400/50',
-            },
-            {
-              id: 'overdue-approvals',
-              label: t('execution.manager.kpi.overdueApprovals', 'Overdue approvals'),
-              value: overdueItems,
-              sub: t('execution.manager.kpi.overdueApprovalsSub', 'Past due date'),
-              color: overdueItems > 0 ? 'text-amber-500' : 'text-slate-400',
-              borderHover: 'hover:border-amber-400/50',
-            },
-            {
-              id: 'kpi-alerts',
-              label: t('execution.manager.kpi.kpiAlerts', 'KPI alerts'),
-              value: kpiAlerts,
-              sub: t('execution.manager.kpi.kpiAlertsSub', 'Without recovery plan'),
-              color: kpiAlerts > 0 ? 'text-fuchsia-500' : 'text-slate-400',
-              borderHover: 'hover:border-fuchsia-400/50',
-            },
-            {
-              id: 'blocked',
-              label: t('execution.manager.kpi.blocked', 'Blocked'),
-              value: blockedCount,
-              sub: t('execution.manager.kpi.blockedSub', 'Initiatives stalled'),
-              color: blockedCount > 0 ? 'text-rose-500' : 'text-slate-400',
-              borderHover: 'hover:border-rose-400/50',
-            },
-            {
-              id: 'missing-dates',
-              label: t('execution.manager.kpi.missingDates', 'Missing dates'),
-              value: missingDatesCount,
-              sub: t('execution.manager.kpi.missingDatesSub', 'No target date set'),
-              color: missingDatesCount > 0 ? 'text-cyan-500' : 'text-slate-400',
-              borderHover: 'hover:border-cyan-400/50',
-            },
-          ] as const).map((kpi) => (
-            <button
-              key={kpi.id}
-              type="button"
-              onClick={() => {
-                if (kpi.value === 0) return;
-                setManagerDrillDown(managerDrillDown === kpi.id ? null : kpi.id);
-              }}
-              className={`text-left rounded-xl border bg-white dark:bg-navy-900 p-3.5 transition-all ${kpi.borderHover} ${
-                managerDrillDown === kpi.id
-                  ? 'border-cyan-400 dark:border-cyan-600 shadow-sm'
-                  : 'border-slate-200 dark:border-navy-700'
-              } ${kpi.value > 0 ? 'cursor-pointer' : 'cursor-default'}`}
-            >
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-tight">
-                {kpi.label}
-              </div>
-              <div className={`mt-1.5 text-2xl font-bold tabular-nums ${kpi.color}`}>
-                {kpi.value}
-              </div>
-              <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                {kpi.sub}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Drill-down panel per §6.4 */}
-        {managerDrillDown && (
-          <div className="rounded-xl border border-cyan-200 dark:border-cyan-800/40 bg-cyan-50/30 dark:bg-cyan-900/10 p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {t('execution.manager.drillDown', 'Drill-down')}
-              </h4>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {tiles.map((tile) => {
+            const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
+            return (
               <button
+                key={tile.id}
                 type="button"
-                onClick={() => setManagerDrillDown(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                onClick={() => handleOpenManagerModule(tile.id)}
+                className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
+                  hasAlerts ? 'border-amber-200 dark:border-amber-800/40' : 'border-slate-200 dark:border-navy-700'
+                }`}
               >
-                {t('common.close', 'Close')}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                    {tile.icon}
+                  </div>
+                  <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-1" />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{tile.title}</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{tile.description}</p>
+                <div className="flex gap-3">
+                  {tile.metrics.map((m) => (
+                    <div key={m.label} className="min-w-0">
+                      <div className={`text-lg font-bold tabular-nums ${
+                        m.variant === 'critical' ? 'text-rose-600 dark:text-rose-400' :
+                        m.variant === 'warn' ? 'text-amber-600 dark:text-amber-400' :
+                        'text-slate-900 dark:text-white'
+                      }`}>{m.value}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{m.label}</div>
+                    </div>
+                  ))}
+                </div>
               </button>
-            </div>
-            <div className="space-y-1.5 max-h-60 overflow-y-auto">
-              {managerDrillDown === 'blocked' && actionCenter.blocked.map((i) => (
-                <button
-                  key={i.id}
-                  type="button"
-                  onClick={() => { const full = initiatives.find((x) => x.id === i.id); if (full) handleOpenSidePanel(full); }}
-                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-rose-300 dark:hover:border-rose-700 transition-colors"
-                >
-                  <AlertTriangle size={12} className="text-rose-500 shrink-0" />
-                  <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{i.name}</span>
-                </button>
-              ))}
-              {managerDrillDown === 'overdue-approvals' && actionCenter.overdueDecisions.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => {
-                    const relId = (d as any).relatedObjectId;
-                    if (relId) {
-                      const full = initiatives.find((x) => x.id === relId);
-                      if (full) handleOpenSidePanel(full);
-                    }
-                  }}
-                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
-                >
-                  <Scale size={12} className="text-amber-500 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{d.title}</span>
-                    <span className="text-[10px] text-slate-400">{d.relatedObjectName || '—'} · {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}</span>
-                  </div>
-                </button>
-              ))}
-              {managerDrillDown === 'missing-dates' && actionCenter.missingDates.map((i) => (
-                <button
-                  key={i.id}
-                  type="button"
-                  onClick={() => { const full = initiatives.find((x) => x.id === i.id); if (full) handleOpenSidePanel(full); }}
-                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-cyan-300 dark:hover:border-cyan-700 transition-colors"
-                >
-                  <Clock size={12} className="text-cyan-500 shrink-0" />
-                  <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{i.name}</span>
-                </button>
-              ))}
-              {managerDrillDown === 'kpi-alerts' && actionQueueItems
-                .filter((item) => item.type === 'kpi_deviation_no_plan')
-                .map((item) => (
-                  <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
-                    <Target size={12} className="text-fuchsia-500 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{item.title}</span>
-                      <span className="text-[10px] text-slate-400">{item.initiativeName || '—'}</span>
-                    </div>
-                  </div>
-                ))}
-              {managerDrillDown === 'action-items' && actionQueueItems.slice(0, 20).map((item) => (
-                <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
-                  <ClipboardList size={12} className="text-cyan-500 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{item.title}</span>
-                    <span className="text-[10px] text-slate-400">{item.initiativeName || '—'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* B. Action Center */}
-        <ToggleBlock
-          title={t('execution.manager.actionCenter', 'Action Center')}
-          badge={actionQueueItems.length}
-          icon={<AlertTriangle size={14} />}
-          defaultOpen
-        >
-          {renderActionCenter()}
-        </ToggleBlock>
-
-        {/* C. Resource Management */}
-        <ToggleBlock
-          title={t('execution.manager.resource', 'Resource & Workload')}
-          icon={<Users size={14} />}
-          defaultOpen={false}
-        >
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <ExecutionWorkloadView
-              initiatives={initiatives}
-              onInitiativeClick={handleOpenSidePanel}
-              showControls={false}
-              controls={{
-                viewMode: workloadViewMode,
-                setViewMode: setWorkloadViewMode,
-                weekCount: workloadWeekCount,
-                setWeekCount: setWorkloadWeekCount,
-                monthCount: workloadMonthCount,
-                setMonthCount: setWorkloadMonthCount,
-                startDate: workloadStartDate,
-                setStartDate: setWorkloadStartDate,
-              }}
-            />
-          </div>
-        </ToggleBlock>
-
-        {/* D. Execution Risk */}
-        <ToggleBlock
-          title={t('execution.manager.execRisk', 'Execution Risk')}
-          badge={riskSignals.length + delaySignals.length}
-          icon={<Shield size={14} />}
-          defaultOpen={riskSignals.length + delaySignals.length > 0}
-        >
-          <div className="space-y-3">
-            {riskSignals.length === 0 && delaySignals.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">
-                {t('execution.manager.noRiskSignals', 'No active risk signals. Delivery is on track.')}
-              </p>
-            ) : (
-              <>
-                {riskSignals.slice(0, 10).map((rs) => (
-                  <div
-                    key={rs.id}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-rose-50/60 dark:bg-rose-900/10 border border-rose-200/50 dark:border-rose-800/30"
-                  >
-                    <AlertTriangle size={14} className="text-rose-500 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {rs.title} <span className="text-slate-400 font-normal">· {rs.initiativeName}</span>
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {rs.description}
-                      </p>
-                      {rs.suggestedAction && (
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
-                          → {rs.suggestedAction}
-                        </p>
-                      )}
-                    </div>
-                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
-                      rs.severity === 'CRITICAL' || rs.severity === 'HIGH'
-                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
-                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
-                    }`}>
-                      {rs.severity}
-                    </span>
-                  </div>
-                ))}
-                {delaySignals.slice(0, 10).map((ds, idx) => (
-                  <div
-                    key={`delay-${idx}`}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30"
-                  >
-                    <Clock size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {ds.entityName || `Delay #${idx + 1}`}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {ds.deviationType.replace(/_/g, ' ')} · {ds.daysDeviation}d
-                        {ds.whySlipReasons?.length > 0 && ` — ${ds.whySlipReasons[0].reason}`}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
-                      ds.severity === 'CRITICAL'
-                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
-                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
-                    }`}>
-                      {ds.severity}
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </ToggleBlock>
-
-        {/* E. Intervention Suggestions */}
-        {interventionSuggestions.length > 0 && (
-          <ToggleBlock
-            title={t('execution.manager.interventions', 'Intervention Suggestions')}
-            badge={interventionSuggestions.length}
-            icon={<Sparkles size={14} />}
-            defaultOpen
-          >
-            <div className="space-y-3">
-              {interventionSuggestions.map((s) => (
-                <div
-                  key={s.id}
-                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors ${
-                    s.severity === 'high'
-                      ? 'border-rose-200 dark:border-rose-800/40 bg-rose-50/40 dark:bg-rose-900/10'
-                      : s.severity === 'medium'
-                        ? 'border-amber-200 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-900/10'
-                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-                  }`}
-                >
-                  <div className="shrink-0 mt-0.5">{s.icon}</div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {s.action}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {s.reason}
-                    </p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
-                      → {s.expected}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${
-                      s.severity === 'high'
-                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
-                        : s.severity === 'medium'
-                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {s.severity}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </ToggleBlock>
-        )}
-
-        {/* F. People & Change (existing component) */}
-        <ToggleBlock
-          title={t('execution.manager.peopleChange', 'People & Change')}
-          icon={<Users size={14} />}
-          defaultOpen={false}
-        >
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <PeopleChangeWorkspace
-              initiativeId={undefined}
-              projectId={currentProjectId || undefined}
-            />
-          </div>
-        </ToggleBlock>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -4510,6 +4350,16 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             />
           );
         }
+      }
+      if (activeDocumentId.startsWith('manager:')) {
+        const moduleId = activeDocumentId.replace('manager:', '');
+        return (
+          <ManagerModuleView
+            moduleId={moduleId}
+            data={managerDataContext}
+            onBack={handleShowList}
+          />
+        );
       }
       return (
         <InitiativeDocumentView
