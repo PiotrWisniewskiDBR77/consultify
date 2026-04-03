@@ -70,32 +70,22 @@ const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: s
 };
 
 const DEFAULT_ACCENT = SECTION_ACCENT['consultify-decisions-that-ship'];
-const SECTION_META: Record<
-  string,
-  {
-    eyebrow: string;
-    hook: string;
-    chips: string[];
-    statLabel: string;
-  }
-> = {
+type SectionMetaKeys = { eyebrowKey: string; chipsKeys: string[]; statLabelKey: string };
+const SECTION_META_KEYS: Record<string, SectionMetaKeys> = {
   'consultify-why-transformations-fail': {
-    eyebrow: 'Failure patterns',
-    hook: 'Where stalled programs, dead initiatives, and governance theater finally become visible.',
-    chips: ['Governance', 'Risk', 'Leadership'],
-    statLabel: 'warning signs',
+    eyebrowKey: 'kb.lane.failurePatterns',
+    chipsKeys: ['kb.chip.governance', 'kb.chip.risk', 'kb.chip.leadership'],
+    statLabelKey: 'kb.stat.warningSigns',
   },
   'consultify-the-money-question': {
-    eyebrow: 'Board logic',
-    hook: 'ROI defense, budget linkage, and board-ready evidence before the next capital ask.',
-    chips: ['ROI', 'Board Room', 'Portfolio'],
-    statLabel: 'board cases',
+    eyebrowKey: 'kb.lane.boardLogic',
+    chipsKeys: ['kb.chip.roi', 'kb.chip.boardRoom', 'kb.chip.portfolio'],
+    statLabelKey: 'kb.stat.boardCases',
   },
   'consultify-decisions-that-ship': {
-    eyebrow: 'Execution moves',
-    hook: 'Turn decision latency into owned initiatives, cleaner prioritization, and faster follow-through.',
-    chips: ['Execution', 'AI Strategy', 'Decision Speed'],
-    statLabel: 'execution plays',
+    eyebrowKey: 'kb.lane.executionMoves',
+    chipsKeys: ['kb.chip.execution', 'kb.chip.aiStrategy', 'kb.chip.decisionSpeed'],
+    statLabelKey: 'kb.stat.executionPlays',
   },
 };
 
@@ -284,12 +274,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {consultifyCategories.map((category: KbCategory) => {
                 const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
-                const meta = SECTION_META[category.slug] || {
-                  eyebrow: t('kb.sections.defaultEyebrow', 'Category'),
-                  hook: category.description || '',
-                  chips: [],
-                  statLabel: t('kb.sections.defaultStatLabel', 'articles'),
-                };
+                const metaKeys = SECTION_META_KEYS[category.slug];
+                const eyebrow = metaKeys ? t(metaKeys.eyebrowKey) : t('kb.sections.defaultEyebrow', 'Category');
+                const chips = metaKeys ? metaKeys.chipsKeys.map((k) => t(k)) : [];
+                const statLabel = metaKeys ? t(metaKeys.statLabelKey) : t('kb.sections.defaultStatLabel', 'articles');
                 return (
                   <Link
                     key={category.id}
@@ -309,7 +297,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
-                            {meta.eyebrow}
+                            {eyebrow}
                           </p>
                           <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
                             {category.name}
@@ -324,11 +312,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       </div>
 
                       <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
-                        {meta.hook}
+                        {category.description}
                       </p>
 
                       <div className="mt-5 flex flex-wrap gap-2">
-                        {meta.chips.map((chip) => (
+                        {chips.map((chip) => (
                           <span
                             key={chip}
                             className={cn(
@@ -347,7 +335,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                             {category.article_count}
                           </div>
                           <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
-                            {meta.statLabel}
+                            {statLabel}
                           </div>
                         </div>
                         <div className={cn('inline-flex items-center gap-2 text-sm font-bold', accent.text)}>

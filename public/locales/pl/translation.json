@@ -3231,6 +3231,58 @@
     "article": {
       "listen": "Słuchaj",
       "stopListening": "Zatrzymaj"
+    },
+    "lane": {
+      "failurePatterns": "Wzorce porażek",
+      "boardLogic": "Logika zarządu",
+      "executionMoves": "Ruchy egzekucyjne"
+    },
+    "chip": {
+      "governance": "Governance",
+      "risk": "Ryzyko",
+      "leadership": "Przywództwo",
+      "roi": "ROI",
+      "boardRoom": "Sala Zarządu",
+      "portfolio": "Portfel",
+      "execution": "Egzekucja",
+      "aiStrategy": "AI i Strategia",
+      "decisionSpeed": "Szybkość Decyzji"
+    },
+    "stat": {
+      "warningSigns": "sygnałów ostrzegawczych",
+      "boardCases": "przypadków zarządu",
+      "executionPlays": "ruchów egzekucyjnych"
+    },
+    "sections": {
+      "eyebrow": "Wybierz napięcie, które chcesz rozwiązać",
+      "title": "Trzy ostrzejsze wejścia do biblioteki",
+      "subtitle": "Każda ścieżka dotyczy realnego napięcia w zarządzie — wchodzisz przez porażki, pieniądze lub egzekucję zamiast generycznych kategorii.",
+      "openLane": "Otwórz ścieżkę",
+      "defaultEyebrow": "Kategoria",
+      "defaultStatLabel": "artykułów"
+    },
+    "hero": {
+      "badge": "50+ eksperckich artykułów o zarządzaniu transformacją",
+      "title": "Baza Wiedzy",
+      "subtitle": "Czytaj przewodniki, z których korzystają liderzy zanim zatwierdzą budżet, uruchomią wdrożenie lub obronią ROI. Dla momentów, gdy kolejna decyzja jest ważniejsza niż kolejna opinia."
+    },
+    "featured": {
+      "title": "Wyróżnione Artykuły",
+      "subtitle": "Zacznij tutaj od najważniejszych wniosków",
+      "viewAll": "Zobacz wszystkie"
+    },
+    "browse": {
+      "title": "Przeglądaj Wszystkie Artykuły",
+      "loadMore": "Załaduj więcej artykułów"
+    },
+    "card": {
+      "read": "Czytaj artykuł",
+      "featured": "Wyróżniony"
+    },
+    "search": {
+      "placeholder": "Szukaj artykułów...",
+      "noResults": "Nie znaleziono artykułów",
+      "noResultsHint": "Spróbuj innych słów kluczowych lub przeglądaj kategorie poniżej."
     }
   },
   "cloud": {

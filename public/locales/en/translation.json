@@ -3116,6 +3116,58 @@
     "article": {
       "listen": "Listen",
       "stopListening": "Stop"
+    },
+    "lane": {
+      "failurePatterns": "Failure patterns",
+      "boardLogic": "Board logic",
+      "executionMoves": "Execution moves"
+    },
+    "chip": {
+      "governance": "Governance",
+      "risk": "Risk",
+      "leadership": "Leadership",
+      "roi": "ROI",
+      "boardRoom": "Board Room",
+      "portfolio": "Portfolio",
+      "execution": "Execution",
+      "aiStrategy": "AI Strategy",
+      "decisionSpeed": "Decision Speed"
+    },
+    "stat": {
+      "warningSigns": "warning signs",
+      "boardCases": "board cases",
+      "executionPlays": "execution plays"
+    },
+    "sections": {
+      "eyebrow": "Choose the tension you want to solve",
+      "title": "Three sharper ways into the library",
+      "subtitle": "Each lane is framed around a real executive tension, so people can enter through failure, money, or execution instead of generic taxonomy.",
+      "openLane": "Open lane",
+      "defaultEyebrow": "Category",
+      "defaultStatLabel": "articles"
+    },
+    "hero": {
+      "badge": "50+ expert articles on transformation management",
+      "title": "Knowledge Base",
+      "subtitle": "Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion."
+    },
+    "featured": {
+      "title": "Featured Articles",
+      "subtitle": "Start here for the most impactful insights",
+      "viewAll": "View all"
+    },
+    "browse": {
+      "title": "Browse All Articles",
+      "loadMore": "Load more articles"
+    },
+    "card": {
+      "read": "Read article",
+      "featured": "Featured"
+    },
+    "search": {
+      "placeholder": "Search articles...",
+      "noResults": "No articles found",
+      "noResultsHint": "Try different keywords or browse categories below."
     }
   },
   "cloud": {
