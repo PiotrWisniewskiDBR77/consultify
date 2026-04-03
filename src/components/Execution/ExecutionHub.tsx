@@ -630,6 +630,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
 
+  const [managerLaneCounts, setManagerLaneCounts] = useState<Record<string, { total: number; critical: number; warning: number }>>({});
+
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
       if (v === null || v === undefined || !Number.isFinite(Number(v))) return '—';
@@ -941,6 +943,36 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     void Promise.allSettled([loadRiskSignals(), loadDelaySignals(), loadOverspendSignals()]).finally(
       () => setIsLoadingControlSignals(false)
     );
+  }, [currentProjectId, executionTruthRefreshKey]);
+
+  useEffect(() => {
+    const LANES = ['action-queue', 'decisions', 'blockers', 'workload', 'risk', 'people-change'] as const;
+    const pid = currentProjectId || undefined;
+    Promise.allSettled(
+      LANES.map(async (laneId) => {
+        try {
+          const resp = await V8ExecutionControlApi.getManagerProblems(laneId, pid);
+          const data = (resp as any)?.data || resp;
+          const problems: Array<{ severity: string }> = data?.problems || [];
+          return {
+            laneId,
+            total: problems.length,
+            critical: problems.filter((p) => p.severity === 'critical').length,
+            warning: problems.filter((p) => p.severity === 'warning').length,
+          };
+        } catch {
+          return { laneId, total: 0, critical: 0, warning: 0 };
+        }
+      })
+    ).then((results) => {
+      const counts: Record<string, { total: number; critical: number; warning: number }> = {};
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          counts[r.value.laneId] = { total: r.value.total, critical: r.value.critical, warning: r.value.warning };
+        }
+      }
+      setManagerLaneCounts(counts);
+    });
   }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
@@ -3122,13 +3154,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
+      const mlc = (id: string) => managerLaneCounts[id]?.total ?? 0;
       const managerPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 6, icon: <span className="h-2 w-2 rounded-full bg-slate-400" /> },
-        { id: 'action-queue' as const, label: 'Action Queue', count: actionQueueItems.length, icon: <ClipboardList size={14} className="text-cyan-400" /> },
-        { id: 'decisions' as const, label: 'Decisions', count: actionCenter.overdueDecisions.length, icon: <Scale size={14} className="text-amber-400" /> },
-        { id: 'blockers' as const, label: 'Blockers', count: actionCenter.blocked.length, icon: <AlertTriangle size={14} className="text-rose-400" /> },
-        { id: 'risk' as const, label: 'Risk', count: riskSignals.length, icon: <Shield size={14} className="text-rose-400" /> },
-        { id: 'workload' as const, label: 'Workload', count: tasks.length, icon: <Users size={14} className="text-violet-400" /> },
+        { id: 'action-queue' as const, label: 'Action Queue', count: mlc('action-queue'), icon: <ClipboardList size={14} className="text-cyan-400" /> },
+        { id: 'decisions' as const, label: 'Decisions', count: mlc('decisions'), icon: <Scale size={14} className="text-amber-400" /> },
+        { id: 'blockers' as const, label: 'Blockers', count: mlc('blockers'), icon: <AlertTriangle size={14} className="text-rose-400" /> },
+        { id: 'risk' as const, label: 'Risk', count: mlc('risk'), icon: <Shield size={14} className="text-rose-400" /> },
+        { id: 'workload' as const, label: 'Workload', count: mlc('workload'), icon: <Users size={14} className="text-violet-400" /> },
       ];
       return (
         <div className="flex items-center gap-2">
@@ -4073,11 +4106,7 @@ Please return:
 
   // ---------------------------------------------------------------------------
   const renderManagerCockpit = () => {
-    const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
-    const withoutOwner = dashboardBaseInitiatives.filter((i: any) => !i.ownerId && !i.assigneeId).length;
-    const highRisks = riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length;
-
-    const pendingDec = decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length;
+    const lc = (id: string) => managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
 
     const tiles: {
       id: ManagerModuleId;
@@ -4092,8 +4121,8 @@ Please return:
         title: t('execution.manager.tile.actionQueue', 'Action Queue'),
         description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
         metrics: [
-          { label: 'Items', value: actionQueueItems.length, variant: 'warn' },
-          { label: 'Overdue', value: overdueItems, variant: 'critical' },
+          { label: 'Items', value: lc('action-queue').total, variant: lc('action-queue').total > 0 ? 'warn' : 'default' },
+          { label: 'Critical', value: lc('action-queue').critical, variant: lc('action-queue').critical > 0 ? 'critical' : 'default' },
         ],
       },
       {
@@ -4102,8 +4131,8 @@ Please return:
         title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
         description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
         metrics: [
-          { label: 'Overdue', value: overdueItems, variant: 'critical' },
-          { label: 'Pending', value: pendingDec },
+          { label: 'Critical', value: lc('decisions').critical, variant: lc('decisions').critical > 0 ? 'critical' : 'default' },
+          { label: 'Issues', value: lc('decisions').total, variant: lc('decisions').total > 0 ? 'warn' : 'default' },
         ],
       },
       {
@@ -4112,8 +4141,8 @@ Please return:
         title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
         description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
         metrics: [
-          { label: 'Blocked', value: blockedCount, variant: 'critical' },
-          { label: 'Critical risks', value: highRisks, variant: 'warn' },
+          { label: 'Blocked', value: lc('blockers').critical, variant: lc('blockers').critical > 0 ? 'critical' : 'default' },
+          { label: 'Issues', value: lc('blockers').total, variant: lc('blockers').total > 0 ? 'warn' : 'default' },
         ],
       },
       {
@@ -4122,8 +4151,8 @@ Please return:
         title: t('execution.manager.tile.workload', 'Resource & Workload'),
         description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
         metrics: [
-          { label: 'Tasks', value: tasks.length },
-          { label: 'Due soon', value: actionCenter.dueSoonTasks.length, variant: 'warn' },
+          { label: 'Issues', value: lc('workload').total, variant: lc('workload').total > 0 ? 'warn' : 'default' },
+          { label: 'Critical', value: lc('workload').critical, variant: lc('workload').critical > 0 ? 'critical' : 'default' },
         ],
       },
       {
@@ -4132,8 +4161,8 @@ Please return:
         title: t('execution.manager.tile.risk', 'Execution Risk'),
         description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
         metrics: [
-          { label: 'Risk signals', value: riskSignals.length, variant: 'warn' },
-          { label: 'Delays', value: delaySignals.length, variant: 'warn' },
+          { label: 'Risks', value: lc('risk').total, variant: lc('risk').total > 0 ? 'warn' : 'default' },
+          { label: 'Critical', value: lc('risk').critical, variant: lc('risk').critical > 0 ? 'critical' : 'default' },
         ],
       },
       {
@@ -4142,8 +4171,8 @@ Please return:
         title: t('execution.manager.tile.peopleChange', 'People & Change'),
         description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
         metrics: [
-          { label: 'Missing owners', value: withoutOwner, variant: 'warn' },
-          { label: 'Missing dates', value: missingDatesCount, variant: 'warn' },
+          { label: 'Gaps', value: lc('people-change').total, variant: lc('people-change').total > 0 ? 'warn' : 'default' },
+          { label: 'Critical', value: lc('people-change').critical, variant: lc('people-change').critical > 0 ? 'critical' : 'default' },
         ],
       },
     ];

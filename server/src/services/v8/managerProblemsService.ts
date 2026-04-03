@@ -462,7 +462,7 @@ function buildBlockers(initiatives: any[], tasks: any[], raidItems: any[]): Mana
 
 function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>): ManagerProblemRow[] {
   const problems: ManagerProblemRow[] = [];
-  const OVERLOAD_THRESHOLD = 10;
+  const OVERLOAD_THRESHOLD = 7;
   const seen = new Set<string>();
 
   for (const [userId, cnt] of Object.entries(taskCountsByPerson)) {
@@ -472,7 +472,7 @@ function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>)
       const name = sample?.assignee_name || 'Unknown';
       problems.push({
         id: `wl-overload-${userId}`,
-        severity: cnt >= 15 ? 'critical' : 'warning',
+        severity: cnt >= 12 ? 'critical' : 'warning',
         problemType: 'overloaded_person',
         title: `Overloaded: ${name} (${cnt} active tasks)`,
         rootCause: `Person has ${cnt} non-closed tasks assigned. Threshold is ${OVERLOAD_THRESHOLD}.`,
@@ -536,6 +536,31 @@ function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>)
         actions: [{ id: 'set_capacity', label: 'Set estimate' }],
         meta: { status: t.status },
       });
+    }
+    if (t.due_date && s !== 'DONE' && s !== 'CANCELLED') {
+      const dd = daysDiff(t.due_date);
+      if (dd !== null && dd >= -5 && dd <= 0) {
+        problems.push({
+          id: `wl-duesoon-${t.id}`,
+          severity: dd >= -2 ? 'warning' : 'info',
+          problemType: 'due_soon',
+          title: `Due soon: ${t.title}`,
+          rootCause: `Due in ${Math.abs(dd)} day(s).${t.assignee_name ? ` Assigned to ${t.assignee_name}.` : ''}`,
+          sourceEntityType: 'TASK',
+          sourceEntityId: t.id,
+          sourceEntityName: t.title,
+          ownerId: t.assignee_id,
+          ownerName: t.assignee_name || null,
+          daysOverdue: dd,
+          impactCount: 0,
+          affectedEntities: t.initiative_name ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }] : [],
+          actions: [
+            { id: 'replan', label: 'Extend deadline' },
+            { id: 'reassign', label: 'Reassign' },
+          ],
+          meta: { status: t.status, days_until_due: Math.abs(dd) },
+        });
+      }
     }
   }
 
