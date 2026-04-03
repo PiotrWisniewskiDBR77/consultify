@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   ChevronRight,
@@ -152,20 +153,34 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
     <div className="min-h-screen bg-white dark:bg-navy-950 text-navy-900 dark:text-white flex flex-col md:flex-row">
       {/* Sidebar — The AI Regulator Narrative */}
       <div className="w-full md:w-1/3 bg-slate-50 dark:bg-navy-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-navy-700 p-8 md:p-12 flex flex-col">
-        <div className="flex items-center gap-3 mb-12">
-          <img
-            src="/assets/logos/logo-light.svg?v=20260319"
-            alt="Consultify"
-            className="h-7 w-auto dark:hidden"
-          />
-          <img
-            src="/assets/logos/logo-dark.svg?v=20260319"
-            alt="Consultify"
-            className="hidden h-7 w-auto dark:block"
-          />
-          <span className="text-sm font-bold tracking-widest text-navy-900 dark:text-white opacity-40 uppercase">
-            Partner Decyzyjny
-          </span>
+        <div className="space-y-4 mb-12">
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.WELCOME)}
+            className="flex items-center gap-3 group"
+          >
+            <img
+              src="/assets/logos/logo-light.svg?v=20260319"
+              alt="Consultify"
+              className="h-7 w-auto dark:hidden"
+            />
+            <img
+              src="/assets/logos/logo-dark.svg?v=20260319"
+              alt="Consultify"
+              className="hidden h-7 w-auto dark:block"
+            />
+            <span className="text-sm font-bold tracking-widest text-navy-900 dark:text-white opacity-40 uppercase">
+              Partner Decyzyjny
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.WELCOME)}
+            className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            Wróć na stronę główną
+          </button>
         </div>
 
         <div className="flex-1 space-y-10">
