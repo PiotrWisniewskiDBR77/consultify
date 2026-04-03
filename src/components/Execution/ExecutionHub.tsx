@@ -95,7 +95,14 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { ReportCompactPanel, type ReportDef as ReportCompactDef } from './ReportCompactPanel';
+import {
+  buildReportMarkdown,
+  computeRAG,
+  exportReportPDF,
+  RAG_CONFIG,
+  ReportCompactPanel,
+  type ReportDef as ReportCompactDef,
+} from './ReportCompactPanel';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -3695,6 +3702,137 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
   ], [t]);
 
 
+  const renderReportPreviewBody = useCallback((report: ReportDef) => {
+    const rag = computeRAG(report as ReportCompactDef);
+    const ragConf = RAG_CONFIG[rag];
+    const RagIcon = ragConf.icon;
+    return (
+      <div className="p-4 space-y-4 overflow-auto">
+        {/* RAG badge + title */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}>
+              <RagIcon size={10} className="inline mr-1 -mt-0.5" />
+              {ragConf.label}
+            </div>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              {report.cadence}
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
+              {report.icon}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">{report.title}</div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500">{report.audience}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live highlights */}
+        {report.highlights.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {report.highlights.map((h) => (
+              <span
+                key={h.label}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                  h.variant === 'critical'
+                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                    : h.variant === 'warn'
+                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                {h.label}: {h.value}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Scope */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Scope</div>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{report.scope}</p>
+        </div>
+
+        {/* Data sources */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Data Sources</div>
+          <div className="flex flex-wrap gap-1">
+            {report.dataSources.map((ds) => (
+              <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Mandatory sections */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Mandatory Sections</div>
+          <ol className="space-y-0.5 list-decimal list-inside">
+            {report.sections.map((s) => (
+              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">{s}</li>
+            ))}
+          </ol>
+        </div>
+
+        {/* RAG logic */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">RAG / Confidence Logic</div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+        </div>
+
+        {/* Follow-up actions */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Expected Follow-up Actions</div>
+          <div className="flex flex-wrap gap-1.5">
+            {report.followUpActions.map((a) => (
+              <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }, []);
+
+  const renderReportPreviewFooter = useCallback((report: ReportDef) => {
+    const rag = computeRAG(report as ReportCompactDef);
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+        <button
+          type="button"
+          onClick={() => handleGenerateReport(report)}
+          className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+        >
+          {t('execution.reportPanel.generateAI', 'Generate with AI')}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            exportReportPDF(report as ReportCompactDef, rag);
+            toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
+          }}
+          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+        >
+          PDF
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const md = buildReportMarkdown(report as ReportCompactDef, rag);
+            navigator.clipboard.writeText(md).then(
+              () => toast.success(t('execution.reportPanel.copied', 'Copied')),
+              () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
+            );
+          }}
+          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+        >
+          {t('execution.reportPanel.copy', 'Copy')}
+        </button>
+      </div>
+    );
+  }, [handleGenerateReport, t]);
+
   const renderReportsCatalog = () => {
     if (filteredInitiatives.length === 0) {
       return (
@@ -3707,26 +3845,43 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     }
 
     if (viewMode === 'table') {
+      type ReportRow = ReportDef & { title: string };
+      const selectedReport = reportPanelId
+        ? (reportCatalog.find((r) => r.id === reportPanelId) as ReportRow | undefined) ?? null
+        : null;
+      const reportIds = reportCatalog.map((r) => r.id);
+
       return (
-        <div className="h-full overflow-auto">
-          <FilterableTable
-            columns={reportColumns}
-            data={reportCatalog as any[]}
-            selectedRowId={reportPanelId}
-            onRowClick={(row) => {
-              setReportPanelId(String(row.id));
-              setReportPanelOpen(true);
-            }}
-            onRowDoubleClick={(row) => {
-              const r = reportCatalog.find((x) => x.id === row.id);
+        <div className="h-full overflow-hidden">
+          <TableWithPreviewLayout<ReportRow>
+            selectedId={reportPanelId}
+            selectedItem={selectedReport}
+            onSelect={setReportPanelId}
+            itemIds={reportIds}
+            getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
+            onOpenFull={(id) => {
+              const r = reportCatalog.find((x) => x.id === id);
               if (r) handleGenerateReport(r);
             }}
-            activeFilters={reportFilters}
-            onFilterChange={setReportFilters}
-            emptyMessage={t('execution.reportCatalog.noData', 'No reports')}
-            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-            density="compact"
-          />
+            renderPreview={(item) => renderReportPreviewBody(item)}
+            renderPreviewFooter={(item) => renderReportPreviewFooter(item)}
+          >
+            <FilterableTable
+              columns={reportColumns}
+              data={reportCatalog as any[]}
+              selectedRowId={reportPanelId}
+              onRowClick={(row) => setReportPanelId(String(row.id))}
+              onRowDoubleClick={(row) => {
+                const r = reportCatalog.find((x) => x.id === row.id);
+                if (r) handleGenerateReport(r);
+              }}
+              activeFilters={reportFilters}
+              onFilterChange={setReportFilters}
+              emptyMessage={t('execution.reportCatalog.noData', 'No reports')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              density="compact"
+            />
+          </TableWithPreviewLayout>
         </div>
       );
     }

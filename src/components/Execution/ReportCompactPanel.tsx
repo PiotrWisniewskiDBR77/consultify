@@ -64,7 +64,7 @@ type PanelTab = 'contract' | 'data' | 'export';
 // RAG LOGIC
 // ---------------------------------------------------------------------------
 
-function computeRAG(report: ReportDef): 'green' | 'amber' | 'red' {
+export function computeRAG(report: ReportDef): 'green' | 'amber' | 'red' {
   const crits = report.highlights.filter((h) => h.variant === 'critical');
   const warns = report.highlights.filter((h) => h.variant === 'warn');
   if (crits.length >= 2) return 'red';
@@ -72,7 +72,7 @@ function computeRAG(report: ReportDef): 'green' | 'amber' | 'red' {
   return 'green';
 }
 
-const RAG_CONFIG = {
+export const RAG_CONFIG = {
   green: {
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/30',
@@ -106,7 +106,7 @@ const PANEL_TABS: { id: PanelTab; labelKey: string; icon: React.ElementType }[] 
 // EXPORT HELPERS
 // ---------------------------------------------------------------------------
 
-function buildReportMarkdown(report: ReportDef, rag: 'green' | 'amber' | 'red'): string {
+export function buildReportMarkdown(report: ReportDef, rag: 'green' | 'amber' | 'red'): string {
   const ragLabel = RAG_CONFIG[rag].label;
   const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   return [
@@ -137,7 +137,7 @@ function buildReportMarkdown(report: ReportDef, rag: 'green' | 'amber' | 'red'):
   ].join('\n');
 }
 
-function exportReportPDF(report: ReportDef, rag: 'green' | 'amber' | 'red') {
+export function exportReportPDF(report: ReportDef, rag: 'green' | 'amber' | 'red') {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
