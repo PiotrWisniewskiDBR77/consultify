@@ -237,6 +237,28 @@ The strongest systems support:
 - smoothing without blindly breaking deadlines
 - using work schedules and effort data instead of intuition only
 
+### 4.11 One runtime, three execution surfaces
+
+The strongest systems separate operator intent without splitting runtime truth.
+
+For `consultify`, the benchmark-consistent execution split is:
+
+- `Portfolio`: live cross-initiative delivery surface
+- `Raporty`: pre-defined execution reporting packs
+- `Manager`: PMO / operator intervention cockpit
+
+Imported lesson from ClickUp:
+
+- dashboards and portfolios are useful only when they still lead back to real work and real action
+
+Imported lesson from monday.com:
+
+- reporting and workload become strong when many views read from standardized execution fields rather than from isolated boards
+
+Rule:
+
+`consultify` should separate surfaces by operator question, not by creating separate work truth.
+
 ---
 
 ## 5. Benchmark-derived requirement areas for consultify
@@ -244,6 +266,7 @@ The strongest systems support:
 `Execution v8` should explicitly support:
 
 - operator control tower
+- explicit surface split: `Portfolio`, `Raporty`, `Manager`
 - workload and balancing
 - timeliness and baseline honesty
 - baseline, variance and critical-path truth

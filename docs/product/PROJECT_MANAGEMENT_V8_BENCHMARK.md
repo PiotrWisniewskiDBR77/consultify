@@ -96,6 +96,17 @@ Modern project tools separate:
 
 The user sees different surfaces, but the operating model stays one.
 
+For `consultify`, this specifically means:
+
+- `Initiatives` owns shaping, planning and lifecycle governance
+- `Execution -> Portfolio` owns the live portfolio of initiatives already in delivery
+- `Execution -> Raporty` owns pre-defined execution reporting packs
+- `Execution -> Manager` owns intervention, workload and PMO/operator control
+
+Rule:
+
+`Execution` may expose multiple surfaces, but it must not absorb full initiative planning or create a second project runtime.
+
 ### 4.3 Triage before execution chaos
 
 Strong systems do not dump everything straight into execution.
@@ -143,6 +154,13 @@ Reporting should connect:
 - blockers and risks
 - accountability
 - benefits transition
+
+Good reporting surfaces in this benchmark family also:
+
+- are audience-specific,
+- are cadence-driven,
+- define what happens after the report is read,
+- stay grounded in the same execution truth as the live operating surfaces.
 
 ### 4.7 AI belongs inside the work system
 

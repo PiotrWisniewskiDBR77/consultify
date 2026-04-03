@@ -13,7 +13,7 @@ Reporting is not optional – it is the management layer of Consultinity.
 ---
 
 ## 1. Canonical report types (MVP)
-Consultinity supports 4 mandatory report types.
+Consultinity supports 4 mandatory cross-system report types.
 
 | Code | Report type | Audience | Frequency |
 |---|---|---|---|
@@ -21,6 +21,32 @@ Consultinity supports 4 mandatory report types.
 | R2 | Steering Committee Report | Sponsors / Board | Monthly / gate-based |
 | R3 | Benefits Tracking Report | Business Owners | Monthly / Quarterly |
 | R4 | Portfolio Overview | Executives / Owner | On-demand |
+
+---
+
+## 1a. Execution reporting surface extension
+
+Within `Execution -> Raporty`, the product may expose a broader pre-defined catalog of execution-focused reports, as long as they remain derived from the same canonical data model and map back to the four mandatory reporting families above.
+
+Allowed execution-focused report surfaces include:
+
+- Weekly execution pack
+- Monthly PMO review
+- Program health summary
+- Blockers and recovery report
+- Milestone slippage report
+- Capacity utilization report
+- Budget variance report
+- Decision backlog and approval aging report
+- Cross-initiative dependency report
+- Delivery confidence report
+- Sponsor-ready one-pager
+
+Rule:
+
+- the four canonical report families remain mandatory,
+- execution-specific report packs are allowed as curated operational views,
+- no execution report may invent a second truth or bypass the canonical reporting logic.
 
 ---
 

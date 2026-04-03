@@ -43,6 +43,27 @@ Rule:
 
 `reporting should stay honest when data is missing or planning quality is weak`
 
+### 3.1 Reporting surface boundary inside Execution
+
+Inside the `Execution` module, the `Raporty` tab owns:
+
+- pre-defined reporting packs,
+- execution snapshots,
+- audience-specific summaries,
+- export/share-ready outputs.
+
+It does **not** own:
+
+- the main live initiative portfolio,
+- the PMO intervention cockpit,
+- a second runtime for changing initiative truth.
+
+Boundary rule:
+
+- `Portfolio` shows live execution objects,
+- `Raporty` shows reporting outputs built from those objects,
+- `Manager` shows intervention and workload control.
+
 ---
 
 ## 4. Execution risk doctrine
@@ -78,6 +99,31 @@ When execution health degrades, the system should support:
 
 Recovery should not be hidden in comments only.
 
+## 5a. Canonical execution report catalog
+
+The execution reporting surface should provide a fixed catalog of pre-defined reports:
+
+- Weekly execution pack
+- Monthly PMO review
+- Program health summary
+- Blockers and recovery report
+- Milestone slippage report
+- Capacity utilization report
+- Budget variance report
+- Decision backlog and approval aging report
+- Cross-initiative dependency report
+- Delivery confidence report
+- Sponsor-ready one-pager
+
+Every report should declare:
+
+- audience,
+- cadence,
+- scope,
+- sections,
+- data sources,
+- follow-up expectations after reading.
+
 ---
 
 ## 6. Accountability doctrine
@@ -96,6 +142,7 @@ This is necessary both for team operations and executive trust.
 
 ## 7. Related canonical docs
 
+- `EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
 - `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
 - `EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
 - `EXECUTION_READINESS_AUDIT_V8.md`

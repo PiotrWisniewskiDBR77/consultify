@@ -108,6 +108,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: benchmark of leading execution-management patterns for workload, balance, timeliness, dependencies, dashboards, recovery and delivery control
   - **Authority**: Highest for benchmark and parity target-setting in the Execution or Wdrozenie package
 
+- `docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical split of the Execution module into `Portfolio`, `Raporty` and `Manager`, including surface responsibilities, allowed actions, reporting catalog boundaries and PMO/manager cockpit semantics
+  - **Authority**: Highest for Execution surface semantics, tab boundaries and UX-level ownership split inside the Wdrozenie package
+
 - `docs/product/EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical runtime for the execution control tower, including workload, balance, timeliness, intervention queues, recovery and operator actions

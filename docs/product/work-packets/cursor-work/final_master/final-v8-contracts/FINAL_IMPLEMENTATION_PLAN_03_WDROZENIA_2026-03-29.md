@@ -2,7 +2,7 @@
 Date: 2026-03-29  
 Owner: Product + Engineering  
 Status: `verified(evidence)` (P03 program complete 2026-03-31)  
-Last updated: 2026-03-31 (P03-B/C closure)
+Last updated: 2026-04-03 (Execution surfaces standard refresh: Portfolio / Raporty / Manager)
 
 ## 1. Executive summary
 - **Intent**: Zarządzanie pracą wielu zadań i inicjatyw: ryzyko, obciążenia, zasoby.
@@ -126,6 +126,7 @@ When one-truth readback cannot be guaranteed, control tower must be honest:
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_WDROZENIA_2026-03-29.md`
 - Benchmark: `docs/product/EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+- Execution surfaces standard: `docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
 - Adjacent benchmark: `docs/product/TASK_AND_DECISION_BENCHMARK_V8.md`, `docs/product/PROJECT_MANAGEMENT_V8_BENCHMARK.md`
 
 ## 4. Softs inspirations (benchmark apps)
@@ -180,9 +181,47 @@ When one-truth readback cannot be guaranteed, control tower must be honest:
 - Drill-down: “why” (dependency, workload window, baseline variance, missing estimate) + “what next”.
 - Interwencje: reassign/smooth, replan, escalate, convert into governed follow-up work.
 
-### 5.2 UI surfaces / entry points
-- “Queues” operatora: at-risk, blocked, overloaded, stale work.
-- Cross-initiative rollups (portfolio style) dla bieżącej kontroli, ale bez przejęcia planowania inicjatyw.
+### 5.2 Execution surfaces (frozen split)
+`Execution` is one runtime exposed through three surfaces:
+
+| Surface | Product role | Main question | Main object |
+| --- | --- | --- | --- |
+| `Portfolio` | live delivery portfolio | what is in execution and what is its state? | initiatives in execution |
+| `Raporty` | pre-defined execution reporting layer | what report should PMO / leadership consume now? | report definitions and report runs |
+| `Manager` | intervention cockpit | where should I intervene today? | exceptions, workload, risk, actions |
+
+Rules:
+
+- The split is semantic, not architectural: all three surfaces must use the same execution truth.
+- `Portfolio` may show cross-initiative rollups, but it does not absorb initiative planning from the `Inicjatywy` module.
+- `Raporty` is not a second live list of initiatives; it owns pre-defined reporting packs and execution snapshots.
+- `Manager` is not a decorative dashboard; it owns detect → drill-down → suggest → intervene → verify behavior.
+
+### 5.3 Surface responsibilities
+#### `Portfolio`
+- canonical live list of initiatives already in execution,
+- supports `table`, `kanban`, `timeline`,
+- uses the canonical table + preview pattern,
+- allows bounded inline execution actions already declared by the module,
+- does not become a dashboard builder or planning workspace.
+
+#### `Raporty`
+- owns pre-defined reports built from execution truth,
+- focuses on audience-specific reporting packs and snapshots,
+- may link back to live work, but does not replace the portfolio surface,
+- must keep report definitions explicit: audience, cadence, scope, sections, follow-up actions.
+
+#### `Manager`
+- owns PMO/operator/manager cockpit semantics,
+- surfaces workload changes, overdue approvals, KPI alerts without plan, blockers, missing dates, stale work and intervention suggestions,
+- connects risk and capacity signals with bounded actions (`reassign`, `smooth`, `replan`, `escalate`),
+- remains exception-driven rather than row-driven.
+
+### 5.4 UI surfaces / entry points
+- `Portfolio`: canonical initiative list + preview + execution views (`table`, `kanban`, `timeline`).
+- `Raporty`: fixed report catalog, execution snapshots, operational and executive packs.
+- `Manager`: action center, workload/capacity, exception queues, intervention suggestions and PMO-style drill-down.
+- All three surfaces must respect frozen layouts: one command row, topbar order and Outlook-style preview where table work is used.
 
 ## 6. Data + API contract (engineering-facing)
 Kontrakt wymaga (minimum):
@@ -202,6 +241,10 @@ Kontrakt wymaga (minimum):
 - Zależności pokazują “blocked by” + “affects next” (bounded blast radius, 1-hop).
 - Baseline vs forecast jest jawne; variance jest widoczne; brak baseline jest jawny (bez udawania precyzji).
 - Degraded posture jest jawne: write denied, partial refresh failure, stale data, missing baseline/estimate.
+- `Execution` is explicitly split into `Portfolio`, `Raporty`, `Manager` with no duplicate runtime.
+- `Portfolio` remains the live initiative surface with canonical preview behavior.
+- `Raporty` remains a reporting layer rather than a second initiative list.
+- `Manager` remains an intervention cockpit rather than a decorative dashboard wall.
 
 ### 7.2 Tests
 - Integracyjne: write → refresh → summary/detail agree (dla kluczowych mutacji).
