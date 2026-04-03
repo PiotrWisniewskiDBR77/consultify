@@ -151,6 +151,8 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             onOpenInitiative={onOpenInitiative}
             onQuickUpdate={onQuickUpdate}
             users={users}
+            initiatives={initiatives}
+            dependencies={dependencies}
           />
         )}
         {subview === 'completeness' && (
@@ -158,6 +160,9 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             initiatives={completenessRows}
             issues={completenessIssues}
             onOpenInitiative={onOpenInitiative}
+            onQuickUpdate={onQuickUpdate}
+            users={users}
+            rawInitiatives={initiatives}
           />
         )}
       </div>
