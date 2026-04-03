@@ -65,6 +65,30 @@ export interface V8ExecutionOverspendSignal {
   message: string;
 }
 
+export interface V8ManagerProblemAction {
+  id: string;
+  label: string;
+  variant?: 'default' | 'primary' | 'danger';
+}
+
+export interface V8ManagerProblemRow {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  problemType: string;
+  title: string;
+  rootCause: string;
+  sourceEntityType: 'INITIATIVE' | 'TASK' | 'DECISION' | 'RAID_ITEM' | 'PERSON';
+  sourceEntityId: string;
+  sourceEntityName: string;
+  ownerId: string | null;
+  ownerName: string | null;
+  daysOverdue: number | null;
+  impactCount: number;
+  affectedEntities: Array<{ id: string; name: string; type: string }>;
+  actions: V8ManagerProblemAction[];
+  meta: Record<string, unknown>;
+}
+
 export interface V8ExecutionTimelineWarning {
   initiativeId: string;
   initiativeName: string;
@@ -312,6 +336,12 @@ export const V8ExecutionControlApi = {
   getLaneAnalysis: (laneId: string, projectId?: string) =>
     v8Get<V8LaneAnalysisResponse>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/analysis`,
+      projectId ? { projectId } : undefined
+    ),
+
+  getManagerProblems: (laneId: string, projectId?: string) =>
+    v8Get<{ problems: V8ManagerProblemRow[]; count: number }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problems`,
       projectId ? { projectId } : undefined
     ),
 

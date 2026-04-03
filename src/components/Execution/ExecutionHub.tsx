@@ -100,7 +100,7 @@ import {
   type ReportDataContext,
 } from './executionReports';
 import { ReportDocumentView } from './ReportDocumentView';
-import { type ManagerModuleDataContext, type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
+import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -3668,52 +3668,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return suggestions;
   }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
 
-  const managerDataContext = useMemo((): ManagerModuleDataContext => ({
-    initiatives: dashboardBaseInitiatives,
-    tasks,
-    decisions: decisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      status: d.status,
-      priority: (d as any).priority,
-      dueDate: (d as any).dueDate,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      relatedObjectId: (d as any).relatedObjectId,
-      relatedObjectName: (d as any).relatedObjectName,
-    })),
-    actionQueueItems: actionQueueItems.map((item) => ({
-      type: item.type,
-      id: item.id,
-      title: item.title,
-      initiativeName: item.initiativeName,
-      dueDate: item.dueDate,
-      severity: item.severity,
-      impact: item.impact,
-      periodStart: item.periodStart,
-    })),
-    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
-    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      dueDate: d.dueDate,
-      relatedObjectId: (d as any).relatedObjectId,
-      relatedObjectName: (d as any).relatedObjectName,
-    })),
-    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
-    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      dueDate: (t as any).dueDate,
-      assigneeName: (t as any).assigneeName,
-    })),
-    riskSignals,
-    delaySignals,
-    interventionSuggestions,
-    kpiAlerts: managerMetrics.kpiAlerts,
-    projectId: currentProjectId || undefined,
-    onInitiativeClick: handleOpenSidePanel,
-  }), [dashboardBaseInitiatives, tasks, decisions, actionQueueItems, actionCenter, riskSignals, delaySignals, interventionSuggestions, managerMetrics.kpiAlerts, currentProjectId, handleOpenSidePanel]);
+  // managerDataContext removed — ManagerModuleView now fetches its own data via API
 
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
@@ -4301,8 +4256,9 @@ Please return:
         return (
           <ManagerModuleView
             moduleId={moduleId}
-            data={managerDataContext}
+            projectId={currentProjectId || undefined}
             onBack={handleShowList}
+            onOpenEntity={handleOpenSidePanel ? (type, id) => handleOpenSidePanel({ id, name: id } as any) : undefined}
           />
         );
       }

@@ -1,147 +1,10 @@
 /**
- * Manager 6-Lane Cockpit — shared types
+ * Manager Module — Problem-list types
  *
- * Every lane follows the same analytical cycle:
- *   Observations -> Insights -> Effects -> Suggestions -> Decisions -> Execution
+ * Each of the 6 manager areas presents a flat table of problems.
+ * Every row links back to its source entity (initiative / task / decision / RAID item)
+ * and carries actions the manager can take.
  */
-
-// ---------------------------------------------------------------------------
-// Observation: raw facts from data
-// ---------------------------------------------------------------------------
-
-export interface ObservationItem {
-  id: string;
-  metric: string;
-  scope: 'initiative' | 'team' | 'owner' | 'portfolio' | 'task' | 'decision';
-  since?: string;
-  trend: 'rising' | 'stable' | 'improving';
-  severity: 'info' | 'warning' | 'critical';
-  entityId?: string;
-  entityName?: string;
-  rawData?: Record<string, unknown>;
-}
-
-// ---------------------------------------------------------------------------
-// Insight: system interpretation
-// ---------------------------------------------------------------------------
-
-export interface InsightItem {
-  id: string;
-  observationIds: string[];
-  interpretation: string;
-  isSystemic: boolean;
-  requiresAction: boolean;
-  confidence: 'high' | 'medium' | 'low';
-}
-
-// ---------------------------------------------------------------------------
-// Effect: consequences of inaction
-// ---------------------------------------------------------------------------
-
-export interface EffectItem {
-  id: string;
-  insightId: string;
-  consequence: string;
-  blastRadius: number;
-  costImpact?: string;
-  timelineImpact?: string;
-  affectedEntities?: Array<{ id: string; name: string; type: string }>;
-}
-
-// ---------------------------------------------------------------------------
-// Suggestion: proposed actions with feasibility
-// ---------------------------------------------------------------------------
-
-export type SuggestionFeasibility =
-  | 'immediate'
-  | 'manager_decision'
-  | 'leadership_decision'
-  | 'not_feasible_now';
-
-export type SuggestionCategory =
-  | 'operational'
-  | 'organizational'
-  | 'governance'
-  | 'quality';
-
-export interface SuggestionItem {
-  id: string;
-  action: string;
-  reason: string;
-  expectedOutcome: string;
-  cost: string;
-  feasibility: SuggestionFeasibility;
-  requiresApproval: boolean;
-  recommendedOwner?: string;
-  category: SuggestionCategory;
-}
-
-// ---------------------------------------------------------------------------
-// Decision: operator choice on a suggestion
-// ---------------------------------------------------------------------------
-
-export type DecisionState =
-  | 'proposed'
-  | 'pending_approval'
-  | 'approved'
-  | 'rejected'
-  | 'deferred'
-  | 'in_execution'
-  | 'verified';
-
-export interface DecisionItem {
-  id: string;
-  suggestionId: string;
-  state: DecisionState;
-  decidedBy?: string;
-  decidedAt?: string;
-  notes?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Execution plan: tasks created from a decision
-// ---------------------------------------------------------------------------
-
-export type VerificationStatus = 'pending' | 'in_progress' | 'verified' | 'failed';
-
-export interface ExecutionTask {
-  title: string;
-  owner: string;
-  deadline: string;
-  status: string;
-}
-
-export interface ExecutionPlanItem {
-  id: string;
-  decisionId: string;
-  tasks: ExecutionTask[];
-  beforeState?: string;
-  afterState?: string;
-  verificationStatus: VerificationStatus;
-}
-
-// ---------------------------------------------------------------------------
-// Full lane analysis (returned by backend)
-// ---------------------------------------------------------------------------
-
-export type LaneSeverity = 'ok' | 'warning' | 'critical';
-export type LaneConfidence = 'high' | 'medium' | 'low' | 'degraded';
-
-export interface LaneAnalysis {
-  observations: ObservationItem[];
-  insights: InsightItem[];
-  effects: EffectItem[];
-  suggestions: SuggestionItem[];
-  decisions: DecisionItem[];
-  executionPlan: ExecutionPlanItem[];
-  severity: LaneSeverity;
-  confidence: LaneConfidence;
-  lastRefreshed: string;
-}
-
-// ---------------------------------------------------------------------------
-// Lane identifiers
-// ---------------------------------------------------------------------------
 
 export type ManagerLaneId =
   | 'action-queue'
@@ -151,56 +14,92 @@ export type ManagerLaneId =
   | 'risk'
   | 'people-change';
 
-// ---------------------------------------------------------------------------
-// Lane action dispatched from UI
-// ---------------------------------------------------------------------------
+export type ProblemSeverity = 'critical' | 'warning' | 'info';
 
-export type LaneActionType =
+export type ProblemType =
+  | 'overdue_task'
+  | 'blocked_task'
+  | 'overdue_decision'
+  | 'pending_decision'
+  | 'no_decision_maker'
+  | 'deferred_decision'
+  | 'blocked_initiative'
+  | 'dependency_block'
+  | 'decision_block'
+  | 'critical_issue'
+  | 'escalated'
+  | 'overloaded_person'
+  | 'unassigned_task'
+  | 'no_estimate'
+  | 'due_soon'
+  | 'critical_risk'
+  | 'high_risk'
+  | 'delay_overdue'
+  | 'delay_risk'
+  | 'delay_late_start'
+  | 'missing_baseline'
+  | 'dependency_risk'
+  | 'budget_overspend'
+  | 'stale_item'
+  | 'no_owner'
+  | 'no_sponsor'
+  | 'no_dates'
+  | 'bus_factor'
+  | 'low_clarity';
+
+export type SourceEntityType = 'INITIATIVE' | 'TASK' | 'DECISION' | 'RAID_ITEM' | 'PERSON';
+
+export type ProblemActionId =
+  | 'replan'
+  | 'reassign'
+  | 'escalate'
+  | 'set_due_date'
+  | 'open_entity'
   | 'approve'
   | 'reject'
   | 'defer'
-  | 'escalate'
-  | 'execute'
+  | 'assign_maker'
   | 'request_info'
-  | 'refresh'
-  | 'ai_manage'
-  | 'ai_manage_all';
+  | 'unblock'
+  | 'workaround'
+  | 'scope_reduction'
+  | 'set_capacity'
+  | 'smooth_schedule'
+  | 'create_mitigation'
+  | 'assign_mitigation_owner'
+  | 'set_baseline'
+  | 'mark_mitigated'
+  | 'dismiss'
+  | 'assign_owner'
+  | 'assign_sponsor'
+  | 'set_dates'
+  | 'distribute_work'
+  | 'send_nudge';
 
-export interface LaneAction {
-  type: LaneActionType;
-  targetId: string;
-  payload?: Record<string, unknown>;
+export interface ProblemAction {
+  id: ProblemActionId;
+  label: string;
+  variant?: 'default' | 'primary' | 'danger';
+  icon?: string;
 }
 
-// ---------------------------------------------------------------------------
-// AI Action Plan (generated by AI Zarządzaj)
-// ---------------------------------------------------------------------------
-
-export interface AiActionStep {
-  title: string;
-  description: string;
-  owner: string;
-  deadline: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'immediate' | 'short_term' | 'strategic';
-}
-
-export interface AiActionPlan {
+export interface ManagerProblemRow {
   id: string;
-  scope: 'single' | 'comprehensive';
-  targetIds: string[];
-  laneId: ManagerLaneId;
-  diagnosis: string;
-  riskAssessment: string;
-  steps: AiActionStep[];
-  expectedOutcome: string;
-  estimatedTimeline: string;
-  generatedAt: string;
+  severity: ProblemSeverity;
+  problemType: ProblemType;
+  title: string;
+  rootCause: string;
+  sourceEntityType: SourceEntityType;
+  sourceEntityId: string;
+  sourceEntityName: string;
+  ownerId: string | null;
+  ownerName: string | null;
+  daysOverdue: number | null;
+  impactCount: number;
+  affectedEntities: Array<{ id: string; name: string; type: SourceEntityType }>;
+  actions: ProblemAction[];
+  meta: Record<string, unknown>;
 }
-
-// ---------------------------------------------------------------------------
-// Metric definition for summary strip
-// ---------------------------------------------------------------------------
 
 export interface MetricDef {
   label: string;

@@ -1093,6 +1093,7 @@ router.get(
 // ────────────────────────────────────────────────────────────────
 
 import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
+import { getManagerProblems } from '../../services/v8/managerProblemsService.js';
 
 const VALID_LANES = new Set([
   'action-queue', 'decisions', 'blockers', 'workload', 'risk', 'people-change',
@@ -1107,6 +1108,30 @@ const LaneDecisionSchema = z.object({
 const LaneExecuteSchema = z.object({
   decisionId: z.string().min(1),
 });
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/problems
+ * Flat list of ManagerProblemRow[] for the given lane — real data from DB.
+ */
+router.get(
+  '/manager/lanes/:laneId/problems',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const problems = await getManagerProblems(organizationId, laneId, projectId);
+    return res.json({
+      data: { problems, count: problems.length },
+      meta: executionControlMeta(),
+    });
+  })
+);
 
 /**
  * GET /api/v8/execution-control/manager/lanes/:laneId/analysis

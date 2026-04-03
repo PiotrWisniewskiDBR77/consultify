@@ -1,14 +1,3 @@
-export { AiActionPlanPanel } from './AiActionPlanPanel';
-export { AiManageButton } from './AiManageButton';
-export { FeasibilityBadge } from './FeasibilityBadge';
-export { LaneCockpitShell } from './LaneCockpitShell';
-export { LaneDecisionsSection } from './LaneDecisionsSection';
-export { LaneEffectsSection } from './LaneEffectsSection';
-export { LaneExecutionSection } from './LaneExecutionSection';
-export { LaneInsightsSection } from './LaneInsightsSection';
-export { LaneObservationsSection } from './LaneObservationsSection';
-export { LaneProblemList, type ProblemEntry } from './LaneProblemList';
-export { LaneSuggestionsSection } from './LaneSuggestionsSection';
-export { LaneSummaryStrip } from './LaneSummaryStrip';
-export * from './lanes';
+export { ProblemTable } from './ProblemTable';
+export { ProblemPreview } from './ProblemPreview';
 export * from './types';
