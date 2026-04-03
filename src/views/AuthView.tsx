@@ -64,8 +64,12 @@ export function isQuickAccessShortcutHost(hostname: string): boolean {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.startsWith('stage.') ||
+    hostname.startsWith('staging.') ||
     hostname === 'consultify.ai' ||
-    hostname === 'www.consultify.ai'
+    hostname === 'www.consultify.ai' ||
+    hostname === 'app.consultify.com' ||
+    hostname.endsWith('.consultify.com') ||
+    hostname.endsWith('.railway.app')
   );
 }
 

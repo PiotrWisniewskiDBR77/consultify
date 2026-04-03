@@ -34,14 +34,16 @@ describe('AuthView quick access guard', () => {
     expect(isQuickAccessEnabledHost('www.consultify.ai')).toBe(true);
   });
 
-  it('keeps shortcut panel off arbitrary subdomains', () => {
-    expect(isQuickAccessEnabledHost('app.consultify.ai')).toBe(false);
+  it('keeps shortcut panel off arbitrary external domains', () => {
+    expect(isQuickAccessEnabledHost('evil.example.com')).toBe(false);
   });
 
   it('keeps quick access available on local and staging hosts', () => {
     expect(isQuickAccessEnabledHost('localhost')).toBe(true);
     expect(isQuickAccessEnabledHost('127.0.0.1')).toBe(true);
     expect(isQuickAccessEnabledHost('stage.consultify.ai')).toBe(true);
+    expect(isQuickAccessEnabledHost('staging.consultify.app')).toBe(true);
+    expect(isQuickAccessEnabledHost('app.consultify.com')).toBe(true);
   });
 
   it('on production public host only 1111 resolves (Anna demo)', () => {
