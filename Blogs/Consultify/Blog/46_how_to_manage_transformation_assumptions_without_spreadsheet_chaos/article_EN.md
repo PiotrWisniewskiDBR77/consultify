@@ -5,47 +5,47 @@ Funnel stage: Evaluation
 Core problem: assumptions scatter across workbooks, slide footnotes, and email, so reviews rehearse debates instead of testing hypotheses and recording interventions  
 Main promise: you can run a single assumption ledger with owners, test plans, and status that scales with portfolio complexity
 
-manage transformation assumptions without spreadsheet chaos by creating one assumption ledger as the system of record: each assumption gets an owner, evidence source, impact class, test method, review cadence, last validation date, and linked decisions. Ban parallel shadow lists in personal files. Route every review to ledger deltas and retire assumptions with a written reason. If assumptions live in twelve tabs, governance will always feel like archaeology. Assumptions are liabilities until they are owned and tested. Spreadsheets are fine as calculators. They are weak as governance systems.
+Assumptions are liabilities until they are owned, tested, and linked to decisions. Spreadsheets are fine as calculators. They are weak as governance systems—because tabs multiply, versions diverge, and every team quietly maintains the “real” list that feels safest locally.
 
-## Ledger fields (minimum viable record)
+The result is predictable: each review reopens the same arguments with new formatting. Sponsors hear confidence without comparability. Finance hears narratives without a stable record of what changed and why.
 
-Each row should answer six questions without opening another file.
+> **What a healthy ledger does:** forces falsifiable statements, named owners, and explicit consequences when reality disagrees—without turning every meeting into archaeology.
 
-**Assumption statement** (one sentence, falsifiable); **Owner** (named role, not a team mailbox); **Impact if wrong** (benefits, cost, timeline, risk class); **Evidence or signal** (what would prove it true or false); **Test plan** (what you will observe this cycle); **Decision link** (what changes if the assumption breaks).
+## Minimum viable record: what each row must answer
 
-## Step sequence: migrate from spreadsheet sprawl
+Each assumption should answer six questions without opening another file.
 
-Freeze new assumption tabs for two weeks; Import the top thirty assumptions into the ledger with owners assigned; Run one portfolio review using only ledger deltas; Delete duplicate lists after stakeholders confirm parity; Add assumption changes to the standard review cadence agenda as the first ten minutes.
+**Assumption statement:** one sentence, falsifiable. **Owner:** a named role, not a team mailbox. **Impact if wrong:** benefits, cost, timeline, or risk class—enough to prioritize attention. **Evidence or signal:** what would prove it true or false in the real world. **Test plan:** what you will observe this cycle, and what “good enough evidence” means. **Decision link:** what changes if the assumption breaks—pause, pivot, funding shift, dependency action.
+
+If you cannot state the decision link, you do not yet have governance. You have commentary.
+
+## Migrate from spreadsheet sprawl: a practical cutover
+
+**Freeze new assumption tabs** for two weeks—no exceptions without sponsor approval. **Import the top thirty assumptions** into the ledger with owners assigned, even if the wording is imperfect. **Run one portfolio review** using only ledger deltas as the first agenda block. **Delete duplicate lists** after stakeholders confirm parity—painful, but necessary. **Add assumption changes** to the standard cadence as a fixed first ten minutes, not an optional appendix.
+
+The cutover is cultural as much as technical. Leadership signals that one system of record beats local elegance.
 
 ## Checklist: ledger discipline is working when
 
-- sponsors can open one view and see what changed since last review  
-- broken assumptions produce decision records, not hallway agreements  
-- slide decks reference ledger IDs instead of retyping assumptions  
-- fewer meetings end with "we should track that" and no owner  
-- board and PMO packets pull the same assumption truth
+- Sponsors can open one view and see what changed since last review.  
+- Broken assumptions produce decision records, not hallway agreements.  
+- Slide decks reference ledger IDs instead of retyping assumptions.  
+- Fewer meetings end with “we should track that” and no owner.  
+- Board and PMO packets pull the same assumption truth.
 
-## Reality check: assumption chaos usually survives because every team thinks its local list is the safest one
+## Why local lists feel rational—and create chaos
 
-Finance keeps one version. PMO keeps another. Workstreams keep private trackers "just in case."
+Finance keeps one version. PMO keeps another. Workstreams keep private trackers “just in case.”
 
-Those lists may all look responsible locally, but together they guarantee that the same assumption will be defended, edited, and rediscovered in parallel.
-
-## When this works versus when it fails
-
-**Works** when leadership agrees one system of record beats local elegance. **Fails** when the ledger becomes a dump without owners and tests.
+Each list may look responsible locally. Together, they guarantee the same assumption will be defended, edited, and rediscovered in parallel—while governance burns hours reconciling reality.
 
 ## How Consultify replaces assumption archaeology
 
-Consultify holds the assumption ledger, owners, tests, and decision hooks in one system of record so reviews pull one truth instead of competing spreadsheets.
-
-When assumptions, value proof, and decisions share one backbone, reviews test reality instead of retyping it.
+Consultify holds the assumption ledger, owners, tests, and decision hooks in one system of record so reviews pull one truth instead of competing spreadsheets. When assumptions, value proof, and decisions share a backbone, reviews test reality instead of retyping it.
 
 ## Bottom line
 
-Spreadsheet chaos is a governance choice.
-
-Run one assumption ledger with owners and tests, or every review will reopen the same arguments with new formatting.
+Spreadsheet chaos is a governance choice. Run one assumption ledger with owners and tests, or every review will reopen the same arguments with new packaging—and your portfolio will keep mistaking motion for learning.
 
 ---
 

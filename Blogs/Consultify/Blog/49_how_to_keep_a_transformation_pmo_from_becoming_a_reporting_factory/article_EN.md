@@ -5,52 +5,52 @@ Funnel stage: Evaluation
 Core problem: PMO teams drown in slide refresh cycles and status assembly, which crowds out dependency clearing, risk intervention, and decision preparation for sponsors  
 Main promise: you can invert the PMO operating model so reporting is a byproduct of live records and the team sells decision quality, not deck volume
 
-keep a transformation PMO from becoming a reporting factory by defining three non-negotiable outputs each week: decision-ready packets for sponsors, cleared or escalated top dependencies, and updated risk and assumption records tied to value proof. Cap status production hours. Automate or template repetitive views from the system of record. Measure PMO success by decision latency reduction and dependency aging, not by slide count. If the PMO cannot point to decisions it enabled, it is a publishing house. PMO value is decision facilitation. Reporting is support work. When support work becomes the job, execution waits.
+PMO value is decision facilitation. Reporting is support work.
 
-## The inversion framework
+When support work becomes the job, execution waits. Sponsors receive motion. Dependencies age. Risks linger in polite “watch” lists. Assumptions scatter across decks. And the PMO—often the most capable team in the program—spends its talent formatting instead of intervening.
 
-| Factory mode | facilitation mode |
+The inversion is simple to state and hard to enforce: refresh the system of record first, produce thin standard packets second, and measure success by decision latency and dependency aging—not slide throughput.
+
+> **What a healthy PMO sells weekly:** decision-ready packets, cleared or escalated dependencies, and updated risk and assumption records tied to value proof.
+
+## Factory mode versus facilitation mode
+
+| Factory mode | Facilitation mode |
 | --- | --- |
-| custom deck per forum | standard packet from records |
-| status as narrative | status as exception-based delta |
-| PMO owns formatting | owners own facts in system |
-| success is on-time slides | success is on-time decisions |
+| Custom deck per forum | Standard packet from records |
+| Status as narrative | Status as exception-based delta |
+| PMO owns formatting | Owners own facts in the system |
+| Success is on-time slides | Success is on-time decisions |
 
-## Weekly operating rhythm (minimum)
+This is not an argument against visuals. It is an argument against bespoke theater as the PMO’s primary product.
 
-Monday: refresh dependency aging list and assign clearing owners. Midweek: prepare sponsor packet: decisions required, options, consequences.
+## Weekly operating rhythm: a minimum viable cadence
 
-Friday: close the loop: record outcomes and update assumption ledger ties.
+**Monday:** refresh dependency aging and assign clearing owners with dates. **Midweek:** prepare the sponsor packet—decisions required, options, consequences—linked to record IDs. **Friday:** close the loop: record outcomes, update ties to the assumption ledger, and publish what changed.
 
-## Checklist: PMO is healthy when
+If Friday becomes “finish the deck,” the week failed. If Friday becomes “close decisions,” the PMO is doing its real job.
 
-- sponsors receive decisions, not only updates  
-- recurring decks shrink because exceptions carry the story  
-- PMO hours track to clearing blockers and preparing choices  
-- reporting templates map to ledger and risk IDs  
-- fewer meetings happen because records answer predictable questions
+## Checklist: the PMO is healthy when
 
-## Reality check: PMO reporting sprawl usually grows because every stakeholder request sounds individually reasonable
+- Sponsors receive decisions, not only updates.  
+- Recurring decks shrink because exceptions carry the story.  
+- PMO hours track to clearing blockers and preparing choices.  
+- Reporting templates map to ledger and risk IDs.  
+- Fewer meetings happen because records answer predictable questions.
 
-One leader wants a different cut. Another wants more context. Someone else asks for one extra weekly view.
+## Why reporting sprawl grows quietly
 
-None of those requests looks fatal alone, but together they quietly turn the PMO into a service desk for presentation demand instead of an operating team for decision flow.
+Every stakeholder request sounds individually reasonable. One leader wants a different cut. Another wants more context. Someone else asks for one extra weekly view.
 
-## When this works versus when it fails
-
-**Works** when leadership agrees standardized packets beat bespoke theater.
-
-**Fails** when sponsors still reward prettier slides over faster decisions.
+None of those requests looks fatal alone. Together, they turn the PMO into a presentation service desk instead of an operating team for decision flow. The fix is leadership discipline: standardized packets, capped status hours, and rewards for faster decisions—not prettier slides.
 
 ## How Consultify shifts PMO work from publishing to operating
 
-Consultify inverts PMO work: refresh the system of record first, then shape the thin slide layer that points to ledger IDs, risks, and decision asks.
-
-When the system of record stays current, PMO energy moves from assembly to intervention and decision support.
+Consultify inverts PMO work by keeping the system of record current first, then shaping a thin slide layer that points to ledger IDs, risks, and decision asks. When records stay live, PMO energy moves from assembly to intervention and decision support.
 
 ## Bottom line
 
-A PMO that only reports is a tax on execution. Invert the model: records first, decisions second, slides last.
+A PMO that only reports is a tax on execution. Invert the model: records first, decisions second, slides last—or your best operators will spend their careers refreshing green, while the portfolio drifts red underneath.
 
 ---
 

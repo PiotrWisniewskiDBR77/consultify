@@ -5,59 +5,61 @@ Funnel stage: Consideration
 Core problem: annual or quarterly strategy reviews often become polished storyline sessions, which feels senior while decision latency, portfolio trade-offs, and value proof stay soft  
 Main promise: strategy reviews stay operational when they force explicit choices on assumptions, capital waves, capability bets, and stop-doing lists backed by comparable scenarios
 
-keep strategy reviews honest by requiring a pre-read with named strategic bets, explicit assumptions with falsification signals, a portfolio menu (fund, pause, merge, stop), and time-boxed decision slots for sponsors. If the review ends with alignment language but no recorded trade-offs, you ran a narrative theater production, not a strategy control point. Strategy reviews are supposed to reset direction. They often reset slides instead.
+Strategy reviews are expensive because they are supposed to be decisive. They gather the most expensive attention in the company, set multi-year commitments, and shape what the organization will refuse to do.
 
-The difference is whether executives leave with decisions or with applause.
+When they drift into narrative theater, they still feel important. The stories are coherent. The ambition sounds serious. The visuals look inevitable. But if the room leaves with alignment language and no recorded trade-offs, the organization bought a performance—not a control point.
 
-## Narrative theater patterns (recognize them)
+> **What executives should leave with:** named bets, explicit deferred bets with revisit triggers, stopped work with capacity consequences, and a cadence tied to assumption risk—not calendar habit alone.
 
-Theater shows up as: long market stories without a decision ask; scenario work that never ties to funding or capacity; strategy themes that every function can interpret as "yes, we are already doing that"; beautiful visuals with weak comparability between options; follow-up lists that avoid naming owners and dates.
+## Recognize the theater patterns
 
-These patterns increase governance load downstream because teams guess what strategy meant.
+Theater is not “too many slides.” Theater is missing decision structure.
 
-## Strategy review operating rules
+You see long market stories without a decision ask. Scenario work never ties to funding or capacity. Strategic themes are vague enough that every function can claim alignment. Visuals impress while options remain incomparable. Follow-up lists avoid owners and dates, so execution becomes a guessing game.
 
-Adopt these rules for the forum: **One page of bets:** what you will be wrong about if the strategy fails; **Assumption ledger:** each assumption has an owner, a review date, and a kill signal; **Portfolio menu:** explicit choices on initiatives and waves, not only themes; **Capacity truth:** where the work will land in functions and leadership time; **Stop-doing list:** what deprioritization frees the bets you claim to fund.
+These patterns increase governance load downstream because teams must interpret strategy through politics instead of through published choices.
 
-## Framework: strategy decision outputs (must publish)
+## Operating rules that keep reviews honest
+
+Adopt rules that are boring on purpose—because boring rules produce decisions.
+
+**One page of bets:** what you will be wrong about if the strategy fails. **Assumption ledger:** each assumption has an owner, a review date, and a kill signal. **Portfolio menu:** explicit choices on initiatives and waves, not only themes. **Capacity truth:** where the work lands in functions and leadership time—not “we will staff it.” **Stop-doing list:** what deprioritization frees the bets you claim to fund.
+
+If the review cannot produce those outputs, it is not ready to be called a strategy cycle. It is a draft conversation.
+
+## Publish decision outputs every time
 
 At minimum, publish:
 
-- **chosen bets** with funding and owner  
-- **deferred bets** with revisit trigger  
-- **stopped work** with consequence for capacity  
-- **next review cadence** tied to assumption risk, not calendar habit
+- **Chosen bets** with funding and owner  
+- **Deferred bets** with a revisit trigger tied to evidence, not mood  
+- **Stopped work** with a consequence for capacity (what becomes possible because you stopped)  
+- **Next review cadence** driven by which assumptions are fragile, not by quarterly inertia  
 
-## Comparison: storyline review versus decision review
+This is how strategy becomes operational: the organization can trace execution choices back to a recorded fork in the road.
 
-| Review type | primary artifact | typical control outcome |
+## Storyline review versus decision review
+
+| Review type | Primary artifact | Typical control outcome |
 | --- | --- | --- |
-| storyline | inspirational narrative | ambiguous priorities |
-| decision | recorded trade-offs | clearer execution discipline |
+| Storyline | Inspirational narrative | Ambiguous priorities |
+| Decision | Recorded trade-offs | Clearer execution discipline |
 
-## Reality check: strategy theater usually feels most persuasive when the options are least comparable
+The second type still needs narrative skill—but narrative serves comparability, not applause.
 
-The story is coherent. The ambition sounds serious. The visuals make the path look inevitable.
+## Why polished narrative creates false confidence
 
-That is exactly why leaders need comparability discipline, because polished narrative can create false confidence where hard choice structure is still missing.
+The story can be coherent while the options are least comparable. That is the dangerous moment: leadership feels clarity because the language is smooth, even when the portfolio menu is still implicit.
 
-## When this works versus when it fails
-
-**Works** when sponsors treat ambiguity as debt that must be cleared in the room.
-
-**Fails** when strategy review becomes a brand exercise without portfolio teeth.
+Comparability discipline means forcing options into the same shape: costs, risks, dependencies, and what gets delayed if you choose A versus B. It is less pleasant in the room. It is far more useful on Monday morning.
 
 ## How Consultify connects strategy bets to ROI and execution records
 
-Consultify forces strategy bets, assumptions, and execution records into one structure, so reviews output menus and recorded choices instead of narrative-only closure.
-
-When strategic assumptions, ROI cases, and decisions share one system, strategy reviews spend time choosing waves, not rewriting history.
+Consultify forces strategy bets, assumptions, and execution records into one structure, so reviews output menus and recorded choices instead of narrative-only closure. When strategic assumptions, ROI cases, and decisions share a system, the review spends its time choosing waves—not rewriting history.
 
 ## Bottom line
 
-Strategy reviews earn their cost only when they produce recorded trade-offs.
-
-If everyone leaves inspired but nobody leaves accountable, you paid for theater.
+Strategy reviews earn their cost only when they produce recorded trade-offs. If everyone leaves inspired but nobody leaves accountable, you paid for theater—and execution will pay twice.
 
 ---
 

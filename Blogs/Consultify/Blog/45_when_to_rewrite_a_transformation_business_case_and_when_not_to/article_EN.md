@@ -5,54 +5,62 @@ Funnel stage: Consideration
 Core problem: teams rewrite business cases after every shock, burning capacity and resetting governance conversations instead of updating assumptions and decision records  
 Main promise: you get a simple rule set for full rewrite versus controlled assumption update so sponsors protect focus and value proof stays comparable
 
-rewrite the full transformation business case when funding logic, scope boundaries, or outcome definition materially change (new strategic mandate, merger, stop-start of a major dependency, or invalidated baseline). Do not rewrite when only timing slipped, a non-core assumption broke, or narrative pressure increased; instead update the assumption ledger, show variance to baseline, and record the portfolio decision. Full rewrites should be rare events that reset comparability on purpose, not weekly morale therapy. Business cases are baselines.
+Business cases are baselines. If you erase the baseline every month, you cannot prove value, learn which assumptions were wrong, or hold honest portfolio conversations about variance.
 
-If you erase the baseline every month, you cannot prove value or learn which assumptions were wrong.
+Yet many teams respond to discomfort by rewriting: a new sponsor, a bad quarter, a sharper question from finance, a competitor headline. Rewriting feels like progress. Often it is avoidance—an expensive reset that destroys comparability and restarts governance arguments from zero.
+
+The operating discipline is simpler: rewrite rarely and deliberately; update assumptions constantly; record decisions whenever reality moves.
+
+> **What sponsors should protect:** a stable comparator and a visible assumption history—so the portfolio can learn without narrating its way out of accountability.
 
 ## Decision tree: rewrite versus update
 
-Use this sequence before authorizing work.
+Walk this sequence before authorizing major case work.
 
-Did the **defined outcome** change? If yes, consider full rewrite; Did **scope boundaries** change enough that benefits and costs are not comparable? If yes, consider full rewrite; Did **funding structure** change tranches, gates, or capital treatment? If yes, consider full rewrite; Is the issue **timing, execution variance, or a single broken assumption**? If yes, update ledger and variance, avoid rewrite; Is the driver **political discomfort** without structural change? If yes, do not rewrite; run a decision forum.
+**Did the defined outcome change?** If yes, consider a full rewrite.  
+**Did scope boundaries change enough that benefits and costs are not comparable?** If yes, consider a full rewrite.  
+**Did funding structure change tranches, gates, or capital treatment materially?** If yes, consider a full rewrite.  
+**Is the issue timing, execution variance, or a single broken assumption?** If yes, update the ledger and variance; avoid a rewrite.  
+**Is the driver political discomfort without structural change?** If yes, do not rewrite—run a decision forum and keep the baseline honest.
 
-## Comparison: rewrite churn versus ledger discipline
+The goal is to separate structural change from emotional pressure.
 
-| Signal | rewrite churn | ledger discipline |
+## Rewrite churn versus ledger discipline
+
+| Signal | Rewrite churn | Ledger discipline |
 | --- | --- | --- |
-| quarterly shock | new case version | assumption delta plus decision |
-| sponsor change | full narrative reset | ownership transfer note plus same baseline |
-| miss | benefits reframed | variance explained, trade-offs recorded |
-| learning | old case discarded | hypotheses retired with evidence |
+| Quarterly shock | New case version | Assumption delta plus decision |
+| Sponsor change | Full narrative reset | Ownership transfer note plus same baseline |
+| Miss | Benefits reframed | Variance explained, trade-offs recorded |
+| Learning | Old case discarded | Hypotheses retired with evidence |
 
-## Checklist: permission to rewrite (all must be true)
+Ledger discipline is how finance and operations stay aligned while the world moves. Rewrites should be rare events that reset comparability on purpose—not weekly morale therapy.
 
-- outcome definition or scope boundary materially changed  
-- finance requires a new baseline for audit or capital tracking  
-- governance agreed the old case is no longer a legitimate comparator  
-- capacity is budgeted for rewrite work without stealing delivery  
-- assumption ledger archive preserves the prior baseline for learning
+## Permission to rewrite: all must be true
 
-## Reality check: rewrite pressure usually rises fastest right after the old story becomes uncomfortable to defend
+Treat full rewrites as expensive portfolio actions. Require:
 
-The variance looks worse than planned. The sponsor wants a cleaner narrative. The team wants a version that feels easier to explain.
+- Outcome definition or scope boundary materially changed.  
+- Finance requires a new baseline for audit or capital tracking.  
+- Governance agreed the old case is no longer a legitimate comparator.  
+- Capacity is budgeted for rewrite work without stealing delivery.  
+- The prior baseline is archived in the assumption history so learning survives.
 
-That is exactly when leadership has to ask whether the business changed or only the comfort level changed.
+If you cannot meet these conditions, you probably need an update path—not a reset.
 
-## When this works versus when it fails
+## Why rewrite pressure spikes when the story gets uncomfortable
 
-**Works** when finance and sponsors share one definition of material change.
+The variance looks worse than planned. The sponsor wants a cleaner narrative. The team wants a version that is easier to explain.
 
-**Fails** when rewrite becomes a hiding place for weak execution discipline.
+That is exactly when leadership must ask whether the business changed—or only the comfort level changed. If only comfort changed, a rewrite buys temporary relief and permanent opacity.
 
 ## How Consultify keeps cases honest without endless versions
 
-Consultify links each case version to assumption history and governed updates so finance can see what changed, when, and why without losing the prior baseline.
-
-When assumptions, variance, and decisions live together, leadership updates reality without deleting history.
+Consultify links case versions to assumption history and governed updates so finance can see what changed, when, and why—without losing the prior baseline. When assumptions, variance, and decisions live together, leadership updates reality without deleting history.
 
 ## Bottom line
 
-Rewrite rarely and deliberately. Update assumptions constantly. That is how you keep value proof comparable and governance load sane.
+Rewrite rarely and deliberately. Update assumptions constantly. That is how you keep value proof comparable, governance load sane, and learning visible—instead of restarting the same argument under a new cover page.
 
 ---
 

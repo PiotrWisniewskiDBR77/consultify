@@ -5,50 +5,56 @@ Funnel stage: Consideration
 Core problem: plans can stay green while queues, decision latency, and hidden workstreams compress the team, which erodes execution discipline and value proof before risks show up in milestone charts  
 Main promise: you can detect overload early by measuring decision queues, rework rates, cross-initiative context switching, governance hours, and sponsor dependency on a small number of named individuals
 
-treat the team as overloaded when decision queues age beyond thresholds, when rework rises while milestones stay green, when key people become single points for multiple initiatives, when governance hours crowd out delivery work, or when dependency resolution slows even though task completion looks fine. Green plans can hide capacity insolvency because schedules tolerate silent borrowing from quality, documentation, and risk management. Green is a schedule color. It is not a capacity truth statement.
+Green is a schedule color. It is not a capacity truth statement.
 
-Overload is often invisible until someone quits, an audit finds gaps, or a dependency explodes.
+In complex transformations, plans can remain green while the organization borrows silently from quality, documentation, risk management, and recovery time. That borrowing is not free. It shows up later as missed quarters, audit findings, dependency explosions, and attrition among the people who were “always dependable.”
 
-## Overload signals that survive green plans
+Overload is often invisible until it becomes a crisis—not because leaders are careless, but because milestone charts were never designed to show queues, contention, or decision waiting time.
 
-Watch for several together: **Decision waiting lists** grow while status decks stay confident; **Same names** appear as owners across many critical paths; **After-hours work** becomes normalized for core leads; **Quality and risk tasks** slip quietly to "next sprint" repeatedly; **Escalations** take longer even though task velocity looks steady; **Value proof work** is deferred while milestone reporting stays polished.
+> **What sponsors should treat as a red flag:** the same names on every critical path, growing decision queues while status stays confident, and governance hours crowding out delivery corrections.
 
-## Comparison: schedule green versus capacity green
+## Signals that survive green plans
 
-| View | what it measures | blind spot |
+Watch for several together, not isolated annoyances.
+
+**Decision waiting lists grow** while executive decks stay polished. **The same people** appear as owners across many critical paths. **After-hours work** becomes normalized for core leads. **Quality and risk tasks** slip quietly to “next sprint” again and again. **Escalations take longer** even though task velocity looks steady. **Value proof work** is deferred while milestone reporting stays current.
+
+This pattern is capacity insolvency: the system is paying for visible green with invisible debt.
+
+## Schedule green versus capacity green
+
+| View | What it measures | Blind spot |
 | --- | --- | --- |
-| schedule green | planned dates versus reported completion | hidden borrowing from non-milestone work |
-| capacity green | throughput with guardrails for rework and queue age | requires honest logging |
+| Schedule green | Planned dates versus reported completion | Hidden borrowing from non-milestone work |
+| Capacity green | Throughput with guardrails for rework and queue age | Requires honest logging and sponsor attention |
 
-## Step sequence: diagnose overload in one week
+Capacity green is harder because it names people and trade-offs. That is also why it prevents late surprises.
 
-**Export decision queue** with ages and owners; **Map owner concentration** across initiatives; **Sample two weeks** of actual work allocation from leads; **Review deferred risk and quality tasks** as a portfolio set; **Compare governance hours** to delivery hours for the same leads. If the map surprises you, the plan was already lying politely.
+## Diagnose overload in one week
 
-## Intervention menu (pick one primary move)
+**Export the decision queue** with ages and owners. **Map owner concentration** across initiatives and dependencies. **Sample two weeks** of actual work allocation from leads—not only timesheets narratives. **Review deferred risk and quality tasks** as a portfolio set, not as isolated team issues. **Compare governance hours to delivery hours** for the same names.
 
-**pause scope expansion** until queues fall below threshold; **merge initiatives** that share one overloaded spine team; **split ownership** so no single person holds more than one critical escalation path; **retire governance forums** that consume leads without decisions; **hire or borrow capacity** with explicit sunset, not permanent heroics.
+If the map surprises you, the plan was already lying politely.
 
-## Reality check: overload usually hides longest in teams that still look dependable
+## Intervention menu: pick one primary move
+
+**Pause scope expansion** until queues fall below threshold. **Merge initiatives** that share one overloaded spine team. **Split ownership** so no single person holds more than one critical escalation path without explicit relief. **Retire governance forums** that consume leads without producing decisions. **Hire or borrow capacity** with an explicit sunset—not permanent heroics.
+
+The mistake is choosing five moves lightly. Overload is a portfolio problem; it needs a portfolio decision.
+
+## Why dependable teams hide overload longest
 
 The same people keep saying yes. Deadlines are still being met on paper. Meetings still happen.
 
-That reliability can mask the fact that the team is paying for green status by borrowing from documentation, risk response, coaching, and recovery time.
-
-## When this works versus when it fails
-
-**Works** when sponsors accept that green plans can mask insolvency.
-
-**Fails** when overload fixes become motivational speeches without portfolio trade-offs.
+That reliability can mask the fact that the team is paying for green status by borrowing from the work that prevents the next failure. Sponsors should treat sustained heroics as a governance signal, not as a compliment.
 
 ## How Consultify surfaces queues, decisions, and capacity signals together
 
-Consultify surfaces queue depth, dependency pressure, and decision load beside milestone color, so green plans cannot hide insolvency in the work layer.
-
-When decisions, dependencies, and delivery truth live together, overload shows up as patterns, not as private suffering.
+Consultify surfaces queue depth, dependency pressure, and decision load beside milestone color, so green plans cannot hide insolvency in the work layer. When decisions, dependencies, and delivery truth live together, overload shows up as patterns—not as private suffering.
 
 ## Bottom line
 
-Overload is a portfolio problem disguised as a staffing mood. Measure queues and ownership concentration, not only milestone color.
+Overload is a portfolio problem disguised as a staffing mood. Measure queues and ownership concentration, not only milestone color—or you will discover the truth when your best people leave and the dependencies finally collide.
 
 ---
 
