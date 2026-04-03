@@ -416,17 +416,18 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
         {/* Breadcrumb */}
         <div className="relative z-10 border-b border-slate-200/80 dark:border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/40">
-              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 dark:text-white/40 overflow-hidden">
+              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0">
                 <Home size={14} />
                 <span className="hidden sm:inline">{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
               </Link>
-              <ChevronRight size={14} />
-              <Link to={`/knowledge-base/${categorySlug}`} className="hover:text-primary-500 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]">
+              <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
+              <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
+              <Link to={`/knowledge-base/${categorySlug}`} className="hover:text-primary-500 dark:hover:text-primary-400 transition-colors truncate max-w-[140px] sm:max-w-[200px]">
                 {article.category_name || categorySlug}
               </Link>
-              <ChevronRight size={14} className="hidden sm:block" />
+              <ChevronRight size={14} className="hidden sm:block flex-shrink-0" />
               <span className="text-slate-700 font-medium truncate max-w-xs hidden sm:block dark:text-white/70">
                 {article.title}
               </span>
@@ -434,7 +435,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* Mobile TOC */}
           {toc.length > 2 && (
             <div className="xl:hidden mb-8">
@@ -486,17 +487,17 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   </Link>
                 )}
 
-                <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-[1.1] dark:text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-[1.1] dark:text-white">
                   {article.title}
                 </h1>
 
                 {article.summary && (
-                  <p className="mt-4 text-lg text-slate-600 leading-relaxed font-medium dark:text-white/45">
+                  <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-600 leading-relaxed font-medium dark:text-white/45">
                     {article.summary}
                   </p>
                 )}
 
-                <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-5 text-sm text-slate-500 dark:text-white/30">
+                <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm text-slate-500 dark:text-white/30">
                   <span className="flex items-center gap-1.5">
                     <Clock size={14} />
                     {article.reading_time_minutes} {t('kb.card.min', 'min read')}
@@ -594,16 +595,20 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     img: ({ src, alt, ...props }) => {
                       const caption = truncateAltText(alt);
                       return (
-                        <figure className="my-10">
+                        <figure className="my-6 sm:my-10">
                           <img
                             src={src}
                             alt={alt || ''}
-                            className="w-full rounded-xl border border-slate-200 dark:border-white/[0.06]"
+                            width={1200}
+                            height={675}
+                            sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 720px, 768px"
+                            className="w-full rounded-lg sm:rounded-xl border border-slate-200 dark:border-white/[0.06]"
                             loading="lazy"
+                            decoding="async"
                             {...props}
                           />
                           {caption && (
-                            <figcaption className="mt-3 text-center text-sm text-slate-400 italic dark:text-white/25">
+                            <figcaption className="mt-2 sm:mt-3 text-center text-xs sm:text-sm text-slate-400 italic dark:text-white/25">
                               {caption}
                             </figcaption>
                           )}
@@ -617,10 +622,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
               </div>
 
               {/* "Discuss with Anna" CTA */}
-              <div className="mt-12 p-6 rounded-2xl border border-primary-500/20 bg-gradient-to-r from-primary-50 to-white dark:from-primary-950/40 dark:to-primary-900/20">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-500/15 flex items-center justify-center">
-                    <MessageCircle size={20} className="text-primary-400" />
+              <div className="mt-8 sm:mt-12 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-primary-500/20 bg-gradient-to-r from-primary-50 to-white dark:from-primary-950/40 dark:to-primary-900/20">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-500/15 flex items-center justify-center">
+                    <MessageCircle size={18} className="text-primary-400" />
                   </div>
                   <div className="flex-1">
                     <h4 className="text-slate-900 font-bold text-base mb-1 dark:text-white">
@@ -684,8 +689,8 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
               {(prevArticle || nextArticle) && (
                 <div
                   className={cn(
-                    'mt-12 gap-4',
-                    articleNavigationCount === 1 ? 'grid grid-cols-1 max-w-xl' : 'grid grid-cols-2'
+                    'mt-8 sm:mt-12 gap-3 sm:gap-4',
+                    articleNavigationCount === 1 ? 'grid grid-cols-1 max-w-xl' : 'grid grid-cols-1 sm:grid-cols-2'
                   )}
                 >
                   {prevArticle ? (
@@ -727,11 +732,11 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
               {/* Related Articles */}
               {relatedArticles && relatedArticles.length > 0 && (
-                <div className="mt-14">
-                  <h3 className="text-lg font-black text-slate-900 mb-5 tracking-tight dark:text-white">
+                <div className="mt-10 sm:mt-14">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 mb-4 sm:mb-5 tracking-tight dark:text-white">
                     {t('kb.article.related', 'Related Articles')}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {relatedArticles.map((related: any) => (
                       <Link
                         key={related.id}

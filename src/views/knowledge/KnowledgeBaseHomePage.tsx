@@ -206,41 +206,41 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         </div>
 
         {/* Hero Section */}
-        <section className="relative z-10 pt-20 pb-16 px-6">
+        <section className="relative z-10 pt-12 sm:pt-20 pb-10 sm:pb-16 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-xs font-bold text-primary-300 tracking-wide mb-8">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-[11px] sm:text-xs font-bold text-primary-300 tracking-wide mb-6 sm:mb-8">
                 <span>{t('kb.hero.badge', '50+ expert articles on transformation management')}</span>
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.0] dark:text-white">
+              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
                 {t('kb.hero.title', 'Knowledge Base')}
               </h1>
 
-              <p className="mt-6 text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto dark:text-white/55">
+              <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto px-2 dark:text-white/55">
                 {t('kb.hero.subtitle', 'Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion.')}
               </p>
 
               {/* Search */}
-              <form onSubmit={handleSearch} className="mt-10 max-w-xl mx-auto">
+              <form onSubmit={handleSearch} className="mt-8 sm:mt-10 max-w-xl mx-auto">
                 <div className="relative">
-                  <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+                  <Search size={18} className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('kb.hero.searchPlaceholder', 'Search articles...')}
-                    className="w-full pl-12 pr-12 py-4 rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-900 placeholder-slate-400 text-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all dark:bg-white/[0.05] dark:border-white/[0.10] dark:text-white dark:placeholder-white/40"
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-900 placeholder-slate-400 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all dark:bg-white/[0.05] dark:border-white/[0.10] dark:text-white dark:placeholder-white/40"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => { setSearchQuery(''); setActiveSearch(''); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
+                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
                     </button>
@@ -253,14 +253,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
         {/* Section Navigation Cards — clickable, link to category page */}
         {!activeSearch && (
-        <section className="relative z-10 px-6 pb-12">
+        <section className="relative z-10 px-4 sm:px-6 pb-10 sm:pb-12">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-6 flex items-end justify-between gap-6">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
+                <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
                   {t('kb.sections.eyebrow', 'Choose the tension you want to solve')}
                 </p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                   {t('kb.sections.title', 'Three sharper ways into the library')}
                 </h2>
               </div>
@@ -271,7 +271,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 )}
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
               {consultifyCategories.map((category: KbCategory) => {
                 const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
                 const metaKeys = SECTION_META_KEYS[category.slug];
@@ -283,8 +283,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     key={category.id}
                     to={`/knowledge-base/${category.slug}`}
                     className={cn(
-                      'group relative overflow-hidden rounded-[28px] border p-6 text-left transition-all duration-300',
-                      'min-h-[260px] md:min-h-[290px]',
+                      'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
+                      'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
                       `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
                       accent.glow
                     )}
@@ -354,9 +354,9 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
         {/* Tags */}
         {tags && tags.length > 0 && (
-          <section className="relative z-10 px-6 pb-8">
+          <section className="relative z-10 px-4 sm:px-6 pb-6 sm:pb-8">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
                 <Tag size={14} className="flex-shrink-0 text-slate-400 dark:text-white/30" />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
@@ -410,23 +410,23 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         </AnimatePresence>
 
         {/* Content Area */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {isResultView && displayArticles.length > 0 ? (
             <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-6 sm:mb-8 dark:text-white">
                 {activeSearch
                   ? t('kb.results.searchTitle', 'Search results')
                   : t('kb.results.categoryTitle', 'Articles')}
-                <span className="ml-2 text-lg font-normal text-slate-500 dark:text-white/40">({displayArticles.length})</span>
+                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">({displayArticles.length})</span>
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {displayArticles.map((article: KbArticleListItem) => (
                   <ArticleCard key={article.id} article={article} />
                 ))}
               </div>
             </div>
           ) : isResultView ? (
-            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-8 text-center backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
+            <div className="rounded-2xl sm:rounded-[28px] border border-slate-200 bg-white/90 p-6 sm:p-8 text-center backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-white/55">
                 <Search size={22} />
               </div>
@@ -448,21 +448,21 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-24">
+            <div className="space-y-16 sm:space-y-24">
               {/* Featured Articles */}
               {featured && featured.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center justify-between mb-6 sm:mb-10">
                     <div>
-                      <h2 className="text-3xl font-black text-slate-900 tracking-tight dark:text-white">
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight dark:text-white">
                         {t('kb.featured.title', 'Featured Articles')}
                       </h2>
-                      <p className="mt-2 text-slate-600 font-medium dark:text-white/45">
+                      <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-slate-600 font-medium dark:text-white/45">
                         {t('kb.featured.subtitle', 'Start here for the most impactful insights')}
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {featured.map((article: KbArticleListItem) => (
                       <ArticleCard key={article.id} article={article} featured />
                     ))}
@@ -483,22 +483,23 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               {/* Browse All Articles */}
               {browseArticles.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-10">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 text-white">
-                        <GraduationCap size={22} />
+                  <div className="flex items-center justify-between mb-6 sm:mb-10">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 text-white">
+                        <GraduationCap size={18} className="sm:hidden" />
+                        <GraduationCap size={22} className="hidden sm:block" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight dark:text-white">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight dark:text-white">
                           {t('kb.browse.title', 'Browse All Articles')}
                         </h2>
-                        <p className="text-sm text-slate-500 dark:text-white/40">
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-white/40">
                           {browseArticles.length} {t('kb.articles', 'articles')} {t('kb.browse.subtitle', 'across all categories')}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                     {browseArticles.slice(0, browseLimit).map((article: KbArticleListItem) => (
                       <BrowseArticleCard key={article.id} article={article} />
                     ))}
@@ -546,12 +547,16 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           <img
             src={article.thumbnail_url}
             alt={article.title}
+            width={1200}
+            height={675}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
             loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1F]/60 via-transparent to-transparent" />
           {featured && article.is_featured && (
-            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white backdrop-blur-sm">
+            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white backdrop-blur-sm">
               {t('kb.card.featured', 'Featured')}
             </span>
           )}
@@ -562,7 +567,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         </div>
       )}
 
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col">
         {article.category_name && (
           <span className="self-start px-2.5 py-0.5 rounded-full border border-primary-500/20 bg-primary-600/10 text-primary-300 text-[10px] font-bold uppercase tracking-wider mb-3">
             {article.category_name}
@@ -606,7 +611,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         </div>
       </div>
 
-      <div className="px-5 py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
         <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
@@ -689,44 +694,48 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className={cn(
-            'w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br text-white',
+            'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
             accent.gradient
           )}>
-            {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
+            {SECTION_ICONS[category.slug] || <BookOpen size={20} />}
           </div>
-          <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight dark:text-white">{category.name}</h2>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{category.name}</h2>
             {category.description && (
-              <p className="text-sm text-slate-600 dark:text-white/40">{category.description}</p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">{category.description}</p>
             )}
           </div>
         </div>
         <Link
           to={`/knowledge-base/${category.slug}`}
-          className={cn('flex items-center gap-1 text-sm font-bold transition-colors', accent.text)}
+          className={cn('flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0', accent.text)}
         >
           {t('kb.section.viewAll', 'View all')}
           <ChevronRight size={14} />
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {articles.slice(0, 4).map((article: KbArticleListItem) => (
           <Link
             key={article.id}
             to={`/knowledge-base/${category.slug}/${article.slug}`}
-            className="group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
+            className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (
               <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
                 <img
                   src={article.thumbnail_url}
                   alt={article.title}
+                  width={1200}
+                  height={675}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             )}

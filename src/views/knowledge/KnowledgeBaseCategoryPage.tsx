@@ -57,14 +57,15 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
 
         {/* Breadcrumb */}
         <div className="relative z-10 border-b border-slate-200/80 dark:border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/40">
-              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 dark:text-white/40 overflow-hidden">
+              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0">
                 <Home size={14} />
-                <span>{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
+                <span className="hidden sm:inline">{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
               </Link>
-              <ChevronRight size={14} />
-              <span className="text-slate-900 font-semibold dark:text-white">
+              <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
+              <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
+              <span className="text-slate-900 font-semibold dark:text-white truncate">
                 {category?.name || categorySlug}
               </span>
             </nav>
@@ -76,29 +77,29 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative z-10 max-w-7xl mx-auto px-6 py-16"
+          className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16"
         >
           <div className="max-w-3xl">
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
               {category?.name || categorySlug}
             </h1>
             {category?.description && (
-              <p className="mt-4 text-lg text-slate-600 font-medium leading-relaxed dark:text-white/45">
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-600 font-medium leading-relaxed dark:text-white/45">
                 {category.description}
               </p>
             )}
-            <div className="mt-4 text-sm text-slate-500 font-semibold dark:text-white/30">
+            <div className="mt-3 sm:mt-4 text-sm text-slate-500 font-semibold dark:text-white/30">
               {articles?.length || 0} {t('kb.articles', 'articles')}
             </div>
           </div>
         </motion.div>
 
         {/* Articles */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/[0.06] dark:bg-white/[0.02]">
+                <div key={i} className="animate-pulse rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.02]">
                   <div className="aspect-[16/9] rounded-lg bg-slate-100 mb-4 dark:bg-white/[0.04]" />
                   <div className="h-4 bg-slate-200 rounded w-2/3 mb-3 dark:bg-white/[0.06]" />
                   <div className="h-3 bg-slate-100 rounded w-full mb-2 dark:bg-white/[0.04]" />
@@ -114,7 +115,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                     <BookOpen size={18} className="text-primary-400" />
                     {t('kb.category.featured', 'Featured')}
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {featuredArticles.map((article: KbArticleListItem) => (
                       <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
                     ))}
@@ -129,7 +130,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                       {t('kb.category.all', 'All Articles')}
                     </h2>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {otherArticles.map((article: KbArticleListItem) => (
                       <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
                     ))}
@@ -142,8 +143,8 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
 
         {/* Other Categories */}
         {otherCategories.length > 0 && (
-          <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20">
-            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-12">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
+            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-8 sm:pt-12">
               <h3 className="text-lg font-black text-slate-900 mb-6 tracking-tight dark:text-white">
                 {t('kb.category.otherCategories', 'Explore other categories')}
               </h3>
@@ -190,12 +191,16 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
           <img
             src={article.thumbnail_url}
             alt={article.title}
+            width={1200}
+            height={675}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
             loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1F]/60 via-transparent to-transparent" />
           {article.is_featured && (
-            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white">
+            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white">
               {t('kb.card.featured', 'Featured')}
             </span>
           )}
@@ -206,7 +211,7 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
         </div>
       )}
 
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col">
         <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
           {article.title}
         </h3>
@@ -228,7 +233,7 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
           )}
         </div>
       </div>
-      <div className="px-5 py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
         <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
