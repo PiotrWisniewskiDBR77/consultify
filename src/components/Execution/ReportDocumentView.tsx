@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Copy,
   Download,
+  ExternalLink,
   FileText,
   Sparkles,
   TrendingDown,
@@ -12,6 +13,9 @@ import {
 import React, { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
+
+import { getArtifactPath, type ArtifactType } from '../../utils/artifactLinks';
 
 import {
   buildReportMarkdown,
@@ -34,7 +38,7 @@ interface ReportDocumentViewProps {
   onGenerateAI: (report: ReportDef) => void;
 }
 
-type Renderer = (data: ReportDataContext, report: ReportDef) => React.ReactNode;
+type Renderer = (data: ReportDataContext, report: ReportDef, nav: NavigateFunction) => React.ReactNode;
 
 type InitiativeRow = {
   id: string;
@@ -533,11 +537,44 @@ const IssueTag: React.FC<{ row: InitiativeRow }> = ({ row }) => {
   return <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">On track</span>;
 };
 
+/* ── Artifact link — clickable navigation to initiative / task / decision ── */
+
+const ALink: React.FC<{
+  id: string;
+  type: ArtifactType;
+  children: React.ReactNode;
+  nav: NavigateFunction;
+  className?: string;
+}> = ({ id, type, children, nav, className = '' }) => (
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      nav(getArtifactPath(type, id));
+    }}
+    className={[
+      'group/alink inline-flex items-center gap-1 text-left font-medium transition-colors',
+      'text-slate-900 hover:text-primary-500 dark:text-white dark:hover:text-primary-400',
+      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 rounded-sm',
+      className,
+    ].join(' ')}
+    title={`Open ${type}`}
+  >
+    <span className="underline decoration-slate-300/0 underline-offset-2 transition-all group-hover/alink:decoration-primary-400/60 dark:decoration-white/0">
+      {children}
+    </span>
+    <ExternalLink
+      size={10}
+      className="shrink-0 opacity-0 transition-opacity group-hover/alink:opacity-60"
+    />
+  </button>
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
    11 Report renderers
    ──────────────────────────────────────────────────────────────────────────── */
 
-const weeklyRenderer: Renderer = (data) => {
+const weeklyRenderer: Renderer = (data, _report, nav) => {
   const iniRows = buildInitiativeRows(data)
     .sort((a, b) => Number(b.blocked) - Number(a.blocked) || b.overdueDecisions - a.overdueDecisions || b.overdueTasks - a.overdueTasks)
     .slice(0, 10);
@@ -554,7 +591,7 @@ const weeklyRenderer: Renderer = (data) => {
         <DataTable
           headers={['Initiative', 'Owner', 'Tasks ⚠/open', 'Decisions', 'Issue']}
           rows={iniRows.map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             r.owner ?? '—',
             <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}/{r.openTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>{r.overdueDecisions}/{r.pendingDecisions}</span>,
@@ -568,7 +605,7 @@ const weeklyRenderer: Renderer = (data) => {
           headers={['Task / Milestone', 'Initiative', 'Owner', 'Due']}
           rows={[
             ...taskRows.map((t) => [
-              t.title,
+              <ALink id={t.id} type="task" nav={nav}>{t.title}</ALink>,
               t.initiativeName ?? '—',
               t.assigneeName ?? '—',
               <span className={t.overdue ? 'text-rose-400 font-medium' : ''}>{formatDate(t.dueDate)}</span>,
@@ -587,7 +624,7 @@ const weeklyRenderer: Renderer = (data) => {
         <DataTable
           headers={['Decision', 'Initiative', 'Owner', 'Age']}
           rows={decRows.map((d) => [
-            d.title,
+            <ALink id={d.id} type="decision" nav={nav}>{d.title}</ALink>,
             d.initiativeName,
             d.ownerName ?? '—',
             <span className={d.ageDays > 7 ? 'text-rose-400 font-medium' : d.ageDays > 0 ? 'text-amber-400' : ''}>
@@ -611,7 +648,7 @@ const weeklyRenderer: Renderer = (data) => {
   );
 };
 
-const monthlyPmoRenderer: Renderer = (data) => {
+const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
   const iniRows = buildInitiativeRows(data).sort((a, b) => a.confidence - b.confidence);
 
   return (
@@ -620,7 +657,7 @@ const monthlyPmoRenderer: Renderer = (data) => {
         <DataTable
           headers={['Initiative', 'Health', 'Progress', 'Owner', 'Target', 'Conf.']}
           rows={iniRows.slice(0, 12).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <StatusDot status={r.health} />,
             r.progress != null ? `${r.progress}%` : '—',
             r.owner ?? '—',
@@ -686,7 +723,7 @@ const monthlyPmoRenderer: Renderer = (data) => {
   );
 };
 
-const programHealthRenderer: Renderer = (data, report) => {
+const programHealthRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data).sort((a, b) => a.confidence - b.confidence);
 
   return (
@@ -695,7 +732,7 @@ const programHealthRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Status', 'Health', 'Conf.', 'Main issue']}
           rows={iniRows.slice(0, 12).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <StatusDot status={r.status} />,
             r.health ?? '—',
             <ConfBadge score={r.confidence} />,
@@ -727,7 +764,7 @@ const programHealthRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Tasks overdue', 'Decisions overdue', 'Target']}
           rows={iniRows.filter((r) => r.confidence < 70).slice(0, 8).map((r) => [
-            r.name,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>{r.overdueDecisions}</span>,
             formatDate(r.targetDate),
@@ -743,7 +780,7 @@ const programHealthRenderer: Renderer = (data, report) => {
   );
 };
 
-const blockersRecoveryRenderer: Renderer = (data, report) => {
+const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data).filter((r) => r.blocked);
   const blockedIds = new Set(iniRows.map((r) => r.id));
 
@@ -753,7 +790,7 @@ const blockersRecoveryRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Owner', 'Reason', 'Tasks', 'Decisions']}
           rows={iniRows.map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             r.owner ?? '—',
             <span className="text-rose-400">{r.blockedReason || 'Blocked'}</span>,
             `${r.overdueTasks}/${r.openTasks}`,
@@ -769,7 +806,7 @@ const blockersRecoveryRenderer: Renderer = (data, report) => {
           rows={buildTaskRows(data)
             .filter((t) => t.initiativeId && blockedIds.has(t.initiativeId) && !isDoneLike(t.status))
             .slice(0, 12)
-            .map((t) => [t.title, t.initiativeName ?? '—', t.assigneeName ?? '—', formatDate(t.dueDate)])}
+            .map((t) => [<ALink id={t.id} type="task" nav={nav}>{t.title}</ALink>, t.initiativeName ?? '—', t.assigneeName ?? '—', formatDate(t.dueDate)])}
           emptyText="No stalled tasks."
         />
       </Section>
@@ -781,7 +818,7 @@ const blockersRecoveryRenderer: Renderer = (data, report) => {
             ...buildDecisionRows(data)
               .filter((d) => d.relatedObjectId && blockedIds.has(d.relatedObjectId))
               .slice(0, 6)
-              .map((d) => [d.title, d.initiativeName, <span className="text-amber-400">{d.ageDays}d</span>]),
+              .map((d) => [<ALink id={d.id} type="decision" nav={nav}>{d.title}</ALink>, d.initiativeName, <span className="text-amber-400">{d.ageDays}d</span>]),
             ...data.priorityAlerts.slice(0, 4).map((a) => [
               a.message,
               'Portfolio',
@@ -799,7 +836,7 @@ const blockersRecoveryRenderer: Renderer = (data, report) => {
   );
 };
 
-const milestoneSlippageRenderer: Renderer = (data, report) => {
+const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data).filter((r) => r.delayCount > 0 || r.timelineWarnings > 0 || r.missingDates);
   const overdueTargets = iniRows.filter((r) => { const d = daysPastDue(r.targetDate); return d !== null && d > 0; });
 
@@ -809,7 +846,7 @@ const milestoneSlippageRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Target', 'Delay signals', 'Warnings']}
           rows={iniRows.slice(0, 10).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             formatDate(r.targetDate),
             <span className={r.delayCount > 0 ? 'text-rose-400 font-medium' : ''}>{r.delayCount}</span>,
             <span className={r.timelineWarnings > 0 ? 'text-amber-400' : ''}>{r.timelineWarnings}</span>,
@@ -849,7 +886,7 @@ const milestoneSlippageRenderer: Renderer = (data, report) => {
   );
 };
 
-const capacityUtilizationRenderer: Renderer = (data) => {
+const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
   const loadByAssignee = Object.entries(
     data.tasks.reduce<Record<string, { open: number; overdue: number; dueSoon: number }>>((acc, t) => {
       const key = t.assigneeName || 'Unassigned';
@@ -914,7 +951,7 @@ const capacityUtilizationRenderer: Renderer = (data) => {
           rows={buildTaskRows(data)
             .filter((t) => t.assigneeName && overloaded.has(t.assigneeName) && !isDoneLike(t.status))
             .slice(0, 10)
-            .map((t) => [t.title, t.assigneeName ?? '—', t.initiativeName ?? '—', formatDate(t.dueDate)])}
+            .map((t) => [<ALink id={t.id} type="task" nav={nav}>{t.title}</ALink>, t.assigneeName ?? '—', t.initiativeName ?? '—', formatDate(t.dueDate)])}
           emptyText="No tasks need reassignment."
         />
       </Section>
@@ -922,7 +959,7 @@ const capacityUtilizationRenderer: Renderer = (data) => {
   );
 };
 
-const budgetVarianceRenderer: Renderer = (data, report) => {
+const budgetVarianceRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data).filter((r) => r.overspendCount > 0 || r.blocked);
 
   return (
@@ -931,7 +968,7 @@ const budgetVarianceRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Signal', 'Planned', 'Actual', 'Variance']}
           rows={data.overspendSignals.slice(0, 10).map((s) => [
-            s.initiativeName,
+            s.initiativeId ? <ALink id={s.initiativeId} type="initiative" nav={nav}>{s.initiativeName}</ALink> : s.initiativeName,
             s.signalType,
             s.plannedAmount.toLocaleString(),
             s.actualAmount.toLocaleString(),
@@ -945,7 +982,7 @@ const budgetVarianceRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Blocked', 'Overdue tasks', 'Decisions', 'Progress']}
           rows={iniRows.slice(0, 10).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
             <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>{r.overdueDecisions}</span>,
@@ -961,7 +998,7 @@ const budgetVarianceRenderer: Renderer = (data, report) => {
           rows={buildTaskRows(data)
             .filter((t) => data.overspendSignals.some((s) => s.initiativeId && s.initiativeId === t.initiativeId))
             .slice(0, 10)
-            .map((t) => [t.title, t.initiativeName ?? '—', t.assigneeName ?? '—', formatDate(t.dueDate)])}
+            .map((t) => [<ALink id={t.id} type="task" nav={nav}>{t.title}</ALink>, t.initiativeName ?? '—', t.assigneeName ?? '—', formatDate(t.dueDate)])}
           emptyText="No work items linked to overspend."
         />
       </Section>
@@ -973,7 +1010,7 @@ const budgetVarianceRenderer: Renderer = (data, report) => {
   );
 };
 
-const decisionBacklogRenderer: Renderer = (data, report) => {
+const decisionBacklogRenderer: Renderer = (data, report, nav) => {
   const decRows = buildDecisionRows(data);
   const iniRows = buildInitiativeRows(data).filter((r) => r.pendingDecisions > 0);
   const buckets = {
@@ -988,7 +1025,7 @@ const decisionBacklogRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Decision', 'Initiative', 'Owner', 'Age', 'Priority']}
           rows={decRows.slice(0, 12).map((d) => [
-            d.title,
+            <ALink id={d.id} type="decision" nav={nav}>{d.title}</ALink>,
             d.initiativeName,
             d.ownerName ?? '—',
             <span className={d.ageDays > 14 ? 'text-rose-400 font-medium' : d.ageDays > 7 ? 'text-amber-400' : ''}>{d.ageDays > 0 ? `${d.ageDays}d` : 'Due now'}</span>,
@@ -1012,7 +1049,7 @@ const decisionBacklogRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Pending', 'Overdue', 'Blocked']}
           rows={iniRows.slice(0, 10).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             r.pendingDecisions,
             <span className={r.overdueDecisions > 0 ? 'text-rose-400' : ''}>{r.overdueDecisions}</span>,
             r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
@@ -1028,7 +1065,7 @@ const decisionBacklogRenderer: Renderer = (data, report) => {
   );
 };
 
-const crossDependencyRenderer: Renderer = (data, report) => {
+const crossDependencyRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data)
     .sort((a, b) => (b.pendingDecisions + b.dueSoonTasks + b.timelineWarnings) - (a.pendingDecisions + a.dueSoonTasks + a.timelineWarnings))
     .slice(0, 10);
@@ -1052,7 +1089,7 @@ const crossDependencyRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Tasks due soon', 'Pending decisions', 'Warnings']}
           rows={iniRows.map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             r.dueSoonTasks,
             r.pendingDecisions,
             <span className={r.timelineWarnings > 0 ? 'text-amber-400' : ''}>{r.timelineWarnings}</span>,
@@ -1079,7 +1116,7 @@ const crossDependencyRenderer: Renderer = (data, report) => {
   );
 };
 
-const deliveryConfidenceRenderer: Renderer = (data, report) => {
+const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data).sort((a, b) => a.confidence - b.confidence);
 
   return (
@@ -1088,7 +1125,7 @@ const deliveryConfidenceRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Conf.', 'Blocked', 'High risks', 'Decision debt']}
           rows={iniRows.slice(0, 12).map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <ConfBadge score={r.confidence} />,
             r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
             <span className={r.highRiskCount > 0 ? 'text-rose-400' : ''}>{r.highRiskCount}</span>,
@@ -1122,7 +1159,7 @@ const deliveryConfidenceRenderer: Renderer = (data, report) => {
   );
 };
 
-const sponsorOnePagerRenderer: Renderer = (data, report) => {
+const sponsorOnePagerRenderer: Renderer = (data, report, nav) => {
   const iniRows = buildInitiativeRows(data);
   const attention = iniRows
     .filter((r) => r.blocked || r.overdueDecisions > 0 || r.overspendCount > 0)
@@ -1143,7 +1180,7 @@ const sponsorOnePagerRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Why now', 'Owner', 'Target']}
           rows={attention.map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <IssueTag row={r} />,
             r.owner ?? '—',
             formatDate(r.targetDate),
@@ -1156,7 +1193,7 @@ const sponsorOnePagerRenderer: Renderer = (data, report) => {
         <DataTable
           headers={['Initiative', 'Progress', 'Owner', 'Next milestone']}
           rows={achievements.map((r) => [
-            <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>,
+            <ALink id={r.id} type="initiative" nav={nav}>{r.name}</ALink>,
             <span className="text-emerald-400 font-medium">{r.progress != null ? `${r.progress}%` : '—'}</span>,
             r.owner ?? '—',
             formatDate(data.nextMilestones.find((m) => m.initiativeId === r.id)?.targetDate),
@@ -1201,6 +1238,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
   onGenerateAI,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const rag = useMemo(() => computeRAG(report), [report]);
   const ragConf = RAG_CONFIG[rag];
   const renderer = REPORT_RENDERERS[report.id];
@@ -1360,7 +1398,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
 
           {/* Report-specific content */}
           {renderer ? (
-            renderer(data, report)
+            renderer(data, report, navigate)
           ) : (
             <Section title="Report Template" subtitle="This report type is not configured yet.">
               <AiInsightStrip items={['No renderer found for this report type.']} />
