@@ -564,7 +564,17 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    p: ({ children, ...props }) => {
+                    p: ({ node, children, ...props }) => {
+                      const paragraphChildren = Array.isArray((node as any)?.children)
+                        ? (node as any).children
+                        : [];
+                      const isImageOnlyParagraph =
+                        paragraphChildren.length === 1 && paragraphChildren[0]?.tagName === 'img';
+
+                      if (isImageOnlyParagraph) {
+                        return <>{children}</>;
+                      }
+
                       paragraphIndex++;
                       if (paragraphIndex <= 3) {
                         return <p className="!text-slate-800 dark:!text-white/75 !text-[1.15rem] !leading-[1.85]" {...props}>{children}</p>;
