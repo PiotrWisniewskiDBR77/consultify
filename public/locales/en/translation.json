@@ -590,7 +590,8 @@
       "subtitle": "Proven methodologies and best practices trusted by industry leaders across Europe.",
       "readMore": "Read Full Article",
       "exploreAll": "Access Full Knowledge Base",
-      "ctaSubtext": "Start a free trial to unlock all articles, videos, and resources."
+      "ctaSubtext": "Start a free trial to unlock all articles, videos, and resources.",
+      "minUnit": "min"
     },
     "compliance": {
       "label": "Enterprise-Grade Security & Compliance",

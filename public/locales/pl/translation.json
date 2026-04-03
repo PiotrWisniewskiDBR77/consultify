@@ -2950,7 +2950,8 @@
       "subtitle": "Sprawdzone metodyki i najlepsze praktyki zaufane przez liderów przemysłu w Europie.",
       "readMore": "Czytaj cały artykuł",
       "exploreAll": "Uzyskaj dostęp do pełnej bazy wiedzy",
-      "ctaSubtext": "Rozpocznij darmowy okres próbny, aby odblokować wszystkie artykuły, wideo i materiały."
+      "ctaSubtext": "Rozpocznij darmowy okres próbny, aby odblokować wszystkie artykuły, wideo i materiały.",
+      "minUnit": "min"
     },
     "compliance": {
       "label": "Bezpieczeństwo i zgodność klasy enterprise",

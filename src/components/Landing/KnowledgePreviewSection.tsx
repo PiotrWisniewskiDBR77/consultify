@@ -12,6 +12,11 @@ import { useNavigate } from 'react-router-dom';
 import { KbArticleListItem, useKnowledgeFeatured, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
+function kbImg(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+}
+
 // ============================================
 // DYNAMIC ICON
 // ============================================
@@ -64,8 +69,12 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
       <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 overflow-hidden">
         {article.thumbnail_url ? (
           <img
-            src={article.thumbnail_url}
+            src={kbImg(article.thumbnail_url) || article.thumbnail_url}
             alt={article.title}
+            width={1200}
+            height={675}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -95,7 +104,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
         <div className="absolute bottom-3 right-3">
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
             <Clock size={10} />
-            {article.reading_time_minutes} min
+            {article.reading_time_minutes} {t('landing.knowledge.minUnit', 'min')}
           </span>
         </div>
       </div>
