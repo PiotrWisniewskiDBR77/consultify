@@ -14,11 +14,12 @@ import { Link, useParams } from 'react-router-dom';
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
+import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
 export const KnowledgeBaseCategoryPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { categorySlug } = useParams<{ categorySlug: string }>();
-  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : i18n.language?.startsWith('de') ? 'de' : 'en';
+  const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
   const { data: categories } = useDocsCategories(docsLanguage);
   const category = categories?.find((c: KbCategory) => c.slug === categorySlug);

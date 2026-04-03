@@ -49,6 +49,7 @@ import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KbArticleListItem, useDocsArticle, useDocsArticles, useDocsTrackView } from '@/hooks/useDocs';
 import { useKnowledgeRelated } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
+import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
 interface TocItem {
   id: string;
@@ -203,11 +204,11 @@ function useTTS(content: string | undefined) {
 export const KnowledgeBaseArticlePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { categorySlug, articleSlug } = useParams<{ categorySlug: string; articleSlug: string }>();
-  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : i18n.language?.startsWith('de') ? 'de' : 'en';
+  const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
   const { data: article, isLoading, error } = useDocsArticle(articleSlug || '', docsLanguage);
   const trackView = useDocsTrackView();
-  const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '');
+  const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '', docsLanguage);
 
   const { data: categoryArticlesData } = useDocsArticles({
     language: docsLanguage,

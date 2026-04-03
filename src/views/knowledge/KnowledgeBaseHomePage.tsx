@@ -37,6 +37,7 @@ import {
 } from '@/hooks/useDocs';
 import { useKnowledgeTags } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
+import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
   'consultify-why-transformations-fail': <AlertTriangle size={22} />,
@@ -119,12 +120,12 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [browseLimit, setBrowseLimit] = useState(ARTICLES_PER_PAGE);
 
-  const docsLanguage = i18n.language?.startsWith('pl') ? 'pl' : i18n.language?.startsWith('de') ? 'de' : 'en';
+  const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
   const { data: categories } = useDocsCategories(docsLanguage);
   const { data: allFeatured } = useDocsFeatured(docsLanguage, 20);
   const { data: searchResults } = useDocsSearch(activeSearch, docsLanguage);
-  const { data: tags } = useKnowledgeTags(docsLanguage);
+  const { data: tags } = useKnowledgeTags(undefined, docsLanguage);
   const { data: allArticlesData } = useDocsArticles({ language: docsLanguage, limit: 100 });
   const allArticles = allArticlesData?.articles;
 

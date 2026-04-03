@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
+import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
 // ============================================
 // TYPES
@@ -64,12 +65,7 @@ const API_BASE = '/api/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
 
 function normalizeKbLang(raw: string | undefined | null): string {
-  const lang = String(raw || '').trim().toLowerCase();
-  if (!lang) return 'en';
-  if (lang === 'pl' || lang.startsWith('pl-')) return 'pl';
-  if (lang === 'en' || lang.startsWith('en-')) return 'en';
-  // KB currently guarantees EN + PL; keep the API stable for the help runtime.
-  return 'en';
+  return resolveKnowledgeLanguage(raw);
 }
 
 async function fetchPublicBridgeArticles(path: 'public' | 'featured', lang: string, limit: number) {
@@ -480,9 +476,9 @@ export function useKnowledgeCollectionArticles(collectionSlug: string | undefine
   });
 }
 
-export function useKnowledgeTags(kind?: string) {
+export function useKnowledgeTags(kind?: string, languageOverride?: string) {
   const { i18n } = useTranslation();
-  const lang = normalizeKbLang(i18n.language);
+  const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({
     queryKey: ['kb-tags', lang, kind],
     queryFn: () => fetchTags(lang, kind),
@@ -490,9 +486,9 @@ export function useKnowledgeTags(kind?: string) {
   });
 }
 
-export function useKnowledgeRelated(slug: string | undefined) {
+export function useKnowledgeRelated(slug: string | undefined, languageOverride?: string) {
   const { i18n } = useTranslation();
-  const lang = normalizeKbLang(i18n.language);
+  const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({
     queryKey: ['kb-related', slug, lang],
     queryFn: () => fetchRelatedArticles(slug!, lang),
