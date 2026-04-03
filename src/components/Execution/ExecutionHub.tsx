@@ -842,13 +842,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
+    if (activeTab === 'list') {
+      const allowed: ViewMode[] = ['table', 'kanban', 'timeline'];
+      if (!allowed.includes(viewMode)) setViewMode('table');
+      return;
+    }
     if (activeTab === 'reports') {
-      // View modes order must follow the v3 canonical order (docs/ui-standards/.../view-modes-standard.md)
       const allowed: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'grid'];
       if (!allowed.includes(viewMode)) setViewMode('table');
       return;
     }
-    // list / management (and any other tabs)
     if (viewMode !== 'table') setViewMode('table');
   }, [activeTab, viewMode]);
 
@@ -1520,7 +1523,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('execution.tabs.execution', 'Summary'),
+        label: t('execution.tabs.execution', 'Portfolio'),
         icon: <LayoutDashboard size={16} />,
         count:
           (stats.blocked ?? 0) +
@@ -4055,6 +4058,38 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === 'list') {
+      if (viewMode === 'kanban') {
+        return (
+          <ExecutionInitiativesKanbanView
+            initiatives={portfolioInitiatives}
+            scope={scope}
+            onInitiativeClick={(pi) => {
+              const full = summaryInitiatives.find((x) => x.id === pi.id) || filteredInitiatives.find((x) => x.id === pi.id);
+              if (full) handleOpenSidePanel(full);
+            }}
+            onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
+          />
+        );
+      }
+
+      if (viewMode === 'timeline') {
+        return (
+          <div className="min-h-[420px]">
+            <ExecutionTimelineView
+              initiatives={(summaryInitiatives.length ? summaryInitiatives : filteredInitiatives) as FullInitiative[]}
+              onInitiativeClick={handleOpenSidePanel}
+              onUpdateInitiative={handleInitiativeUpdate}
+              onTimelineUpdate={handleTimelineUpdate}
+              onDependenciesChanged={handleRefresh}
+              riskSignals={riskSignals}
+              delaySignals={delaySignals}
+              governedTimelineWarnings={timelineWarnings}
+              projectId={currentProjectId || undefined}
+            />
+          </div>
+        );
+      }
+
       type PreviewItem = FullInitiative & { title: string };
 
       const selectedInit = summaryPreviewInitiativeId
@@ -5033,9 +5068,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const availableViewModes = useMemo(
     () =>
-      activeTab === 'reports'
-        ? (['table', 'kanban', 'timeline', 'calendar', 'grid'] as ViewMode[])
-        : (['table'] as ViewMode[]),
+      activeTab === 'list'
+        ? (['table', 'kanban', 'timeline'] as ViewMode[])
+        : activeTab === 'reports'
+          ? (['table', 'kanban', 'timeline', 'calendar', 'grid'] as ViewMode[])
+          : (['table'] as ViewMode[]),
     [activeTab]
   );
 
