@@ -254,6 +254,8 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
     };
   }, [categoryArticles, articleSlug]);
 
+  const articleNavigationCount = Number(Boolean(prevArticle)) + Number(Boolean(nextArticle));
+
   const toc = useMemo<TocItem[]>(() => {
     if (!cleanContent) return [];
     const headings: TocItem[] = [];
@@ -669,7 +671,12 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
               {/* Previous / Next Navigation */}
               {(prevArticle || nextArticle) && (
-                <div className="mt-12 grid grid-cols-2 gap-4">
+                <div
+                  className={cn(
+                    'mt-12 gap-4',
+                    articleNavigationCount === 1 ? 'grid grid-cols-1 max-w-xl' : 'grid grid-cols-2'
+                  )}
+                >
                   {prevArticle ? (
                     <Link
                       to={`/knowledge-base/${categorySlug}/${prevArticle.slug}`}
@@ -683,13 +690,19 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                         {prevArticle.title}
                       </h4>
                     </Link>
-                  ) : <div />}
+                  ) : null}
                   {nextArticle ? (
                     <Link
                       to={`/knowledge-base/${categorySlug}/${nextArticle.slug}`}
-                      className="group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 text-right dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]"
+                      className={cn(
+                        'group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
+                        articleNavigationCount > 1 && 'text-right'
+                      )}
                     >
-                      <div className="flex items-center justify-end gap-1 text-xs text-slate-500 mb-2 dark:text-white/30">
+                      <div className={cn(
+                        'flex items-center gap-1 text-xs text-slate-500 mb-2 dark:text-white/30',
+                        articleNavigationCount > 1 && 'justify-end'
+                      )}>
                         {t('kb.article.next', 'Next article')}
                         <ChevronRight size={12} />
                       </div>
@@ -697,7 +710,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                         {nextArticle.title}
                       </h4>
                     </Link>
-                  ) : <div />}
+                  ) : null}
                 </div>
               )}
 
@@ -733,7 +746,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
             {/* Sidebar: Table of Contents */}
             {toc.length > 2 && (
-              <aside className="hidden xl:block w-64 flex-shrink-0">
+              <aside className="hidden xl:block w-64 flex-shrink-0 self-start h-0">
                 <div className="sticky top-20">
                   <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-5 dark:text-white/30">
                     {t('kb.article.toc', 'On this page')}
