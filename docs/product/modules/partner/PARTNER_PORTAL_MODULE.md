@@ -172,10 +172,10 @@ GET    /api/partners/tiers                - Partner tier info
 
 | Tier       | Discount | Requirements                               |
 | ---------- | -------- | ------------------------------------------ |
-| Registered | 0%       | Basic registration                         |
-| Certified  | 20%      | €50K revenue, 3+ projects, Foundation cert |
-| Premier    | 30%      | €150K revenue, 10+ projects, All certs     |
-| Elite      | 40%      | €500K revenue, 25+ projects, VIP status    |
+| Registered | 10%      | Basic registration                         |
+| Certified  | 12%      | €50K revenue, 3+ projects, Foundation cert |
+| Premier    | 14%      | €150K revenue, 10+ projects, All certs     |
+| Elite      | 20%      | €500K revenue, 25+ projects, VIP status    |
 
 ## Certification Path
 

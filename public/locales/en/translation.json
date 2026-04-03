@@ -767,7 +767,7 @@
       "items": {
         "0": {
           "question": "How do I earn commissions as a partner?",
-          "answer": "You earn commissions by referring new clients to Consultify. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from 10% to 20% depending on your partner tier."
+          "answer": "You earn commissions by referring new clients to Consultify. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Discount rates range from 10% to 14% depending on your partner tier."
         },
         "1": {
           "question": "When and how do I get paid?",
@@ -3103,6 +3103,12 @@
     "aiSees": "AI sees",
     "project": "Project",
     "focus": "Focus"
+  },
+  "kb": {
+    "article": {
+      "listen": "Listen",
+      "stopListening": "Stop"
+    }
   },
   "cloud": {
     "title": "Cloud Data Sources",

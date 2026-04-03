@@ -314,7 +314,7 @@ AI-generated insights and recommendations for improving operations.
 • Configure public directory listing
 
 **Commission Rates by Tier:**
-• Registered: 10% • Bronze: 12% • Silver: 15% • Gold: 18% • Platinum: 20%
+• Registered: 10% • Certified: 12% • Premier: 14%
 
 **Client Discounts:**
 Partners can offer discounts to referred clients (configured by SuperAdmin). Default: 15% for 12 months.`,

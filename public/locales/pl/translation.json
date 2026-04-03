@@ -3159,7 +3159,7 @@
       "items": {
         "0": {
           "question": "Jak zarabiam prowizje jako partner?",
-          "answer": "Zarabiasz prowizje polecając nowych klientów Consultify. Gdy klient rejestruje się używając Twojego unikalnego kodu polecającego lub linku i zostaje płacącym klientem, otrzymujesz procent od jego opłaty subskrypcyjnej. Stawki prowizji wahają się od 10% do 20% w zależności od poziomu partnerskiego."
+          "answer": "Zarabiasz prowizje polecając nowych klientów Consultify. Gdy klient rejestruje się używając Twojego unikalnego kodu polecającego lub linku i zostaje płacącym klientem, otrzymujesz procent od jego opłaty subskrypcyjnej. Stawki rabatów wahają się od 10% do 14% w zależności od poziomu partnerskiego."
         },
         "1": {
           "question": "Kiedy i jak otrzymuję płatność?",
@@ -3218,6 +3218,12 @@
     "aiSees": "AI widzi",
     "project": "Projekt",
     "focus": "Fokus"
+  },
+  "kb": {
+    "article": {
+      "listen": "Słuchaj",
+      "stopListening": "Zatrzymaj"
+    }
   },
   "cloud": {
     "title": "Źródła danych w chmurze",

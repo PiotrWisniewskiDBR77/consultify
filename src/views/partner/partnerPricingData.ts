@@ -113,7 +113,7 @@ export const PARTNER_TIERS: PartnerTier[] = [
       { name: 'Wpis w Solutions Directory (rozszerzony)', included: true },
       { name: 'Priority support (24h SLA)', included: true },
       { name: 'Quarterly business reviews', included: true },
-      { name: '12% commission na zamknięte deale', included: true, highlight: true },
+      { name: '12% rabat na zamknięte deale', included: true, highlight: true },
       { name: 'Co-sell lead sharing', included: true },
       { name: 'Marketing kit access', included: true },
       { name: 'Deal desk support', included: false },
@@ -142,7 +142,7 @@ export const PARTNER_TIERS: PartnerTier[] = [
     name: 'Gold',
     subtitle: 'Certified Partners',
     description: 'Pełny dostęp do deal desk i joint marketing',
-    commissionRate: 15,
+    commissionRate: 14,
     highlight: true,
     badge: 'Najpopularniejszy',
     icon: Award,
@@ -152,7 +152,7 @@ export const PARTNER_TIERS: PartnerTier[] = [
       { name: 'Wpis w Solutions Directory (premium)', included: true },
       { name: 'Premium support (4h SLA)', included: true },
       { name: 'Monthly business reviews', included: true },
-      { name: '15% commission na zamknięte deale', included: true, highlight: true },
+      { name: '14% rabat na zamknięte deale', included: true, highlight: true },
       { name: 'Co-sell lead sharing (priorytet)', included: true },
       { name: 'Marketing kit access', included: true },
       { name: 'Deal desk support', included: true },
@@ -228,7 +228,7 @@ export interface PartnerBenefit {
 export const PARTNER_BENEFITS: PartnerBenefit[] = [
   {
     icon: TrendingUp,
-    title: 'Revenue Share do 20%',
+    title: 'Rabat do 14%',
     description:
       'Progresywny model prowizji rośnie wraz z Twoim zaangażowaniem i sukcesami w programie.',
   },
@@ -275,7 +275,7 @@ export const PARTNER_FAQS: PartnerFAQ[] = [
   {
     question: 'Jak działa model prowizji?',
     answer:
-      'Prowizja jest naliczana od wartości zamkniętych dealów. Stawka zależy od Twojego poziomu partnerskiego: Bronze (10%), Silver (12%), Gold (15%), Platinum (20%). Prowizje są rozliczane kwartalnie w ramach Commission Statements.',
+      'Rabat jest naliczany od wartości zamkniętych dealów. Stawka zależy od Twojego poziomu partnerskiego: Bronze (10%), Silver (12%), Gold (14%), Platinum (20%). Prowizje są rozliczane kwartalnie w ramach Commission Statements.',
   },
   {
     question: 'Jak awansować na wyższy poziom?',

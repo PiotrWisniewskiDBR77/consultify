@@ -83,7 +83,7 @@ export const BecomePartnerView: React.FC = () => {
       title: 'Certified',
       description: 'Dla doświadczonych konsultantów',
       requirements: ['Egzamin certyfikacyjny', 'Min. 3 projekty'],
-      benefits: ['20% rabat', 'Logo partnera', 'Dedykowane wsparcie', 'Listing w katalogu'],
+      benefits: ['12% rabat', 'Logo partnera', 'Dedykowane wsparcie', 'Listing w katalogu'],
       color: 'violet',
     },
     {
@@ -91,7 +91,7 @@ export const BecomePartnerView: React.FC = () => {
       title: 'Premier',
       description: 'Dla partnerów strategicznych',
       requirements: ['10+ projektów', 'Case study', 'Referencje'],
-      benefits: ['30% rabat', 'Dedykowany opiekun', 'Co-marketing', 'Wczesny dostęp do nowości'],
+      benefits: ['14% rabat', 'Dedykowany opiekun', 'Co-marketing', 'Wczesny dostęp do nowości'],
       color: 'emerald',
     },
   ];

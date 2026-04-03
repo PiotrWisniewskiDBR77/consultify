@@ -2306,12 +2306,12 @@ const BillingSection: React.FC<{
           <Award className="w-8 h-8" />
           <div>
             <h3 className="text-xl font-bold">Certified Partner</h3>
-            <p className="text-violet-200">20% discount on all licenses</p>
+            <p className="text-violet-200">12% discount on all licenses</p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 mt-6">
           <div className="bg-white/10 rounded-lg p-3">
-            <div className="text-2xl font-bold">20%</div>
+            <div className="text-2xl font-bold">12%</div>
             <div className="text-sm text-violet-200">License Discount</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3">
