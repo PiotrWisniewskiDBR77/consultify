@@ -36,6 +36,7 @@ export interface KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  tags?: Array<{ id: string; slug: string; kind: string; label: string }>;
 }
 
 export interface KbArticle extends KbArticleListItem {

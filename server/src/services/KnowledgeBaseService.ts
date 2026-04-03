@@ -74,6 +74,7 @@ export interface KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  tags?: Array<{ id: string; slug: string; kind: string; label: string }>;
   requested_language?: string;
   resolved_language?: string;
   is_fallback?: boolean;
@@ -84,6 +85,69 @@ export interface KbArticleListItem {
 // ============================================
 
 class KnowledgeBaseService {
+  private async attachTagsToArticleListItems(
+    language: string,
+    rows: any[]
+  ): Promise<KbArticleListItem[]> {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return [];
+    }
+
+    const articleIds = rows
+      .map((row) => String(row?.id || '').trim())
+      .filter(Boolean);
+
+    let tagsByArticleId = new Map<string, Array<{ id: string; slug: string; kind: string; label: string }>>();
+
+    if (articleIds.length > 0) {
+      try {
+        const placeholders = articleIds.map(() => '?').join(', ');
+        const tagRows = (await dbAll(
+          `SELECT
+             atg.article_id,
+             tg.id,
+             tg.slug,
+             tg.kind,
+             COALESCE(tt.label, tte.label) as label
+           FROM kb_article_tags atg
+           JOIN kb_tags tg ON atg.tag_id = tg.id
+           LEFT JOIN kb_tag_translations tt ON tg.id = tt.tag_id AND tt.language = ?
+           LEFT JOIN kb_tag_translations tte ON tg.id = tte.tag_id AND tte.language = 'en'
+           WHERE atg.article_id IN (${placeholders})
+             AND tg.status = 'active'
+           ORDER BY tg.kind ASC, label ASC`,
+          [language, ...articleIds]
+        )) as any[];
+
+        tagsByArticleId = tagRows.reduce((map, row) => {
+          const articleId = String(row?.article_id || '').trim();
+          if (!articleId) return map;
+          const current = map.get(articleId) || [];
+          current.push({
+            id: row.id,
+            slug: row.slug,
+            kind: row.kind,
+            label: row.label,
+          });
+          map.set(articleId, current);
+          return map;
+        }, new Map<string, Array<{ id: string; slug: string; kind: string; label: string }>>());
+      } catch {
+        tagsByArticleId = new Map();
+      }
+    }
+
+    return rows.map((row: any) => {
+      const { requested_title, ...rest } = row;
+      return {
+        ...rest,
+        tags: tagsByArticleId.get(String(row.id)) || [],
+        ...this.resolveLanguage(language, Boolean(requested_title)),
+        is_featured: Boolean(row.is_featured),
+      };
+    });
+  }
+
   private resolveLanguage(language: string, hasRequestedTranslation: boolean) {
     const requested = language || 'en';
     const resolved = requested === 'en' || hasRequestedTranslation ? requested : 'en';
@@ -225,14 +289,7 @@ class KnowledgeBaseService {
       const articles = await dbAll(dataSql, [language, language, ...queryParams, limit, offset]);
 
       return {
-        articles: articles.map((row: any) => {
-          const { requested_title, ...rest } = row;
-          return {
-            ...rest,
-            ...this.resolveLanguage(language, Boolean(requested_title)),
-            is_featured: Boolean(row.is_featured),
-          };
-        }),
+        articles: await this.attachTagsToArticleListItems(language, articles),
         total,
       };
     } catch (error) {
@@ -384,14 +441,7 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, limit]);
-      return articles.map((row: any) => {
-        const { requested_title, ...rest } = row;
-        return {
-          ...rest,
-          ...this.resolveLanguage(language, Boolean(requested_title)),
-          is_featured: Boolean(row.is_featured),
-        };
-      });
+      return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting public preview:', error);
       return [];
@@ -428,14 +478,7 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, `%"${moduleId}"%`, limit]);
-      return articles.map((row: any) => {
-        const { requested_title, ...rest } = row;
-        return {
-          ...rest,
-          ...this.resolveLanguage(language, Boolean(requested_title)),
-          is_featured: Boolean(row.is_featured),
-        };
-      });
+      return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting contextual articles:', error);
       return [];
@@ -491,14 +534,7 @@ class KnowledgeBaseService {
         limit,
       ]);
 
-      return articles.map((row: any) => {
-        const { requested_title, ...rest } = row;
-        return {
-          ...rest,
-          ...this.resolveLanguage(language, Boolean(requested_title)),
-          is_featured: Boolean(row.is_featured),
-        };
-      });
+      return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error searching articles:', error);
       return [];
@@ -1052,14 +1088,7 @@ class KnowledgeBaseService {
       `;
 
       const articles = await dbAll(sql, [language, language, limit]);
-      return articles.map((row: any) => {
-        const { requested_title, ...rest } = row;
-        return {
-          ...rest,
-          ...this.resolveLanguage(language, Boolean(requested_title)),
-          is_featured: Boolean(row.is_featured),
-        };
-      });
+      return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting featured articles:', error);
       return [];

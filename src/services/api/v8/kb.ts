@@ -30,6 +30,7 @@ export interface V8KbArticleListItem {
   category_name: string;
   category_icon: string;
   view_count: number;
+  tags?: Array<{ id: string; slug: string; kind: string; label: string }>;
   requested_language?: string;
   resolved_language?: string;
   is_fallback?: boolean;

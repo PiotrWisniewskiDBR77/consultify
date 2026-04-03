@@ -71,6 +71,16 @@ const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: s
 const DEFAULT_ACCENT = SECTION_ACCENT['consultify-execution-and-rollout'];
 
 const ARTICLES_PER_PAGE = 12;
+const CARD_TAG_LIMIT = 4;
+
+function getVisibleArticleTags(article: KbArticleListItem, limit = CARD_TAG_LIMIT) {
+  return (article.tags || []).slice(0, limit);
+}
+
+function matchesSelectedTag(article: KbArticleListItem, selectedTag: string | null) {
+  if (!selectedTag) return true;
+  return (article.tags || []).some((tag) => tag.slug === selectedTag);
+}
 
 export const KnowledgeBaseHomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -95,14 +105,21 @@ export const KnowledgeBaseHomePage: React.FC = () => {
     [categories]
   );
 
-  const featured = useMemo(() =>
-    allFeatured?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-')).slice(0, 6) || [],
-    [allFeatured]
+  const featured = useMemo(
+    () =>
+      allFeatured
+        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag))
+        .slice(0, 6) || [],
+    [allFeatured, selectedTag]
   );
 
-  const browseArticles = useMemo(() =>
-    allArticles?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-')) || [],
-    [allArticles]
+  const browseArticles = useMemo(
+    () =>
+      allArticles
+        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)) || [],
+    [allArticles, selectedTag]
   );
 
   const { data: categoryArticlesData } = useDocsArticles({
@@ -114,11 +131,15 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
   const displayArticles = useMemo(() => {
     if (activeSearch && searchResults?.length) {
-      return searchResults.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'));
+      return searchResults
+        .filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
-    if (selectedCategory && categoryArticles?.length) return categoryArticles;
+    if (selectedCategory && categoryArticles?.length) {
+      return categoryArticles.filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
+    }
     return null;
-  }, [activeSearch, searchResults, selectedCategory, categoryArticles]);
+  }, [activeSearch, searchResults, selectedCategory, categoryArticles, selectedTag]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,7 +270,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
                 <Tag size={14} className="flex-shrink-0 text-white/30" />
-                {tags.slice(0, 12).map((tag: any) => (
+                {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}
                     onClick={() => setSelectedTag(selectedTag === tag.slug ? null : tag.slug)}
@@ -284,6 +305,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   {selectedCategory && (
                     <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
                       {consultifyCategories.find((c: KbCategory) => c.slug === selectedCategory)?.name}
+                    </span>
+                  )}
+                  {selectedTag && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-white/75 text-xs font-semibold">
+                      #{tags?.find((tag: any) => tag.slug === selectedTag)?.label || selectedTag}
                     </span>
                   )}
                 </div>
@@ -336,7 +362,12 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
               {/* Section Previews */}
               {consultifyCategories.map((category: KbCategory) => (
-                <SectionPreview key={category.id} category={category} language={docsLanguage} />
+                <SectionPreview
+                  key={category.id}
+                  category={category}
+                  language={docsLanguage}
+                  selectedTag={selectedTag}
+                />
               ))}
 
               {/* Browse All Articles */}
@@ -388,6 +419,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
 const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> = ({ article, featured }) => {
   const { t } = useTranslation();
+  const visibleTags = getVisibleArticleTags(article);
 
   return (
     <Link
@@ -437,6 +469,19 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           </p>
         )}
 
+        {visibleTags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {visibleTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-white/60"
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="mt-4 flex items-center gap-4 text-[11px] text-white/30 font-medium">
           <span className="flex items-center gap-1">
             <Clock size={11} />
@@ -466,6 +511,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
 const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }) => {
   const { t } = useTranslation();
   const accent = SECTION_ACCENT[article.category_slug || ''] || DEFAULT_ACCENT;
+  const visibleTags = getVisibleArticleTags(article);
 
   return (
     <Link
@@ -484,6 +530,18 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
       <p className="mt-2 text-[11px] text-white/35 line-clamp-2 leading-relaxed">
         {article.summary}
       </p>
+      {visibleTags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {visibleTags.map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-white/55"
+            >
+              {tag.label}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-[10px] text-white/25 flex items-center gap-1">
           <Clock size={10} />
@@ -499,14 +557,21 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
 
 /* ─────────────────────────── Section Preview ─────────────────────────── */
 
-const SectionPreview: React.FC<{ category: KbCategory; language: string }> = ({ category, language }) => {
+const SectionPreview: React.FC<{ category: KbCategory; language: string; selectedTag: string | null }> = ({
+  category,
+  language,
+  selectedTag,
+}) => {
   const { t } = useTranslation();
   const { data: articlesData } = useDocsArticles({
     language,
     categorySlug: category.slug,
     limit: 4,
   });
-  const articles = articlesData?.articles;
+  const articles = useMemo(
+    () => (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
+    [articlesData?.articles, selectedTag]
+  );
 
   if (!articles?.length) return null;
 
