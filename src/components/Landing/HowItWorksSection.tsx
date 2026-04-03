@@ -3,52 +3,14 @@ import { ArrowRight, Brain, CheckCircle2, Cpu, FileText, Play, TrendingUp, Zap }
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const steps = [
-  {
-    number: '01',
-    icon: FileText,
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.30)',
-    title: 'Feed the relevant data',
-    description:
-      'Upload documents, connect your data sources, or simply describe your challenge. Consultify absorbs your full context — financials, org structure, market position — in seconds.',
-  },
-  {
-    number: '02',
-    icon: Brain,
-    color: '#a855f7',
-    glow: 'rgba(168,85,247,0.28)',
-    title: 'AI instantly understands the full picture',
-    description:
-      'DBR77 Vector — our proprietary model — analyzes your context against 1,000+ real transformation engagements to map gaps, risks, and opportunities with structured reasoning.',
-  },
-  {
-    number: '03',
-    icon: CheckCircle2,
-    color: '#06b6d4',
-    glow: 'rgba(6,182,212,0.25)',
-    title: 'You receive a bulletproof plan with clear numbers',
-    description:
-      'A complete strategic roadmap with prioritized initiatives, NPV/IRR projections, timelines, and dependencies. Board-ready from the first output.',
-  },
-  {
-    number: '04',
-    icon: Zap,
-    color: '#10b981',
-    glow: 'rgba(16,185,129,0.25)',
-    title: 'Execute with AI guiding every step',
-    description:
-      'Manage workstreams, assign tasks, and track milestones. AI flags risks before they become problems and nudges your team toward impact at every decision point.',
-  },
-  {
-    number: '05',
-    icon: TrendingUp,
-    color: '#f59e0b',
-    glow: 'rgba(245,158,11,0.25)',
-    title: 'Watch the results appear',
-    description:
-      'Live KPI tracking connects every initiative to real business outcomes. See NPV delivered vs. projected, flag deviations instantly, and report results to stakeholders automatically.',
-  },
+const STEP_KEYS = ['feedData', 'aiUnderstands', 'bulletproofPlan', 'executeWithAI', 'watchResults'] as const;
+
+const STEP_VISUALS = [
+  { number: '01', icon: FileText,     color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
+  { number: '02', icon: Brain,        color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
+  { number: '03', icon: CheckCircle2, color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+  { number: '04', icon: Zap,          color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
+  { number: '05', icon: TrendingUp,   color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
 ];
 
 export const HowItWorksSection: React.FC = () => {
@@ -117,12 +79,14 @@ export const HowItWorksSection: React.FC = () => {
 
         {/* Timeline */}
         <div className="grid lg:grid-cols-5 gap-4 mb-20">
-          {steps.map((step, idx) => {
+          {STEP_KEYS.map((key, idx) => {
+            const step = STEP_VISUALS[idx];
             const Icon = step.icon;
             const isActive = activeStep === idx;
+            const prefix = `landing.howItWorks.steps.${key}`;
             return (
               <motion.button
-                key={idx}
+                key={key}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -159,8 +123,8 @@ export const HowItWorksSection: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug mb-2">{step.title}</h3>
-                <p className="text-xs text-slate-500 dark:text-white/45 leading-relaxed">{step.description}</p>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug mb-2">{t(`${prefix}.title`)}</h3>
+                <p className="text-xs text-slate-500 dark:text-white/45 leading-relaxed">{t(`${prefix}.description`)}</p>
               </motion.button>
             );
           })}
@@ -215,36 +179,28 @@ export const HowItWorksSection: React.FC = () => {
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition-colors hover:text-cyan-200"
               >
-                Explore DBR77 Vector
+                {t('landing.howItWorks.techExplore', 'Explore DBR77 Vector')}
                 <ArrowRight size={14} />
               </a>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'DBR77 Vector', desc: 'Proprietary AI model', color: '#7c3aed' },
-                { label: 'MCP Integration', desc: 'Full end-to-end automation', color: '#06b6d4' },
-                {
-                  label: 'Private Deployment',
-                  desc: 'On-premise, private API, or isolated access',
-                  color: '#a855f7',
-                },
-                {
-                  label: '1,000+ Engagements',
-                  desc: 'Real transformation knowledge base',
-                  color: '#10b981',
-                },
-              ].map((item) => (
+                { labelKey: 'landing.howItWorks.tech.vector', descKey: 'landing.howItWorks.tech.vectorDesc', color: '#7c3aed' },
+                { labelKey: 'landing.howItWorks.tech.mcp', descKey: 'landing.howItWorks.tech.mcpDesc', color: '#06b6d4' },
+                { labelKey: 'landing.howItWorks.tech.private', descKey: 'landing.howItWorks.tech.privateDesc', color: '#a855f7' },
+                { labelKey: 'landing.howItWorks.tech.engagements', descKey: 'landing.howItWorks.tech.engagementsDesc', color: '#10b981' },
+              ]              .map((item) => (
                 <div
-                  key={item.label}
+                  key={item.labelKey}
                   className="p-4 rounded-xl"
                   style={{
                     background: `${item.color}10`,
                     border: `1px solid ${item.color}25`,
                   }}
                 >
-                  <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">{item.label}</div>
-                  <div className="text-[11px] text-slate-400 dark:text-white/40 leading-snug">{item.desc}</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">{t(item.labelKey)}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-white/40 leading-snug">{t(item.descKey)}</div>
                 </div>
               ))}
             </div>

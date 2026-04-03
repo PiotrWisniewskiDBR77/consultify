@@ -13,67 +13,15 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const features = [
-  {
-    icon: Brain,
-    accentColor: '#7c3aed',
-    glowColor: 'rgba(124,58,237,0.25)',
-    badge: 'AI Core',
-    title: 'Strategic AI Advisor',
-    description:
-      'AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.',
-    highlights: ['Diagnostic Assessment', 'Gap Analysis', 'Benchmark vs. Industry'],
-  },
-  {
-    icon: BarChart3,
-    accentColor: '#0891b2',
-    glowColor: 'rgba(8,145,178,0.22)',
-    badge: 'Economics',
-    title: 'Financial Modeling & ROI',
-    description:
-      'Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.',
-    highlights: ['NPV / IRR Modeling', 'Sensitivity Analysis', 'Live ROI Tracking'],
-  },
-  {
-    icon: Layers,
-    accentColor: '#059669',
-    glowColor: 'rgba(5,150,105,0.22)',
-    badge: 'Execution',
-    title: 'Initiative Management',
-    description:
-      'Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.',
-    highlights: ['Initiative Roadmap', 'Human Approval Gates', 'Risk Flagging'],
-  },
-  {
-    icon: FileText,
-    accentColor: '#c026d3',
-    glowColor: 'rgba(192,38,211,0.22)',
-    badge: 'Deliverables',
-    title: 'Report & Presentation Builder',
-    description:
-      'Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.',
-    highlights: ['Auto-Generated Decks', 'Narrative Engine', 'Source Traceability'],
-  },
-  {
-    icon: MessageSquare,
-    accentColor: '#d97706',
-    glowColor: 'rgba(217,119,6,0.20)',
-    badge: 'Chat',
-    title: 'AI Expert Interview',
-    description:
-      'Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.',
-    highlights: ['Context-Aware Chat', 'Framework Library', 'Cited Answers'],
-  },
-  {
-    icon: TrendingUp,
-    accentColor: '#0d9488',
-    glowColor: 'rgba(13,148,136,0.22)',
-    badge: 'Results',
-    title: 'Impact Tracking',
-    description:
-      'Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.',
-    highlights: ['KPI Dashboard', 'Deviation Alerts', 'Value Attribution'],
-  },
+const FEATURE_KEYS = ['aiCore', 'economics', 'execution', 'deliverables', 'chat', 'results'] as const;
+
+const FEATURE_VISUALS = [
+  { icon: Brain,          accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
+  { icon: BarChart3,      accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
+  { icon: Layers,         accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
+  { icon: FileText,       accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
+  { icon: MessageSquare,  accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
+  { icon: TrendingUp,     accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
 ];
 
 export const WhereItHappensSection: React.FC = () => {
@@ -123,11 +71,14 @@ export const WhereItHappensSection: React.FC = () => {
 
         {/* Feature grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((feature, idx) => {
-            const Icon = feature.icon;
+          {FEATURE_KEYS.map((key, idx) => {
+            const visual = FEATURE_VISUALS[idx];
+            const Icon = visual.icon;
+            const prefix = `landing.whereItHappens.features.${key}`;
+            const highlights = (t(`${prefix}.highlights`, { returnObjects: true }) || []) as string[];
             return (
               <motion.div
-                key={idx}
+                key={key}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -140,9 +91,9 @@ export const WhereItHappensSection: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    `0 0 40px -12px ${feature.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
+                    `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
                   (e.currentTarget as HTMLDivElement).style.borderColor =
-                    `${feature.accentColor}40`;
+                    `${visual.accentColor}40`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.boxShadow =
@@ -150,45 +101,40 @@ export const WhereItHappensSection: React.FC = () => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
                 }}
               >
-                {/* Icon */}
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{
-                    background: `${feature.accentColor}18`,
-                    border: `1px solid ${feature.accentColor}30`,
+                    background: `${visual.accentColor}18`,
+                    border: `1px solid ${visual.accentColor}30`,
                   }}
                 >
-                  <Icon size={20} style={{ color: feature.accentColor }} strokeWidth={2} />
+                  <Icon size={20} style={{ color: visual.accentColor }} strokeWidth={2} />
                 </div>
 
-                {/* Badge */}
                 <div className="mb-2">
                   <span
                     className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded"
                     style={{
-                      background: `${feature.accentColor}18`,
-                      color: feature.accentColor,
+                      background: `${visual.accentColor}18`,
+                      color: visual.accentColor,
                     }}
                   >
-                    {feature.badge}
+                    {t(`${prefix}.badge`)}
                   </span>
                 </div>
 
-                {/* Title */}
                 <h3 className="text-base font-black text-slate-900 dark:text-white mb-2 leading-tight">
-                  {feature.title}
+                  {t(`${prefix}.title`)}
                 </h3>
 
-                {/* Description */}
-                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">{feature.description}</p>
+                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">{t(`${prefix}.description`)}</p>
 
-                {/* Highlights */}
                 <div className="space-y-1.5">
-                  {feature.highlights.map((h) => (
-                    <div key={h} className="flex items-center gap-2">
+                  {(Array.isArray(highlights) ? highlights : []).map((h, i) => (
+                    <div key={i} className="flex items-center gap-2">
                       <CheckCircle2
                         size={12}
-                        style={{ color: feature.accentColor }}
+                        style={{ color: visual.accentColor }}
                         className="shrink-0"
                       />
                       <span className="text-xs text-slate-500 dark:text-white/50 font-medium">{h}</span>
@@ -196,12 +142,11 @@ export const WhereItHappensSection: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Corner glow */}
                 <div
                   aria-hidden
                   className="absolute top-0 right-0 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{
-                    background: `radial-gradient(circle, ${feature.glowColor} 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, ${visual.glowColor} 0%, transparent 70%)`,
                     transform: 'translate(30%, -30%)',
                     filter: 'blur(20px)',
                   }}

@@ -3,59 +3,13 @@ import { BarChart3, Brain, Building2, Rocket, Users } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const personas = [
-  {
-    icon: Rocket,
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.28)',
-    tag: 'Founders & Owners',
-    headline: 'Move fast without burning cash.',
-    description:
-      'You built something real. Now you need a strategy that scales it — without hiring a McKinsey team. Consultify is your always-on strategic partner: from market analysis to financial modeling to execution tracking, all in one place.',
-    points: [
-      'Business model stress-testing',
-      'Investor-ready financial models',
-      'Growth roadmap in days, not months',
-    ],
-  },
-  {
-    icon: Users,
-    color: '#0891b2',
-    glow: 'rgba(8,145,178,0.25)',
-    tag: 'Executives & Change Leaders',
-    headline: 'Lead transformation. Deliver results.',
-    description:
-      "You're accountable for change. Consultify gives you a structured, data-backed approach to transformation — with human governance built in. Every decision traceable, every result measured.",
-    points: [
-      'Organizational diagnostic',
-      'Initiative portfolio management',
-      'Board-ready reporting in one click',
-    ],
-  },
-  {
-    icon: Building2,
-    color: '#059669',
-    glow: 'rgba(5,150,105,0.25)',
-    tag: 'Consulting Firms',
-    headline: 'Deliver 10× the value in half the time.',
-    description:
-      'Stop writing the same slides in PowerPoint. Consultify automates your analysis and deliverables so your team focuses on insight and relationships — not formatting and data gathering.',
-    points: [
-      'White-label client workspaces',
-      'Automated analysis & decks',
-      'Partner program with revenue share',
-    ],
-  },
-  {
-    icon: Brain,
-    color: '#c026d3',
-    glow: 'rgba(192,38,211,0.25)',
-    tag: 'AI-First Leaders',
-    headline: 'You think in systems. We speak your language.',
-    description:
-      'You already know AI is the lever. Consultify is where that bet pays off — a full MCP-integrated, multi-LLM platform with proprietary consulting intelligence layered on top.',
-    points: ['Full API & MCP access', 'Custom LLM routing', 'Build your own AI consulting stack'],
-  },
+const PERSONA_KEYS = ['founders', 'executives', 'consultingFirms', 'aiLeaders'] as const;
+
+const PERSONA_VISUALS = [
+  { icon: Rocket,    color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+  { icon: Users,     color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
+  { icon: Building2, color: '#059669', glow: 'rgba(5,150,105,0.25)' },
+  { icon: Brain,     color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
 ];
 
 export const ForWhomSection: React.FC = () => {
@@ -110,11 +64,14 @@ export const ForWhomSection: React.FC = () => {
 
         {/* Cards grid */}
         <div className="grid md:grid-cols-2 gap-5">
-          {personas.map((persona, idx) => {
-            const Icon = persona.icon;
+          {PERSONA_KEYS.map((key, idx) => {
+            const visual = PERSONA_VISUALS[idx];
+            const Icon = visual.icon;
+            const prefix = `landing.forWhom.personas.${key}`;
+            const points = (t(`${prefix}.points`, { returnObjects: true }) || []) as string[];
             return (
               <motion.div
-                key={idx}
+                key={key}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -125,21 +82,20 @@ export const ForWhomSection: React.FC = () => {
                   border: '1px solid rgba(255,255,255,0.08)',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = `${persona.color}45`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = `${visual.color}45`;
                   (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    `0 0 40px -12px ${persona.glow}`;
+                    `0 0 40px -12px ${visual.glow}`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
                   (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                 }}
               >
-                {/* Corner glow */}
                 <div
                   aria-hidden
                   className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{
-                    background: `radial-gradient(circle, ${persona.glow} 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, ${visual.glow} 0%, transparent 70%)`,
                     transform: 'translate(30%, -30%)',
                     filter: 'blur(20px)',
                   }}
@@ -150,33 +106,33 @@ export const ForWhomSection: React.FC = () => {
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
                       style={{
-                        background: `${persona.color}18`,
-                        border: `1px solid ${persona.color}30`,
+                        background: `${visual.color}18`,
+                        border: `1px solid ${visual.color}30`,
                       }}
                     >
-                      <Icon size={22} style={{ color: persona.color }} strokeWidth={2} />
+                      <Icon size={22} style={{ color: visual.color }} strokeWidth={2} />
                     </div>
                     <span
                       className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
-                      style={{ background: `${persona.color}15`, color: persona.color }}
+                      style={{ background: `${visual.color}15`, color: visual.color }}
                     >
-                      {persona.tag}
+                      {t(`${prefix}.tag`)}
                     </span>
                   </div>
 
                   <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 leading-tight">
-                    {persona.headline}
+                    {t(`${prefix}.headline`)}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-white/50 leading-relaxed mb-5">
-                    {persona.description}
+                    {t(`${prefix}.description`)}
                   </p>
 
                   <div className="space-y-2">
-                    {persona.points.map((point) => (
-                      <div key={point} className="flex items-center gap-2.5">
+                    {(Array.isArray(points) ? points : []).map((point, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
                         <div
                           className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ background: persona.color }}
+                          style={{ background: visual.color }}
                         />
                         <span className="text-xs text-slate-500 dark:text-white/55 font-medium">{point}</span>
                       </div>

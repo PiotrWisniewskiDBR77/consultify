@@ -122,7 +122,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
       >
         <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
         <span className="text-lg font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-          Demo
+          {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
@@ -150,7 +150,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
           {t('landing.demo.getA', 'Get a')}
         </span>
         <span className="text-xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Demo
+          {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
@@ -179,7 +179,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
             {t('landing.demo.bookA', 'Book a')}
           </span>
           <span className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-tight">
-            Demo
+            {t('landing.demo.word', 'Demo')}
           </span>
           <ArrowRight
             size={22}

@@ -133,7 +133,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           >
             {t('landing.hero.subtitleLine1', 'Your')}{' '}
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">
-              AI Co-Thinker
+              {t('landing.hero.coThinker', 'AI Co-Thinker')}
             </span>{' '}
             {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}
             <br />

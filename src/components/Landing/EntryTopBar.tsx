@@ -188,7 +188,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               }}
             >
               {isNavOpen ? <X size={15} /> : <Menu size={15} />}
-              <span className="text-xs font-semibold">Menu</span>
+              <span className="text-xs font-semibold">{t('landing.topBar.menu', 'Menu')}</span>
             </button>
 
             <AnimatePresence>
@@ -263,7 +263,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                           : '1px solid rgba(0,0,0,0.10)',
                       }}
                     >
-                      Demo
+                      {t('landing.topBar.demo', 'Try demo')}
                     </button>
                     <button
                       onClick={() => {
@@ -273,7 +273,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       className="flex-1 py-1.5 rounded-full text-xs font-medium text-center text-white transition-all"
                       style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
                     >
-                      Free Trial
+                      {t('landing.topBar.trial', 'Start trial')}
                     </button>
                   </div>
                 </motion.div>
@@ -372,7 +372,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 ? 'rgba(255,255,255,0.40)'
                 : 'rgba(0,0,0,0.40)';
             }}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
           >
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
@@ -555,10 +555,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                           ? 'rgba(255,255,255,0.50)'
                           : 'rgba(0,0,0,0.50)',
                       }}
-                      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                      aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
                     >
                       {isDark ? <Sun size={12} /> : <Moon size={12} />}
-                      <span>{isDark ? 'Light' : 'Dark'}</span>
+                      <span>{isDark ? t('landing.topBar.lightMode', 'Light') : t('landing.topBar.darkMode', 'Dark')}</span>
                     </button>
                     {languages.slice(0, 3).map((lang) => (
                       <button

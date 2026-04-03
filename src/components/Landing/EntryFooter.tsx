@@ -146,7 +146,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <Server size={14} className="text-purple-500" />
-                <span>EU Data</span>
+                <span>{t('landing.footer.trust.euData', 'EU Data')}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <Key size={14} className="text-amber-500" />

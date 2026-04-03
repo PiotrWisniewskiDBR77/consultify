@@ -9,7 +9,8 @@
     "hero": {
       "title": "Think bigger.Do smarter",
       "subtitleLine1": "Your",
-      "subtitleLine1End": "for end-to-end transformation.",
+      "coThinker": "AI Co-Thinker",
+      "subtitleLine1End": "for Enterprise Strategy.",
       "slogans": {
         "1": "From diagnosis to delivery — in one operating system.",
         "2": "Evidence-based decisions. Measurable outcomes.",
@@ -62,10 +63,15 @@
       }
     },
     "topBar": {
-      "demo": "Watch demo",
+      "demo": "Try demo",
       "trial": "Start trial",
       "login": "Log in",
-      "signUp": "Sign up"
+      "signUp": "Sign up",
+      "menu": "Menu",
+      "lightMode": "Light",
+      "darkMode": "Dark",
+      "switchLight": "Switch to light mode",
+      "switchDark": "Switch to dark mode"
     },
     "epicHero": {
       "eyebrow": "Consulting Intelligence Platform",
@@ -229,6 +235,46 @@
       }
     },
     "howItWorks": {
+      "badge": "How it works",
+      "heading": "From idea to measurable results",
+      "headingAccent": "in five moves.",
+      "sub": "No consulting firm. No 6-month project. Just intelligence turning into action.",
+      "steps": {
+        "feedData": {
+          "title": "Feed the relevant data",
+          "description": "Upload documents, connect your data sources, or simply describe your challenge. Consultify absorbs your full context — financials, org structure, market position — in seconds."
+        },
+        "aiUnderstands": {
+          "title": "AI instantly understands the full picture",
+          "description": "DBR77 Vector — our proprietary model — analyzes your context against 1,000+ real transformation engagements to map gaps, risks, and opportunities with structured reasoning."
+        },
+        "bulletproofPlan": {
+          "title": "You receive a bulletproof plan with clear numbers",
+          "description": "A complete strategic roadmap with prioritized initiatives, NPV/IRR projections, timelines, and dependencies. Board-ready from the first output."
+        },
+        "executeWithAI": {
+          "title": "Execute with AI guiding every step",
+          "description": "Manage workstreams, assign tasks, and track milestones. AI flags risks before they become problems and nudges your team toward impact at every decision point."
+        },
+        "watchResults": {
+          "title": "Watch the results appear",
+          "description": "Live KPI tracking connects every initiative to real business outcomes. See NPV delivered vs. projected, flag deviations instantly, and report results to stakeholders automatically."
+        }
+      },
+      "techBadge": "The technology behind the magic",
+      "techTitle": "Powered by DBR77 Vector, our proprietary AI model.",
+      "techDesc": "Built on 1,000+ real transformation engagements and delivered through secure deployment paths. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation.",
+      "techExplore": "Explore DBR77 Vector",
+      "tech": {
+        "vector": "DBR77 Vector",
+        "vectorDesc": "Proprietary AI model",
+        "mcp": "MCP Integration",
+        "mcpDesc": "Full end-to-end automation",
+        "private": "Private Deployment",
+        "privateDesc": "On-premise, private API, or isolated access",
+        "engagements": "1,000+ Engagements",
+        "engagementsDesc": "Real transformation knowledge base"
+      },
       "teaser": {
         "title": "See it live (20s)",
         "subtitle": "Public teaser. Full version after login.",
@@ -236,6 +282,37 @@
         "after": "Want the full version? Log in to unlock all videos.",
         "afterCta": "Watch full version after login",
         "afterCtaAuthed": "Watch full version"
+      }
+    },
+    "forWhom": {
+      "badge": "For whom",
+      "heading": "Built for the ambitious.",
+      "sub": "Whoever you are — if results matter to you, Consultify is your co-pilot.",
+      "personas": {
+        "founders": {
+          "tag": "Founders & Owners",
+          "headline": "Move fast without burning cash.",
+          "description": "You built something real. Now you need a strategy that scales it — without hiring a McKinsey team. Consultify is your always-on strategic partner: from market analysis to financial modeling to execution tracking, all in one place.",
+          "points": ["Business model stress-testing", "Investor-ready financial models", "Growth roadmap in days, not months"]
+        },
+        "executives": {
+          "tag": "Executives & Change Leaders",
+          "headline": "Lead transformation. Deliver results.",
+          "description": "You're accountable for change. Consultify gives you a structured, data-backed approach to transformation — with human governance built in. Every decision traceable, every result measured.",
+          "points": ["Organizational diagnostic", "Initiative portfolio management", "Board-ready reporting in one click"]
+        },
+        "consultingFirms": {
+          "tag": "Consulting Firms",
+          "headline": "Deliver 10× the value in half the time.",
+          "description": "Stop writing the same slides in PowerPoint. Consultify automates your analysis and deliverables so your team focuses on insight and relationships — not formatting and data gathering.",
+          "points": ["White-label client workspaces", "Automated analysis & decks", "Partner program with revenue share"]
+        },
+        "aiLeaders": {
+          "tag": "AI-First Leaders",
+          "headline": "You think in systems. We speak your language.",
+          "description": "You already know AI is the lever. Consultify is where that bet pays off — a full MCP-integrated, multi-LLM platform with proprietary consulting intelligence layered on top.",
+          "points": ["Full API & MCP access", "Custom LLM routing", "Build your own AI consulting stack"]
+        }
       }
     },
     "resources": {
@@ -260,11 +337,50 @@
       "goHome": "Go to homepage"
     },
     "whereItHappens": {
-      "badge": "Product",
-      "heading": "Consultify is where it happens.",
-      "sub": "Chat, tools, execution, ROI and deliverables — all in one place.",
+      "badge": "What Consultify does",
+      "heading": "Consultify brings consulting knowledge, frameworks, execution, and deliverables into one working environment.",
+      "sub": "This is the Consulting Intelligence Platform in practice: not just AI answers, but a structured consulting workflow from diagnosis through results.",
+      "closingNote": "One category promise, one product surface, one path from understanding to measurable results.",
       "imageAlt": "Consultify product screenshot",
-      "imageHint": "Screenshots will appear here when assets are available."
+      "imageHint": "Screenshots will appear here when assets are available.",
+      "features": {
+        "aiCore": {
+          "badge": "AI Core",
+          "title": "Strategic AI Advisor",
+          "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
+          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
+        },
+        "economics": {
+          "badge": "Economics",
+          "title": "Financial Modeling & ROI",
+          "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
+          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
+        },
+        "execution": {
+          "badge": "Execution",
+          "title": "Initiative Management",
+          "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
+          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
+        },
+        "deliverables": {
+          "badge": "Deliverables",
+          "title": "Report & Presentation Builder",
+          "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
+          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
+        },
+        "chat": {
+          "badge": "Chat",
+          "title": "AI Expert Interview",
+          "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
+          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
+        },
+        "results": {
+          "badge": "Results",
+          "title": "Impact Tracking",
+          "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
+          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
+        }
+      }
     },
     "films": {
       "film1": {
@@ -461,6 +577,7 @@
       "usa": "United States"
     },
     "demo": {
+      "word": "Demo",
       "schedule": "Schedule a Demo",
       "scheduleShort": "Schedule",
       "getA": "Get a",
@@ -507,6 +624,7 @@
     "footer": {
       "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
       "copyright": "All rights reserved.",
+      "trust": { "euData": "EU Data" },
       "products": {
         "title": "Products"
       },
@@ -5842,5 +5960,134 @@
     "createBtn": "Create Schedule",
     "created": "Schedule created",
     "createError": "Failed to create schedule"
+  },
+  "pricing": {
+    "badge": "Pricing",
+    "heading": "Simple plans.",
+    "headingAccent": "Clear usage limits.",
+    "sub": "Choose the package that matches your actual usage, team size, and rollout stage.",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "mostPopular": "Most popular",
+    "perMonth": "/mo",
+    "custom": "Custom",
+    "footnote": "Pricing is explicit on seats, projects, exports, and AI usage so teams can scale predictably.",
+    "plans": {
+      "trial": {
+        "name": "Trial",
+        "description": "14 days to validate the workflow before you commit.",
+        "features": ["1 workspace sandbox", "2 active projects", "30 AI credits total", "Basic report export", "Email support"],
+        "cta": "Start trial"
+      },
+      "user": {
+        "name": "User",
+        "description": "For solo consultants and operators who need steady monthly usage.",
+        "features": ["1 user seat", "5 active projects", "150 AI credits / month", "Scenario builder and report drafts", "10 exports / month", "Email support"],
+        "cta": "Choose User"
+      },
+      "manager": {
+        "name": "Manager",
+        "description": "For team leads running multiple initiatives with shared visibility.",
+        "features": ["3 user seats included", "15 active projects", "500 AI credits / month", "Shared workspace and approvals", "Presentation-ready exports", "Priority support"],
+        "cta": "Choose Manager"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "For consulting firms and enterprise teams with security and rollout needs.",
+        "features": ["Custom seats and usage packs", "SSO / SAML and advanced permissions", "API and MCP access", "Private model routing or BYOK", "Security review and SLA", "Dedicated onboarding"],
+        "cta": "Contact sales"
+      }
+    }
+  },
+  "pages": {
+    "public": {
+      "nav": { "docs": "Docs", "signIn": "Sign In" },
+      "hero": { "title": "Strategic decisions are too complex for intuition and too important for chance." },
+      "cards": {
+        "demo": { "meta": "Instant Access", "title": "Explore Demo", "description": "Experience a live environment with fictional, realistic data." },
+        "trial": { "meta": "Primary Path", "title": "Start Free Trial", "description": "Use Consultify on your real organization data and build your transformation roadmap." },
+        "tour": { "meta": "Product Tour", "title": "How It Works", "description": "Guided by Dr. Piotr Wiśniewski" },
+        "tools": { "meta": "Education Hub", "title": "Learn Our Tools", "description": "Watch demos and masterclasses." },
+        "partner": { "meta": "Returning Users", "title": "Become Partner", "description": "Join our ecosystem." }
+      },
+      "tagline": { "line1": "AI consulting.", "line2": "No slides.", "line3": "Just decisions." },
+      "cta": {
+        "noPressure": "No rush. No sales pressure.",
+        "justSubstance": "Just substance.",
+        "body": "If you feel your organization needs a new discipline in decision-making, we invite you to explore our method.",
+        "button": "Discover the Consultify Method",
+        "noForms": "No Forms • No Obligations"
+      },
+      "footer": {
+        "docs": "Documentation",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "security": "Security",
+        "secured": "Secured by DBR77 Governance"
+      }
+    },
+    "partner": {
+      "hero": {
+        "badge": "Consultify Partner Program",
+        "titleLine1": "Join the",
+        "titleLine2": "Consultify Partner Program",
+        "subtitle": "Join a network of partners using Consultify for digital transformation. Professional PMO standards combined with the power of AI.",
+        "applyBtn": "Apply for Partnership",
+        "learnMore": "Discover Consultify",
+        "existingPartner": "I already have a partner account"
+      },
+      "benefits": {
+        "heading": "What You Get as a Partner",
+        "sub": "Partnership with Consultify opens new opportunities for growing your consulting practice.",
+        "items": {
+          "platform": { "title": "PMO + AI Platform", "description": "Access to an advanced platform combining PMO standards with AI capabilities." },
+          "certifications": { "title": "PMO Certifications", "description": "ISO 21500, PMBOK 7, PRINCE2 training and specialist assessments (DRD, SIRI, ADMA)." },
+          "billing": { "title": "Billing Portal", "description": "Transparent system for managing licenses, invoices and partner discounts." },
+          "materials": { "title": "Materials & Templates", "description": "Access to marketing materials, PMO templates, case studies and documentation." }
+        }
+      },
+      "tiers": {
+        "heading": "Partnership Tiers",
+        "sub": "Choose the tier that matches your goals. Advance as your partnership grows.",
+        "requirementsLabel": "Requirements",
+        "benefitsLabel": "Benefits",
+        "items": {
+          "registered": {
+            "title": "Registered",
+            "description": "For those starting the partnership",
+            "requirements": ["Registration", "Basic training"],
+            "benefits": ["10% discount", "Access to materials", "Email support"]
+          },
+          "certified": {
+            "title": "Certified",
+            "description": "For experienced consultants",
+            "requirements": ["Certification exam", "Min. 3 projects"],
+            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
+          },
+          "premier": {
+            "title": "Premier",
+            "description": "For strategic partners",
+            "requirements": ["10+ projects", "Case study", "References"],
+            "benefits": ["14% discount", "Dedicated account manager", "Co-marketing", "Early access to new features"]
+          }
+        }
+      },
+      "process": {
+        "heading": "How to Join?",
+        "sub": "Simple 4-step process to start the partnership.",
+        "steps": {
+          "apply": { "title": "Apply", "description": "Fill out the partner application form" },
+          "meet": { "title": "Let's Meet", "description": "Conversation about needs and goals" },
+          "onboarding": { "title": "Onboarding", "description": "Training and platform access" },
+          "grow": { "title": "Grow", "description": "Joint projects and development" }
+        }
+      },
+      "cta": {
+        "heading": "Ready to Partner?",
+        "body": "Join the Consultify partner community and together deliver professional PMO + AI solutions for organizations in transformation.",
+        "applyBtn": "Start Application",
+        "noObligation": "No obligations • We respond within 24h"
+      }
+    }
   }
 }

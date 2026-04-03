@@ -9,6 +9,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
@@ -24,6 +25,7 @@ import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewS
  */
 
 export const PublicLandingPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const brandLogoSrc = new URL(
     '../../Logo consultify/Consultify_logo_dark_medium.svg',
@@ -63,13 +65,13 @@ export const PublicLandingPage: React.FC = () => {
               className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
             >
               <BookOpen size={14} />
-              Docs
+              {t('pages.public.nav.docs', 'Docs')}
             </Link>
             <Link
               to="/login"
               className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/10"
             >
-              Sign In
+              {t('pages.public.nav.signIn', 'Sign In')}
             </Link>
           </nav>
         </div>
@@ -80,8 +82,7 @@ export const PublicLandingPage: React.FC = () => {
         <section className="max-w-5xl mx-auto text-center mb-24 animate-fade-in">
           {/* North Star Sentence */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-            Decyzje strategiczne są zbyt złożone na intuicję <br className="hidden md:block" />i
-            zbyt ważne na przypadek.
+            {t('pages.public.hero.title', 'Strategic decisions are too complex for intuition and too important for chance.')}
           </h1>
 
           {/* 6-Card Grid — Experience Navigator */}
@@ -92,12 +93,12 @@ export const PublicLandingPage: React.FC = () => {
               className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
-                Instant Access
+                {t('pages.public.cards.demo.meta', 'Instant Access')}
               </div>
               <div className="mt-8">
-                <h3 className="text-2xl font-bold mb-3">Explore Demo</h3>
+                <h3 className="text-2xl font-bold mb-3">{t('pages.public.cards.demo.title', 'Explore Demo')}</h3>
                 <p className="text-white/50 leading-relaxed text-sm">
-                  Experience a live environment with fictional, realistic data.
+                  {t('pages.public.cards.demo.description', 'Experience a live environment with fictional, realistic data.')}
                 </p>
               </div>
             </div>
@@ -108,13 +109,12 @@ export const PublicLandingPage: React.FC = () => {
               className="glass-card p-8 rounded-xl group hover:bg-brand-600/10 transition-all duration-500 border-2 border-brand-500/30 cursor-pointer relative overflow-hidden row-span-2"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-brand-400 uppercase tracking-[0.2em]">
-                Primary Path
+                {t('pages.public.cards.trial.meta', 'Primary Path')}
               </div>
               <div className="mt-8 flex flex-col h-full justify-center">
-                <h3 className="text-3xl md:text-4xl font-bold mb-4">Start Free Trial</h3>
+                <h3 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.public.cards.trial.title', 'Start Free Trial')}</h3>
                 <p className="text-white/60 leading-relaxed mb-6">
-                  Use Consultify on your real organization data and build your transformation
-                  roadmap.
+                  {t('pages.public.cards.trial.description', 'Use Consultify on your real organization data and build your transformation roadmap.')}
                 </p>
                 <ArrowRight
                   className="text-brand-400 group-hover:translate-x-2 transition-transform duration-500"
@@ -129,15 +129,15 @@ export const PublicLandingPage: React.FC = () => {
               className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
-                Product Tour
+                {t('pages.public.cards.tour.meta', 'Product Tour')}
               </div>
               <div className="mt-8 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-brand-600/20 transition-colors">
                   <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold mb-1">How It Works</h3>
-                  <p className="text-white/40 text-sm">Guided by Dr. Piotr Wiśniewski</p>
+                  <h3 className="text-xl font-bold mb-1">{t('pages.public.cards.tour.title', 'How It Works')}</h3>
+                  <p className="text-white/40 text-sm">{t('pages.public.cards.tour.description', 'Guided by Dr. Piotr Wiśniewski')}</p>
                 </div>
               </div>
             </div>
@@ -159,15 +159,15 @@ export const PublicLandingPage: React.FC = () => {
 
               <div className="relative z-10">
                 <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
-                  Education Hub
+                  {t('pages.public.cards.tools.meta', 'Education Hub')}
                 </div>
                 <div className="mt-8 flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-cyan-600/20 flex items-center justify-center border border-cyan-500/30 group-hover:bg-cyan-600/30 transition-colors">
                     <Sparkles size={32} className="text-cyan-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold mb-1 text-white">Learn Our Tools</h3>
-                    <p className="text-white/60 text-sm">Watch demos and masterclasses.</p>
+                    <h3 className="text-2xl font-bold mb-1 text-white">{t('pages.public.cards.tools.title', 'Learn Our Tools')}</h3>
+                    <p className="text-white/60 text-sm">{t('pages.public.cards.tools.description', 'Watch demos and masterclasses.')}</p>
                   </div>
                 </div>
               </div>
@@ -179,15 +179,15 @@ export const PublicLandingPage: React.FC = () => {
               className="glass-card p-8 rounded-xl group hover:bg-purple-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
-                Returning Users
+                {t('pages.public.cards.partner.meta', 'Returning Users')}
               </div>
               <div className="mt-8 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-xl bg-brand-600/20 flex items-center justify-center border border-brand-500/30 group-hover:bg-brand-600/30 transition-colors">
                   <Handshake size={32} className="text-brand-400" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-1">Become Partner</h3>
-                  <p className="text-white/40 text-sm">Join our ecosystem.</p>
+                  <h3 className="text-2xl font-bold mb-1">{t('pages.public.cards.partner.title', 'Become Partner')}</h3>
+                  <p className="text-white/40 text-sm">{t('pages.public.cards.partner.description', 'Join our ecosystem.')}</p>
                 </div>
               </div>
             </div>
@@ -195,13 +195,13 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 7: AI Consulting Pitch */}
             <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-purple-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
-                <h3 className="text-3xl font-bold mb-2">AI consulting.</h3>
+                <h3 className="text-3xl font-bold mb-2">{t('pages.public.tagline.line1', 'AI consulting.')}</h3>
                 <h3 className="text-3xl font-bold mb-2">
                   <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-                    No slides.
+                    {t('pages.public.tagline.line2', 'No slides.')}
                   </span>
                 </h3>
-                <h3 className="text-3xl font-bold">Just decisions.</h3>
+                <h3 className="text-3xl font-bold">{t('pages.public.tagline.line3', 'Just decisions.')}</h3>
                 <div className="w-12 h-1 bg-brand-500 mt-4 rounded-full" />
               </div>
             </div>
@@ -220,15 +220,14 @@ export const PublicLandingPage: React.FC = () => {
         >
           <div className="inline-block glass-panel p-2 rounded-xl mb-12">
             <div className="px-6 py-3 rounded-xl bg-white/5 dark:bg-navy-900/50 flex items-center gap-4 text-sm font-medium text-white/60">
-              <span>Brak pośpiechu. Brak presji sprzedaży.</span>
+              <span>{t('pages.public.cta.noPressure', 'No rush. No sales pressure.')}</span>
               <div className="w-1 h-1 rounded-full bg-brand-500" />
-              <span>Tylko merytoryka.</span>
+              <span>{t('pages.public.cta.justSubstance', 'Just substance.')}</span>
             </div>
           </div>
 
           <p className="text-xl md:text-2xl text-white/70 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
-            Jeśli czujesz, że Twoja organizacja potrzebuje nowej dyscypliny w podejmowaniu decyzji,
-            zapraszamy do zapoznania się z naszą metodą.
+            {t('pages.public.cta.body', 'If you feel your organization needs a new discipline in decision-making, we invite you to explore our method.')}
           </p>
 
           <button
@@ -245,7 +244,7 @@ export const PublicLandingPage: React.FC = () => {
                         "
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <span>Poznaj Metodę Consultify</span>
+            <span>{t('pages.public.cta.button', 'Discover the Consultify Method')}</span>
             <ArrowRight
               className="group-hover:translate-x-2 transition-transform duration-500"
               size={24}
@@ -253,7 +252,7 @@ export const PublicLandingPage: React.FC = () => {
           </button>
 
           <div className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.3em]">
-            Bez Formularzy • Bez Zobowiązań
+            {t('pages.public.cta.noForms', 'No Forms • No Obligations')}
           </div>
         </section>
       </main>
@@ -270,22 +269,22 @@ export const PublicLandingPage: React.FC = () => {
 
           <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">
             <a href="/docs" className="hover:text-brand-400 transition-colors">
-              Documentation
+              {t('pages.public.footer.docs', 'Documentation')}
             </a>
             <a href="/privacy" className="hover:text-brand-400 transition-colors">
-              Privacy
+              {t('pages.public.footer.privacy', 'Privacy')}
             </a>
             <a href="/terms" className="hover:text-brand-400 transition-colors">
-              Terms
+              {t('pages.public.footer.terms', 'Terms')}
             </a>
             <a href="/docs/security" className="hover:text-brand-400 transition-colors">
-              Security
+              {t('pages.public.footer.security', 'Security')}
             </a>
           </div>
 
           <div className="flex items-center gap-2 text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] relative">
             <Shield size={12} className="mb-0.5" />
-            Zabezpieczone przez DBR77 Governance
+            {t('pages.public.footer.secured', 'Secured by DBR77 Governance')}
             {/* Hidden System Health Icon - Triple-click to access */}
             <div
               className="absolute -right-8 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-500/20 hover:bg-green-500/40 cursor-pointer transition-all group"
