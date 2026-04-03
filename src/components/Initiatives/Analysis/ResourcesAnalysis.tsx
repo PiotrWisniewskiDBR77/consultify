@@ -117,6 +117,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   const [aiProposals, setAiProposals] = useState<AiReassignment[] | null>(null);
   const [aiRunning, setAiRunning] = useState(false);
   const [applyingProposalIdx, setApplyingProposalIdx] = useState<number | null>(null);
+  const [proposalOverrides, setProposalOverrides] = useState<Record<number, string>>({});
 
   // Sort & filter state
   const [sortCol, setSortCol] = useState<SortColumn>('workload');
@@ -294,6 +295,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       }
 
       setAiProposals(proposals.length > 0 ? proposals : []);
+      setProposalOverrides({});
       setAiRunning(false);
     }, 800);
   }, [allocations, users, initiatives, t]);
@@ -324,12 +326,16 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
   const handleApplyAllProposals = useCallback(async () => {
     if (!onQuickUpdate || !aiProposals) return;
-    const actionable = aiProposals.filter((p) => p.toUserId);
+    const resolvedProposals = aiProposals.map((p, idx) => {
+      const overrideId = proposalOverrides[idx];
+      return overrideId ? { ...p, toUserId: overrideId } : p;
+    });
+    const actionable = resolvedProposals.filter((p) => p.toUserId);
     if (actionable.length === 0) {
       toast.error(
         t(
           'initiatives.analysis.resources.noActionable',
-          'No actionable proposals — all require manual resolution'
+          'No actionable proposals — select a person for each row first'
         )
       );
       return;
@@ -366,8 +372,9 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       );
     }
     setAiProposals(null);
+    setProposalOverrides({});
     setAiRunning(false);
-  }, [aiProposals, onQuickUpdate, t]);
+  }, [aiProposals, proposalOverrides, onQuickUpdate, t]);
 
   /* ---------- render ---------- */
 
@@ -448,7 +455,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {aiProposals.some((p) => p.toUserId) && (
+              {aiProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
                 <button
                   onClick={handleApplyAllProposals}
                   disabled={aiRunning}
@@ -461,7 +468,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                 </button>
               )}
               <button
-                onClick={() => setAiProposals(null)}
+                onClick={() => { setAiProposals(null); setProposalOverrides({}); }}
                 className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
               >
                 <X size={14} />
@@ -481,41 +488,80 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             </div>
           ) : (
             <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-              {aiProposals.map((proposal, idx) => (
-                <div
-                  key={`${proposal.initiativeId}-${idx}`}
-                  className="flex items-center gap-3 px-4 py-3 text-sm"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-slate-900 dark:text-white truncate">
-                        {proposal.initiativeName}
-                      </span>
-                      <span className="text-slate-400 dark:text-slate-500">:</span>
-                      <span className="text-red-600 dark:text-red-400 line-through text-xs">
-                        {proposal.fromUserName}
-                      </span>
-                      {proposal.toUserId ? (
-                        <>
-                          <span className="text-slate-400">→</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs">
-                            {proposal.toUserName}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-amber-600 dark:text-amber-400 text-xs font-medium">
-                          {t('initiatives.analysis.resources.noTarget', '⚠ No available person')}
+              {aiProposals.map((proposal, idx) => {
+                const overrideUserId = proposalOverrides[idx];
+                const effectiveUserId = overrideUserId ?? proposal.toUserId;
+                const effectiveUserName = overrideUserId
+                  ? (users.find((u) => u.id === overrideUserId)
+                      ? getUserLabel(users.find((u) => u.id === overrideUserId)!)
+                      : overrideUserId)
+                  : proposal.toUserName;
+                const isOverridden = !!overrideUserId && overrideUserId !== proposal.toUserId;
+
+                return (
+                  <div
+                    key={`${proposal.initiativeId}-${idx}`}
+                    className="flex items-center gap-3 px-4 py-3 text-sm"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 dark:text-white truncate">
+                          {proposal.initiativeName}
                         </span>
-                      )}
+                        <span className="text-slate-400 dark:text-slate-500">:</span>
+                        <span className="text-red-600 dark:text-red-400 line-through text-xs">
+                          {proposal.fromUserName}
+                        </span>
+                        <span className="text-slate-400">→</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {proposal.reason}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {proposal.reason}
-                    </p>
-                  </div>
-                  {proposal.toUserId ? (
+
+                    {/* Person selector: dropdown with AI suggestion pre-selected */}
+                    <select
+                      value={effectiveUserId}
+                      onChange={(e) => {
+                        setProposalOverrides((prev) => ({ ...prev, [idx]: e.target.value }));
+                      }}
+                      className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors
+                        bg-white dark:bg-navy-950 text-slate-900 dark:text-white
+                        ${isOverridden
+                          ? 'border-primary-400 dark:border-primary-500 ring-1 ring-primary-400/30'
+                          : 'border-slate-200 dark:border-navy-700'
+                        }`}
+                    >
+                      {proposal.toUserId && (
+                        <option value={proposal.toUserId}>
+                          {proposal.toUserName} (AI)
+                        </option>
+                      )}
+                      {!proposal.toUserId && (
+                        <option value="">
+                          {t('initiatives.analysis.resources.selectPerson', '— Select person —')}
+                        </option>
+                      )}
+                      {users
+                        .filter((u) => u.id !== proposal.fromUserId && u.id !== proposal.toUserId)
+                        .map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {getUserLabel(u)}
+                          </option>
+                        ))}
+                    </select>
+
                     <button
-                      onClick={() => handleApplyProposal(proposal, idx)}
-                      disabled={applyingProposalIdx === idx}
+                      onClick={() => {
+                        if (!effectiveUserId) return;
+                        const effectiveProposal: AiReassignment = {
+                          ...proposal,
+                          toUserId: effectiveUserId,
+                          toUserName: effectiveUserName,
+                        };
+                        handleApplyProposal(effectiveProposal, idx);
+                      }}
+                      disabled={applyingProposalIdx === idx || !effectiveUserId}
                       className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
                         bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
                         hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
@@ -527,22 +573,9 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       )}
                       {t('initiatives.analysis.resources.accept', 'Accept')}
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        const init = initiatives.find((i) => i.id === proposal.initiativeId);
-                        if (init) onOpenInitiative(init.id);
-                      }}
-                      className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                        bg-primary-500/10 text-primary-600 dark:text-primary-400
-                        hover:bg-primary-500/20 transition-colors"
-                    >
-                      <ExternalLink size={12} />
-                      {t('initiatives.analysis.resources.resolve', 'Resolve manually')}
-                    </button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
