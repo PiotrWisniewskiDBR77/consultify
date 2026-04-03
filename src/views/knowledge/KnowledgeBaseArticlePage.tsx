@@ -477,7 +477,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 {article.category_name && (
                   <Link
                     to={`/knowledge-base/${categorySlug}`}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-primary-500/25 bg-primary-600/10 text-primary-300 text-[10px] font-bold uppercase tracking-wider mb-5 hover:bg-primary-600/20 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-primary-300 bg-primary-100 text-primary-700 text-[10px] font-bold uppercase tracking-wider mb-5 hover:bg-primary-200 transition-colors dark:border-primary-500/25 dark:bg-primary-600/10 dark:text-primary-300 dark:hover:bg-primary-600/20"
                   >
                     {article.category_name}
                   </Link>
@@ -622,7 +622,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     </p>
                     <button
                       onClick={handleAskAnna}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600/20 border border-primary-500/30 text-primary-300 text-sm font-semibold hover:bg-primary-600/30 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700 transition-colors dark:bg-primary-600/20 dark:border dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-600/30"
                     >
                       <MessageCircle size={14} />
                       {docsLanguage === 'pl' ? 'Zapytaj Annę' : docsLanguage === 'de' ? 'Anna fragen' : 'Ask Anna'}
@@ -643,7 +643,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                       'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all',
                       feedback === 'up'
                         ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                        : 'border-slate-200 text-slate-500 hover:border-emerald-500/25 hover:text-emerald-500 dark:border-white/[0.08] dark:text-white/40 dark:hover:text-emerald-400'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-500/40 hover:text-emerald-600 dark:border-white/[0.08] dark:bg-transparent dark:text-white/40 dark:hover:text-emerald-400'
                     )}
                   >
                     <ThumbsUp size={14} />
@@ -655,7 +655,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                       'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all',
                       feedback === 'down'
                         ? 'bg-red-500/15 border-red-500/30 text-red-400'
-                        : 'border-slate-200 text-slate-500 hover:border-red-500/25 hover:text-red-500 dark:border-white/[0.08] dark:text-white/40 dark:hover:text-red-400'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-red-500/40 hover:text-red-600 dark:border-white/[0.08] dark:bg-transparent dark:text-white/40 dark:hover:text-red-400'
                     )}
                   >
                     <ThumbsDown size={14} />
