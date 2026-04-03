@@ -1,15 +1,15 @@
-# Your First 30 Minutes in Consultify
-
-Target persona: Owner / President / Change Leader  
-Funnel stage: Activation  
-Core problem: new users often lose momentum in strategic platforms because the first session feels like setup instead of progress  
-Main promise: in the first 30 minutes, a user should move from raw context to a usable diagnostic, an initial roadmap, and a leadership-ready output
-
+UPDATE kb_article_translations
+SET
+  title = 'Your First 30 Minutes in Consultify',
+  summary = 'the first session should produce a usable diagnostic, a first roadmap, and a leadership-ready output instead of another half-configured workspace',
+  content = $article$
 Your first session in Consultify should not feel like software onboarding. It should feel like the start of real transformation work.
 
-That changes the standard immediately. The first 30 minutes are not there to help a leader "discover features." They are there to prove that a strategic platform can turn a messy business challenge into a usable line of action before momentum disappears.
+The first 30 minutes are not there to help a leader "discover features." They are there to prove that a strategic platform can turn a messy business challenge into a usable line of action before momentum disappears.
 
 If the first session only creates another half-configured workspace, trust drops and adoption stalls. If it produces a credible diagnosis, a first roadmap, and something leadership can actually react to, the platform starts earning its place.
+
+![Consultify first-session workspace](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
 
 ## What success looks like after 30 minutes
 
@@ -57,6 +57,8 @@ At this stage, the user should ask which initiatives truly matter first, which d
 
 In practice, three to five priority initiatives are usually enough for the first working version. More than that often creates the illusion of sophistication while weakening focus.
 
+![First-session workflow map](/kb/consultify/03_first_30_minutes_in_consultify/analytical.png)
+
 ## Minutes 25-30: generate the first leadership-ready output
 
 Trust grows when a system helps the user communicate clearly, not only think privately.
@@ -96,3 +98,10 @@ The real goal is to prove that strategy work can start faster, stay governed, an
 ---
 
 *Consultify helps new users move from business context to diagnostic, roadmap, and leadership-ready output in one system instead of across disconnected tools. [Start free trial](https://consultify.ai) or [Open demo](https://consultify.ai/demo).*
+$article$
+WHERE article_id = 'kb-consultify-03_first_30_minutes_in_consultify'
+  AND language = 'en';
+
+UPDATE kb_articles
+SET updated_at = CURRENT_TIMESTAMP
+WHERE id = 'kb-consultify-03_first_30_minutes_in_consultify';
