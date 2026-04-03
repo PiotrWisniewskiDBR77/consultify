@@ -161,18 +161,18 @@ export const KnowledgeBaseHomePage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
           <div
-            className="absolute inset-0 opacity-[0.04]"
+            className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
+              backgroundImage: 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
               backgroundSize: '64px 64px',
               mask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
               WebkitMask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
             }}
           />
-          <div className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.18)_0%,transparent_65%)] blur-[80px]" />
-          <div className="absolute bottom-[-10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(0,210,255,0.10)_0%,transparent_65%)] blur-[90px]" />
+          <div className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.10)_0%,transparent_65%)] blur-[80px] dark:bg-[radial-gradient(circle,rgba(109,40,217,0.18)_0%,transparent_65%)]" />
+          <div className="absolute bottom-[-10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(14,165,233,0.08)_0%,transparent_65%)] blur-[90px] dark:bg-[radial-gradient(circle,rgba(0,210,255,0.10)_0%,transparent_65%)]" />
         </div>
 
         {/* Hero Section */}
@@ -187,30 +187,30 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <span>{t('kb.hero.badge', '50+ expert articles on transformation management')}</span>
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.0]">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.0] dark:text-white">
                 {t('kb.hero.title', 'Knowledge Base')}
               </h1>
 
-              <p className="mt-6 text-lg text-white/55 font-medium leading-relaxed max-w-2xl mx-auto">
+              <p className="mt-6 text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto dark:text-white/55">
                 {t('kb.hero.subtitle', 'Governance, execution, and AI decision support for transformation leaders. Built from real industrial practice, not theory.')}
               </p>
 
               {/* Search */}
               <form onSubmit={handleSearch} className="mt-10 max-w-xl mx-auto">
                 <div className="relative">
-                  <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('kb.hero.searchPlaceholder', 'Search articles...')}
-                    className="w-full pl-12 pr-12 py-4 rounded-2xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.10] text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all"
+                    className="w-full pl-12 pr-12 py-4 rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-900 placeholder-slate-400 text-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all dark:bg-white/[0.05] dark:border-white/[0.10] dark:text-white dark:placeholder-white/40"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => { setSearchQuery(''); setActiveSearch(''); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
                     </button>
@@ -233,7 +233,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     to={`/knowledge-base/${category.slug}`}
                     className={cn(
                       'group relative flex items-start gap-4 p-6 rounded-2xl border transition-all duration-300 text-left',
-                      `border-white/[0.06] bg-white/[0.025] backdrop-blur-sm hover:bg-white/[0.04] ${accent.border}`,
+                      `border-slate-200 bg-white/90 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.06] dark:bg-white/[0.025] dark:hover:bg-white/[0.04]`,
                       accent.glow
                     )}
                   >
@@ -244,11 +244,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-white text-sm tracking-tight">
+                      <h3 className="font-bold text-slate-900 text-sm tracking-tight dark:text-white">
                         {category.name}
                       </h3>
                       {category.description && (
-                        <p className="mt-1.5 text-xs text-white/45 line-clamp-2 leading-relaxed">
+                        <p className="mt-1.5 text-xs text-slate-600 line-clamp-2 leading-relaxed dark:text-white/45">
                           {category.description}
                         </p>
                       )}
@@ -269,7 +269,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <section className="relative z-10 px-6 pb-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
-                <Tag size={14} className="flex-shrink-0 text-white/30" />
+                <Tag size={14} className="flex-shrink-0 text-slate-400 dark:text-white/30" />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}
@@ -278,7 +278,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
                       selectedTag === tag.slug
                         ? 'bg-primary-600/20 border-primary-500/40 text-primary-300'
-                        : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:border-white/[0.15] hover:text-white/70'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:bg-white/[0.03] dark:border-white/[0.08] dark:text-white/50 dark:hover:border-white/[0.15] dark:hover:text-white/70'
                     )}
                   >
                     {tag.label}
@@ -298,8 +298,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               exit={{ opacity: 0, height: 0 }}
               className="relative z-10 px-6"
             >
-              <div className="max-w-7xl mx-auto py-3 flex items-center justify-between border-t border-white/[0.06]">
-                <div className="flex items-center gap-2 text-sm text-white/50">
+              <div className="max-w-7xl mx-auto py-3 flex items-center justify-between border-t border-slate-200 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-white/50">
                   <Filter size={14} />
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
                   {selectedCategory && (
@@ -308,7 +308,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     </span>
                   )}
                   {selectedTag && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-white/75 text-xs font-semibold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-semibold dark:bg-white/[0.06] dark:border-white/[0.12] dark:text-white/75">
                       #{tags?.find((tag: any) => tag.slug === selectedTag)?.label || selectedTag}
                     </span>
                   )}
@@ -325,11 +325,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
           {displayArticles ? (
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight mb-8">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8 dark:text-white">
                 {activeSearch
                   ? t('kb.results.searchTitle', 'Search results')
                   : t('kb.results.categoryTitle', 'Articles')}
-                <span className="ml-2 text-lg font-normal text-white/40">({displayArticles.length})</span>
+                <span className="ml-2 text-lg font-normal text-slate-500 dark:text-white/40">({displayArticles.length})</span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayArticles.map((article: KbArticleListItem) => (
@@ -344,10 +344,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-10">
                     <div>
-                      <h2 className="text-3xl font-black text-white tracking-tight">
+                      <h2 className="text-3xl font-black text-slate-900 tracking-tight dark:text-white">
                         {t('kb.featured.title', 'Featured Articles')}
                       </h2>
-                      <p className="mt-2 text-white/45 font-medium">
+                      <p className="mt-2 text-slate-600 font-medium dark:text-white/45">
                         {t('kb.featured.subtitle', 'Start here for the most impactful insights')}
                       </p>
                     </div>
@@ -379,10 +379,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                         <GraduationCap size={22} />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-black text-white tracking-tight">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight dark:text-white">
                           {t('kb.browse.title', 'Browse All Articles')}
                         </h2>
-                        <p className="text-sm text-white/40">
+                        <p className="text-sm text-slate-500 dark:text-white/40">
                           {browseArticles.length} {t('kb.articles', 'articles')} {t('kb.browse.subtitle', 'across all categories')}
                         </p>
                       </div>
@@ -397,7 +397,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     <div className="mt-10 text-center">
                       <button
                         onClick={() => setBrowseLimit((prev) => prev + ARTICLES_PER_PAGE)}
-                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-white/80 border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] hover:border-primary-500/30 transition-all duration-300"
+                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-slate-700 border border-slate-200 bg-white hover:bg-slate-50 hover:border-primary-500/30 transition-all duration-300 dark:text-white/80 dark:border-white/[0.12] dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
                       >
                         {t('kb.browse.loadMore', 'Load more articles')}
                         <ArrowRight size={14} />
@@ -426,13 +426,13 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
       to={`/knowledge-base/${article.category_slug}/${article.slug}`}
       className={cn(
         'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
-        'border-white/[0.06] bg-white/[0.025] backdrop-blur-sm',
-        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+        'border-slate-200 bg-white backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
+        'hover:bg-slate-50 hover:border-slate-300 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
         'hover:shadow-[0_0_40px_-12px_rgba(124,58,237,0.20)]'
       )}
     >
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-[#0D0828]">
+        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0D0828]">
           <img
             src={article.thumbnail_url}
             alt={article.title}
@@ -447,8 +447,8 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-[#0D0828] to-[#12082E] flex items-center justify-center">
-          <BookOpen size={32} className="text-white/15" />
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0D0828] dark:to-[#12082E]">
+          <BookOpen size={32} className="text-slate-300 dark:text-white/15" />
         </div>
       )}
 
@@ -459,12 +459,12 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           </span>
         )}
 
-        <h3 className="text-[15px] font-bold text-white group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
           {article.title}
         </h3>
 
         {article.summary && (
-          <p className="mt-2 text-xs text-white/40 line-clamp-2 leading-relaxed flex-1">
+          <p className="mt-2 text-xs text-slate-600 line-clamp-2 leading-relaxed flex-1 dark:text-white/40">
             {article.summary}
           </p>
         )}
@@ -474,7 +474,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
             {visibleTags.map((tag) => (
               <span
                 key={tag.id}
-                className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-white/60"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/60"
               >
                 {tag.label}
               </span>
@@ -482,7 +482,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-4 text-[11px] text-white/30 font-medium">
+        <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-500 font-medium dark:text-white/30">
           <span className="flex items-center gap-1">
             <Clock size={11} />
             {article.reading_time_minutes} {t('kb.card.min', 'min')}
@@ -496,11 +496,11 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         </div>
       </div>
 
-      <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
-        <span className="text-xs font-bold text-primary-400">
+      <div className="px-5 py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
+        <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
-        <ArrowRight size={13} className="text-primary-400 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight size={13} className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform" />
       </div>
     </Link>
   );
@@ -516,18 +516,18 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
   return (
     <Link
       to={`/knowledge-base/${article.category_slug}/${article.slug}`}
-      className="group p-5 rounded-2xl border border-white/[0.045] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.10] backdrop-blur-sm transition-all duration-200"
+      className="group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
     >
       <div className="flex items-center gap-2 mb-3">
         <span className={cn('w-2 h-2 rounded-full', accent.bg)} />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-white/30">
           {article.category_name}
         </span>
       </div>
-      <h4 className="font-bold text-sm text-white group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+      <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
         {article.title}
       </h4>
-      <p className="mt-2 text-[11px] text-white/35 line-clamp-2 leading-relaxed">
+      <p className="mt-2 text-[11px] text-slate-600 line-clamp-2 leading-relaxed dark:text-white/35">
         {article.summary}
       </p>
       {visibleTags.length > 0 && (
@@ -535,7 +535,7 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
           {visibleTags.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-white/55"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/55"
             >
               {tag.label}
             </span>
@@ -543,7 +543,7 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
         </div>
       )}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-[10px] text-white/25 flex items-center gap-1">
+        <span className="text-[10px] text-slate-500 flex items-center gap-1 dark:text-white/25">
           <Clock size={10} />
           {article.reading_time_minutes} {t('kb.card.min', 'min')}
         </span>
@@ -588,9 +588,9 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
             {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight">{category.name}</h2>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight dark:text-white">{category.name}</h2>
             {category.description && (
-              <p className="text-sm text-white/40">{category.description}</p>
+              <p className="text-sm text-slate-600 dark:text-white/40">{category.description}</p>
             )}
           </div>
         </div>
@@ -608,10 +608,10 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
           <Link
             key={article.id}
             to={`/knowledge-base/${category.slug}/${article.slug}`}
-            className="group p-5 rounded-2xl border border-white/[0.045] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.10] backdrop-blur-sm transition-all duration-200"
+            className="group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (
-              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-[#0D0828]">
+              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
                 <img
                   src={article.thumbnail_url}
                   alt={article.title}
@@ -620,10 +620,10 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
                 />
               </div>
             )}
-            <h4 className="font-bold text-sm text-white group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+            <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
               {article.title}
             </h4>
-            <p className="mt-2 text-[11px] text-white/35 line-clamp-2 leading-relaxed">
+            <p className="mt-2 text-[11px] text-slate-600 line-clamp-2 leading-relaxed dark:text-white/35">
               {article.summary}
             </p>
             <div className={cn('mt-3 flex items-center gap-1 text-xs font-bold', accent.text)}>
