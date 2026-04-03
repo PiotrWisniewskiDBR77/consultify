@@ -14,87 +14,40 @@ import { useTranslation } from 'react-i18next';
 
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
-const steps = [
-  {
-    number: '01',
-    icon: FileText,
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.30)',
-    title: 'Feed the relevant data',
-    description:
-      'Upload documents, connect your data sources, or simply describe your challenge in plain language. Consultify absorbs your full context — financials, org structure, competitive position, team capabilities — in seconds. No templates, no lengthy onboarding, no consultants required.',
-    details: [
-      'Financial statements & forecasts',
-      'Strategic documents & meeting notes',
-      'Market data & competitive intel',
-      'CRM, ERP or any data source via API',
-    ],
-  },
-  {
-    number: '02',
-    icon: Brain,
-    color: '#a855f7',
-    glow: 'rgba(168,85,247,0.28)',
-    title: 'AI instantly understands the full picture',
-    description:
-      'DBR77 Vector — our proprietary model — analyzes your context against 1,000+ real transformation engagements to map gaps, risks, and opportunities with structured reasoning. Built for decisions, not generic chat.',
-    details: [
-      'Cross-referenced against 1,000+ engagements',
-      'Gap analysis vs. industry benchmarks',
-      'Risk matrix with probability scoring',
-      'Cited sources for every insight',
-    ],
-  },
-  {
-    number: '03',
-    icon: CheckCircle2,
-    color: '#06b6d4',
-    glow: 'rgba(6,182,212,0.25)',
-    title: 'You receive a bulletproof plan with clear numbers',
-    description:
-      'A complete strategic roadmap with prioritized initiatives, NPV/IRR projections, timelines, resource requirements, and dependencies. Board-ready from the first output. Edit, refine, or regenerate in seconds.',
-    details: [
-      'NPV/IRR/Payback for every initiative',
-      'Gantt-style roadmap with milestones',
-      'Resource allocation model',
-      'Board-ready presentation, auto-generated',
-    ],
-  },
-  {
-    number: '04',
-    icon: Zap,
-    color: '#10b981',
-    glow: 'rgba(16,185,129,0.25)',
-    title: 'Execute with AI guiding every step',
-    description:
-      'Manage workstreams, assign tasks, track milestones, and navigate governance approvals — all in one place. AI flags risks before they escalate and proactively nudges your team toward decisions that matter.',
-    details: [
-      'Workstream & task management',
-      'Human approval gates (governance)',
-      'AI risk alerts & escalation triggers',
-      'Integrated chat for every initiative',
-    ],
-  },
-  {
-    number: '05',
-    icon: TrendingUp,
-    color: '#f59e0b',
-    glow: 'rgba(245,158,11,0.25)',
-    title: 'Watch the results appear',
-    description:
-      'Live KPI tracking connects every initiative to real business outcomes. See NPV delivered vs. projected, flag deviations instantly, and generate stakeholder reports automatically. No more manual status updates.',
-    details: [
-      'Live KPI vs. target dashboard',
-      'Deviation detection & alerts',
-      'Automatic investor/board reports',
-      'ROI attribution per initiative',
-    ],
-  },
+const STEP_VISUALS = [
+  { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
+  { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
+  { number: '03', icon: CheckCircle2, color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+  { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
+  { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
+];
+
+const TECH_VISUALS = [
+  { color: '#7c3aed', icon: Brain },
+  { color: '#06b6d4', icon: Zap },
+  { color: '#a855f7', icon: Cpu },
+  { color: '#10b981', icon: CheckCircle2 },
 ];
 
 export const HowItWorksPage: React.FC = () => {
   const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
+
+  const steps = STEP_VISUALS.map((v, i) => ({
+    ...v,
+    title: t(`pages.howItWorks.steps.${i}.title`),
+    description: t(`pages.howItWorks.steps.${i}.description`),
+    details: (() => {
+      const items = t(`pages.howItWorks.steps.${i}.details`, { returnObjects: true });
+      return Array.isArray(items) ? items : [];
+    })(),
+  }));
+
+  const techCards = TECH_VISUALS.map((v, i) => ({
+    ...v,
+    label: t(`pages.howItWorks.tech.cards.${i}.label`),
+    desc: t(`pages.howItWorks.tech.cards.${i}.desc`),
+  }));
 
   return (
     <MarketingLayout>
@@ -126,7 +79,7 @@ export const HowItWorksPage: React.FC = () => {
           >
             <Play size={11} className="text-primary-300" fill="currentColor" />
             <span className="text-xs font-bold text-primary-300 uppercase tracking-wider">
-              How it works
+              {t('pages.howItWorks.hero.badge', 'How it works')}
             </span>
           </motion.div>
 
@@ -137,7 +90,7 @@ export const HowItWorksPage: React.FC = () => {
             className="font-black tracking-tight leading-tight text-white mb-6"
             style={{ fontSize: 'clamp(38px, 5vw, 72px)' }}
           >
-            From idea to measurable results.
+            {t('pages.howItWorks.hero.titleLine1', 'From idea to measurable results.')}
             <span
               className="block"
               style={{
@@ -147,7 +100,7 @@ export const HowItWorksPage: React.FC = () => {
                 backgroundClip: 'text',
               }}
             >
-              Fully automated.
+              {t('pages.howItWorks.hero.titleLine2', 'Fully automated.')}
             </span>
           </motion.h1>
 
@@ -157,8 +110,7 @@ export const HowItWorksPage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/55 max-w-2xl mx-auto mb-10"
           >
-            No consulting firm. No 6-month project. No slides assembled manually at 2am. Just
-            intelligence turning into execution and results.
+            {t('pages.howItWorks.hero.subtitle', 'No consulting firm. No 6-month project. No slides assembled manually at 2am. Just intelligence turning into execution and results.')}
           </motion.p>
 
           <motion.div
@@ -174,7 +126,7 @@ export const HowItWorksPage: React.FC = () => {
                 boxShadow: '0 0 40px -12px rgba(124,58,237,0.65)',
               }}
             >
-              <span>Open Demo Now</span>
+              <span>{t('pages.howItWorks.hero.ctaPrimary', 'Open Demo Now')}</span>
               <ArrowRight size={15} />
             </button>
             <button
@@ -184,7 +136,7 @@ export const HowItWorksPage: React.FC = () => {
                 border: '1px solid rgba(255,255,255,0.15)',
               }}
             >
-              Launch Free Trial
+              {t('pages.howItWorks.hero.ctaSecondary', 'Launch Free Trial')}
             </button>
           </motion.div>
         </div>
@@ -253,9 +205,9 @@ export const HowItWorksPage: React.FC = () => {
             </div>
             <div className="space-y-3">
               <p className="text-xs font-black text-white/30 uppercase tracking-widest mb-4">
-                What you get:
+                {t('pages.howItWorks.steps.whatYouGet', 'What you get:')}
               </p>
-              {steps[activeStep].details.map((d) => (
+              {steps[activeStep].details.map((d: string) => (
                 <div
                   key={d}
                   className="flex items-center gap-3 p-3 rounded-xl"
@@ -317,16 +269,14 @@ export const HowItWorksPage: React.FC = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <Cpu size={18} className="text-primary-400" />
                   <span className="text-xs font-black text-primary-400 uppercase tracking-widest">
-                    The technology behind the magic
+                    {t('pages.howItWorks.tech.badge', 'The technology behind the magic')}
                   </span>
                 </div>
                 <h2 className="text-3xl font-black text-white mb-5">
-                  Powered by DBR77 Vector, our proprietary AI model.
+                  {t('pages.howItWorks.tech.title', 'Powered by DBR77 Vector, our proprietary AI model.')}
                 </h2>
                 <p className="text-white/55 leading-relaxed mb-6">
-                  Built on 1,000+ real transformation engagements and delivered through secure
-                  deployment options. DBR77 Vector is our model, not a wrapper, with MCP
-                  integration for end-to-end automation from data ingestion to final output.
+                  {t('pages.howItWorks.tech.description', 'Built on 1,000+ real transformation engagements and delivered through secure deployment options. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation from data ingestion to final output.')}
                 </p>
                 <a
                   href="https://vector.dbr77.com"
@@ -338,37 +288,12 @@ export const HowItWorksPage: React.FC = () => {
                     boxShadow: '0 0 30px -10px rgba(124,58,237,0.60)',
                   }}
                 >
-                  Explore DBR77 Vector <ArrowRight size={14} />
+                  {t('pages.howItWorks.tech.cta', 'Explore DBR77 Vector')} <ArrowRight size={14} />
                 </a>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  {
-                    label: 'DBR77 Vector',
-                    desc: 'Proprietary AI model',
-                    color: '#7c3aed',
-                    icon: Brain,
-                  },
-                  {
-                    label: 'MCP Integration',
-                    desc: 'Full end-to-end automation',
-                    color: '#06b6d4',
-                    icon: Zap,
-                  },
-                  {
-                    label: 'Private Deployment',
-                    desc: 'On-premise, private API, or isolated access',
-                    color: '#a855f7',
-                    icon: Cpu,
-                  },
-                  {
-                    label: '1,000+ Engagements',
-                    desc: 'Real transformation knowledge base',
-                    color: '#10b981',
-                    icon: CheckCircle2,
-                  },
-                ].map((item) => {
+                {techCards.map((item) => {
                   const I = item.icon;
                   return (
                     <div

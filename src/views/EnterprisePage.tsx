@@ -1,51 +1,29 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Building2, CheckCircle2, Globe, Lock, Shield, Zap } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
-const capabilities = [
-  {
-    icon: Zap,
-    color: '#7c3aed',
-    title: 'The brain of your organization',
-    desc: 'Consultify integrates with your entire business ecosystem — ERP, CRM, BI tools — becoming the strategic intelligence layer that connects data to decisions.',
-  },
-  {
-    icon: Globe,
-    color: '#06b6d4',
-    title: 'Global deployment, local compliance',
-    desc: 'Deploy in EU, US, GCC or Japan. Full GDPR, CCPA, and regional data residency. Your data never leaves your chosen region.',
-  },
-  {
-    icon: Lock,
-    color: '#10b981',
-    title: 'Enterprise-grade security',
-    desc: 'SSO, MFA, SCIM provisioning, role-based access control, full audit logs, and AES-256 encryption at rest and in transit.',
-  },
-  {
-    icon: Shield,
-    color: '#f59e0b',
-    title: 'Human governance built in',
-    desc: 'Every AI recommendation requires human approval at configurable gates. Full accountability. Zero autonomous decisions without your sign-off.',
-  },
-  {
-    icon: Building2,
-    color: '#c026d3',
-    title: 'White-label & co-branded',
-    desc: 'Deploy as your own product. White-label UI, custom domain, your branding, your clients. Full partner revenue sharing.',
-  },
-  {
-    icon: CheckCircle2,
-    color: '#0891b2',
-    title: 'Dedicated success team',
-    desc: 'Onboarding, training, quarterly business reviews, and a dedicated CSM to ensure your organization gets maximum value.',
-  },
+const CAPABILITY_VISUALS = [
+  { icon: Zap, color: '#7c3aed' },
+  { icon: Globe, color: '#06b6d4' },
+  { icon: Lock, color: '#10b981' },
+  { icon: Shield, color: '#f59e0b' },
+  { icon: Building2, color: '#c026d3' },
+  { icon: CheckCircle2, color: '#0891b2' },
 ];
 
 export const EnterprisePage: React.FC = () => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', company: '', email: '', message: '' });
   const [sent, setSent] = useState(false);
+
+  const capabilities = CAPABILITY_VISUALS.map((v, i) => ({
+    ...v,
+    title: t(`pages.enterprise.capabilities.${i}.title`),
+    desc: t(`pages.enterprise.capabilities.${i}.desc`),
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +60,7 @@ export const EnterprisePage: React.FC = () => {
           >
             <Building2 size={12} className="text-cyan-400" />
             <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-              Enterprise
+              {t('pages.enterprise.hero.badge', 'Enterprise')}
             </span>
           </motion.div>
 
@@ -93,9 +71,9 @@ export const EnterprisePage: React.FC = () => {
             className="font-black tracking-tight text-white mb-6"
             style={{ fontSize: 'clamp(36px, 5vw, 72px)', lineHeight: 1.05 }}
           >
-            For serious players only.
+            {t('pages.enterprise.hero.titleLine1', 'For serious players only.')}
             <span className="block text-white/60 font-black" style={{ fontSize: '70%' }}>
-              Consultify as the intelligence layer of your entire organization.
+              {t('pages.enterprise.hero.titleLine2', 'Consultify as the intelligence layer of your entire organization.')}
             </span>
           </motion.h1>
 
@@ -105,8 +83,7 @@ export const EnterprisePage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/50 max-w-2xl mx-auto mb-10"
           >
-            Not another SaaS tool. A strategic operating system that sits at the center of your org
-            — connecting every team, every decision, every outcome.
+            {t('pages.enterprise.hero.subtitle', 'Not another SaaS tool. A strategic operating system that sits at the center of your org — connecting every team, every decision, every outcome.')}
           </motion.p>
         </div>
       </section>
@@ -157,20 +134,26 @@ export const EnterprisePage: React.FC = () => {
             {sent ? (
               <div className="text-center py-8">
                 <CheckCircle2 size={48} className="text-emerald-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-black text-white mb-2">We'll be in touch.</h2>
-                <p className="text-white/50">Our enterprise team will reach you within 24 hours.</p>
+                <h2 className="text-2xl font-black text-white mb-2">
+                  {t('pages.enterprise.form.successTitle', "We'll be in touch.")}
+                </h2>
+                <p className="text-white/50">
+                  {t('pages.enterprise.form.successMessage', 'Our enterprise team will reach you within 24 hours.')}
+                </p>
               </div>
             ) : (
               <>
-                <h2 className="text-2xl font-black text-white mb-2">Talk to our team.</h2>
+                <h2 className="text-2xl font-black text-white mb-2">
+                  {t('pages.enterprise.form.title', 'Talk to our team.')}
+                </h2>
                 <p className="text-white/45 mb-8 text-sm">
-                  Tell us about your organization and we'll show you exactly how Consultify fits.
+                  {t('pages.enterprise.form.subtitle', "Tell us about your organization and we'll show you exactly how Consultify fits.")}
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {[
-                    { key: 'name', placeholder: 'Your name', type: 'text' },
-                    { key: 'company', placeholder: 'Company name', type: 'text' },
-                    { key: 'email', placeholder: 'Work email', type: 'email' },
+                    { key: 'name', placeholder: t('pages.enterprise.form.placeholderName', 'Your name'), type: 'text' },
+                    { key: 'company', placeholder: t('pages.enterprise.form.placeholderCompany', 'Company name'), type: 'text' },
+                    { key: 'email', placeholder: t('pages.enterprise.form.placeholderEmail', 'Work email'), type: 'email' },
                   ].map((field) => (
                     <input
                       key={field.key}
@@ -193,7 +176,7 @@ export const EnterprisePage: React.FC = () => {
                     />
                   ))}
                   <textarea
-                    placeholder="Tell us about your challenge (optional)"
+                    placeholder={t('pages.enterprise.form.placeholderMessage', 'Tell us about your challenge (optional)')}
                     rows={3}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -218,7 +201,7 @@ export const EnterprisePage: React.FC = () => {
                       boxShadow: '0 0 30px -10px rgba(124,58,237,0.55)',
                     }}
                   >
-                    Send message <ArrowRight size={14} />
+                    {t('pages.enterprise.form.submit', 'Send message')} <ArrowRight size={14} />
                   </button>
                 </form>
               </>
