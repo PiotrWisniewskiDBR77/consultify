@@ -379,37 +379,6 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom CTA */}
-        <section className="relative z-10 mx-6 mb-16">
-          <div className="max-w-5xl mx-auto rounded-[32px] border border-white/[0.08] bg-white/[0.035] backdrop-blur-xl p-12 text-center">
-            <h2 className="text-3xl font-black text-white tracking-tight">
-              {t('kb.cta.title', 'Ready to transform how you manage change?')}
-            </h2>
-            <p className="mt-4 text-lg text-white/50 max-w-2xl mx-auto">
-              {t('kb.cta.subtitle', 'See how Consultify connects strategy, governance, and execution in one system.')}
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/trial/start"
-                className="px-8 py-3.5 rounded-full font-bold text-white transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                  boxShadow: '0 0 36px -14px rgba(124,58,237,0.70)',
-                }}
-              >
-                {t('kb.cta.trial', 'Start Free Trial')}
-              </Link>
-              <Link
-                to="/demo"
-                className="px-8 py-3.5 rounded-full font-bold text-white/80 border border-white/[0.18] bg-white/[0.05] hover:bg-white/[0.09] hover:border-primary-500/45 transition-all"
-              >
-                {t('kb.cta.demo', 'Book a Demo')}
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <div className="relative z-10 h-px mx-auto max-w-4xl bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
       </div>
     </MarketingLayout>
   );
