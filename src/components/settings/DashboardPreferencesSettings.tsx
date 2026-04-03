@@ -1,14 +1,3 @@
-/**
- * DashboardPreferencesSettings Component
- *
- * User preferences for dashboard customization:
- * - Default landing page after login
- * - Widget visibility toggles
- * - Compact mode
- * - Greeting message
- * - Auto-refresh interval
- */
-
 import {
   BarChart3,
   Brain,
@@ -16,19 +5,20 @@ import {
   Calendar,
   CheckSquare,
   Eye,
-  EyeOff,
   Home,
   LayoutDashboard,
   Loader2,
   MessageSquare,
   Minimize2,
   RefreshCw,
-  Save,
+  RotateCcw,
+  Zap,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { invalidateDashboardPreferencesCache } from '../../hooks/useDashboardPreferences';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -39,10 +29,11 @@ interface DashboardPreferencesSettingsProps {
 }
 
 interface DashboardPreferences {
-  defaultLandingPage: 'ai-assistant' | 'projects' | 'tasks' | 'calendar';
+  defaultLandingPage: string;
   showGreeting: boolean;
   compactMode: boolean;
-  autoRefreshInterval: number; // in seconds, 0 = disabled
+  autoRefreshInterval: number;
+  liveUpdates: boolean;
   widgets: {
     tasks: boolean;
     initiatives: boolean;
@@ -62,7 +53,8 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
   defaultLandingPage: 'ai-assistant',
   showGreeting: true,
   compactMode: false,
-  autoRefreshInterval: 60,
+  autoRefreshInterval: 0,
+  liveUpdates: false,
   widgets: {
     tasks: true,
     initiatives: true,
@@ -81,11 +73,18 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestPrefsRef = useRef<DashboardPreferences>(DEFAULT_PREFERENCES);
 
   useEffect(() => {
     loadPreferences();
   }, [currentUser.id]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const loadPreferences = async () => {
     try {
@@ -93,7 +92,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         '/settings/preferences/dashboard'
       )) as DashboardPreferencesResponse;
       if (data?.preferences) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+        const merged = { ...DEFAULT_PREFERENCES, ...data.preferences, widgets: { ...DEFAULT_PREFERENCES.widgets, ...data.preferences.widgets } };
+        setPreferences(merged);
+        latestPrefsRef.current = merged;
       }
     } catch (error) {
       console.error('Failed to load dashboard preferences:', error);
@@ -102,31 +103,54 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await Api.put('/settings/preferences/dashboard', { preferences });
-      toast.success(t('settings.dashboard.saved', 'Dashboard preferences saved successfully'));
-    } catch (error) {
-      toast.error(t('settings.dashboard.error', 'Failed to save preferences'));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const debouncedSave = useCallback((newPrefs: DashboardPreferences) => {
+    latestPrefsRef.current = newPrefs;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await Api.put('/settings/preferences/dashboard', { preferences: latestPrefsRef.current });
+        invalidateDashboardPreferencesCache();
+        toast.success(t('settings.dashboard.saved', 'Preferences saved'), { id: 'dash-prefs-save', duration: 1500 });
+      } catch {
+        toast.error(t('settings.dashboard.error', 'Failed to save preferences'));
+      }
+    }, 600);
+  }, [t]);
 
   const updatePreference = <K extends keyof DashboardPreferences>(
     key: K,
     value: DashboardPreferences[K]
   ) => {
-    setPreferences((prev) => ({ ...prev, [key]: value }));
+    setPreferences((prev) => {
+      const next = { ...prev, [key]: value };
+      debouncedSave(next);
+      return next;
+    });
   };
 
   const toggleWidget = (widget: keyof DashboardPreferences['widgets']) => {
-    setPreferences((prev) => ({
-      ...prev,
-      widgets: { ...prev.widgets, [widget]: !prev.widgets[widget] },
-    }));
+    setPreferences((prev) => {
+      const next = {
+        ...prev,
+        widgets: { ...prev.widgets, [widget]: !prev.widgets[widget] },
+      };
+      debouncedSave(next);
+      return next;
+    });
   };
+
+  const handleReset = useCallback(async () => {
+    setPreferences(DEFAULT_PREFERENCES);
+    latestPrefsRef.current = DEFAULT_PREFERENCES;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    try {
+      await Api.put('/settings/preferences/dashboard', { preferences: DEFAULT_PREFERENCES });
+      invalidateDashboardPreferencesCache();
+      toast.success(t('settings.dashboard.reset', 'Preferences reset to defaults'));
+    } catch {
+      toast.error(t('settings.dashboard.error', 'Failed to save preferences'));
+    }
+  }, [t]);
 
   if (loading) {
     return (
@@ -138,6 +162,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
 
   const landingPageOptions = [
     { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Chat'), icon: Brain },
+    { value: 'my-work', label: t('settings.dashboard.pages.myWork', 'My Work'), icon: Home },
     {
       value: 'projects',
       label: t('settings.dashboard.pages.projects', 'Projects'),
@@ -148,6 +173,16 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
       value: 'calendar',
       label: t('settings.dashboard.pages.calendar', 'Calendar'),
       icon: Calendar,
+    },
+    {
+      value: 'dashboard',
+      label: t('settings.dashboard.pages.dashboard', 'Dashboard'),
+      icon: LayoutDashboard,
+    },
+    {
+      value: 'initiatives',
+      label: t('settings.dashboard.pages.initiatives', 'Initiatives'),
+      icon: Briefcase,
     },
   ];
 
@@ -207,12 +242,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
           </p>
         </div>
         <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          onClick={handleReset}
+          className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 rounded-lg transition-colors text-sm"
         >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
+          <RotateCcw size={14} />
+          {t('settings.dashboard.resetDefaults', 'Reset to Defaults')}
         </button>
       </div>
 
@@ -229,7 +263,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
           )}
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {landingPageOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = preferences.defaultLandingPage === option.value;
@@ -239,7 +273,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 onClick={() =>
                   updatePreference(
                     'defaultLandingPage',
-                    option.value as DashboardPreferences['defaultLandingPage']
+                    option.value
                   )
                 }
                 className={`p-4 rounded-xl border-2 transition-all text-center ${
@@ -253,7 +287,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                   className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500'}`}
                 />
                 <div
-                  className={`mt-2 text-sm font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                  className={`mt-2 text-xs font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
                 >
                   {option.label}
                 </div>
@@ -369,37 +403,30 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
             </button>
           </div>
 
-          {/* Auto Refresh */}
+          {/* Live Updates */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <RefreshCw size={16} className="text-blue-500" />
-                {t('settings.dashboard.autoRefresh', 'Auto-Refresh Interval')}
+                <Zap size={16} className="text-blue-500" />
+                {t('settings.dashboard.liveUpdates', 'Live Updates')}
               </label>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {t(
-                  'settings.dashboard.autoRefreshDescription',
-                  'Automatically refresh dashboard data'
+                  'settings.dashboard.liveUpdatesDescription',
+                  'Automatically refresh dashboard data when changes occur'
                 )}
               </p>
             </div>
-            <select
-              value={preferences.autoRefreshInterval}
-              onChange={(e) => updatePreference('autoRefreshInterval', parseInt(e.target.value))}
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+            <button
+              onClick={() => updatePreference('liveUpdates', !preferences.liveUpdates)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                preferences.liveUpdates ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+              }`}
             >
-              <option value="0">{t('settings.dashboard.disabled', 'Disabled')}</option>
-              <option value="30">
-                {t('settings.dashboard.seconds', '{{count}} seconds', { count: 30 })}
-              </option>
-              <option value="60">{t('settings.dashboard.minute', '1 minute')}</option>
-              <option value="300">
-                {t('settings.dashboard.minutes', '{{count}} minutes', { count: 5 })}
-              </option>
-              <option value="600">
-                {t('settings.dashboard.minutes', '{{count}} minutes', { count: 10 })}
-              </option>
-            </select>
+              <span
+                className={`${preferences.liveUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+              />
+            </button>
           </div>
         </div>
       </div>

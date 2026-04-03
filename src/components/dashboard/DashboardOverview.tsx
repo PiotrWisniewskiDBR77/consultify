@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import { useDashboardPreferences } from '../../hooks/useDashboardPreferences';
 import { AppView, FullSession, InitiativeStatus } from '../../types';
 
 interface DashboardOverviewProps {
@@ -35,6 +36,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onEditTask,
   refreshTrigger,
 }) => {
+  const { preferences: dashPrefs } = useDashboardPreferences();
   const safeSession = session || {
     step1Completed: false,
     step2Completed: false,
@@ -285,7 +287,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* Initiative Summary & KPIs */}
         <div className="space-y-6">
           {/* Initiative Summary */}
-          <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+          {dashPrefs.widgets.initiatives && <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
             <h3 className="font-bold text-navy-900 dark:text-white mb-4">Initiative Summary</h3>
             <div className="flex justify-between items-end mb-6">
               <div>
@@ -319,10 +321,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="font-mono font-bold">{initiativeStats.done}</span>
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* KPI Snapshot */}
-          <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+          {dashPrefs.widgets.metrics && <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
             <h3 className="font-bold text-navy-900 dark:text-white mb-4">
               Key Performance Indicators
             </h3>
@@ -342,12 +344,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* AI Insights */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
+          {dashPrefs.widgets.aiInsights && <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
             <div className="absolute top-0 right-0 p-8 opacity-20">
               <BrainCircuit size={180} />
             </div>
@@ -398,10 +400,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {dashPrefs.widgets.quickActions && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button
               onClick={onCreateTask}
               className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group"
@@ -421,7 +423,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <Rocket className="mx-auto mb-2 text-orange-600 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-semibold">Pilot</span>
             </button>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

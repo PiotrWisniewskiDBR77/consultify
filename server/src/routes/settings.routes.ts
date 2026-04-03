@@ -2620,13 +2620,14 @@ router.get(
         return res.json({ preferences: JSON.parse(prefs.preferences_data) });
       }
 
-      // Return defaults
+      // Return defaults (aligned with client DEFAULT_PREFERENCES)
       return res.json({
         preferences: {
-          defaultLandingPage: 'dashboard',
+          defaultLandingPage: 'ai-assistant',
           showGreeting: true,
           compactMode: false,
-          autoRefreshInterval: 60,
+          autoRefreshInterval: 0,
+          liveUpdates: false,
           widgets: {
             tasks: true,
             initiatives: true,
