@@ -742,7 +742,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(cookieParser()); // Required for CSRF protection
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-app.use('/kb', express.static(path.join(__dirname, '../public/kb'), { maxAge: '7d', immutable: true }));
+const kbStaticCandidates = [
+  path.join(__dirname, '../../public/kb'),
+  path.join(__dirname, '../public/kb'),
+  path.join(process.cwd(), 'public/kb'),
+  path.join(process.cwd(), 'server/public/kb'),
+];
+const kbStaticDir = kbStaticCandidates.find((d) => fs.existsSync(d)) || kbStaticCandidates[0];
+app.use('/kb', express.static(kbStaticDir, { maxAge: '7d', immutable: true }));
 
 // Correlation & Context Tracking
 app.use(correlationMiddleware);

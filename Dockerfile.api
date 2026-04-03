@@ -172,6 +172,8 @@ RUN mkdir -p /app/server
 COPY --from=backend-builder --chown=nodejs:nodejs /app/dist /app/server/dist-temp
 # Copy runtime SQL migrations needed by the table-platform bootstrapper.
 COPY --from=backend-builder --chown=nodejs:nodejs /app/migrations /app/server/migrations
+# Copy public KB assets (article images served via express.static('/kb'))
+COPY --from=backend-builder --chown=nodejs:nodejs /app/public /app/server/public
 # Check where index.js actually is and set up the correct structure
 RUN if [ -f /app/server/dist-temp/index.js ]; then \
       echo "Found index.js at root level"; \
