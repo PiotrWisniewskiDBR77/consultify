@@ -803,7 +803,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       if (!allowed.includes(viewMode)) setViewMode('table');
       return;
     }
-    // Raporty and Manager don't use view modes — reset to table if needed
+    if (activeTab === 'reports') {
+      const allowed: ViewMode[] = ['table', 'grid'];
+      if (!allowed.includes(viewMode)) setViewMode('table');
+      return;
+    }
     if (viewMode !== 'table') setViewMode('table');
   }, [activeTab, viewMode]);
 
@@ -3594,6 +3598,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
 
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
 
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
@@ -3620,174 +3626,398 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     [filteredInitiatives.length, tasks.length, decisions.length, actionCenter.blocked.length, riskSignals.length, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
   );
 
-  const renderReportsCatalog = () => (
-    <div className="p-4 space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            {t('execution.reportCatalog.heading', 'Execution Reports')}
-          </h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.')}
-          </p>
+  const reportColumns: TableColumn[] = useMemo(() => [
+    {
+      id: 'title',
+      label: t('execution.reportCatalog.col.title', 'Report'),
+      render: (row: any) => {
+        const r = row as ReportDef;
+        return (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+              {r.icon}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{r.title}</div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{r.audience}</div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'cadence',
+      label: t('execution.reportCatalog.col.cadence', 'Cadence'),
+      width: '100px',
+      render: (row: any) => (
+        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {(row as ReportDef).cadence}
+        </span>
+      ),
+    },
+    {
+      id: 'highlights',
+      label: t('execution.reportCatalog.col.data', 'Live Data'),
+      width: '200px',
+      render: (row: any) => {
+        const r = row as ReportDef;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {r.highlights.slice(0, 3).map((h) => (
+              <span
+                key={h.label}
+                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                  h.variant === 'critical'
+                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                    : h.variant === 'warn'
+                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                {h.label}: {h.value}
+              </span>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'sections',
+      label: t('execution.reportCatalog.col.sections', 'Sections'),
+      width: '60px',
+      render: (row: any) => (
+        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          {(row as ReportDef).sections.length}
+        </span>
+      ),
+    },
+  ], [t]);
+
+  const renderReportPreviewBody = (report: ReportDef) => (
+    <div className="p-4 space-y-4 overflow-auto">
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
+          {report.icon}
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/reports')}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-        >
-          {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
-        </button>
+        <div>
+          <div className="text-sm font-semibold text-slate-900 dark:text-white">{report.title}</div>
+          <div className="text-[10px] text-slate-400 dark:text-slate-500">
+            {report.cadence} · {report.audience}
+          </div>
+        </div>
       </div>
 
-      {filteredInitiatives.length === 0 && (
-        <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
-          {t('execution.reportCatalog.noDataDesc', 'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.')}
-        </Callout>
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {reportCatalog.map((report) => {
-          const isExpanded = expandedReportId === report.id;
-          return (
-            <div
-              key={report.id}
-              className={`group rounded-xl border bg-white dark:bg-navy-900 transition-all ${
-                isExpanded
-                  ? 'border-cyan-400 dark:border-cyan-600 shadow-md col-span-1 sm:col-span-2 xl:col-span-3'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30'
+      {report.highlights.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {report.highlights.map((h) => (
+            <span
+              key={h.label}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                h.variant === 'critical'
+                  ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                  : h.variant === 'warn'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
               }`}
             >
-              {/* Card header — always visible */}
-              <button
-                type="button"
-                onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-                className="w-full text-left p-4"
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
-                      {report.icon}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
-                        {report.title}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                          {report.cadence}
-                        </span>
-                        <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                          {report.audience}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight size={14} className={`text-slate-300 dark:text-slate-600 transition-transform ${isExpanded ? 'rotate-90 text-cyan-500' : 'group-hover:text-cyan-500'}`} />
-                </div>
+              {h.label}: {h.value}
+            </span>
+          ))}
+        </div>
+      )}
 
-                {report.highlights.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {report.highlights.map((h) => (
-                      <span
-                        key={h.label}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                          h.variant === 'critical'
-                            ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                            : h.variant === 'warn'
-                              ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {h.label}: {h.value}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </button>
+      <div className="space-y-3 pt-2">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Scope</div>
+          <p className="text-xs text-slate-700 dark:text-slate-300">{report.scope}</p>
+        </div>
 
-              {/* Expanded contract details — per §5.5 */}
-              {isExpanded && (
-                <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-800 pt-3 space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Scope</div>
-                      <p className="text-xs text-slate-700 dark:text-slate-300">{report.scope}</p>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Data sources</div>
-                      <div className="flex flex-wrap gap-1">
-                        {report.dataSources.map((ds) => (
-                          <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Mandatory sections</div>
-                      <ul className="space-y-0.5">
-                        {report.sections.map((s) => (
-                          <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
-                            <span className="text-slate-300 dark:text-slate-600 mt-px">•</span> {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">RAG / confidence logic</div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
-                    </div>
-                  </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Data sources</div>
+          <div className="flex flex-wrap gap-1">
+            {report.dataSources.map((ds) => (
+              <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+            ))}
+          </div>
+        </div>
 
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Expected follow-up actions</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {report.followUpActions.map((a) => (
-                        <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
-                      ))}
-                    </div>
-                  </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Mandatory sections</div>
+          <ul className="space-y-0.5">
+            {report.sections.map((s) => (
+              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                <span className="text-slate-300 dark:text-slate-600 mt-px">•</span> {s}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-                  <div className="flex items-center gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateReport(report)}
-                      className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
-                    >
-                      {t('execution.reportCatalog.generate', 'Generate Report')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const text = [
-                          `# ${report.title}`,
-                          `Audience: ${report.audience}`,
-                          `Cadence: ${report.cadence}`,
-                          `Scope: ${report.scope}`,
-                          `Data sources: ${report.dataSources.join(', ')}`,
-                          `\nSections:\n${report.sections.map((s) => `- ${s}`).join('\n')}`,
-                          `\nRAG logic: ${report.ragLogic}`,
-                          `\nFollow-up actions:\n${report.followUpActions.map((a) => `- ${a}`).join('\n')}`,
-                          `\nLive data: ${report.highlights.map((h) => `${h.label}: ${h.value}`).join(', ')}`,
-                        ].join('\n');
-                        navigator.clipboard.writeText(text).then(
-                          () => toast.success(t('execution.reportCatalog.copied', 'Report definition copied to clipboard')),
-                          () => toast.error(t('execution.reportCatalog.copyFailed', 'Failed to copy'))
-                        );
-                      }}
-                      className="h-8 px-4 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      {t('execution.reportCatalog.export', 'Copy Report Definition')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">RAG / confidence logic</div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+        </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Expected follow-up actions</div>
+          <div className="flex flex-wrap gap-1.5">
+            {report.followUpActions.map((a) => (
+              <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
+
+  const renderReportPreviewFooter = (report: ReportDef) => (
+    <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+      <button
+        type="button"
+        onClick={() => handleGenerateReport(report)}
+        className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+      >
+        {t('execution.reportCatalog.generate', 'Generate Report')}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const text = [
+            `# ${report.title}`,
+            `Audience: ${report.audience}`,
+            `Cadence: ${report.cadence}`,
+            `Scope: ${report.scope}`,
+            `Data sources: ${report.dataSources.join(', ')}`,
+            `\nSections:\n${report.sections.map((s) => `- ${s}`).join('\n')}`,
+            `\nRAG logic: ${report.ragLogic}`,
+            `\nFollow-up actions:\n${report.followUpActions.map((a) => `- ${a}`).join('\n')}`,
+            `\nLive data: ${report.highlights.map((h) => `${h.label}: ${h.value}`).join(', ')}`,
+          ].join('\n');
+          navigator.clipboard.writeText(text).then(
+            () => toast.success(t('execution.reportCatalog.copied', 'Report definition copied to clipboard')),
+            () => toast.error(t('execution.reportCatalog.copyFailed', 'Failed to copy'))
+          );
+        }}
+        className="h-8 px-4 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+      >
+        {t('execution.reportCatalog.export', 'Copy Report Definition')}
+      </button>
+    </div>
+  );
+
+  const renderReportsCatalog = () => {
+    if (filteredInitiatives.length === 0) {
+      return (
+        <div className="p-4">
+          <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
+            {t('execution.reportCatalog.noDataDesc', 'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.')}
+          </Callout>
+        </div>
+      );
+    }
+
+    if (viewMode === 'table') {
+      type ReportRow = ReportDef & { title: string };
+      const selectedReport = selectedReportId
+        ? (reportCatalog.find((r) => r.id === selectedReportId) as ReportRow | undefined) ?? null
+        : null;
+      const reportIds = reportCatalog.map((r) => r.id);
+
+      return (
+        <div className="h-full overflow-hidden">
+          <TableWithPreviewLayout<ReportRow>
+            selectedId={selectedReportId}
+            selectedItem={selectedReport}
+            onSelect={setSelectedReportId}
+            itemIds={reportIds}
+            getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
+            onOpenFull={(id) => {
+              const r = reportCatalog.find((x) => x.id === id);
+              if (r) handleGenerateReport(r);
+            }}
+            renderPreview={(item) => renderReportPreviewBody(item)}
+            renderPreviewFooter={(item) => renderReportPreviewFooter(item)}
+          >
+            <FilterableTable
+              columns={reportColumns}
+              data={reportCatalog as any[]}
+              selectedRowId={selectedReportId}
+              onRowClick={(row) => setSelectedReportId(String(row.id))}
+              onRowDoubleClick={(row) => {
+                const r = reportCatalog.find((x) => x.id === row.id);
+                if (r) handleGenerateReport(r);
+              }}
+              activeFilters={reportFilters}
+              onFilterChange={setReportFilters}
+              emptyMessage={t('execution.reportCatalog.noData', 'No reports')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              density="compact"
+            />
+          </TableWithPreviewLayout>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              {t('execution.reportCatalog.heading', 'Execution Reports')}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/reports')}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
+          </button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {reportCatalog.map((report) => {
+            const isExpanded = expandedReportId === report.id;
+            return (
+              <div
+                key={report.id}
+                className={`group rounded-xl border bg-white dark:bg-navy-900 transition-all ${
+                  isExpanded
+                    ? 'border-cyan-400 dark:border-cyan-600 shadow-md col-span-1 sm:col-span-2 xl:col-span-3'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
+                  className="w-full text-left p-4"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                        {report.icon}
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                          {report.title}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            {report.cadence}
+                          </span>
+                          <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                            {report.audience}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className={`text-slate-300 dark:text-slate-600 transition-transform ${isExpanded ? 'rotate-90 text-cyan-500' : 'group-hover:text-cyan-500'}`} />
+                  </div>
+
+                  {report.highlights.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {report.highlights.map((h) => (
+                        <span
+                          key={h.label}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                            h.variant === 'critical'
+                              ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                              : h.variant === 'warn'
+                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {h.label}: {h.value}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-800 pt-3 space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Scope</div>
+                        <p className="text-xs text-slate-700 dark:text-slate-300">{report.scope}</p>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Data sources</div>
+                        <div className="flex flex-wrap gap-1">
+                          {report.dataSources.map((ds) => (
+                            <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Mandatory sections</div>
+                        <ul className="space-y-0.5">
+                          {report.sections.map((s) => (
+                            <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                              <span className="text-slate-300 dark:text-slate-600 mt-px">•</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">RAG / confidence logic</div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Expected follow-up actions</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {report.followUpActions.map((a) => (
+                          <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateReport(report)}
+                        className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+                      >
+                        {t('execution.reportCatalog.generate', 'Generate Report')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const text = [
+                            `# ${report.title}`,
+                            `Audience: ${report.audience}`,
+                            `Cadence: ${report.cadence}`,
+                            `Scope: ${report.scope}`,
+                            `Data sources: ${report.dataSources.join(', ')}`,
+                            `\nSections:\n${report.sections.map((s) => `- ${s}`).join('\n')}`,
+                            `\nRAG logic: ${report.ragLogic}`,
+                            `\nFollow-up actions:\n${report.followUpActions.map((a) => `- ${a}`).join('\n')}`,
+                            `\nLive data: ${report.highlights.map((h) => `${h.label}: ${h.value}`).join(', ')}`,
+                          ].join('\n');
+                          navigator.clipboard.writeText(text).then(
+                            () => toast.success(t('execution.reportCatalog.copied', 'Report definition copied to clipboard')),
+                            () => toast.error(t('execution.reportCatalog.copyFailed', 'Failed to copy'))
+                          );
+                        }}
+                        className="h-8 px-4 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        {t('execution.reportCatalog.export', 'Copy Report Definition')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   // ---------------------------------------------------------------------------
   // MANAGER — operator cockpit
@@ -4379,7 +4609,9 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     () =>
       activeTab === 'list'
         ? (['table', 'kanban', 'timeline'] as ViewMode[])
-        : ([] as ViewMode[]),
+        : activeTab === 'reports'
+          ? (['table', 'grid'] as ViewMode[])
+          : ([] as ViewMode[]),
     [activeTab]
   );
 
