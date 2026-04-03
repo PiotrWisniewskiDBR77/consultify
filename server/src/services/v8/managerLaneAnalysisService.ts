@@ -22,6 +22,7 @@ import { analyzePeopleChange } from './laneHeuristics/peopleChangeHeuristics.js'
 import { analyzeRisk } from './laneHeuristics/riskHeuristics.js';
 import { analyzeWorkload } from './laneHeuristics/workloadHeuristics.js';
 import type { HeuristicInput, LaneAnalysis } from './laneHeuristics/types.js';
+import { getDemoAnalysis, isEmptyAnalysis } from './laneHeuristics/demoData.js';
 
 type LaneId = 'action-queue' | 'decisions' | 'blockers' | 'workload' | 'risk' | 'people-change';
 
@@ -179,6 +180,15 @@ export async function analyzeLane(
   };
 
   const { observations, insights, effects, suggestions } = heuristicFn(input);
+
+  // If heuristics produced no results (empty DB), return demo data for testing
+  const heuristicResult = { observations, insights, effects, suggestions };
+  if (isEmptyAnalysis({ ...heuristicResult, decisions: [], executionPlan: [], severity: 'ok', confidence: 'degraded', lastRefreshed: '' })) {
+    const demo = getDemoAnalysis(laneId);
+    if (demo) {
+      return { ...demo, lastRefreshed: new Date().toISOString() };
+    }
+  }
 
   // Compute severity
   const criticalObs = observations.filter((o) => o.severity === 'critical').length;
