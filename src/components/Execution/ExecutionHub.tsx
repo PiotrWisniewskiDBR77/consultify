@@ -3536,6 +3536,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const commandRowContent = useMemo(() => {
+    if (activeTab === 'reports') {
+      return (
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <FileText size={14} />
+          <span>11 {t('execution.reportCatalog.available', 'reports available')}</span>
+        </div>
+      );
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return (
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <Shield size={14} />
+          <span>{actionQueueItems.length} {t('execution.manager.commandRow', 'action items')} · {actionCenter.blocked.length} {t('execution.attention.blocked', 'blocked')}</span>
+        </div>
+      );
+    }
+
     const chipBase =
       'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
     const badgeBase =
@@ -3656,7 +3674,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       </div>
     );
-  }, [activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t]);
+  }, [activeTab, activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t, actionQueueItems.length]);
 
   const renderActionCenter = () => (
     <div className="space-y-4">
@@ -3865,9 +3883,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   // ---------------------------------------------------------------------------
-  // RAPORTY — pre-defined report catalog
+  // RAPORTY — pre-defined report catalog (§5 of EXECUTION_SURFACES spec)
+  // Every report declares: audience, cadence, scope, data sources,
+  // mandatory sections, RAG/confidence logic, expected follow-up actions.
   // ---------------------------------------------------------------------------
-  const reportCatalog = useMemo(() => {
+  type ReportDef = {
+    id: string;
+    title: string;
+    audience: string;
+    cadence: string;
+    scope: string;
+    dataSources: string[];
+    sections: string[];
+    ragLogic: string;
+    followUpActions: string[];
+    icon: React.ReactNode;
+    highlights: { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' }[];
+  };
+
+  const reportCatalog = useMemo((): ReportDef[] => {
     const blocked = actionCenter.blocked.length;
     const overdueDecisionCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
@@ -3878,149 +3912,208 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const totalInitiatives = filteredInitiatives.length;
     const progressPct = execSnapshot?.overview?.progressPercent ?? null;
 
-    type ReportDef = {
-      id: string;
-      title: string;
-      audience: string;
-      cadence: string;
-      description: string;
-      icon: React.ReactNode;
-      highlights: { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' }[];
-    };
-
-    const catalog: ReportDef[] = [
+    return [
       {
         id: 'weekly-exec',
-        title: t('execution.reportCatalog.weeklyExec.title', 'Weekly Execution Pack'),
-        audience: t('execution.reportCatalog.weeklyExec.audience', 'PMO, Team Leads'),
-        cadence: t('execution.reportCatalog.weeklyExec.cadence', 'Weekly'),
-        description: t('execution.reportCatalog.weeklyExec.desc', 'Progress overview, blockers, overdue items and next milestones for the current cycle.'),
+        title: 'Weekly Execution Pack',
+        audience: 'PMO, Team Leads',
+        cadence: 'Weekly',
+        scope: 'All active initiatives in current execution cycle',
+        dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals', 'Milestones'],
+        sections: ['Progress summary', 'Blockers & escalations', 'Overdue items', 'Next milestones', 'Key decisions needed'],
+        ragLogic: 'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',
+        followUpActions: ['Clear blockers', 'Resolve overdue decisions', 'Update missing dates', 'Reassign stale tasks'],
         icon: <CalendarDays size={18} className="text-cyan-500" />,
         highlights: [
-          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.stats.tasks', 'Tasks'), value: totalTasks },
+          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: 'Tasks', value: totalTasks },
         ],
       },
       {
         id: 'monthly-pmo',
-        title: t('execution.reportCatalog.monthlyPmo.title', 'Monthly PMO Review'),
-        audience: t('execution.reportCatalog.monthlyPmo.audience', 'PMO Director, Sponsors'),
-        cadence: t('execution.reportCatalog.monthlyPmo.cadence', 'Monthly'),
-        description: t('execution.reportCatalog.monthlyPmo.desc', 'Cross-initiative trends, milestone slippage, budget variance and delivery confidence.'),
+        title: 'Monthly PMO Review',
+        audience: 'PMO Director, Sponsors',
+        cadence: 'Monthly',
+        scope: 'Full portfolio month-over-month trends',
+        dataSources: ['Initiatives', 'Budget', 'Milestones', 'Baseline/forecast', 'Capacity'],
+        sections: ['Portfolio trend (MoM)', 'Milestone slippage summary', 'Budget variance', 'Delivery confidence', 'Capacity utilization overview'],
+        ragLogic: 'GREEN if all initiatives on-track; AMBER if >20% initiatives amber; RED if any initiative RED or budget variance >15%',
+        followUpActions: ['Rebaseline slipped initiatives', 'Escalate budget overruns', 'Rebalance overloaded resources'],
         icon: <TrendingUp size={18} className="text-indigo-500" />,
         highlights: [
-          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
-          { label: t('execution.attention.missingDates', 'Missing dates'), value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          { label: 'Initiatives', value: totalInitiatives },
+          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
         ],
       },
       {
         id: 'program-health',
-        title: t('execution.reportCatalog.programHealth.title', 'Program Health Summary'),
-        audience: t('execution.reportCatalog.programHealth.audience', 'Steering Committee'),
-        cadence: t('execution.reportCatalog.programHealth.cadence', 'Bi-weekly'),
-        description: t('execution.reportCatalog.programHealth.desc', 'RAG status per initiative, priority alerts, confidence scoring and executive narrative.'),
+        title: 'Program Health Summary',
+        audience: 'Steering Committee',
+        cadence: 'Bi-weekly',
+        scope: 'Per-initiative RAG and aggregate program health',
+        dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Priority alerts', 'Exec snapshot'],
+        sections: ['RAG per initiative', 'Priority alerts', 'Confidence score & trend', 'Executive narrative', 'Required governance decisions'],
+        ragLogic: 'GREEN if confidence >70% and no critical alerts; AMBER if confidence 40-70% or critical alerts exist; RED if confidence <40% or multiple critical blockers',
+        followUpActions: ['Review RED initiatives', 'Approve recovery plans', 'Authorize resource reallocation'],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
-          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
         ],
       },
       {
         id: 'blockers-recovery',
-        title: t('execution.reportCatalog.blockersRecovery.title', 'Blockers & Recovery Report'),
-        audience: t('execution.reportCatalog.blockersRecovery.audience', 'PMO, Delivery Managers'),
-        cadence: t('execution.reportCatalog.blockersRecovery.cadence', 'On demand'),
-        description: t('execution.reportCatalog.blockersRecovery.desc', 'Active blockers, blast radius, owner accountability and recommended recovery actions.'),
+        title: 'Blockers & Recovery Report',
+        audience: 'PMO, Delivery Managers',
+        cadence: 'On demand',
+        scope: 'All blocked initiatives and downstream blast radius',
+        dataSources: ['Blocked initiatives', 'Dependencies', 'Tasks', 'Risk register'],
+        sections: ['Active blockers list', 'Blast radius per blocker', 'Owner accountability', 'Recovery actions proposed', 'Dependency chain impact'],
+        ragLogic: 'RED if any blockers; AMBER if blockers existed in last 7 days; GREEN if clear for >7 days',
+        followUpActions: ['Assign blocker owners', 'Remove external dependencies', 'Escalate to governance', 'Replan affected work'],
         icon: <AlertTriangle size={18} className="text-rose-500" />,
         highlights: [
-          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.attention.dueSoonTasks', 'Due soon'), value: actionCenter.dueSoonTasks.length },
+          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: 'Due soon', value: actionCenter.dueSoonTasks.length },
         ],
       },
       {
         id: 'milestone-slippage',
-        title: t('execution.reportCatalog.milestoneSlippage.title', 'Milestone Slippage Report'),
-        audience: t('execution.reportCatalog.milestoneSlippage.audience', 'PMO, Sponsors'),
-        cadence: t('execution.reportCatalog.milestoneSlippage.cadence', 'Weekly'),
-        description: t('execution.reportCatalog.milestoneSlippage.desc', 'Milestones at risk, overdue dates, forecast vs baseline variance and timeline drift.'),
+        title: 'Milestone Slippage Report',
+        audience: 'PMO, Sponsors',
+        cadence: 'Weekly',
+        scope: 'All milestones with baseline vs forecast drift',
+        dataSources: ['Milestones', 'Baseline', 'Forecast', 'Delay signals'],
+        sections: ['Slipped milestones', 'Drift by initiative', 'Root cause analysis', 'Forecast accuracy trend', 'Recovery timeline'],
+        ragLogic: 'GREEN if no milestones slipped >3 days; AMBER if 1-2 milestones slipped; RED if >2 milestones slipped or any critical milestone missed',
+        followUpActions: ['Rebaseline slipped milestones', 'Add recovery buffer', 'Escalate critical misses'],
         icon: <Clock size={18} className="text-amber-500" />,
         highlights: [
-          { label: t('execution.attention.missingDates', 'Missing dates'), value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
         ],
       },
       {
         id: 'capacity-utilization',
-        title: t('execution.reportCatalog.capacityUtil.title', 'Capacity Utilization Report'),
-        audience: t('execution.reportCatalog.capacityUtil.audience', 'Resource Managers, PMO'),
-        cadence: t('execution.reportCatalog.capacityUtil.cadence', 'Monthly'),
-        description: t('execution.reportCatalog.capacityUtil.desc', 'Per-person and per-team workload, overload signals, underutilized capacity and balancing opportunities.'),
+        title: 'Capacity Utilization Report',
+        audience: 'Resource Managers, PMO',
+        cadence: 'Monthly',
+        scope: 'Per-person and per-team workload vs capacity',
+        dataSources: ['Tasks', 'Assignments', 'Capacity', 'Workload view'],
+        sections: ['Utilization by person', 'Team averages', 'Overload alerts', 'Underutilized resources', 'Capacity horizon (4-week lookahead)'],
+        ragLogic: 'GREEN if all <85% utilized; AMBER if anyone 85-100%; RED if anyone >100% or team average >90%',
+        followUpActions: ['Smooth overloaded assignments', 'Redistribute idle capacity', 'Flag resource gaps to hiring'],
         icon: <Users size={18} className="text-violet-500" />,
         highlights: [
-          { label: t('execution.stats.tasks', 'Tasks'), value: totalTasks },
+          { label: 'Tasks', value: totalTasks },
         ],
       },
       {
         id: 'budget-variance',
-        title: t('execution.reportCatalog.budgetVariance.title', 'Budget Variance Report'),
-        audience: t('execution.reportCatalog.budgetVariance.audience', 'Finance, Sponsors'),
-        cadence: t('execution.reportCatalog.budgetVariance.cadence', 'Monthly'),
-        description: t('execution.reportCatalog.budgetVariance.desc', 'Budget planned vs actual, initiative-level spend and forecast overshoot alerts.'),
+        title: 'Budget Variance Report',
+        audience: 'Finance, Sponsors',
+        cadence: 'Monthly',
+        scope: 'Planned vs actual budget per initiative',
+        dataSources: ['Budget', 'Initiatives', 'Overspend signals'],
+        sections: ['Aggregate budget status', 'Per-initiative variance', 'Forecast overshoot alerts', 'Burn rate trend', 'Cost category breakdown'],
+        ragLogic: 'GREEN if variance <5%; AMBER if 5-15%; RED if >15% overspend or forecast exceeds approved budget',
+        followUpActions: ['Review overspending initiatives', 'Request budget reallocation', 'Freeze discretionary spend'],
         icon: <TrendingUp size={18} className="text-green-500" />,
         highlights: [
-          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
+          { label: 'Initiatives', value: totalInitiatives },
         ],
       },
       {
         id: 'decision-backlog',
-        title: t('execution.reportCatalog.decisionBacklog.title', 'Decision Backlog & Approval Aging'),
-        audience: t('execution.reportCatalog.decisionBacklog.audience', 'PMO, Decision Owners'),
-        cadence: t('execution.reportCatalog.decisionBacklog.cadence', 'Weekly'),
-        description: t('execution.reportCatalog.decisionBacklog.desc', 'Pending decisions, approval queue aging, decision-latency risk and accountability gaps.'),
+        title: 'Decision Backlog & Approval Aging',
+        audience: 'PMO, Decision Owners',
+        cadence: 'Weekly',
+        scope: 'All pending decisions and approval age',
+        dataSources: ['Decisions', 'Action queue', 'Initiative dependencies'],
+        sections: ['Pending decisions list', 'Aging histogram', 'Decision-latency risk', 'Accountability gaps', 'Downstream blocked work'],
+        ragLogic: 'GREEN if no decisions overdue; AMBER if 1-3 overdue; RED if >3 overdue or any blocking critical path',
+        followUpActions: ['Escalate aged decisions', 'Assign decision owners', 'Unblock dependent work'],
         icon: <Scale size={18} className="text-amber-600" />,
         highlights: [
-          { label: t('execution.attention.overdueDecisions', 'Overdue'), value: overdueDecisionCount, variant: overdueDecisionCount > 0 ? 'warn' : 'default' },
-          { label: t('execution.stats.pendingDecisions', 'Pending'), value: pendingDecisions },
+          { label: 'Overdue', value: overdueDecisionCount, variant: overdueDecisionCount > 0 ? 'warn' : 'default' },
+          { label: 'Pending', value: pendingDecisions },
         ],
       },
       {
         id: 'cross-dependency',
-        title: t('execution.reportCatalog.crossDep.title', 'Cross-Initiative Dependency Report'),
-        audience: t('execution.reportCatalog.crossDep.audience', 'PMO, Architects'),
-        cadence: t('execution.reportCatalog.crossDep.cadence', 'Bi-weekly'),
-        description: t('execution.reportCatalog.crossDep.desc', 'Inter-initiative dependencies, critical path risk, dependency health and cascade impact analysis.'),
+        title: 'Cross-Initiative Dependency Report',
+        audience: 'PMO, Architects',
+        cadence: 'Bi-weekly',
+        scope: 'Inter-initiative dependency graph and cascade risk',
+        dataSources: ['Dependencies', 'Initiatives', 'Risk signals'],
+        sections: ['Dependency map', 'Critical path', 'Cascade impact analysis', 'Dependency health', 'External dependency risks'],
+        ragLogic: 'GREEN if no dependency conflicts; AMBER if dependencies at risk; RED if broken dependency chain on critical path',
+        followUpActions: ['Resolve dependency conflicts', 'Decouple tightly coupled work', 'Add buffers to critical chains'],
         icon: <GripVertical size={18} className="text-slate-500" />,
         highlights: [
-          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
+          { label: 'Initiatives', value: totalInitiatives },
         ],
       },
       {
         id: 'delivery-confidence',
-        title: t('execution.reportCatalog.deliveryConf.title', 'Delivery Confidence Report'),
-        audience: t('execution.reportCatalog.deliveryConf.audience', 'Steering Committee, Sponsors'),
-        cadence: t('execution.reportCatalog.deliveryConf.cadence', 'Monthly'),
-        description: t('execution.reportCatalog.deliveryConf.desc', 'Confidence scoring per initiative, trend direction, risk-adjusted forecast and sponsor-ready narrative.'),
+        title: 'Delivery Confidence Report',
+        audience: 'Steering Committee, Sponsors',
+        cadence: 'Monthly',
+        scope: 'Risk-adjusted delivery forecast with confidence scoring',
+        dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Budget', 'Exec snapshot'],
+        sections: ['Confidence per initiative', 'Trend direction', 'Risk-adjusted forecast', 'Sponsor-ready narrative', 'Recommended governance actions'],
+        ragLogic: 'GREEN if aggregate confidence >75%; AMBER if 50-75%; RED if <50% or confidence declining for 2+ periods',
+        followUpActions: ['Investigate declining confidence', 'Approve recovery plans', 'Communicate revised timelines'],
         icon: <Sparkles size={18} className="text-cyan-500" />,
         highlights: [
-          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
         ],
       },
       {
         id: 'sponsor-onepager',
-        title: t('execution.reportCatalog.sponsorOnePager.title', 'Sponsor-Ready One-Pager'),
-        audience: t('execution.reportCatalog.sponsorOnePager.audience', 'Executive Sponsors'),
-        cadence: t('execution.reportCatalog.sponsorOnePager.cadence', 'On demand'),
-        description: t('execution.reportCatalog.sponsorOnePager.desc', 'Concise one-page summary: progress, key risks, next milestones and required decisions.'),
+        title: 'Sponsor-Ready One-Pager',
+        audience: 'Executive Sponsors',
+        cadence: 'On demand',
+        scope: 'Concise executive summary of portfolio state',
+        dataSources: ['Exec snapshot', 'Initiatives', 'Risk signals', 'Milestones'],
+        sections: ['Overall progress', 'Top 3 risks', 'Next milestones', 'Decisions required from sponsor', 'Key achievements this period'],
+        ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
+        followUpActions: ['Make requested decisions', 'Remove escalated blockers', 'Approve budget changes'],
         icon: <FileText size={18} className="text-indigo-500" />,
         highlights: [
-          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
         ],
       },
     ];
+  }, [actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
 
-    return catalog;
-  }, [t, actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+
+  const handleGenerateReport = useCallback(
+    async (report: ReportDef) => {
+      const prompt = `Generate an execution report: "${report.title}" for audience "${report.audience}".
+Scope: ${report.scope}.
+Include these sections: ${report.sections.join(', ')}.
+Apply this RAG logic: ${report.ragLogic}.
+Data: ${filteredInitiatives.length} initiatives, ${tasks.length} tasks, ${decisions.length} decisions, ${actionCenter.blocked.length} blocked, ${riskSignals.length} risk signals.
+Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
+      try {
+        const convId = await openChatWithContext({
+          entityType: 'execution_report' as any,
+          entityId: report.id,
+          entityName: report.title,
+          contextData: { reportId: report.id, scope: report.scope, audience: report.audience, cadence: report.cadence },
+        });
+        await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
+        toast.success(t('execution.reportCatalog.generating', 'Generating "{{title}}"…', { title: report.title }), { duration: 2000 });
+        if (isChatCollapsed) toggleChatCollapse();
+      } catch {
+        toast.error(t('execution.reportCatalog.generateError', 'Failed to generate report'));
+      }
+    },
+    [filteredInitiatives.length, tasks.length, decisions.length, actionCenter.blocked.length, riskSignals.length, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
+  );
 
   const renderReportsCatalog = () => (
     <div className="p-4 space-y-5">
@@ -4030,7 +4123,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             {t('execution.reportCatalog.heading', 'Execution Reports')}
           </h2>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Select a report to generate or export.')}
+            {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.')}
           </p>
         </div>
         <button
@@ -4042,63 +4135,135 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       </div>
 
+      {filteredInitiatives.length === 0 && (
+        <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
+          {t('execution.reportCatalog.noDataDesc', 'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.')}
+        </Callout>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {reportCatalog.map((report) => (
-          <button
-            key={report.id}
-            type="button"
-            onClick={() => {
-              toast(t('execution.reportCatalog.generating', 'Generating {{title}}…', { title: report.title }));
-            }}
-            className="group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30 transition-all"
-          >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
-                  {report.icon}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
-                    {report.title}
+        {reportCatalog.map((report) => {
+          const isExpanded = expandedReportId === report.id;
+          return (
+            <div
+              key={report.id}
+              className={`group rounded-xl border bg-white dark:bg-navy-900 transition-all ${
+                isExpanded
+                  ? 'border-cyan-400 dark:border-cyan-600 shadow-md col-span-1 sm:col-span-2 xl:col-span-3'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30'
+              }`}
+            >
+              {/* Card header — always visible */}
+              <button
+                type="button"
+                onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
+                className="w-full text-left p-4"
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                      {report.icon}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                        {report.title}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          {report.cadence}
+                        </span>
+                        <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                          {report.audience}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {report.cadence}
-                    </span>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {report.audience}
-                    </span>
+                  <ChevronRight size={14} className={`text-slate-300 dark:text-slate-600 transition-transform ${isExpanded ? 'rotate-90 text-cyan-500' : 'group-hover:text-cyan-500'}`} />
+                </div>
+
+                {report.highlights.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {report.highlights.map((h) => (
+                      <span
+                        key={h.label}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                          h.variant === 'critical'
+                            ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                            : h.variant === 'warn'
+                              ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {h.label}: {h.value}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </button>
+
+              {/* Expanded contract details — per §5.5 */}
+              {isExpanded && (
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-800 pt-3 space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Scope</div>
+                      <p className="text-xs text-slate-700 dark:text-slate-300">{report.scope}</p>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Data sources</div>
+                      <div className="flex flex-wrap gap-1">
+                        {report.dataSources.map((ds) => (
+                          <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Mandatory sections</div>
+                      <ul className="space-y-0.5">
+                        {report.sections.map((s) => (
+                          <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                            <span className="text-slate-300 dark:text-slate-600 mt-px">•</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">RAG / confidence logic</div>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Expected follow-up actions</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {report.followUpActions.map((a) => (
+                        <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport(report)}
+                      className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+                    >
+                      {t('execution.reportCatalog.generate', 'Generate Report')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/reports')}
+                      className="h-8 px-4 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      {t('execution.reportCatalog.export', 'Export / Share')}
+                    </button>
                   </div>
                 </div>
-              </div>
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-0.5" />
+              )}
             </div>
-
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
-              {report.description}
-            </p>
-
-            {report.highlights.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {report.highlights.map((h) => (
-                  <span
-                    key={h.label}
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                      h.variant === 'critical'
-                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                        : h.variant === 'warn'
-                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {h.label}: {h.value}
-                  </span>
-                ))}
-              </div>
-            )}
-          </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -4179,48 +4344,97 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return suggestions;
   }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
 
+  const [managerDrillDown, setManagerDrillDown] = useState<string | null>(null);
+
   const renderManagerCockpit = () => {
     const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
 
+    const initiativesWithoutBaseline = filteredInitiatives.filter(
+      (i) => !(i as any).plannedStartDate && !(i as any).plannedEndDate
+    ).length;
+    const initiativesWithoutOwner = filteredInitiatives.filter(
+      (i) => !(i as any).ownerId && !(i as any).assigneeId
+    ).length;
+
     return (
       <div className="p-4 space-y-5">
-        {/* A. Manager KPIs */}
+        {/* §3.3 Honest degraded posture */}
+        {filteredInitiatives.length === 0 && (
+          <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
+            {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
+          </Callout>
+        )}
+        {filteredInitiatives.length > 0 && (initiativesWithoutBaseline > 0 || initiativesWithoutOwner > 0) && (
+          <Callout variant="warning" title={t('execution.manager.dataGaps', 'Data quality gaps detected')}>
+            {initiativesWithoutBaseline > 0 && (
+              <span className="block text-xs">
+                {t('execution.manager.missingBaseline', '{{count}} initiative(s) have no baseline dates — timeline risk detection is incomplete.', { count: initiativesWithoutBaseline })}
+              </span>
+            )}
+            {initiativesWithoutOwner > 0 && (
+              <span className="block text-xs">
+                {t('execution.manager.missingOwner', '{{count}} initiative(s) have no assigned owner — accountability gaps exist.', { count: initiativesWithoutOwner })}
+              </span>
+            )}
+          </Callout>
+        )}
+
+        {/* A. Manager KPIs — clickable for drill-down per §6.4 */}
         <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
-          {[
+          {([
             {
+              id: 'action-items',
               label: t('execution.manager.kpi.actionItems', 'Action items'),
               value: actionQueueItems.length,
               sub: t('execution.manager.kpi.actionItemsSub', 'Need review this cycle'),
               color: 'text-cyan-500',
+              borderHover: 'hover:border-cyan-400/50',
             },
             {
+              id: 'overdue-approvals',
               label: t('execution.manager.kpi.overdueApprovals', 'Overdue approvals'),
               value: overdueItems,
               sub: t('execution.manager.kpi.overdueApprovalsSub', 'Past due date'),
               color: overdueItems > 0 ? 'text-amber-500' : 'text-slate-400',
+              borderHover: 'hover:border-amber-400/50',
             },
             {
+              id: 'kpi-alerts',
               label: t('execution.manager.kpi.kpiAlerts', 'KPI alerts'),
               value: kpiAlerts,
               sub: t('execution.manager.kpi.kpiAlertsSub', 'Without recovery plan'),
               color: kpiAlerts > 0 ? 'text-fuchsia-500' : 'text-slate-400',
+              borderHover: 'hover:border-fuchsia-400/50',
             },
             {
+              id: 'blocked',
               label: t('execution.manager.kpi.blocked', 'Blocked'),
               value: blockedCount,
               sub: t('execution.manager.kpi.blockedSub', 'Initiatives stalled'),
               color: blockedCount > 0 ? 'text-rose-500' : 'text-slate-400',
+              borderHover: 'hover:border-rose-400/50',
             },
             {
+              id: 'missing-dates',
               label: t('execution.manager.kpi.missingDates', 'Missing dates'),
               value: missingDatesCount,
               sub: t('execution.manager.kpi.missingDatesSub', 'No target date set'),
               color: missingDatesCount > 0 ? 'text-cyan-500' : 'text-slate-400',
+              borderHover: 'hover:border-cyan-400/50',
             },
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3.5"
+          ] as const).map((kpi) => (
+            <button
+              key={kpi.id}
+              type="button"
+              onClick={() => {
+                if (kpi.value === 0) return;
+                setManagerDrillDown(managerDrillDown === kpi.id ? null : kpi.id);
+              }}
+              className={`text-left rounded-xl border bg-white dark:bg-navy-900 p-3.5 transition-all ${kpi.borderHover} ${
+                managerDrillDown === kpi.id
+                  ? 'border-cyan-400 dark:border-cyan-600 shadow-sm'
+                  : 'border-slate-200 dark:border-navy-700'
+              } ${kpi.value > 0 ? 'cursor-pointer' : 'cursor-default'}`}
             >
               <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-tight">
                 {kpi.label}
@@ -4231,9 +4445,80 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
                 {kpi.sub}
               </div>
-            </div>
+            </button>
           ))}
         </div>
+
+        {/* Drill-down panel per §6.4 */}
+        {managerDrillDown && (
+          <div className="rounded-xl border border-cyan-200 dark:border-cyan-800/40 bg-cyan-50/30 dark:bg-cyan-900/10 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {t('execution.manager.drillDown', 'Drill-down')}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setManagerDrillDown(null)}
+                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                {t('common.close', 'Close')}
+              </button>
+            </div>
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+              {managerDrillDown === 'blocked' && actionCenter.blocked.map((i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  onClick={() => { const full = initiatives.find((x) => x.id === i.id); if (full) handleOpenSidePanel(full); }}
+                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-rose-300 dark:hover:border-rose-700 transition-colors"
+                >
+                  <AlertTriangle size={12} className="text-rose-500 shrink-0" />
+                  <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{i.name}</span>
+                </button>
+              ))}
+              {managerDrillDown === 'overdue-approvals' && actionCenter.overdueDecisions.map((d) => (
+                <div key={d.id} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
+                  <Scale size={12} className="text-amber-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{d.title}</span>
+                    <span className="text-[10px] text-slate-400">{d.relatedObjectName || '—'} · {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}</span>
+                  </div>
+                </div>
+              ))}
+              {managerDrillDown === 'missing-dates' && actionCenter.missingDates.map((i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  onClick={() => { const full = initiatives.find((x) => x.id === i.id); if (full) handleOpenSidePanel(full); }}
+                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-cyan-300 dark:hover:border-cyan-700 transition-colors"
+                >
+                  <Clock size={12} className="text-cyan-500 shrink-0" />
+                  <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{i.name}</span>
+                </button>
+              ))}
+              {managerDrillDown === 'kpi-alerts' && actionQueueItems
+                .filter((item) => item.type === 'kpi_deviation_no_plan')
+                .map((item) => (
+                  <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
+                    <Target size={12} className="text-fuchsia-500 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{item.title}</span>
+                      <span className="text-[10px] text-slate-400">{item.initiativeName || '—'}</span>
+                    </div>
+                  </div>
+                ))}
+              {managerDrillDown === 'action-items' && actionQueueItems.slice(0, 20).map((item) => (
+                <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
+                  <ClipboardList size={12} className="text-cyan-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{item.title}</span>
+                    <span className="text-[10px] text-slate-400">{item.initiativeName || '—'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* B. Action Center */}
         <ToggleBlock
@@ -4714,48 +4999,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
-    if (activeTab === 'initiatives') {
-      return (
-        <div className="p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            {renderExecutionView()}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTab === 'tasks') {
-      return <div className="h-full">{renderTasksQueue()}</div>;
-    }
-
-    if (activeTab === 'decisions') {
-      return <div className="h-full">{renderDecisionsBuckets()}</div>;
-    }
-
-    if (activeTab === 'team') {
-      return (
-        <div className="p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <ExecutionWorkloadView
-              initiatives={initiatives}
-              onInitiativeClick={handleOpenSidePanel}
-              showControls={false}
-              controls={{
-                viewMode: workloadViewMode,
-                setViewMode: setWorkloadViewMode,
-                weekCount: workloadWeekCount,
-                setWeekCount: setWorkloadWeekCount,
-                monthCount: workloadMonthCount,
-                setMonthCount: setWorkloadMonthCount,
-                startDate: workloadStartDate,
-                setStartDate: setWorkloadStartDate,
-              }}
-            />
-          </div>
-        </div>
-      );
-    }
-
     if (activeTab === ('people_change' as ModuleTab)) {
       return renderManagerCockpit();
     }
@@ -4764,6 +5007,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return renderReportsCatalog();
     }
 
+    // Fallback — should never reach here with the 3-tab model.
+    // Keep executive snapshot for backward compat if extra tabs re-appear.
     const snapshot = execSnapshot;
     return (
       <div className="p-4 space-y-6">
@@ -5476,9 +5721,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     () =>
       activeTab === 'list'
         ? (['table', 'kanban', 'timeline'] as ViewMode[])
-        : activeTab === 'reports'
-          ? (['table', 'kanban', 'timeline', 'calendar', 'grid'] as ViewMode[])
-          : (['table'] as ViewMode[]),
+        : ([] as ViewMode[]),
     [activeTab]
   );
 
