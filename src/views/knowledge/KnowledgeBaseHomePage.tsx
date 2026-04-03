@@ -22,7 +22,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -158,8 +158,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const categoryArticles = categoryArticlesData?.articles;
 
   const displayArticles = useMemo(() => {
-    if (activeSearch && searchResults?.length) {
-      return searchResults
+    if (activeSearch) {
+      return (searchResults || [])
         .filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
@@ -175,6 +175,16 @@ export const KnowledgeBaseHomePage: React.FC = () => {
     setSelectedCategory(null);
   };
 
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    const timeoutId = window.setTimeout(() => {
+      setActiveSearch(trimmed);
+      if (trimmed) setSelectedCategory(null);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   const clearFilters = () => {
     setSearchQuery('');
     setActiveSearch('');
@@ -183,6 +193,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   };
 
   const isFiltering = !!activeSearch || !!selectedCategory || !!selectedTag;
+  const isResultView = displayArticles !== null;
 
   return (
     <MarketingLayout footerVariant="knowledge">
@@ -250,6 +261,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         </section>
 
         {/* Section Navigation Cards — clickable, link to category page */}
+        {!activeSearch && (
         <section className="relative z-10 px-6 pb-12">
           <div className="max-w-7xl mx-auto">
             <div className="mb-6 flex items-end justify-between gap-6">
@@ -349,6 +361,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* Tags */}
         {tags && tags.length > 0 && (
@@ -409,7 +422,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
         {/* Content Area */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-          {displayArticles ? (
+          {isResultView && displayArticles.length > 0 ? (
             <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8 dark:text-white">
                 {activeSearch
@@ -422,6 +435,28 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   <ArticleCard key={article.id} article={article} />
                 ))}
               </div>
+            </div>
+          ) : isResultView ? (
+            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-8 text-center backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-white/55">
+                <Search size={22} />
+              </div>
+              <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                {t('kb.results.emptyTitle', 'No matching articles yet')}
+              </h2>
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-white/55">
+                {t(
+                  'kb.results.emptyBody',
+                  'Try a broader phrase, switch the tag filter, or clear search to browse the three main lanes.'
+                )}
+              </p>
+              <button
+                onClick={clearFilters}
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.12] dark:bg-white/[0.05] dark:text-white/80 dark:hover:bg-white/[0.08]"
+              >
+                {t('kb.filtering.clear', 'Clear filters')}
+                <ArrowRight size={14} />
+              </button>
             </div>
           ) : (
             <div className="space-y-24">
