@@ -216,6 +216,45 @@ describe('Public Anna route guardrails', () => {
     );
   });
 
+  it('blends current article context into retrieval and runtime instructions', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Tell me more about this step',
+      sessionId: 'session-article',
+      locale: 'en',
+      surfaceContext: {
+        surface: 'knowledge_article',
+        articleTitle: 'Your First 30 Minutes in Consultify',
+        articleSummary: 'The first session should produce a usable diagnostic.',
+        categoryName: 'Consultify Execution and Rollout',
+        currentSection: 'Minutes 10-18: Run the first diagnostic',
+        articleUrl:
+          'http://localhost:3000/knowledge-base/consultify-execution-and-rollout/03_first_30_minutes_in_consultify',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.fallbackReason).toBe('service_unavailable');
+    expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.stringContaining('Current knowledge base article: Your First 30 Minutes in Consultify'),
+      })
+    );
+
+    expect(
+      buildAnnaRuntimeInstruction({
+        locale: 'en',
+        knowledgeContext: 'Public knowledge context',
+        surfaceContext: {
+          surface: 'knowledge_article',
+          articleTitle: 'Your First 30 Minutes in Consultify',
+          currentSection: 'Minutes 10-18: Run the first diagnostic',
+        },
+      })
+    ).toContain('Article title: Your First 30 Minutes in Consultify');
+  });
+
   it('returns the static degraded-state message when Anna providers are unavailable', async () => {
     const app = createApp();
 

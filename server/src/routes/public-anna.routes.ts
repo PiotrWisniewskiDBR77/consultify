@@ -29,6 +29,16 @@ const AnnaChatSchema = z.object({
   message: z.string().min(1).max(2000),
   locale: z.string().optional(),
   sessionId: z.string().optional(),
+  surfaceContext: z
+    .object({
+      surface: z.literal('knowledge_article'),
+      articleTitle: z.string().min(1).max(240),
+      articleSummary: z.string().max(1200).optional(),
+      categoryName: z.string().max(160).optional(),
+      currentSection: z.string().max(200).optional(),
+      articleUrl: z.string().max(2000).optional(),
+    })
+    .optional(),
   history: z
     .array(
       z.object({
@@ -446,13 +456,16 @@ export function buildAnnaRuntimeInstruction(args: {
   knowledgeContext?: string;
   workerSystemPrompt?: string | null;
   conversationContext?: string | null;
+  surfaceContext?: AnnaChatBody['surfaceContext'];
 }): string {
   const baseInstruction = buildSystemInstruction(args.locale, args.knowledgeContext);
   const conversationContext = String(args.conversationContext || '').trim();
+  const surfaceContext = buildAnnaSurfaceContext(args.surfaceContext);
   const workerSystemPrompt = String(args.workerSystemPrompt || '').trim();
-  const shapedInstruction = conversationContext
-    ? `${baseInstruction}\n\n${conversationContext}`
-    : baseInstruction;
+  const additiveContext = [surfaceContext, conversationContext]
+    .filter((item) => Boolean(String(item || '').trim()))
+    .join('\n\n');
+  const shapedInstruction = additiveContext ? `${baseInstruction}\n\n${additiveContext}` : baseInstruction;
 
   if (!workerSystemPrompt) {
     return shapedInstruction;
@@ -464,6 +477,40 @@ WORKER PROFILE ADDON
 - The following worker-specific guidance may refine Anna's tone or emphasis, but it must not override the public Anna boundary, public-surface role, language rules, or knowledge limitations above.
 
 ${workerSystemPrompt}`.trim();
+}
+
+function buildAnnaSurfaceContext(
+  surfaceContext?: AnnaChatBody['surfaceContext']
+): string | null {
+  if (!surfaceContext || surfaceContext.surface !== 'knowledge_article') {
+    return null;
+  }
+
+  const sections = [
+    'CURRENT ARTICLE CONTEXT',
+    '- The user is currently reading a public Consultify knowledge base article.',
+    `- Article title: ${surfaceContext.articleTitle}`,
+  ];
+
+  if (surfaceContext.categoryName) {
+    sections.push(`- Category: ${surfaceContext.categoryName}`);
+  }
+  if (surfaceContext.currentSection) {
+    sections.push(`- Current section in view: ${surfaceContext.currentSection}`);
+  }
+  if (surfaceContext.articleSummary) {
+    sections.push(`- Article summary: ${safeSlice(surfaceContext.articleSummary, 500)}`);
+  }
+  if (surfaceContext.articleUrl) {
+    sections.push(`- Public article URL: ${safeSlice(surfaceContext.articleUrl, 300)}`);
+  }
+
+  sections.push(
+    '- Treat this article as the default topic and connect your answer to it unless the user clearly changes subject.',
+    '- You may use this page context as public framing, but do not claim you can read anything beyond the supplied public article context.'
+  );
+
+  return sections.join('\n');
 }
 
 function findLastUserMessage(history: AnnaChatBody['history']): string | null {
@@ -508,18 +555,36 @@ function shouldExpandAnnaRetrievalQuery(message: string): boolean {
   return normalized.length <= 80 && wordCount <= 8 && (hasFollowUpLead || hasReferenceCue);
 }
 
-function buildAnnaRetrievalQuery(message: string, history: AnnaChatBody['history']): string {
+function buildAnnaRetrievalQuery(
+  message: string,
+  history: AnnaChatBody['history'],
+  surfaceContext?: AnnaChatBody['surfaceContext']
+): string {
   const normalizedMessage = String(message || '').trim();
-  if (!shouldExpandAnnaRetrievalQuery(normalizedMessage)) {
-    return normalizedMessage;
+  const baseQuery = shouldExpandAnnaRetrievalQuery(normalizedMessage)
+    ? (() => {
+        const lastUserMessage = findLastUserMessage(history);
+        if (!lastUserMessage) {
+          return normalizedMessage;
+        }
+        return `${lastUserMessage}\n\nFollow-up question: ${normalizedMessage}`;
+      })()
+    : normalizedMessage;
+
+  if (!surfaceContext || surfaceContext.surface !== 'knowledge_article') {
+    return baseQuery;
   }
 
-  const lastUserMessage = findLastUserMessage(history);
-  if (!lastUserMessage) {
-    return normalizedMessage;
-  }
+  const surfaceQuery = [
+    `Current knowledge base article: ${surfaceContext.articleTitle}`,
+    surfaceContext.categoryName ? `Category: ${surfaceContext.categoryName}` : null,
+    surfaceContext.currentSection ? `Current section: ${surfaceContext.currentSection}` : null,
+    surfaceContext.articleSummary ? `Article summary: ${safeSlice(surfaceContext.articleSummary, 240)}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
-  return `${lastUserMessage}\n\nFollow-up question: ${normalizedMessage}`;
+  return `${baseQuery}\n\n${surfaceQuery}`;
 }
 
 function buildAnnaConversationContext(
@@ -707,7 +772,7 @@ router.post(
     }
 
     const history = (body.history || []).slice(-8);
-    const retrievalQuery = buildAnnaRetrievalQuery(body.message, history);
+    const retrievalQuery = buildAnnaRetrievalQuery(body.message, history, body.surfaceContext);
     const conversationContext = buildAnnaConversationContext(body.message, history);
     const contents: GeminiContent[] = history.map((item) => ({
       role: item.role === 'assistant' ? 'model' : 'user',
@@ -752,6 +817,7 @@ router.post(
         knowledgeContext: knowledge.contextText,
         workerSystemPrompt: workerConfig?.profile?.system_prompt,
         conversationContext,
+        surfaceContext: body.surfaceContext,
       });
 
       const answer = await callAnnaModel(systemPrompt, contents);

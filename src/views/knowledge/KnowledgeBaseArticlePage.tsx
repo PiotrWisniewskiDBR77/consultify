@@ -56,6 +56,15 @@ interface TocItem {
   level: number;
 }
 
+interface AnnaArticleContext {
+  surface: 'knowledge_article';
+  articleTitle: string;
+  articleSummary?: string;
+  categoryName?: string;
+  currentSection?: string;
+  articleUrl?: string;
+}
+
 const METADATA_LINE_PATTERN = /^(Target persona|Funnel stage|Funnel-Stufe|Core problem|Main promise|Docelowa persona|Etap lejka|Główny problem|Główna obietnica|Zielpersona|Kernproblem|Hauptversprechen|Hlavní problém|Direct answer):\s/i;
 
 function stripMetadataFromContent(content: string): string {
@@ -259,6 +268,30 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
     return headings;
   }, [cleanContent]);
 
+  const currentSectionTitle = useMemo(() => {
+    if (!toc.length) return undefined;
+
+    const activeItem = toc.find((item) => item.id === activeHeading);
+    if (activeItem) return activeItem.text;
+
+    if (typeof window === 'undefined') return undefined;
+    const hash = window.location.hash.replace(/^#/, '').trim();
+    return toc.find((item) => item.id === hash)?.text;
+  }, [activeHeading, toc]);
+
+  const annaArticleContext = useMemo<AnnaArticleContext | null>(() => {
+    if (!article?.title) return null;
+
+    return {
+      surface: 'knowledge_article',
+      articleTitle: article.title,
+      articleSummary: article.summary || undefined,
+      categoryName: article.category_name || undefined,
+      currentSection: currentSectionTitle,
+      articleUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+    };
+  }, [article?.category_name, article?.summary, article?.title, currentSectionTitle]);
+
   useEffect(() => {
     if (!toc.length) return;
     const observer = new IntersectionObserver(
@@ -268,6 +301,16 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
     for (const item of toc) { const el = document.getElementById(item.id); if (el) observer.observe(el); }
     return () => observer.disconnect();
   }, [toc]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.dispatchEvent(new CustomEvent('anna:context', { detail: { context: annaArticleContext } }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('anna:context', { detail: { context: null } }));
+    };
+  }, [annaArticleContext]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
@@ -294,13 +337,13 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   const handleAskAnna = useCallback(() => {
     const prompt = article?.title
       ? (docsLanguage === 'pl'
-          ? `Przeczytałem artykuł "${article.title}". Chcę dowiedzieć się więcej.`
+          ? `Przeczytałem artykuł "${article.title}"${currentSectionTitle ? `, sekcja "${currentSectionTitle}"` : ''}. Chcę dowiedzieć się więcej.`
           : docsLanguage === 'de'
-          ? `Ich habe den Artikel "${article.title}" gelesen. Ich möchte mehr erfahren.`
-          : `I just read "${article.title}". I want to learn more.`)
+          ? `Ich habe den Artikel "${article.title}"${currentSectionTitle ? `, Abschnitt "${currentSectionTitle}"` : ''}, gelesen. Ich möchte mehr erfahren.`
+          : `I just read "${article.title}"${currentSectionTitle ? `, especially the section "${currentSectionTitle}"` : ''}. I want to learn more.`)
       : undefined;
-    window.dispatchEvent(new CustomEvent('anna:open', { detail: { prompt } }));
-  }, [article?.title, docsLanguage]);
+    window.dispatchEvent(new CustomEvent('anna:open', { detail: { prompt, context: annaArticleContext } }));
+  }, [annaArticleContext, article?.title, currentSectionTitle, docsLanguage]);
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 

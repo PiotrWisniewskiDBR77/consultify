@@ -23,6 +23,15 @@ type AnnaMessage = {
   content: string;
 };
 
+type AnnaSurfaceContext = {
+  surface: 'knowledge_article';
+  articleTitle: string;
+  articleSummary?: string;
+  categoryName?: string;
+  currentSection?: string;
+  articleUrl?: string;
+};
+
 type VoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
 
 type AnnaCopy = {
@@ -393,7 +402,40 @@ interface AnnaAssistantWidgetProps {
 
 type AnnaOpenEventDetail = {
   prompt?: string;
+  context?: AnnaSurfaceContext | null;
 };
+
+type AnnaContextEventDetail = {
+  context?: AnnaSurfaceContext | null;
+};
+
+function buildSurfaceContextInstruction(context?: AnnaSurfaceContext | null): string {
+  if (!context || context.surface !== 'knowledge_article') return '';
+
+  const lines = [
+    'Current public article context:',
+    `- Article title: ${context.articleTitle}`,
+  ];
+
+  if (context.categoryName) {
+    lines.push(`- Category: ${context.categoryName}`);
+  }
+  if (context.currentSection) {
+    lines.push(`- Current section in view: ${context.currentSection}`);
+  }
+  if (context.articleSummary) {
+    lines.push(`- Article summary: ${context.articleSummary}`);
+  }
+  if (context.articleUrl) {
+    lines.push(`- Article URL: ${context.articleUrl}`);
+  }
+
+  lines.push(
+    '- Treat this article as the starting topic unless the user clearly changes the subject.'
+  );
+
+  return lines.join('\n');
+}
 
 export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   onDemoClick,
@@ -430,6 +472,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   const [voiceAvailable, setVoiceAvailable] = useState(false);
   const [voiceApiKey, setVoiceApiKey] = useState<string | null>(FRONTEND_GEMINI_KEY || null);
   const [voiceName, setVoiceName] = useState(LIVE_VOICE_NAME);
+  const [surfaceContext, setSurfaceContext] = useState<AnnaSurfaceContext | null>(null);
   const [messages, setMessages] = useState<AnnaMessage[]>(() => [
     {
       id: 'anna-welcome',
@@ -511,9 +554,12 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   );
 
   const openWidget = useCallback(
-    (draftPrompt?: string) => {
+    (draftPrompt?: string, draftContext?: AnnaSurfaceContext | null) => {
       setError(null);
       setInput(draftPrompt ?? '');
+      if (draftContext !== undefined) {
+        setSurfaceContext(draftContext);
+      }
 
       if (isOpen) return;
 
@@ -688,11 +734,21 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   useEffect(() => {
     const openAnna = (event: Event) => {
       const customEvent = event as CustomEvent<AnnaOpenEventDetail>;
-      openWidget(customEvent.detail?.prompt);
+      openWidget(customEvent.detail?.prompt, customEvent.detail?.context);
     };
     window.addEventListener('anna:open', openAnna);
     return () => window.removeEventListener('anna:open', openAnna);
   }, [openWidget]);
+
+  useEffect(() => {
+    const syncAnnaContext = (event: Event) => {
+      const customEvent = event as CustomEvent<AnnaContextEventDetail>;
+      setSurfaceContext(customEvent.detail?.context || null);
+    };
+
+    window.addEventListener('anna:context', syncAnnaContext);
+    return () => window.removeEventListener('anna:context', syncAnnaContext);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -774,6 +830,11 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         console.warn('[AnnaAssistantWidget] Voice context bootstrap failed', contextError);
       }
 
+      const surfaceInstruction = buildSurfaceContextInstruction(surfaceContext);
+      const mergedVoiceKnowledgeContext = [voiceKnowledgeContext, surfaceInstruction]
+        .filter((item) => Boolean(String(item || '').trim()))
+        .join('\n\n');
+
       if (!AudioContextCtor) {
         throw new Error('AudioContext unavailable');
       }
@@ -808,7 +869,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
               prebuiltVoiceConfig: { voiceName },
             },
           },
-          systemInstruction: buildVoiceSystemInstruction(voiceSessionLang, voiceKnowledgeContext),
+          systemInstruction: buildVoiceSystemInstruction(
+            voiceSessionLang,
+            mergedVoiceKnowledgeContext
+          ),
         },
         callbacks: {
           onopen: () => {
@@ -997,6 +1061,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     voiceApiKey,
     voiceAvailable,
     voiceName,
+    surfaceContext,
   ]);
 
   const stopVoiceConversation = useCallback(async () => {
@@ -1064,6 +1129,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           locale: i18n.resolvedLanguage || i18n.language || lang,
           sessionId: sessionIdRef.current,
           history,
+          surfaceContext,
         }),
       });
 

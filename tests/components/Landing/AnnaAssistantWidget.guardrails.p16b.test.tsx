@@ -113,5 +113,58 @@ describe('AnnaAssistantWidget P16-B guardrails', () => {
     });
     expect(hasVoiceUnavailable).toBe(true);
   });
+
+  it('sends the active knowledge-article context with Anna chat requests', async () => {
+    await renderWidget();
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('anna:context', {
+          detail: {
+            context: {
+              surface: 'knowledge_article',
+              articleTitle: 'Your First 30 Minutes in Consultify',
+              articleSummary: 'The first session should produce a usable diagnostic.',
+              categoryName: 'Consultify Execution and Rollout',
+              currentSection: 'Minutes 10-18: Run the first diagnostic',
+              articleUrl:
+                'http://localhost:3000/knowledge-base/consultify-execution-and-rollout/03_first_30_minutes_in_consultify',
+            },
+          },
+        }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Tell me more about this step' },
+    });
+    fireEvent.keyDown(screen.getByRole('textbox'), {
+      key: 'Enter',
+      code: 'Enter',
+      shiftKey: false,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('OK')).toBeInTheDocument();
+    });
+
+    const annaChatCall = (globalThis.fetch as any as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([url]: any[]) => String(url).includes('/api/public/anna/chat')
+    );
+
+    expect(annaChatCall).toBeTruthy();
+    const [, init] = annaChatCall;
+    const body = JSON.parse(String(init?.body || '{}'));
+    expect(body.surfaceContext).toEqual({
+      surface: 'knowledge_article',
+      articleTitle: 'Your First 30 Minutes in Consultify',
+      articleSummary: 'The first session should produce a usable diagnostic.',
+      categoryName: 'Consultify Execution and Rollout',
+      currentSection: 'Minutes 10-18: Run the first diagnostic',
+      articleUrl:
+        'http://localhost:3000/knowledge-base/consultify-execution-and-rollout/03_first_30_minutes_in_consultify',
+    });
+  });
 });
 
