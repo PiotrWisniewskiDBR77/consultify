@@ -1093,6 +1093,11 @@ router.get(
 // ────────────────────────────────────────────────────────────────
 
 import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
+import {
+  getAiManageAll,
+  getAiRecommendation,
+  getAiTriage,
+} from '../../services/v8/managerAiService.js';
 import { getManagerProblems } from '../../services/v8/managerProblemsService.js';
 
 const VALID_LANES = new Set([
@@ -1305,6 +1310,68 @@ router.get(
       data: { plans },
       meta: executionControlMeta(),
     });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
+// Manager AI endpoints
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/recommend
+ * AI recommendation for a single problem.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/recommend',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { problemId } = req.body;
+    if (!problemId) {
+      return res.status(400).json({ error: 'problemId required', code: 'MISSING_PARAM' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const recommendation = await getAiRecommendation(organizationId, laneId, problemId, projectId);
+    return res.json({ data: recommendation, meta: executionControlMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/triage
+ * AI clustering and prioritization of all problems in a lane.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const triage = await getAiTriage(organizationId, laneId, projectId);
+    return res.json({ data: triage, meta: executionControlMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/manage-all
+ * Comprehensive AI management plan for an entire lane.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/manage-all',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const plan = await getAiManageAll(organizationId, laneId, projectId);
+    return res.json({ data: plan, meta: executionControlMeta() });
   })
 );
 

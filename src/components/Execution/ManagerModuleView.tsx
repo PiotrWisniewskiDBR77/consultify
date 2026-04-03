@@ -9,9 +9,11 @@ import {
   AlertTriangle,
   ArrowLeft,
   ClipboardList,
+  Layers,
   RefreshCw,
   Scale,
   Shield,
+  Sparkles,
   Target,
   Users,
 } from 'lucide-react';
@@ -22,6 +24,7 @@ import {
   V8ExecutionControlApi,
   type V8ManagerProblemRow,
 } from '../../services/api/v8/execution-control';
+import { AiRecommendationPanel } from './Manager/AiRecommendationPanel';
 import { ProblemPreview } from './Manager/ProblemPreview';
 import { ProblemTable } from './Manager/ProblemTable';
 import type { ManagerProblemRow, ProblemAction } from './Manager/types';
@@ -144,6 +147,29 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
   const { rows, loading, refresh } = useManagerProblems(moduleId, projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // AI panel state
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiPanelMode, setAiPanelMode] = useState<'recommend' | 'triage' | 'manage-all'>('manage-all');
+  const [aiProblemId, setAiProblemId] = useState<string | undefined>();
+
+  const openAiRecommend = useCallback((problemId: string) => {
+    setAiProblemId(problemId);
+    setAiPanelMode('recommend');
+    setAiPanelOpen(true);
+  }, []);
+
+  const openAiTriage = useCallback(() => {
+    setAiProblemId(undefined);
+    setAiPanelMode('triage');
+    setAiPanelOpen(true);
+  }, []);
+
+  const openAiManageAll = useCallback(() => {
+    setAiProblemId(undefined);
+    setAiPanelMode('manage-all');
+    setAiPanelOpen(true);
+  }, []);
 
   const selectedProblem = useMemo(
     () => rows.find((r) => r.id === selectedId) || null,
@@ -288,6 +314,30 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
             <span className="text-[10px] text-slate-400 tabular-nums">{rows.length} total</span>
           </div>
 
+          {/* AI buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={openAiTriage}
+              disabled={loading || rows.length === 0}
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[10px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-40 dark:border-violet-800/40 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30"
+              title="AI Triage — cluster and prioritize problems"
+            >
+              <Layers size={12} />
+              AI Triage
+            </button>
+            <button
+              type="button"
+              onClick={openAiManageAll}
+              disabled={loading || rows.length === 0}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+              title="AI Manage All — comprehensive management plan"
+            >
+              <Sparkles size={12} />
+              AI Manage All
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={refresh}
@@ -321,16 +371,37 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
         {/* Preview (right) */}
         {selectedProblem && (
-          <div className="w-[380px] shrink-0">
+          <div className="w-[380px] shrink-0 flex flex-col">
             <ProblemPreview
               problem={selectedProblem}
               onAction={handlePreviewAction}
               onClose={() => setSelectedId(null)}
               onOpenEntity={onOpenEntity}
             />
+            {/* AI Suggest button at bottom of preview */}
+            <div className="shrink-0 border-t border-slate-200 dark:border-navy-700 px-3 py-2">
+              <button
+                type="button"
+                onClick={() => openAiRecommend(selectedProblem.id)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-2 text-[11px] font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110"
+              >
+                <Sparkles size={13} />
+                {t('execution.manager.ai.suggest', 'AI — How to manage this?')}
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* AI Recommendation Panel */}
+      <AiRecommendationPanel
+        isOpen={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        mode={aiPanelMode}
+        laneId={moduleId}
+        problemId={aiProblemId}
+        projectId={projectId}
+      />
     </div>
   );
 };

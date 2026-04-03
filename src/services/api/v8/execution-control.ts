@@ -89,6 +89,55 @@ export interface V8ManagerProblemRow {
   meta: Record<string, unknown>;
 }
 
+// AI recommendation types
+export interface V8AiStep {
+  order: number;
+  action: string;
+  owner: string;
+  timeframe: string;
+  outcome: string;
+}
+
+export interface V8AiRecommendation {
+  problemId: string;
+  diagnosis: string;
+  recommendation: string;
+  steps: V8AiStep[];
+  confidence: number;
+  reasoning: string;
+  alternativeApproach: string;
+}
+
+export interface V8AiTriageCluster {
+  theme: string;
+  severity: 'critical' | 'warning' | 'info';
+  problemIds: string[];
+  summary: string;
+  suggestedAction: string;
+}
+
+export interface V8AiTriageResult {
+  clusters: V8AiTriageCluster[];
+  topPriority: string[];
+  executiveSummary: string;
+}
+
+export interface V8AiManageAllCluster {
+  theme: string;
+  severity: 'critical' | 'warning' | 'info';
+  diagnosis: string;
+  steps: V8AiStep[];
+  affectedProblemIds: string[];
+}
+
+export interface V8AiManageAllResult {
+  laneId: string;
+  executiveSummary: string;
+  clusters: V8AiManageAllCluster[];
+  quickWins: string[];
+  escalationNeeded: string[];
+}
+
 export interface V8ExecutionTimelineWarning {
   initiativeId: string;
   initiativeName: string;
@@ -374,4 +423,29 @@ export const V8ExecutionControlApi = {
 
   interveneEscalate: (payload: { entityId: string; severity: string; message: string }) =>
     v8Post<{ success: boolean }>('/execution-control/interventions/escalate', payload),
+
+  // AI Manager endpoints
+  getAiRecommendation: (laneId: string, problemId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiRecommendation>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/recommend${qs}`,
+      { problemId },
+    );
+  },
+
+  getAiTriage: (laneId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiTriageResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/triage${qs}`,
+      {},
+    );
+  },
+
+  getAiManageAll: (laneId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiManageAllResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/manage-all${qs}`,
+      {},
+    );
+  },
 };
