@@ -155,8 +155,9 @@ export const RAG_CONFIG: Record<string, RagConf> = {
  * Determine RAG level based on report highlight signals.
  */
 export function computeRAG(report: ReportDef): RagLevel {
-  const criticals = report.highlights.filter((h) => h.variant === 'critical');
-  const warns = report.highlights.filter((h) => h.variant === 'warn');
+  const highlights = report.highlights ?? [];
+  const criticals = highlights.filter((h) => h.variant === 'critical');
+  const warns = highlights.filter((h) => h.variant === 'warn');
 
   if (criticals.some((h) => Number(h.value) > 0)) return 'red';
   if (warns.some((h) => Number(h.value) > 0)) return 'amber';
@@ -258,14 +259,14 @@ export function buildReportMarkdown(report: ReportDef, rag: string): string {
   lines.push(`**Scope:** ${report.scope}`);
   lines.push('');
 
-  if (report.aiExecutiveReadout.length > 0) {
+  if ((report.aiExecutiveReadout ?? []).length > 0) {
     lines.push('## AI Executive Readout');
     lines.push('');
     report.aiExecutiveReadout.forEach((l) => lines.push(`- ${l}`));
     lines.push('');
   }
 
-  if (report.highlights.length > 0) {
+  if ((report.highlights ?? []).length > 0) {
     lines.push('## Key Metrics');
     lines.push('');
     lines.push('| Metric | Value |');
@@ -289,14 +290,14 @@ export function buildReportMarkdown(report: ReportDef, rag: string): string {
   lines.push(report.ragLogic);
   lines.push('');
 
-  if (report.followUpActions.length > 0) {
+  if ((report.followUpActions ?? []).length > 0) {
     lines.push('## Follow-Up Actions');
     lines.push('');
     report.followUpActions.forEach((a) => lines.push(`- [ ] ${a}`));
     lines.push('');
   }
 
-  if (report.degradedFlags.length > 0) {
+  if ((report.degradedFlags ?? []).length > 0) {
     lines.push('## Data Quality Flags');
     lines.push('');
     report.degradedFlags.forEach((f) => lines.push(`⚠ ${f}`));

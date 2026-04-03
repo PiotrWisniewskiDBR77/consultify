@@ -138,7 +138,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     </span>
                     <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {report.dataQuality.freshnessLabel}
+                      {report.dataQuality?.freshnessLabel ?? 'Live'}
                     </span>
                   </div>
                   <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -297,8 +297,8 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                   <PanelSection label="Data Quality">
                     <div className="flex flex-wrap gap-1">
                       {[
-                        `Freshness: ${report.dataQuality.freshnessLabel}`,
-                        `Confidence: ${report.dataQuality.confidence}`,
+                        `Freshness: ${report.dataQuality?.freshnessLabel ?? '—'}`,
+                        `Confidence: ${report.dataQuality?.confidence ?? '—'}`,
                       ].map((tag) => (
                         <span
                           key={tag}
@@ -308,9 +308,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                         </span>
                       ))}
                     </div>
-                    {report.dataQuality.knownLimitations.length > 0 && (
+                    {(report.dataQuality?.knownLimitations?.length ?? 0) > 0 && (
                       <div className="mt-2 space-y-1">
-                        {report.dataQuality.knownLimitations.map((lim) => (
+                        {report.dataQuality!.knownLimitations.map((lim) => (
                           <div
                             key={lim}
                             className="text-[10px] text-slate-400 dark:text-slate-500"

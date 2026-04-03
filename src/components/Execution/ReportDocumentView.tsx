@@ -319,48 +319,54 @@ const ActionCards: React.FC<{ actions: ReportAiRecommendation[] }> = ({ actions 
 
 /* ── Data quality footer ────────────────────────────────────────────────── */
 
-const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => (
-  <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-navy-900/40">
-    <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-      Data quality posture
-    </div>
-    <div className="flex flex-wrap gap-1.5">
-      {[
-        `Freshness: ${report.dataQuality.freshnessLabel}`,
-        `Confidence: ${report.dataQuality.confidence}`,
-        `Missing baseline: ${report.dataQuality.missingBaselineCount}`,
-        `Missing estimate: ${report.dataQuality.missingEstimateCount}`,
-      ].map((tag) => (
-        <span
-          key={tag}
-          className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-navy-800/60 dark:text-slate-400"
-        >
-          {tag}
-        </span>
-      ))}
-      {report.degradedFlags.map((flag) => (
-        <span
-          key={flag}
-          className="rounded-full bg-amber-50/80 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
-        >
-          {flag}
-        </span>
-      ))}
-    </div>
-    {report.dataQuality.knownLimitations.length > 0 && (
-      <div className="mt-2 space-y-1">
-        {report.dataQuality.knownLimitations.map((lim) => (
-          <div
-            key={lim}
-            className="text-[10px] text-slate-400 dark:text-slate-500"
+const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => {
+  const dq = report.dataQuality ?? {} as Partial<ReportDef['dataQuality']>;
+  const flags = report.degradedFlags ?? [];
+  const limitations = dq.knownLimitations ?? [];
+
+  return (
+    <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-navy-900/40">
+      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        Data quality posture
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {[
+          `Freshness: ${dq.freshnessLabel ?? '—'}`,
+          `Confidence: ${dq.confidence ?? '—'}`,
+          `Missing baseline: ${dq.missingBaselineCount ?? 0}`,
+          `Missing estimate: ${dq.missingEstimateCount ?? 0}`,
+        ].map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-navy-800/60 dark:text-slate-400"
           >
-            ⚠ {lim}
-          </div>
+            {tag}
+          </span>
+        ))}
+        {flags.map((flag) => (
+          <span
+            key={flag}
+            className="rounded-full bg-amber-50/80 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+          >
+            {flag}
+          </span>
         ))}
       </div>
-    )}
-  </div>
-);
+      {limitations.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {limitations.map((lim) => (
+            <div
+              key={lim}
+              className="text-[10px] text-slate-400 dark:text-slate-500"
+            >
+              ⚠ {lim}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 /* ────────────────────────────────────────────────────────────────────────────
    Data builders (initiative / task / decision aggregation)
@@ -1239,33 +1245,50 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const rag = useMemo(() => computeRAG(report), [report]);
+
+  const safeReport = useMemo((): ReportDef => ({
+    ...report,
+    highlights: report.highlights ?? [],
+    aiExecutiveReadout: report.aiExecutiveReadout ?? [],
+    aiRecommendedActions: report.aiRecommendedActions ?? [],
+    degradedFlags: report.degradedFlags ?? [],
+    scenarioNotes: report.scenarioNotes ?? [],
+    dataQuality: report.dataQuality ?? {
+      freshnessLabel: 'Live workspace snapshot',
+      confidence: '—',
+      missingBaselineCount: 0,
+      missingEstimateCount: 0,
+      knownLimitations: [],
+    },
+  }), [report]);
+
+  const rag = useMemo(() => computeRAG(safeReport), [safeReport]);
   const ragConf = RAG_CONFIG[rag];
-  const renderer = REPORT_RENDERERS[report.id];
+  const renderer = REPORT_RENDERERS[safeReport.id];
 
   const handleExportPDF = useCallback(() => {
     try {
-      exportReportPDF(report, rag);
+      exportReportPDF(safeReport, rag);
       toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
     } catch {
       toast.error(t('execution.reportPanel.pdfFailed', 'PDF export failed'));
     }
-  }, [report, rag, t]);
+  }, [safeReport, rag, t]);
 
   const handleCopy = useCallback(() => {
-    const md = buildReportMarkdown(report, rag);
+    const md = buildReportMarkdown(safeReport, rag);
     navigator.clipboard.writeText(md).then(
       () => toast.success(t('execution.reportPanel.copied', 'Copied')),
       () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed')),
     );
-  }, [report, rag, t]);
+  }, [safeReport, rag, t]);
 
   const handlePresentation = useCallback(() => {
-    const md = buildReportMarkdown(report, rag);
+    const md = buildReportMarkdown(safeReport, rag);
     const encoded = encodeURIComponent(md);
-    const title = encodeURIComponent(report.title);
+    const title = encodeURIComponent(safeReport.title);
     window.open(`/prezentacje?sourceType=execution_report&sourceName=${title}&content=${encoded}`, '_blank');
-  }, [report, rag]);
+  }, [safeReport, rag]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
@@ -1284,12 +1307,12 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
               <ArrowLeft size={16} />
             </button>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 shadow-sm dark:bg-navy-800/80">
-              {report.icon}
+              {safeReport.icon}
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                  {report.title}
+                  {safeReport.title}
                 </h1>
                 <div className="flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full shadow-sm ${RAG_DOT[rag]}`} />
@@ -1301,11 +1324,11 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
                 </div>
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-                <span>{report.audience}</span>
+                <span>{safeReport.audience}</span>
                 <span className="text-slate-300 dark:text-slate-600">·</span>
-                <span>{report.cadence}</span>
+                <span>{safeReport.cadence}</span>
                 <span className="text-slate-300 dark:text-slate-600">·</span>
-                <span>{report.dataQuality.freshnessLabel}</span>
+                <span>{safeReport.dataQuality.freshnessLabel}</span>
               </div>
             </div>
           </div>
@@ -1314,7 +1337,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onGenerateAI(report)}
+              onClick={() => onGenerateAI(safeReport)}
               className="flex h-8 items-center gap-1.5 rounded-lg bg-primary-600 px-3 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-primary-700 active:scale-[0.98]"
             >
               <Sparkles size={12} />
@@ -1340,7 +1363,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
 
         {/* Highlights strip */}
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {report.highlights.map((h) => (
+          {safeReport.highlights.map((h) => (
             <span
               key={h.label}
               className={[
@@ -1372,15 +1395,15 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
                     AI Executive Readout
                   </h3>
                 </div>
-                <AiInsightStrip items={report.aiExecutiveReadout} />
+                <AiInsightStrip items={safeReport.aiExecutiveReadout} />
               </div>
             </div>
           </GlassCard>
 
           {/* Metric pills */}
-          {report.highlights.length > 0 && (
+          {safeReport.highlights.length > 0 && (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {report.highlights.slice(0, 4).map((h) => (
+              {safeReport.highlights.slice(0, 4).map((h) => (
                 <MetricPill
                   key={h.label}
                   label={h.label}
@@ -1398,7 +1421,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
 
           {/* Report-specific content */}
           {renderer ? (
-            renderer(data, report, navigate)
+            renderer(data, safeReport, navigate)
           ) : (
             <Section title="Report Template" subtitle="This report type is not configured yet.">
               <AiInsightStrip items={['No renderer found for this report type.']} />
@@ -1406,7 +1429,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
           )}
 
           {/* AI Recommended Actions */}
-          {report.aiRecommendedActions.length > 0 && (
+          {safeReport.aiRecommendedActions.length > 0 && (
             <GlassCard className="overflow-hidden">
               <div className="flex items-stretch">
                 <div className="w-1 shrink-0 bg-gradient-to-b from-cyan-500 to-emerald-500" />
@@ -1417,14 +1440,14 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
                       AI Recommended Actions
                     </h3>
                   </div>
-                  <ActionCards actions={report.aiRecommendedActions} />
+                  <ActionCards actions={safeReport.aiRecommendedActions} />
                 </div>
               </div>
             </GlassCard>
           )}
 
           {/* Data quality footer */}
-          <QualityFooter report={report} />
+          <QualityFooter report={safeReport} />
         </div>
       </div>
     </div>
