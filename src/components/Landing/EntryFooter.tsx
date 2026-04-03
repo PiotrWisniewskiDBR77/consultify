@@ -123,7 +123,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
   ];
 
   return (
-    <footer className="bg-white dark:bg-navy-950 border-t border-slate-200 dark:border-navy-700 py-16 px-6">
+    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0B0A23]/95">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
@@ -147,7 +147,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
             </div>
 
             {/* Tagline */}
-            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
+            <p className="max-w-xs text-sm leading-relaxed text-slate-600 dark:text-slate-300">
               {t(
                 'landing.footer.tagline',
                 'Consultify is the Consulting Intelligence Platform: accessible world-class knowledge, structured guidance, and execution in one working environment.'
@@ -156,40 +156,40 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
 
             {/* Trust Badges */}
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <ShieldCheck size={14} className="text-green-500" />
                 <span>GDPR</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <Lock size={14} className="text-blue-500" />
                 <span>SOC2</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <Server size={14} className="text-purple-500" />
                 <span>EU Data</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 <Key size={14} className="text-amber-500" />
                 <span>AES-256</span>
               </div>
             </div>
 
             {/* Company Info */}
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 space-y-2 pt-2">
+            <div className="space-y-2 pt-2 text-[10px] text-slate-500 dark:text-slate-400">
               {/* HQ - Poland */}
               <div>
-                <p className="font-semibold text-slate-500 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-200">
                   {COMPANY.headquarters.name}
                 </p>
                 <p>
                   {COMPANY.headquarters.address}, {COMPANY.headquarters.city}
                 </p>
-                <p className="opacity-70">
+                <p className="text-slate-400 dark:text-slate-500">
                   NIP: {COMPANY.headquarters.nip} | KRS: {COMPANY.headquarters.krs}
                 </p>
               </div>
               {/* USA & Germany - compact */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 opacity-70">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-400 dark:text-slate-500">
                 <span>
                   {COMPANY.usa.name} · {COMPANY.usa.city}
                 </span>
@@ -203,7 +203,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
           {/* Navigation Columns */}
           {sections.map((section, idx) => (
             <div key={idx} className="space-y-4">
-              <h4 className="text-xs font-bold text-navy-950 dark:text-white uppercase tracking-widest">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 {section.title}
               </h4>
               <ul className="space-y-2.5">
@@ -213,7 +213,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
                       <button
                         type="button"
                         onClick={(link as any).onClick}
-                        className="text-sm text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                        className="text-sm text-slate-600 transition-colors hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-400"
                       >
                         {link.label}
                       </button>
@@ -223,7 +223,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
                         {...((link as any).external
                           ? { target: '_blank', rel: 'noopener noreferrer' }
                           : {})}
-                        className="text-sm text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                        className="text-sm text-slate-600 transition-colors hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-400"
                       >
                         {link.label}
                         {(link as any).external && (
@@ -239,12 +239,12 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
         </div>
 
         {/* Become Partner CTA */}
-        <div className="mt-12 pt-10 border-t border-slate-200 dark:border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/90 pt-10 sm:flex-row dark:border-white/[0.08]">
           <div>
             <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
               {t('partner.footerCta.title', 'Become a Consultify Partner')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-white/40">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               {t('partner.footerCta.sub', 'Resell, integrate, or co-create with us globally.')}
             </p>
           </div>
@@ -262,10 +262,10 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-10 pt-8 border-t border-slate-100 dark:border-navy-700">
+        <div className="mt-10 border-t border-slate-200/80 pt-8 dark:border-white/[0.08]">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
             {/* Copyright */}
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-slate-400">
               © 2025 Consultify. Powered by{' '}
               <a
                 href={COMPANY.website}
