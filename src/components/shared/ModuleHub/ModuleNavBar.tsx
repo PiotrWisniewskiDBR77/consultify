@@ -382,61 +382,56 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             })}
           </div>
 
-          {/* Status Filter Dropdown (replaces button row) */}
-          {statusDropdownContext && onStatusFilterChange && (
-            <>
-              <div className="w-px h-6 bg-slate-200 dark:bg-white/5" />
-              <StatusDropdown
-                context={statusDropdownContext}
-                value={activeStatusFilter || 'all'}
-                onChange={(status) => onStatusFilterChange(status === 'all' ? null : status)}
-                counts={statusCounts}
-                size="sm"
-              />
-            </>
-          )}
-
-          {/* Legacy: Status Filter Buttons (fallback when no dropdown context) */}
-          {!statusDropdownContext && statusFilters && statusFilters.length > 0 && (
-            <>
-              <div className="w-px h-6 bg-slate-200 dark:bg-white/5" />
-              <div className="flex items-center gap-1.5">
-                {statusFilters.map((filter) => {
-                  const isActive =
-                    activeStatusFilter === filter.id ||
-                    (filter.id === 'all' && !activeStatusFilter);
-                  return (
-                    <button
-                      key={filter.id}
-                      onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
-                      data-testid={`status-filter-${filter.id}`}
-                      className={`
-                        inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium
-                        transition-colors duration-150
-                        ${
-                          isActive
-                            ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
-                        }
-                      `}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${filter.color}`} />
-                      <span>{filter.label}</span>
-                      {filter.count !== undefined && (
-                        <span className="text-slate-500 dark:text-slate-400">{filter.count}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
         </div>
 
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
         <div className="flex items-center gap-3 ml-auto justify-end">
           {/* Filters / compact controls (leftmost in the right cluster) */}
           {rightControls}
+
+          {/* Status Filter Dropdown */}
+          {statusDropdownContext && onStatusFilterChange && (
+            <StatusDropdown
+              context={statusDropdownContext}
+              value={activeStatusFilter || 'all'}
+              onChange={(status) => onStatusFilterChange(status === 'all' ? null : status)}
+              counts={statusCounts}
+              size="sm"
+            />
+          )}
+
+          {/* Legacy: Status Filter Buttons (fallback when no dropdown context) */}
+          {!statusDropdownContext && statusFilters && statusFilters.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {statusFilters.map((filter) => {
+                const isActive =
+                  activeStatusFilter === filter.id ||
+                  (filter.id === 'all' && !activeStatusFilter);
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
+                    data-testid={`status-filter-${filter.id}`}
+                    className={`
+                      inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium
+                      transition-colors duration-150
+                      ${
+                        isActive
+                          ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                      }
+                    `}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${filter.color}`} />
+                    <span>{filter.label}</span>
+                    {filter.count !== undefined && (
+                      <span className="text-slate-500 dark:text-slate-400">{filter.count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* View Mode Toggle — V3-A03: canonical order */}
           {orderedViewModes.length > 1 && (
