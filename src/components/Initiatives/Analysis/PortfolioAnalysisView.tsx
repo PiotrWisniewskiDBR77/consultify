@@ -140,6 +140,8 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             issues={logicIssues}
             onOpenInitiative={onOpenInitiative}
             onQuickUpdate={onQuickUpdate}
+            initiatives={initiatives}
+            users={users}
           />
         )}
         {subview === 'timeline' && (
