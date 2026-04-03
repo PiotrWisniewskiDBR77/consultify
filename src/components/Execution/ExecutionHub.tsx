@@ -32,13 +32,13 @@ import {
   Clock,
   FileText,
   GripVertical,
-  Heart,
   LayoutDashboard,
   LayoutGrid,
   Loader2,
   MessageSquare,
   RefreshCw,
   Scale,
+  Shield,
   Sparkles,
   Target,
   TrendingUp,
@@ -1533,18 +1533,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'reports' as ModuleTab,
-        label: t('execution.tabs.reports', 'Reporting'),
+        label: t('execution.tabs.reports', 'Raporty'),
         icon: <FileText size={16} />,
-        count: filteredInitiatives.length,
       },
       {
         id: 'people_change' as ModuleTab,
-        label: t('execution.tabs.peopleChange', 'Management'),
-        icon: <Heart size={16} />,
-        count: stats.blocked ?? 0,
+        label: t('execution.tabs.peopleChange', 'Manager'),
+        icon: <Shield size={16} />,
+        count:
+          (stats.blocked ?? 0) +
+          (actionQueueItems?.length ?? 0),
       },
     ],
-    [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions]
+    [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
   );
 
   // Table columns
@@ -3863,6 +3864,549 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
+  // ---------------------------------------------------------------------------
+  // RAPORTY — pre-defined report catalog
+  // ---------------------------------------------------------------------------
+  const reportCatalog = useMemo(() => {
+    const blocked = actionCenter.blocked.length;
+    const overdueDecisionCount = actionCenter.overdueDecisions.length;
+    const missingDatesCount = actionCenter.missingDates.length;
+    const totalTasks = tasks.length;
+    const pendingDecisions = decisions.filter(
+      (d) => String(d.status).toUpperCase() === 'PENDING'
+    ).length;
+    const totalInitiatives = filteredInitiatives.length;
+    const progressPct = execSnapshot?.overview?.progressPercent ?? null;
+
+    type ReportDef = {
+      id: string;
+      title: string;
+      audience: string;
+      cadence: string;
+      description: string;
+      icon: React.ReactNode;
+      highlights: { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' }[];
+    };
+
+    const catalog: ReportDef[] = [
+      {
+        id: 'weekly-exec',
+        title: t('execution.reportCatalog.weeklyExec.title', 'Weekly Execution Pack'),
+        audience: t('execution.reportCatalog.weeklyExec.audience', 'PMO, Team Leads'),
+        cadence: t('execution.reportCatalog.weeklyExec.cadence', 'Weekly'),
+        description: t('execution.reportCatalog.weeklyExec.desc', 'Progress overview, blockers, overdue items and next milestones for the current cycle.'),
+        icon: <CalendarDays size={18} className="text-cyan-500" />,
+        highlights: [
+          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.stats.tasks', 'Tasks'), value: totalTasks },
+        ],
+      },
+      {
+        id: 'monthly-pmo',
+        title: t('execution.reportCatalog.monthlyPmo.title', 'Monthly PMO Review'),
+        audience: t('execution.reportCatalog.monthlyPmo.audience', 'PMO Director, Sponsors'),
+        cadence: t('execution.reportCatalog.monthlyPmo.cadence', 'Monthly'),
+        description: t('execution.reportCatalog.monthlyPmo.desc', 'Cross-initiative trends, milestone slippage, budget variance and delivery confidence.'),
+        icon: <TrendingUp size={18} className="text-indigo-500" />,
+        highlights: [
+          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
+          { label: t('execution.attention.missingDates', 'Missing dates'), value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+        ],
+      },
+      {
+        id: 'program-health',
+        title: t('execution.reportCatalog.programHealth.title', 'Program Health Summary'),
+        audience: t('execution.reportCatalog.programHealth.audience', 'Steering Committee'),
+        cadence: t('execution.reportCatalog.programHealth.cadence', 'Bi-weekly'),
+        description: t('execution.reportCatalog.programHealth.desc', 'RAG status per initiative, priority alerts, confidence scoring and executive narrative.'),
+        icon: <Shield size={18} className="text-emerald-500" />,
+        highlights: [
+          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+        ],
+      },
+      {
+        id: 'blockers-recovery',
+        title: t('execution.reportCatalog.blockersRecovery.title', 'Blockers & Recovery Report'),
+        audience: t('execution.reportCatalog.blockersRecovery.audience', 'PMO, Delivery Managers'),
+        cadence: t('execution.reportCatalog.blockersRecovery.cadence', 'On demand'),
+        description: t('execution.reportCatalog.blockersRecovery.desc', 'Active blockers, blast radius, owner accountability and recommended recovery actions.'),
+        icon: <AlertTriangle size={18} className="text-rose-500" />,
+        highlights: [
+          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.attention.dueSoonTasks', 'Due soon'), value: actionCenter.dueSoonTasks.length },
+        ],
+      },
+      {
+        id: 'milestone-slippage',
+        title: t('execution.reportCatalog.milestoneSlippage.title', 'Milestone Slippage Report'),
+        audience: t('execution.reportCatalog.milestoneSlippage.audience', 'PMO, Sponsors'),
+        cadence: t('execution.reportCatalog.milestoneSlippage.cadence', 'Weekly'),
+        description: t('execution.reportCatalog.milestoneSlippage.desc', 'Milestones at risk, overdue dates, forecast vs baseline variance and timeline drift.'),
+        icon: <Clock size={18} className="text-amber-500" />,
+        highlights: [
+          { label: t('execution.attention.missingDates', 'Missing dates'), value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+        ],
+      },
+      {
+        id: 'capacity-utilization',
+        title: t('execution.reportCatalog.capacityUtil.title', 'Capacity Utilization Report'),
+        audience: t('execution.reportCatalog.capacityUtil.audience', 'Resource Managers, PMO'),
+        cadence: t('execution.reportCatalog.capacityUtil.cadence', 'Monthly'),
+        description: t('execution.reportCatalog.capacityUtil.desc', 'Per-person and per-team workload, overload signals, underutilized capacity and balancing opportunities.'),
+        icon: <Users size={18} className="text-violet-500" />,
+        highlights: [
+          { label: t('execution.stats.tasks', 'Tasks'), value: totalTasks },
+        ],
+      },
+      {
+        id: 'budget-variance',
+        title: t('execution.reportCatalog.budgetVariance.title', 'Budget Variance Report'),
+        audience: t('execution.reportCatalog.budgetVariance.audience', 'Finance, Sponsors'),
+        cadence: t('execution.reportCatalog.budgetVariance.cadence', 'Monthly'),
+        description: t('execution.reportCatalog.budgetVariance.desc', 'Budget planned vs actual, initiative-level spend and forecast overshoot alerts.'),
+        icon: <TrendingUp size={18} className="text-green-500" />,
+        highlights: [
+          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
+      },
+      {
+        id: 'decision-backlog',
+        title: t('execution.reportCatalog.decisionBacklog.title', 'Decision Backlog & Approval Aging'),
+        audience: t('execution.reportCatalog.decisionBacklog.audience', 'PMO, Decision Owners'),
+        cadence: t('execution.reportCatalog.decisionBacklog.cadence', 'Weekly'),
+        description: t('execution.reportCatalog.decisionBacklog.desc', 'Pending decisions, approval queue aging, decision-latency risk and accountability gaps.'),
+        icon: <Scale size={18} className="text-amber-600" />,
+        highlights: [
+          { label: t('execution.attention.overdueDecisions', 'Overdue'), value: overdueDecisionCount, variant: overdueDecisionCount > 0 ? 'warn' : 'default' },
+          { label: t('execution.stats.pendingDecisions', 'Pending'), value: pendingDecisions },
+        ],
+      },
+      {
+        id: 'cross-dependency',
+        title: t('execution.reportCatalog.crossDep.title', 'Cross-Initiative Dependency Report'),
+        audience: t('execution.reportCatalog.crossDep.audience', 'PMO, Architects'),
+        cadence: t('execution.reportCatalog.crossDep.cadence', 'Bi-weekly'),
+        description: t('execution.reportCatalog.crossDep.desc', 'Inter-initiative dependencies, critical path risk, dependency health and cascade impact analysis.'),
+        icon: <GripVertical size={18} className="text-slate-500" />,
+        highlights: [
+          { label: t('execution.stats.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
+      },
+      {
+        id: 'delivery-confidence',
+        title: t('execution.reportCatalog.deliveryConf.title', 'Delivery Confidence Report'),
+        audience: t('execution.reportCatalog.deliveryConf.audience', 'Steering Committee, Sponsors'),
+        cadence: t('execution.reportCatalog.deliveryConf.cadence', 'Monthly'),
+        description: t('execution.reportCatalog.deliveryConf.desc', 'Confidence scoring per initiative, trend direction, risk-adjusted forecast and sponsor-ready narrative.'),
+        icon: <Sparkles size={18} className="text-cyan-500" />,
+        highlights: [
+          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: t('execution.attention.blocked', 'Blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+        ],
+      },
+      {
+        id: 'sponsor-onepager',
+        title: t('execution.reportCatalog.sponsorOnePager.title', 'Sponsor-Ready One-Pager'),
+        audience: t('execution.reportCatalog.sponsorOnePager.audience', 'Executive Sponsors'),
+        cadence: t('execution.reportCatalog.sponsorOnePager.cadence', 'On demand'),
+        description: t('execution.reportCatalog.sponsorOnePager.desc', 'Concise one-page summary: progress, key risks, next milestones and required decisions.'),
+        icon: <FileText size={18} className="text-indigo-500" />,
+        highlights: [
+          { label: t('common.progress', 'Progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+        ],
+      },
+    ];
+
+    return catalog;
+  }, [t, actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
+
+  const renderReportsCatalog = () => (
+    <div className="p-4 space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            {t('execution.reportCatalog.heading', 'Execution Reports')}
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Select a report to generate or export.')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/reports')}
+          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+        >
+          {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {reportCatalog.map((report) => (
+          <button
+            key={report.id}
+            type="button"
+            onClick={() => {
+              toast(t('execution.reportCatalog.generating', 'Generating {{title}}…', { title: report.title }));
+            }}
+            className="group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30 transition-all"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                  {report.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                    {report.title}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {report.cadence}
+                    </span>
+                    <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {report.audience}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-0.5" />
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+              {report.description}
+            </p>
+
+            {report.highlights.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {report.highlights.map((h) => (
+                  <span
+                    key={h.label}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                      h.variant === 'critical'
+                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                        : h.variant === 'warn'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {h.label}: {h.value}
+                  </span>
+                ))}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // ---------------------------------------------------------------------------
+  // MANAGER — operator cockpit
+  // ---------------------------------------------------------------------------
+  const managerMetrics = useMemo(() => {
+    const kpiAlerts = actionQueueItems.filter(
+      (item) => item.type === 'kpi_deviation_no_plan'
+    ).length;
+    const overdueItems = actionQueueItems.filter(
+      (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
+    ).length;
+    const blockedCount = actionCenter.blocked.length;
+    const missingDatesCount = actionCenter.missingDates.length;
+    return { kpiAlerts, overdueItems, blockedCount, missingDatesCount };
+  }, [actionQueueItems, actionCenter]);
+
+  const interventionSuggestions = useMemo(() => {
+    const suggestions: { id: string; action: string; reason: string; expected: string; icon: React.ReactNode; severity: 'high' | 'medium' | 'low' }[] = [];
+
+    if (managerMetrics.blockedCount > 0) {
+      suggestions.push({
+        id: 'unblock',
+        action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
+        reason: t('execution.manager.suggestions.unblockReason', '{{count}} initiative(s) blocked — delivery stalled.', { count: managerMetrics.blockedCount }),
+        expected: t('execution.manager.suggestions.unblockExpected', 'Unblocked initiatives resume delivery.'),
+        icon: <AlertTriangle size={14} className="text-rose-500" />,
+        severity: 'high',
+      });
+    }
+
+    if (managerMetrics.overdueItems > 0) {
+      suggestions.push({
+        id: 'escalate-decisions',
+        action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
+        reason: t('execution.manager.suggestions.escalateReason', '{{count}} approval(s) past due — blocking downstream work.', { count: managerMetrics.overdueItems }),
+        expected: t('execution.manager.suggestions.escalateExpected', 'Decision queue clears, dependent tasks unblock.'),
+        icon: <Scale size={14} className="text-amber-500" />,
+        severity: 'high',
+      });
+    }
+
+    if (managerMetrics.missingDatesCount > 0) {
+      suggestions.push({
+        id: 'fill-dates',
+        action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
+        reason: t('execution.manager.suggestions.replanReason', '{{count}} initiative(s) have no target date — timeline invisible.', { count: managerMetrics.missingDatesCount }),
+        expected: t('execution.manager.suggestions.replanExpected', 'Timeline becomes credible; slippage detection activates.'),
+        icon: <Clock size={14} className="text-cyan-500" />,
+        severity: 'medium',
+      });
+    }
+
+    if (managerMetrics.kpiAlerts > 0) {
+      suggestions.push({
+        id: 'address-kpi',
+        action: t('execution.manager.suggestions.addressKpi', 'Create recovery plans for KPI deviations'),
+        reason: t('execution.manager.suggestions.addressKpiReason', '{{count}} KPI deviation(s) without a plan.', { count: managerMetrics.kpiAlerts }),
+        expected: t('execution.manager.suggestions.addressKpiExpected', 'Deviations get action plans, confidence improves.'),
+        icon: <Target size={14} className="text-fuchsia-500" />,
+        severity: 'medium',
+      });
+    }
+
+    if (actionCenter.dueSoonTasks.length > 3) {
+      suggestions.push({
+        id: 'smooth-workload',
+        action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
+        reason: t('execution.manager.suggestions.smoothReason', '{{count}} tasks due soon — potential resource crunch.', { count: actionCenter.dueSoonTasks.length }),
+        expected: t('execution.manager.suggestions.smoothExpected', 'Workload spread evenly; no single-point overload.'),
+        icon: <Users size={14} className="text-violet-500" />,
+        severity: 'low',
+      });
+    }
+
+    return suggestions;
+  }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
+
+  const renderManagerCockpit = () => {
+    const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
+
+    return (
+      <div className="p-4 space-y-5">
+        {/* A. Manager KPIs */}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+          {[
+            {
+              label: t('execution.manager.kpi.actionItems', 'Action items'),
+              value: actionQueueItems.length,
+              sub: t('execution.manager.kpi.actionItemsSub', 'Need review this cycle'),
+              color: 'text-cyan-500',
+            },
+            {
+              label: t('execution.manager.kpi.overdueApprovals', 'Overdue approvals'),
+              value: overdueItems,
+              sub: t('execution.manager.kpi.overdueApprovalsSub', 'Past due date'),
+              color: overdueItems > 0 ? 'text-amber-500' : 'text-slate-400',
+            },
+            {
+              label: t('execution.manager.kpi.kpiAlerts', 'KPI alerts'),
+              value: kpiAlerts,
+              sub: t('execution.manager.kpi.kpiAlertsSub', 'Without recovery plan'),
+              color: kpiAlerts > 0 ? 'text-fuchsia-500' : 'text-slate-400',
+            },
+            {
+              label: t('execution.manager.kpi.blocked', 'Blocked'),
+              value: blockedCount,
+              sub: t('execution.manager.kpi.blockedSub', 'Initiatives stalled'),
+              color: blockedCount > 0 ? 'text-rose-500' : 'text-slate-400',
+            },
+            {
+              label: t('execution.manager.kpi.missingDates', 'Missing dates'),
+              value: missingDatesCount,
+              sub: t('execution.manager.kpi.missingDatesSub', 'No target date set'),
+              color: missingDatesCount > 0 ? 'text-cyan-500' : 'text-slate-400',
+            },
+          ].map((kpi) => (
+            <div
+              key={kpi.label}
+              className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3.5"
+            >
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-tight">
+                {kpi.label}
+              </div>
+              <div className={`mt-1.5 text-2xl font-bold tabular-nums ${kpi.color}`}>
+                {kpi.value}
+              </div>
+              <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                {kpi.sub}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* B. Action Center */}
+        <ToggleBlock
+          title={t('execution.manager.actionCenter', 'Action Center')}
+          badge={actionQueueItems.length}
+          icon={<AlertTriangle size={14} />}
+          defaultOpen
+        >
+          {renderActionCenter()}
+        </ToggleBlock>
+
+        {/* C. Resource Management */}
+        <ToggleBlock
+          title={t('execution.manager.resource', 'Resource & Workload')}
+          icon={<Users size={14} />}
+          defaultOpen={false}
+        >
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <ExecutionWorkloadView
+              initiatives={initiatives}
+              onInitiativeClick={handleOpenSidePanel}
+              showControls={false}
+              controls={{
+                viewMode: workloadViewMode,
+                setViewMode: setWorkloadViewMode,
+                weekCount: workloadWeekCount,
+                setWeekCount: setWorkloadWeekCount,
+                monthCount: workloadMonthCount,
+                setMonthCount: setWorkloadMonthCount,
+                startDate: workloadStartDate,
+                setStartDate: setWorkloadStartDate,
+              }}
+            />
+          </div>
+        </ToggleBlock>
+
+        {/* D. Execution Risk */}
+        <ToggleBlock
+          title={t('execution.manager.execRisk', 'Execution Risk')}
+          badge={riskSignals.length + delaySignals.length}
+          icon={<Shield size={14} />}
+          defaultOpen={riskSignals.length + delaySignals.length > 0}
+        >
+          <div className="space-y-3">
+            {riskSignals.length === 0 && delaySignals.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">
+                {t('execution.manager.noRiskSignals', 'No active risk signals. Delivery is on track.')}
+              </p>
+            ) : (
+              <>
+                {riskSignals.slice(0, 10).map((rs) => (
+                  <div
+                    key={rs.id}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-rose-50/60 dark:bg-rose-900/10 border border-rose-200/50 dark:border-rose-800/30"
+                  >
+                    <AlertTriangle size={14} className="text-rose-500 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {rs.title} <span className="text-slate-400 font-normal">· {rs.initiativeName}</span>
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {rs.description}
+                      </p>
+                      {rs.suggestedAction && (
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
+                          → {rs.suggestedAction}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
+                      rs.severity === 'CRITICAL' || rs.severity === 'HIGH'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
+                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
+                    }`}>
+                      {rs.severity}
+                    </span>
+                  </div>
+                ))}
+                {delaySignals.slice(0, 10).map((ds, idx) => (
+                  <div
+                    key={`delay-${idx}`}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30"
+                  >
+                    <Clock size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {ds.entityName || `Delay #${idx + 1}`}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {ds.deviationType.replace(/_/g, ' ')} · {ds.daysDeviation}d
+                        {ds.whySlipReasons?.length > 0 && ` — ${ds.whySlipReasons[0].reason}`}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
+                      ds.severity === 'CRITICAL'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
+                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
+                    }`}>
+                      {ds.severity}
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </ToggleBlock>
+
+        {/* E. Intervention Suggestions */}
+        {interventionSuggestions.length > 0 && (
+          <ToggleBlock
+            title={t('execution.manager.interventions', 'Intervention Suggestions')}
+            badge={interventionSuggestions.length}
+            icon={<Sparkles size={14} />}
+            defaultOpen
+          >
+            <div className="space-y-3">
+              {interventionSuggestions.map((s) => (
+                <div
+                  key={s.id}
+                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors ${
+                    s.severity === 'high'
+                      ? 'border-rose-200 dark:border-rose-800/40 bg-rose-50/40 dark:bg-rose-900/10'
+                      : s.severity === 'medium'
+                        ? 'border-amber-200 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-900/10'
+                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                  }`}
+                >
+                  <div className="shrink-0 mt-0.5">{s.icon}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {s.action}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {s.reason}
+                    </p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
+                      → {s.expected}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${
+                      s.severity === 'high'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
+                        : s.severity === 'medium'
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {s.severity}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </ToggleBlock>
+        )}
+
+        {/* F. People & Change (existing component) */}
+        <ToggleBlock
+          title={t('execution.manager.peopleChange', 'People & Change')}
+          icon={<Users size={14} />}
+          defaultOpen={false}
+        >
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <PeopleChangeWorkspace
+              initiativeId={undefined}
+              projectId={currentProjectId || undefined}
+            />
+          </div>
+        </ToggleBlock>
+      </div>
+    );
+  };
+
   const renderCalendarView = () => {
     if (isLoadingTasks || isLoadingDecisions) {
       return (
@@ -4213,149 +4757,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
-      const kpiAlerts = actionQueueItems.filter(
-        (item) => item.type === 'kpi_deviation_no_plan'
-      ).length;
-      const overdueItems = actionQueueItems.filter(
-        (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
-      ).length;
-      return (
-        <div className="p-4 space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('execution.management.workloadTitle', 'Workload changes')}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                {actionQueueItems.length}
-              </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'execution.management.workloadBody',
-                  'Items that need review, acceptance, or follow-up this cycle.'
-                )}
-              </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('execution.management.overdueTitle', 'Overdue approvals')}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                {overdueItems}
-              </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'execution.management.overdueBody',
-                  'Decisions and communications that are past due and should move first.'
-                )}
-              </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('execution.management.kpiAlertsTitle', 'KPI alerts without plan')}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                {kpiAlerts}
-              </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'execution.management.kpiAlertsBody',
-                  'Deviation cases surface here so teams can turn them into actions and staffing changes.'
-                )}
-              </div>
-            </div>
-          </div>
-
-          {renderActionCenter()}
-
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <ExecutionWorkloadView
-              initiatives={initiatives}
-              onInitiativeClick={handleOpenSidePanel}
-              showControls={false}
-              controls={{
-                viewMode: workloadViewMode,
-                setViewMode: setWorkloadViewMode,
-                weekCount: workloadWeekCount,
-                setWeekCount: setWorkloadWeekCount,
-                monthCount: workloadMonthCount,
-                setMonthCount: setWorkloadMonthCount,
-                startDate: workloadStartDate,
-                setStartDate: setWorkloadStartDate,
-              }}
-            />
-          </div>
-
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <PeopleChangeWorkspace
-              initiativeId={undefined}
-              projectId={currentProjectId || undefined}
-            />
-          </div>
-        </div>
-      );
+      return renderManagerCockpit();
     }
 
     if (activeTab === 'reports') {
-      return (
-        <div className="p-4 space-y-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            {renderExecutionView()}
-          </div>
-
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
-            <BudgetControlPanel
-              projectId={currentProjectId || undefined}
-              onInitiativeClick={(id) => {
-                const init = initiatives.find((i) => i.id === id);
-                if (init) handleOpenSidePanel(init);
-              }}
-            />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ToggleBlock
-              title={t('execution.reporting.tasksTitle', 'Tasks')}
-              badge={tasks.length}
-              defaultOpen={false}
-              icon={<ClipboardList size={16} />}
-            >
-              {renderTasksQueue()}
-            </ToggleBlock>
-            <ToggleBlock
-              title={t('execution.reporting.decisionsTitle', 'Decisions')}
-              badge={decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length}
-              defaultOpen={false}
-              icon={<Scale size={16} />}
-            >
-              {renderDecisionsBuckets()}
-            </ToggleBlock>
-          </div>
-
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {t('execution.reports.title', 'Execution reports')}
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {t(
-                    'execution.reports.subtitle',
-                    'Generate a simple weekly pack and deep-dive reports without adding process overhead.'
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/reports')}
-                className="h-9 px-4 rounded-xl text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors"
-              >
-                {t('execution.reports.open', 'Open Reports')}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
+      return renderReportsCatalog();
     }
 
     const snapshot = execSnapshot;
