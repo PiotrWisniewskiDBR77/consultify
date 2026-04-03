@@ -68,6 +68,18 @@ Consultify is the main public product priority. It is an AI-powered platform for
 const DBR77_FALLBACK_CONTEXT = `Product: DBR77 Ecosystem
 DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`;
 
+const IRIS_FALLBACK_CONTEXT = `Product: IRIS
+IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`;
+
+const DIGITAL_TWIN_FALLBACK_CONTEXT = `Product: Digital Twin
+DBR77 Digital Twin creates a virtual replica of physical factory processes, enabling simulation, scenario planning and optimization without disrupting production. It integrates with IIoT data and IRIS analytics.`;
+
+const IIOT_FALLBACK_CONTEXT = `Product: IIoT
+DBR77 IIoT is the Industrial Internet of Things connectivity layer that collects real-time sensor and machine data from production lines, feeding it into Digital Twin, IRIS and the broader DBR77 analytics stack.`;
+
+const MARKETPLACE_FALLBACK_CONTEXT = `Product: Marketplace
+DBR77 Marketplace is the curated catalog of pre-built transformation modules, integrations and partner solutions that organizations can plug into their Consultify-managed transformation programs.`;
+
 function parseMeta(raw: AnnaDocRow['metadata']): AnnaDocMeta {
   if (!raw) return {};
   if (typeof raw === 'object') return raw as AnnaDocMeta;
@@ -168,8 +180,10 @@ function detectRequestedProducts(query: string): {
 function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  if (!mentionsDbR) return false;
-  return (
+  const mentionsAnnaOrProduct =
+    /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
+
+  const portfolioKeywords =
     /\bportfolio\b/.test(q) ||
     /\bekosystem\b/.test(q) ||
     /\bprodukty\b/.test(q) ||
@@ -177,8 +191,20 @@ function isDbR77PortfolioQuestion(query: string): boolean {
     /\boferta\b/.test(q) ||
     /\bco macie\b/.test(q) ||
     /\bjakie.*(produkty|produkt)\b/.test(q) ||
-    /\bjakie znasz\b/.test(q)
-  );
+    /\bjakie znasz\b/.test(q) ||
+    /\bco oferujecie\b/.test(q) ||
+    /\bwhat.*offer\b/.test(q) ||
+    /\bwhat products\b/.test(q) ||
+    /\byour products\b/.test(q) ||
+    /\bwasze produkty\b/.test(q) ||
+    /\bwhat do you (have|know)\b/.test(q) ||
+    /\btell me about your\b/.test(q) ||
+    /\bopowiedz.*o.*produk\b/.test(q) ||
+    /\bprzedstaw.*ofert\b/.test(q);
+
+  if (mentionsDbR && portfolioKeywords) return true;
+  if (portfolioKeywords && !mentionsAnnaOrProduct) return true;
+  return false;
 }
 
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
@@ -270,36 +296,30 @@ async function searchScopedKnowledge(
     .filter((result) => Boolean(result?.content)) as AnnaRagHit[];
 }
 
+const FALLBACK_CONTEXT_MAP: Record<string, string> = {
+  consultify: CONSULTIFY_FALLBACK_CONTEXT,
+  vector: VECTOR_FALLBACK_CONTEXT,
+  dbr77: DBR77_FALLBACK_CONTEXT,
+  iris: IRIS_FALLBACK_CONTEXT,
+  'digital-twin': DIGITAL_TWIN_FALLBACK_CONTEXT,
+  iiot: IIOT_FALLBACK_CONTEXT,
+  marketplace: MARKETPLACE_FALLBACK_CONTEXT,
+};
+
 function buildFallbackHits(primaryProducts: string[]): AnnaRagHit[] {
   const hits: AnnaRagHit[] = [];
-
-  if (primaryProducts.includes('consultify')) {
-    hits.push({
-      content: CONSULTIFY_FALLBACK_CONTEXT,
-      source: 'consultify-fallback',
-      similarity: 0.6,
-      productSlug: 'consultify',
-    });
+  for (const product of primaryProducts) {
+    const ctx = FALLBACK_CONTEXT_MAP[product];
+    if (ctx) {
+      hits.push({
+        content: ctx,
+        source: `${product}-fallback`,
+        similarity: product === 'consultify' ? 0.6 : product === 'vector' ? 0.55 : 0.5,
+        productSlug: product,
+        language: null,
+      });
+    }
   }
-
-  if (primaryProducts.includes('vector')) {
-    hits.push({
-      content: VECTOR_FALLBACK_CONTEXT,
-      source: 'vector-fallback',
-      similarity: 0.55,
-      productSlug: 'vector',
-    });
-  }
-
-  if (primaryProducts.includes('dbr77')) {
-    hits.push({
-      content: DBR77_FALLBACK_CONTEXT,
-      source: 'dbr77-fallback',
-      similarity: 0.5,
-      productSlug: 'dbr77',
-    });
-  }
-
   return hits;
 }
 
@@ -481,13 +501,13 @@ export async function buildAnnaVoiceBootstrap(
   const bootstrapQuery = String(locale || '')
     .toLowerCase()
     .startsWith('pl')
-    ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector ekosystem'
-    : 'Consultify overview business value demo trial ROI security DBR77 Vector ecosystem';
+    ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'
+    : 'Consultify overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem';
 
   return buildAnnaKnowledgeContext({
     query: bootstrapQuery,
     locale,
-    limit: 5,
-    preferredProducts: ['consultify', 'vector', 'dbr77'],
+    limit: 8,
+    preferredProducts: ['consultify', 'vector', 'dbr77', 'iris', 'digital-twin', 'iiot', 'marketplace'],
   });
 }
