@@ -219,7 +219,7 @@ interface CatalogApp {
   description: string;
   features: string[];
   icon: React.FC;
-  authType: 'oauth2' | 'api_key' | 'token';
+  authType: 'oauth2' | 'api_key' | 'token' | 'basic';
   configFields: string[];
 }
 
@@ -240,13 +240,13 @@ const CATALOG: CatalogApp[] = [
   // Calendar
   { id: 'google_calendar', name: 'Google Calendar', category: 'calendar', description: 'Two-way sync of events, reminders and shared calendars', features: ['Event sync', 'Reminders', 'Shared calendars'], icon: GoogleCalendarIcon, authType: 'oauth2', configFields: [] },
   { id: 'outlook_calendar', name: 'Outlook Calendar', category: 'calendar', description: 'Sync your Outlook calendar events and availability', features: ['Event sync', 'Availability', 'Room booking'], icon: OutlookCalendarIcon, authType: 'oauth2', configFields: [] },
-  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', category: 'calendar', description: 'Connect via CalDAV for iCloud calendar sync', features: ['CalDAV sync', 'Reminders'], icon: AppleCalendarIcon, authType: 'token', configFields: ['caldav_url'] },
+  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', category: 'calendar', description: 'Connect via CalDAV for iCloud calendar sync', features: ['CalDAV sync', 'Reminders'], icon: AppleCalendarIcon, authType: 'basic', configFields: ['caldav_url'] },
   { id: 'calendly', name: 'Calendly', category: 'calendar', description: 'Import scheduled meetings and availability windows', features: ['Scheduling sync', 'Availability', 'Event types'], icon: CalendlyIcon, authType: 'oauth2', configFields: [] },
 
   // Task Management
   { id: 'jira', name: 'Jira', category: 'task_management', description: 'Bi-directional sync of issues, sprints and boards', features: ['Issue sync', 'Sprint tracking', 'Status mapping'], icon: JiraIcon, authType: 'oauth2', configFields: ['site_url'] },
   { id: 'asana', name: 'Asana', category: 'task_management', description: 'Sync tasks, projects and portfolios with Asana', features: ['Task sync', 'Project mapping', 'Portfolios'], icon: AsanaIcon, authType: 'oauth2', configFields: [] },
-  { id: 'trello', name: 'Trello', category: 'task_management', description: 'Sync boards, lists and cards with Trello', features: ['Board sync', 'Card mapping', 'Checklists'], icon: TrelloIcon, authType: 'oauth2', configFields: [] },
+  { id: 'trello', name: 'Trello', category: 'task_management', description: 'Sync boards, lists and cards with Trello', features: ['Board sync', 'Card mapping', 'Checklists'], icon: TrelloIcon, authType: 'token', configFields: [] },
   { id: 'clickup', name: 'ClickUp', category: 'task_management', description: 'Connect tasks, spaces and goals from ClickUp', features: ['Task sync', 'Space mapping', 'Goals'], icon: ClickUpIcon, authType: 'oauth2', configFields: [] },
   { id: 'monday', name: 'Monday.com', category: 'task_management', description: 'Sync boards, items and workspaces from Monday', features: ['Board sync', 'Item mapping', 'Automations'], icon: MondayIcon, authType: 'api_key', configFields: ['api_token'] },
   { id: 'notion', name: 'Notion', category: 'task_management', description: 'Sync databases, pages and task lists from Notion', features: ['Database sync', 'Page import', 'Task lists'], icon: NotionIcon, authType: 'oauth2', configFields: [] },
@@ -325,28 +325,87 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     return counts;
   }, []);
 
-  const handleConnect = useCallback(async (appId: string) => {
-    try {
-      await connect(appId);
-      toast.success(t('settings.integrations.connectStarted', 'Connection initiated'));
-    } catch {
-      toast.error(t('settings.integrations.connectError', 'Failed to initiate connection'));
+  // Handle OAuth success/error from redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthSuccess = params.get('oauth_success');
+    const oauthError = params.get('oauth_error');
+    if (oauthSuccess) {
+      toast.success(`Connected to ${oauthSuccess} successfully!`);
+      window.history.replaceState({}, '', window.location.pathname);
+      refresh();
+    } else if (oauthError) {
+      toast.error(`OAuth error: ${oauthError}`);
+      window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [connect, t]);
+  }, [refresh]);
+
+  const startOAuthFlow = useCallback(async (connectorId: string) => {
+    try {
+      const resp = await fetch(`/api/settings/integrations/oauth/start/${connectorId}`, {
+        credentials: 'include',
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        toast.error('No authorization URL returned');
+      }
+    } catch (err: any) {
+      toast.error(err.message || t('settings.integrations.connectError', 'Failed to initiate connection'));
+    }
+  }, [t]);
+
+  const handleConnect = useCallback(async (app: CatalogApp) => {
+    if (app.authType === 'oauth2' || app.authType === 'token') {
+      await startOAuthFlow(app.id);
+    } else if (app.authType === 'basic') {
+      const draft: Record<string, string> = { username: '', password: '' };
+      if (app.configFields.includes('caldav_url')) draft.serverUrl = 'https://caldav.icloud.com/';
+      setDraftConfig(draft);
+      setConnectModalApp(app);
+    } else if (app.configFields.length > 0) {
+      const draft: Record<string, string> = {};
+      app.configFields.forEach((f) => { draft[f] = ''; });
+      setDraftConfig(draft);
+      setConnectModalApp(app);
+    } else {
+      await startOAuthFlow(app.id);
+    }
+  }, [startOAuthFlow]);
 
   const handleDisconnect = useCallback(async (appId: string) => {
     const confirmed = window.confirm(t('settings.integrations.disconnectConfirm', 'Are you sure you want to disconnect this integration?'));
     if (!confirmed) return;
-    const success = await disconnect(appId);
-    if (success) {
-      toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
+    try {
+      const resp = await fetch(`/api/settings/integrations/${appId}/oauth-disconnect`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (resp.ok) {
+        toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
+        refresh();
+      } else {
+        await disconnect(appId);
+        toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
+      }
+    } catch {
+      await disconnect(appId);
     }
-  }, [disconnect, t]);
+  }, [disconnect, t, refresh]);
 
   const handleTest = useCallback(async (appId: string) => {
     setTestingProvider(appId);
     try {
-      const result = await testConnection(appId);
+      const resp = await fetch(`/api/settings/integrations/${appId}/oauth-test`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const result = await resp.json();
       if (result.success) {
         toast.success(t('settings.integrations.testSuccess', 'Connection working!'));
       } else {
@@ -357,32 +416,41 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     } finally {
       setTestingProvider(null);
     }
-  }, [testConnection, t]);
+  }, [t]);
 
   const openConnectModal = useCallback((app: CatalogApp) => {
-    if (app.configFields.length === 0) {
-      handleConnect(app.id);
-      return;
-    }
-    const draft: Record<string, string> = {};
-    app.configFields.forEach((f) => { draft[f] = ''; });
-    setDraftConfig(draft);
-    setConnectModalApp(app);
+    handleConnect(app);
   }, [handleConnect]);
 
   const submitConnectModal = useCallback(async () => {
     if (!connectModalApp) return;
     setConnecting(true);
     try {
-      await connect(connectModalApp.id);
-      toast.success(t('settings.integrations.connectStarted', 'Connection initiated'));
-      setConnectModalApp(null);
-    } catch {
-      toast.error(t('settings.integrations.connectError', 'Failed to initiate connection'));
+      if (connectModalApp.authType === 'basic') {
+        const resp = await fetch(`/api/settings/integrations/${connectModalApp.id}/basic-connect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: draftConfig.username || '',
+            password: draftConfig.password || '',
+            serverUrl: draftConfig.serverUrl || '',
+          }),
+        });
+        if (!resp.ok) throw new Error('Connection failed');
+        toast.success('Connected successfully');
+        setConnectModalApp(null);
+        refresh();
+      } else {
+        await startOAuthFlow(connectModalApp.id);
+        setConnectModalApp(null);
+      }
+    } catch (err: any) {
+      toast.error(err.message || t('settings.integrations.connectError', 'Failed to initiate connection'));
     } finally {
       setConnecting(false);
     }
-  }, [connectModalApp, connect, t]);
+  }, [connectModalApp, draftConfig, startOAuthFlow, t, refresh]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
@@ -555,6 +623,9 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                   {f}
                                 </span>
                               ))}
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${app.authType === 'oauth2' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : app.authType === 'basic' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'}`}>
+                                {app.authType === 'oauth2' ? 'OAuth 2.0' : app.authType === 'basic' ? 'CalDAV' : app.authType === 'token' ? 'Token' : 'API Key'}
+                              </span>
                             </div>
                           </div>
 
@@ -626,9 +697,9 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                   Connect {connectModalApp.name}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {connectModalApp.authType === 'oauth2'
-                    ? 'A new window will open for secure authentication.'
-                    : 'Provide the required credentials below.'}
+                  {connectModalApp.authType === 'basic'
+                    ? 'Provide your Apple ID and app-specific password.'
+                    : 'Provide the required configuration below.'}
                 </p>
               </div>
               <button onClick={() => setConnectModalApp(null)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
@@ -636,19 +707,52 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               </button>
             </div>
             <div className="p-5 space-y-3">
-              {connectModalApp.configFields.map((field) => (
-                <div key={field} className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
-                    {field.replace(/_/g, ' ')}
-                  </label>
-                  <input
-                    value={draftConfig[field] || ''}
-                    onChange={(e) => setDraftConfig((prev) => ({ ...prev, [field]: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
-                    placeholder={`Enter ${field.replace(/_/g, ' ')}`}
-                  />
-                </div>
-              ))}
+              {connectModalApp.authType === 'basic' ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Apple ID Email</label>
+                    <input
+                      value={draftConfig.username || ''}
+                      onChange={(e) => setDraftConfig((prev) => ({ ...prev, username: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                      placeholder="your@icloud.com"
+                      type="email"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">App-Specific Password</label>
+                    <input
+                      value={draftConfig.password || ''}
+                      onChange={(e) => setDraftConfig((prev) => ({ ...prev, password: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                      placeholder="xxxx-xxxx-xxxx-xxxx"
+                      type="password"
+                    />
+                  </div>
+                  <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <p className="font-medium">How to generate an app-specific password:</p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-blue-600 dark:text-blue-400">
+                      <li>Go to <a href="https://appleid.apple.com" target="_blank" rel="noopener noreferrer" className="underline">appleid.apple.com</a></li>
+                      <li>Sign In &amp; Security &rarr; App-Specific Passwords</li>
+                      <li>Generate a password labeled "Consultify"</li>
+                    </ol>
+                  </div>
+                </>
+              ) : (
+                connectModalApp.configFields.map((field) => (
+                  <div key={field} className="space-y-1">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
+                      {field.replace(/_/g, ' ')}
+                    </label>
+                    <input
+                      value={draftConfig[field] || ''}
+                      onChange={(e) => setDraftConfig((prev) => ({ ...prev, [field]: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                      placeholder={`Enter ${field.replace(/_/g, ' ')}`}
+                    />
+                  </div>
+                ))
+              )}
             </div>
             <div className="flex items-center justify-end gap-2 p-5 pt-0">
               <button

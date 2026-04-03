@@ -11,6 +11,7 @@ import { createAccountDeletionRequest, createDataExportRequest } from '../servic
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
+import * as oauthEngine from '../services/integrationOAuthEngine.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
 import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
@@ -1207,10 +1208,15 @@ router.post(
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
+    const oauthResult = await oauthEngine.testConnection(userId, provider);
+    if (oauthResult.success) {
+      return res.json({ success: true });
+    }
+
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const item = integrations.find((integration) => integration.provider === provider);
     if (!item) {
-      return res.status(404).json({ success: false, error: 'Integration not connected' });
+      return res.status(404).json({ success: false, error: oauthResult.error || 'Integration not connected' });
     }
 
     if (item.status !== 'active') {
@@ -1226,6 +1232,256 @@ router.post(
                 : item.lastError || 'Integration is not healthy enough to test',
       });
     }
+
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// OAuth 2.0 Integration Flow
+// ===========================================
+
+/**
+ * GET /api/settings/integrations/oauth/start/:connectorId
+ * Generates authorization URL and redirects the user.
+ */
+router.get(
+  '/integrations/oauth/start/:connectorId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
+    const { connectorId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const cfg = oauthEngine.getConnectorConfig(connectorId);
+    if (!cfg) {
+      return res.status(404).json({ error: 'Unknown connector' });
+    }
+
+    if (cfg.authType === 'basic') {
+      return res.status(400).json({ error: 'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.' });
+    }
+
+    const result = oauthEngine.generateAuthUrl(connectorId, userId, organizationId);
+    if (!result) {
+      return res.status(503).json({ error: 'Connector not configured. Missing API credentials in environment.' });
+    }
+
+    await logIntegrationConnectionEvent({
+      organizationId: organizationId || 'unknown',
+      userId,
+      integrationId: `${connectorId}-${userId}`,
+      connectorId,
+      eventType: 'connect_initiated',
+      metadata: { source: 'oauth_engine', connectorId },
+      ipAddress: typeof req.ip === 'string' ? req.ip : null,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
+
+    return res.json({ authUrl: result.url, state: result.state });
+  })
+);
+
+/**
+ * GET /api/settings/integrations/oauth/callback
+ * Handles the OAuth callback from the provider.
+ */
+router.get(
+  '/integrations/oauth/callback',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { code, state, error: oauthError } = req.query as Record<string, string>;
+
+    if (oauthError) {
+      logger.warn(`[OAuth callback] Provider returned error: ${oauthError}`);
+      return res.redirect('/settings/integrations?oauth_error=' + encodeURIComponent(oauthError));
+    }
+
+    if (!state) {
+      return res.redirect('/settings/integrations?oauth_error=missing_state');
+    }
+
+    const pending = oauthEngine.consumeState(state);
+    if (!pending) {
+      return res.redirect('/settings/integrations?oauth_error=invalid_or_expired_state');
+    }
+
+    if (!code) {
+      return res.redirect('/settings/integrations?oauth_error=missing_code');
+    }
+
+    const tokens = await oauthEngine.exchangeCode(pending.connectorId, code);
+    if (!tokens) {
+      return res.redirect(`/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`);
+    }
+
+    const cfg = oauthEngine.getConnectorConfig(pending.connectorId);
+    await oauthEngine.storeTokens(pending.userId, pending.connectorId, {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      scopes: cfg?.scopes.join(' '),
+      extraData: tokens.raw,
+    });
+
+    const now = new Date().toISOString();
+    const integrations = await loadIntegrations(pending.userId);
+    const providerMeta = defaultIntegrationProviders.find((p) => p.id === pending.connectorId);
+    const entry: IntegrationEntry = {
+      id: `${pending.connectorId}-${pending.userId}`,
+      userId: pending.userId,
+      provider: pending.connectorId,
+      providerName: providerMeta?.name || cfg?.name || pending.connectorId,
+      status: 'active',
+      config: {},
+      capabilities: providerMeta?.capabilities || [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const filtered = integrations.filter((i) => i.provider !== pending.connectorId);
+    filtered.push(entry);
+    await saveIntegrations(pending.userId, filtered);
+
+    if (pending.organizationId) {
+      await setIntegrationOwner({
+        integrationId: entry.id,
+        organizationId: pending.organizationId,
+        ownerUserId: pending.userId,
+      });
+    }
+
+    await logIntegrationConnectionEvent({
+      organizationId: pending.organizationId || 'unknown',
+      userId: pending.userId,
+      integrationId: entry.id,
+      connectorId: pending.connectorId,
+      eventType: 'external_auth_callback_received',
+      metadata: { source: 'oauth_engine', hasRefreshToken: !!tokens.refreshToken },
+    });
+
+    return res.redirect(`/settings/integrations?oauth_success=${pending.connectorId}`);
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:connectorId/oauth-disconnect
+ * Disconnect an OAuth-connected integration.
+ */
+router.post(
+  '/integrations/:connectorId/oauth-disconnect',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { connectorId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await oauthEngine.disconnectIntegration(userId, connectorId);
+
+    const integrations = await loadIntegrations(userId);
+    const filtered = integrations.filter((i) => i.provider !== connectorId);
+    await saveIntegrations(userId, filtered);
+
+    await logIntegrationConnectionEvent({
+      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      userId,
+      integrationId: `${connectorId}-${userId}`,
+      connectorId,
+      eventType: 'disconnect_requested',
+      metadata: { source: 'oauth_engine' },
+    });
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:connectorId/oauth-test
+ * Test an OAuth-connected integration by calling the provider's API.
+ */
+router.post(
+  '/integrations/:connectorId/oauth-test',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { connectorId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const result = await oauthEngine.testConnection(userId, connectorId);
+    return res.json(result);
+  })
+);
+
+/**
+ * GET /api/settings/integrations/oauth/status
+ * Get OAuth connection status for all connectors for the current user.
+ */
+router.get(
+  '/integrations/oauth/status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const connected = await oauthEngine.listConnectedIntegrations(userId);
+    const availability = oauthEngine.getConnectorAvailability();
+
+    return res.json({ connected, availability });
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:connectorId/basic-connect
+ * Connect via credentials (for CalDAV / Apple Calendar).
+ */
+router.post(
+  '/integrations/:connectorId/basic-connect',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { connectorId } = req.params;
+    const { username, password, serverUrl } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const cfg = oauthEngine.getConnectorConfig(connectorId);
+    if (!cfg || cfg.authType !== 'basic') {
+      return res.status(400).json({ error: 'This connector does not use basic auth' });
+    }
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    await oauthEngine.storeTokens(userId, connectorId, {
+      accessToken: Buffer.from(`${username}:${password}`).toString('base64'),
+      extraData: { username, serverUrl: serverUrl || 'https://caldav.icloud.com/' },
+    });
+
+    const providerMeta = defaultIntegrationProviders.find((p) => p.id === connectorId);
+    const now = new Date().toISOString();
+    const integrations = await loadIntegrations(userId);
+    const entry: IntegrationEntry = {
+      id: `${connectorId}-${userId}`,
+      userId,
+      provider: connectorId,
+      providerName: providerMeta?.name || cfg.name,
+      status: 'active',
+      config: { serverUrl: serverUrl || 'https://caldav.icloud.com/' },
+      capabilities: providerMeta?.capabilities || [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const filtered = integrations.filter((i) => i.provider !== connectorId);
+    filtered.push(entry);
+    await saveIntegrations(userId, filtered);
+
+    await logIntegrationConnectionEvent({
+      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      userId,
+      integrationId: `${connectorId}-${userId}`,
+      connectorId,
+      eventType: 'connect_initiated',
+      metadata: { source: 'basic_auth', connectorId },
+    });
 
     return res.json({ success: true });
   })
