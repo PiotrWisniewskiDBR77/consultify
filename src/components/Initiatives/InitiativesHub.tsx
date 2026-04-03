@@ -57,7 +57,6 @@ import {
   ModuleHub,
   ModuleTab,
   OpenDocument,
-  StatusDropdown,
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -858,6 +857,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setActiveDocumentId(null);
   }, []);
 
+  const handleMainTabChange = useCallback((tab: ModuleTab) => {
+    setActiveTab(tab);
+    setActiveDocumentId(null);
+  }, []);
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -922,6 +926,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             const init = initiatives.find((i) => i.id === id);
             if (init) handleOpenFullScreen(init);
           }}
+          onQuickUpdate={async (initiativeId, updates) => {
+            await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
+          }}
+          users={users}
         />
       );
     }
@@ -1251,24 +1259,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const statusDropdownControl = (
-    <StatusDropdown
-      context="initiatives"
-      value={activeStatusFilter || 'all'}
-      onChange={(status) => {
-        setActiveStatusFilter(status === 'all' ? null : status);
-      }}
-      counts={statusCounts}
-      size="sm"
-    />
-  );
-
-  const rightControls = (
-    <div className="flex items-center gap-2">
-      {scopeToggle}
-      {statusDropdownControl}
-    </div>
-  );
+  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
@@ -1416,7 +1407,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         persistViewModeKey="initiatives"
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleMainTabChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}

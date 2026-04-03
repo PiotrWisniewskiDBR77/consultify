@@ -17,6 +17,8 @@ export type {
   FeasibilityDimension,
   InitiativeFeasibility,
   IssueSeverity,
+  OrgUser,
+  QuickUpdatePayload,
   ResourceAllocation,
   TimelineBar,
 } from './types';

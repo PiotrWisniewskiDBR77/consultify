@@ -1,6 +1,7 @@
 /**
  * Portfolio Analysis Types
  * V3-F02: Initiatives Portfolio Analysis
+ * V3-F02b: Inline initiative management during planning
  */
 
 import type { PortfolioInitiative } from '@/types';
@@ -17,6 +18,23 @@ export interface AnalysisIssue {
   initiativeName?: string;
   fixSuggestion?: string;
   issueType: string;
+  autoFixPayload?: Record<string, unknown>;
+}
+
+export interface OrgUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+}
+
+export interface QuickUpdatePayload {
+  ownerBusinessId?: string;
+  ownerExecutionId?: string;
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+  priority?: string;
+  budget?: number;
 }
 
 export interface ResourceAllocation {
@@ -24,6 +42,7 @@ export interface ResourceAllocation {
   resourceName: string;
   role: string;
   allocatedInitiatives: string[];
+  allocatedInitiativeNames: string[];
   utilizationPercent: number;
   status: 'ok' | 'overallocated' | 'underutilized';
 }
@@ -40,6 +59,10 @@ export interface InitiativeFeasibility {
   initiativeName: string;
   dimensions: FeasibilityDimension;
   overallScore: number; // 0-100
+  ownerName?: string;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  budget?: number;
 }
 
 export interface DependencyLink {
@@ -48,6 +71,7 @@ export interface DependencyLink {
   toId: string;
   toName: string;
   type: string;
+  hasTimingConflict?: boolean;
 }
 
 export interface TimelineBar {
@@ -56,4 +80,5 @@ export interface TimelineBar {
   startDate: string | null;
   endDate: string | null;
   status: 'on-schedule' | 'delayed' | 'at-risk' | 'no-dates';
+  ownerName?: string;
 }

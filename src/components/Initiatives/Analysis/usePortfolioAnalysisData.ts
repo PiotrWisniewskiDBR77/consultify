@@ -84,6 +84,7 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
         resourceName: r.name,
         role: r.role,
         allocatedInitiatives: r.initIds,
+        allocatedInitiativeNames: r.initIds.map((iid) => idToName.get(iid) ?? iid),
         utilizationPercent: util,
         status,
       };
@@ -121,11 +122,20 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
       const overall =
         (scores[dims.budget] + scores[dims.skills] + scores[dims.time] + scores[dims.risk]) / 4;
 
+      const ownerObj = i.ownerBusiness;
+      const ownerName = ownerObj
+        ? `${ownerObj.firstName} ${ownerObj.lastName}`
+        : undefined;
+
       return {
         initiativeId: i.id,
         initiativeName: i.name,
         dimensions: dims,
         overallScore: Math.round(overall),
+        ownerName,
+        plannedStartDate: i.plannedStartDate ?? null,
+        plannedEndDate: i.plannedEndDate ?? null,
+        budget: i.budget,
       };
     });
 
@@ -152,28 +162,32 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
       const fromIds = depsList(i);
       for (const toId of fromIds) {
         const toName = idToName.get(toId) ?? toId;
-        deps.push({
-          fromId: i.id,
-          fromName: i.name,
-          toId,
-          toName,
-          type: 'depends_on',
-        });
-        // Check: does i start before to completes?
         const toInit = initiatives.find((x) => x.id === toId);
+        let hasTimingConflict = false;
         if (toInit && i.plannedStartDate && toInit.plannedEndDate) {
           if (new Date(i.plannedStartDate) < new Date(toInit.plannedEndDate)) {
+            hasTimingConflict = true;
+            const suggestedStart = toInit.plannedEndDate;
             logicIssues.push({
               id: `logic-${i.id}-${toId}`,
               severity: 'critical',
               description: `${i.name} starts before dependency ${toName} completes`,
               initiativeId: i.id,
               initiativeName: i.name,
-              fixSuggestion: 'Adjust start date or dependency end date',
+              fixSuggestion: `Move start date to ${new Date(suggestedStart).toLocaleDateString()}`,
               issueType: 'dependency_timing',
+              autoFixPayload: { plannedStartDate: suggestedStart },
             });
           }
         }
+        deps.push({
+          fromId: i.id,
+          fromName: i.name,
+          toId,
+          toName,
+          type: 'depends_on',
+          hasTimingConflict,
+        });
       }
     }
 
@@ -182,6 +196,10 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
     const bars: TimelineBar[] = initiatives.map((i) => {
       const start = i.plannedStartDate ?? (i as any).startDate;
       const end = i.plannedEndDate ?? (i as any).endDate;
+      const ownerObj = i.ownerBusiness;
+      const ownerName = ownerObj
+        ? `${ownerObj.firstName} ${ownerObj.lastName}`
+        : undefined;
       let status: TimelineBar['status'] = 'on-schedule';
       if (!start || !end)
         return {
@@ -190,11 +208,12 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
           startDate: start ?? null,
           endDate: end ?? null,
           status: 'no-dates',
+          ownerName,
         };
       const endDate = new Date(end);
       if (endDate < today) status = 'delayed';
       else if (endDate < new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)) status = 'at-risk';
-      return { initiativeId: i.id, initiativeName: i.name, startDate: start, endDate: end, status };
+      return { initiativeId: i.id, initiativeName: i.name, startDate: start, endDate: end, status, ownerName };
     });
 
     const timelineIssues: AnalysisIssue[] = bars

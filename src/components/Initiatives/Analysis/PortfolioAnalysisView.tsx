@@ -17,13 +17,15 @@ import { FeasibilityAnalysis } from './FeasibilityAnalysis';
 import { LogicAnalysis } from './LogicAnalysis';
 import { ResourcesAnalysis } from './ResourcesAnalysis';
 import { TimelineAnalysis } from './TimelineAnalysis';
-import type { AnalysisSubview } from './types';
+import type { AnalysisSubview, OrgUser, QuickUpdatePayload } from './types';
 import { useCompletenessRows } from './usePortfolioAnalysisData';
 import { usePortfolioAnalysisData } from './usePortfolioAnalysisData';
 
 interface PortfolioAnalysisViewProps {
   initiatives: PortfolioInitiative[];
   onOpenInitiative: (id: string) => void;
+  onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
+  users?: OrgUser[];
 }
 
 const SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
@@ -49,6 +51,8 @@ const SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }
 export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
   initiatives,
   onOpenInitiative,
+  onQuickUpdate,
+  users = [],
 }) => {
   const { t } = useTranslation();
   const [subview, setSubview] = useState<AnalysisSubview>('resources');
@@ -116,6 +120,9 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             allocations={allocations}
             issues={resourceIssues}
             onOpenInitiative={onOpenInitiative}
+            onQuickUpdate={onQuickUpdate}
+            users={users}
+            initiatives={initiatives}
           />
         )}
         {subview === 'feasibility' && (
@@ -123,6 +130,8 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             feasibilities={feasibilities}
             issues={feasibilityIssues}
             onOpenInitiative={onOpenInitiative}
+            onQuickUpdate={onQuickUpdate}
+            users={users}
           />
         )}
         {subview === 'logic' && (
@@ -130,6 +139,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             dependencies={dependencies}
             issues={logicIssues}
             onOpenInitiative={onOpenInitiative}
+            onQuickUpdate={onQuickUpdate}
           />
         )}
         {subview === 'timeline' && (
@@ -137,6 +147,8 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             bars={bars}
             issues={timelineIssues}
             onOpenInitiative={onOpenInitiative}
+            onQuickUpdate={onQuickUpdate}
+            users={users}
           />
         )}
         {subview === 'completeness' && (

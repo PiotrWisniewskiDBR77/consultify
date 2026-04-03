@@ -1,28 +1,39 @@
 /**
- * LogicAnalysis — Dependency graph (simplified list view)
+ * LogicAnalysis — Dependency graph with conflict resolution
  * V3-F02: Portfolio quality gate — Logic sub-view
+ * V3-F02b: Inline dependency management and AI fix actions
  */
 
-import { AlertTriangle, ArrowRight, ExternalLink, Lightbulb } from 'lucide-react';
-import React from 'react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ExternalLink,
+  Lightbulb,
+  Sparkles,
+} from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-import type { AnalysisIssue, DependencyLink } from './types';
+import type { AnalysisIssue, DependencyLink, QuickUpdatePayload } from './types';
 
 interface LogicAnalysisProps {
   dependencies: DependencyLink[];
   issues: AnalysisIssue[];
   onOpenInitiative: (id: string) => void;
+  onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
 }
 
 export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   dependencies,
   issues,
   onOpenInitiative,
+  onQuickUpdate,
 }) => {
   const { t } = useTranslation();
+  const [applyingFix, setApplyingFix] = useState<string | null>(null);
 
   const handleIssueClick = (issue: AnalysisIssue) => {
     trackFunnelEvent('initiatives_analysis_issue_opened', {
@@ -32,44 +43,92 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     if (issue.initiativeId) onOpenInitiative(issue.initiativeId);
   };
 
+  const handleApplyAiFix = useCallback(
+    async (issue: AnalysisIssue) => {
+      if (!onQuickUpdate || !issue.initiativeId || !issue.autoFixPayload) return;
+      setApplyingFix(issue.id);
+      try {
+        await onQuickUpdate(issue.initiativeId, issue.autoFixPayload as QuickUpdatePayload);
+        toast.success(t('initiatives.analysis.fixApplied', 'AI suggestion applied'));
+      } catch {
+        toast.error(t('initiatives.analysis.fixFailed', 'Failed to apply fix'));
+      } finally {
+        setApplyingFix(null);
+      }
+    },
+    [onQuickUpdate, t]
+  );
+
   const criticalCount = issues.filter(
     (i) => i.severity === 'critical' || i.severity === 'high'
   ).length;
-  const keyMetric = criticalCount;
+
+  const conflictingDeps = dependencies.filter((d) => d.hasTimingConflict);
+  const healthyDeps = dependencies.filter((d) => !d.hasTimingConflict);
 
   return (
     <div className="space-y-6">
-      {/* Summary card */}
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
-        <div className="text-2xl font-semibold text-slate-900 dark:text-white">{keyMetric}</div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          {t('initiatives.analysis.logic.criticalDependencyIssues', {
-            count: keyMetric,
-            defaultValue: '{{count}} critical dependency issue(s)',
-          })}
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+          <div className="text-2xl font-semibold text-slate-900 dark:text-white">
+            {dependencies.length}
+          </div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('initiatives.analysis.logic.totalDeps', 'Total dependencies')}
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+          <div className="text-2xl font-semibold text-red-600 dark:text-red-400">
+            {conflictingDeps.length}
+          </div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('initiatives.analysis.logic.timingConflicts', 'Timing conflicts')}
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+          <div className="text-2xl font-semibold text-slate-900 dark:text-white">
+            {criticalCount}
+          </div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('initiatives.analysis.logic.criticalDependencyIssues', {
+              count: criticalCount,
+              defaultValue: '{{count}} critical issue(s)',
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Dependency list */}
-      {dependencies.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {t('initiatives.analysis.logic.dependencies', 'Dependencies')}
+      {/* Conflicting dependencies (highlighted) */}
+      {conflictingDeps.length > 0 && (
+        <div className="rounded-xl border border-red-200 dark:border-red-900/50 overflow-hidden">
+          <div className="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/50">
+            <h3 className="text-sm font-semibold text-red-700 dark:text-red-300">
+              {t('initiatives.analysis.logic.conflictingDeps', 'Timing conflicts — requires attention')}
             </h3>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-navy-800/50">
-            {dependencies.map((d) => (
+          <div className="divide-y divide-red-100 dark:divide-red-900/30">
+            {conflictingDeps.map((d) => (
               <div
                 key={`${d.fromId}-${d.toId}`}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
+                className="flex items-center gap-3 px-4 py-3 text-sm bg-red-500/5 dark:bg-red-500/10"
               >
-                <span className="font-medium text-slate-900 dark:text-white truncate max-w-[140px]">
+                <AlertTriangle size={14} className="text-red-500 shrink-0" />
+                <button
+                  onClick={() => onOpenInitiative(d.fromId)}
+                  className="font-medium text-slate-900 dark:text-white truncate max-w-[160px] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
                   {d.fromName}
-                </span>
-                <ArrowRight size={16} className="text-slate-400 shrink-0" />
-                <span className="text-slate-600 dark:text-slate-400 truncate max-w-[140px]">
+                </button>
+                <ArrowRight size={16} className="text-red-400 shrink-0" />
+                <button
+                  onClick={() => onOpenInitiative(d.toId)}
+                  className="text-slate-600 dark:text-slate-400 truncate max-w-[160px] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
                   {d.toName}
+                </button>
+                <span className="text-xs text-red-600 dark:text-red-400 font-medium ml-auto">
+                  {t('initiatives.analysis.logic.conflict', 'Conflict')}
                 </span>
               </div>
             ))}
@@ -77,7 +136,43 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         </div>
       )}
 
-      {/* Issues list */}
+      {/* Healthy dependency list */}
+      {healthyDeps.length > 0 && (
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {t('initiatives.analysis.logic.dependencies', 'Dependencies')}
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-navy-800/50">
+            {healthyDeps.map((d) => (
+              <div
+                key={`${d.fromId}-${d.toId}`}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
+              >
+                <button
+                  onClick={() => onOpenInitiative(d.fromId)}
+                  className="font-medium text-slate-900 dark:text-white truncate max-w-[160px] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
+                  {d.fromName}
+                </button>
+                <ArrowRight size={16} className="text-slate-400 shrink-0" />
+                <button
+                  onClick={() => onOpenInitiative(d.toId)}
+                  className="text-slate-600 dark:text-slate-400 truncate max-w-[160px] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
+                  {d.toName}
+                </button>
+                <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400">
+                  {t('initiatives.analysis.logic.ok', 'OK')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Issues list with AI fix */}
       {issues.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
@@ -121,15 +216,29 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       </p>
                     )}
                   </div>
-                  {issue.initiativeId && (
-                    <button
-                      onClick={() => handleIssueClick(issue)}
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-                    >
-                      <ExternalLink size={12} />
-                      {t('initiatives.analysis.openInitiative', 'Open initiative')}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {issue.autoFixPayload && onQuickUpdate && (
+                      <button
+                        onClick={() => handleApplyAiFix(issue)}
+                        disabled={applyingFix === issue.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors disabled:opacity-50"
+                      >
+                        <Sparkles size={12} />
+                        {applyingFix === issue.id
+                          ? t('initiatives.analysis.applying', 'Applying...')
+                          : t('initiatives.analysis.applyFix', 'Apply fix')}
+                      </button>
+                    )}
+                    {issue.initiativeId && (
+                      <button
+                        onClick={() => handleIssueClick(issue)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                      >
+                        <ExternalLink size={12} />
+                        {t('initiatives.analysis.openInitiative', 'Open initiative')}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
           </div>
