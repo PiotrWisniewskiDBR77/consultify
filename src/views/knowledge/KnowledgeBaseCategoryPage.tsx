@@ -26,11 +26,12 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
     (c: KbCategory) => c.slug !== categorySlug && c.slug.startsWith('consultify-')
   ) || [];
 
-  const { data: articles, isLoading } = useDocsArticles({
+  const { data: articlesData, isLoading } = useDocsArticles({
     language: docsLanguage,
     categorySlug: categorySlug || undefined,
     limit: 50,
   });
+  const articles = articlesData?.articles;
 
   const featuredArticles = articles?.filter((a: KbArticleListItem) => a.is_featured) || [];
   const otherArticles = articles?.filter((a: KbArticleListItem) => !a.is_featured) || [];

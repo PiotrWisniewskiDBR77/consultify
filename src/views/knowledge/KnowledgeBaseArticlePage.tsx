@@ -47,11 +47,12 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   const trackView = useDocsTrackView();
   const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '', docsLanguage, 4);
 
-  const { data: categoryArticles } = useDocsArticles({
+  const { data: categoryArticlesData } = useDocsArticles({
     language: docsLanguage,
     categorySlug: categorySlug || undefined,
     limit: 100,
   });
+  const categoryArticles = categoryArticlesData?.articles;
 
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [copied, setCopied] = useState(false);
