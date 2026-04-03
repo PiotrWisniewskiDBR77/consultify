@@ -19,6 +19,8 @@ An initiative, in this sense, is more than a project label. It is the smallest u
 
 > **What “owned” should mean:** a named executive who can reallocate attention and absorb political cost, not a coordinator who routes updates.
 
+Consider a familiar pattern: the board agrees to “accelerate digital margin improvement,” and three weeks later sales still runs the old discount playbook, IT is buried in integration debt, and finance is arguing about whether the savings were ever modeled as cash. No one violated the spirit of the decision. The decision simply never became an object anyone could run against.
+
 ## Why decisions lose force after the meeting
 
 The usual causes are boring because they repeat everywhere. Ownership stays collective, which means nobody feels individually accountable when the first busy week arrives. The next move is described as “align” or “socialize” instead of “ship,” “stop,” or “fund.” Dependencies sit in narrative form rather than as explicit interfaces between functions. The ROI story stays in the approval deck instead of attaching to the initiative the way finance and delivery will actually measure it.
@@ -30,6 +32,8 @@ Follow-up drifts to the edges of the governance calendar, or it disappears into 
 Many companies are skilled at options and weak at closure mechanics. They debate well, then under-invest in the handoff: who converts the decision into a charter, who validates feasibility against capacity, who publishes the trade-offs, who schedules the first review with real consequences.
 
 That weakness creates a predictable decay curve. Urgency fades within days. Interpretations diverge by function. The original decision becomes easier to soften because nothing in the system forces a reconciled version to win. This is one of the largest hidden losses in transformation: not bad strategy, but strategy that never fully lands as executable work.
+
+A strong handoff answers four questions in writing before the narrative diverges: What exactly changed in priorities or scope? Who is accountable for the outcome, not the coordination? What is the first sequenced set of moves with dates? What forum will inspect drift, and what happens if the drift crosses an agreed threshold?
 
 ## What an owned initiative must make explicit
 
@@ -55,6 +59,18 @@ Ownership without structure becomes nominal. The accountable executive also need
 
 Strong ownership includes the authority to say no inside the initiative’s scope and the obligation to surface when the value case no longer holds. That is how nominal responsibility turns into something the rest of the leadership team can trust.
 
+## Diagnostic questions within ten days of a major decision
+
+If you want to know whether conversion is real, ask:
+
+- Can every affected function state the same top three implications of the decision without improvising?
+- Is there a single published record that finance, HR, and delivery all treat as authoritative?
+- Have budget or staffing objects changed, or are teams still “finding capacity”?
+- Is the first review scheduled with a decision ask, or only a readout?
+- What would we stop or defer to make room— and is that stop visible, not implied?
+
+Weak answers are not a people problem. They are a system signal that the decision is still floating above the operating model.
+
 ## How to run the first week after a major decision
 
 The first week sets the standard. Publish the initiative record in the same system governance already uses, not as an email thread. Assign owners before the narrative diverges. Tie the first review to a decision ask: what must be true by then, and what happens if it is not. Connect the initiative to the value logic finance and sponsors will use when pressure rises.
@@ -67,11 +83,15 @@ Several patterns kill conversion quickly. The leadership frame stays too broad t
 
 Each mistake produces the same outcome: motion without execution ownership. The platform or program office may look busy while the organization still cannot run the decision.
 
-## How Consultify supports decision-to-initiative conversion
+## Executive implications
 
-Consultify is built around the idea that commitments from the leadership room should land as structured initiatives: owners, value logic, dependencies, and review hooks in one workspace rather than scattered across decks and inboxes. The handoff stops being a memory exercise and becomes part of how governance already runs.
+Conversion discipline is how you protect strategic credibility. When decisions evaporate after the room, teams stop treating leadership commitments as binding inputs to their own planning. They hedge. They protect local metrics. They wait for the next workshop to rewrite the story. The fix is not louder communication. It is a conversion standard that makes ambiguity expensive and clarity durable.
 
-That does not remove judgment. It makes judgment easier to follow, challenge, and adjust when reality moves.
+## How this works inside Consultify
+
+Consultify is built as an operating system for transformation, not a document repository. Commitments from the leadership room land as structured initiatives—owners, value logic, dependencies, and review hooks—in the same workspace where governance already meets. The handoff stops being a memory exercise and becomes part of how the organization runs: one thread from decision to inspection to adjustment when reality moves.
+
+That does not remove judgment. It makes judgment easier to follow, challenge, and adjust. When the next steering cycle opens, the room works from shared objects instead of competing recollections of what everyone thought they heard.
 
 ## Why this matters to leadership
 

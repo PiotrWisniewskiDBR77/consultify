@@ -9,6 +9,10 @@ Systemy operacyjne transformacji cicho zawodzą, gdy każdy może komentować, a
 
 Prawa decyzyjne to nie grzeczność. To minimalna struktura, która utrzymuje sponsorship w zdrowiu: kto decyduje, o czym, do kiedy i gdzie zapisany jest wynik, żeby zespoły mogły iść naprzód bez co miesięcznego ponownego spierania się o ten sam wątek.
 
+Domyślne prawa są szczególnie drogie w pracy międzyfunkcyjnej. Zależności nie czekają grzecznie na konsensus. Terminy dostawców, okna regulacyjne i zobowiązania wobec klientów tworzą prawdziwe zegary. Gdy prawa są mgliste, organizacja płaci eskalacjami, układami na boku i interwencjami sponsorów, które powinny być rutynową mechaniką portfela.
+
+Celem nie jest usunięcie osądu ani nadzoru nad ryzykiem. Celem jest oddzielenie wkładu od odpowiedzialności oraz zapewnienie, że każda powtarzająca się klasa decyzji ma mechanizm domknięcia.
+
 > **Co w praktyce znaczy „jawne prawa”:** jeden odpowiedzialny approver na klasę decyzji na każdym poziomie, plus ścieżka eskalacji i SLA — opublikowane tam, gdzie zespoły mogą na nich polegać.
 
 ## Czym są prawa decyzyjne (a czym nie są)
@@ -18,6 +22,8 @@ Prawa decyzyjne oznaczają: nazwaną rolę odpowiedzialną za zdefiniowaną klas
 Nie są konsensusem na wszystko. Nie są opcjonalnym podpisem sponsora po tym, jak praca jest już zrobiona. I nie są plakatem RACI, który nigdy nie pojawia się na żywych forach.
 
 Jeśli wasze prawa żyją tylko na slajdzie z warsztatu sprzed roku — nie macie praw. Macie nostalgię.
+
+Prawa zawodzą też wtedy, gdy „wszyscy się zgadzają” jest traktowane jako decyzja. Zgoda bez zapisu jest krucha. System operacyjny potrzebuje wyników, które przetrwają rotację kierownictwa i chaos skrzynek.
 
 ## Startowa inwentaryzacja: klasy decyzji, które pożerają godziny leadership
 
@@ -41,6 +47,8 @@ Chodzi nie o perfekcję za pierwszym razem, lecz o pokrycie: decyzje, które rea
 
 Mapy praw zawodzą, gdy traktuje się je jak artefakty. Działają, gdy traktuje się je jak reguły operacyjne.
 
+**Nawyk executive:** otwieraj spotkania od nazwy klasy decyzji z agendy i odpowiedzialnego domykacza. Jeśli spotkanie kończy się bez zapisanego wyniku, zaklasyfikuj to jako tryb awarii i napraw projekt forum — nie postawę zespołu.
+
 ## Lista kontrolna: prawa decyzyjne są realne, gdy
 
 - Każda klasa decyzji ma jednego odpowiedzialnego approvera na poziom.  
@@ -55,9 +63,39 @@ Organizacje chronią wiele wet w imię wyrównania. Każdy chce głosu. Żaden l
 
 Gdy kilka ról może w praktyce zatrzymać tę samą decyzję bez tego, by jedna z nich nosiła końcową odpowiedzialność, wyrównanie zamienia się w licencjonowane opóźnienie. Prawa decyzyjne mają przełamać ten impas bez usuwania uzasadnionego nadzoru nad ryzykiem — oddzielając wkład od odpowiedzialności.
 
-## Jak Consultify utrzymuje prawa decyzyjne operacyjne
+Praktyczny kompromis: zachowaj weto tam, gdzie naprawdę ma znaczenie (bezpieczeństwo, compliance, istotna ekspozycja finansowa), a usuń je z klas decyzji, gdzie koszt to głównie prędkość i jasność.
 
-Consultify mapuje klasy decyzji, SLA i zapisane wyniki w jednej warstwie operacyjnej, więc domyślne prawa nie mogą chować się w notatkach ze spotkań. Gdy typy decyzji, SLA i wyniki żyją w jednym systemie, governance przestaje recyklingować te same pytania i zaczyna je zamykać.
+## Mapy praw, które przetrwają pierwszy prawdziwy konflikt
+
+Większość map praw wygląda dobrze, dopóki dwóch executive nie zgodzi się publicznie. Przetestujcie mapę ćwiczeniem stołowym: wybierzcie realistyczny impas międzyfunkcyjny i przejdźcie go według mapy. Jeśli ćwiczenie kończy się na „jakoś to ogarniemy”, mapa jest niekompletna. Potrzebujecie nazwanego poziomu rozstrzygania remisów, ramy czasowej i działania domyślnego.
+
+Opublikujcie też, jak prawa wchodzą w interakcję z procurementem, prawem i governance IT. Decyzje transformacyjne często stają nie dlatego, że komitet sterujący jest niejasny, ale dlatego, że inna bramka ma domyślne weto bez SLA. OS musi pokazać cały łańcuch, nie tylko nazwy forów transformacji.
+
+## Delegacja bez rozcieńczenia
+
+Prawa decyzyjne zawodzą, gdy executive delegują zadania, ale zachowują domyślne weto bez reguł. Delegacja powinna obejmować granice: co delegat może zdecydować sam, co wymaga powiadomienia, a co wciąż wymaga podniesienia do executive. Bez granic delegaci stają się posłańcami — a opóźnienie wraca.
+
+W programach międzyfunkcyjnych opublikujcie, które decyzje mogą podejmować liderzy inicjatyw, które wymagają pary z liderem funkcji, a które wymagają podniesienia do sponsora portfela. Niejasność tutaj to miejsce, w którym mnożą się „spotkania wyrównania”.
+
+## Zapisywanie wyników, żeby wykonanie mogło iść naprzód
+
+Decyzja nie jest realna, dopóki nie jest zapisana tam, gdzie zespoły wykonują: granice zakresu, postawa finansowania, zwolnienia zależności i akceptacja ryzyka. Protokoły, które podsumowują „dyskusję” bez wyników, to częsty tryb awarii. Wyniki powinny być po jednej linii każdy: zdecydowano X, właściciel Y, data wejścia Z, link do zapisu R.
+
+Jeśli mapa praw nie określa miejsca zapisu, dostaniecie piękne decyzje, które parują w skrzynkach.
+
+## Szkolenie organizacji w używaniu praw pod presją
+
+Mapy praw są łatwe pierwszego dnia i trudne w szóstym miesiącu — gdy deadline naciska i kanały poboczne kuszą. Co kwartał róbcie „ćwiczenie praw”: wybierzcie trzy zablokowane decyzje z ostatniego kwartału i zapytajcie, czy przestrzegano praw. Jeśli odpowiedź konsekwentnie brzmi „nie”, albo mapa jest nierealistyczna, albo brakuje egzekucji. Dostosujcie mapę, zaostrzcie SLA albo dodajcie jawne domyślne działania — nie udawajcie, że zgodność pojawi się z dobrej woli.
+
+Wdrażajcie nowych liderów mapą jako obowiązkową lekturą powiązaną z pierwszymi decyzjami w tygodniu. Rotacja to miejsce, w którym wracają domyślne prawa.
+
+## Jak to działa w Consultify
+
+Consultify jest zbudowany wokół idei, że zarządzanie transformacją to system operacyjny: typy decyzji, SLA i wyniki powinny przetrwać jako trwałe obiekty, nie rozproszone notatki ze spotkań. Gdy prawa żyją obok zapisu portfela, governance przestaje recyklingować te same pytania i zaczyna je zamykać.
+
+Ta trwałość czyni prawa „realnymi” przez rotacje. Nowy sponsor lub lider PMO powinien odziedziczyć mapę już operacyjną — nie odbudowywać praw z archeologii slajdów.
+
+Consultify trzyma typy decyzji, SLA i zapisane wyniki w jednym żywym systemie transformacji zamiast w rozproszonych deckach i wątkach skrzynki.
 
 ## Podsumowanie
 

@@ -17,6 +17,8 @@ Weak weekly packs often emphasize percent complete, task lists, meeting attendan
 
 Control questions are different: where is truth diverging from plan, where are decisions stuck, where is capacity breaking, and which value hypotheses are weakening?
 
+Activity reporting tells you people are busy. Control reporting tells you whether the portfolio is still a coherent bet.
+
 ## Weekly tracking checklist: decision-oriented
 
 Use the following as a minimum viable weekly PMO lens. Each line should map to an owner action if the signal worsens.
@@ -49,9 +51,61 @@ If executives use the weekly forum as a performance review of slides, teams will
 
 It works when executives treat the weekly pack as a control instrument, not an obligation to be endured. It fails when the PMO optimizes for completeness and the portfolio optimizes for narrative safety.
 
-## How Consultify fits the weekly PMO model
+## PMO leadership: protect the signal-to-noise ratio
 
-Consultify maps weekly checklist signals to initiative and ROI context in one live record so the PMO loop starts from operating truth rather than reassembled slides. That is how weekly governance stays operational instead of performative.
+The PMO’s credibility comes from escalation discipline: refusing to bury decision latency inside a forty-slide rollup, and insisting that “green” initiatives with rising dependency risk get the same scrutiny as red ones. That stance is political work. It is also the job.
+
+## What executives owe the weekly loop
+
+Weekly PMO forums fail when executives treat them as optional listening sessions. The weekly loop needs sponsor behavior: decisions taken when thresholds breach, refusal to accept narrative substitutes for dates, and willingness to kill agenda items that do not change outcomes. Without that, the PMO becomes a scribe for drift.
+
+Executives should also protect the PMO from becoming a universal inbox. The weekly checklist is a control lens, not a dump for every function’s anxiety. Triage discipline is part of portfolio hygiene.
+
+## Connecting weekly signals to monthly and quarterly consequences
+
+The weekly view should feed a clear escalation path: what repeats, what ages, what becomes a portfolio trade-off. If weekly issues never change monthly priorities, teams learn that “escalation” is vocabulary without leverage. If weekly signals routinely reshape the portfolio, teams learn that early honesty is rewarded with decisions—not punishment.
+
+## Examples of weekly lines that fail the “so what?” test
+
+“We held workshops,” “we advanced planning,” “we are aligning stakeholders,” and “we are nearly ready to begin” are often activity descriptions without decision hooks. Strong weekly lines sound different: “dependency X missed its decision date; owner Y; breach in three days unless escalated,” or “initiative Z burned 12 percent of envelope with 4 percent of milestones closed; requires sponsor trade-off.”
+
+Train owners to write weekly updates as if the reader must intervene—not as if the reader must be impressed.
+
+## When to escalate weekly versus absorb noise
+
+Not every slip deserves a portfolio drama. The PMO’s job includes triage: distinguish one-week variance from structural drift, local noise from cross-cutting dependency failure, and normal delivery uncertainty from value-case fracture. Escalation discipline is what keeps weekly forums credible. If everything is red, nothing is red.
+
+Publish triage rules with sponsors so teams know what gets escalated automatically versus what gets handled locally.
+
+## What “done” looks like at the end of a weekly PMO cycle
+
+A strong weekly close ends with three artifacts: an updated decision queue with ages, a published set of decisions or escalations from the forum, and explicit next-week commitments tied to owners and dates. If the weekly cycle ends with “we discussed,” you have a seminar. If it ends with “we decided” or “we escalated with a deadline,” you have control.
+
+The PMO should measure itself on decision throughput and aging reduction—not on slide completeness.
+
+## Executive checklist: is your weekly PMO actually governing?
+
+- Does every recurring line item map to a decision, escalation, or explicit “no action” with rationale?  
+- Can you see decision latency and dependency deadlock aging in one view, by owner?  
+- Do trigger breaches automatically create a portfolio conversation, or do they die in notes?  
+- Is the weekly publish record treated as authoritative by delivery and finance?  
+- Are you removing forums that duplicate the weekly loop instead of adding fields to it?
+
+If you cannot answer “yes” to most of these, your weekly rhythm is still optimized for reporting comfort rather than control.
+
+## A practical anti-pattern list for PMO leads
+
+Avoid these weekly failure modes: letting every initiative get equal airtime regardless of risk, accepting “no change” updates without probing for hidden drift, allowing owners to substitute narrative for dates, and letting escalations expire without a default decision. Each pattern trains the organization that the weekly forum is optional. Replace patterns with rules: time-boxing, escalation defaults, and mandatory decision queues.
+
+## How this works inside Consultify
+
+Consultify maps weekly checklist signals to initiative and ROI context in one live record so the PMO loop starts from operating truth rather than reassembled slides. As the transformation operating system, it keeps delivery truth, decision queues, and value logic adjacent—so weekly governance stays operational instead of performative.
+
+When sponsors and PMO share one workspace, the week’s conversation can move from description to consequence without rebuilding reality from email threads.
+
+## Putting it together
+
+The weekly PMO layer exists to prevent small misses from compounding into quarterly crises. When it tracks decision-oriented signals, enforces triage discipline, and publishes consequences, it becomes the connective tissue between delivery reality and executive judgment. That is the difference between a reporting function and an operating function—and it is what transformation governance actually needs in the gaps between bigger forums.
 
 ## Bottom line
 

@@ -162,7 +162,7 @@ Bewerten Sie jede Plattform auf einer Skala von 1–5 pro Frage. Multiplizieren 
 
 Nutzen Sie die Scorecard für ehrliche Anbietergespräche und damit das Einkaufsteam nicht Flüssigkeit mit Steuerung verwechselt.
 
-## Wie Consultify diesen Maßstab erfüllt
+## So funktioniert das in Consultify
 
 Consultify ist nicht als generischer KI-Assistent für Strategie positioniert. Es ist als Transformationsmanagement gebaut: Analyse, Umsetzung, Steuerung und Finanzlogik in einer operativen Schicht. Beratungsintelligenz ist über Frameworks strukturiert, nicht über Ad-hoc-Prompting. Empfehlungen werden zu verfolgten Initiativen mit Verantwortlichen, Meilensteinen, Abhängigkeiten und sichtbarem Risiko. Menschliche Freigaben sitzen an sinnvollen Stellen. Finanzmodellierung ist nativ, damit Wertfall und Umsetzungsbeleg zusammenbleiben. Strukturierte Daten im Ablauf machen Roadmaps, Executive Summaries und Finanzpakete reproduzierbar – ohne manuelles Neuaufbauen.
 

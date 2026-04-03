@@ -21,9 +21,11 @@ Bez tego zgoda przy stole kierowniczym trzy warstwy niżej zamienia się we frag
 
 > **Sygnał z terenu:** jeśli każdy zespół twierdzi, że jest „zgodny ze strategią”, a kamienie milowe się gryzą, nie potrzebujecie kolejnej kampanii komunikacyjnej. Potrzebujecie wspólnego zapisu programu.
 
+**Pytania na kolejne forum kierownicze:** czego nie robimy w tym kwartale? która inicjatywa przegrywa, jeśli dodamy kolejny „priorytet”? kto może powiedzieć „nie” na stykach bez miesięcznej eskalacji?
+
 ## Sygnały z terenu przy słabej zgodności
 
-Brak zgody nie zawsze jest dramatyczny. Często wygląda jak zdublowane projekty z różnymi sponsorami; sprzeczne kamienie milowe między funkcjami; decyzje czekające, bo żaden forum nie jest właścicielem kompromisu; inicjatywy „na zielono” w raportach, podczas gdy finanse lub dostawa mówią co innego.
+Brak zgody nie zawsze jest dramatyczny. Często wygląda jak zdublowane projekty z różnymi sponsorami; sprzeczne kamienie milowe między funkcjami; decyzje czekające, bo żadne forum nie jest właścicielem kompromisu; inicjatywy „na zielono” w raportach, podczas gdy finanse lub dostawa mówią co innego.
 
 Organizacja jest zajęta. Niekoniecznie spójna.
 
@@ -55,21 +57,51 @@ AI jest użyteczne, gdy zmniejsza tarcie między strategią, interpretacją a do
 
 Celem nie jest automatyzacja zgodności. Celem jest wcześniejsza widoczność rozjechania założeń i dryfu — zanim kwartały pójdą w obronę złej pracy.
 
+**Ostrożność:** streszczenia, które wygładzają konflikt, brzmią pomocnie i kosztują kontrolę. Preferuj wyniki, które jawnie podświetlają niedopasowane kamienie milowe, zdublowaną pracę i luki założeń.
+
 ## Zgodność i priorytetyzacja to ten sam problem powiedziany dwa razy
 
 Jeśli kierownictwo próbuje wyrównać wszystkich wokół wszystkiego, system się przeciąża.
 
 Mocniejsza zgodność wynika z jawnych wyborów: co liczy się najbardziej w tym okresie; co czeka; które inicjatywy są centralne, a które wspierające; jaka praca kończy się, by zwolnić zdolność. Jeśli wszystko zostaje „strategiczne”, nikt nie ma stabilnej kotwicy na codzienne kompromisy.
 
-## Jak Consultify wspiera ten wzorzec operacyjny
-
-Consultify to zarządzanie transformacją wspierane przez AI. Utrzymuje kontekst diagnostyczny, priorytety strategiczne, własność inicjatyw, logikę finansową i raportowanie w jednej przestrzeni, by historia, roadmapa i dowody z realizacji pozostawały połączone. To bliżej systemu operacyjnego transformacji niż okresowego tłumaczenia z nowej wersji slajdów.
-
 ## Kiedy ryzyko zgodności jest najwyższe
 
 Zwróć dodatkową uwagę, gdy firma się skaluje lub integruje; kilka programów transformacyjnych biegnie równolegle; kierownictwo jest rozproszone lub nowe; silosy są mocne, a zdolność ciasna.
 
 Wtedy zgodność to temat kontroli — nie warsztat kulturowy.
+
+## Handoffy, styki i prawdziwe zabójcy zgodności
+
+Większość braku zgody nie jest ideologiczna. Dzieje się na stykach: sprzedaż zobowiązuje to, czego operacje nie dowiozą; produkt wysyła to, czego customer success nie wchłonie; finanse finansuje przypadek, którego operacje nie podpisały; IT układa kolejność prac sprzeczną z startem krytycznym dla przychodu. Praca nad zgodnością powinna jawnie mapować te styki — kto decyduje na granicy, jaka metryka rozstrzyga konflikt i co eskaluje do sponsora.
+
+**Reguła operacyjna:** jeśli dwie funkcje mogą jednocześnie twierdzić o sukcesie, podczas gdy cierpi klient albo wynik, wasz stos KPI jest niezgodny nawet przy „zieleniach” wszędzie.
+
+## Co przeglądać co miesiąc, by powstrzymać cichy dryf
+
+Prowadź krótki przegląd zgodności portfela: czy górne priorytety są niezmienione albo świadomie zmienione; czy konflikty zależności są na stole z datami; czy zdublowane inicjatywy zostały scalone lub zakończone; czy założenia za ROI zaktualizowano przy zmianie zakresu. Chodzi o złapanie dryfu, póki to jeszcze problem planistyczny, nie kryzys wiarygodności.
+
+## Rola sponsora w utrzymaniu zgodności
+
+Zgodność nie utrzymuje się sama. Sponsorzy muszą odmawiać grzecznego poszerzania zakresu w pobocznych rozmowach, kierować nową pracę do stosu priorytetów i eskalować, gdy dwie funkcje optymalizują lokalnie wobec tego samego ograniczenia systemowego. Bez dyscypliny sponsora nawet doskonały dokument strategii staje się skrzynką sugestii.
+
+To zachowanie jest łatwiejsze, gdy sponsor może wskazać jedną uszeregowaną listę i jeden zapis programu. Rozmowa przesuwa się z „dlaczego moja inicjatywa ma znaczenie” na „co poświęcamy, jeśli to dodajemy” — czyli na rozmowę, jakiej zgodność faktycznie wymaga.
+
+## Jak to działa w Consultify
+
+Consultify to zarządzanie transformacją wspierane przez AI. Utrzymuje kontekst diagnostyczny, priorytety strategiczne, własność inicjatyw, logikę finansową i raportowanie w jednej przestrzeni, by historia, roadmapa i dowody z realizacji pozostawały połączone. To bliżej systemu operacyjnego transformacji niż okresowego tłumaczenia z nowej wersji slajdów.
+
+Dla członków zarządu payoff jest operacyjny: ten sam obiekt, o którym mowa w komitecie, jest obiektem, który dostawa aktualizuje między spotkaniami — więc „zgodność” oznacza wspólne dane, nie wspólny optymizm. Consultify ma trzymać ten jeden zapis programu zamiast pozwalać każdej funkcji utrzymywać obronną prywatną prawdę.
+
+Ponieważ Consultify traktuje inicjatywy, założenia i nadzór jako obiekty pierwszej klasy — nie statyczne dokumenty — zgodność staje się czymś, co egzekwujesz przez użycie: jeśli nie ma tego w systemie, nie jest to oficjalnie uzgodnione. Brzmi surowo, dopóki nie policzysz kosztu alternatywy.
+
+## Metryki, które ujawniają brak zgodności, zanim uderzą w wynik
+
+Użyteczne metryki zgodności są międzyfunkcyjne: czas cyklu end-to-end, trafność prognoz na stykach, wskaźniki przeróbek między handoffami, efekty dla klienta wymagające współdziałania wielu funkcji oraz sygnały konwersji gotówki, które obnażają lokalne „wygrane” pożyczone od innej linii. Jeśli każda funkcja jest na zielono na KPI silosowych, a efekty przedsiębiorstwa słabną, system pomiaru kłamie — cicho i drogo.
+
+Członkowie zarządu powinni co miesiąc przeglądać mały zestaw metryk przedsiębiorstwa obok zdrowia inicjatyw — nie jako zamiennik osądu, lecz jako wczesne ostrzeżenie, gdy lokalna optymalizacja wygrywa.
+
+Praktyczny zestaw startowy: czasy cyklu istotne dla klienta, jakość lub przeróbki na stykach, obciążenie prognoz według funkcji oraz metryki gotówki, których nie da się „wygrać” jednym silosem. Dokładne nazwy metryk mają mniejsze znaczenie niż nawyk patrzenia przez granice.
 
 ## Wniosek
 

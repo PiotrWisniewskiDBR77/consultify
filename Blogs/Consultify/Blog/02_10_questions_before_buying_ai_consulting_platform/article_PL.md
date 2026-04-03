@@ -162,11 +162,13 @@ Oceń każdą platformę w skali 1–5 dla każdego pytania. Pomnóż przez wag�
 
 Używaj karty, by wymusić uczciwe rozmowy z dostawcami i nie mylić płynności modelu z kontrolą.
 
-## Jak Consultify mieści się w tym progu
+## Jak to działa w Consultify
 
-Consultify nie jest pozycjonowany jako ogólny asystent AI do strategii. Jest zbudowany jako zarządzanie transformacją: analiza, realizacja, nadzór i logika finansowa w jednej warstwie operacyjnej. Inteligencja doradcza jest ustrukturyzowana ramami zamiast ad hoc promptowania. Rekomendacje stają się śledzonymi inicjatywami z właścicielami, kamieniami milowymi, zależnościami i widocznym ryzykiem. Akceptacja człowieka jest przy sensownych bramkach. Modelowanie finansowe jest natywne, więc uzasadnienie wartości i dowody z realizacji pozostają połączone. Ustrukturyzowane dane w całym przepływie sprawiają, że roadmapy, streszczenia dla kierownictwa i pakiety finansowe odtwarzają się bez ręcznego składania.
+Consultify nie jest ogólnym asystentem strategii. To zarządzanie transformacją: analiza, realizacja, nadzór i logika finansowa w jednej warstwie. Ramy strukturyzują inteligencję zamiast ad hoc promptowania. Rekomendacje stają się śledzonymi inicjatywami z właścicielami, kamieniami milowymi, zależnościami i widocznym ryzykiem. Akceptacja człowieka siedzi przy sensownych bramkach. Natywne modelowanie finansowe utrzymuje przypadek wartości i dowody z realizacji na tych samych szynach, więc roadmapy i pakiety pod radę odtwarzają się z żywego programu zamiast z pośpiechu eksportów.
 
-Ten przewodnik to nie tylko lista kontrolna dostawcy. To sposób, by nie kupić nowocześnie wyglądającej wersji tego samego starego problemu consultingu.
+Dla kupujących oznacza to, że dziesięć pytań powyżej to ograniczenia projektowe, nie pola do odhaczenia w marketingu. Consultify jest zbudowany tak, by łańcuch od diagnozy do nadzorowanego działania pozostał nienaruszony po pierwszym wyniku modelu — bo wartość transformacji powstaje w realizacji, nie w jakości pierwszego akapitu.
+
+Ten przewodnik to lista kontrolna dostawcy i standard tego, co „AI consulting” musi znaczyć, jeśli ma zastąpić powtarzalne fazy consultingu bez powtarzania tej samej porażki przekazania.
 
 ---
 
