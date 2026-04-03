@@ -3122,14 +3122,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
-      const mf = (real: number, fallback: number) => real > 0 ? real : fallback;
       const managerPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 6, icon: <span className="h-2 w-2 rounded-full bg-slate-400" /> },
-        { id: 'action-queue' as const, label: 'Action Queue', count: mf(actionQueueItems.length, 12), icon: <ClipboardList size={14} className="text-cyan-400" /> },
-        { id: 'decisions' as const, label: 'Decisions', count: mf(actionCenter.overdueDecisions.length, 3), icon: <Scale size={14} className="text-amber-400" /> },
-        { id: 'blockers' as const, label: 'Blockers', count: mf(actionCenter.blocked.length, 6), icon: <AlertTriangle size={14} className="text-rose-400" /> },
-        { id: 'risk' as const, label: 'Risk', count: mf(riskSignals.length, 7), icon: <Shield size={14} className="text-rose-400" /> },
-        { id: 'workload' as const, label: 'Workload', count: mf(tasks.length, 47), icon: <Users size={14} className="text-violet-400" /> },
+        { id: 'action-queue' as const, label: 'Action Queue', count: actionQueueItems.length, icon: <ClipboardList size={14} className="text-cyan-400" /> },
+        { id: 'decisions' as const, label: 'Decisions', count: actionCenter.overdueDecisions.length, icon: <Scale size={14} className="text-amber-400" /> },
+        { id: 'blockers' as const, label: 'Blockers', count: actionCenter.blocked.length, icon: <AlertTriangle size={14} className="text-rose-400" /> },
+        { id: 'risk' as const, label: 'Risk', count: riskSignals.length, icon: <Shield size={14} className="text-rose-400" /> },
+        { id: 'workload' as const, label: 'Workload', count: tasks.length, icon: <Users size={14} className="text-violet-400" /> },
       ];
       return (
         <div className="flex items-center gap-2">
@@ -4124,7 +4123,6 @@ Please return:
     const highRisks = riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length;
 
     const pendingDec = decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length;
-    const m = (real: number, fallback: number) => real > 0 ? real : fallback;
 
     const tiles: {
       id: ManagerModuleId;
@@ -4139,8 +4137,8 @@ Please return:
         title: t('execution.manager.tile.actionQueue', 'Action Queue'),
         description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
         metrics: [
-          { label: 'Items', value: m(actionQueueItems.length, 12), variant: 'warn' },
-          { label: 'Overdue', value: m(overdueItems, 4), variant: 'critical' },
+          { label: 'Items', value: actionQueueItems.length, variant: 'warn' },
+          { label: 'Overdue', value: overdueItems, variant: 'critical' },
         ],
       },
       {
@@ -4149,8 +4147,8 @@ Please return:
         title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
         description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
         metrics: [
-          { label: 'Overdue', value: m(overdueItems, 3), variant: 'critical' },
-          { label: 'Pending', value: m(pendingDec, 8) },
+          { label: 'Overdue', value: overdueItems, variant: 'critical' },
+          { label: 'Pending', value: pendingDec },
         ],
       },
       {
@@ -4159,8 +4157,8 @@ Please return:
         title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
         description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
         metrics: [
-          { label: 'Blocked', value: m(blockedCount, 6), variant: 'critical' },
-          { label: 'Critical risks', value: m(highRisks, 3), variant: 'warn' },
+          { label: 'Blocked', value: blockedCount, variant: 'critical' },
+          { label: 'Critical risks', value: highRisks, variant: 'warn' },
         ],
       },
       {
@@ -4169,8 +4167,8 @@ Please return:
         title: t('execution.manager.tile.workload', 'Resource & Workload'),
         description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
         metrics: [
-          { label: 'Tasks', value: m(tasks.length, 47) },
-          { label: 'Due soon', value: m(actionCenter.dueSoonTasks.length, 9), variant: 'warn' },
+          { label: 'Tasks', value: tasks.length },
+          { label: 'Due soon', value: actionCenter.dueSoonTasks.length, variant: 'warn' },
         ],
       },
       {
@@ -4179,8 +4177,8 @@ Please return:
         title: t('execution.manager.tile.risk', 'Execution Risk'),
         description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
         metrics: [
-          { label: 'Risk signals', value: m(riskSignals.length, 7), variant: 'warn' },
-          { label: 'Delays', value: m(delaySignals.length, 12), variant: 'warn' },
+          { label: 'Risk signals', value: riskSignals.length, variant: 'warn' },
+          { label: 'Delays', value: delaySignals.length, variant: 'warn' },
         ],
       },
       {
@@ -4189,8 +4187,8 @@ Please return:
         title: t('execution.manager.tile.peopleChange', 'People & Change'),
         description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
         metrics: [
-          { label: 'Missing owners', value: m(withoutOwner, 6), variant: 'warn' },
-          { label: 'Missing dates', value: m(missingDatesCount, 4), variant: 'warn' },
+          { label: 'Missing owners', value: withoutOwner, variant: 'warn' },
+          { label: 'Missing dates', value: missingDatesCount, variant: 'warn' },
         ],
       },
     ];

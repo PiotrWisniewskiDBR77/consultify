@@ -189,6 +189,7 @@ interface InitRow {
   updated_at: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  end_date: string | null;
 }
 
 interface TaskRow {
@@ -209,11 +210,12 @@ async function loadActiveInitiatives(
   projectId?: string
 ): Promise<InitRow[]> {
   let q = `
-    SELECT id, name, status, project_id, planned_end_date, sla_deadline, updated_at,
-           blocked_reason, blocked_at
+    SELECT id, name, status, project_id, planned_end_date,
+           end_date as sla_deadline, updated_at,
+           NULL as blocked_reason, NULL as blocked_at
     FROM initiatives
     WHERE organization_id = ?
-      AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+      AND UPPER(COALESCE(status,'')) NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
   `;
   const p: unknown[] = [organizationId];
   if (projectId) {
@@ -230,7 +232,7 @@ async function loadActiveTasks(organizationId: string, projectId?: string): Prom
     FROM tasks t
     JOIN initiatives i ON i.id = t.initiative_id
     WHERE i.organization_id = ?
-      AND t.status NOT IN ('DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED')
+      AND UPPER(COALESCE(t.status,'')) NOT IN ('DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED')
   `;
   const p: unknown[] = [organizationId];
   if (projectId) {

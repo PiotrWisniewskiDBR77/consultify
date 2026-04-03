@@ -38,12 +38,14 @@ const HEURISTIC_MAP: Record<LaneId, (input: HeuristicInput) => ReturnType<typeof
 async function loadDecisions(organizationId: string, projectId?: string): Promise<any[]> {
   try {
     let q = `
-      SELECT d.id, d.title, d.status, d.priority, d.due_date as "dueDate",
+      SELECT d.id, d.title, d.status, d.priority,
+             d.deadline as "dueDate",
              d.created_at as "createdAt",
-             u.name as "ownerName", d.owner_id as "ownerId",
-             d.related_object_id as "relatedObjectId"
+             COALESCE(u.first_name || ' ' || u.last_name, '') as "ownerName",
+             COALESCE(d.decision_owner_id, d.decision_maker_id) as "ownerId",
+             d.initiative_id as "relatedObjectId"
       FROM decisions d
-      LEFT JOIN users u ON u.id = d.owner_id
+      LEFT JOIN users u ON u.id = COALESCE(d.decision_owner_id, d.decision_maker_id)
       WHERE d.organization_id = ?
     `;
     const params: unknown[] = [organizationId];
@@ -60,8 +62,9 @@ async function loadDecisions(organizationId: string, projectId?: string): Promis
 async function loadInitiatives(organizationId: string, projectId?: string): Promise<any[]> {
   try {
     let q = `
-      SELECT id, name, status, owner_execution_id as "ownerId", assignee_id as "assigneeId",
-             planned_start_date, planned_end_date, start_date, sla_deadline, project_id, updated_at
+      SELECT id, name, status, owner_execution_id as "ownerId", owner_execution_id as "assigneeId",
+             planned_start_date, planned_end_date, start_date, planned_end_date as sla_deadline,
+             project_id, updated_at
       FROM initiatives
       WHERE organization_id = ?
     `;
@@ -81,15 +84,14 @@ async function loadTasks(organizationId: string, projectId?: string): Promise<an
     let q = `
       SELECT t.id, t.title, t.status, t.due_date, t.assignee_id, t.estimated_hours,
              t.initiative_id, t.project_id, t.updated_at,
-             u.name as "assigneeName"
+             COALESCE(u.first_name || ' ' || u.last_name, '') as "assigneeName"
       FROM tasks t
-      LEFT JOIN initiatives i ON i.id = t.initiative_id
       LEFT JOIN users u ON u.id = t.assignee_id
-      WHERE i.organization_id = ?
+      WHERE t.organization_id = ?
     `;
     const params: unknown[] = [organizationId];
     if (projectId) {
-      q += ' AND i.project_id = ?';
+      q += ' AND t.project_id = ?';
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
