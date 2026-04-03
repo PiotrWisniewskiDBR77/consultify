@@ -36,7 +36,6 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
-  RefreshCw,
   Scale,
   Shield,
   Sparkles,
@@ -49,10 +48,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import {
   Callout,
-  EmbeddedView,
   EmptyStateInline,
   InlineTable,
   ToggleBlock,
@@ -84,7 +81,6 @@ import {
   type InitiativePreviewV3Model,
 } from '../Initiatives/InitiativePreviewV3';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
-import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import {
   FilterableTable,
   FilterChip,
@@ -94,13 +90,10 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { BudgetControlPanel } from './BudgetControlPanel';
-import { DelayDetectionPanel } from './DelayDetectionPanel';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
-import { RiskSignalsPanel } from './RiskSignalsPanel';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 
 // Kanban column status mapping
@@ -384,16 +377,6 @@ interface ExecutionDecision {
   relatedObjectName?: string;
 }
 
-type CalendarItem = {
-  id: string;
-  type: 'task' | 'decision' | 'initiative';
-  kind?: 'start' | 'end';
-  title: string;
-  dueDate: string;
-  status: string;
-  initiativeName?: string;
-  ownerName?: string;
-};
 
 type PMOHealthSnapshot = {
   projectId: string;
@@ -546,7 +529,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d'); // D6.9
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
@@ -633,7 +615,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingExecSnapshot, setIsLoadingExecSnapshot] = useState(false);
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
-  const [workstreamsViewMode, setWorkstreamsViewMode] = useState<'list' | 'table'>('list');
 
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
@@ -647,23 +628,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     []
   );
 
-  const formatMoney = useCallback(
-    (v: number | null | undefined) =>
-      formatNumber(v, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
-    [formatNumber]
-  );
-
-  const severityToCalloutVariant = useCallback((s: string) => {
-    const sev = String(s || '').toLowerCase();
-    if (sev === 'critical') return 'critical' as const;
-    if (sev === 'high') return 'warning' as const;
-    if (sev === 'medium') return 'warning' as const;
-    return 'info' as const;
-  }, []);
-
-  const topTimelineWarning = timelineWarnings[0] ?? null;
-  const topCapacityAlert = capacityAlerts[0] ?? null;
-  const capacityHorizon = capacityTimeline[0] ?? null;
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
@@ -833,25 +797,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     tasks,
   ]);
 
-  const formatHeatmapKey = useCallback((k: string) => {
-    const [p, i] = String(k || '').split(':');
-    const pp = p ? p.toUpperCase() : '—';
-    const ii = i ? i.toUpperCase() : '—';
-    return `${pp} × ${ii}`;
-  }, []);
-
-  // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
     if (activeTab === 'list') {
       const allowed: ViewMode[] = ['table', 'kanban', 'timeline'];
       if (!allowed.includes(viewMode)) setViewMode('table');
       return;
     }
-    if (activeTab === 'reports') {
-      const allowed: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'grid'];
-      if (!allowed.includes(viewMode)) setViewMode('table');
-      return;
-    }
+    // Raporty and Manager don't use view modes — reset to table if needed
     if (viewMode !== 'table') setViewMode('table');
   }, [activeTab, viewMode]);
 
@@ -1250,68 +1202,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setExecIncludeAI(Boolean(execSnapshot.ai?.enabled));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [execSnapshot?.ai?.enabled]);
-
-  const execControls = useMemo(() => {
-    if (activeTab !== 'list') return null;
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100/60 dark:bg-navy-800/60">
-          {(['week', 'month', 'quarter'] as ExecPeriod[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setExecPeriod(p)}
-              className={`h-7 px-2 rounded-md text-[11px] font-medium transition-colors ${
-                execPeriod === p
-                  ? 'bg-white dark:bg-navy-700 text-slate-700 dark:text-slate-200 shadow-sm'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-              }`}
-              title={t('execution.execSnapshot.period', 'Period')}
-            >
-              {p.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setExecIncludeAI((v) => {
-              const next = !v;
-              trackFunnelEvent('execution_exec_snapshot_ai_toggled', {
-                projectId: currentProjectId,
-                enabled: next,
-              });
-              return next;
-            });
-          }}
-          className={`h-7 px-2 rounded-lg text-[11px] font-medium transition-colors inline-flex items-center gap-1 ${
-            execIncludeAI
-              ? 'text-purple-500 bg-purple-500/10'
-              : 'text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-navy-800/50 hover:bg-slate-100/70 dark:hover:bg-navy-800/70'
-          }`}
-          title={t('execution.execSnapshot.ai.toggle', 'Toggle AI')}
-        >
-          <Sparkles size={12} />
-          {t('execution.execSnapshot.ai.label', 'AI')}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            trackFunnelEvent('execution_exec_snapshot_refreshed', { projectId: currentProjectId });
-            return loadExecutiveSnapshot({ refresh: true });
-          }}
-          disabled={isLoadingExecSnapshot}
-          className="h-7 px-2 rounded-lg text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-navy-800/50 hover:bg-slate-100/70 dark:hover:bg-navy-800/70 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
-          title={t('execution.execSnapshot.refresh', 'Refresh')}
-        >
-          <RefreshCw size={12} className={isLoadingExecSnapshot ? 'animate-spin' : ''} />
-          {t('execution.execSnapshot.refresh', 'Refresh')}
-        </button>
-      </div>
-    );
-  }, [activeTab, execIncludeAI, execPeriod, isLoadingExecSnapshot, loadExecutiveSnapshot, t]);
 
   // Calculate stats
   const statusCounts = useMemo(() => {
@@ -2124,69 +2014,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
   }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
 
-  const calendarItems = useMemo(() => {
-    const items: CalendarItem[] = [];
-    const initiativeIds = new Set(filteredInitiatives.map((i) => i.id));
-
-    tasks.forEach((task) => {
-      if (!task.dueDate) return;
-      if (task.initiativeId && !initiativeIds.has(task.initiativeId)) return;
-      items.push({
-        id: `task-${task.id}`,
-        type: 'task',
-        title: task.title,
-        dueDate: task.dueDate,
-        status: task.status,
-        initiativeName: task.initiativeName,
-        ownerName: task.assigneeName,
-      });
-    });
-
-    decisions.forEach((decision) => {
-      if (!decision.dueDate) return;
-      const relatedId = (decision as any).relatedObjectId;
-      if (relatedId && !initiativeIds.has(relatedId)) return;
-      items.push({
-        id: `decision-${decision.id}`,
-        type: 'decision',
-        title: decision.title,
-        dueDate: decision.dueDate,
-        status: decision.status,
-        initiativeName: decision.relatedObjectName,
-        ownerName: decision.ownerName,
-      });
-    });
-
-    filteredInitiatives.forEach((initiative) => {
-      if (initiative.plannedStartDate) {
-        items.push({
-          id: `initiative-start-${initiative.id}`,
-          type: 'initiative',
-          kind: 'start',
-          title: initiative.name,
-          dueDate: initiative.plannedStartDate,
-          status: String(initiative.status),
-          initiativeName: initiative.name,
-        });
-      }
-      if (initiative.plannedEndDate || (initiative as any).slaDeadline) {
-        const end = (initiative as any).slaDeadline || initiative.plannedEndDate;
-        if (end) {
-          items.push({
-            id: `initiative-end-${initiative.id}`,
-            type: 'initiative',
-            kind: 'end',
-            title: initiative.name,
-            dueDate: end,
-            status: String(initiative.status),
-            initiativeName: initiative.name,
-          });
-        }
-      }
-    });
-
-    return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  }, [tasks, decisions, filteredInitiatives]);
 
   const handleExport = useCallback(() => {
     const headers = ['Name', 'Status', 'Owner', 'Progress', 'Planned Start', 'Planned End'];
@@ -2211,65 +2038,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [filteredInitiatives]);
-
-  const aiInsights = useMemo(() => {
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-
-    const dueSoonTasks = tasks.filter((task) => {
-      if (!task.dueDate) return false;
-      const due = new Date(task.dueDate).getTime();
-      return due >= now && due <= now + sevenDays && normalizeTaskStatus(task.status) !== 'done';
-    });
-
-    const priorityRecommendations = dueSoonTasks.slice(0, 3).map((task) => ({
-      title: task.title,
-      context: task.initiativeName || 'Execution Center',
-    }));
-
-    const timelineConflicts = initiatives
-      .filter(
-        (initiative) =>
-          !initiative.plannedStartDate ||
-          !initiative.plannedEndDate ||
-          (initiative.plannedStartDate &&
-            initiative.plannedEndDate &&
-            new Date(initiative.plannedStartDate) > new Date(initiative.plannedEndDate))
-      )
-      .slice(0, 3)
-      .map((initiative) => ({
-        title: initiative.name,
-        context:
-          !initiative.plannedStartDate || !initiative.plannedEndDate
-            ? 'Missing dates'
-            : 'Schedule conflict',
-      }));
-
-    const riskAlerts = initiatives
-      .filter((initiative) => initiative.status === InitiativeStatus.BLOCKED)
-      .slice(0, 3)
-      .map((initiative) => ({
-        title: initiative.name,
-        context: 'Blocked initiative',
-      }));
-
-    const overdueDecisionAlerts = decisions
-      .filter(
-        (decision) =>
-          String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
-      )
-      .slice(0, 3)
-      .map((decision) => ({
-        title: decision.title,
-        context: decision.relatedObjectName || 'Pending decision',
-      }));
-
-    return {
-      priorityRecommendations,
-      timelineConflicts,
-      riskAlerts: [...riskAlerts, ...overdueDecisionAlerts].slice(0, 3),
-    };
-  }, [tasks, initiatives, decisions]);
 
   // Handlers
   const handleOpenDocument = useCallback((row: FullInitiative) => {
@@ -2854,173 +2622,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
-  const renderAIInsights = () =>
-    execSnapshot ? (
-      <div className="space-y-3">
-        {!execIncludeAI || !execSnapshot.ai.enabled ? (
-          <Callout
-            variant="info"
-            title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}
-          >
-            {t(
-              'execution.execSnapshot.ai.disabled',
-              'AI insights are disabled for this view (or your role).'
-            )}
-          </Callout>
-        ) : execSnapshot.ai.insights ? (
-          <>
-            <Callout
-              variant="purple"
-              title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}
-            >
-              {execSnapshot.ai.insights.paragraph}
-            </Callout>
-            {execSnapshot.ai.insights.warnings?.length ? (
-              <Callout
-                variant="warning"
-                title={t('execution.execSnapshot.ai.warnings', 'Warnings')}
-                compact
-              >
-                <ul className="list-disc pl-4 space-y-1">
-                  {execSnapshot.ai.insights.warnings.slice(0, 6).map((w, idx) => (
-                    <li key={`${idx}-${w}`}>{w}</li>
-                  ))}
-                </ul>
-              </Callout>
-            ) : null}
-            <InlineTable
-              caption={t('execution.execSnapshot.ai.recommendedActions', 'Recommended actions')}
-              columns={[
-                {
-                  key: 'urgency',
-                  header: t('execution.execSnapshot.ai.urgency', 'Urgency'),
-                  width: 'w-28',
-                  render: (row: any) => {
-                    const u = String(row.urgency || 'low');
-                    const cls =
-                      u === 'high'
-                        ? 'text-rose-400'
-                        : u === 'medium'
-                          ? 'text-amber-400'
-                          : 'text-slate-400';
-                    return (
-                      <span className={`text-xs font-medium uppercase tracking-wide ${cls}`}>
-                        {u}
-                      </span>
-                    );
-                  },
-                },
-                {
-                  key: 'title',
-                  header: t('execution.execSnapshot.ai.action', 'Action'),
-                  render: (row: any) => (
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                        {row.title}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                        {row.rationale}
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'ownerHint',
-                  header: t('execution.execSnapshot.ai.owner', 'Owner'),
-                  width: 'w-40',
-                  render: (row: any) => (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {row.ownerHint || '—'}
-                    </span>
-                  ),
-                },
-              ]}
-              data={(execSnapshot.ai.insights.recommendedActions || []).slice(0, 5) as any[]}
-              rowKey={(row: any, idx: number) => `${row.title || 'a'}-${idx}`}
-              emptyMessage={t('execution.execSnapshot.ai.noActions', 'No actions suggested.')}
-              compact
-            />
-          </>
-        ) : (
-          <Callout
-            variant="info"
-            title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}
-          >
-            {t('execution.execSnapshot.ai.noInsights', 'No insights available yet.')}
-          </Callout>
-        )}
-      </div>
-    ) : (
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-            {t('execution.ai.priorityRecommendations')}
-          </h3>
-          {aiInsights.priorityRecommendations.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.ai.noPriorities')}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {aiInsights.priorityRecommendations.map((item, idx) => (
-                <div
-                  key={`${item.title}-${idx}`}
-                  className="text-xs text-slate-700 dark:text-slate-300"
-                >
-                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                  <span className="text-slate-500"> · {item.context}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-            {t('execution.ai.timelineConflicts')}
-          </h3>
-          {aiInsights.timelineConflicts.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.ai.noConflicts')}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {aiInsights.timelineConflicts.map((item, idx) => (
-                <div
-                  key={`${item.title}-${idx}`}
-                  className="text-xs text-slate-700 dark:text-slate-300"
-                >
-                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                  <span className="text-slate-500"> · {item.context}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-            {t('execution.ai.riskSuggestions')}
-          </h3>
-          {aiInsights.riskAlerts.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.ai.noRisks')}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {aiInsights.riskAlerts.map((item, idx) => (
-                <div
-                  key={`${item.title}-${idx}`}
-                  className="text-xs text-slate-700 dark:text-slate-300"
-                >
-                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                  <span className="text-slate-500"> · {item.context}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-
   const dashboardBaseInitiatives = useMemo(() => {
     let result = initiatives;
     if (!activeStatusFilter && scope === 'active') {
@@ -3066,101 +2667,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       dueSoonTasks,
     };
   }, [dashboardBaseInitiatives, decisions, tasks]);
-
-  const weeklyPackMarkdown = useMemo(() => {
-    const now = new Date();
-    const date = now.toISOString().slice(0, 10);
-
-    const phaseLabel = healthSnapshot?.phase
-      ? `${healthSnapshot.phase.number}/6 · ${healthSnapshot.phase.name}`
-      : '—';
-    const gateType = healthSnapshot?.stageGate?.gateType || '—';
-    const missingGate = healthSnapshot?.stageGate?.missingCriteria?.length ?? 0;
-    const gateStatus = healthSnapshot?.stageGate?.isReady
-      ? 'READY'
-      : `NOT_READY (${missingGate} missing)`;
-
-    const blockers = (healthSnapshot?.blockers || []).slice(0, 5);
-    const overdueDecisions = actionCenter.overdueDecisions.slice(0, 5);
-    const dueSoonTasks = actionCenter.dueSoonTasks.slice(0, 5);
-
-    return [
-      `# Weekly Execution Pack (${date})`,
-      ``,
-      `## PMO Snapshot`,
-      `- Phase: ${phaseLabel}`,
-      `- Gate: ${gateType} · ${gateStatus}`,
-      `- Blockers: ${(healthSnapshot?.blockers || []).length}`,
-      `- Overdue tasks: ${healthSnapshot?.tasks?.overdueCount ?? 0}`,
-      `- Pending decisions: ${healthSnapshot?.decisions?.pendingCount ?? 0} (overdue: ${healthSnapshot?.decisions?.overdueCount ?? 0})`,
-      ``,
-      `## Top blockers (action required)`,
-      blockers.length ? blockers.map((b) => `- [${b.type}] ${b.message}`).join('\n') : `- None`,
-      ``,
-      `## Overdue decisions (resolve / escalate)`,
-      overdueDecisions.length
-        ? overdueDecisions
-            .map((d) => `- ${d.title}${d.dueDate ? ` (due: ${d.dueDate})` : ''}`)
-            .join('\n')
-        : `- None`,
-      ``,
-      `## Due soon tasks (next 7 days)`,
-      dueSoonTasks.length
-        ? dueSoonTasks
-            .map(
-              (task) =>
-                `- ${task.title}${task.dueDate ? ` (due: ${task.dueDate})` : ''}${task.initiativeName ? ` · ${task.initiativeName}` : ''}`
-            )
-            .join('\n')
-        : `- None`,
-      ``,
-    ].join('\n');
-  }, [actionCenter.dueSoonTasks, actionCenter.overdueDecisions, healthSnapshot]);
-
-  const handleCopyWeeklyPack = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(weeklyPackMarkdown);
-      toast.success(t('execution.reports.copied', 'Weekly pack copied'));
-    } catch (e) {
-      // Fallback: best-effort copy
-      try {
-        const el = document.createElement('textarea');
-        el.value = weeklyPackMarkdown;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        toast.success(t('execution.reports.copied', 'Weekly pack copied'));
-      } catch {
-        toast.error(t('execution.reports.copyFailed', 'Copy failed'));
-      }
-    }
-  }, [t, weeklyPackMarkdown]);
-
-  const renderWeeklyPackCard = () => (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-            {t('execution.reports.weeklyPack', 'Weekly pack')}
-          </p>
-          <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">
-            {t(
-              'execution.reports.weeklyPackHint',
-              'One copy-ready snapshot for the weekly execution review.'
-            )}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleCopyWeeklyPack}
-          className="h-9 px-4 rounded-xl text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors"
-        >
-          {t('execution.reports.copy', 'Copy')}
-        </button>
-      </div>
-    </div>
-  );
 
   const activeExecutionInitiativeIds = useMemo(() => {
     return new Set(
@@ -3499,9 +3005,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     (
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
-      setActiveTab('reports' as ModuleTab);
+      setActiveTab('list' as ModuleTab);
       setViewMode('table');
-      // Status filter is useful only for pure-status buckets.
       if (attention === 'blocked') {
         setActiveStatusFilter(InitiativeStatus.BLOCKED);
         setActiveFilters([]);
@@ -4253,10 +3758,26 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate('/reports')}
+                      onClick={() => {
+                        const text = [
+                          `# ${report.title}`,
+                          `Audience: ${report.audience}`,
+                          `Cadence: ${report.cadence}`,
+                          `Scope: ${report.scope}`,
+                          `Data sources: ${report.dataSources.join(', ')}`,
+                          `\nSections:\n${report.sections.map((s) => `- ${s}`).join('\n')}`,
+                          `\nRAG logic: ${report.ragLogic}`,
+                          `\nFollow-up actions:\n${report.followUpActions.map((a) => `- ${a}`).join('\n')}`,
+                          `\nLive data: ${report.highlights.map((h) => `${h.label}: ${h.value}`).join(', ')}`,
+                        ].join('\n');
+                        navigator.clipboard.writeText(text).then(
+                          () => toast.success(t('execution.reportCatalog.copied', 'Report definition copied to clipboard')),
+                          () => toast.error(t('execution.reportCatalog.copyFailed', 'Failed to copy'))
+                        );
+                      }}
                       className="h-8 px-4 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
-                      {t('execution.reportCatalog.export', 'Export / Share')}
+                      {t('execution.reportCatalog.export', 'Copy Report Definition')}
                     </button>
                   </div>
                 </div>
@@ -4477,13 +3998,24 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
                 </button>
               ))}
               {managerDrillDown === 'overdue-approvals' && actionCenter.overdueDecisions.map((d) => (
-                <div key={d.id} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50">
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => {
+                    const relId = (d as any).relatedObjectId;
+                    if (relId) {
+                      const full = initiatives.find((x) => x.id === relId);
+                      if (full) handleOpenSidePanel(full);
+                    }
+                  }}
+                  className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/50 dark:border-navy-700/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+                >
                   <Scale size={12} className="text-amber-500 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <span className="text-sm text-slate-800 dark:text-slate-200 truncate block">{d.title}</span>
                     <span className="text-[10px] text-slate-400">{d.relatedObjectName || '—'} · {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}</span>
                   </div>
-                </div>
+                </button>
               ))}
               {managerDrillDown === 'missing-dates' && actionCenter.missingDates.map((i) => (
                 <button
@@ -4692,173 +4224,6 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     );
   };
 
-  const renderCalendarView = () => {
-    if (isLoadingTasks || isLoadingDecisions) {
-      return (
-        <div className="flex items-center justify-center h-80">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
-      );
-    }
-
-    if (calendarItems.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-80 text-slate-500 dark:text-slate-400">
-          <div className="text-center">
-            <CalendarDays className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">
-              {t('execution.empty.noDeadlines')}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('execution.empty.deadlinesWillAppear')}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    const grouped = calendarItems.reduce<Record<string, CalendarItem[]>>((acc, item) => {
-      const dateKey = new Date(item.dueDate).toDateString();
-      if (!acc[dateKey]) acc[dateKey] = [];
-      acc[dateKey].push(item);
-      return acc;
-    }, {});
-
-    return (
-      <div className="p-4 space-y-4">
-        {Object.entries(grouped).map(([dateKey, items]) => (
-          <div
-            key={dateKey}
-            className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4"
-          >
-            <div className="flex items-center gap-2 mb-3 text-slate-700 dark:text-slate-300">
-              <Calendar size={16} className="text-cyan-400" />
-              <span className="text-sm font-semibold">
-                {new Date(dateKey).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
-                    isPastDue(item.dueDate)
-                      ? 'border-rose-500/40 bg-rose-500/10'
-                      : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
-                      {item.type === 'task' ? (
-                        <ClipboardList size={14} className="text-cyan-400" />
-                      ) : item.type === 'decision' ? (
-                        <Scale size={14} className="text-amber-400" />
-                      ) : (
-                        <Calendar size={14} className="text-purple-400" />
-                      )}
-                      {item.title}
-                      {item.type === 'initiative' && item.kind && (
-                        <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          {item.kind === 'start' ? 'Start' : 'End'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {item.initiativeName || 'Execution Center'}
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-slate-400">
-                    <div>{item.ownerName || t('execution.table.unassigned')}</div>
-                    {isPastDue(item.dueDate) && (
-                      <div className="text-rose-400">{t('execution.badges.overdue')}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderExecutionView = () => {
-    if (viewMode === 'calendar') {
-      return renderCalendarView();
-    }
-
-    if (viewMode === 'timeline') {
-      return (
-        <div className="min-h-[420px]">
-          <ExecutionTimelineView
-            initiatives={filteredInitiatives as FullInitiative[]}
-            onInitiativeClick={handleOpenSidePanel}
-            onUpdateInitiative={handleInitiativeUpdate}
-            onTimelineUpdate={handleTimelineUpdate}
-            onDependenciesChanged={handleRefresh}
-            riskSignals={riskSignals}
-            delaySignals={delaySignals}
-            governedTimelineWarnings={timelineWarnings}
-            projectId={currentProjectId || undefined}
-          />
-        </div>
-      );
-    }
-
-    if (viewMode === 'kanban') {
-      return (
-        <ExecutionInitiativesKanbanView
-          initiatives={portfolioInitiatives}
-          scope={scope}
-          onInitiativeClick={(pi) => {
-            const full = filteredInitiatives.find((x) => x.id === pi.id);
-            if (full) handleOpenSidePanel(full);
-          }}
-          onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
-        />
-      );
-    }
-
-    if (viewMode === 'grid') {
-      return (
-        <div className="h-full overflow-auto p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {portfolioInitiatives.map((pi) => (
-              <InitiativeGridCard
-                key={pi.id}
-                initiative={pi}
-                onClick={() => {
-                  const full = filteredInitiatives.find((x) => x.id === pi.id);
-                  if (full) handleOpenSidePanel(full);
-                }}
-              />
-            ))}
-          </div>
-          {portfolioInitiatives.length === 0 && (
-            <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-              {t('execution.empty.noAvailable')}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <FilterableTable
-        columns={columns}
-        data={filteredInitiatives as any[]}
-        onRowClick={(row) => handleOpenSidePanel(row as unknown as FullInitiative)}
-        onRowAction={(action, row) => handleRowAction(action, row as unknown as FullInitiative)}
-        activeFilters={activeFilters}
-        onFilterChange={setActiveFilters}
-        emptyMessage={t('execution.empty.noInExecution')}
-      />
-    );
-  };
 
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
@@ -5007,714 +4372,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       return renderReportsCatalog();
     }
 
-    // Fallback — should never reach here with the 3-tab model.
-    // Keep executive snapshot for backward compat if extra tabs re-appear.
-    const snapshot = execSnapshot;
-    return (
-      <div className="p-4 space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {t('execution.execSnapshot.title', 'Executive snapshot')}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {snapshot?.generatedAt
-                ? t('execution.execSnapshot.generatedAt', 'Generated at') +
-                  `: ${new Date(snapshot.generatedAt).toLocaleString()}`
-                : t('execution.execSnapshot.generatedAt', 'Generated at') + ': —'}
-            </div>
-          </div>
-          {execControls}
-        </div>
-
-        {execSnapshotError ? (
-          <Callout variant="critical" title={t('execution.execSnapshot.error', 'Snapshot error')}>
-            {execSnapshotError}
-          </Callout>
-        ) : null}
-
-        {!snapshot ? (
-          <div className="bg-white/40 dark:bg-navy-900/30 rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-8">
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {t('execution.execSnapshot.loading', 'Loading snapshot...')}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* 7.1 Overview */}
-            <ToggleBlock
-              title={t('execution.execSnapshot.overview.title', 'Overview')}
-              badge={`${snapshot.overview.progressPercent}%`}
-              icon={<LayoutDashboard size={14} />}
-              defaultOpen
-            >
-              <div className="grid gap-3 lg:grid-cols-3">
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.progress', 'Progress')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {snapshot.overview.progressPercent}%
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {t('execution.execSnapshot.overview.phase', 'Phase')}:{' '}
-                    {snapshot.overview.phaseLabel || '—'}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.alerts', 'Priority alerts')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {snapshot.overview.priorityAlerts?.length || 0}
-                  </div>
-                  <div className="mt-2 space-y-2">
-                    {(snapshot.overview.priorityAlerts || []).slice(0, 3).map((a, idx) => (
-                      <Callout
-                        key={`${a.type}-${idx}`}
-                        variant={severityToCalloutVariant(a.severity)}
-                        compact
-                        title={a.type}
-                      >
-                        {a.message}
-                      </Callout>
-                    ))}
-                    {(snapshot.overview.priorityAlerts || []).length === 0 ? (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {t('execution.execSnapshot.overview.noAlerts', 'No critical alerts.')}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.nextMilestones', 'Next milestones')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {snapshot.overview.nextMilestones?.length || 0}
-                  </div>
-                  <InlineTable
-                    className="mt-3"
-                    compact
-                    columns={[
-                      {
-                        key: 'initiative',
-                        header: t('execution.execSnapshot.overview.initiative', 'Initiative'),
-                        render: (row: any) => (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const init = initiatives.find((i) => i.id === row.initiativeId);
-                              if (init) handleOpenSidePanel(init);
-                              else
-                                toast.error(
-                                  t(
-                                    'execution.toast.initiativeNotFound',
-                                    'Related initiative not found'
-                                  )
-                                );
-                            }}
-                            className="text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:underline"
-                          >
-                            {row.initiativeName || '—'}
-                          </button>
-                        ),
-                      },
-                      {
-                        key: 'date',
-                        header: t('execution.execSnapshot.overview.targetDate', 'Target'),
-                        width: 'w-28',
-                        align: 'right',
-                        render: (row: any) => (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {row.targetDate ? new Date(row.targetDate).toLocaleDateString() : '—'}
-                          </span>
-                        ),
-                      },
-                    ]}
-                    data={(snapshot.overview.nextMilestones || []).slice(0, 5) as any[]}
-                    rowKey={(row: any) => row.id}
-                    emptyMessage={t(
-                      'execution.execSnapshot.overview.noMilestones',
-                      'No upcoming milestones.'
-                    )}
-                  />
-                </div>
-              </div>
-              <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.timelineWarnings', 'Timeline warnings')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {formatNumber(timelineWarningTotal)}
-                  </div>
-                  <div className="mt-2">
-                    {topTimelineWarning ? (
-                      <Callout
-                        compact
-                        variant={severityToCalloutVariant(topTimelineWarning.severity)}
-                        title={
-                          topTimelineWarning.initiativeName ||
-                          t('execution.execSnapshot.overview.topWarning', {
-                            defaultValue: 'Top warning',
-                          })
-                        }
-                      >
-                        {topTimelineWarning.message}
-                      </Callout>
-                    ) : (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {t(
-                          'execution.execSnapshot.overview.noTimelineWarnings',
-                          'No timeline warnings detected.'
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.capacityAlerts', 'Capacity alerts')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {formatNumber(capacityAlerts.length)}
-                  </div>
-                  <div className="mt-2">
-                    {topCapacityAlert ? (
-                      <Callout
-                        compact
-                        variant={severityToCalloutVariant(topCapacityAlert.severity)}
-                        title={
-                          topCapacityAlert.name ||
-                          t('execution.execSnapshot.overview.topCapacityAlert', {
-                            defaultValue: 'Top alert',
-                          })
-                        }
-                      >
-                        {t('execution.execSnapshot.overview.capacityAlertDetail', {
-                          hours: formatNumber(topCapacityAlert.overloadHours),
-                          defaultValue: '{{hours}}h over capacity',
-                        })}
-                      </Callout>
-                    ) : (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {t(
-                          'execution.execSnapshot.overview.noCapacityAlerts',
-                          'No capacity leveling alerts detected.'
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('execution.execSnapshot.overview.capacityHorizon', 'Capacity horizon')}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                    {capacityHorizon
-                      ? `${formatNumber(capacityHorizon.allocatedHours)}/${formatNumber(capacityHorizon.capacityHours)}h`
-                      : '—'}
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    {capacityHorizon
-                      ? t('execution.execSnapshot.overview.capacityHorizonDetail', {
-                          hours: formatNumber(capacityHorizon.availableHours),
-                          date: new Date(capacityHorizon.weekStart).toLocaleDateString(),
-                          defaultValue: '{{hours}}h available in week of {{date}}',
-                        })
-                      : t(
-                          'execution.execSnapshot.overview.noCapacityTimeline',
-                          'No capacity forecast available.'
-                        )}
-                  </div>
-                </div>
-              </div>
-            </ToggleBlock>
-
-            {/* 7.2 Workstreams */}
-            <ToggleBlock
-              title={t('execution.execSnapshot.workstreams.title', 'Workstreams')}
-              badge={
-                (snapshot.workstreams.items?.length || 0) +
-                (snapshot.workstreams.unassignedInitiatives ? 1 : 0)
-              }
-              icon={<LayoutGrid size={14} />}
-              defaultOpen
-            >
-              <EmbeddedView
-                title={t('execution.execSnapshot.workstreams.title', 'Workstreams')}
-                count={snapshot.workstreams.items?.length || 0}
-                viewModes={['list', 'table']}
-                activeMode={workstreamsViewMode}
-                onModeChange={(m) => setWorkstreamsViewMode(m as any)}
-                onOpenFull={() => navigate('/pmo')}
-                loading={isLoadingExecSnapshot}
-              >
-                {snapshot.workstreams.items?.length ? (
-                  workstreamsViewMode === 'table' ? (
-                    <InlineTable
-                      compact
-                      columns={[
-                        {
-                          key: 'name',
-                          header: t('execution.execSnapshot.workstreams.name', 'Workstream'),
-                          render: (row: any) => (
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                                {row.name}
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                {t('execution.execSnapshot.workstreams.owner', 'Owner')}:{' '}
-                                {row.ownerName || '—'}
-                              </div>
-                            </div>
-                          ),
-                        },
-                        {
-                          key: 'progress',
-                          header: t('execution.execSnapshot.workstreams.progress', 'Progress'),
-                          width: 'w-24',
-                          align: 'right',
-                          render: (row: any) => (
-                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                              {formatNumber(row.progressAvg)}%
-                            </span>
-                          ),
-                        },
-                        {
-                          key: 'counts',
-                          header: t(
-                            'execution.execSnapshot.workstreams.initiatives',
-                            'Initiatives'
-                          ),
-                          width: 'w-28',
-                          align: 'right',
-                          render: (row: any) => (
-                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                              {formatNumber(row.initiativeCount)}
-                            </span>
-                          ),
-                        },
-                      ]}
-                      data={snapshot.workstreams.items as any[]}
-                      rowKey={(row: any) => row.id}
-                      emptyMessage={t(
-                        'execution.execSnapshot.workstreams.empty',
-                        'No workstreams defined.'
-                      )}
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      {snapshot.workstreams.items.slice(0, 10).map((ws) => (
-                        <div
-                          key={ws.id}
-                          className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                                {ws.name}
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                {t('execution.execSnapshot.workstreams.owner', 'Owner')}:{' '}
-                                {ws.ownerName || '—'}
-                              </div>
-                            </div>
-                            <div className="text-right text-xs text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
-                              <div>{formatNumber(ws.progressAvg)}%</div>
-                              <div>
-                                {formatNumber(ws.onTrackCount)} on track ·{' '}
-                                {formatNumber(ws.atRiskCount)} at risk
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {snapshot.workstreams.unassignedInitiatives ? (
-                        <Callout
-                          variant="warning"
-                          compact
-                          title={t('execution.execSnapshot.workstreams.unassigned', 'Unassigned')}
-                        >
-                          {t(
-                            'execution.execSnapshot.workstreams.unassignedHint',
-                            'Initiatives without a workstream'
-                          )}
-                          : {formatNumber(snapshot.workstreams.unassignedInitiatives)}
-                        </Callout>
-                      ) : null}
-                    </div>
-                  )
-                ) : (
-                  <EmptyStateInline
-                    message={t(
-                      'execution.execSnapshot.workstreams.empty',
-                      'No workstreams defined.'
-                    )}
-                    hint={t(
-                      'execution.execSnapshot.workstreams.emptyHint',
-                      'Create workstreams to improve accountability and reporting.'
-                    )}
-                    action={{
-                      label: t('execution.execSnapshot.workstreams.openPMO', 'Open PMO'),
-                      onClick: () => navigate('/pmo'),
-                    }}
-                  />
-                )}
-              </EmbeddedView>
-            </ToggleBlock>
-
-            {/* 7.3 KPI */}
-            <ToggleBlock
-              title={t('execution.execSnapshot.kpis.title', 'KPIs')}
-              badge={snapshot.kpis.highlights?.length || 0}
-              icon={<TrendingUp size={14} />}
-            >
-              <InlineTable
-                columns={[
-                  {
-                    key: 'name',
-                    header: t('execution.execSnapshot.kpis.kpi', 'KPI'),
-                    render: (row: any) => (
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                          {row.id === 'derived_initiatives_executing'
-                            ? t(
-                                'execution.execSnapshot.kpis.derived.initiativesExecuting',
-                                'Initiatives executing'
-                              )
-                            : row.id === 'derived_initiatives_blocked'
-                              ? t(
-                                  'execution.execSnapshot.kpis.derived.initiativesBlocked',
-                                  'Initiatives blocked'
-                                )
-                              : row.id === 'derived_tasks_overdue'
-                                ? t(
-                                    'execution.execSnapshot.kpis.derived.tasksOverdue',
-                                    'Overdue tasks'
-                                  )
-                                : row.id === 'derived_decisions_pending'
-                                  ? t(
-                                      'execution.execSnapshot.kpis.derived.decisionsPending',
-                                      'Pending decisions'
-                                    )
-                                  : row.name}
-                        </div>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'current',
-                    header: t('execution.execSnapshot.kpis.current', 'Current'),
-                    width: 'w-28',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                        {formatNumber(row.currentValue)}
-                        {row.unit ? ` ${row.unit}` : ''}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: 'target',
-                    header: t('execution.execSnapshot.kpis.target', 'Target'),
-                    width: 'w-28',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                        {formatNumber(row.targetValue)}
-                        {row.unit ? ` ${row.unit}` : ''}
-                      </span>
-                    ),
-                  },
-                ]}
-                data={(snapshot.kpis.highlights || []).slice(0, 8) as any[]}
-                rowKey={(row: any) => row.id}
-                emptyMessage={t('execution.execSnapshot.kpis.empty', 'No KPIs available.')}
-                caption={`${t('execution.execSnapshot.kpis.dataQuality', 'Data quality')}: ${snapshot.kpis.dataQuality}`}
-              />
-            </ToggleBlock>
-
-            {/* 7.4 ROI */}
-            <ToggleBlock
-              title={t('execution.execSnapshot.roi.title', 'ROI / financial impact')}
-              badge={
-                snapshot.roi.summary ? `${formatMoney(snapshot.roi.summary.totalProjected)}` : '—'
-              }
-              icon={<Target size={14} />}
-            >
-              {snapshot.roi.summary ? (
-                <div className="grid gap-3 lg:grid-cols-4">
-                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {t('execution.execSnapshot.roi.projected', 'Projected')}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {formatMoney(snapshot.roi.summary.totalProjected)}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {t('execution.execSnapshot.roi.realized', 'Realized')}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {formatMoney(snapshot.roi.summary.totalRealized)}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {t('execution.execSnapshot.roi.variance', 'Variance')}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {formatMoney(snapshot.roi.summary.totalVariance)}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
-                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {t('execution.execSnapshot.roi.coverage', 'Coverage')}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {formatNumber(snapshot.roi.summary.coveragePercent)}%
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <EmptyStateInline
-                  message={t('execution.execSnapshot.roi.empty', 'No ROI data available.')}
-                  hint={t(
-                    'execution.execSnapshot.roi.emptyHint',
-                    'Connect initiatives to benefit tracking to compute financial impact.'
-                  )}
-                  action={{
-                    label: t('execution.execSnapshot.roi.openBenefits', 'Open Benefits'),
-                    onClick: () => navigate('/benefits'),
-                  }}
-                />
-              )}
-              <div className="mt-4">
-                <InlineTable
-                  compact
-                  caption={t('execution.execSnapshot.roi.initiatives', 'Top initiatives')}
-                  columns={[
-                    {
-                      key: 'initiative',
-                      header: t('execution.execSnapshot.roi.initiative', 'Initiative'),
-                      render: (row: any) => (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const init = initiatives.find((i) => i.id === row.initiativeId);
-                            if (init) handleOpenSidePanel(init);
-                            else
-                              toast.error(
-                                t(
-                                  'execution.toast.initiativeNotFound',
-                                  'Related initiative not found'
-                                )
-                              );
-                          }}
-                          className="text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:underline"
-                        >
-                          {row.initiativeName || '—'}
-                        </button>
-                      ),
-                    },
-                    {
-                      key: 'projected',
-                      header: t('execution.execSnapshot.roi.projected', 'Projected'),
-                      width: 'w-32',
-                      align: 'right',
-                      render: (row: any) => (
-                        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                          {formatMoney(row.projectedBenefit)}
-                        </span>
-                      ),
-                    },
-                    {
-                      key: 'realized',
-                      header: t('execution.execSnapshot.roi.realized', 'Realized'),
-                      width: 'w-32',
-                      align: 'right',
-                      render: (row: any) => (
-                        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                          {formatMoney(row.realizedBenefit)}
-                        </span>
-                      ),
-                    },
-                  ]}
-                  data={(snapshot.roi.items || []).slice(0, 8) as any[]}
-                  rowKey={(row: any, idx: number) => `${row.initiativeId || idx}`}
-                  emptyMessage={t(
-                    'execution.execSnapshot.roi.noItems',
-                    'No initiatives mapped to ROI.'
-                  )}
-                />
-              </div>
-            </ToggleBlock>
-
-            {/* 7.5 Risks */}
-            <ToggleBlock
-              title={t('execution.execSnapshot.risks.title', 'Risks')}
-              badge={snapshot.risks.topRisks?.length || 0}
-              icon={<AlertTriangle size={14} />}
-            >
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div>
-                  <InlineTable
-                    caption={t('execution.execSnapshot.risks.heatmap', 'Heatmap (P×I)')}
-                    compact
-                    columns={[
-                      {
-                        key: 'cell',
-                        header: t('execution.execSnapshot.risks.cell', 'Cell'),
-                        render: (row: any) => row.cell,
-                      },
-                      {
-                        key: 'count',
-                        header: t('execution.execSnapshot.risks.count', 'Count'),
-                        width: 'w-20',
-                        align: 'right',
-                        render: (row: any) => (
-                          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                            {row.count}
-                          </span>
-                        ),
-                      },
-                    ]}
-                    data={
-                      Object.entries(snapshot.risks.heatmap || {})
-                        .sort((a, b) => (b[1] as number) - (a[1] as number))
-                        .slice(0, 10)
-                        .map(([k, v]) => ({ cell: formatHeatmapKey(k), count: v })) as any[]
-                    }
-                    rowKey={(row: any, idx: number) => `${row.cell}-${idx}`}
-                    emptyMessage={t(
-                      'execution.execSnapshot.risks.noHeatmap',
-                      'No risk heatmap data.'
-                    )}
-                  />
-                </div>
-                <div>
-                  <InlineTable
-                    caption={t('execution.execSnapshot.risks.top', 'Top risks')}
-                    compact
-                    columns={[
-                      {
-                        key: 'risk',
-                        header: t('execution.execSnapshot.risks.risk', 'Risk'),
-                        render: (row: any) => (
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                              {row.title}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                              {t('execution.execSnapshot.risks.score', 'Score')}:{' '}
-                              {formatNumber(row.score)}
-                            </div>
-                          </div>
-                        ),
-                      },
-                      {
-                        key: 'due',
-                        header: t('execution.execSnapshot.risks.due', 'Due'),
-                        width: 'w-28',
-                        align: 'right',
-                        render: (row: any) => (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {row.dueDate ? new Date(row.dueDate).toLocaleDateString() : '—'}
-                          </span>
-                        ),
-                      },
-                    ]}
-                    data={(snapshot.risks.topRisks || []).slice(0, 8) as any[]}
-                    rowKey={(row: any) => row.id}
-                    emptyMessage={t('execution.execSnapshot.risks.noTop', 'No top risks.')}
-                  />
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                <Callout
-                  variant="warning"
-                  title={t('execution.execSnapshot.risks.signals', 'Signals')}
-                  compact
-                >
-                  {t('execution.execSnapshot.risks.signalCounts', 'Risk/Delay/Overspend signals')}
-                  :&nbsp;
-                  <span className="tabular-nums">
-                    {riskSignals.length}/{delaySignals.length}/{overspendSignals.length}
-                  </span>
-                </Callout>
-                <Callout
-                  variant="info"
-                  title={t('execution.execSnapshot.risks.openPanels', 'Control panels')}
-                  compact
-                >
-                  {t(
-                    'execution.execSnapshot.risks.panelsHint',
-                    'See detailed signals in the panels below.'
-                  )}
-                </Callout>
-                <Callout
-                  variant="success"
-                  title={t('execution.execSnapshot.risks.raids', 'RAID log')}
-                  compact
-                >
-                  {t(
-                    'execution.execSnapshot.risks.raidsHint',
-                    'Top risks are sourced from the project RAID log.'
-                  )}
-                </Callout>
-              </div>
-            </ToggleBlock>
-
-            {/* Existing control panels (detailed) */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-              <RiskSignalsPanel
-                projectId={currentProjectId || undefined}
-                signals={riskSignals}
-                loading={isLoadingControlSignals}
-                onRefresh={handleRefresh}
-                onInitiativeClick={(id) => {
-                  const init = initiatives.find((i) => i.id === id);
-                  if (init) handleOpenSidePanel(init);
-                }}
-              />
-            </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
-              <DelayDetectionPanel
-                projectId={currentProjectId || undefined}
-                signals={delaySignals}
-                loading={isLoadingControlSignals}
-                onRefresh={handleRefresh}
-                onInitiativeClick={(id) => {
-                  const init = initiatives.find((i) => i.id === id);
-                  if (init) handleOpenSidePanel(init);
-                }}
-              />
-            </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
-              <BudgetControlPanel
-                projectId={currentProjectId || undefined}
-                overspendSignals={overspendSignals}
-                loading={isLoadingControlSignals}
-                onSaved={handleRefresh}
-                onInitiativeClick={(id) => {
-                  const init = initiatives.find((i) => i.id === id);
-                  if (init) handleOpenSidePanel(init);
-                }}
-              />
-            </div>
-
-            {/* Weekly pack + action center + AI */}
-            {renderWeeklyPackCard()}
-            {renderActionCenter()}
-            {renderAIInsights()}
-          </>
-        )}
-      </div>
-    );
+    return null;
   };
 
   const availableViewModes = useMemo(
