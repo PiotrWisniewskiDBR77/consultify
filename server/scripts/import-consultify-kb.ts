@@ -9,7 +9,7 @@
  *  - Blogs/Consultify/Blog/<slug>/publish.md (image placement)
  *
  * Outputs:
- *  - server/migrations/20260402_consultify_kb_import.sql
+ *  - server/migrations/20260403_consultify_kb_import_v3.sql
  *  - public/kb/consultify/<slug>/ (hero, analytical, social images)
  */
 
@@ -25,7 +25,7 @@ const BLOGS_ROOT = path.join(ROOT, 'Blogs', 'Consultify', 'Blog');
 const MANIFEST_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'knowledge_base_manifest.json');
 const RENDERER_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'renderer_manifest.json');
 const RELATION_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'relation_manifest.json');
-const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v2.sql');
+const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v3.sql');
 
 interface ManifestArticle {
   canonical_id: string;
@@ -264,7 +264,7 @@ function main() {
 
   const sql: string[] = [];
 
-  sql.push(`-- Migration: 20260403_consultify_kb_import_v2.sql`);
+  sql.push(`-- Migration: 20260403_consultify_kb_import_v3.sql`);
   sql.push(`-- Purpose: Import 50 Consultify knowledge base articles with EN/PL/DE translations`);
   sql.push(`-- Source: Blogs/_LP_KB_READY/Consultify manifests + Blogs/Consultify/Blog/ articles`);
   sql.push(`-- Date: 2026-04-02`);
