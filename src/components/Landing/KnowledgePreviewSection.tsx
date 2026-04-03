@@ -14,7 +14,16 @@ import { ROUTES } from '../../routes/routeConfig';
 
 function kbImg(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+  if (url.startsWith('/kb/') && url.endsWith('.png')) return url.slice(0, -4) + '.webp';
+  return url;
+}
+
+function kbThumb(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const resolved = kbImg(url);
+  if (!resolved) return undefined;
+  if (resolved.endsWith('/hero.webp')) return resolved.replace('/hero.webp', '/thumb.webp');
+  return resolved;
 }
 
 // ============================================
@@ -57,22 +66,25 @@ function buildLandingArticles(
 
 interface PreviewCardProps {
   article: KbArticleListItem & { video_teaser_url?: string };
-  onCTAClick: () => void;
+  onArticleClick: (article: KbArticleListItem) => void;
 }
 
-const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
+const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all group hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+    <div
+      className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all group hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900 cursor-pointer"
+      onClick={() => onArticleClick(article)}
+    >
       {/* Video Teaser / Thumbnail */}
       <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 overflow-hidden">
         {article.thumbnail_url ? (
           <img
-            src={kbImg(article.thumbnail_url) || article.thumbnail_url}
+            src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url) || article.thumbnail_url}
             alt={article.title}
-            width={1200}
-            height={675}
+            width={600}
+            height={338}
             loading="lazy"
             decoding="async"
             className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
@@ -117,13 +129,10 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
         <p className="mb-4 flex-1 text-sm text-slate-600 line-clamp-3 dark:text-slate-400">
           {article.summary}
         </p>
-        <button
-          onClick={onCTAClick}
-          className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:from-purple-700 hover:to-indigo-700"
-        >
+        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-purple-700 group-hover:to-indigo-700">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
-        </button>
+        </span>
       </div>
     </div>
   );
@@ -140,7 +149,6 @@ interface KnowledgePreviewSectionProps {
 
 export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = ({
   className = '',
-  onTrialClick,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -154,12 +162,8 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   );
   const isLoading = featuredLoading || previewLoading;
 
-  const handleCTAClick = () => {
-    if (onTrialClick) {
-      onTrialClick();
-      return;
-    }
-    navigate(ROUTES.TRIAL_ENTRY);
+  const handleArticleClick = (article: KbArticleListItem) => {
+    navigate(`${ROUTES.KNOWLEDGE_BASE_PUBLIC}/${article.category_slug}/${article.slug}`);
   };
 
   const handleExploreAll = () => {
@@ -207,7 +211,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
         {/* Article Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           {articles.map((article) => (
-            <PreviewCard key={article.id} article={article} onCTAClick={handleCTAClick} />
+            <PreviewCard key={article.id} article={article} onArticleClick={handleArticleClick} />
           ))}
         </div>
 

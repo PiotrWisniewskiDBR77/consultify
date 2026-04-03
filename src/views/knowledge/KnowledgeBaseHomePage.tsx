@@ -91,7 +91,16 @@ const SECTION_META_KEYS: Record<string, SectionMetaKeys> = {
 
 function kbImg(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+  if (url.startsWith('/kb/') && url.endsWith('.png')) return url.slice(0, -4) + '.webp';
+  return url;
+}
+
+function kbThumb(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const resolved = kbImg(url);
+  if (!resolved) return undefined;
+  if (resolved.endsWith('/hero.webp')) return resolved.replace('/hero.webp', '/thumb.webp');
+  return resolved;
 }
 
 const ARTICLES_PER_PAGE = 12;
@@ -733,10 +742,10 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
             {article.thumbnail_url && (
               <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
                 <img
-                  src={kbImg(article.thumbnail_url)}
+                  src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url)}
                   alt={article.title}
-                  width={1200}
-                  height={675}
+                  width={600}
+                  height={338}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                   loading="lazy"

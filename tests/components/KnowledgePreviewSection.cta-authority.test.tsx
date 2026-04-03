@@ -20,7 +20,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../src/hooks/useKnowledge', () => ({
-  useKnowledgePublicPreview: () => ({
+  useKnowledgeFeatured: () => ({
     data: [
       {
         id: 'kb-1',
@@ -35,6 +35,10 @@ vi.mock('../../src/hooks/useKnowledge', () => ({
         view_count: 1,
       },
     ],
+    isLoading: false,
+  }),
+  useKnowledgePublicPreview: () => ({
+    data: [],
     isLoading: false,
   }),
 }));
@@ -52,22 +56,19 @@ describe('KnowledgePreviewSection CTA authority', () => {
     navigateMock.mockReset();
   });
 
-  it('routes landing CTAs through the shared trial callback when provided', () => {
-    const onTrialClick = vi.fn();
-    renderSection({ onTrialClick });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Read Full Article' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Access Full Knowledge Base' }));
-
-    expect(onTrialClick).toHaveBeenCalledTimes(2);
-    expect(navigateMock).not.toHaveBeenCalled();
-  });
-
-  it('falls back to the canonical trial entry route when no shared callback is provided', () => {
+  it('navigates to the article page when clicking an article card', () => {
     renderSection();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Access Full Knowledge Base' }));
+    fireEvent.click(screen.getByText('Preview One'));
 
-    expect(navigateMock).toHaveBeenCalledWith('/trial');
+    expect(navigateMock).toHaveBeenCalledWith('/knowledge-base/ops/preview-one');
+  });
+
+  it('navigates to the knowledge base listing when clicking Access Full Knowledge Base', () => {
+    renderSection();
+
+    fireEvent.click(screen.getByRole('button', { name: /Access Full Knowledge Base/i }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/knowledge-base');
   });
 });
